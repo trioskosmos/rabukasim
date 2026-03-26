@@ -132,11 +132,7 @@ fn test_heart_transformation_kanan_via_reduction() {
         player_id: 0,
         ..Default::default()
     };
-    state.resolve_semantic_frames(
-        &db,
-        &FrameProgram::from_words(&bc).frames,
-        &ctx,
-    );
+    state.resolve_semantic_frames(&db, &FrameProgram::from_words(&bc).frames, &ctx);
 
     assert!(state.players[0].heart_req_reductions.get_color_count(1) == 1);
 }

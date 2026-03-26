@@ -20,7 +20,9 @@ fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize
     cards
         .iter()
         .enumerate()
-        .filter(|(idx, cid)| **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx as i32)))
+        .filter(|(idx, cid)| {
+            **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx as i32))
+        })
         .count()
 }
 

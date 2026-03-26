@@ -7,10 +7,81 @@ use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::{
-    Ability, ActionReceiver, CardDatabase, ChoiceType, GameState, PendingInteraction,
+    Ability, AbilityContext, ActionReceiver, CardDatabase, ChoiceType, GameState,
+    PendingInteraction,
 };
 
 pub struct ResponseGenerator;
+
+fn optional_skip_is_available(pi: &PendingInteraction) -> bool {
+    (pi.filter_attr & FILTER_IS_OPTIONAL) != 0 || pi.choice_type == ChoiceType::Optional
+}
+
+fn should_offer_zero_action(pi: &PendingInteraction, choice_type: ChoiceType) -> bool {
+    match choice_type {
+        ChoiceType::Optional => true,
+        ChoiceType::MoveMemberDest => false,
+        _ => optional_skip_is_available(pi),
+    }
+}
+
+fn add_cards_matching_filter<R: ActionReceiver + ?Sized>(
+    state: &GameState,
+    db: &CardDatabase,
+    receiver: &mut R,
+    cards: &[i32],
+    filter_attr: u64,
+    ctx: &AbilityContext,
+    base_action: i32,
+) {
+    for (i, &cid) in cards.iter().enumerate() {
+        if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
+            receiver.add_action((base_action + i as i32) as usize);
+        }
+    }
+}
+
+fn add_indexed_actions<R, F>(receiver: &mut R, count: usize, base_action: i32, mut include: F)
+where
+    R: ActionReceiver + ?Sized,
+    F: FnMut(usize) -> bool,
+{
+    for idx in 0..count {
+        if include(idx) {
+            receiver.add_action((base_action + idx as i32) as usize);
+        }
+    }
+}
+
+fn add_stage_actions<R, F>(receiver: &mut R, count: usize, base_action: i32, mut include: F)
+where
+    R: ActionReceiver + ?Sized,
+    F: FnMut(usize) -> bool,
+{
+    add_indexed_actions(receiver, count, base_action, |idx| include(idx));
+}
+
+fn add_slot_actions<R: ActionReceiver + ?Sized>(receiver: &mut R, slots: &[i32], base_action: i32) {
+    for (i, &cid) in slots.iter().enumerate() {
+        if cid >= 0 {
+            receiver.add_action((base_action + i as i32) as usize);
+        }
+    }
+}
+
+fn add_optional_done<R: ActionReceiver + ?Sized>(receiver: &mut R) {
+    receiver.add_action(0);
+}
+
+fn should_enable_targeted_live_bonus(state: &GameState, pi: &PendingInteraction) -> bool {
+    pi.ctx.trigger_type == TriggerType::OnLiveStart
+        && matches!(
+            pi.choice_type,
+            ChoiceType::SelectMember | ChoiceType::SelectHandDiscard
+        )
+        && (pi.choice_type != ChoiceType::SelectHandDiscard
+            || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty()))
+}
 
 impl ActionGenerator for ResponseGenerator {
     fn generate<R: ActionReceiver + ?Sized>(
@@ -189,28 +260,7 @@ impl ResponseGenerator {
 
         let player = &state.players[p_idx];
 
-        // 1. Determine action 0 (fallback/skip)
-        // Only allow action 0 if the interaction is marked OPTIONAL
-        // or if the choice type is inherently skip-able.
-        let mut allow_action_0 = (pi.filter_attr & FILTER_IS_OPTIONAL) != 0;
-
-        if choice_type == ChoiceType::Optional {
-            allow_action_0 = true;
-        } else if choice_type == ChoiceType::MoveMemberDest {
-            allow_action_0 = false;
-        }
-
-        if !allow_action_0
-            && (choice_type == ChoiceType::RevealHand
-                || choice_type == ChoiceType::SelectSwapSource
-                || choice_type == ChoiceType::SelectSwapTarget
-                || choice_type == ChoiceType::PayEnergy
-                || choice_type == ChoiceType::OpponentChoose)
-        {
-            allow_action_0 = false;
-        }
-
-        if allow_action_0 {
+        if should_offer_zero_action(pi, choice_type) {
             receiver.add_action(0);
         }
 
@@ -228,15 +278,8 @@ impl ResponseGenerator {
             return;
         }
 
-        let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
-            pi.ctx.trigger_type == TriggerType::OnLiveStart
-                && matches!(
-                    pi.choice_type,
-                    ChoiceType::SelectMember | ChoiceType::SelectHandDiscard
-                )
-                && (pi.choice_type != ChoiceType::SelectHandDiscard
-                    || (state.players[0].hand.is_empty() && state.players[1].hand.is_empty()))
-        });
+        let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi)
+            .filter(|_| should_enable_targeted_live_bonus(state, pi));
 
         if let Some((_filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
             for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
@@ -257,46 +300,31 @@ impl ResponseGenerator {
             ChoiceType::Optional => {
                 receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
                 receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
-                if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
-                    eprintln!(
-                        "[RESP_MAKI_OPT] targeted_cost={} p_idx={} target_slot={} filter={:X} slot_is_4={} filter_nonzero={} masked_nonzero={}",
-                        is_targeted_select_member_cost,
-                        p_idx,
-                        pi.target_slot,
-                        pi.filter_attr,
-                        pi.target_slot == 4,
-                        pi.filter_attr != 0,
-                        (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
-                    );
-                }
                 if is_targeted_select_member_cost {
-                    for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
-                        if cid >= 0 {
-                            eprintln!("[RESP_MAKI_OPT_STAGE] adding slot {} cid={}", i, cid);
-                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                        }
-                    }
-                    receiver.add_action(0);
+                    add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                        state.players[p_idx].stage[i] >= 0
+                    });
+                    add_optional_done(receiver);
                 }
                 return;
             }
             ChoiceType::PayEnergy => {
-                for i in 0..player.energy_zone.len().min(16) {
-                    if pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER
-                        || !player.is_energy_tapped(i)
-                    {
-                        receiver.add_action((ACTION_BASE_ENERGY + i as i32) as usize);
-                    }
-                }
+                add_indexed_actions(
+                    receiver,
+                    player.energy_zone.len().min(16),
+                    ACTION_BASE_ENERGY,
+                    |i| {
+                        pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER
+                            || !player.is_energy_tapped(i)
+                    },
+                );
                 if pi.v_remaining == -2 {
                     receiver.add_action((ACTION_BASE_CHOICE + 99) as usize);
                 }
                 return;
             }
             ChoiceType::RevealHand => {
-                for (i, &_cid) in player.hand.iter().enumerate() {
-                    receiver.add_action((ACTION_BASE_HAND_SELECT + i as i32) as usize);
-                }
+                add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
                 return;
             }
             ChoiceType::TapO => {
@@ -352,9 +380,12 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectSwapSource => {
-                for i in 0..player.success_lives.len() {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
+                add_stage_actions(
+                    receiver,
+                    player.success_lives.len(),
+                    ACTION_BASE_STAGE_SLOTS,
+                    |_| true,
+                );
                 return;
             }
             ChoiceType::SelectStage => {
@@ -375,11 +406,9 @@ impl ResponseGenerator {
                         db, state, receiver, pi, abilities, p_idx,
                     );
                 } else {
-                    for i in 0..3 {
-                        if (player.prevent_play_to_slot_mask() & (1 << i)) == 0 {
-                            receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
-                        }
-                    }
+                    add_indexed_actions(receiver, 3, ACTION_BASE_CHOICE, |i| {
+                        (player.prevent_play_to_slot_mask() & (1 << i)) == 0
+                    });
                 }
                 return;
             }
@@ -404,27 +433,19 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectStageEmptyBaton => {
-                for i in 0..3 {
-                    if player.stage[i] == -1
+                add_indexed_actions(receiver, 3, ACTION_BASE_CHOICE, |i| {
+                    player.stage[i] == -1
                         && (player.prevent_play_to_slot_mask() & (1 << i) as u8) == 0
                         && player.baton_source_slots.contains(&i)
-                    {
-                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
-                    }
-                }
+                });
                 return;
             }
             ChoiceType::SelectLiveSlot => {
-                for i in 0..3 {
-                    // Usually there's no prevent_play for live slots, but we verify it's open
-                    receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
-                }
+                add_indexed_actions(receiver, 3, ACTION_BASE_CHOICE, |_| true);
                 return;
             }
             ChoiceType::SelectSwapTarget => {
-                for (i, &_cid) in player.hand.iter().enumerate() {
-                    receiver.add_action((ACTION_BASE_HAND_SELECT + i as i32) as usize);
-                }
+                add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
                 return;
             }
             _ => {}
@@ -782,39 +803,54 @@ impl ResponseGenerator {
 
         match pi.choice_type {
             ChoiceType::SelectHandDiscard => {
-                for (i, &cid) in player.hand.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
-                        receiver.add_action((ACTION_BASE_HAND_SELECT + i as i32) as usize);
-                    }
+                add_cards_matching_filter(
+                    state,
+                    db,
+                    receiver,
+                    player.hand.as_slice(),
+                    final_filter_attr,
+                    &pi.ctx,
+                    ACTION_BASE_HAND_SELECT,
+                );
+                if optional_skip_is_available(pi) {
+                    add_optional_done(receiver);
                 }
             }
             ChoiceType::SelectDiscardPlay => {
-                for (i, &cid) in player.looked_cards.iter().enumerate() {
-                    if state.card_matches_filter_with_ctx(db, cid, final_filter_attr, &pi.ctx) {
-                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
-                    }
+                add_cards_matching_filter(
+                    state,
+                    db,
+                    receiver,
+                    player.looked_cards.as_slice(),
+                    final_filter_attr,
+                    &pi.ctx,
+                    ACTION_BASE_CHOICE,
+                );
+                if optional_skip_is_available(pi) {
+                    add_optional_done(receiver);
                 }
             }
             ChoiceType::SelectStage => {
-                for i in 0..3 {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
+                add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |_| true);
             }
             ChoiceType::SelectLiveSlot => {
-                for i in 0..player.live_zone.len().min(10) {
-                    if player.live_zone[i] >= 0 {
-                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                    }
-                }
+                add_indexed_actions(
+                    receiver,
+                    player.live_zone.len().min(10),
+                    ACTION_BASE_STAGE_SLOTS,
+                    |i| player.live_zone[i] >= 0,
+                );
             }
             ChoiceType::PayEnergy => {
-                for i in 0..player.energy_zone.len().min(10) {
-                    if pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER
-                        || !player.is_energy_tapped(i)
-                    {
-                        receiver.add_action((ACTION_BASE_ENERGY + i as i32) as usize);
-                    }
-                }
+                add_indexed_actions(
+                    receiver,
+                    player.energy_zone.len().min(10),
+                    ACTION_BASE_ENERGY,
+                    |i| {
+                        pi.effect_opcode == O_PLACE_ENERGY_UNDER_MEMBER
+                            || !player.is_energy_tapped(i)
+                    },
+                );
             }
             _ => {
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
@@ -885,17 +921,14 @@ impl ResponseGenerator {
         });
 
         if let Some((_follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
-            for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
-                if cid >= 0
+            add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                state.players[p_idx].stage[i] >= 0
                     && db
-                        .get_member(cid)
+                        .get_member(state.players[p_idx].stage[i])
                         .map(|card| card.groups.contains(&0))
                         .unwrap_or(false)
-                {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
-            }
-            receiver.add_action(0);
+            });
+            add_optional_done(receiver);
             return;
         }
         let decoded_slot = DecodedSlot::decode(pi.target_slot);
@@ -910,21 +943,17 @@ impl ResponseGenerator {
         if (pi.choice_type == ChoiceType::TapMSelect || is_targeted_select_member_cost)
             && filter_only == 0
         {
-            for (i, &cid) in player.stage.iter().enumerate() {
-                if cid >= 0 {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
-            }
-            receiver.add_action(0);
+            add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                player.stage[i] >= 0
+            });
+            add_optional_done(receiver);
             return;
         }
         if is_targeted_select_member_cost {
-            for (i, &cid) in player.stage.iter().enumerate() {
-                if cid >= 0 {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
-            }
-            receiver.add_action(0);
+            add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                player.stage[i] >= 0
+            });
+            add_optional_done(receiver);
             return;
         }
 
@@ -955,32 +984,29 @@ impl ResponseGenerator {
         match target_slot {
             6 => {
                 // Hand
-                for (i, &cid) in player.hand.iter().enumerate() {
-                    if filter_only == 0
+                add_indexed_actions(receiver, player.hand.len(), ACTION_BASE_HAND_SELECT, |i| {
+                    let cid = player.hand[i];
+                    filter_only == 0
                         || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx)
-                    {
-                        receiver.add_action((ACTION_BASE_HAND_SELECT + i as i32) as usize);
-                    }
-                }
+                });
             }
             7 => {
                 // Discard
-                for (i, &cid) in player.discard.iter().enumerate() {
-                    if filter_only == 0
+                add_indexed_actions(receiver, player.discard.len(), ACTION_BASE_CHOICE, |i| {
+                    let cid = player.discard[i];
+                    filter_only == 0
                         || state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx)
-                    {
-                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
-                    }
-                }
+                });
             }
             _ => {
                 // Stage (0-2) or Default
                 let exclude_selected = true;
-                for (i, &cid) in player.stage.iter().enumerate() {
+                add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                    let cid = player.stage[i];
                     let effective_hearts = state
                         .get_effective_hearts(target_player, i, db, 0)
                         .to_array();
-                    let matches = cid >= 0
+                    cid >= 0
                         && (!exclude_selected
                             || !pi
                                 .ctx
@@ -995,17 +1021,12 @@ impl ResponseGenerator {
                                 state.players[target_player].is_tapped(i),
                                 Some(&effective_hearts),
                                 &pi.ctx,
-                            ));
-                    if matches {
-                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                    }
-                }
+                            ))
+                });
                 if receiver.is_empty() && filter_struct.special_id == 3 {
-                    for (i, &cid) in player.stage.iter().enumerate() {
-                        if cid >= 0 && source_slot != Some(i) {
-                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                        }
-                    }
+                    add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                        player.stage[i] >= 0 && source_slot != Some(i)
+                    });
                 }
             }
         }

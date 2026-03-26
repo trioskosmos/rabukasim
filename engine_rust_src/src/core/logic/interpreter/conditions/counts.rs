@@ -12,6 +12,25 @@ fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize
     }
 }
 
+fn extend_positive_ids(ids: &mut smallvec::SmallVec<[i32; 32]>, cards: &[i32]) {
+    ids.extend(cards.iter().copied().filter(|&id| id >= 0));
+}
+
+fn matches_count_filter(
+    state: &GameState,
+    db: &CardDatabase,
+    id: i32,
+    filter_attr: u64,
+    filter: &CardFilter,
+    ctx: &AbilityContext,
+) -> bool {
+    if state.debug.debug_mode {
+        state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx)
+    } else {
+        state.card_matches_filter_with_struct(db, id, filter, ctx)
+    }
+}
+
 pub fn resolve_count_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -49,7 +68,9 @@ pub fn resolve_count(
         || op == C_COUNT_SUCCESS_LIVE
         || op == C_COUNT_GROUP
         || op == 307
+        || op == 13
         || (op >= 400 && op < 500)
+        || crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot).is_dynamic
     {
         let filter = CardFilter::from_attr(attr as i64);
         let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
@@ -97,39 +118,41 @@ pub fn resolve_count(
         } else {
             op == C_COUNT_HAND || s_zone == Zone::Hand
         };
-        let check_success =
-            is_explicit_success_count || s_zone == Zone::SuccessPile;
+        let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
 
         use smallvec::SmallVec;
         let mut ids = SmallVec::<[i32; 32]>::new();
 
         if !only_opponent {
             if check_stage {
-                ids.extend(player.stage.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &player.stage);
             }
             if check_discard {
-                ids.extend(player.discard.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &player.discard);
             }
             if check_hand {
-                ids.extend(player.hand.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &player.hand);
             }
             if check_success {
-                ids.extend(player.success_lives.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &player.success_lives);
             }
         }
         if include_opponent {
             if check_stage {
-                ids.extend(opponent.stage.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &opponent.stage);
             }
             if check_discard {
-                ids.extend(opponent.discard.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &opponent.discard);
             }
             if check_hand {
-                ids.extend(opponent.hand.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &opponent.hand);
             }
             if check_success {
-                ids.extend(opponent.success_lives.iter().copied().filter(|&id| id >= 0));
+                extend_positive_ids(&mut ids, &opponent.success_lives);
             }
+        }
+        if state.debug.debug_mode && !state.ui.silent {
+            eprintln!("[DEBUG_COUNT] ids.len() = {}, op = {}, check_hand = {}, check_stage = {}", ids.len(), op, check_hand, check_stage);
         }
 
         let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
@@ -164,11 +187,7 @@ pub fn resolve_count(
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
             for id in ids {
-                let matched = if state.debug.debug_mode {
-                    state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx)
-                } else {
-                    state.card_matches_filter_with_struct(db, id, &filter, ctx)
-                };
+                let matched = matches_count_filter(state, db, id, filter_attr, &filter, ctx);
                 if matched {
                     if let Some(m) = db.get_member(id) {
                         names.insert(m.name.clone());
@@ -179,40 +198,26 @@ pub fn resolve_count(
             }
             names.len() as i32
         } else {
-            let special_id = (filter_attr >> 56) & 0x7;
-            let mut final_filter_struct = filter.clone();
-            let mut final_filter_attr = filter_attr;
-            if special_id == 2 || special_id == 3 {
-                final_filter_struct.special_id = 0;
-                final_filter_attr &= !(0x7u64 << 56);
-            }
+            let final_filter_struct = filter.clone();
+            let final_filter_attr = filter_attr;
 
-            let raw_count = ids
-                .iter()
-                .filter(|&&id| {
-                    if state.debug.debug_mode {
-                        state.card_matches_filter_with_ctx_logs(db, id, final_filter_attr, ctx)
-                    } else {
-                        state.card_matches_filter_with_struct(db, id, &final_filter_struct, ctx)
-                    }
-                })
-                .count() as i32;
-
-            let mut res = raw_count;
-            if special_id == 2 || special_id == 3 {
-                let target_id = if special_id == 3 {
-                    ctx.source_card_id
-                } else {
-                    ctx.activator_id as i32
-                };
-                let target_matched = if state.debug.debug_mode {
-                    state.card_matches_filter_with_ctx_logs(db, target_id, final_filter_attr, ctx)
-                } else {
-                    state.card_matches_filter_with_struct(db, target_id, &final_filter_struct, ctx)
-                };
-                if ids.contains(&target_id) && target_matched {
-                    res = (res - 1).max(0);
+            let mut res = 0;
+            for &id in &ids {
+                let matched = matches_count_filter(
+                    state,
+                    db,
+                    id,
+                    final_filter_attr,
+                    &final_filter_struct,
+                    ctx,
+                );
+                if matched {
+                    res += 1;
                 }
+                eprintln!(
+                    "[DEBUG_COUNT] ID: {}, matched: {}, filter_attr: {:X}, special_id: {}",
+                    id, matched, final_filter_attr, final_filter_struct.special_id
+                );
             }
             res
         }

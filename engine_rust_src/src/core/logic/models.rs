@@ -1,7 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::filter::{CardFilter, filter_attr_from_params};
+use crate::core::logic::filter::{filter_attr_from_params, CardFilter};
 use crate::core::logic::interpreter::instruction::{
     BytecodeInstruction, BytecodeProgram, DecodedLookAndChoose, DecodedSlot,
 };
@@ -274,13 +274,16 @@ impl AbilityFrame {
             .or_else(|| frame.get("v"))
             .and_then(|v| v.as_i64())
             .unwrap_or(0) as i32;
-        let filter = payload
-            .get("filter")
-            .or_else(|| payload.get("attr"))
-            .or_else(|| frame.get("attr"))
-            .cloned()
-            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
-            .unwrap_or_default();
+        let filter = filter_attr_from_params(Some(payload))
+            .map(|attr| CardFilter::from_attr(attr as i64))
+            .unwrap_or_else(|| {
+                payload
+                    .get("filter")
+                    .or_else(|| payload.get("attr"))
+                    .cloned()
+                    .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
+                    .unwrap_or_default()
+            });
         let slot = payload
             .get("slot")
             .or_else(|| frame.get("slot"))
@@ -693,7 +696,9 @@ impl AbilityFrame {
                 is_negated,
                 params: None,
             },
-            AbilityFrame::Raw { value, attr, slot, .. } => AbilityFrameComponents {
+            AbilityFrame::Raw {
+                value, attr, slot, ..
+            } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: *value,
@@ -1125,6 +1130,8 @@ pub struct AbilityContext {
     pub selected_target_keys: smallvec::SmallVec<[i32; 8]>,
     #[serde(default)]
     pub auto_pick: bool, // If true, mandatory single-choice steps (like O_SELECT_MODE) will resolve automatically
+    #[serde(default)]
+    pub is_static_eval: bool, // If true, skip phase restoration in finish_execution
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -1176,6 +1183,7 @@ impl Default for AbilityContext {
             selected_cards: smallvec::SmallVec::new(),
             selected_target_keys: smallvec::SmallVec::new(),
             auto_pick: false,
+            is_static_eval: false,
         }
     }
 }
@@ -1194,6 +1202,11 @@ impl AbilityContext {
             original_phase: self.original_phase,
             original_current_player: self.original_current_player,
         }
+    }
+
+    pub fn capture_state_raw(&mut self, phase: crate::core::enums::Phase, current_player: u8) {
+        self.original_phase = Some(phase);
+        self.original_current_player = Some(current_player);
     }
 
     pub fn execution_state(&self) -> AbilityExecutionState {

@@ -12,6 +12,28 @@ pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
 }
 
+const ALWAYS_SUSPEND_TYPES: &[ChoiceType] = &[
+    ChoiceType::Optional,
+    ChoiceType::LookAndChoose,
+    ChoiceType::ColorSelect,
+    ChoiceType::TapO,
+    ChoiceType::TapMSelect,
+    ChoiceType::SelectMember,
+    ChoiceType::SelectLive,
+    ChoiceType::SelectPlayer,
+    ChoiceType::SelectDiscardPlay,
+    ChoiceType::SelectStage,
+    ChoiceType::SelectStageEmpty,
+    ChoiceType::SelectLiveSlot,
+    ChoiceType::SelectMode,
+    ChoiceType::SelectHandDiscard,
+    ChoiceType::SelectHandPlay,
+    ChoiceType::SelectCardsOrder,
+    ChoiceType::OrderDeck,
+    ChoiceType::RecovM,
+    ChoiceType::RecovL,
+];
+
 pub fn finish_pending_interaction(state: &mut GameState) {
     let popped = state.interaction_stack.pop();
     if state.interaction_stack.is_empty() {
@@ -104,12 +126,13 @@ pub fn suspend_interaction(
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
 
     let _actions_len = final_actions.len();
-    if choice_type == ChoiceType::Optional
-        && final_actions.len() == 1
-        && final_actions[0] == 0
-    {
+    let is_optional_prompt = (filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
+    if is_optional_prompt && final_actions.len() == 1 && final_actions[0] == 0 {
         if state.debug.debug_mode {
-            println!("[DEBUG] Auto-skipping degenerate optional prompt: {:?}", choice_type);
+            println!(
+                "[DEBUG] Auto-skipping degenerate optional prompt: {:?}",
+                choice_type
+            );
         }
         state.trace_internal(&format!(
             "BC_SUSPEND_SKIP_OPTIONAL: [phase={:?}] choice_type={} v_remaining={} {}",
@@ -124,28 +147,7 @@ pub fn suspend_interaction(
         return false;
     }
 
-    let always_suspend_types = [
-        ChoiceType::Optional,
-        ChoiceType::LookAndChoose,
-        ChoiceType::ColorSelect,
-        ChoiceType::TapO,
-        ChoiceType::TapMSelect,
-        ChoiceType::SelectMember,
-        ChoiceType::SelectLive,
-        ChoiceType::SelectPlayer,
-        ChoiceType::SelectDiscardPlay,
-        ChoiceType::SelectStage,
-        ChoiceType::SelectStageEmpty,
-        ChoiceType::SelectLiveSlot,
-        ChoiceType::SelectMode,
-        ChoiceType::SelectHandDiscard,
-        ChoiceType::SelectHandPlay,
-        ChoiceType::SelectCardsOrder,
-        ChoiceType::OrderDeck,
-        ChoiceType::RecovM,
-        ChoiceType::RecovL,
-    ];
-    let should_check_skip = !always_suspend_types.contains(&choice_type);
+    let should_check_skip = !ALWAYS_SUSPEND_TYPES.contains(&choice_type);
 
     if state.debug.debug_mode {
         println!(

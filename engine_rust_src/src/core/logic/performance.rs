@@ -440,28 +440,28 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
                 if eff_h.iter().any(|&v| v > 0) {
                     if !state.ui.silent {
-                    let mut h8 = [0u8; 7];
-                    for k in 0..7 {
-                        h8[k] = eff_h[k] as u8;
-                    }
-                    heart_sources.push(SourceInfo {
-                        id: cid,
-                        slot: i as i16,
-                        name: m.name.clone(),
-                        hearts: h8,
-                        base_hearts: source_base_h,
-                        documented_bonus_hearts: documented_bonus_h,
-                        is_yell: false,
-                    });
+                        let mut h8 = [0u8; 7];
+                        for k in 0..7 {
+                            h8[k] = eff_h[k] as u8;
+                        }
+                        heart_sources.push(SourceInfo {
+                            id: cid,
+                            slot: i as i16,
+                            name: m.name.clone(),
+                            hearts: h8,
+                            base_hearts: source_base_h,
+                            documented_bonus_hearts: documented_bonus_h,
+                            is_yell: false,
+                        });
 
-                    heart_breakdown.push(json!({
-                        "source": m.name,
-                        "source_id": cid,
-                        "value": eff_h,
-                        "type": "member"
-                    }));
+                        heart_breakdown.push(json!({
+                            "source": m.name,
+                            "source_id": cid,
+                            "value": eff_h,
+                            "type": "member"
+                        }));
 
-                    let mut slot_heart_buffs = state.players[p_idx]
+                        let mut slot_heart_buffs = state.players[p_idx]
                         .heart_buff_logs
                         .iter()
                         .filter(|&&(_, _, _, slot)| slot == i as u8)
@@ -479,54 +479,59 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         })
                         .collect::<Vec<_>>();
 
-                    // Scan constant abilities for heart sources (Wave 1: area buffs)
-                    for other_slot in 0..3 {
-                        let other_cid = state.players[p_idx].stage[other_slot];
-                        if other_cid < 0 {
-                            continue;
-                        }
-                        if let Some(other_m) = db.get_member(other_cid) {
-                            for ab in &other_m.abilities {
-                                if ab.trigger == TriggerType::Constant {
-                                    let ctx = AbilityContext {
-                                        source_card_id: other_cid,
-                                        player_id: p_idx as u8,
-                                        activator_id: p_idx as u8,
-                                        area_idx: other_slot as i16,
-                                        target_slot: i as i16,
-                                        ..Default::default()
-                                    };
-                                    if ab
-                                        .conditions
-                                        .iter()
-                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                    {
-                                        if let Some(frame_program) = ab.frame_program.as_ref() {
-                                            for frame in &frame_program.frames {
-                                                let bop = frame.opcode();
-                                                let bv = frame.value();
-                                                let bs = frame.slot();
-                                                let mut targets_us = false;
-                                                if bs == 1 {
-                                                    targets_us = true;
-                                                } else if (bs == 4 || bs == 0) && other_slot == i {
-                                                    targets_us = true;
-                                                } else if bs == 10 && i as i16 == ctx.target_slot {
-                                                    targets_us = true;
-                                                }
-                                                if bop == O_ADD_HEARTS && targets_us && bv > 0 {
-                                                    let color = semantic_heart_color_from_frame(
-                                                        &frame.components(),
-                                                        ctx.selected_color as usize,
-                                                    );
-                                                    if color < 7 {
-                                                        slot_heart_buffs.push(json!({
-                                                        "source": other_m.name,
-                                                        "amount": bv,
-                                                            "color": color,
-                                                            "ability_text": ab.raw_text,
-                                                            "img": other_m.img_path
-                                                        }));
+                        // Scan constant abilities for heart sources (Wave 1: area buffs)
+                        for other_slot in 0..3 {
+                            let other_cid = state.players[p_idx].stage[other_slot];
+                            if other_cid < 0 {
+                                continue;
+                            }
+                            if let Some(other_m) = db.get_member(other_cid) {
+                                for ab in &other_m.abilities {
+                                    if ab.trigger == TriggerType::Constant {
+                                        let ctx = AbilityContext {
+                                            source_card_id: other_cid,
+                                            player_id: p_idx as u8,
+                                            activator_id: p_idx as u8,
+                                            area_idx: other_slot as i16,
+                                            target_slot: i as i16,
+                                            ..Default::default()
+                                        };
+                                        if ab
+                                            .conditions
+                                            .iter()
+                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                        {
+                                            if let Some(frame_program) = ab.frame_program.as_ref() {
+                                                for frame in &frame_program.frames {
+                                                    let bop = frame.opcode();
+                                                    let bv = frame.value();
+                                                    let bs = frame.slot();
+                                                    let mut targets_us = false;
+                                                    if bs == 1 {
+                                                        targets_us = true;
+                                                    } else if (bs == 4 || bs == 0)
+                                                        && other_slot == i
+                                                    {
+                                                        targets_us = true;
+                                                    } else if bs == 10
+                                                        && i as i16 == ctx.target_slot
+                                                    {
+                                                        targets_us = true;
+                                                    }
+                                                    if bop == O_ADD_HEARTS && targets_us && bv > 0 {
+                                                        let color = semantic_heart_color_from_frame(
+                                                            &frame.components(),
+                                                            ctx.selected_color as usize,
+                                                        );
+                                                        if color < 7 {
+                                                            slot_heart_buffs.push(json!({
+                                                            "source": other_m.name,
+                                                            "amount": bv,
+                                                                "color": color,
+                                                                "ability_text": ab.raw_text,
+                                                                "img": other_m.img_path
+                                                            }));
+                                                        }
                                                     }
                                                 }
                                             }
@@ -535,45 +540,46 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                 }
                             }
                         }
-                    }
-                    // Wave 2: Granted abilities for heart sources
-                    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
-                    {
-                        if target_cid != cid {
-                            continue;
-                        }
-                        if let Some(src_m) = db.get_member(source_cid) {
-                            if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                                if ab.trigger == TriggerType::Constant {
-                                    let ctx = AbilityContext {
-                                        source_card_id: cid,
-                                        player_id: p_idx as u8,
-                                        activator_id: p_idx as u8,
-                                        area_idx: i as i16,
-                                        ..Default::default()
-                                    };
-                                    if ab
-                                        .conditions
-                                        .iter()
-                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                    {
-                                        if let Some(frame_program) = ab.frame_program.as_ref() {
-                                            for frame in &frame_program.frames {
-                                                if frame.opcode() == O_ADD_HEARTS
-                                                    && frame.value() > 0
-                                                {
-                                                    let color = semantic_heart_color_from_frame(
-                                                        &frame.components(),
-                                                        ctx.selected_color as usize,
-                                                    );
-                                                    if color < 7 {
-                                                        slot_heart_buffs.push(json!({
+                        // Wave 2: Granted abilities for heart sources
+                        for &(target_cid, source_cid, ab_idx) in
+                            &state.players[p_idx].granted_abilities
+                        {
+                            if target_cid != cid {
+                                continue;
+                            }
+                            if let Some(src_m) = db.get_member(source_cid) {
+                                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                    if ab.trigger == TriggerType::Constant {
+                                        let ctx = AbilityContext {
+                                            source_card_id: cid,
+                                            player_id: p_idx as u8,
+                                            activator_id: p_idx as u8,
+                                            area_idx: i as i16,
+                                            ..Default::default()
+                                        };
+                                        if ab
+                                            .conditions
+                                            .iter()
+                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                        {
+                                            if let Some(frame_program) = ab.frame_program.as_ref() {
+                                                for frame in &frame_program.frames {
+                                                    if frame.opcode() == O_ADD_HEARTS
+                                                        && frame.value() > 0
+                                                    {
+                                                        let color = semantic_heart_color_from_frame(
+                                                            &frame.components(),
+                                                            ctx.selected_color as usize,
+                                                        );
+                                                        if color < 7 {
+                                                            slot_heart_buffs.push(json!({
                                                             "source": format!("Granted: {}", src_m.name),
                                                             "amount": frame.value(),
                                                             "color": color,
                                                             "ability_text": ab.raw_text,
                                                             "img": src_m.img_path
                                                         }));
+                                                        }
                                                     }
                                                 }
                                             }
@@ -582,17 +588,16 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                 }
                             }
                         }
-                    }
 
-                    let key = format!("{}_{}", i, cid);
-                    if let Some(entry) = member_summary.get_mut(&key) {
-                        entry["hearts"] = json!(eff_h);
-                        entry["base_hearts"] = json!(source_base_h);
-                        entry["bonus_hearts"] = json!(true_bonus_h);
-                        entry["note_icons"] = json!(m.note_icons);
-                        entry["base_notes"] = json!(m.note_icons);
-                        entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
-                    }
+                        let key = format!("{}_{}", i, cid);
+                        if let Some(entry) = member_summary.get_mut(&key) {
+                            entry["hearts"] = json!(eff_h);
+                            entry["base_hearts"] = json!(source_base_h);
+                            entry["bonus_hearts"] = json!(true_bonus_h);
+                            entry["note_icons"] = json!(m.note_icons);
+                            entry["base_notes"] = json!(m.note_icons);
+                            entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
+                        }
                     }
                 }
                 note_icons += m.note_icons;

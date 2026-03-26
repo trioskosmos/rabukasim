@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 if __name__ == "__main__":
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from verify.bytecode_decoder import decode_bytecode
+from tools.archive.verify.bytecode_decoder import decode_bytecode
 
 
 def load_json(path):
@@ -207,9 +207,18 @@ class CardReporter:
                 raw = self.ds.cards_raw.get(compiled.get("card_no"))
         
         if not raw and not compiled:
+            if query.isdigit():
+                print(f"[cf] No card found with card_id={query} in compiled DB.")
+                # Still try fuzzy but report it
+                results = self._search_fuzzy(query)
+                if results:
+                    print(f"  Fuzzy matches containing '{query}' in card_no ({len(results)} found):")
+                    for r in results[:5]: print(f"    - {r}")
+                    if len(results) > 5: print(f"    ... and {len(results)-5} more.")
+                return []
             # 3. Fuzzy match
             return self._search_fuzzy(query)
-            
+
         return {
             "raw": raw,
             "compiled": compiled,
@@ -246,9 +255,17 @@ class CardReporter:
             db = self.ds.cards_compiled.get(db_name, {})
             if str(qid) in db:
                 return db[str(qid)], str(qid)
+            # Exact card_id field match
             for cid, c in db.items():
-                if (int(cid) & 0x0FFF) == qid:
+                if isinstance(c, dict) and c.get("card_id") == qid:
                     return c, cid
+            # Logic ID bitmask match (lower 12 bits)
+            for cid, c in db.items():
+                try:
+                    if (int(cid) & 0x0FFF) == qid:
+                        return c, cid
+                except (ValueError, TypeError):
+                    pass
         return None, None
 
     def _search_fuzzy(self, query: str):
@@ -365,171 +382,382 @@ class CardReporter:
         else:
             self.display_ai(data)
 
-    def display_ai(self, data: Dict):
+    # ── Opcode ID → name lookup ────────────────────────────────────────────
+    OPCODE_NAMES = {
+        0: "O_NOP", 1: "O_RETURN", 2: "O_JUMP", 3: "O_JUMP_IF_FALSE",
+        10: "O_DRAW", 11: "O_ADD_BLADES", 12: "O_ADD_HEARTS", 13: "O_REDUCE_COST",
+        14: "O_LOOK_DECK", 15: "O_RECOVER_LIVE", 16: "O_BOOST_SCORE", 17: "O_RECOVER_MEMBER",
+        18: "O_BUFF_POWER", 19: "O_IMMUNITY", 20: "O_MOVE_MEMBER", 21: "O_SWAP_CARDS",
+        22: "O_SEARCH_DECK", 23: "O_ENERGY_CHARGE", 24: "O_SET_BLADES", 25: "O_SET_HEARTS",
+        26: "O_FORMATION_CHANGE", 27: "O_NEGATE_EFFECT", 28: "O_ORDER_DECK", 29: "O_META_RULE",
+        30: "O_SELECT_MODE", 31: "O_MOVE_TO_DECK", 32: "O_TAP_OPPONENT", 33: "O_PLACE_UNDER",
+        34: "O_FLAVOR_ACTION", 35: "O_RESTRICTION", 36: "O_BATON_TOUCH_MOD", 37: "O_SET_SCORE",
+        38: "O_SWAP_ZONE", 39: "O_TRANSFORM_COLOR", 40: "O_REVEAL_CARDS", 41: "O_LOOK_AND_CHOOSE",
+        42: "O_CHEER_REVEAL", 43: "O_ACTIVATE_MEMBER", 44: "O_ADD_TO_HAND", 45: "O_COLOR_SELECT",
+        47: "O_TRIGGER_REMOTE", 48: "O_REDUCE_HEART_REQ", 49: "O_MODIFY_SCORE_RULE",
+        50: "O_ADD_STAGE_ENERGY", 51: "O_SET_TAPPED", 53: "O_TAP_MEMBER",
+        57: "O_PLAY_MEMBER_FROM_HAND", 58: "O_MOVE_TO_DISCARD", 60: "O_GRANT_ABILITY",
+        61: "O_INCREASE_HEART_COST", 62: "O_REDUCE_YELL_COUNT", 63: "O_PLAY_MEMBER_FROM_DISCARD",
+        64: "O_PAY_ENERGY", 65: "O_SELECT_MEMBER", 66: "O_DRAW_UNTIL", 67: "O_SELECT_PLAYER",
+        68: "O_SELECT_LIVE", 69: "O_REVEAL_UNTIL", 70: "O_INCREASE_COST", 71: "O_PREVENT_PLAY_TO_SLOT",
+        72: "O_SWAP_AREA", 73: "O_TRANSFORM_HEART", 74: "O_SELECT_CARDS", 75: "O_OPPONENT_CHOOSE",
+        76: "O_PLAY_LIVE_FROM_DISCARD", 77: "O_REDUCE_LIVE_SET_LIMIT", 78: "O_SET_TARGET_SELF",
+        79: "O_SET_TARGET_OPPONENT", 80: "O_PREVENT_SET_TO_SUCCESS_PILE", 81: "O_ACTIVATE_ENERGY",
+        82: "O_PREVENT_ACTIVATE", 83: "O_SET_HEART_COST", 90: "O_PREVENT_BATON_TOUCH",
+        91: "O_LOOK_DECK_DYNAMIC", 92: "O_REDUCE_SCORE", 93: "O_REPEAT_ABILITY",
+        94: "O_LOSE_EXCESS_HEARTS", 95: "O_SKIP_ACTIVATE_PHASE", 96: "O_PAY_ENERGY_DYNAMIC",
+        97: "O_PLACE_ENERGY_UNDER_MEMBER", 106: "O_CALC_SUM_COST", 125: "O_LOOK_REORDER_DISCARD",
+        126: "O_DIV_VALUE", 127: "O_TRANSFORM_BLADES",
+        
+        # Conditions
+        200: "C_TURN_1", 201: "C_HAS_MEMBER", 202: "C_HAS_COLOR", 203: "C_COUNT_STAGE",
+        204: "C_COUNT_HAND", 205: "C_COUNT_DISCARD", 206: "C_IS_CENTER", 207: "C_LIFE_LEAD",
+        208: "C_COUNT_GROUP", 209: "C_GROUP_FILTER", 210: "C_OPPONENT_HAS", 211: "C_SELF_IS_GROUP",
+        212: "C_MODAL_ANSWER", 213: "C_COUNT_ENERGY", 214: "C_HAS_LIVE_CARD", 215: "C_COST_CHECK",
+        216: "C_RARITY_CHECK", 217: "C_HAND_HAS_NO_LIVE", 218: "C_COUNT_SUCCESS_LIVE",
+        219: "C_OPPONENT_HAND_DIFF", 220: "C_SCORE_COMPARE", 221: "C_HAS_CHOICE",
+        222: "C_OPPONENT_CHOICE", 223: "C_COUNT_HEARTS", 224: "C_COUNT_BLADES",
+        225: "C_OPPONENT_ENERGY_DIFF", 226: "C_HAS_KEYWORD", 227: "C_DECK_REFRESHED",
+        228: "C_HAS_MOVED", 229: "C_HAND_INCREASED", 230: "C_COUNT_LIVE_ZONE",
+        231: "C_BATON", 232: "C_TYPE_CHECK", 233: "C_IS_IN_DISCARD", 234: "C_AREA_CHECK",
+        235: "C_COST_LEAD", 236: "C_SCORE_LEAD", 237: "C_HEART_LEAD", 238: "C_HAS_EXCESS_HEART",
+        239: "C_NOT_HAS_EXCESS_HEART", 240: "C_TOTAL_BLADES", 241: "C_COST_COMPARE",
+        242: "C_BLADE_COMPARE", 243: "C_HEART_COMPARE", 244: "C_OPPONENT_HAS_WAIT",
+        245: "C_IS_TAPPED", 246: "C_IS_ACTIVE", 247: "C_LIVE_PERFORMED",
+        248: "C_IS_PLAYER", 249: "C_IS_OPPONENT", 250: "C_COUNT_UNIQUE_COLORS",
+        301: "C_COUNT_ENERGY_EXACT", 302: "C_COUNT_BLADE_HEART_TYPES",
+        303: "C_OPPONENT_HAS_EXCESS_HEART", 304: "C_SCORE_TOTAL_CHECK", 305: "C_MAIN_PHASE",
+        306: "C_SELECT_MEMBER", 307: "C_SUCCESS_PILE_COUNT", 308: "C_IS_SELF_MOVE",
+        309: "C_DISCARDED_CARDS", 310: "C_YELL_REVEALED_UNIQUE_COLORS", 311: "C_SYNC_COST",
+        312: "C_SUM_VALUE", 313: "C_IS_WAIT", 314: "C_ON_ABILITY_RESOLVE",
+        315: "C_TARGET_MEMBER_HAS_NO_HEARTS",
+    }
+
+    TRIGGER_NAMES = {
+        0: "None", 1: "OnPlay", 2: "Constant", 3: "OnLiveStart",
+        4: "OnLiveSuccess", 5: "TurnEnd", 6: "TurnStart", 7: "Activated",
+        8: "OnAppear", 9: "OnMove", 10: "OnBaton", 11: "OnActivate",
+        12: "OnLeaves", 13: "OnAbilityResolve", 14: "OnAbilitySuccess",
+        15: "Static", 
+    }
+
+    def _opname(self, op):
+        return self.OPCODE_NAMES.get(op, f"op={op}")
+
+    def _trigname(self, t):
+        return self.TRIGGER_NAMES.get(t, f"trigger={t}")
+
+    def _describe_filter(self, f: dict) -> str:
+        if not f:
+            return "(none)"
+        parts = []
+        if f.get("target_player"): parts.append({1:"Self",2:"Opponent"}.get(f["target_player"],f"player={f['target_player']}"))
+        if f.get("card_type"): parts.append({1:"Member",2:"Live"}.get(f["card_type"],f"type={f['card_type']}"))
+        if f.get("group_enabled"): parts.append(f"group={f.get('group_id',0)}")
+        if f.get("unit_enabled"): parts.append(f"unit={f.get('unit_id',0)}")
+        if f.get("char_id_1"): parts.append(f"char={f['char_id_1']}" + (f"+{f['char_id_2']}" if f.get("char_id_2") else ""))
+        if f.get("color_mask"): parts.append(f"color_mask=0x{f['color_mask']:02X}")
+        if f.get("special_id"):
+            sid_map = {2:"NOT_MY",3:"NOT_SELF",4:"SAME_NAME",5:"EXACT_COST",6:"SELECTED",7:"NOT_SELECTED"}
+            parts.append(sid_map.get(f["special_id"], f"special={f['special_id']}"))
+        if f.get("value_enabled"):
+            op_str = "<=" if f.get("is_le") else ">="
+            kind = "cost" if f.get("is_cost_type") else "hearts"
+            parts.append(f"{kind}{op_str}{f.get('value_threshold',0)}")
+        if f.get("zone_mask"): parts.append(f"zone=0x{f['zone_mask']:02X}")
+        if f.get("compare_accumulated"): parts.append("CMP_ACCUM")
+        if not parts:
+            return "(any)"
+        return ", ".join(parts)
+
+    def _format_frame_program(self, fp: dict) -> str:
+        if not fp or "frames" not in fp:
+            return "  (no frames)"
+        lines = []
+        for i, frame in enumerate(fp["frames"]):
+            if isinstance(frame, str):
+                lines.append(f"  [{i:02d}] {frame}")
+                continue
+            if not isinstance(frame, dict):
+                lines.append(f"  [{i:02d}] {frame}")
+                continue
+
+            # Priority 1: Check for 'semantic' -> 'decoded'
+            semantic = frame.get("semantic")
+            if isinstance(semantic, dict) and semantic.get("decoded"):
+                lines.append(f"  [{i:02d}] {semantic['decoded']}")
+                continue
+
+            # Priority 2: Tagged Enum check (Semantic/Return/etc)
+            if "Semantic" in frame:
+                sem = frame["Semantic"]
+                op = sem.get("opcode", 0)
+                v = sem.get("value", 0)
+                filt = sem.get("filter", {})
+                slot = sem.get("slot", {})
+                params = sem.get("params") or {}
+                negated = sem.get("is_negated", False)
+                op_str = self._opname(op)
+                filter_str = self._describe_filter(filt)
+                slot_parts = []
+                if slot.get("source_zone"): slot_parts.append(f"src={slot['source_zone']}")
+                if slot.get("dest_zone"): slot_parts.append(f"dst={slot['dest_zone']}")
+                if slot.get("target_slot") not in (None, -1, 255): slot_parts.append(f"target={slot['target_slot']}")
+                if slot.get("is_dynamic"): slot_parts.append("DYNAMIC")
+                if slot.get("is_opponent"): slot_parts.append("OPPONENT")
+                slot_str = ("[" + ", ".join(slot_parts) + "]") if slot_parts else ""
+                per_card = ""
+                if isinstance(params, dict) and (params.get("per_card") or params.get("PER_CARD")):
+                    per_card = f" PER_CARD={params.get('per_card') or params.get('PER_CARD')}"
+                extra = ""
+                if isinstance(params, dict):
+                    skipped = {"per_card","PER_CARD"}
+                    rest = {k:v2 for k,v2 in params.items() if k not in skipped}
+                    if rest: extra = f" params={json.dumps(rest, ensure_ascii=False)}"
+                neg_str = " [NOT]" if negated else ""
+                lines.append(f"  [{i:02d}] {op_str}(v={v}) filter=[{filter_str}] {slot_str}{per_card}{extra}{neg_str}")
+                continue
+
+            # Priority 3: Flat format (opcode, value, attr, slot)
+            op_name = frame.get("opcode")
+            if not op_name and "opcode_id" in frame:
+                op_name = self._opname(frame["opcode_id"])
+            
+            if op_name:
+                v = frame.get("value", 0)
+                parts = [f"v={v}"]
+                attr = frame.get("attr")
+                if isinstance(attr, dict):
+                    # Filter attributes?
+                    attr_parts = [f"{k}={v2}" for k,v2 in attr.items()]
+                    if attr_parts: parts.append(f"attr=[{', '.join(attr_parts)}]")
+                slot = frame.get("slot")
+                if isinstance(slot, dict):
+                    sp = []
+                    if slot.get("source_zone"): sp.append(f"src={slot['source_zone']}")
+                    if slot.get("dest_zone"): sp.append(f"dst={slot['dest_zone']}")
+                    if slot.get("target_slot") is not None: sp.append(f"target={slot['target_slot']}")
+                    if sp: parts.append(f"slot=[{', '.join(sp)}]")
+                
+                lines.append(f"  [{i:02d}] {op_name}({', '.join(parts)})")
+                continue
+
+            # Fallback: JSON keys
+            keys = ", ".join(frame.keys())
+            lines.append(f"  [{i:02d}] Unknown Frame: {{{keys}}}")
+            
+        return "\n".join(lines) if lines else "  (empty)"
+
+    def _format_condition(self, c: dict) -> str:
+        op = c.get("condition_type", c.get("opcode", 0))
+        v = c.get("value", 0)
+        a = c.get("attr", 0)
+        return f"{self._opname(op) if isinstance(op,int) else op}(v={v}, attr=0x{a:X})"
+
+    def _format_cost(self, c: dict) -> str:
+        op = c.get("cost_type", c.get("opcode", 0))
+        v = c.get("value", 0)
+        opt = " [optional]" if c.get("is_optional") else ""
+        return f"{op}(v={v}){opt}"
+
+    def display_ai(self, data: dict):
         raw = data.get("raw")
         compiled = data.get("compiled")
         card_no = data.get("card_no")
         cid = data.get("cid")
-        
-        print(f"\n### Card Analysis: {card_no}")
-        if cid:
-            val = int(cid)
-            print(f"- **IDs**: Packed=`{val}`, Logic=`{val & 0x0FFF}`, Var=`{val >> 12}`")
+
+        print(f"\n{'='*60}")
+        print(f"  Card: {card_no}  (engine id: {cid})")
+        print(f"{'='*60}")
 
         if raw:
-            print(f"- **Name**: {raw.get('name')}")
-            ability_text = raw.get('ability', '').replace('\n', ' ')
-            print(f"- **JP Ability**: {ability_text}")
-            
-            # Pseudocode resolution
-            ab_norm = raw.get("ability", "").strip()
+            print(f"Name    : {raw.get('name')}")
+            print(f"Rarity  : {raw.get('rare','?')}  Cost: {raw.get('cost','?')}")
+            print(f"\n── JP Ability Text ─────────────────────────────")
+            jptxt = raw.get('ability','(none)').strip()
+            for line in jptxt.splitlines():
+                print(f"  {line}")
+            print()
+
+            # Pseudocode
+            ab_norm = jptxt
             pseudo = ""
             if card_no in self.ds.manual_pseudo:
-                pseudo = self.ds.manual_pseudo[card_no].get("pseudocode")
-                print(f"- **Pseudocode (Manual)**: `{pseudo}`")
-            elif card_no in self.ds.consolidated_pseudo_by_no:
+                pseudo = self.ds.manual_pseudo[card_no].get("pseudocode","")
+                src = "manual"
+            elif card_no in getattr(self.ds,'consolidated_pseudo_by_no',{}):
                 pseudo = self.ds.consolidated_pseudo_by_no[card_no]
-                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode", "")
-                print(f"- **Pseudocode (Consolidated by Card No)**: `{pseudo}`")
-            elif ab_norm in self.ds.consolidated_pseudo:
+                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode","")
+                src = "consolidated"
+            elif ab_norm in getattr(self.ds,'consolidated_pseudo',{}):
                 pseudo = self.ds.consolidated_pseudo[ab_norm]
-                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode", "")
-                print(f"- **Pseudocode (Consolidated by Text)**: `{pseudo}`")
+                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode","")
+                src = "consolidated-text"
             else:
-                pseudo = raw.get("pseudocode", "")
-                print(f"- **Pseudocode (Raw)**: `{pseudo}`")
+                pseudo = raw.get("pseudocode","")
+                src = "raw"
+            if pseudo:
+                print(f"Pseudocode ({src}): {pseudo}")
 
         if compiled:
-            for i, ab in enumerate(compiled.get("abilities", [])):
-                trig = ab.get("trigger", 0)
-                bc = ab.get("bytecode", [])
+            abilities = compiled.get("abilities", [])
+            print(f"\n── Abilities ({len(abilities)}) ──────────────────────────────")
+            for i, ab in enumerate(abilities):
+                trig = ab.get("trigger",0)
+                pseudo = ab.get("pseudocode","")
+                once = " [once/turn]" if ab.get("is_once_per_turn") else ""
+                print(f"\n  [Ability {i}] trigger={self._trigname(trig)}{once}")
+                if pseudo:
+                    print(f"    Pseudocode: {pseudo}")
+
+                # Conditions
+                conds = ab.get("conditions", [])
+                if conds:
+                    print(f"    Conditions:")
+                    for c in conds:
+                        print(f"      • {self._format_condition(c)}")
+
+                # Costs
+                costs = ab.get("costs", [])
+                if costs:
+                    print(f"    Costs:")
+                    for c in costs:
+                        print(f"      • {self._format_cost(c)}")
+
+                # Filters
+                filters = ab.get("filters", [])
+                if filters:
+                    print(f"    Filters:")
+                    for f in filters:
+                        print(f"      • {self._describe_filter(f)}")
+
+                # Frame program
                 fp = ab.get("frame_program")
-                
-                print(f"\n#### Ability {i} (Trigger: {trig})")
-                
                 if fp:
-                    print("**Ability Frames**:")
+                    print(f"    Semantic Frames:")
                     print(self._format_frame_program(fp))
-                
-                print(f"**Bytecode**: `{bc}`")
-                print("**Decoded Bytecode**:\n```\n{0}\n```".format(decode_bytecode(bc)))
+                else:
+                    # Fallback: show raw effects
+                    efx = ab.get("effects", [])
+                    if efx:
+                        print(f"    Effects (raw):")
+                        for e in efx:
+                            op = e.get("effect_type",e.get("runtime_opcode","?"))
+                            v = e.get("runtime_value",e.get("value","?"))
+                            a = e.get("runtime_attr",e.get("attr",0))
+                            s = e.get("runtime_slot",e.get("slot",0))
+                            print(f"      • {op}  v={v}  attr=0x{a:X}  slot={s}")
 
-        if data.get("qas"):
-            print(f"- **QA Rulings**: {len(data['qas'])} items.")
-        if data.get("tests"):
-            print(f"- **Rust Tests**: {', '.join(data['tests'][:3])}{'...' if len(data['tests']) > 3 else ''}")
-        print("\n---\n")
+        # QA
+        qas = data.get("qas", [])
+        if qas:
+            print(f"\n── Q&A Rulings ({len(qas)}) ────────────────────────────")
+            for qa in qas[:10]:
+                print(f"  [{qa.get('id','?')}] Q: {qa.get('question','').strip()}")
+                print(f"         A: {qa.get('answer','').strip()}")
+                print()
 
-    def generate_report(self, data: Dict, output_path: str):
+        # Tests
+        tests = data.get("tests", [])
+        if tests:
+            print(f"── Rust Tests ({len(tests)}) ──────────────────────────────")
+            for t in tests[:10]:
+                print(f"  • {t}")
+        else:
+            print("  [!] No Rust tests found for this card.")
+        print()
+
+    def generate_report(self, data: dict, output_path: str):
         raw = data.get("raw")
         compiled = data.get("compiled")
         card_no = data.get("card_no")
         cid = data.get("cid")
-        
+
         lines = [f"# Card Report: {card_no}"]
-        
+
         if cid:
             val = int(cid)
-            lines.append("\n## IDs")
-            lines.append(f"- **Engine Packed ID**: `{val}`")
-            lines.append(f"- **Logic ID**: `{val & 0x0FFF}`")
-            lines.append(f"- **Variant Index**: `{val >> 12}`")
+            lines.append(f"\n**Engine Packed ID**: `{val}`  |  **Logic ID**: `{val & 0x0FFF}`  |  **Variant**: `{val >> 12}`")
 
-        lines.append("\n## Metadata")
         if raw:
-            lines.append(f"- **Name**: {raw.get('name')}")
-            lines.append(f"- **Card No**: {raw.get('card_no')}")
-            lines.append(f"- **Ability (JP)**:\n```\n{raw.get('ability')}\n```")
-            
-            # Image support
-            img = raw.get("image_url") or raw.get("img_path")
-            if img:
-                # If it's a relative path, try to make it a file:// URL for VS Code
-                if not img.startswith("http"):
-                    abs_img = os.path.abspath(img)
-                    # On Windows, need to ensure the path is correctly formatted for file://
-                    img_path_str = abs_img.replace(os.sep, '/')
-                    if not img_path_str.startswith('/'):
-                        img_path_str = '/' + img_path_str
-                    img_url = f"file://{img_path_str}"
+            lines.append(f"\n## {raw.get('name')} ({raw.get('rare','?')}, Cost {raw.get('cost','?')})")
+            lines.append(f"\n### JP Ability Text\n```\n{raw.get('ability','(none)')}\n```")
+
+            # Pseudocode
+            ab_norm = raw.get("ability","").strip()
+            pseudo = ""
+            if card_no in self.ds.manual_pseudo:
+                pseudo = self.ds.manual_pseudo[card_no].get("pseudocode","")
+                pseudo_src = "Manual"
+            elif card_no in getattr(self.ds,'consolidated_pseudo_by_no',{}):
+                pseudo = self.ds.consolidated_pseudo_by_no[card_no]
+                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode","")
+                pseudo_src = "Consolidated"
+            elif ab_norm in getattr(self.ds,'consolidated_pseudo',{}):
+                pseudo = self.ds.consolidated_pseudo[ab_norm]
+                if isinstance(pseudo, dict): pseudo = pseudo.get("pseudocode","")
+                pseudo_src = "Consolidated (text match)"
+            else:
+                pseudo = raw.get("pseudocode","")
+                pseudo_src = "Raw"
+            if pseudo:
+                lines.append(f"\n**Pseudocode** ({pseudo_src}): `{pseudo}`")
+
+        if compiled:
+            abilities = compiled.get("abilities", [])
+            lines.append(f"\n## Abilities ({len(abilities)})")
+            for i, ab in enumerate(abilities):
+                trig = ab.get("trigger",0)
+                once = " [once/turn]" if ab.get("is_once_per_turn") else ""
+                pseudo = ab.get("pseudocode","")
+                lines.append(f"\n### Ability {i} — `{self._trigname(trig)}`{once}")
+                if pseudo:
+                    lines.append(f"- **Pseudocode**: `{pseudo}`")
+
+                conds = ab.get("conditions", [])
+                if conds:
+                    lines.append("\n**Conditions**:")
+                    for c in conds: lines.append(f"- `{self._format_condition(c)}`")
+
+                costs = ab.get("costs", [])
+                if costs:
+                    lines.append("\n**Costs**:")
+                    for c in costs: lines.append(f"- `{self._format_cost(c)}`")
+
+                filters = ab.get("filters", [])
+                if filters:
+                    lines.append("\n**Filters**: " + " | ".join(f"`{self._describe_filter(f)}`" for f in filters))
+
+                fp = ab.get("frame_program")
+                if fp:
+                    lines.append("\n**Semantic Frames**:\n```")
+                    lines.append(self._format_frame_program(fp))
+                    lines.append("```")
                 else:
-                    img_url = img
-                lines.append(f"\n![{raw.get('name')}]({img_url})")
+                    efx = ab.get("effects", [])
+                    if efx:
+                        lines.append("\n**Effects (raw)**:")
+                        for e in efx:
+                            op = e.get("effect_type",e.get("runtime_opcode","?"))
+                            v = e.get("runtime_value",e.get("value","?"))
+                            a = e.get("runtime_attr",e.get("attr",0))
+                            s = e.get("runtime_slot",e.get("slot",0))
+                            lines.append(f"- `{op}  v={v}  attr=0x{a:X}  slot={s}`")
 
         if data.get("qas"):
-            lines.append(f"\n## QA Rulings ({len(data['qas'])})")
+            lines.append(f"\n## Q&A Rulings ({len(data['qas'])})")
             for qa in data["qas"]:
-                lines.append(f"**{qa.get('id')}**: {qa.get('question')}\n> {qa.get('answer')}\n")
+                lines.append(f"\n**[{qa.get('id','?')}]** {qa.get('question','').strip()}\n> {qa.get('answer','').strip()}\n")
 
-        lines.append(f"\n## Rust Engine Tests ({len(data['tests'])})")
+        lines.append(f"\n## Rust Tests ({len(data.get('tests',[]))})")
         if data.get("tests"):
             for t in data["tests"]: lines.append(f"- `{t}`")
         else:
             lines.append("\n> [!CAUTION]\n> No known Rust tests cover this card.")
 
-        if compiled:
-            lines.append("\n## Compiled Logic")
-            for i, ab in enumerate(compiled.get("abilities", [])):
-                lines.append(f"\n### Ability {i}")
-                lines.append(f"- **Trigger**: `{ab.get('trigger')}`")
-                
-                # Filters as table
-                filters = ab.get("filters", [])
-                if filters:
-                    lines.append("\n#### Filters")
-                    lines.append("| Type | Target | Details |")
-                    lines.append("| :--- | :--- | :--- |")
-                    for f in filters:
-                        lines.append(f"| {f.get('card_type', 'Any')} | {f.get('target_player', 'Self')} | {f.get('summary', '')} |")
-
-                fp = ab.get("frame_program")
-                if fp:
-                    lines.append("\n#### Ability Frames")
-                    lines.append("```")
-                    lines.append(self._format_frame_program(fp))
-                    lines.append("```")
-
-                lines.append(f"\n#### Decoded Bytecode\n```\n{decode_bytecode(ab.get('bytecode', []))}\n```")
-
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
-        print(f"Report generated: {output_path}")
-
-    def _format_frame_program(self, frame_program: Dict) -> str:
-        if not frame_program or "frames" not in frame_program:
-            return ""
-        
-        lines = []
-        for i, frame in enumerate(frame_program["frames"]):
-            if isinstance(frame, str):
-                lines.append(f"  [{i:02d}] {frame}")
-            elif isinstance(frame, dict):
-                # Usually it's {"OpName": {params...}}
-                for op_name, params in frame.items():
-                    param_parts = []
-                    if isinstance(params, dict):
-                        # Show 'count' or 'value' if present
-                        if "count" in params: param_parts.append(f"count={params['count']}")
-                        if "value" in params: param_parts.append(f"value={params['value']}")
-                        if "filter" in params and isinstance(params["filter"], dict):
-                            summary = params["filter"].get("summary")
-                            if summary: param_parts.append(f"filter=[{summary}]")
-                        
-                        # Simplified slot description
-                        if "slot" in params and isinstance(params["slot"], dict):
-                            slot = params["slot"]
-                            if slot.get("target_slot") is not None:
-                                param_parts.append(f"slot={slot['target_slot']}")
-                            if slot.get("source_zone"):
-                                param_parts.append(f"src={slot['source_zone']}")
-                            if slot.get("dest_zone"):
-                                param_parts.append(f"dest={slot['dest_zone']}")
-                                
-                    param_str = f"({', '.join(param_parts)})" if param_parts else ""
-                    lines.append(f"  [{i:02d}] {op_name}{param_str}")
-            else:
-                lines.append(f"  [{i:02d}] {frame}")
-        return "\n".join(lines)
+        print(f"Report → {output_path}")
 
     def loop(self):
         self.run_interactive()
@@ -559,12 +787,37 @@ def main():
     parser.add_argument("--group", help="Filter by group name (fuzzy)")
     parser.add_argument("--member", help="Filter by member name (fuzzy)")
     parser.add_argument("--rarity", help="Filter by rarity")
+    parser.add_argument("--test", help="Run a specific cargo test (substring filter)", type=str)
+    parser.add_argument("--fails", help="Path to failing test list to read and display", type=str)
+    parser.add_argument("--rust-dir", help="Path to engine_rust_src/src", type=str, default=None)
 
     args = parser.parse_args()
 
     # Determine base path (assume repo root)
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    
+
+    # --test: run cargo test directly
+    if args.test:
+        import subprocess
+        rust_dir = args.rust_dir or os.path.join(base_path, "engine_rust_src")
+        print(f"Running: cargo test {args.test} -- --nocapture")
+        result = subprocess.run(
+            ["cargo", "test", args.test, "--", "--nocapture"],
+            cwd=rust_dir, text=True, encoding="utf-8", errors="replace"
+        )
+        sys.exit(result.returncode)
+
+    # --fails: print summarized list of failures from a saved file
+    if args.fails:
+        if os.path.exists(args.fails):
+            with open(args.fails, "r", encoding="utf-8", errors="replace") as f:
+                for line in f:
+                    if "FAILED" in line or "assertion" in line:
+                        print(line.rstrip())
+        else:
+            print(f"File not found: {args.fails}")
+        sys.exit(0)
+
     ds = DataStore(base_path)
     ds.load_all()
     

@@ -140,35 +140,30 @@ fn test_constant_blade_aura_self_target_and_condition_gating() {
         area_idx: 0,
         ..Default::default()
     };
-    assert!(!card_415
-        .abilities[0]
-        .conditions
-        .iter()
-        .all(|cond| crate::core::logic::interpreter::check_condition(
+    assert!(!card_415.abilities[0].conditions.iter().all(|cond| {
+        crate::core::logic::interpreter::check_condition(
             &blocked_415,
             &db,
             0,
             cond,
             &blocked_ctx,
-            1
-        )));
+            1,
+        )
+    }));
     blocked_415.sync_stat_caches(0, &db);
 
     assert_eq!(active_415.players[0].board_aura.blades[0], 3);
     assert_eq!(blocked_415.players[0].board_aura.blades[0], 0);
     assert_eq!(
-        active_415.players[0].board_aura.blades[0]
-            - blocked_415.players[0].board_aura.blades[0],
+        active_415.players[0].board_aura.blades[0] - blocked_415.players[0].board_aura.blades[0],
         3
     );
     assert_eq!(
-        active_415.players[0].board_aura.blades[1]
-            - blocked_415.players[0].board_aura.blades[1],
+        active_415.players[0].board_aura.blades[1] - blocked_415.players[0].board_aura.blades[1],
         0
     );
     assert_eq!(
-        active_415.players[0].board_aura.blades[2]
-            - blocked_415.players[0].board_aura.blades[2],
+        active_415.players[0].board_aura.blades[2] - blocked_415.players[0].board_aura.blades[2],
         0
     );
 }

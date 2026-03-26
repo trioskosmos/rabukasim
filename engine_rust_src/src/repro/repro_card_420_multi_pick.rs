@@ -68,7 +68,8 @@ fn test_repro_card_420_multi_pick_from_discard() {
         .iter()
         .position(|&c| c == -1)
         .expect("Need an empty slot for the first discard placement");
-    state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_1 as i32)
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS + slot_1 as i32)
         .unwrap();
 
     assert!(
@@ -85,7 +86,8 @@ fn test_repro_card_420_multi_pick_from_discard() {
         .iter()
         .position(|&c| c == -1)
         .expect("Need an empty slot for the second discard placement");
-    state.step(&db, ACTION_BASE_STAGE_SLOTS + slot_2 as i32)
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS + slot_2 as i32)
         .unwrap();
 
     assert!(

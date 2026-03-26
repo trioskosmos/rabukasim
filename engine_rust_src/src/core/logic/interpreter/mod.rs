@@ -10,7 +10,7 @@ pub mod instruction;
 pub mod logging;
 pub mod suspension;
 
-use super::models::{Ability, AbilityFrame};
+use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use super::CardDatabase;
 use crate::core::enums::Phase;
 use crate::core::logic::constants::*;
@@ -82,7 +82,8 @@ fn finish_execution(state: &mut GameState, ctx_in: &AbilityContext, execution_st
         state.clear_execution_id();
     }
 
-    if (state.phase == Phase::Response || state.phase == Phase::Setup)
+    if !ctx_in.is_static_eval
+        && (state.phase == Phase::Response || state.phase == Phase::Setup)
         && state.interaction_stack.is_empty()
     {
         let orig = ctx_in.original_phase.unwrap_or(Phase::Main);
@@ -95,6 +96,131 @@ fn finish_execution(state: &mut GameState, ctx_in: &AbilityContext, execution_st
             state.current_player = p;
         }
     }
+}
+
+fn is_condition_frame(frame_data: &AbilityFrameComponents<'_>) -> bool {
+    let opcode = frame_data.opcode;
+    let has_raw_condition = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+        .unwrap_or(false);
+
+    has_raw_condition
+        || (opcode >= crate::core::logic::constants::CONDITION_START_1
+            && opcode <= crate::core::logic::constants::CONDITION_END_1)
+        || (opcode >= crate::core::logic::constants::CONDITION_START_2
+            && opcode <= crate::core::logic::constants::CONDITION_END_2)
+}
+
+fn should_accumulate_count(frame_data: &AbilityFrameComponents<'_>) -> bool {
+    matches!(
+        frame_data.opcode,
+        crate::core::generated_constants::C_COUNT_STAGE
+            | crate::core::generated_constants::C_COUNT_HAND
+            | crate::core::generated_constants::C_COUNT_DISCARD
+            | crate::core::generated_constants::C_COUNT_ENERGY
+            | crate::core::generated_constants::C_COUNT_HEARTS
+            | crate::core::generated_constants::C_COUNT_BLADES
+            | crate::core::generated_constants::C_COUNT_GROUP
+            | crate::core::generated_constants::C_COUNT_SUCCESS_LIVE
+            | 307
+    )
+}
+
+fn log_frame_step(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    ip: usize,
+) {
+    if !state.debug.debug_mode {
+        return;
+    }
+
+    let desc = logging::describe_frame_step(frame_data);
+    let card_name = db
+        .get_member(ctx.source_card_id)
+        .map(|c| c.name.as_str())
+        .or_else(|| db.get_live(ctx.source_card_id).map(|l| l.name.as_str()))
+        .unwrap_or("System");
+    let log_line = format!(
+        "FRAME_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+        state.core.trigger_depth, state.phase, card_name, ip, desc
+    );
+    if !state.ui.silent {
+        println!("[DEBUG] {}", log_line);
+    }
+
+    let b_log = &mut state.ui.semantic_log;
+    if b_log.len() < MAX_FRAME_LOG_SIZE {
+        b_log.push(log_line.clone());
+    }
+    state.trace_internal(&log_line);
+    let semantic_line = logging::describe_frame_semantics(frame_data, ctx, db);
+    state.trace_internal(&format!(
+        "FRAME_SEM: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
+        state.core.trigger_depth, state.phase, card_name, ip, semantic_line
+    ));
+}
+
+fn log_frame_result(
+    state: &mut GameState,
+    frame_data: &AbilityFrameComponents<'_>,
+    ip: usize,
+    passed: bool,
+) {
+    if !state.debug.debug_mode {
+        return;
+    }
+
+    let result_line = format!(
+        "FRAME_RESULT: ip={:<3} {}",
+        ip,
+        if frame_data.is_negated {
+            !passed
+        } else {
+            passed
+        }
+    );
+    if !state.ui.silent {
+        println!("[DEBUG] {}", result_line);
+    }
+    let b_log = &mut state.ui.semantic_log;
+    if b_log.len() < MAX_FRAME_LOG_SIZE {
+        b_log.push(result_line.clone());
+    }
+    state.trace_internal(&result_line);
+}
+
+fn log_condition_result(
+    state: &mut GameState,
+    frame_data: &AbilityFrameComponents<'_>,
+    ip: usize,
+    passed: bool,
+    final_cond: bool,
+) {
+    if !state.debug.debug_mode {
+        return;
+    }
+
+    let cond_desc = format!(
+        "FRAME_COND: ip={:<3} {} -> passed={}, final={}",
+        ip,
+        logging::describe_frame_condition(frame_data),
+        passed,
+        final_cond
+    );
+    if !state.ui.silent {
+        println!("      | [COND] {}", cond_desc);
+    }
+
+    let b_log = &mut state.ui.semantic_log;
+    if b_log.len() < MAX_FRAME_LOG_SIZE {
+        b_log.push(cond_desc.clone());
+    }
+    state.trace_internal(&cond_desc);
 }
 
 pub fn resolve_ability(
@@ -167,32 +293,7 @@ pub fn resolve_semantic_frames(
             break;
         }
 
-        if state.debug.debug_mode {
-            let desc = logging::describe_frame_step(&frame_data);
-            let card_name = db
-                .get_member(ctx.source_card_id)
-                .map(|c| c.name.as_str())
-                .or_else(|| db.get_live(ctx.source_card_id).map(|l| l.name.as_str()))
-                .unwrap_or("System");
-            let log_line = format!(
-                "FRAME_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
-                state.core.trigger_depth, state.phase, card_name, ip, desc
-            );
-            if !state.ui.silent {
-                println!("[DEBUG] {}", log_line);
-            }
-
-            let b_log = &mut state.ui.semantic_log;
-            if b_log.len() < MAX_FRAME_LOG_SIZE {
-                b_log.push(log_line.clone());
-            }
-            state.trace_internal(&log_line);
-            let semantic_line = logging::describe_frame_semantics(&frame_data, &ctx, db);
-            state.trace_internal(&format!(
-                "FRAME_SEM: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
-                state.core.trigger_depth, state.phase, card_name, ip, semantic_line
-            ));
-        }
+        log_frame_step(state, db, &ctx, &frame_data, ip);
         if let Some(ref mut set) = state.debug.executed_opcodes {
             set.insert(frame_data.opcode);
         }
@@ -204,18 +305,7 @@ pub fn resolve_semantic_frames(
             condition_frame.raw_slot = condition_frame.slot.to_raw();
         }
 
-        let has_raw_condition = condition_frame
-            .params
-            .and_then(|value| value.as_object())
-            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
-            .unwrap_or(false);
-
-        if has_raw_condition
-            || (frame_data.opcode >= crate::core::logic::constants::CONDITION_START_1
-                && frame_data.opcode <= crate::core::logic::constants::CONDITION_END_1)
-            || (frame_data.opcode >= crate::core::logic::constants::CONDITION_START_2
-                && frame_data.opcode <= crate::core::logic::constants::CONDITION_END_2)
-        {
+        if is_condition_frame(&condition_frame) {
             if state.debug.debug_mode {
                 if !state.ui.silent {
                     println!(
@@ -224,23 +314,16 @@ pub fn resolve_semantic_frames(
                     );
                 }
             }
-            let accumulated_count = match condition_frame.opcode {
-                crate::core::generated_constants::C_COUNT_STAGE
-                | crate::core::generated_constants::C_COUNT_HAND
-                | crate::core::generated_constants::C_COUNT_DISCARD
-                | crate::core::generated_constants::C_COUNT_ENERGY
-                | crate::core::generated_constants::C_COUNT_HEARTS
-                | crate::core::generated_constants::C_COUNT_BLADES
-                | crate::core::generated_constants::C_COUNT_GROUP
-                | crate::core::generated_constants::C_COUNT_SUCCESS_LIVE
-                | 307 => Some(conditions::resolve_count_frame(
+            let accumulated_count = if should_accumulate_count(&condition_frame) {
+                Some(conditions::resolve_count_frame(
                     state,
                     db,
                     &condition_frame,
                     &ctx,
                     0,
-                )),
-                _ => None,
+                ))
+            } else {
+                None
             };
             let passed = if !cond {
                 false
@@ -250,49 +333,14 @@ pub fn resolve_semantic_frames(
             if let Some(count) = accumulated_count {
                 ctx.v_accumulated = count as i16;
             }
-            if state.debug.debug_mode {
-                let result_line = format!(
-                    "FRAME_RESULT: ip={:<3} {}",
-                    ip,
-                    if condition_frame.is_negated {
-                        !passed
-                    } else {
-                        passed
-                    }
-                );
-                if !state.ui.silent {
-                    println!("[DEBUG] {}", result_line);
-                }
-                let b_log = &mut state.ui.semantic_log;
-                if b_log.len() < MAX_FRAME_LOG_SIZE {
-                    b_log.push(result_line.clone());
-                }
-                state.trace_internal(&result_line);
-            }
+            log_frame_result(state, &condition_frame, ip, passed);
             cond = cond
                 && if condition_frame.is_negated {
                     !passed
                 } else {
                     passed
                 };
-            if state.debug.debug_mode {
-                let cond_desc = format!(
-                    "FRAME_COND: ip={:<3} {} -> passed={}, final={}",
-                    ip,
-                    logging::describe_frame_condition(&condition_frame),
-                    passed,
-                    cond
-                );
-                if !state.ui.silent {
-                    println!("      | [COND] {}", cond_desc);
-                }
-
-                let b_log = &mut state.ui.semantic_log;
-                if b_log.len() < MAX_FRAME_LOG_SIZE {
-                    b_log.push(cond_desc.clone());
-                }
-                state.trace_internal(&cond_desc);
-            }
+            log_condition_result(state, &condition_frame, ip, passed, cond);
             ctx.choice_index = -1;
             effect_idx += 1;
             continue;

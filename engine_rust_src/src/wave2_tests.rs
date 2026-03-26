@@ -175,7 +175,16 @@ fn test_granted_ability_propagation_cost() {
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
                 frame_program: Some(FrameProgram::from_words(&[
-                    O_REDUCE_COST, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                    O_REDUCE_COST,
+                    1,
+                    0,
+                    0,
+                    0,
+                    O_RETURN,
+                    0,
+                    0,
+                    0,
+                    0,
                 ])),
                 ..Default::default()
             }],
@@ -226,7 +235,16 @@ fn test_granted_ability_propagation_hearts() {
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
                 frame_program: Some(FrameProgram::from_words(&[
-                    O_ADD_HEARTS, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                    O_ADD_HEARTS,
+                    1,
+                    0,
+                    0,
+                    0,
+                    O_RETURN,
+                    0,
+                    0,
+                    0,
+                    0,
                 ])), // O_ADD_HEARTS [count, color, 0]
                 ..Default::default()
             }],
@@ -260,7 +278,16 @@ fn test_granted_ability_propagation_score() {
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
                 frame_program: Some(FrameProgram::from_words(&[
-                    O_BOOST_SCORE, 500, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                    O_BOOST_SCORE,
+                    500,
+                    0,
+                    0,
+                    0,
+                    O_RETURN,
+                    0,
+                    0,
+                    0,
+                    0,
                 ])),
                 ..Default::default()
             }],

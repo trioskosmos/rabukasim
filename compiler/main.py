@@ -165,9 +165,13 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         if not quiet:
             print(f"Loading existing ID mapping from {mapping_path}...")
         with open(mapping_path, "r", encoding="utf-8") as f:
-            existing_id_mapping = json.load(f)
+            raw_mapping = json.load(f)
+            # Normalize keys to ensure stability across character variants (+ vs ＋)
+            for k, v in raw_mapping.items():
+                norm_k = SparseSourceManager._normalize_card_no(k)
+                existing_id_mapping[norm_k] = v
         if not quiet:
-            print(f"Loaded {len(existing_id_mapping)} existing ID mappings")
+            print(f"Loaded {len(existing_id_mapping)} existing ID mappings (normalized)")
 
     sorted_keys = sorted(raw_data.keys())
     # Logic for bit-packed IDs
@@ -227,7 +231,9 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             v_key = v["card_no"]
             v_data = v["data"]
             
-            existing_id = existing_id_mapping.get(v_key)
+            # Use normalized key for lookup to match character variants
+            norm_v_key = SparseSourceManager._normalize_card_no(v_key)
+            existing_id = existing_id_mapping.get(norm_v_key)
             logical_id = 0
             v_idx = 0
             

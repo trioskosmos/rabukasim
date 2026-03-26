@@ -825,8 +825,9 @@ impl ResponseController for GameState {
                     crate::core::logic::models::AbilityFrame::Semantic {
                         opcode: pi.effect_opcode,
                         value: pi.ctx.v_remaining as i32,
-                        filter:
-                        crate::core::logic::filter::CardFilter::from_attr(pi.filter_attr as i64),
+                        filter: crate::core::logic::filter::CardFilter::from_attr(
+                            pi.filter_attr as i64,
+                        ),
                         slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
                         is_negated: false,
                         params: serde_json::Value::Null,
@@ -922,11 +923,7 @@ impl ResponseController for GameState {
                     );
                 }
                 if self.interaction_stack.is_empty() {
-                    self.phase = if orig_phase == Phase::Response || orig_phase == Phase::Setup {
-                        Phase::Main
-                    } else {
-                        orig_phase
-                    };
+                    self.phase = orig_phase;
                 }
                 self.current_player = orig_cp;
             }
@@ -1001,6 +998,7 @@ impl ResponseController for GameState {
             choice_index: choice_idx as i16,
             ..Default::default()
         };
+        ctx.capture_state_raw(self.phase, self.current_player);
         if target_slot >= 0 {
             ctx.target_slot = target_slot as i16;
         }

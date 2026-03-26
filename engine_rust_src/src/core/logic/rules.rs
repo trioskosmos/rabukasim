@@ -202,6 +202,9 @@ fn apply_reduce_cost_modifiers(
         frame_idx += 1;
 
         let op = frame.opcode();
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] apply_reduce_cost_modifiers: frame_idx={}, opcode={}", frame_idx - 1, op);
+        }
         if op != O_REDUCE_COST && op != O_INCREASE_COST {
             continue;
         }
@@ -220,9 +223,15 @@ fn apply_reduce_cost_modifiers(
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
 
-        if frame_data.slot.is_dynamic || frame_data.filter.compare_accumulated || per_card.is_some()
+        println!("[DEBUG] apply_reduce_cost_modifiers: is_dynamic={}, compare_acc={}, per_card={:?}, source_zone={:?}",
+            frame_data.slot.is_dynamic, frame_data.filter.compare_accumulated, per_card, frame_data.slot.source_zone);
+
+        if frame_data.slot.is_dynamic
+            || frame_data.filter.compare_accumulated
+            || per_card.is_some()
+            || frame_data.slot.source_zone != Zone::Default
         {
-            let count_op = if let Some(ref per_card) = per_card {
+            let mut count_op = if let Some(ref per_card) = per_card {
                 match per_card.as_str() {
                     "HAND" => C_COUNT_HAND,
                     "DISCARD" | "DISCARD_COUNT" => C_COUNT_DISCARD,
@@ -240,7 +249,16 @@ fn apply_reduce_cost_modifiers(
                 }
             };
 
+            // Fallback to remainder_zone for dynamic cost reductions (e.g. BP2-001)
+            if count_op == 0 && frame_data.slot.is_dynamic && frame_data.slot.remainder_zone >= 200
+            {
+                count_op = frame_data.slot.remainder_zone as i32;
+            }
+
             if count_op != 0 {
+                if state.debug.debug_mode && !state.ui.silent {
+                    println!("[DEBUG] apply_reduce_cost_modifiers: count_op={}", count_op);
+                }
                 multiplier = resolve_count(
                     state,
                     db,
@@ -523,10 +541,17 @@ pub fn get_member_cost(
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
                 area_idx: slot_idx,
+                is_static_eval: true,
                 ..Default::default()
             };
-            for ab in &target_m.abilities {
+            for (idx, ab) in target_m.abilities.iter().enumerate() {
+                if state.debug.debug_mode && !state.ui.silent {
+                    println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
+                }
                 if ab.trigger == TriggerType::Constant {
+                    if state.debug.debug_mode && !state.ui.silent {
+                        println!("[DEBUG] get_member_cost: Applying Constant ab#{}", idx);
+                    }
                     apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
                 }
             }
@@ -550,6 +575,7 @@ pub fn get_member_cost(
                         player_id: p_idx as u8,
                         activator_id: p_idx as u8,
                         area_idx: -1,
+                        is_static_eval: true,
                         ..Default::default()
                     };
                     if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx)
@@ -564,6 +590,7 @@ pub fn get_member_cost(
                                 player_id: p_idx as u8,
                                 activator_id: p_idx as u8,
                                 area_idx: -1, // Not used for constant card filters
+                                is_static_eval: true,
                                 ..Default::default()
                             };
                             if !ab.filters.iter().any(
@@ -603,6 +630,7 @@ pub fn get_member_cost(
                     player_id: p_idx as u8,
                     activator_id: p_idx as u8,
                     area_idx: -1,
+                    is_static_eval: true,
                     ..Default::default()
                 };
                 if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
@@ -616,6 +644,7 @@ pub fn get_member_cost(
                             player_id: p_idx as u8,
                             activator_id: p_idx as u8,
                             area_idx: -1,
+                            is_static_eval: true,
                             ..Default::default()
                         };
                         if !ab
@@ -673,6 +702,7 @@ pub fn get_member_cost(
             player_id: p_idx as u8,
             activator_id: p_idx as u8,
             area_idx: slot_idx,
+            is_static_eval: true,
             ..Default::default()
         };
         apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
@@ -685,6 +715,7 @@ pub fn get_member_cost(
             player_id: p_idx as u8,
             activator_id: p_idx as u8,
             area_idx: slot_idx as i16,
+            is_static_eval: true,
             ..Default::default()
         };
         if check_condition(state, db, p_idx, cond, &ctx, depth + 1) {
@@ -732,6 +763,7 @@ pub fn has_restriction(
                         player_id: p_idx as u8,
                         activator_id: p_idx as u8,
                         area_idx: slot_idx as i16,
+                        is_static_eval: true,
                         ..Default::default()
                     };
                     if ab
@@ -766,6 +798,7 @@ pub fn has_restriction(
                             player_id: p_idx as u8,
                             activator_id: p_idx as u8,
                             area_idx: slot_idx as i16,
+                            is_static_eval: true,
                             ..Default::default()
                         };
                         if ab
@@ -822,6 +855,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 player_id: player_idx as u8,
                 activator_id: player_idx as u8,
                 area_idx: source_slot as i16,
+                is_static_eval: true,
                 ..Default::default()
             };
 
@@ -958,6 +992,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 player_id: player_idx as u8,
                 activator_id: player_idx as u8,
                 area_idx: if slot_idx < 3 { slot_idx as i16 } else { -1 },
+                is_static_eval: true,
                 ..Default::default()
             };
 

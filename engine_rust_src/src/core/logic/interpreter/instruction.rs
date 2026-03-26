@@ -1,8 +1,9 @@
 use crate::core::enums::Zone;
 use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
-use serde::{Deserialize, Serialize};
 use crate::core::logic::filter::CardFilter;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::sync::Arc;
 
 pub const WORDS_PER_INSTRUCTION: usize = 5;
@@ -55,19 +56,24 @@ struct DecodedSlotStructuredRaw {
     #[serde(default)]
     remainder_zone: Option<u8>,
     #[serde(default)]
-    is_opponent: Option<bool>,
+    is_opponent: Option<Value>,
     #[serde(default)]
-    is_reveal_until_live: Option<bool>,
+    is_reveal_until_live: Option<Value>,
     #[serde(default)]
-    is_baton_slot: Option<bool>,
+    is_baton_slot: Option<Value>,
     #[serde(default)]
-    is_empty_slot: Option<bool>,
+    is_empty_slot: Option<Value>,
     #[serde(default)]
-    is_wait: Option<bool>,
+    is_wait: Option<Value>,
     #[serde(default)]
-    is_dynamic: Option<bool>,
+    is_dynamic: Option<Value>,
     #[serde(default)]
     area_idx: Option<u8>,
+}
+
+fn as_bool_robust(v: &Value) -> bool {
+    v.as_bool()
+        .unwrap_or_else(|| v.as_i64().map(|i| i != 0).unwrap_or(false))
 }
 
 impl From<DecodedSlotRaw> for DecodedSlot {
@@ -80,12 +86,12 @@ impl From<DecodedSlotRaw> for DecodedSlot {
                 source_zone: raw.source_zone.unwrap_or_default(),
                 dest_zone: raw.dest_zone.unwrap_or_default(),
                 remainder_zone: raw.remainder_zone.unwrap_or_default(),
-                is_opponent: raw.is_opponent.unwrap_or_default(),
-                is_reveal_until_live: raw.is_reveal_until_live.unwrap_or_default(),
-                is_baton_slot: raw.is_baton_slot.unwrap_or_default(),
-                is_empty_slot: raw.is_empty_slot.unwrap_or_default(),
-                is_wait: raw.is_wait.unwrap_or_default(),
-                is_dynamic: raw.is_dynamic.unwrap_or_default(),
+                is_opponent: raw.is_opponent.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_reveal_until_live: raw.is_reveal_until_live.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_baton_slot: raw.is_baton_slot.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_empty_slot: raw.is_empty_slot.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_wait: raw.is_wait.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_dynamic: raw.is_dynamic.map(|v| as_bool_robust(&v)).unwrap_or_default(),
                 area_idx: raw.area_idx.unwrap_or_default(),
             },
         }
@@ -479,29 +485,29 @@ struct DecodedFilterAttrStructuredRaw {
     #[serde(default)]
     card_type: Option<u8>,
     #[serde(default)]
-    group_enabled: Option<bool>,
+    group_enabled: Option<Value>,
     #[serde(default)]
     group_id: Option<u8>,
     #[serde(default)]
-    is_tapped: Option<bool>,
+    is_tapped: Option<Value>,
     #[serde(default)]
-    has_blade_heart: Option<bool>,
+    has_blade_heart: Option<Value>,
     #[serde(default)]
-    not_has_blade_heart: Option<bool>,
+    not_has_blade_heart: Option<Value>,
     #[serde(default)]
-    unique_names: Option<bool>,
+    unique_names: Option<Value>,
     #[serde(default)]
-    unit_enabled: Option<bool>,
+    unit_enabled: Option<Value>,
     #[serde(default)]
     unit_id: Option<u8>,
     #[serde(default)]
-    value_enabled: Option<bool>,
+    value_enabled: Option<Value>,
     #[serde(default)]
     value_threshold: Option<u8>,
     #[serde(default)]
-    is_le: Option<bool>,
+    is_le: Option<Value>,
     #[serde(default)]
-    is_cost_type: Option<bool>,
+    is_cost_type: Option<Value>,
     #[serde(default)]
     color_mask: Option<u8>,
     #[serde(default)]
@@ -513,17 +519,17 @@ struct DecodedFilterAttrStructuredRaw {
     #[serde(default)]
     zone_mask: Option<u8>,
     #[serde(default)]
-    special_id: Option<u8>,
+    special_id: Option<Value>,
     #[serde(default)]
-    is_setsuna: Option<bool>,
+    is_setsuna: Option<Value>,
     #[serde(default)]
-    compare_accumulated: Option<bool>,
+    compare_accumulated: Option<Value>,
     #[serde(default)]
-    is_optional: Option<bool>,
+    is_optional: Option<Value>,
     #[serde(default)]
-    keyword_energy: Option<bool>,
+    keyword_energy: Option<Value>,
     #[serde(default)]
-    keyword_member: Option<bool>,
+    keyword_member: Option<Value>,
 }
 
 impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
@@ -533,29 +539,39 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
             DecodedFilterAttrRaw::Structured(raw) => Self {
                 target_player: raw.target_player.unwrap_or_default(),
                 card_type: raw.card_type.unwrap_or_default(),
-                group_enabled: raw.group_enabled.unwrap_or_default(),
+                group_enabled: raw.group_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
                 group_id: raw.group_id.unwrap_or_default(),
-                is_tapped: raw.is_tapped.unwrap_or_default(),
-                has_blade_heart: raw.has_blade_heart.unwrap_or_default(),
-                not_has_blade_heart: raw.not_has_blade_heart.unwrap_or_default(),
-                unique_names: raw.unique_names.unwrap_or_default(),
-                unit_enabled: raw.unit_enabled.unwrap_or_default(),
+                is_tapped: raw.is_tapped.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                has_blade_heart: raw.has_blade_heart.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                not_has_blade_heart: raw.not_has_blade_heart.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                unique_names: raw.unique_names.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                unit_enabled: raw.unit_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
                 unit_id: raw.unit_id.unwrap_or_default(),
-                value_enabled: raw.value_enabled.unwrap_or_default(),
+                value_enabled: raw.value_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
                 value_threshold: raw.value_threshold.unwrap_or_default(),
-                is_le: raw.is_le.unwrap_or_default(),
-                is_cost_type: raw.is_cost_type.unwrap_or_default(),
+                is_le: raw.is_le.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_cost_type: raw.is_cost_type.map(|v| as_bool_robust(&v)).unwrap_or_default(),
                 color_mask: raw.color_mask.unwrap_or_default(),
                 char_id_1: raw.char_id_1.unwrap_or_default(),
                 char_id_2: raw.char_id_2.unwrap_or_default(),
                 char_id_3: raw.char_id_3.unwrap_or_default(),
                 zone_mask: raw.zone_mask.unwrap_or_default(),
-                special_id: raw.special_id.unwrap_or_default(),
-                is_setsuna: raw.is_setsuna.unwrap_or_default(),
-                compare_accumulated: raw.compare_accumulated.unwrap_or_default(),
-                is_optional: raw.is_optional.unwrap_or_default(),
-                keyword_energy: raw.keyword_energy.unwrap_or_default(),
-                keyword_member: raw.keyword_member.unwrap_or_default(),
+                special_id: raw.special_id.map(|v| {
+                    if let Some(s) = v.as_str() {
+                        match s.to_uppercase().replace('_', " ").as_str() {
+                            "NOT MY" | "NOTMY" => 2,
+                            "NOT SELF" | "NOTSELF" => 3,
+                            _ => 0,
+                        }
+                    } else {
+                        v.as_u64().unwrap_or_default() as u8
+                    }
+                }).unwrap_or_default(),
+                is_setsuna: raw.is_setsuna.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                compare_accumulated: raw.compare_accumulated.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_optional: raw.is_optional.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                keyword_energy: raw.keyword_energy.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                keyword_member: raw.keyword_member.map(|v| as_bool_robust(&v)).unwrap_or_default(),
             },
         }
     }

@@ -6,7 +6,6 @@ use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
 
 #[allow(clippy::too_many_arguments)]
-#[allow(clippy::too_many_arguments)]
 pub fn suspend_choice(
     state: &mut GameState,
     db: &CardDatabase,

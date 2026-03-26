@@ -31,11 +31,11 @@ ID 300 | [JP] 【マリガン】Card #1   | このカードをデッキに戻し
 ID 301 | [JP] 【マリガン】Card #10001 | このカードをデッキに戻して引き直します。 (MULLIGAN)
        | [EN] Mulligan: Card #10001 | Return this card to deck and draw a new one. (MULLIGAN)
 -------
-ID 302 | [JP] 【マリガン】渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | このカードをデッキに戻して引き直します。 (MULLIGAN)
-       | [EN] Mulligan: 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Return this card to deck and draw a new one. (MULLIGAN)
+ID 302 | [JP] 【マリガン】渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Return this card to deck and draw a new one. (MULLIGAN)
 -------
-ID 303 | [JP] 【マリガン】園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R＋) | このカードをデッキに戻して引き直します。 (MULLIGAN)
-       | [EN] Mulligan: 園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R＋) | Return this card to deck and draw a new one. (MULLIGAN)
+ID 303 | [JP] 【マリガン】園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R+) | このカードをデッキに戻して引き直します。 (MULLIGAN)
+       | [EN] Mulligan: 園田海未&津島善子&天王寺璃奈 (LL-bp3-001-R+) | Return this card to deck and draw a new one. (MULLIGAN)
 -------
 
 === Scenario: Energy Phase (Auto-draw logic prompt) ===
@@ -132,8 +132,8 @@ ID 11000 | [JP] Energy #1       | このカードを回収します。 (CHOICE)
 ID 11001 | [JP] Energy #2       | このカードを回収します。 (CHOICE)
        | [EN] Energy #2       | Recover this card. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | このカードを回収します。 (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Recover this card. (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | このカードを回収します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Recover this card. (CHOICE)
 -------
 
 === Scenario: Choice: Put Card to Discard (from Mixed Hand) ===
@@ -165,8 +165,8 @@ ID 11000 | [JP] Energy #1       | この順番で戻します。 (CHOICE)
 ID 11001 | [JP] Energy #2       | この順番で戻します。 (CHOICE)
        | [EN] Energy #2       | Return in this order. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | この順番で戻します。 (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Return in this order. (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | この順番で戻します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Return in this order. (CHOICE)
 -------
 
 === Scenario: Choice: Select Cards (Generic) ===
@@ -178,8 +178,8 @@ ID 11000 | [JP] Energy #1       | カードを選択します。 (CHOICE)
 ID 11001 | [JP] Energy #2       | カードを選択します。 (CHOICE)
        | [EN] Energy #2       | Select a card. (CHOICE)
 -------
-ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | カードを選択します。 (CHOICE)
-       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R＋) | Select a card. (CHOICE)
+ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | カードを選択します。 (CHOICE)
+       | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Select a card. (CHOICE)
 -------
 
 === Scenario: Choice: Select Target Slot for Played Member ===
@@ -204,8 +204,8 @@ Phase: Main
 ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
        | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
 -------
-ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】自身を退場させて: 手札へ: メンバーを回収: 1 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
-       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act]Sacrifice self: To Hand: Recov Member: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act] (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
 -------
 
 [Dump Complete]

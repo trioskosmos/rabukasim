@@ -159,6 +159,11 @@ path = "src/bin/generate_opcode_guide.rs"
 test = false
 
 [[bin]]
+name = "generate_ability_manifest"
+path = "src/bin/generate_ability_manifest.rs"
+test = false
+
+[[bin]]
 name = "inject_source_words"
 path = "src/bin/inject_source_words.rs"
 test = false

@@ -16,7 +16,16 @@ fn create_test_db() -> CardDatabase {
         abilities: vec![Ability {
             trigger: TriggerType::Activated, // or whatever triggers manually
             frame_program: Some(FrameProgram::from_words(&[
-                O_RECOVER_MEMBER, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                O_RECOVER_MEMBER,
+                1,
+                0,
+                0,
+                0,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
             ])),
             ..Default::default()
         }],

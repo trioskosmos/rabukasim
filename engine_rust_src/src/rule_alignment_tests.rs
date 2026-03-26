@@ -83,7 +83,16 @@ fn test_priority_p1_triggers_first() {
     m1.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
         frame_program: Some(FrameProgram::from_words(&[
-            O_BOOST_SCORE, 100, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+            O_BOOST_SCORE,
+            100,
+            0,
+            0,
+            0,
+            O_RETURN,
+            0,
+            0,
+            0,
+            0,
         ])),
         ..Default::default()
     });
@@ -97,7 +106,16 @@ fn test_priority_p1_triggers_first() {
     m2.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
         frame_program: Some(FrameProgram::from_words(&[
-            O_BOOST_SCORE, 200, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+            O_BOOST_SCORE,
+            200,
+            0,
+            0,
+            0,
+            O_RETURN,
+            0,
+            0,
+            0,
+            0,
         ])),
         ..Default::default()
     });

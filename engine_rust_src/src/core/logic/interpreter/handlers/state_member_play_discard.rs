@@ -46,8 +46,8 @@ pub fn handle_play_member_from_discard(
     // Support modern bit 60 (compare_accumulated)
     // Support legacy bit 50 (FILTER_TOTAL_COST)
     // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
-    let is_total_cost = (filter_attr_base & (1u64 << 60)) != 0
-        || (filter_attr_base & (1u64 << 50)) != 0;
+    let is_total_cost =
+        (filter_attr_base & (1u64 << 60)) != 0 || (filter_attr_base & (1u64 << 50)) != 0;
 
     let is_fresh_chain = state.players[target_p_idx].looked_cards.is_empty();
     let remaining = if is_fresh_chain || ctx.v_remaining == -1 {

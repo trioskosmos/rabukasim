@@ -150,7 +150,7 @@ impl GameState {
         start_ab_idx: usize,
         choice: i16,
     ) {
-        let ctx = AbilityContext {
+        let mut ctx = AbilityContext {
             player_id: p_idx as u8,
             activator_id: p_idx as u8,
             source_card_id: source_cid,
@@ -160,6 +160,7 @@ impl GameState {
             auto_pick: false,
             ..Default::default()
         };
+        ctx.capture_state_raw(self.phase, self.current_player);
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
     }
 
@@ -175,7 +176,7 @@ impl GameState {
         let cp = self.current_player as usize;
         for i in 0..2 {
             let p_idx = (cp + i) % 2;
-            let ctx = AbilityContext {
+            let mut ctx = AbilityContext {
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
                 source_card_id: source_cid,
@@ -184,6 +185,7 @@ impl GameState {
                 choice_index: choice,
                 ..Default::default()
             };
+            ctx.capture_state_raw(self.phase, self.current_player);
             self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
         }
     }

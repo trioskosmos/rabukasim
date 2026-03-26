@@ -20,7 +20,9 @@ fn test_card_162_anyoji_himeme_discard_3_cards() {
     card162.cost = 2;
     card162.hearts = [1, 0, 0, 0, 0, 0, 0];
 
-    let words = vec![58, 3, 1, 0, 65540, 0, 0, 4, 14680064, 48, 12, 1, 0, 0, 4, 1, 0, 0, 0, 0];
+    let words = vec![
+        58, 3, 1, 0, 65540, 0, 0, 4, 14680064, 48, 12, 1, 0, 0, 4, 1, 0, 0, 0, 0,
+    ];
 
     let mut ability = Ability::default();
     ability.trigger = TriggerType::OnPlay;
@@ -30,7 +32,10 @@ fn test_card_162_anyoji_himeme_discard_3_cards() {
 
     db.members.insert(162, card162);
 
-    assert!(db.members.contains_key(&162), "Card 162 should be in database");
+    assert!(
+        db.members.contains_key(&162),
+        "Card 162 should be in database"
+    );
 
     let loaded_card = db.members.get(&162).unwrap();
     assert_eq!(loaded_card.name, "螳蛾､雁ｯｺ 蟋ｫ闃ｽ");

@@ -1,7 +1,7 @@
 {
   "member_db": {
-    "888": {
-      "card_id": 888,
+    "9": {
+      "card_id": 9,
       "card_no": "LL-bp1-001-R+",
       "name": "上原歩夢&澁谷かのん&日野下花帆",
       "cost": 20,
@@ -213,8 +213,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "889": {
-      "card_id": 889,
+    "10": {
+      "card_id": 10,
       "card_no": "LL-bp2-001-R+",
       "name": "渡辺 曜&鬼塚夏美&大沢瑠璃乃",
       "cost": 20,
@@ -529,8 +529,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "890": {
-      "card_id": 890,
+    "11": {
+      "card_id": 11,
       "card_no": "LL-bp3-001-R+",
       "name": "園田海未&津島善子&天王寺璃奈",
       "cost": 20,
@@ -776,8 +776,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "891": {
-      "card_id": 891,
+    "12": {
+      "card_id": 12,
       "card_no": "LL-bp4-001-R+",
       "name": "絢瀬絵里&朝香果林&葉月 恋",
       "cost": 20,
@@ -4651,8 +4651,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "894": {
-      "card_id": 894,
+    "4122": {
+      "card_id": 4122,
       "card_no": "PL!-bp3-004-R+",
       "name": "園田海未",
       "cost": 11,
@@ -5000,8 +5000,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "4990": {
-      "card_id": 4990,
+    "8218": {
+      "card_id": 8218,
       "card_no": "PL!-bp3-004-P+",
       "name": "園田海未",
       "cost": 11,
@@ -6951,8 +6951,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "895": {
-      "card_id": 895,
+    "4126": {
+      "card_id": 4126,
       "card_no": "PL!-bp3-008-R+",
       "name": "小泉花陽",
       "cost": 15,
@@ -7198,8 +7198,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "4991": {
-      "card_id": 4991,
+    "8222": {
+      "card_id": 8222,
       "card_no": "PL!-bp3-008-P+",
       "name": "小泉花陽",
       "cost": 15,
@@ -8072,8 +8072,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "896": {
-      "card_id": 896,
+    "4127": {
+      "card_id": 4127,
       "card_no": "PL!-bp3-009-R+",
       "name": "矢澤にこ",
       "cost": 2,
@@ -8452,8 +8452,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "4992": {
-      "card_id": 4992,
+    "8223": {
+      "card_id": 8223,
       "card_no": "PL!-bp3-009-P+",
       "name": "矢澤にこ",
       "cost": 2,
@@ -11080,8 +11080,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "899": {
-      "card_id": 899,
+    "4151": {
+      "card_id": 4151,
       "card_no": "PL!-bp4-002-R+",
       "name": "絢瀬絵里",
       "cost": 15,
@@ -11311,8 +11311,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "4995": {
-      "card_id": 4995,
+    "8247": {
+      "card_id": 8247,
       "card_no": "PL!-bp4-002-P+",
       "name": "絢瀬絵里",
       "cost": 15,
@@ -12551,8 +12551,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "900": {
-      "card_id": 900,
+    "4154": {
+      "card_id": 4154,
       "card_no": "PL!-bp4-005-R+",
       "name": "星空 凛",
       "cost": 13,
@@ -12845,8 +12845,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "901": {
-      "card_id": 901,
+    "59": {
+      "card_id": 59,
       "card_no": "PL!-bp4-005-P+",
       "name": "星空凛",
       "cost": 13,
@@ -15754,8 +15754,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "905": {
-      "card_id": 905,
+    "4746": {
+      "card_id": 4746,
       "card_no": "PL!-bp5-001-R+",
       "name": "高坂穂乃果",
       "cost": 4,
@@ -16984,8 +16984,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "906": {
-      "card_id": 906,
+    "4748": {
+      "card_id": 4748,
       "card_no": "PL!-bp5-003-R+",
       "name": "南 ことり",
       "cost": 11,
@@ -18111,8 +18111,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "907": {
-      "card_id": 907,
+    "4749": {
+      "card_id": 4749,
       "card_no": "PL!-bp5-004-R+",
       "name": "園田海未",
       "cost": 13,
@@ -21951,8 +21951,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "908": {
-      "card_id": 908,
+    "673": {
+      "card_id": 673,
       "card_no": "PL!-bp5-111-P+",
       "name": "綺羅ツバサ",
       "cost": 11,
@@ -22473,8 +22473,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "909": {
-      "card_id": 909,
+    "674": {
+      "card_id": 674,
       "card_no": "PL!-bp5-222-P+",
       "name": "優木あんじゅ",
       "cost": 4,
@@ -22753,8 +22753,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "910": {
-      "card_id": 910,
+    "675": {
+      "card_id": 675,
       "card_no": "PL!-bp5-333-P+",
       "name": "統堂英玲奈",
       "cost": 7,
@@ -23185,8 +23185,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "911": {
-      "card_id": 911,
+    "86": {
+      "card_id": 86,
       "card_no": "PL!-pb1-001-P+",
       "name": "高坂穂乃果",
       "cost": 13,
@@ -23773,8 +23773,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "912": {
-      "card_id": 912,
+    "87": {
+      "card_id": 87,
       "card_no": "PL!-pb1-002-P+",
       "name": "絢瀬絵里",
       "cost": 13,
@@ -24695,8 +24695,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "913": {
-      "card_id": 913,
+    "88": {
+      "card_id": 88,
       "card_no": "PL!-pb1-003-P+",
       "name": "南ことり",
       "cost": 13,
@@ -25069,8 +25069,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "914": {
-      "card_id": 914,
+    "89": {
+      "card_id": 89,
       "card_no": "PL!-pb1-004-P+",
       "name": "園田海未",
       "cost": 15,
@@ -25653,8 +25653,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "915": {
-      "card_id": 915,
+    "90": {
+      "card_id": 90,
       "card_no": "PL!-pb1-005-P+",
       "name": "星空 凛",
       "cost": 2,
@@ -25927,8 +25927,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "916": {
-      "card_id": 916,
+    "91": {
+      "card_id": 91,
       "card_no": "PL!-pb1-006-P+",
       "name": "西木野真姫",
       "cost": 11,
@@ -26289,8 +26289,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "917": {
-      "card_id": 917,
+    "92": {
+      "card_id": 92,
       "card_no": "PL!-pb1-007-P+",
       "name": "東條 希",
       "cost": 13,
@@ -26647,8 +26647,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "918": {
-      "card_id": 918,
+    "93": {
+      "card_id": 93,
       "card_no": "PL!-pb1-008-P+",
       "name": "小泉花陽",
       "cost": 11,
@@ -26965,8 +26965,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "919": {
-      "card_id": 919,
+    "94": {
+      "card_id": 94,
       "card_no": "PL!-pb1-009-P+",
       "name": "矢澤にこ",
       "cost": 4,
@@ -27221,8 +27221,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "920": {
-      "card_id": 920,
+    "95": {
+      "card_id": 95,
       "card_no": "PL!-pb1-010-P+",
       "name": "高坂穂乃果",
       "cost": 11,
@@ -27569,8 +27569,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "921": {
-      "card_id": 921,
+    "96": {
+      "card_id": 96,
       "card_no": "PL!-pb1-011-P+",
       "name": "絢瀬絵里",
       "cost": 2,
@@ -27891,8 +27891,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "922": {
-      "card_id": 922,
+    "97": {
+      "card_id": 97,
       "card_no": "PL!-pb1-012-P+",
       "name": "南ことり",
       "cost": 2,
@@ -28099,8 +28099,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "923": {
-      "card_id": 923,
+    "98": {
+      "card_id": 98,
       "card_no": "PL!-pb1-013-P+",
       "name": "園田海未",
       "cost": 9,
@@ -28517,8 +28517,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "924": {
-      "card_id": 924,
+    "99": {
+      "card_id": 99,
       "card_no": "PL!-pb1-014-P+",
       "name": "星空 凛",
       "cost": 15,
@@ -28713,8 +28713,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "925": {
-      "card_id": 925,
+    "100": {
+      "card_id": 100,
       "card_no": "PL!-pb1-015-P+",
       "name": "西木野真姫",
       "cost": 11,
@@ -29497,8 +29497,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "926": {
-      "card_id": 926,
+    "101": {
+      "card_id": 101,
       "card_no": "PL!-pb1-016-P+",
       "name": "東條 希",
       "cost": 9,
@@ -29819,8 +29819,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "927": {
-      "card_id": 927,
+    "102": {
+      "card_id": 102,
       "card_no": "PL!-pb1-017-P+",
       "name": "小泉花陽",
       "cost": 7,
@@ -30251,8 +30251,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "928": {
-      "card_id": 928,
+    "103": {
+      "card_id": 103,
       "card_no": "PL!-pb1-018-P+",
       "name": "矢澤にこ",
       "cost": 7,
@@ -38205,8 +38205,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "937": {
-      "card_id": 937,
+    "4264": {
+      "card_id": 4264,
       "card_no": "PL!HS-bp1-003-R+",
       "name": "乙宗 梢",
       "cost": 13,
@@ -38376,8 +38376,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5033": {
-      "card_id": 5033,
+    "8360": {
+      "card_id": 8360,
       "card_no": "PL!HS-bp1-003-P+",
       "name": "乙宗 梢",
       "cost": 13,
@@ -38986,8 +38986,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "938": {
-      "card_id": 938,
+    "4265": {
+      "card_id": 4265,
       "card_no": "PL!HS-bp1-004-R+",
       "name": "夕霧綴理",
       "cost": 15,
@@ -39254,8 +39254,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5034": {
-      "card_id": 5034,
+    "8361": {
+      "card_id": 8361,
       "card_no": "PL!HS-bp1-004-P+",
       "name": "夕霧綴理",
       "cost": 15,
@@ -40295,8 +40295,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "939": {
-      "card_id": 939,
+    "4267": {
+      "card_id": 4267,
       "card_no": "PL!HS-bp1-006-R+",
       "name": "藤島 慈",
       "cost": 11,
@@ -40604,8 +40604,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5035": {
-      "card_id": 5035,
+    "8363": {
+      "card_id": 8363,
       "card_no": "PL!HS-bp1-006-P+",
       "name": "藤島 慈",
       "cost": 11,
@@ -43227,8 +43227,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "945": {
-      "card_id": 945,
+    "4285": {
+      "card_id": 4285,
       "card_no": "PL!HS-bp2-002-R+",
       "name": "村野さやか",
       "cost": 13,
@@ -43396,8 +43396,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5041": {
-      "card_id": 5041,
+    "8381": {
+      "card_id": 8381,
       "card_no": "PL!HS-bp2-002-P+",
       "name": "村野さやか",
       "cost": 13,
@@ -44756,8 +44756,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "946": {
-      "card_id": 946,
+    "4288": {
+      "card_id": 4288,
       "card_no": "PL!HS-bp2-005-R+",
       "name": "大沢瑠璃乃",
       "cost": 10,
@@ -45216,8 +45216,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5042": {
-      "card_id": 5042,
+    "8384": {
+      "card_id": 8384,
       "card_no": "PL!HS-bp2-005-P+",
       "name": "大沢瑠璃乃",
       "cost": 10,
@@ -46884,8 +46884,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "947": {
-      "card_id": 947,
+    "4290": {
+      "card_id": 4290,
       "card_no": "PL!HS-bp2-007-R+",
       "name": "百生 吟子",
       "cost": 11,
@@ -47228,8 +47228,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5043": {
-      "card_id": 5043,
+    "8386": {
+      "card_id": 8386,
       "card_no": "PL!HS-bp2-007-P+",
       "name": "百生 吟子",
       "cost": 11,
@@ -50130,8 +50130,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "953": {
-      "card_id": 953,
+    "4789": {
+      "card_id": 4789,
       "card_no": "PL!HS-bp5-001-R+",
       "name": "日野下花帆",
       "cost": 11,
@@ -51054,8 +51054,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "954": {
-      "card_id": 954,
+    "4790": {
+      "card_id": 4790,
       "card_no": "PL!HS-bp5-002-R+",
       "name": "村野さやか",
       "cost": 15,
@@ -51855,8 +51855,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "955": {
-      "card_id": 955,
+    "4791": {
+      "card_id": 4791,
       "card_no": "PL!HS-bp5-003-R+",
       "name": "大沢瑠璃乃",
       "cost": 2,
@@ -61143,8 +61143,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "957": {
-      "card_id": 957,
+    "4331": {
+      "card_id": 4331,
       "card_no": "PL!N-bp1-002-R+",
       "name": "中須かすみ",
       "cost": 2,
@@ -61379,8 +61379,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5053": {
-      "card_id": 5053,
+    "8427": {
+      "card_id": 8427,
       "card_no": "PL!N-bp1-002-P+",
       "name": "中須かすみ",
       "cost": 2,
@@ -62129,8 +62129,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "958": {
-      "card_id": 958,
+    "4332": {
+      "card_id": 4332,
       "card_no": "PL!N-bp1-003-R+",
       "name": "桜坂しずく",
       "cost": 10,
@@ -62407,8 +62407,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5054": {
-      "card_id": 5054,
+    "8428": {
+      "card_id": 8428,
       "card_no": "PL!N-bp1-003-P+",
       "name": "桜坂しずく",
       "cost": 10,
@@ -63817,8 +63817,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "959": {
-      "card_id": 959,
+    "4335": {
+      "card_id": 4335,
       "card_no": "PL!N-bp1-006-R+",
       "name": "近江彼方",
       "cost": 13,
@@ -64029,8 +64029,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5055": {
-      "card_id": 5055,
+    "8431": {
+      "card_id": 8431,
       "card_no": "PL!N-bp1-006-P+",
       "name": "近江彼方",
       "cost": 13,
@@ -66513,8 +66513,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "960": {
-      "card_id": 960,
+    "4341": {
+      "card_id": 4341,
       "card_no": "PL!N-bp1-012-R+",
       "name": "鐘 嵐珠",
       "cost": 15,
@@ -66703,8 +66703,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5056": {
-      "card_id": 5056,
+    "8437": {
+      "card_id": 8437,
       "card_no": "PL!N-bp1-012-P+",
       "name": "鐘 嵐珠",
       "cost": 15,
@@ -68751,8 +68751,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "966": {
-      "card_id": 966,
+    "4365": {
+      "card_id": 4365,
       "card_no": "PL!N-bp3-001-R+",
       "name": "上原歩夢",
       "cost": 15,
@@ -68979,8 +68979,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5062": {
-      "card_id": 5062,
+    "8461": {
+      "card_id": 8461,
       "card_no": "PL!N-bp3-001-P+",
       "name": "上原歩夢",
       "cost": 15,
@@ -70549,8 +70549,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "967": {
-      "card_id": 967,
+    "4369": {
+      "card_id": 4369,
       "card_no": "PL!N-bp3-005-R+",
       "name": "宮下 愛",
       "cost": 15,
@@ -70791,8 +70791,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5063": {
-      "card_id": 5063,
+    "8465": {
+      "card_id": 8465,
       "card_no": "PL!N-bp3-005-P+",
       "name": "宮下 愛",
       "cost": 15,
@@ -72039,8 +72039,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "968": {
-      "card_id": 968,
+    "4372": {
+      "card_id": 4372,
       "card_no": "PL!N-bp3-008-R+",
       "name": "エマ・ヴェルデ",
       "cost": 13,
@@ -72419,8 +72419,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5064": {
-      "card_id": 5064,
+    "8468": {
+      "card_id": 8468,
       "card_no": "PL!N-bp3-008-P+",
       "name": "エマ・ヴェルデ",
       "cost": 13,
@@ -73565,8 +73565,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "969": {
-      "card_id": 969,
+    "4373": {
+      "card_id": 4373,
       "card_no": "PL!N-bp3-009-R+",
       "name": "天王寺璃奈",
       "cost": 10,
@@ -73951,8 +73951,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5065": {
-      "card_id": 5065,
+    "8469": {
+      "card_id": 8469,
       "card_no": "PL!N-bp3-009-P+",
       "name": "天王寺璃奈",
       "cost": 10,
@@ -78841,8 +78841,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "970": {
-      "card_id": 970,
+    "4396": {
+      "card_id": 4396,
       "card_no": "PL!N-bp4-004-R+",
       "name": "朝香果林",
       "cost": 15,
@@ -79091,8 +79091,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5066": {
-      "card_id": 5066,
+    "8492": {
+      "card_id": 8492,
       "card_no": "PL!N-bp4-004-P+",
       "name": "朝香果林",
       "cost": 15,
@@ -80635,8 +80635,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "971": {
-      "card_id": 971,
+    "4399": {
+      "card_id": 4399,
       "card_no": "PL!N-bp4-007-R+",
       "name": "優木せつ菜",
       "cost": 13,
@@ -80911,8 +80911,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5067": {
-      "card_id": 5067,
+    "8495": {
+      "card_id": 8495,
       "card_no": "PL!N-bp4-007-P+",
       "name": "優木せつ菜",
       "cost": 13,
@@ -82519,8 +82519,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "972": {
-      "card_id": 972,
+    "4402": {
+      "card_id": 4402,
       "card_no": "PL!N-bp4-010-R+",
       "name": "三船栞子",
       "cost": 5,
@@ -82775,8 +82775,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5068": {
-      "card_id": 5068,
+    "8498": {
+      "card_id": 8498,
       "card_no": "PL!N-bp4-010-P+",
       "name": "三船栞子",
       "cost": 5,
@@ -83545,8 +83545,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "973": {
-      "card_id": 973,
+    "4403": {
+      "card_id": 4403,
       "card_no": "PL!N-bp4-011-R+",
       "name": "ミア・テイラー",
       "cost": 9,
@@ -83803,8 +83803,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5069": {
-      "card_id": 5069,
+    "8499": {
+      "card_id": 8499,
       "card_no": "PL!N-bp4-011-P+",
       "name": "ミア・テイラー",
       "cost": 9,
@@ -85911,8 +85911,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "979": {
-      "card_id": 979,
+    "4847": {
+      "card_id": 4847,
       "card_no": "PL!N-bp5-001-R+",
       "name": "上原歩夢",
       "cost": 5,
@@ -88132,8 +88132,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "980": {
-      "card_id": 980,
+    "4851": {
+      "card_id": 4851,
       "card_no": "PL!N-bp5-005-R+",
       "name": "宮下 愛",
       "cost": 9,
@@ -89430,8 +89430,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "981": {
-      "card_id": 981,
+    "4853": {
+      "card_id": 4853,
       "card_no": "PL!N-bp5-007-R+",
       "name": "優木せつ菜",
       "cost": 7,
@@ -92531,8 +92531,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "982": {
-      "card_id": 982,
+    "4858": {
+      "card_id": 4858,
       "card_no": "PL!N-bp5-012-R+",
       "name": "鐘 嵐珠",
       "cost": 13,
@@ -94417,8 +94417,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "983": {
-      "card_id": 983,
+    "330": {
+      "card_id": 330,
       "card_no": "PL!N-pb1-001-P+",
       "name": "上原歩夢",
       "cost": 11,
@@ -94921,8 +94921,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "984": {
-      "card_id": 984,
+    "331": {
+      "card_id": 331,
       "card_no": "PL!N-pb1-002-P+",
       "name": "中須かすみ",
       "cost": 13,
@@ -95237,8 +95237,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "985": {
-      "card_id": 985,
+    "332": {
+      "card_id": 332,
       "card_no": "PL!N-pb1-003-P+",
       "name": "桜坂しずく",
       "cost": 4,
@@ -95547,8 +95547,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "986": {
-      "card_id": 986,
+    "333": {
+      "card_id": 333,
       "card_no": "PL!N-pb1-004-P+",
       "name": "朝香果林",
       "cost": 11,
@@ -96181,8 +96181,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "987": {
-      "card_id": 987,
+    "334": {
+      "card_id": 334,
       "card_no": "PL!N-pb1-005-P+",
       "name": "宮下 愛",
       "cost": 2,
@@ -96441,8 +96441,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "988": {
-      "card_id": 988,
+    "335": {
+      "card_id": 335,
       "card_no": "PL!N-pb1-006-P+",
       "name": "近江彼方",
       "cost": 9,
@@ -96637,8 +96637,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "989": {
-      "card_id": 989,
+    "336": {
+      "card_id": 336,
       "card_no": "PL!N-pb1-007-P+",
       "name": "優木せつ菜",
       "cost": 15,
@@ -96849,8 +96849,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "990": {
-      "card_id": 990,
+    "337": {
+      "card_id": 337,
       "card_no": "PL!N-pb1-008-P+",
       "name": "エマ・ヴェルデ",
       "cost": 17,
@@ -97369,8 +97369,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "991": {
-      "card_id": 991,
+    "338": {
+      "card_id": 338,
       "card_no": "PL!N-pb1-009-P+",
       "name": "天王寺璃奈",
       "cost": 15,
@@ -97705,8 +97705,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "992": {
-      "card_id": 992,
+    "339": {
+      "card_id": 339,
       "card_no": "PL!N-pb1-010-P+",
       "name": "三船栞子",
       "cost": 10,
@@ -98143,8 +98143,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "993": {
-      "card_id": 993,
+    "340": {
+      "card_id": 340,
       "card_no": "PL!N-pb1-011-P+",
       "name": "ミア・テイラー",
       "cost": 15,
@@ -98487,8 +98487,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "994": {
-      "card_id": 994,
+    "341": {
+      "card_id": 341,
       "card_no": "PL!N-pb1-012-P+",
       "name": "鐘 嵐珠",
       "cost": 11,
@@ -98891,8 +98891,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "995": {
-      "card_id": 995,
+    "342": {
+      "card_id": 342,
       "card_no": "PL!N-pb1-013-P+",
       "name": "上原歩夢",
       "cost": 7,
@@ -99259,8 +99259,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "996": {
-      "card_id": 996,
+    "343": {
+      "card_id": 343,
       "card_no": "PL!N-pb1-014-P+",
       "name": "中須かすみ",
       "cost": 11,
@@ -99587,8 +99587,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "997": {
-      "card_id": 997,
+    "344": {
+      "card_id": 344,
       "card_no": "PL!N-pb1-015-P+",
       "name": "桜坂しずく",
       "cost": 13,
@@ -99955,8 +99955,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "998": {
-      "card_id": 998,
+    "345": {
+      "card_id": 345,
       "card_no": "PL!N-pb1-016-P+",
       "name": "朝香果林",
       "cost": 2,
@@ -100185,8 +100185,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "999": {
-      "card_id": 999,
+    "346": {
+      "card_id": 346,
       "card_no": "PL!N-pb1-017-P+",
       "name": "宮下 愛",
       "cost": 7,
@@ -100553,8 +100553,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1000": {
-      "card_id": 1000,
+    "347": {
+      "card_id": 347,
       "card_no": "PL!N-pb1-018-P+",
       "name": "近江彼方",
       "cost": 4,
@@ -100783,8 +100783,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1001": {
-      "card_id": 1001,
+    "348": {
+      "card_id": 348,
       "card_no": "PL!N-pb1-019-P+",
       "name": "優木せつ菜",
       "cost": 9,
@@ -101111,8 +101111,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1002": {
-      "card_id": 1002,
+    "349": {
+      "card_id": 349,
       "card_no": "PL!N-pb1-020-P+",
       "name": "エマ・ヴェルデ",
       "cost": 9,
@@ -101439,8 +101439,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1003": {
-      "card_id": 1003,
+    "350": {
+      "card_id": 350,
       "card_no": "PL!N-pb1-021-P+",
       "name": "天王寺璃奈",
       "cost": 2,
@@ -101669,8 +101669,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1004": {
-      "card_id": 1004,
+    "351": {
+      "card_id": 351,
       "card_no": "PL!N-pb1-022-P+",
       "name": "三船栞子",
       "cost": 11,
@@ -102009,8 +102009,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1005": {
-      "card_id": 1005,
+    "352": {
+      "card_id": 352,
       "card_no": "PL!N-pb1-023-P+",
       "name": "ミア・テイラー",
       "cost": 13,
@@ -102377,8 +102377,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1006": {
-      "card_id": 1006,
+    "353": {
+      "card_id": 353,
       "card_no": "PL!N-pb1-024-P+",
       "name": "鐘 嵐珠",
       "cost": 4,
@@ -110493,8 +110493,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1023": {
-      "card_id": 1023,
+    "4515": {
+      "card_id": 4515,
       "card_no": "PL!S-bp2-005-R+",
       "name": "渡辺 曜",
       "cost": 13,
@@ -110652,8 +110652,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5119": {
-      "card_id": 5119,
+    "8611": {
+      "card_id": 8611,
       "card_no": "PL!S-bp2-005-P+",
       "name": "渡辺 曜",
       "cost": 13,
@@ -111577,8 +111577,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1024": {
-      "card_id": 1024,
+    "4517": {
+      "card_id": 4517,
       "card_no": "PL!S-bp2-007-R+",
       "name": "国木田花丸",
       "cost": 4,
@@ -111874,8 +111874,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5120": {
-      "card_id": 5120,
+    "8613": {
+      "card_id": 8613,
       "card_no": "PL!S-bp2-007-P+",
       "name": "国木田花丸",
       "cost": 4,
@@ -112805,8 +112805,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1025": {
-      "card_id": 1025,
+    "4518": {
+      "card_id": 4518,
       "card_no": "PL!S-bp2-008-R+",
       "name": "小原鞠莉",
       "cost": 17,
@@ -113142,8 +113142,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5121": {
-      "card_id": 5121,
+    "8614": {
+      "card_id": 8614,
       "card_no": "PL!S-bp2-008-P+",
       "name": "小原鞠莉",
       "cost": 17,
@@ -114791,8 +114791,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1031": {
-      "card_id": 1031,
+    "4535": {
+      "card_id": 4535,
       "card_no": "PL!S-bp3-001-R+",
       "name": "高海千歌",
       "cost": 15,
@@ -115018,8 +115018,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5127": {
-      "card_id": 5127,
+    "8631": {
+      "card_id": 8631,
       "card_no": "PL!S-bp3-001-P+",
       "name": "高海千歌",
       "cost": 15,
@@ -115991,8 +115991,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1032": {
-      "card_id": 1032,
+    "4537": {
+      "card_id": 4537,
       "card_no": "PL!S-bp3-003-R+",
       "name": "松浦果南",
       "cost": 11,
@@ -116192,8 +116192,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5128": {
-      "card_id": 5128,
+    "8633": {
+      "card_id": 8633,
       "card_no": "PL!S-bp3-003-P+",
       "name": "松浦果南",
       "cost": 11,
@@ -117484,8 +117484,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1033": {
-      "card_id": 1033,
+    "4540": {
+      "card_id": 4540,
       "card_no": "PL!S-bp3-006-R+",
       "name": "津島善子",
       "cost": 13,
@@ -117788,8 +117788,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5129": {
-      "card_id": 5129,
+    "8636": {
+      "card_id": 8636,
       "card_no": "PL!S-bp3-006-P+",
       "name": "津島善子",
       "cost": 13,
@@ -120809,8 +120809,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1034": {
-      "card_id": 1034,
+    "4892": {
+      "card_id": 4892,
       "card_no": "PL!S-bp5-001-R+",
       "name": "高海千歌",
       "cost": 10,
@@ -121520,8 +121520,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1035": {
-      "card_id": 1035,
+    "4893": {
+      "card_id": 4893,
       "card_no": "PL!S-bp5-002-R+",
       "name": "桜内梨子",
       "cost": 11,
@@ -123269,8 +123269,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1036": {
-      "card_id": 1036,
+    "4896": {
+      "card_id": 4896,
       "card_no": "PL!S-bp5-005-R+",
       "name": "渡辺 曜",
       "cost": 4,
@@ -126650,8 +126650,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1037": {
-      "card_id": 1037,
+    "819": {
+      "card_id": 819,
       "card_no": "PL!S-bp5-111-P+",
       "name": "鹿角聖良",
       "cost": 4,
@@ -127114,8 +127114,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1038": {
-      "card_id": 1038,
+    "820": {
+      "card_id": 820,
       "card_no": "PL!S-bp5-222-P+",
       "name": "鹿角理亞",
       "cost": 11,
@@ -127506,8 +127506,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1039": {
-      "card_id": 1039,
+    "460": {
+      "card_id": 460,
       "card_no": "PL!S-pb1-001-P+",
       "name": "高海千歌",
       "cost": 13,
@@ -127794,8 +127794,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1040": {
-      "card_id": 1040,
+    "461": {
+      "card_id": 461,
       "card_no": "PL!S-pb1-002-P+",
       "name": "桜内梨子",
       "cost": 13,
@@ -128228,8 +128228,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1041": {
-      "card_id": 1041,
+    "462": {
+      "card_id": 462,
       "card_no": "PL!S-pb1-003-P+",
       "name": "松浦果南",
       "cost": 15,
@@ -128698,8 +128698,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1042": {
-      "card_id": 1042,
+    "463": {
+      "card_id": 463,
       "card_no": "PL!S-pb1-004-P+",
       "name": "黒澤ダイヤ",
       "cost": 2,
@@ -128908,8 +128908,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1043": {
-      "card_id": 1043,
+    "464": {
+      "card_id": 464,
       "card_no": "PL!S-pb1-005-P+",
       "name": "渡辺 曜",
       "cost": 15,
@@ -129104,8 +129104,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1044": {
-      "card_id": 1044,
+    "465": {
+      "card_id": 465,
       "card_no": "PL!S-pb1-006-P+",
       "name": "津島善子",
       "cost": 9,
@@ -129586,8 +129586,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1045": {
-      "card_id": 1045,
+    "466": {
+      "card_id": 466,
       "card_no": "PL!S-pb1-007-P+",
       "name": "国木田花丸",
       "cost": 9,
@@ -129868,8 +129868,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1046": {
-      "card_id": 1046,
+    "467": {
+      "card_id": 467,
       "card_no": "PL!S-pb1-008-P+",
       "name": "小原鞠莉",
       "cost": 11,
@@ -130064,8 +130064,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1047": {
-      "card_id": 1047,
+    "468": {
+      "card_id": 468,
       "card_no": "PL!S-pb1-009-P+",
       "name": "黒澤ルビィ",
       "cost": 11,
@@ -135436,8 +135436,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1058": {
-      "card_id": 1058,
+    "4593": {
+      "card_id": 4593,
       "card_no": "PL!SP-bp1-002-R+",
       "name": "唐 可可",
       "cost": 4,
@@ -135644,8 +135644,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5154": {
-      "card_id": 5154,
+    "8689": {
+      "card_id": 8689,
       "card_no": "PL!SP-bp1-002-P+",
       "name": "唐 可可",
       "cost": 4,
@@ -136135,8 +136135,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1059": {
-      "card_id": 1059,
+    "4594": {
+      "card_id": 4594,
       "card_no": "PL!SP-bp1-003-R+",
       "name": "嵐 千砂都",
       "cost": 10,
@@ -136210,8 +136210,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5155": {
-      "card_id": 5155,
+    "8690": {
+      "card_id": 8690,
       "card_no": "PL!SP-bp1-003-P+",
       "name": "嵐 千砂都",
       "cost": 10,
@@ -137366,8 +137366,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1060": {
-      "card_id": 1060,
+    "4598": {
+      "card_id": 4598,
       "card_no": "PL!SP-bp1-007-R+",
       "name": "米女メイ",
       "cost": 13,
@@ -137510,8 +137510,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5156": {
-      "card_id": 5156,
+    "8694": {
+      "card_id": 8694,
       "card_no": "PL!SP-bp1-007-P+",
       "name": "米女メイ",
       "cost": 13,
@@ -139825,8 +139825,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1067": {
-      "card_id": 1067,
+    "4623": {
+      "card_id": 4623,
       "card_no": "PL!SP-bp2-001-R+",
       "name": "澁谷かのん",
       "cost": 13,
@@ -140003,8 +140003,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5163": {
-      "card_id": 5163,
+    "8719": {
+      "card_id": 8719,
       "card_no": "PL!SP-bp2-001-P+",
       "name": "澁谷かのん",
       "cost": 13,
@@ -141574,8 +141574,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1068": {
-      "card_id": 1068,
+    "4628": {
+      "card_id": 4628,
       "card_no": "PL!SP-bp2-006-R+",
       "name": "桜小路きな子",
       "cost": 10,
@@ -141767,8 +141767,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5164": {
-      "card_id": 5164,
+    "8724": {
+      "card_id": 8724,
       "card_no": "PL!SP-bp2-006-P+",
       "name": "桜小路きな子",
       "cost": 10,
@@ -143053,8 +143053,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1069": {
-      "card_id": 1069,
+    "4631": {
+      "card_id": 4631,
       "card_no": "PL!SP-bp2-009-R+",
       "name": "鬼塚夏美",
       "cost": 13,
@@ -143293,8 +143293,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5165": {
-      "card_id": 5165,
+    "8727": {
+      "card_id": 8727,
       "card_no": "PL!SP-bp2-009-P+",
       "name": "鬼塚夏美",
       "cost": 13,
@@ -143968,8 +143968,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1070": {
-      "card_id": 1070,
+    "4632": {
+      "card_id": 4632,
       "card_no": "PL!SP-bp2-010-R+",
       "name": "ウィーン・マルガレーテ",
       "cost": 15,
@@ -144163,8 +144163,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5166": {
-      "card_id": 5166,
+    "8728": {
+      "card_id": 8728,
       "card_no": "PL!SP-bp2-010-P+",
       "name": "ウィーン・マルガレーテ",
       "cost": 15,
@@ -147476,8 +147476,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1076": {
-      "card_id": 1076,
+    "4656": {
+      "card_id": 4656,
       "card_no": "PL!SP-bp4-004-R+",
       "name": "平安名すみれ",
       "cost": 22,
@@ -147743,8 +147743,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5172": {
-      "card_id": 5172,
+    "8752": {
+      "card_id": 8752,
       "card_no": "PL!SP-bp4-004-P+",
       "name": "平安名すみれ",
       "cost": 22,
@@ -148472,8 +148472,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1077": {
-      "card_id": 1077,
+    "4657": {
+      "card_id": 4657,
       "card_no": "PL!SP-bp4-005-R+",
       "name": "葉月 恋",
       "cost": 15,
@@ -148667,8 +148667,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5173": {
-      "card_id": 5173,
+    "8753": {
+      "card_id": 8753,
       "card_no": "PL!SP-bp4-005-P+",
       "name": "葉月 恋",
       "cost": 15,
@@ -149950,8 +149950,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1078": {
-      "card_id": 1078,
+    "4660": {
+      "card_id": 4660,
       "card_no": "PL!SP-bp4-008-R+",
       "name": "若菜四季",
       "cost": 13,
@@ -150275,8 +150275,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5174": {
-      "card_id": 5174,
+    "8756": {
+      "card_id": 8756,
       "card_no": "PL!SP-bp4-008-P+",
       "name": "若菜四季",
       "cost": 13,
@@ -151615,8 +151615,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1079": {
-      "card_id": 1079,
+    "4663": {
+      "card_id": 4663,
       "card_no": "PL!SP-bp4-011-R+",
       "name": "鬼塚冬毬",
       "cost": 7,
@@ -151911,8 +151911,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "5175": {
-      "card_id": 5175,
+    "8759": {
+      "card_id": 8759,
       "card_no": "PL!SP-bp4-011-P+",
       "name": "鬼塚冬毬",
       "cost": 7,
@@ -154315,8 +154315,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1082": {
-      "card_id": 1082,
+    "4950": {
+      "card_id": 4950,
       "card_no": "PL!SP-bp5-001-R+",
       "name": "澁谷かのん",
       "cost": 10,
@@ -156194,8 +156194,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1083": {
-      "card_id": 1083,
+    "4951": {
+      "card_id": 4951,
       "card_no": "PL!SP-bp5-002-R+",
       "name": "唐 可可",
       "cost": 13,
@@ -157256,8 +157256,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1084": {
-      "card_id": 1084,
+    "4952": {
+      "card_id": 4952,
       "card_no": "PL!SP-bp5-003-R+",
       "name": "嵐 千砂都",
       "cost": 17,
@@ -158004,8 +158004,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1085": {
-      "card_id": 1085,
+    "4953": {
+      "card_id": 4953,
       "card_no": "PL!SP-bp5-004-R+",
       "name": "平安名すみれ",
       "cost": 2,
@@ -158786,8 +158786,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1086": {
-      "card_id": 1086,
+    "4954": {
+      "card_id": 4954,
       "card_no": "PL!SP-bp5-005-R+",
       "name": "葉月 恋",
       "cost": 11,
@@ -165343,8 +165343,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1087": {
-      "card_id": 1087,
+    "881": {
+      "card_id": 881,
       "card_no": "PL!SP-bp5-111-P+",
       "name": "柊摩央",
       "cost": 8,
@@ -165653,8 +165653,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1088": {
-      "card_id": 1088,
+    "882": {
+      "card_id": 882,
       "card_no": "PL!SP-bp5-222-P+",
       "name": "聖澤悠奈",
       "cost": 8,
@@ -166031,8 +166031,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1089": {
-      "card_id": 1089,
+    "588": {
+      "card_id": 588,
       "card_no": "PL!SP-pb1-001-P+",
       "name": "澁谷かのん",
       "cost": 11,
@@ -166717,8 +166717,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1090": {
-      "card_id": 1090,
+    "589": {
+      "card_id": 589,
       "card_no": "PL!SP-pb1-002-P+",
       "name": "唐 可可",
       "cost": 15,
@@ -166913,8 +166913,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1091": {
-      "card_id": 1091,
+    "590": {
+      "card_id": 590,
       "card_no": "PL!SP-pb1-003-P+",
       "name": "嵐 千砂都",
       "cost": 9,
@@ -167199,8 +167199,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1092": {
-      "card_id": 1092,
+    "591": {
+      "card_id": 591,
       "card_no": "PL!SP-pb1-004-P+",
       "name": "平安名すみれ",
       "cost": 9,
@@ -167803,8 +167803,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1093": {
-      "card_id": 1093,
+    "592": {
+      "card_id": 592,
       "card_no": "PL!SP-pb1-005-P+",
       "name": "葉月 恋",
       "cost": 13,
@@ -168001,8 +168001,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1094": {
-      "card_id": 1094,
+    "593": {
+      "card_id": 593,
       "card_no": "PL!SP-pb1-006-P+",
       "name": "桜小路きな子",
       "cost": 9,
@@ -168305,8 +168305,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1095": {
-      "card_id": 1095,
+    "594": {
+      "card_id": 594,
       "card_no": "PL!SP-pb1-007-P+",
       "name": "米女メイ",
       "cost": 4,
@@ -168501,8 +168501,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1096": {
-      "card_id": 1096,
+    "595": {
+      "card_id": 595,
       "card_no": "PL!SP-pb1-008-P+",
       "name": "若菜四季",
       "cost": 15,
@@ -168739,8 +168739,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1097": {
-      "card_id": 1097,
+    "596": {
+      "card_id": 596,
       "card_no": "PL!SP-pb1-009-P+",
       "name": "鬼塚夏美",
       "cost": 2,
@@ -169029,8 +169029,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1098": {
-      "card_id": 1098,
+    "597": {
+      "card_id": 597,
       "card_no": "PL!SP-pb1-010-P+",
       "name": "ウィーン・マルガレーテ",
       "cost": 4,
@@ -169225,8 +169225,8 @@
       "synergy_flags": 0,
       "cost_flags": 0
     },
-    "1099": {
-      "card_id": 1099,
+    "598": {
+      "card_id": 598,
       "card_no": "PL!SP-pb1-011-P+",
       "name": "鬼塚冬毬",
       "cost": 13,
@@ -173856,8 +173856,8 @@
         1
       ]
     },
-    "897": {
-      "card_id": 897,
+    "4139": {
+      "card_id": 4139,
       "card_no": "PL!-bp3-020-L+",
       "name": "Snow halation",
       "score": 2,
@@ -185987,8 +185987,8 @@
         1
       ]
     },
-    "974": {
-      "card_id": 974,
+    "4419": {
+      "card_id": 4419,
       "card_no": "PL!N-bp4-032-L+",
       "name": "Blue!",
       "score": 3,
@@ -187612,8 +187612,8 @@
         1
       ]
     },
-    "1007": {
-      "card_id": 1007,
+    "4458": {
+      "card_id": 4458,
       "card_no": "PL!N-pb1-041-L+",
       "name": "PASTEL",
       "score": 4,
@@ -191483,8 +191483,8 @@
         1
       ]
     },
-    "1048": {
-      "card_id": 1048,
+    "4574": {
+      "card_id": 4574,
       "card_no": "PL!S-pb1-022-L+",
       "name": "逃走迷走メビウスループ",
       "score": 2,
@@ -191646,8 +191646,8 @@
         1
       ]
     },
-    "1049": {
-      "card_id": 1049,
+    "4575": {
+      "card_id": 4575,
       "card_no": "PL!S-pb1-023-L+",
       "name": "Next SPARKLING!!",
       "score": 9,
@@ -192784,8 +192784,8 @@
         1
       ]
     },
-    "1061": {
-      "card_id": 1061,
+    "4614": {
+      "card_id": 4614,
       "card_no": "PL!SP-bp1-025-L+",
       "name": "Starlight Prologue",
       "score": 2,
@@ -196328,8 +196328,8 @@
         0
       ]
     },
-    "1100": {
-      "card_id": 1100,
+    "4704": {
+      "card_id": 4704,
       "card_no": "PL!SP-pb1-026-L+",
       "name": "Jump Into the New World",
       "score": 4,
@@ -196938,8 +196938,8 @@
       "ability_text": "",
       "rare": "RE"
     },
-    "892": {
-      "card_id": 892,
+    "22": {
+      "card_id": 22,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-PR-010-PR+",
@@ -196948,8 +196948,8 @@
       "ability_text": "",
       "rare": "PR+"
     },
-    "4988": {
-      "card_id": 4988,
+    "4118": {
+      "card_id": 4118,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-PR-011-PR+",
@@ -196958,8 +196958,8 @@
       "ability_text": "",
       "rare": "PR+"
     },
-    "893": {
-      "card_id": 893,
+    "645": {
+      "card_id": 645,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-PR-013-PR+",
@@ -197018,8 +197018,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "898": {
-      "card_id": 898,
+    "4149": {
+      "card_id": 4149,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp3-030-PE+",
@@ -197038,8 +197038,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "4994": {
-      "card_id": 4994,
+    "12341": {
+      "card_id": 12341,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp3-031-PE+",
@@ -197058,8 +197058,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "9090": {
-      "card_id": 9090,
+    "20533": {
+      "card_id": 20533,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp3-032-PE+",
@@ -197128,8 +197128,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "902": {
-      "card_id": 902,
+    "4178": {
+      "card_id": 4178,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp4-029-PE+",
@@ -197148,8 +197148,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "903": {
-      "card_id": 903,
+    "4179": {
+      "card_id": 4179,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp4-030-PE+",
@@ -197168,8 +197168,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "904": {
-      "card_id": 904,
+    "4180": {
+      "card_id": 4180,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-bp4-031-PE+",
@@ -197358,8 +197358,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "9084": {
-      "card_id": 9084,
+    "16406": {
+      "card_id": 16406,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-034-PE+",
@@ -197378,8 +197378,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "929": {
-      "card_id": 929,
+    "12368": {
+      "card_id": 12368,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-035-PE+",
@@ -197398,8 +197398,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "930": {
-      "card_id": 930,
+    "8297": {
+      "card_id": 8297,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-036-PE+",
@@ -197418,8 +197418,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "931": {
-      "card_id": 931,
+    "12338": {
+      "card_id": 12338,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-037-PE+",
@@ -197438,8 +197438,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "932": {
-      "card_id": 932,
+    "12369": {
+      "card_id": 12369,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-038-PE+",
@@ -197458,8 +197458,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "933": {
-      "card_id": 933,
+    "12326": {
+      "card_id": 12326,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-039-PE+",
@@ -197478,8 +197478,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "934": {
-      "card_id": 934,
+    "8231": {
+      "card_id": 8231,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-040-PE+",
@@ -197498,8 +197498,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "4989": {
-      "card_id": 4989,
+    "12339": {
+      "card_id": 12339,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-041-PE+",
@@ -197518,8 +197518,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "935": {
-      "card_id": 935,
+    "12340": {
+      "card_id": 12340,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!-pb1-042-PE+",
@@ -197898,8 +197898,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "936": {
-      "card_id": 936,
+    "165": {
+      "card_id": 165,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-PR-024-PR+",
@@ -197908,8 +197908,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "5032": {
-      "card_id": 5032,
+    "4261": {
+      "card_id": 4261,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-PR-025-PR+",
@@ -197968,8 +197968,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "940": {
-      "card_id": 940,
+    "4279": {
+      "card_id": 4279,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-027-PE+",
@@ -197988,8 +197988,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "941": {
-      "card_id": 941,
+    "4280": {
+      "card_id": 4280,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-028-PE+",
@@ -198008,8 +198008,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "942": {
-      "card_id": 942,
+    "4281": {
+      "card_id": 4281,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-029-PE+",
@@ -198028,8 +198028,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "943": {
-      "card_id": 943,
+    "4282": {
+      "card_id": 4282,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-030-PE+",
@@ -198048,8 +198048,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "944": {
-      "card_id": 944,
+    "4283": {
+      "card_id": 4283,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-031-PE+",
@@ -198058,8 +198058,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "9128": {
-      "card_id": 9128,
+    "12453": {
+      "card_id": 12453,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp1-999-SEC+",
@@ -198118,8 +198118,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "948": {
-      "card_id": 948,
+    "4312": {
+      "card_id": 4312,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp2-030-PE+",
@@ -198138,8 +198138,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "949": {
-      "card_id": 949,
+    "4313": {
+      "card_id": 4313,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp2-031-PE+",
@@ -198158,8 +198158,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "950": {
-      "card_id": 950,
+    "4314": {
+      "card_id": 4314,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp2-032-PE+",
@@ -198178,8 +198178,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "951": {
-      "card_id": 951,
+    "4315": {
+      "card_id": 4315,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp2-033-PE+",
@@ -198208,8 +198208,8 @@
       "ability_text": "",
       "rare": "LLE"
     },
-    "952": {
-      "card_id": 952,
+    "16529": {
+      "card_id": 16529,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!HS-bp2-999-SEC+",
@@ -198428,8 +198428,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "13186": {
-      "card_id": 13186,
+    "32821": {
+      "card_id": 32821,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-PR-015-PR+",
@@ -198448,8 +198448,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "956": {
-      "card_id": 956,
+    "4316": {
+      "card_id": 4316,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-PR-017-PR+",
@@ -198528,8 +198528,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "961": {
-      "card_id": 961,
+    "4360": {
+      "card_id": 4360,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-034-PE+",
@@ -198548,8 +198548,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "962": {
-      "card_id": 962,
+    "4361": {
+      "card_id": 4361,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-035-PE+",
@@ -198568,8 +198568,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "963": {
-      "card_id": 963,
+    "4362": {
+      "card_id": 4362,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-036-PE+",
@@ -198588,8 +198588,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "964": {
-      "card_id": 964,
+    "4363": {
+      "card_id": 4363,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-037-PE+",
@@ -198608,8 +198608,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "965": {
-      "card_id": 965,
+    "4364": {
+      "card_id": 4364,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-038-PE+",
@@ -198618,8 +198618,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "5052": {
-      "card_id": 5052,
+    "16604": {
+      "card_id": 16604,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp1-999-SEC+",
@@ -198688,8 +198688,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "17282": {
-      "card_id": 17282,
+    "41013": {
+      "card_id": 41013,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp3-037-PE+",
@@ -198708,8 +198708,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "21378": {
-      "card_id": 21378,
+    "49205": {
+      "card_id": 49205,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp3-038-PE+",
@@ -198728,8 +198728,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "25474": {
-      "card_id": 25474,
+    "57397": {
+      "card_id": 57397,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp3-039-PE+",
@@ -198738,8 +198738,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "29570": {
-      "card_id": 29570,
+    "4732": {
+      "card_id": 4732,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp3-040-PE+",
@@ -198838,8 +198838,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "975": {
-      "card_id": 975,
+    "4421": {
+      "card_id": 4421,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp4-038-PE+",
@@ -198858,8 +198858,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "976": {
-      "card_id": 976,
+    "4422": {
+      "card_id": 4422,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp4-039-PE+",
@@ -198878,8 +198878,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "977": {
-      "card_id": 977,
+    "4423": {
+      "card_id": 4423,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp4-040-PE+",
@@ -198898,8 +198898,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "978": {
-      "card_id": 978,
+    "4424": {
+      "card_id": 4424,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-bp4-041-PE+",
@@ -199138,8 +199138,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "9148": {
-      "card_id": 9148,
+    "32988": {
+      "card_id": 32988,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-043-PE+",
@@ -199158,8 +199158,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1008": {
-      "card_id": 1008,
+    "16646": {
+      "card_id": 16646,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-044-PE+",
@@ -199178,8 +199178,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1009": {
-      "card_id": 1009,
+    "16647": {
+      "card_id": 16647,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-045-PE+",
@@ -199198,8 +199198,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1010": {
-      "card_id": 1010,
+    "16632": {
+      "card_id": 16632,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-046-PE+",
@@ -199218,8 +199218,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1011": {
-      "card_id": 1011,
+    "16633": {
+      "card_id": 16633,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-047-PE+",
@@ -199238,8 +199238,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1012": {
-      "card_id": 1012,
+    "20730": {
+      "card_id": 20730,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-048-PE+",
@@ -199258,8 +199258,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1013": {
-      "card_id": 1013,
+    "20765": {
+      "card_id": 20765,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-049-PE+",
@@ -199278,8 +199278,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1014": {
-      "card_id": 1014,
+    "20732": {
+      "card_id": 20732,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-050-PE+",
@@ -199298,8 +199298,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1015": {
-      "card_id": 1015,
+    "20733": {
+      "card_id": 20733,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-051-PE+",
@@ -199318,8 +199318,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1016": {
-      "card_id": 1016,
+    "16638": {
+      "card_id": 16638,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-052-PE+",
@@ -199338,8 +199338,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1017": {
-      "card_id": 1017,
+    "12543": {
+      "card_id": 12543,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-053-PE+",
@@ -199358,8 +199358,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1018": {
-      "card_id": 1018,
+    "16640": {
+      "card_id": 16640,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-054-PE+",
@@ -199368,8 +199368,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1019": {
-      "card_id": 1019,
+    "4420": {
+      "card_id": 4420,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!N-pb1-055-PE+",
@@ -199968,8 +199968,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "1020": {
-      "card_id": 1020,
+    "396": {
+      "card_id": 396,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-PR-011-PR+",
@@ -199978,8 +199978,8 @@
       "ability_text": "",
       "rare": "PR+"
     },
-    "1021": {
-      "card_id": 1021,
+    "397": {
+      "card_id": 397,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-PR-012-PR+",
@@ -200008,8 +200008,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "1022": {
-      "card_id": 1022,
+    "4483": {
+      "card_id": 4483,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-PR-036-PR+",
@@ -200068,8 +200068,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1026": {
-      "card_id": 1026,
+    "4530": {
+      "card_id": 4530,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp2-030-PE+",
@@ -200088,8 +200088,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1027": {
-      "card_id": 1027,
+    "4531": {
+      "card_id": 4531,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp2-031-PE+",
@@ -200108,8 +200108,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1028": {
-      "card_id": 1028,
+    "4532": {
+      "card_id": 4532,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp2-032-PE+",
@@ -200128,8 +200128,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1029": {
-      "card_id": 1029,
+    "4533": {
+      "card_id": 4533,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp2-033-PE+",
@@ -200158,8 +200158,8 @@
       "ability_text": "",
       "rare": "LLE"
     },
-    "1030": {
-      "card_id": 1030,
+    "12677": {
+      "card_id": 12677,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp2-999-SEC+",
@@ -200218,8 +200218,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "33666": {
-      "card_id": 33666,
+    "29308": {
+      "card_id": 29308,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp3-029-PE+",
@@ -200238,8 +200238,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "37762": {
-      "card_id": 37762,
+    "37500": {
+      "card_id": 37500,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp3-030-PE+",
@@ -200258,8 +200258,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "41858": {
-      "card_id": 41858,
+    "45692": {
+      "card_id": 45692,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-bp3-031-PE+",
@@ -200438,8 +200438,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "5118": {
-      "card_id": 5118,
+    "24963": {
+      "card_id": 24963,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-025-PE+",
@@ -200458,8 +200458,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1050": {
-      "card_id": 1050,
+    "20868": {
+      "card_id": 20868,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-026-PE+",
@@ -200478,8 +200478,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "5126": {
-      "card_id": 5126,
+    "29061": {
+      "card_id": 29061,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-027-PE+",
@@ -200498,8 +200498,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1051": {
-      "card_id": 1051,
+    "16774": {
+      "card_id": 16774,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-028-PE+",
@@ -200518,8 +200518,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1052": {
-      "card_id": 1052,
+    "24967": {
+      "card_id": 24967,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-029-PE+",
@@ -200538,8 +200538,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1053": {
-      "card_id": 1053,
+    "24968": {
+      "card_id": 24968,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-030-PE+",
@@ -200558,8 +200558,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1054": {
-      "card_id": 1054,
+    "12681": {
+      "card_id": 12681,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-031-PE+",
@@ -200578,8 +200578,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1055": {
-      "card_id": 1055,
+    "16778": {
+      "card_id": 16778,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-032-PE+",
@@ -200598,8 +200598,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1056": {
-      "card_id": 1056,
+    "16779": {
+      "card_id": 16779,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!S-pb1-033-PE+",
@@ -201128,8 +201128,8 @@
       "ability_text": "",
       "rare": "PR"
     },
-    "1057": {
-      "card_id": 1057,
+    "495": {
+      "card_id": 495,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-PR-014-PR+",
@@ -201138,8 +201138,8 @@
       "ability_text": "",
       "rare": "PR+"
     },
-    "5153": {
-      "card_id": 5153,
+    "4591": {
+      "card_id": 4591,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-PR-015-PR+",
@@ -201208,8 +201208,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1062": {
-      "card_id": 1062,
+    "4617": {
+      "card_id": 4617,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-031-PE+",
@@ -201228,8 +201228,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1063": {
-      "card_id": 1063,
+    "4618": {
+      "card_id": 4618,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-032-PE+",
@@ -201248,8 +201248,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1064": {
-      "card_id": 1064,
+    "4619": {
+      "card_id": 4619,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-033-PE+",
@@ -201268,8 +201268,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1065": {
-      "card_id": 1065,
+    "525": {
+      "card_id": 525,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-034-PE+",
@@ -201288,8 +201288,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1066": {
-      "card_id": 1066,
+    "4622": {
+      "card_id": 4622,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-035-PE+",
@@ -201298,8 +201298,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "9249": {
-      "card_id": 9249,
+    "12783": {
+      "card_id": 12783,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp1-999-SEC+",
@@ -201368,8 +201368,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1071": {
-      "card_id": 1071,
+    "4648": {
+      "card_id": 4648,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp2-032-PE+",
@@ -201388,8 +201388,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1072": {
-      "card_id": 1072,
+    "4649": {
+      "card_id": 4649,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp2-033-PE+",
@@ -201408,8 +201408,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1073": {
-      "card_id": 1073,
+    "4650": {
+      "card_id": 4650,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp2-034-PE+",
@@ -201428,8 +201428,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1074": {
-      "card_id": 1074,
+    "4651": {
+      "card_id": 4651,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp2-035-PE+",
@@ -201458,8 +201458,8 @@
       "ability_text": "",
       "rare": "LLE"
     },
-    "1075": {
-      "card_id": 1075,
+    "8702": {
+      "card_id": 8702,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp2-999-SEC+",
@@ -201528,8 +201528,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1080": {
-      "card_id": 1080,
+    "4682": {
+      "card_id": 4682,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp4-035-PE+",
@@ -201548,8 +201548,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1081": {
-      "card_id": 1081,
+    "4683": {
+      "card_id": 4683,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-bp4-036-PE+",
@@ -201768,8 +201768,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "13345": {
-      "card_id": 13345,
+    "33263": {
+      "card_id": 33263,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-027-PE+",
@@ -201788,8 +201788,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1101": {
-      "card_id": 1101,
+    "20988": {
+      "card_id": 20988,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-028-PE+",
@@ -201808,8 +201808,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1102": {
-      "card_id": 1102,
+    "25062": {
+      "card_id": 25062,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-029-PE+",
@@ -201828,8 +201828,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1103": {
-      "card_id": 1103,
+    "12797": {
+      "card_id": 12797,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-030-PE+",
@@ -201848,8 +201848,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "5171": {
-      "card_id": 5171,
+    "20990": {
+      "card_id": 20990,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-031-PE+",
@@ -201868,8 +201868,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1104": {
-      "card_id": 1104,
+    "20969": {
+      "card_id": 20969,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-032-PE+",
@@ -201888,8 +201888,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1105": {
-      "card_id": 1105,
+    "12799": {
+      "card_id": 12799,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-033-PE+",
@@ -201908,8 +201908,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1106": {
-      "card_id": 1106,
+    "16896": {
+      "card_id": 16896,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-034-PE+",
@@ -201928,8 +201928,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1107": {
-      "card_id": 1107,
+    "12801": {
+      "card_id": 12801,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-035-PE+",
@@ -201948,8 +201948,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1108": {
-      "card_id": 1108,
+    "8743": {
+      "card_id": 8743,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-036-PE+",
@@ -201968,8 +201968,8 @@
       "ability_text": "",
       "rare": "PE"
     },
-    "1109": {
-      "card_id": 1109,
+    "16899": {
+      "card_id": 16899,
       "original_text": "",
       "original_text_en": "",
       "card_no": "PL!SP-pb1-037-PE+",
@@ -202339,6 +202339,6 @@
     "source_hash": "74ce8c4e24e5bbf66a8ca40fae08b99d0a54c654fa84b2f3ebf4ab8cee47c391",
     "ability_source_hash": "e6312dd8d95ecfede2e6277f696d86c0b73c3f09285310025276a5d58de3e08f",
     "generated_by": "compiler/main.py",
-    "generated_at": "2026-03-26T17:08:31.520048"
+    "generated_at": "2026-03-26T18:31:31.920354"
   }
 }

@@ -78,24 +78,16 @@ impl FrameBuilder {
             match frame {
                 AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
                 AbilityFrame::Semantic { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                AbilityFrame::RecoverLive { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
+                AbilityFrame::RecoverLive { filter, .. } => *filter = CardFilter::from_attr(a_val),
                 AbilityFrame::RecoverMember { filter, .. } => {
                     *filter = CardFilter::from_attr(a_val)
                 }
-                AbilityFrame::SelectMember { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
+                AbilityFrame::SelectMember { filter, .. } => *filter = CardFilter::from_attr(a_val),
                 AbilityFrame::LookAndChoose { filter, .. } => {
                     *filter = CardFilter::from_attr(a_val)
                 }
-                AbilityFrame::MoveMember { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
-                AbilityFrame::MetaRule { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
+                AbilityFrame::MoveMember { filter, .. } => *filter = CardFilter::from_attr(a_val),
+                AbilityFrame::MetaRule { filter, .. } => *filter = CardFilter::from_attr(a_val),
                 _ => {}
             }
         }

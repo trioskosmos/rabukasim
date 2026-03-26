@@ -412,10 +412,27 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     card_filter_to_attr(&parsed) as u64 | extras
 }
 
+fn as_bool_robust(v: &serde_json::Value) -> bool {
+    v.as_bool()
+        .unwrap_or_else(|| v.as_i64().map(|i| i != 0).unwrap_or(false))
+}
+
+fn params_object<'a>(
+    params: Option<&'a serde_json::Value>,
+) -> Option<&'a serde_json::Map<String, serde_json::Value>> {
+    let mut obj = params.and_then(|value| value.as_object())?;
+
+    if let Some(sub) = obj.get("attr").or_else(|| obj.get("filter")) {
+        if let Some(sub_obj) = sub.as_object() {
+            obj = sub_obj;
+        }
+    }
+
+    Some(obj)
+}
+
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
-    let Some(obj) = params.and_then(|value| value.as_object()) else {
-        return None;
-    };
+    let obj = params_object(params)?;
 
     let mut filter = CardFilter::default();
     let mut extras = 0u64;
@@ -438,10 +455,17 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
         if let Some(v) = value.as_u64() {
             filter.is_enabled = true;
             filter.card_type = (v & 0x3) as u8;
+        } else if let Some(v) = value.as_str() {
+            filter.is_enabled = true;
+            filter.card_type = match v.to_uppercase().as_str() {
+                "MEMBER" => 1,
+                "LIVE" => 2,
+                _ => 0,
+            };
         }
     }
     if let Some(value) = obj.get("group_enabled") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.group_enabled = true;
         }
@@ -454,31 +478,31 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
         }
     }
     if let Some(value) = obj.get("is_tapped") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.is_tapped = true;
         }
     }
     if let Some(value) = obj.get("has_blade_heart") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.has_blade_heart = true;
         }
     }
     if let Some(value) = obj.get("not_has_blade_heart") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.not_has_blade_heart = true;
         }
     }
     if let Some(value) = obj.get("unique_names") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.unique_names = true;
         }
     }
     if let Some(value) = obj.get("unit_enabled") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.unit_enabled = true;
         }
@@ -491,7 +515,7 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
         }
     }
     if let Some(value) = obj.get("value_enabled") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.value_enabled = true;
         }
@@ -504,13 +528,13 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
         }
     }
     if let Some(value) = obj.get("is_le") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.is_le = true;
         }
     }
     if let Some(value) = obj.get("is_cost_type") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.is_cost_type = true;
         }
@@ -564,34 +588,41 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
         if let Some(v) = value.as_u64() {
             filter.is_enabled = true;
             filter.special_id = (v & 0x7) as u8;
+        } else if let Some(v) = value.as_str() {
+            filter.is_enabled = true;
+            filter.special_id = match v.to_uppercase().replace('_', " ").as_str() {
+                "NOT MY" | "NOTMY" => 2,
+                "NOT SELF" | "NOTSELF" => 3,
+                _ => 0,
+            };
         }
     }
     if let Some(value) = obj.get("is_setsuna") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.is_setsuna = true;
         }
     }
     if let Some(value) = obj.get("compare_accumulated") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.compare_accumulated = true;
         }
     }
     if let Some(value) = obj.get("is_optional") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.is_optional = true;
         }
     }
     if let Some(value) = obj.get("keyword_energy") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.keyword_energy = true;
         }
     }
     if let Some(value) = obj.get("keyword_member") {
-        if value.as_bool().unwrap_or(false) {
+        if as_bool_robust(value) {
             filter.is_enabled = true;
             filter.keyword_member = true;
         }
@@ -610,7 +641,7 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
                 special.is_optional = obj
                     .get("is_optional")
                     .or_else(|| obj.get("IS_OPTIONAL"))
-                    .and_then(|value| value.as_bool())
+                    .map(|value| as_bool_robust(value))
                     .unwrap_or(true);
                 return Some(card_filter_to_attr(&special) as u64);
             }

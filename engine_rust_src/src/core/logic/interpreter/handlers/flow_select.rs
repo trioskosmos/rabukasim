@@ -162,9 +162,10 @@ pub fn handle_select_ops(
         ctx.selected_cards.clear();
         ctx.selected_target_keys.clear();
 
-        for (slot_idx, &cid) in cards_for_source_zone(state, target_player, slot_info.source_zone as u8)
-            .iter()
-            .enumerate()
+        for (slot_idx, &cid) in
+            cards_for_source_zone(state, target_player, slot_info.source_zone as u8)
+                .iter()
+                .enumerate()
         {
             if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
                 ctx.selected_cards.push(cid);
@@ -204,16 +205,20 @@ pub fn handle_select_ops(
             _ => p_idx as u8,
         };
 
+        let select_member_target_player = resolve_select_member_target_player(
+            slot_info,
+            filter_attr,
+            p_idx,
+            is_targeted_select_member_cost,
+        );
+
         if is_optional && op == O_SELECT_MEMBER {
-            let source_zone = slot_info.source_zone as u8;
-            let target_player = resolve_select_member_target_player(
-                slot_info,
-                filter_attr,
-                p_idx,
-                is_targeted_select_member_cost,
-            );
-            let has_legal_target =
-                !matching_cards(cards_for_source_zone(state, target_player, source_zone)).is_empty();
+            let has_legal_target = !matching_cards(cards_for_source_zone(
+                state,
+                select_member_target_player,
+                slot_info.source_zone as u8,
+            ))
+            .is_empty();
 
             if !has_legal_target {
                 return HandlerResult::Continue;
@@ -221,15 +226,12 @@ pub fn handle_select_ops(
         }
 
         if op == O_SELECT_MEMBER {
-            let source_zone = slot_info.source_zone as u8;
-            let target_player = resolve_select_member_target_player(
-                slot_info,
-                filter_attr,
-                p_idx,
-                is_targeted_select_member_cost,
-            );
-            let looked_cards = matching_cards(cards_for_source_zone(state, target_player, source_zone));
-            state.players[target_player].looked_cards = looked_cards.into();
+            let looked_cards = matching_cards(cards_for_source_zone(
+                state,
+                select_member_target_player,
+                slot_info.source_zone as u8,
+            ));
+            state.players[select_member_target_player].looked_cards = looked_cards.into();
         }
 
         if matches!(

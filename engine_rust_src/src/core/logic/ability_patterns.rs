@@ -16,6 +16,45 @@ pub fn decode_optional_mode_mask(value: i16) -> Option<i16> {
     }
 }
 
+fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
+    [pi.card_id, pi.ctx.source_card_id]
+}
+
+fn preferred_ability_index(pi: &PendingInteraction) -> Option<usize> {
+    usize::try_from(pi.ability_index).ok()
+}
+
+fn find_matching_live_ability<'a, F>(
+    db: &'a CardDatabase,
+    pi: &PendingInteraction,
+    mut matches: F,
+) -> Option<&'a Ability>
+where
+    F: FnMut(&Ability) -> bool,
+{
+    let ability_index = preferred_ability_index(pi);
+
+    for live_card_id in pending_live_card_ids(pi) {
+        let Some(card) = db.get_live(live_card_id) else {
+            continue;
+        };
+
+        if let Some(index) = ability_index {
+            if let Some(ability) = card.abilities.get(index) {
+                if matches(ability) {
+                    return Some(ability);
+                }
+            }
+        }
+
+        if let Some(ability) = card.abilities.iter().find(|ability| matches(ability)) {
+            return Some(ability);
+        }
+    }
+
+    None
+}
+
 pub fn pending_live_ability<'a>(
     db: &'a CardDatabase,
     pi: &PendingInteraction,
@@ -45,52 +84,14 @@ pub fn pending_live_ability<'a>(
         pi.choice_type,
         ChoiceType::SelectMode | ChoiceType::RecovM | ChoiceType::RecovL | ChoiceType::Optional
     ) {
-        for live_card_id in [pi.card_id, pi.ctx.source_card_id] {
-            let Some(card) = db.get_live(live_card_id) else {
-                continue;
-            };
-
-            if let Ok(ability_index) = usize::try_from(pi.ability_index) {
-                if let Some(ability) = card.abilities.get(ability_index) {
-                    if is_distinct_optional_mode_live_ability(ability) {
-                        return Some(ability);
-                    }
-                }
-            }
-
-            if let Some(ability) = card
-                .abilities
-                .iter()
-                .find(|ability| is_distinct_optional_mode_live_ability(ability))
-            {
-                return Some(ability);
-            }
-        }
-    }
-
-    for live_card_id in [pi.card_id, pi.ctx.source_card_id] {
-        let Some(card) = db.get_live(live_card_id) else {
-            continue;
-        };
-
-        if let Ok(ability_index) = usize::try_from(pi.ability_index) {
-            if let Some(ability) = card.abilities.get(ability_index) {
-                if ability_matches_pending(ability, pi) {
-                    return Some(ability);
-                }
-            }
-        }
-
-        if let Some(ability) = card
-            .abilities
-            .iter()
-            .find(|ability| ability_matches_pending(ability, pi))
+        if let Some(ability) =
+            find_matching_live_ability(db, pi, is_distinct_optional_mode_live_ability)
         {
             return Some(ability);
         }
     }
 
-    None
+    find_matching_live_ability(db, pi, |ability| ability_matches_pending(ability, pi))
 }
 
 pub fn pending_member_ability<'a>(
@@ -114,22 +115,7 @@ pub fn is_distinct_optional_mode_live_ability(ability: &Ability) -> bool {
 }
 
 pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) -> Option<i16> {
-    let ability = if let Some(card) = db
-        .get_live(pi.card_id)
-        .or_else(|| db.get_live(pi.ctx.source_card_id))
-    {
-        if let Some(ability) = card
-            .abilities
-            .iter()
-            .find(|ability| is_distinct_optional_mode_live_ability(ability))
-        {
-            ability
-        } else {
-            pending_live_ability(db, pi)?
-        }
-    } else {
-        pending_live_ability(db, pi)?
-    };
+    let ability = pending_live_ability(db, pi)?;
     if !is_distinct_optional_mode_live_ability(ability) {
         return None;
     }
@@ -140,11 +126,7 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
 
     if pi.choice_type == ChoiceType::SelectMode && !pi.ctx.selected_cards.is_empty() {
         let option_count = ability.modal_option_count();
-        let mut mask = if option_count >= i16::BITS as usize {
-            i16::MAX
-        } else {
-            (1i16 << option_count) - 1
-        };
+        let mut mask = optional_mode_mask_for_count(option_count);
         for &selected in &pi.ctx.selected_cards {
             if selected >= 0 && (selected as usize) < option_count {
                 mask &= !(1i16 << selected);
@@ -160,14 +142,17 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
         .iter()
         .any(|frame| frame.opcode() == pi.effect_opcode);
     if is_initial_optional_effect {
-        let option_count = ability.modal_option_count();
-        Some(if option_count >= i16::BITS as usize {
-            i16::MAX
-        } else {
-            (1i16 << option_count) - 1
-        })
+        Some(optional_mode_mask_for_count(ability.modal_option_count()))
     } else {
         None
+    }
+}
+
+fn optional_mode_mask_for_count(option_count: usize) -> i16 {
+    if option_count >= i16::BITS as usize {
+        i16::MAX
+    } else {
+        (1i16 << option_count) - 1
     }
 }
 

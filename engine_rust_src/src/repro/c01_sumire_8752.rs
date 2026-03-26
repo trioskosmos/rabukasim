@@ -13,7 +13,10 @@ fn test_sumire_8752_repro() {
     assert_eq!(on_play.trigger, TriggerType::OnPlay);
 
     assert_eq!(on_play.conditions.len(), 2);
-    assert_eq!(on_play.conditions[0].condition_type, ConditionType::HasKeyword);
+    assert_eq!(
+        on_play.conditions[0].condition_type,
+        ConditionType::HasKeyword
+    );
     assert_eq!(on_play.conditions[1].condition_type, ConditionType::Baton);
     assert_eq!(
         on_play.conditions[1].params["FILTER"].as_str(),
@@ -24,7 +27,10 @@ fn test_sumire_8752_repro() {
     assert_eq!(on_play.effects.len(), 2);
     assert_eq!(on_play.effects[0].effect_type, EffectType::Draw);
     assert_eq!(on_play.effects[0].value, 2);
-    assert_eq!(on_play.effects[1].effect_type, EffectType::PlayMemberFromDiscard);
+    assert_eq!(
+        on_play.effects[1].effect_type,
+        EffectType::PlayMemberFromDiscard
+    );
     assert_eq!(on_play.effects[1].value, 1);
     assert_eq!(
         on_play.effects[1].params["FILTER"].as_str(),

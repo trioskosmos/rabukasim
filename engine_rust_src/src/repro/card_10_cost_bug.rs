@@ -411,8 +411,7 @@ mod tests {
         // Run PREVENT_BATON_TOUCH ability
         state.resolve_semantic_frames(
             &db,
-            &FrameProgram::from_words(&prevent_baton_bytecode)
-                .frames,
+            &FrameProgram::from_words(&prevent_baton_bytecode).frames,
             &ctx,
         );
 
