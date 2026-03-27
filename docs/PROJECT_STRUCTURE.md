@@ -49,7 +49,7 @@
     *   Legacy scripts in `tools/_legacy_scripts/` may need migration.
 
 4.  **Tests:**
-    *   Run `cargo test --manifest-path engine_rust_src/Cargo.toml --no-fail-fast -- --nocapture`.
+    *   Run `cargo test --manifest-path engine_rust_src/Cargo.toml --lib -j 4 --no-fail-fast -- --nocapture`.
     *   Rust tests read from `engine/data/` (which is synced from `data/`).
 
 ---

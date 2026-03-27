@@ -23,7 +23,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             "abilities": [
                 {
                     "trigger_id": trigger_id,
-                    "frames": [{"op": "SELECT_MODE", "value": 2}, "Return"],
+                    "instructions": [{"op": "SELECT_MODE", "options": {"value": 2}}, {"op": "RETURN"}],
                     "pseudocode": "A",
                     "cards": ["A-001 | Card A [member_db:1] (ab#0 ON_LIVE_START)", "A-002 | Card B [member_db:2] (ab#0 ON_LIVE_START)"],
                     "card_refs": [
@@ -33,7 +33,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
                 },
                 {
                     "trigger_id": int(metadata["triggers"]["CONSTANT"]),
-                    "frames": [{"op": "RETURN"}],
+                    "instructions": [{"op": "RETURN"}],
                     "card_refs": [{"card_no": "A-003", "ability_index": 0}],
                 },
             ],
@@ -48,7 +48,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         self.assertEqual(len(entry["cards"]), 2)
         self.assertEqual(len(entry["card_refs"]), 2)
         self.assertEqual(entry["opcode_sequence"], ["SELECT_MODE", "RETURN"])
-        self.assertEqual(entry["rust_opcode_sequence"], ["O_SELECT_MODE", "O_RETURN"])
+        self.assertEqual(entry["instructions"][0]["options"]["value"], 2)
         self.assertEqual(entry["card_refs"][0]["card_no"], "A-001")
 
     def test_frame_to_sparse_omits_zero_fields(self) -> None:
@@ -77,9 +77,12 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             "abilities": [
                 {
                     "trigger_id": trigger_id,
-                    "frames": [
-                        {"op": "DRAW", "value": 1, "slot": {"target_slot": int(metadata["slot_indices"]["CONTEXT"])}},
-                        "Return",
+                    "instructions": [
+                        {
+                            "op": "DRAW",
+                            "options": {"value": 1, "slot": {"target_slot": int(metadata["slot_indices"]["CONTEXT"])}},
+                        },
+                        {"op": "RETURN"},
                     ],
                     "card_refs": [{"card_no": "TST-200", "ability_index": 0}],
                 }
@@ -89,8 +92,8 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
         self.assertEqual(payload["schema"], "ability_frames.flat.v2")
-        self.assertTrue(all("op" in frame for frame in entry["frames"]))
-        rebuilt = legacy_codec.model_to_bytecode({"frames": entry["frames"]}, metadata)
+        self.assertTrue(all("op" in frame for frame in entry["instructions"]))
+        rebuilt = legacy_codec.model_to_bytecode({"frames": entry["instructions"]}, metadata)
         self.assertEqual(
             rebuilt,
             [

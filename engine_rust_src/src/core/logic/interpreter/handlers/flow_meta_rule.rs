@@ -149,6 +149,9 @@ pub fn handle_meta_rule(
             let all_active = state.players[p_idx].tapped_energy_count() == 0;
             return HandlerResult::SetCond(all_active);
         }
+    } else if frame.opcode() == O_META_RULE && v == 1 && frame.components().filter.card_type == 2 {
+        let all_active = state.players[p_idx].tapped_energy_count() == 0;
+        return HandlerResult::SetCond(all_active);
     }
 
     if frame.opcode() == O_META_RULE && (a == 0 || a == 10) {

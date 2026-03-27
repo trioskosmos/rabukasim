@@ -3,17 +3,12 @@ use crate::core::alphazero_evaluator::HeuristicBaselineEvaluator;
 use crate::core::heuristics::Heuristic;
 use crate::core::logic::{CardDatabase, GameState};
 use crate::core::mcts::MCTS;
+use crate::test_helpers::load_real_db;
 use std::sync::Arc;
 
 #[test]
 fn test_alphazero_baseline_smoke() {
-    let mut db = CardDatabase::default();
-    // Load minimal cards or use empty for smoke test
-    if let Ok(json) = std::fs::read_to_string("../data/cards_compiled.json") {
-        if let Ok(loaded_db) = CardDatabase::from_json(&json) {
-            db = loaded_db;
-        }
-    }
+    let db = load_real_db();
 
     let mut state = GameState::default();
     // Setup a basic valid state
@@ -83,7 +78,7 @@ fn test_alphazero_baseline_smoke() {
 
 #[test]
 fn test_alphazero_volatile_flags() {
-    let db = CardDatabase::default();
+    let db = load_real_db();
     let mut state = GameState::default();
 
     // 1. Manually set volatile flags

@@ -46,9 +46,18 @@ pub fn handle_meta_control(
                 }
             }
             if state.debug.debug_mode {
+                let selected_names: Vec<String> = ctx
+                    .selected_cards
+                    .iter()
+                    .filter_map(|cid| {
+                        db.get_member(*cid)
+                            .map(|card| card.name.clone())
+                            .or_else(|| db.get_live(*cid).map(|card| card.name.clone()))
+                    })
+                    .collect();
                 println!(
-                    "[DEBUG] CALC_SUM_COST: total_sum={}, cards={:?}",
-                    sum, ctx.selected_cards
+                    "[DEBUG] CALC_SUM_COST: total_sum={} cards={:?}",
+                    sum, selected_names
                 );
             }
             ctx.v_accumulated = sum as i16;

@@ -1,5 +1,5 @@
 use super::*;
-use crate::core::logic::constants::CHOICE_DONE;
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrame;
 
@@ -85,7 +85,7 @@ pub fn handle_pay_energy(
                 options,
                 actions,
             );
-        } else if ctx.choice_index == 99 {
+        } else if ctx.choice_index == CHOICE_DONE {
             // "Done" button pressed
             ctx.choice_index = -1;
             ctx.v_remaining = -1; // Reset marker
@@ -148,7 +148,7 @@ pub fn handle_pay_energy(
     // Resumption logic for optional choice
     let actual_v = v;
     if is_optional && ctx.v_remaining == -1 {
-        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+        if ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
             ctx.choice_index = -1;
             return HandlerResult::SetCond(false);
         }

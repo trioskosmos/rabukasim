@@ -1,8 +1,8 @@
 # Engine Test Suite - Complete Organization Guide
 
 **Last Updated**: March 13, 2026  
-**Total Tests**: 568 (all passing except Q166 isolation issue)  
-**Execution Time**: 17-18 seconds (parallelized), ~70 seconds (single-threaded)
+**Total Tests**: 531 active library tests in the fast path  
+**Execution Time**: ~20-25 seconds cold, much faster warm with `cargo test --lib -j 4`
 
 ---
 
@@ -23,7 +23,7 @@
 ### Run All Tests
 ```bash
 cd engine_rust_src
-cargo test --lib          # ~18s, parallelized (default)
+cargo test --lib -j 4     # Fast path, parallelized
 cargo test --lib -- --test-threads=1  # ~70s, single-threaded
 ```
 

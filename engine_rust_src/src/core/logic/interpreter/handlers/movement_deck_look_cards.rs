@@ -19,6 +19,9 @@ pub fn handle_look_cards(
     let count = v as usize;
     let filter_attr = filter_attr_from_params(frame.components().params).unwrap_or(a as u64);
     if resolved_slot == 6 {
+        if ctx.choice_index == -1 && ctx.v_remaining == -1 {
+            state.players[p_idx].revealed_cards.clear();
+        }
         if ctx.choice_index == -1 {
             if matches!(
                 suspend_choice(
@@ -46,6 +49,9 @@ pub fn handle_look_cards(
             let cid = state.players[p_idx].hand[choice];
             if !state.players[p_idx].looked_cards.contains(&cid) {
                 state.players[p_idx].looked_cards.push(cid);
+            }
+            if !state.players[p_idx].revealed_cards.contains(&cid) {
+                state.players[p_idx].revealed_cards.push(cid);
             }
         }
         if ctx.choice_index == CHOICE_DONE

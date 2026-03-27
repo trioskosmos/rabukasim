@@ -74,8 +74,9 @@ pub fn handle_move_to_discard(
 
     if state.debug.debug_mode {
         println!(
-            "[DEBUG_MOV] h_m_t_d: cid={}, choice={}, optional={}, attr={:x}",
-            ctx.source_card_id, ctx.choice_index, is_optional, a as u64
+            "[DEBUG_MOV] h_m_t_d: optional={} {}",
+            is_optional,
+            logging::describe_context(ctx)
         );
     }
 

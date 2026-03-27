@@ -2,7 +2,13 @@ import os
 import shutil
 
 
-def sync_assets():
+def sync_assets(*, quiet: bool = False):
+    changed = False
+
+    def log(message: str) -> None:
+        if not quiet:
+            print(message)
+
     # Paths relative to project root
     ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     FE_BASE = os.path.join(ROOT, "frontend", "web_ui")
@@ -11,10 +17,10 @@ def sync_assets():
     VITE_DIST = os.path.join(FE_BASE, "dist")
     if os.path.exists(VITE_DIST):
         FE_SRC = VITE_DIST
-        print(f"Using Vite build output: {FE_SRC}")
+        log(f"Using Vite build output: {FE_SRC}")
     else:
         FE_SRC = FE_BASE
-        print(f"Vite build not found at {VITE_DIST}; using raw source fallback: {FE_SRC}")
+        log(f"Vite build not found at {VITE_DIST}; using raw source fallback: {FE_SRC}")
         
     IMG_SRC = os.path.join(ROOT, "frontend", "img")
     LAUNCH_DEST_FINAL = os.path.join(ROOT, "launcher", "static_content")
@@ -23,10 +29,10 @@ def sync_assets():
     if not os.path.exists(LAUNCH_DEST):
         os.makedirs(LAUNCH_DEST)
 
-    print("--- Syncing Assets to Launcher ---")
+    log("--- Syncing Assets to Launcher ---")
 
     # 1. Sync Frontend Web UI (HTML/JS/CSS)
-    print(f"Syncing Web UI -> {LAUNCH_DEST}")
+    log(f"Syncing Web UI -> {LAUNCH_DEST}")
     if os.path.exists(FE_SRC):
         # We use a custom copy tree to avoid stomping on the img folder inside static_content if it exists
         for item in os.listdir(FE_SRC):
@@ -40,23 +46,27 @@ def sync_assets():
                 # O(changed) check: only copy if dest doesn't exist or mtime/size differs
                 if not os.path.exists(d) or os.path.getmtime(s) > os.path.getmtime(d) or os.path.getsize(s) != os.path.getsize(d):
                     shutil.copy2(s, d)
+                    changed = True
 
     # 1b. Sync Compiled Data
-    print("Syncing Compiled Data...")
+    log("Syncing Compiled Data...")
     DATA_DEST = os.path.join(LAUNCH_DEST, "data")
     if not os.path.exists(DATA_DEST):
         os.makedirs(DATA_DEST)
 
     COMPILED_SRC = os.path.join(ROOT, "data", "cards_compiled.json")
     if os.path.exists(COMPILED_SRC):
-        shutil.copy2(COMPILED_SRC, os.path.join(DATA_DEST, "cards_compiled.json"))
-        print(f"Synced cards_compiled.json to {DATA_DEST}")
+        compiled_dst = os.path.join(DATA_DEST, "cards_compiled.json")
+        if not os.path.exists(compiled_dst) or os.path.getmtime(COMPILED_SRC) > os.path.getmtime(compiled_dst) or os.path.getsize(COMPILED_SRC) != os.path.getsize(compiled_dst):
+            shutil.copy2(COMPILED_SRC, compiled_dst)
+            changed = True
+        log(f"Synced cards_compiled.json to {DATA_DEST}")
     else:
-        print(f"WARNING: {COMPILED_SRC} not found!")
+        log(f"WARNING: {COMPILED_SRC} not found!")
 
     # 2. Smart Sync Images
     IMG_DEST = os.path.join(LAUNCH_DEST, "img")
-    print(f"Syncing Images -> {IMG_DEST} (Filtering for WebP/Icons)")
+    log(f"Syncing Images -> {IMG_DEST} (Filtering for WebP/Icons)")
 
     if not os.path.exists(IMG_DEST):
         os.makedirs(IMG_DEST)
@@ -103,12 +113,13 @@ def sync_assets():
                 if not os.path.exists(dest_file) or os.path.getmtime(src_file) > os.path.getmtime(dest_file) or os.path.getsize(src_file) != os.path.getsize(dest_file):
                     shutil.copy2(src_file, dest_file)
                     count += 1
+                    changed = True
 
-    print(f"Done! Synced {count} image/data files.")
+    log(f"Done! Synced {count} image/data files.")
 
 
     # 3. Atomic Flip (Windows-Safe)
-    print(f"--- Atomic Flip: {LAUNCH_DEST} -> {LAUNCH_DEST_FINAL} ---")
+    log(f"--- Atomic Flip: {LAUNCH_DEST} -> {LAUNCH_DEST_FINAL} ---")
     
     # Use shutil.move() which is more robust on Windows for in-use directories
     # First, remove the old destination if it exists (handles in-use directory)
@@ -121,7 +132,7 @@ def sync_assets():
         except (OSError, PermissionError) as e:
             # If the target is in use (common on Windows with dev servers), 
             # copy the new content directly into the existing directory
-            print(f"[!] Note: {LAUNCH_DEST_FINAL} is in use (likely dev server). Copying content instead of replacing.")
+            log(f"[!] Note: {LAUNCH_DEST_FINAL} is in use (likely dev server). Copying content instead of replacing.")
             for item in os.listdir(LAUNCH_DEST):
                 src = os.path.join(LAUNCH_DEST, item)
                 dst = os.path.join(LAUNCH_DEST_FINAL, item)
@@ -132,18 +143,21 @@ def sync_assets():
                         shutil.copytree(src, dst)
                     else:
                         shutil.copy2(src, dst)
+                    changed = True
                 except Exception as inner_e:
-                    print(f"[!] Warning: Could not sync {item}: {inner_e}")
+                    log(f"[!] Warning: Could not sync {item}: {inner_e}")
             # Clean up staging dir
             try:
                 shutil.rmtree(LAUNCH_DEST)
             except Exception as cleanup_e:
-                print(f"[!] Warning: Could not clean up staging directory: {cleanup_e}")
+                log(f"[!] Warning: Could not clean up staging directory: {cleanup_e}")
     else:
         # Normal case: just rename the staging directory
         shutil.move(LAUNCH_DEST, LAUNCH_DEST_FINAL)
+        changed = True
 
-    print("Sync Complete!")
+    log("Sync Complete!")
+    return changed
 
 
 if __name__ == "__main__":

@@ -148,4 +148,8 @@ impl WasmEngine {
             String::new()
         }
     }
+
+    pub fn get_action_label(&self, action_id: i32) -> String {
+        crate::core::logic::ActionFactory::get_verbose_action_label(action_id, &self.state, &self.db)
+    }
 }

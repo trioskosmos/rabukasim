@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+from pathlib import Path
 
 OPCODES = {
     "DRAW": "draw_cards({p}, {v} as u32);",
@@ -19,12 +20,14 @@ OPCODES = {
     "ACTIVATE_ENERGY": "activate_energy({p}, {v});",
 }
 
+ROOT_DIR = Path(__file__).resolve().parents[1]
+DB_PATH = ROOT_DIR / "data" / "ability_frames.json"
+OUT_PATH = ROOT_DIR / "engine_rust_src" / "src" / "core" / "hardcoded.rs"
 
-def generate_rust():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
-    db_path = os.path.join(project_root, "data", "ability_frames.json")
-    out_path = os.path.join(project_root, "engine_rust_src", "src", "core", "hardcoded.rs")
+
+def generate_rust(*, quiet: bool = False) -> bool:
+    db_path = DB_PATH
+    out_path = OUT_PATH
 
     with open(db_path, "r", encoding="utf-8") as f:
         db = json.load(f)
@@ -134,10 +137,22 @@ def generate_rust():
     out.append("    }")
     out.append("}")
 
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(out))
+    content = "\n".join(out)
+    changed = True
+    if out_path.exists():
+        with open(out_path, "r", encoding="utf-8") as f:
+            changed = f.read() != content
 
-    print(f"Generated hardcoded logic for {count} abilities.")
+    if changed:
+        with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(content)
+
+    if not quiet:
+        if changed:
+            print(f"Generated hardcoded logic for {count} abilities.")
+        else:
+            print(f"Hardcoded logic already up to date for {count} abilities.")
+    return changed
 
 
 if __name__ == "__main__":

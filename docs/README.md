@@ -14,6 +14,7 @@ Technical specifications for the game engine and data formats.
 - `pseudocode_spec.md`: The standard for card ability definitions.
 - `opcode_map.md`: Mapping of bytecode opcodes to game effects.
 - `VM_IMPLEMENTATION_GUIDE.md`: Guide for the virtual machine logic.
+- `ability_pipeline.md`: Canonical overview of the active ability build/runtime pipeline.
 
 ### 📖 [guides/](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/docs/guides/)
 How-to guides for running, deploying, and training AI.

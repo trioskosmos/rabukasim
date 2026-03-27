@@ -1,13 +1,8 @@
 use crate::core::logic::*;
+use crate::test_helpers::load_real_db;
 
-fn load_test_db() -> CardDatabase {
-    let paths = ["data/cards_compiled.json", "../data/cards_compiled.json"];
-    for path in paths {
-        if let Ok(json_str) = std::fs::read_to_string(path) {
-            return CardDatabase::from_json(&json_str).expect("Failed to parse CardDatabase");
-        }
-    }
-    panic!("Could not find cards_compiled.json in any of the expected locations");
+fn load_test_db() -> &'static CardDatabase {
+    load_real_db()
 }
 
 #[ignore]

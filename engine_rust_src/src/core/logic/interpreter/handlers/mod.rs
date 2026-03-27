@@ -34,6 +34,7 @@ pub use state::*;
 
 use crate::core::enums::*;
 
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 /// Result of an opcode handler execution
@@ -95,30 +96,12 @@ impl HandlerRegistry {
         let a = frame_data.raw_attr as i64;
         let s = frame_data.raw_slot;
 
-        if !state.ui.silent {
-            eprintln!(
-
-                "[TRACE] DISPATCH: op={}, v={}, a={}, s={}, player_id={}, choice_index={}, phase={:?}",
-
-                op,
-
-                v,
-
-                a,
-
-                s,
-
-                ctx.player_id,
-
-                ctx.choice_index,
-
-                state.phase,
-
+        if state.debug.debug_mode && !state.ui.silent {
+            let sem = crate::core::logic::interpreter::logging::describe_frame_words(op, v, a, s as i32);
+            println!(
+                "[DISPATCH] {} | player={} choice={} phase={:?}",
+                sem, ctx.player_id, ctx.choice_index, state.phase
             );
-        }
-
-        if !state.ui.silent {
-            println!("[DEBUG] DISPATCH: op={} v={} a={} s={}", op, v, a, s);
         }
 
         // Centralized Dispatch Match
@@ -218,8 +201,10 @@ impl HandlerRegistry {
             _ => {
                 if state.debug.debug_mode {
                     println!(
-                        "[WARN] Unhandled opcode: {} (v={}, a={}, s={}) at IP {}",
-                        op, v, a, s, frame_idx
+                        "[WARN] Unhandled opcode: {} at IP {} | {}",
+                        logging::get_opcode_name(op),
+                        frame_idx,
+                        logging::describe_words(op, v, a, s)
                     );
                 }
 

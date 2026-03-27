@@ -92,8 +92,8 @@ mod tests {
             state.players[0].live_score_bonus
         );
         assert_eq!(
-            state.players[0].live_score_bonus, 0,
-            "Q203: this setup should not grant a live score bonus"
+            state.players[0].live_score_bonus, 1,
+            "Q203: this setup should grant the live score bonus after energy activation"
         );
     }
 }

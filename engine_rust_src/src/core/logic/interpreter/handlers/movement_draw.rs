@@ -32,7 +32,7 @@ pub fn handle_draw(
             // Draw to hand (or specified destination zone)
             if state.debug.debug_mode {
                 state.trace_internal(&format!(
-                    "BC_DRAW: target_p={} deck_before={} hand_before={} dest={:?} {}",
+                    "FRAME_DRAW: target_p={} deck_before={} hand_before={} dest={:?} {}",
                     target_p,
                     state.players[target_p].deck.len(),
                     state.players[target_p].hand.len(),
@@ -63,7 +63,7 @@ pub fn handle_draw(
             }
             if state.debug.debug_mode {
                 state.trace_internal(&format!(
-                    "BC_DRAW_DONE: deck_after={} hand_after={}",
+                    "FRAME_DRAW_DONE: deck_after={} hand_after={}",
                     state.players[target_p].deck.len(),
                     state.players[target_p].hand.len()
                 ));

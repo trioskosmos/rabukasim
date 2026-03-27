@@ -16,9 +16,14 @@ def _describe_ability(ability: "Ability") -> str:
             parts = []
             for frame in frames[:4]:
                 if isinstance(frame, dict):
-                    decoded = frame.get("decoded") or frame.get("opcode")
+                    decoded = frame.get("decoded") or frame.get("op") or frame.get("opcode")
                     if decoded:
-                        parts.append(str(decoded))
+                        op = str(decoded)
+                        options = frame.get("options") if isinstance(frame.get("options"), dict) else {}
+                        if options:
+                            parts.append(f"{op}({', '.join(sorted(options.keys()))})")
+                        else:
+                            parts.append(op)
             if parts:
                 return " | ".join(parts)
 

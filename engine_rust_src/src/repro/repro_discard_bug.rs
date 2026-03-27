@@ -1,39 +1,46 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::{AbilityContext, TriggerType};
-    use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
+    use crate::core::logic::{AbilityContext, CardDatabase, FrameProgram, MemberCard, TriggerType};
+    use crate::test_helpers::{create_test_state, TestUtils};
 
     #[test]
     fn test_move_to_discard_deck_top_slot_1_repro() {
-        use crate::test_helpers::generate_card_report;
-        let db = load_real_db();
+        let mut db = CardDatabase::default();
+        
+        // Card 126: Move 5 from DeckTop to Discard. If Live card among them, Draw 1.
+        let mut card126 = MemberCard::default();
+        card126.card_id = 126;
+        let mut ab = crate::core::logic::models::Ability::default();
+        ab.trigger = TriggerType::OnPlay;
+        ab.frame_program = Some(FrameProgram::from_words(&[
+            58, 5, 1, 0, 65540, 309, 1, 8, 0, 48, 10, 1, 0, 0, 4, 1, 0, 0, 0, 0,
+        ]));
+        card126.abilities.push(ab);
+        db.members.insert(126, card126);
+
         let mut state = create_test_state();
         state.debug.debug_mode = true;
 
         let p_idx = 0;
-        // CID 126 is PL!-sd1-007-SD: [OnPlay] MOVE_TO_DISCARD(5) FROM=DECK_TOP ...
-        let card_id = 126;
-        generate_card_report(card_id);
-
         // Ensure deck has enough cards
         state.set_deck(p_idx, &[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
         let initial_discard_len = state.players[p_idx].discard.len();
 
         // Play card to Slot 1 (not 0)
         let slot = 1;
-        state.players[p_idx].stage[slot] = card_id;
+        state.players[p_idx].stage[slot] = 126;
 
         let ctx = AbilityContext {
-            source_card_id: card_id,
+            source_card_id: 126,
             player_id: p_idx as u8,
             area_idx: slot as i16,
-            target_slot: slot as i16, // This sets ctx.target_slot
+            target_slot: slot as i16,
             ..Default::default()
         };
 
         // Trigger OnPlay abilities
-        println!("--- Triggering OnPlay for Card {} ---", card_id);
-        state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+        println!("--- Triggering OnPlay for Card 126 ---");
+        state.resolve_ability(&db, &db.members[&126].abilities[0], &ctx);
         state.dump_verbose();
 
         // If the bug exists, the state will have a suspension and the discard count won't increase by 5

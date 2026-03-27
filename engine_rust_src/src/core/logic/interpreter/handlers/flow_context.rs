@@ -1,6 +1,7 @@
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -84,6 +85,9 @@ pub fn handle_set_target_opponent(ctx: &mut AbilityContext) {
 
 pub fn handle_flavor_action(state: &GameState, v: i32, a: i64, s: i32) {
     if state.debug.debug_mode {
-        println!("[DEBUG] FLAVOR_ACTION: v={}, a={}, s={}", v, a, s);
+        println!(
+            "[DEBUG] FLAVOR_ACTION: {}",
+            logging::describe_words(0, v, a, s)
+        );
     }
 }

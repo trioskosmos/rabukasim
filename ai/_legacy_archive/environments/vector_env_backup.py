@@ -2,8 +2,8 @@ from typing import List
 
 import numpy as np
 
-from engine.game.ai_compat import njit
-from engine.game.fast_logic import batch_apply_action, resolve_bytecode
+from engine.archive.deprecated_v1_engine.game.ai_compat import njit
+from engine.archive.deprecated_v1_engine.game.fast_logic import batch_apply_action, resolve_bytecode
 
 
 @njit

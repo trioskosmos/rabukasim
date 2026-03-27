@@ -75,6 +75,12 @@ pub const FILTER_VALUE_TYPE_FLAG: u64 = 2147483648; // 1 << 31
 
 /// Special choice index for "Done" or "Cancel".
 pub const CHOICE_DONE: i16 = 99;
+/// Choice index for the affirmative branch in two-way prompts.
+pub const CHOICE_YES: i16 = 0;
+/// Choice index for the negative branch in two-way prompts.
+pub const CHOICE_NO: i16 = 1;
+/// Internal "no choice yet" marker.
+pub const CHOICE_UNSET: i16 = -1;
 /// Special choice index for "All" or "Everything".
 pub const CHOICE_ALL: i16 = 999;
 
@@ -112,6 +118,8 @@ pub const TARGET_SLOT_USE_CONTEXT: i32 = 0;
 
 /// Special slot value for "use area index".
 pub const TARGET_SLOT_AREA_IDX: i32 = 4;
+/// Slot value used by stage-targeted selection prompts.
+pub const TARGET_SLOT_STAGE: u8 = 4;
 
 /// Special slot value for "use target slot from context".
 pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
@@ -120,6 +128,7 @@ pub const TARGET_SLOT_FROM_CONTEXT: i32 = 10;
 
 /// Number of stage slots per player.
 pub const STAGE_SLOT_COUNT: usize = 3;
+pub const DECK_TOP_LOOK_WINDOW: usize = 3;
 
 // --- Ability Effect Mask Bits (precomputed to avoid cffi parsing issues) ---
 pub const EFFECT_MASK_BLADE: u64 = 1; // was: 1 << 0

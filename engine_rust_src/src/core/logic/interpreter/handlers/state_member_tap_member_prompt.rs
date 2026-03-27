@@ -1,6 +1,7 @@
 use super::*;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
@@ -53,15 +54,16 @@ pub fn handle_tap_member_prompt(
 
     if ctx.source_card_id == 4196 {
         eprintln!(
-            "[TAP_PROMPT] optional={} select_member={} filter={:X} resolved_slot={} choice_index={} v_remaining={} needs_selection={} active_optional={}",
+            "[TAP_PROMPT] optional={} select_member={} filter=[{}] resolved_slot={} needs_selection={} active_optional={} {}",
             is_optional,
             is_select_member_choice,
-            filter_attr,
+            logging::describe_filter_attr(
+                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(filter_attr as i64)
+            ),
             resolved_slot,
-            ctx.choice_index,
-            ctx.v_remaining,
             needs_selection,
-            active_optional_prompt
+            active_optional_prompt,
+            logging::describe_context(ctx)
         );
     }
 

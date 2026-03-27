@@ -23,14 +23,7 @@ pub fn prepare_discard_prompt(
     target_player_idx: usize,
     next_ctx: &mut AbilityContext,
 ) -> bool {
-    if is_optional
-        && next_ctx.choice_index == -1
-        && available_count < v
-        && !matches!(
-            source_zone,
-            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
-        )
-    {
+    if next_ctx.choice_index == -1 && available_count < v {
         return false;
     }
 

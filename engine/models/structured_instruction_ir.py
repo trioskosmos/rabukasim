@@ -5,6 +5,9 @@ from enum import Enum
 from typing import Any, Dict, Iterable, List
 
 
+SEMANTIC_FORM_VERSION = 1
+
+
 class OperandKind(str, Enum):
     INT = "int"
     BOOL = "bool"

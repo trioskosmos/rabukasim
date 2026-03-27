@@ -1,4 +1,6 @@
 import copy
+"""In-memory ability model built around ordered instruction lists."""
+
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Tuple, Union
@@ -7,6 +9,7 @@ from engine.models.enums import CHAR_MAP
 from engine.models.opcodes import Opcode
 
 from .ability_filter import PackedFilterSpec
+from .ability_frames import normalize_frame
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 from .generated_metadata import COMPARISONS, COUNT_SOURCES, EXTRA_CONSTANTS, HEART_COLOR_MAP, META_RULE_TYPES, ZONES
 from .generated_packer import (
@@ -93,7 +96,8 @@ class Ability:
     modal_options: List[List[Any]] = field(default_factory=list)  # For SELECT_MODE
     is_once_per_turn: bool = False
     frame_program: Dict[str, Any] = field(default_factory=dict)
-    # Ordered list of operations (Union[Effect, Condition]) for precise execution order
+    bytecode: List[int] = field(default_factory=list)  # Legacy compatibility; ignored by frame-first flow.
+    # Ordered list of operations that produce the runtime frame program.
     instructions: List[Union[Effect, Condition, Cost]] = field(default_factory=list)
     card_no: str = ""  # Metadata for debugging/tracing
     requires_selection: bool = False
@@ -103,105 +107,43 @@ class Ability:
     filters: List[Dict[str, Any]] = field(default_factory=list)
     option_names: List[str] = field(default_factory=list)
     semantic_form: Dict[str, Any] = field(default_factory=dict)  # Human-readable form
+    frame_count: int = 0
 
     def build_structured_ir(self) -> Dict[str, Any]:
         from .structured_instruction_ir import build_structured_instruction_ir
 
         return build_structured_instruction_ir(self).to_dict()
 
+    def compile(self) -> List[Union[str, Dict[str, Any]]]:
+        """Backward-compatible alias for callers that still expect compile()."""
+        return self.to_frame_program()
+
     def to_frame_program(self) -> List[Union[str, Dict[str, Any]]]:
-        """Generate high-level semantic frames without regenerating bytecode."""
+        """Return the canonical frame program for this ability."""
         existing_frame_program = getattr(self, "frame_program", None)
         if isinstance(existing_frame_program, dict):
-            frames = existing_frame_program.get("frames", [])
+            frames = existing_frame_program.get("instructions", [])
             if isinstance(frames, list) and frames:
-                return [copy.deepcopy(frame) for frame in frames]
+                normalized = [normalize_frame(frame, idx) for idx, frame in enumerate(frames)]
+                self.frame_program = {"instructions": copy.deepcopy(normalized)}
+                self.frame_count = len(normalized)
+                return normalized
 
         sparse_frame_index = getattr(self, "sparse_frame_index", None)
         if isinstance(sparse_frame_index, dict):
-            frames = sparse_frame_index.get("frames", [])
+            frames = sparse_frame_index.get("instructions", [])
             if isinstance(frames, list) and frames:
-                return [copy.deepcopy(frame) for frame in frames]
+                normalized = [normalize_frame(frame, idx) for idx, frame in enumerate(frames)]
+                self.frame_program = {"instructions": copy.deepcopy(normalized)}
+                self.frame_count = len(normalized)
+                return normalized
 
         from compiler.ability_compiler import build_frame_program
 
         frames = build_frame_program(self)
-        self.frame_program = {"frames": copy.deepcopy(frames)}
+        self.frame_program = {"instructions": copy.deepcopy(frames)}
+        self.frame_count = len(frames)
         return frames
-
-    def _instruction_to_frame(self, instr: Union[Effect, Condition, Cost]) -> Union[str, Dict[str, Any]]:
-        """Map a single instruction (Effect/Condition/Cost) to an AbilityFrame JSON-compatible dict."""
-        opcode_name = ""
-        value = 0
-        attr = {}
-        slot = {}
-        raw = instr.params.copy()
-
-        if isinstance(instr, Effect):
-            opcode_name = instr.effect_type.name
-            opcode_id = instr.runtime_opcode
-            value = instr.value
-            attr = instr.runtime_filter
-            slot = instr.runtime_slot_params
-        elif isinstance(instr, Condition):
-            opcode_name = f"CHECK_{instr.type.name}"
-            # CHECK_ opcodes are offset by 1000 in bytecode if negated, 
-            # but we want the base opcode_id for the frame
-            opcode_id = instr.runtime_opcode % 1000
-            value = instr.value
-            attr = instr.runtime_filter
-            slot = instr.runtime_slot
-        elif isinstance(instr, Cost):
-            # Map cost type to equivalent opcode name
-            mapping = {
-                AbilityCostType.ENERGY: "PAY_ENERGY",
-                AbilityCostType.TAP_SELF: "SET_TAPPED",
-                AbilityCostType.TAP_MEMBER: "TAP_MEMBER",
-                AbilityCostType.DISCARD_HAND: "MOVE_TO_DISCARD",
-                AbilityCostType.PLACE_ENERGY_FROM_DECK: "PLACE_ENERGY_FROM_DECK",
-                AbilityCostType.RETURN_HAND: "MOVE_MEMBER",
-                AbilityCostType.SACRIFICE_SELF: "MOVE_TO_DISCARD",
-            }
-            opcode_name = mapping.get(instr.type, "NONE")
-            opcode_id = instr.runtime_opcode
-            value = instr.value
-            attr = instr.runtime_filter
-            slot = instr.runtime_slot
-
-        if opcode_name == "RETURN":
-            return "Return"
-        
-        # Short-hands for standard frames
-        if opcode_name == "DRAW":
-            return {"Draw": {"count": int(value)}}
-        if opcode_name == "RECOVER_LIVE":
-            return {"RecoverLive": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "RECOVER_MEMBER":
-            return {"RecoverMember": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "LOOK_AND_CHOOSE":
-            # LOOK_AND_CHOOSE value is packed, but semantic frames might want the raw params?
-            # For now, use the packed value as 'params' to match current codec output
-            return {"LookAndChoose": {"params": value, "filter": attr, "slot": slot}}
-        if opcode_name == "SELECT_MEMBER":
-            return {"SelectMember": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "MOVE_MEMBER":
-            return {"MoveMember": {"filter": attr, "slot": slot}}
-        if opcode_name == "META_RULE":
-            return {"MetaRule": {"rule_type": int(value), "filter": attr, "slot": slot}}
-
-        # Default: Generic Semantic Frame
-        return {
-            "Semantic": {
-                "opcode": opcode_id,
-                "value": int(value),
-                "filter": attr,
-                "slot": slot,
-                "is_negated": getattr(instr, "is_negated", False),
-                "params": raw,
-            }
-        }
-
-        return []
 
     def _emit_target_opcode_if_needed(self, bytecode: List[int], target: TargetType, last_emitted_target: TargetType | None):
         desired_target = None

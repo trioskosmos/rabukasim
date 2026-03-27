@@ -53,7 +53,7 @@ impl FrameBuilder {
     }
 
     pub fn op(mut self, op: i32) -> Self {
-        self.frames.push(AbilityFrame::new(op, 0, 0, 0));
+        self.frames.push(AbilityFrame::new(op, 0, 0, 0, false));
         self
     }
 
@@ -654,50 +654,54 @@ pub fn load_real_db() -> &'static CardDatabase {
 }
 
 pub fn create_test_db() -> CardDatabase {
-    let mut db = CardDatabase::default();
+    static TEST_DB: OnceLock<CardDatabase> = OnceLock::new();
 
-    for i in 3000..3501 {
-        let mut hearts = [0u8; 7];
-        hearts[0] = 1;
-        let m = MemberCard {
-            card_id: i,
-            card_no: format!("GEN-M-{}", i),
-            name: format!("Mem {}", i),
-            cost: 1,
-            hearts,
-            groups: vec![1],
-            ..Default::default()
-        };
-        db.members.insert(i, m.clone());
-        let lid = (i & LOGIC_ID_MASK) as usize;
-        if lid < db.members_vec.len() {
-            db.members_vec[lid] = Some(m);
-        }
-    }
+    TEST_DB
+        .get_or_init(|| {
+            let mut db = CardDatabase::default();
 
-    let mut energy = MemberCard::default();
-    energy.card_id = 2000;
-    energy.name = "Test Energy".to_string();
-    energy.hearts[0] = 1;
-    db.members.insert(2000, energy.clone());
-    let eid = (2000 & LOGIC_ID_MASK) as usize;
-    if eid < db.members_vec.len() {
-        db.members_vec[eid] = Some(energy);
-    }
+            for i in 3000..3501 {
+                let mut hearts = [0u8; 7];
+                hearts[0] = 1;
+                let m = MemberCard {
+                    card_id: i,
+                    card_no: format!("GEN-M-{}", i),
+                    name: format!("Mem {}", i),
+                    cost: 1,
+                    hearts,
+                    groups: vec![1],
+                    ..Default::default()
+                };
+                db.members.insert(i, m.clone());
+                let lid = (i & LOGIC_ID_MASK) as usize;
+                if lid < db.members_vec.len() {
+                    db.members_vec[lid] = Some(m);
+                }
+            }
 
-    let l55001 = LiveCard {
-        card_id: 55001,
-        card_no: "GEN-L-55001".to_string(),
-        name: "Live 55001".to_string(),
-        score: 1,
-        required_hearts: [1, 0, 0, 0, 0, 0, 0],
-        ..Default::default()
-    };
-    db.lives.insert(55001, l55001.clone());
-    let llid = (55001 & LOGIC_ID_MASK) as usize;
-    if llid < db.lives_vec.len() {
-        db.lives_vec[llid] = Some(l55001);
-    }
+            let mut energy = MemberCard::default();
+            energy.card_id = 2000;
+            energy.name = "Test Energy".to_string();
+            energy.hearts[0] = 1;
+            db.members.insert(2000, energy.clone());
+            let eid = (2000 & LOGIC_ID_MASK) as usize;
+            if eid < db.members_vec.len() {
+                db.members_vec[eid] = Some(energy);
+            }
+
+            let l55001 = LiveCard {
+                card_id: 55001,
+                card_no: "GEN-L-55001".to_string(),
+                name: "Live 55001".to_string(),
+                score: 1,
+                required_hearts: [1, 0, 0, 0, 0, 0, 0],
+                ..Default::default()
+            };
+            db.lives.insert(55001, l55001.clone());
+            let llid = (55001 & LOGIC_ID_MASK) as usize;
+            if llid < db.lives_vec.len() {
+                db.lives_vec[llid] = Some(l55001);
+            }
 
     add_card(
         &mut db,
@@ -832,7 +836,9 @@ pub fn create_test_db() -> CardDatabase {
         )],
     );
 
-    db
+            db
+        })
+        .clone()
 }
 
 pub fn create_test_state() -> GameState {
@@ -840,8 +846,8 @@ pub fn create_test_state() -> GameState {
     state.players[0].player_id = 0;
     state.players[1].player_id = 1;
     state.phase = Phase::Main;
-    state.debug.debug_mode = true;
-    state.ui.silent = false;
+    state.debug.debug_mode = false;
+    state.ui.silent = true;
     for i in 0..2 {
         state.players[i].deck = vec![51001, 51002, 51003, 51004, 51005].into();
         state.players[i].energy_zone = vec![3101, 3102, 3103].into();

@@ -25,19 +25,19 @@ pub fn finalize_play_member_from_hand(
     state.players[p_idx].set_moved(slot_idx, true);
     state.register_played_member(p_idx, cid, db);
 
-    let new_ctx = AbilityContext {
-        source_card_id: cid,
-        player_id: p_idx as u8,
-        activator_id: p_idx as u8,
-        area_idx: slot_idx as i16,
-        ..Default::default()
-    };
-    state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-    if state.phase == crate::core::enums::Phase::Response {
-        ctx.choice_index = -1;
-        ctx.v_remaining = 0;
-        return HandlerResult::Suspend;
-    }
+        let new_ctx = AbilityContext {
+            source_card_id: cid,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: slot_idx as i16,
+            ..Default::default()
+        };
+        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+        if !state.interaction_stack.is_empty() {
+            ctx.choice_index = -1;
+            ctx.v_remaining = 0;
+            return HandlerResult::Suspend;
+        }
     ctx.choice_index = -1;
     ctx.v_remaining = 0;
     HandlerResult::Continue
@@ -95,7 +95,7 @@ pub fn finalize_play_member_from_discard(
             ..Default::default()
         };
         state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-        if state.phase == crate::core::enums::Phase::Response {
+        if !state.interaction_stack.is_empty() {
             ctx.choice_index = -1;
             ctx.v_remaining = 0;
             return HandlerResult::Suspend;

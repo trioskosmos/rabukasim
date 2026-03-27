@@ -590,7 +590,9 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
             filter.special_id = (v & 0x7) as u8;
         } else if let Some(v) = value.as_str() {
             filter.is_enabled = true;
-            filter.special_id = match v.to_uppercase().replace('_', " ").as_str() {
+            filter.special_id = match v.to_uppercase().replace('_', " ").replace('-', " ").as_str()
+            {
+                "SAME NAME" | "SAMENAME" => 4,
                 "NOT MY" | "NOTMY" => 2,
                 "NOT SELF" | "NOTSELF" => 3,
                 _ => 0,

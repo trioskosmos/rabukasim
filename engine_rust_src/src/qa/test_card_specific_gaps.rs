@@ -1,4 +1,6 @@
 /// Card-specific ability tests for Q&A validation
+// QA: Q122 | Q: 『 {{toujyou.png|登場}} 自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 自分のメインデッキが3枚の時にこの能力を使用してデッキの上から3枚見ているとき、リフレッシュは行いますか？
+// A: いいえ、リフレッシュは行いません。 デッキのカードのすべて見ていますが、それらはデッキから移動していないため、リフレッシュは行いません。 見たカード全てを控え室に置いた場合、リフレッシュを行います。
 /// Coverage: Q122-Q186 Card-specific mechanics and edge cases
 
 #[cfg(test)]
@@ -6,6 +8,8 @@ mod card_specific_qa_gaps {
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
+    // QA: Q122 | Q: 『 {{toujyou.png|登場}} 自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 自分のメインデッキが3枚の時にこの能力を使用してデッキの上から3枚見ているとき、リフレッシュは行いますか？
+    // A: いいえ、リフレッシュは行いません。 デッキのカードのすべて見ていますが、それらはデッキから移動していないため、リフレッシュは行いません。 見たカード全てを控え室に置いた場合、リフレッシュを行います。
     /// Q122: Peek ability without actual refresh (just viewing)
     /// 『登場 手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。
     /// その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』
@@ -37,6 +41,8 @@ mod card_specific_qa_gaps {
         assert!(discard_after >= discard_before);
     }
 
+    // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+    // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
     /// Q131-Q132 variant: Live start ability with opponent as attacker
     /// 『ライブ開始時 self is opponent attacker...』
     /// Abilities that check "my live start" don't trigger if opponent initiated
@@ -62,7 +68,11 @@ mod card_specific_qa_gaps {
         }
     }
 
+    // QA: Q132 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいる『Aqours』のメンバーが持つハートに、 {{heart_05.png|heart05}} が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた場合、このカードのスコアを＋２する。』について。 自分が先行の場合、この能力が発動しますか？
+    // A: はい、発動します。 {{live_success.png|ライブ成功時}} 能力の効果はライブ勝敗判定フェイズで発動するため、条件を満たせばする加算することができます。
     /// Q132 variant: Live success time with opponent as winner
+    // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+    // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
     /// Similar to Q131 but for {{live_success.png|ライブ成功時}}
     #[test]
     fn test_q132_opponent_won_live() {
@@ -88,6 +98,8 @@ mod card_specific_qa_gaps {
         }
     }
 
+    // QA: Q144 | Q: 『 {{toujyou.png|登場}} 手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ {{icon_blade.png|ブレード}} は、エールで公開する枚数を増やさない。）』について。 相手のステージにいるコスト4のメンバーが1人の時にこの能力を使用しました。相手のメンバーはウェイトにできますか？
+    // A: はい、可能です。 「～まで」の能力は指定された数字以内の数字を選択することができます。
     /// Q144: Center ability location check
     /// [[kidou.png|起動]] [[center.png|センター]] ターン1回
     /// メンバー1人をウェイトにする：ライブ終了時まで、...
@@ -114,6 +126,8 @@ mod card_specific_qa_gaps {
         assert_eq!(test.member_at(Player::A, Slot::Left).unwrap().id, center_card.id);
     }
 
+    // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+    // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
     /// Q147-Q149: "Until live end" effect persistence
     /// {{jyouji.png|常時}} score bonuses from {{live_start.png|ライブ開始時}}
     /// persist even if live doesn't happen
@@ -137,6 +151,8 @@ mod card_specific_qa_gaps {
         assert!(!has_bonus); // Should be gone after phase ends
     }
 
+    // QA: Q150 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを＋１する。』について。 自分のステージに、ハートの数が2,3,5のメンバーがいます。相手のステージには、ハートの数が3,6のメンバーがいます。このとき、ライブ成功時の効果は発動しますか？
+    // A: はい、発動します。 自分のステージのいるメンバーのハートの総数は10、相手のステージにいるメンバーのハートの総数は9となり、自分のほうが多いため発動します。
     /// Q150: Surplus heart definition for conditions
     /// {{heart_00.png|heart0}} in surplus means hearts > required
     /// Used in damage calculations but not "heart total" counts
@@ -169,6 +185,8 @@ mod card_specific_qa_gaps {
         assert_eq!(surplus_with_blade, 3);
     }
 
+    // QA: Q151 | Q: 『 {{kidou.png|起動}} {{center.png|センター}} {{turn1.png|ターン1回}} メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）』について。 この能力でウェイトにしたメンバーがステージから離れました。「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」の能力で合計スコアを＋１することはできますか？
+    // A: いいえ、できません。 {{kidou.png|起動}} 能力の効果で {{jyouji.png|常時}} 能力を得たこのメンバーカードがステージから離れることで、この {{jyouji.png|常時}} 能力が無くなるため、合計スコアは＋１されません。
     /// Q151-Q160: Advanced member state transitions
     /// Members that move areas within same turn have reset turn-once
     /// Abilities that check "on appearance" vs "on area move"
@@ -191,6 +209,8 @@ mod card_specific_qa_gaps {
         assert!(!turn_once_ready);
     }
 
+    // QA: Q168 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、自分または相手の控え室にコスト2以下のメンバーカードがいない場合、どうなりますか？
+    // A: 控え室にコスト2以下のメンバーカードがいないプレイヤーはメンバーカードを登場させずに効果の処理を終了します。
     /// Q168-Q170: Multi-user on-play effects
     /// 『登場 自分と相手はそれぞれ、自身の控え室から
     /// コスト2以下のメンバーカードを1枚、メンバーのいないエリアに
@@ -223,6 +243,8 @@ mod card_specific_qa_gaps {
         assert!(!can_place);
     }
 
+    // QA: Q174 | Q: 『 {{live_success.png|ライブ成功時}} このターン、自分が余剰ハートに {{heart_04.png|heart04}} を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。』について、ステージに緑ハートがなくエールによってALLハートを3枚獲得してライブ成功した時、ライブ成功時能力は使えますか？
+    // A: いいえ。使えません。
     /// Q174: Group name vs unit name resolution
     /// 『ライブ成功時 自分のライブ中の『Aqours』のカードが2枚以上ある場合...』
     /// Uses group name (Aqours) not unit name
@@ -246,6 +268,8 @@ mod card_specific_qa_gaps {
         assert_eq!(unique_names.len(), 2);
     }
 
+    // QA: Q175 | Q: 『 {{live_start.png|ライブ開始時}} 手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、 {{heart_04.png|heart04}} {{heart_04.png|heart04}} {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る。』などについて、この能力を使用しているメンバーカードと同じユニットの必要はありますか？
+    // A: いいえ、同じユニットである必要はありません。 手札から控え室に置くカードのユニットが同じである必要があります。ただし、「μ's」や「Aqours」など、グループ名は参照できません。
     /// Q175: Unit name cost reduction (distinct from group)
     /// 『ライブ開始時 手札の同じユニット名を持つカード2枚を控え室に置いてもよい...』
     /// ユニット名 = specific unit, not group name
@@ -273,6 +297,8 @@ mod card_specific_qa_gaps {
         assert!(can_satisfy);
     }
 
+    // QA: Q176 | Q: 『 {{kidou.png|起動}} {{turn1.png|ターン1回}} {{icon_energy.png|E}} {{icon_energy.png|E}} :自分の手札を相手は見ないで１枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時までこのメンバーは「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。』について、公開するのは自分の手札ですか？相手の手札ですか？
+    // A: 自分の手札を公開します。
     /// Q176-Q177: Opponent targeted effects
     ///『起動 このメンバーをウェイトにしてもよい...』
     /// Cannot wait opponent's members, only own
@@ -298,6 +324,8 @@ mod card_specific_qa_gaps {
         assert!(!can_target);
     }
 
+    // QA: Q177 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} 自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト４以下のメンバーがウェイト状態になったとき、カードを１枚引く。』について、条件を満たした場合でも自動能力の効果を解決しないことはできますか？
+    // A: いいえ、必ず解決する必要があります。
     /// Q177: Mandatory vs optional ability execution
     /// 『自動 ターン1回 自分のカードの効果によって...』
     /// Mandatory auto abilities MUST execute if conditions met
@@ -321,6 +349,8 @@ mod card_specific_qa_gaps {
         assert!(!can_skip);
     }
 
+    // QA: Q180 | Q: 『 {{toujyou.png|登場}} このターン、自分と相手のステージにいるメンバーは、効果によってはアクティブにならない。』について、この効果が発動したターンにアクティブフェイズを迎えました。そのアクティブフェイズでメンバーをアクティブにできますか？
+    // A: はい、できます。
     /// Q180: Area movement vs "cannot activate"
     /// [[toujyou.png|登場]] Effect saying members "cannot be activated"
     /// doesn't prevent area movement state changes (wait->active in active phase)
@@ -346,6 +376,8 @@ mod card_specific_qa_gaps {
         assert!(!is_wait); // Should be active now
     }
 
+    // QA: Q178 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージにいる『Printemps』のメンバーをアクティブにする。』について、メンバーを複数枚アクティブにするにすることはできますか？
+    // A: はい、できます。
     /// Q178-Q179: Printemps center member effect
     /// 『ライブ開始時 自分のステージにいるプリンテンプス...』
     /// Checks for group, activates center slot, field counts correctly
@@ -371,6 +403,8 @@ mod card_specific_qa_gaps {
         assert!(!acts_center && !acts_left);
     }
 
+    // QA: Q182 | Q: 『 {{live_success.png|ライブ成功時}} このターン、エールにより公開された自分のカードの中にブレードハートを持たないカードが0枚の場合か、または自分が余剰ハートを2つ以上持っている場合、このカードのスコアは４になる。』について、 ウェイト状態などによってエールで公開したカードが０枚の場合、このライブカードのスコアはいくつになりますか？
+    // A: 「エールにより公開された自分のカードの中にブレードハートを持たないカードが0枚の場合」という条件を満たすため、ライブに成功した際のスコアは4となります。
     /// Q182: Energy placement vs yell conditions
     /// 『ライブ成功時 ...公開されたカードの中にブレードハートを持たないカード
     /// が0枚の場合か、または...』
@@ -394,6 +428,8 @@ mod card_specific_qa_gaps {
         assert!(!abilities_triggered.is_empty());
     }
 
+    // QA: Q183 | Q: 『 {{toujyou.png|登場}} メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。』について、 このカードの効果で相手プレイヤーのメンバーをウェイトにできますか？
+    // A: いいえ。できません。 能力のコストとしてメンバーカードをウェイト状態にする際には、必ず自身のステージのメンバーをウェイト状態にしなければなりません。
     /// Q183: Cost payment side restriction
     /// Cost effects like "player1をウェイトにする" cannot target opponent
     /// Even if the ability doesn't restrict it explicitly
@@ -422,6 +458,8 @@ mod card_specific_qa_gaps {
         assert!(!can_target_opp);
     }
 
+    // QA: Q184 | Q: エネルギーカードをメンバーカードの下に置いているとき、メンバーカードの下に置かれたエネルギーカードはエネルギーの数として数えますか？
+    // A: いいえ。数えません。 エネルギーの枚数を参照する際、メンバーカードの下に置かれたエネルギーカードは参照しません。
     /// Q184: Under-member energy not counted in energy total
     /// メンバーの下に置かれたエネルギーカードはエネルギーの数として数えない
     /// Separate zone from energy field

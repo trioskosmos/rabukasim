@@ -1,9 +1,12 @@
+"""Build runtime frames from the authored ability instruction list."""
+
 import copy
 import re
 from typing import Any, Dict, List, Tuple, Union
 
 from engine.models.enums import CHAR_MAP, Unit, Group, HeartColor
 from engine.models.ability import Condition, Cost, Effect
+from engine.models.ability_frames import normalize_frame
 from engine.models.opcodes import Opcode
 from engine.models.ability_filter import PackedFilterSpec
 from engine.models.generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
@@ -48,14 +51,14 @@ class AbilityCompiler:
 
     def _frame_program_frames(self, frame_program: Any) -> list[Any]:
         if isinstance(frame_program, dict):
-            frames = frame_program.get("frames", [])
+            instructions = frame_program.get("instructions", frame_program.get("frames", []))
         else:
-            frames = frame_program
+            instructions = frame_program
 
-        if not isinstance(frames, list):
+        if not isinstance(instructions, list):
             return []
 
-        return [copy.deepcopy(frame) for frame in frames]
+        return [normalize_frame(frame, idx) for idx, frame in enumerate(instructions)]
 
     def _hydrate_instruction_frames(self, ability) -> list[Union[Effect, Condition, Cost]]:
         instructions = copy.deepcopy(list(getattr(ability, "instructions", []) or []))
@@ -84,14 +87,14 @@ class AbilityCompiler:
 
     def _build_frame_program_from_source(self, ability) -> List[Union[str, Dict[str, Any]]]:
         existing_frame_program = getattr(ability, "frame_program", None)
-        frames = self._frame_program_frames(existing_frame_program)
-        if frames:
-            return frames
+        instructions = self._frame_program_frames(existing_frame_program)
+        if instructions:
+            return instructions
 
         sparse_frame_index = getattr(ability, "sparse_frame_index", None)
-        frames = self._frame_program_frames(sparse_frame_index)
-        if frames:
-            return frames
+        instructions = self._frame_program_frames(sparse_frame_index)
+        if instructions:
+            return instructions
 
         instructions = self._hydrate_instruction_frames(ability)
 
@@ -101,8 +104,8 @@ class AbilityCompiler:
             if frame:
                 frames_out.append(frame)
 
-        if not frames_out or frames_out[-1] != "Return":
-            frames_out.append("Return")
+        if not frames_out or str(frames_out[-1].get("op", "")).upper() != "RETURN":
+            frames_out.append({"op": "RETURN"})
         return frames_out
 
     def compile_to_bytecode(self, ability) -> List[int]:
@@ -1075,12 +1078,11 @@ class AbilityCompiler:
         return packed_val, attr
 
     def _instruction_to_frame(self, instr: Union[Effect, Condition, Cost]) -> Union[str, Dict[str, Any]]:
-        """Map a single instruction (Effect/Condition/Cost) to an AbilityFrame JSON-compatible dict."""
+        """Map a single instruction to the canonical opcode-frame shape."""
         opcode_id = 0
         opcode_name = "NONE"
         value = 0
-        attr = {}
-        slot = {}
+        options: Dict[str, Any] = {}
         raw = copy.deepcopy(getattr(instr, "params", {})) if hasattr(instr, "params") else {}
 
         if self._is_effect_instruction(instr):
@@ -1095,10 +1097,15 @@ class AbilityCompiler:
                 from engine.models.opcodes import Opcode
                 if hasattr(Opcode, opcode_name):
                     opcode_id = int(getattr(Opcode, opcode_name))
-            
+
             value = instr.value
-            attr = getattr(instr, "runtime_filter", {})
-            slot = getattr(instr, "runtime_slot_params", {})
+            options = {
+                "value": value,
+                "filter": copy.deepcopy(getattr(instr, "runtime_filter", {})),
+                "slot": copy.deepcopy(getattr(instr, "runtime_slot_params", {})),
+            }
+            if raw:
+                options["params"] = raw
         elif self._is_condition_instruction(instr):
             opcode_name = f"CHECK_{instr.type.name}"
             try:
@@ -1110,10 +1117,17 @@ class AbilityCompiler:
             if opcode_id == 0:
                 from engine.models.generated_metadata import CONDITIONS
                 opcode_id = CONDITIONS.get(instr.type.name, 0)
-            
+
             value = instr.value
-            attr = getattr(instr, "runtime_filter", {})
-            slot = getattr(instr, "runtime_slot", {})
+            options = {
+                "value": value,
+                "filter": copy.deepcopy(getattr(instr, "runtime_filter", {})),
+                "slot": copy.deepcopy(getattr(instr, "runtime_slot", {})),
+            }
+            if getattr(instr, "is_negated", False):
+                options["negated"] = True
+            if raw:
+                options["params"] = raw
         elif self._is_cost_instruction(instr):
             mapping = {
                 AbilityCostType.ENERGY: "PAY_ENERGY",
@@ -1142,41 +1156,31 @@ class AbilityCompiler:
                         opcode_id = int(getattr(Opcode, opcode_name))
 
             value = instr.value
-            attr = getattr(instr, "runtime_filter", {})
-            slot = getattr(instr, "runtime_slot", {})
-        if opcode_name == "RETURN":
-            return "Return"
-        
-        # Short-hands for standard frames
-        if opcode_name == "DRAW" or opcode_name == "DRAW_UNTIL":
-            return {"Draw": {"count": int(value), "is_until": opcode_name == "DRAW_UNTIL"}}
-        if opcode_name == "RECOVER_LIVE":
-            return {"RecoverLive": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "RECOVER_MEMBER":
-            return {"RecoverMember": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "LOOK_AND_CHOOSE":
-            return {"LookAndChoose": {"params": value, "filter": attr, "slot": slot}}
-        if opcode_name == "SELECT_MEMBER":
-            return {"SelectMember": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "MOVE_MEMBER":
-            return {"MoveMember": {"filter": attr, "slot": slot}}
-        if opcode_name == "MOVE_TO_DISCARD":
-            return {"MoveToDiscard": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "MOVE_TO_DECK":
-            return {"MoveToDeck": {"count": int(value), "filter": attr, "slot": slot}}
-        if opcode_name == "META_RULE":
-            return {"MetaRule": {"rule_type": int(value), "filter": attr, "slot": slot}}
-
-        # Default: Generic Semantic Frame
-        return {
-            "Semantic": {
-                "opcode": opcode_id,
-                "value": int(value),
-                "filter": attr,
-                "slot": slot,
-                "params": raw,
+            options = {
+                "value": value,
+                "is_cost": True,
+                "filter": copy.deepcopy(getattr(instr, "runtime_filter", {})),
+                "slot": copy.deepcopy(getattr(instr, "runtime_slot", {})),
             }
-        }
+            if getattr(instr, "is_optional", False):
+                options["optional"] = True
+            if raw:
+                options["params"] = raw
+        if opcode_name == "RETURN":
+            return {"op": "RETURN", "rust_opcode": "O_RETURN"}
+        
+        frame: Dict[str, Any] = {"op": opcode_name}
+        if options:
+            frame["options"] = options
+            for alias in ("value", "count", "filter", "slot", "params", "is_cost"):
+                if alias in options:
+                    frame[alias] = copy.deepcopy(options[alias])
+            if options.get("negated"):
+                frame["negated"] = True
+        if opcode_id:
+            frame["opcode_id"] = int(opcode_id)
+        frame["rust_opcode"] = f"O_{opcode_name}"
+        return frame
 
 
 def build_frame_program(ability) -> List[Union[str, Dict[str, Any]]]:

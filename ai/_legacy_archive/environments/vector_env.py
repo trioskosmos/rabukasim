@@ -5,7 +5,7 @@ import ai.research.integrated_step_numba as isn
 import numpy as np
 from numba import njit, prange
 
-from engine.game.fast_logic import (
+from engine.archive.deprecated_v1_engine.game.fast_logic import (
     batch_apply_action,
     resolve_bytecode,
 )

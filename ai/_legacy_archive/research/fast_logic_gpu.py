@@ -1,4 +1,4 @@
-from engine.game.fast_logic import (
+from engine.archive.deprecated_v1_engine.game.fast_logic import (
     C_CLR,
     C_CMP,
     C_CTR,

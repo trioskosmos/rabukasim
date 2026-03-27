@@ -8,15 +8,13 @@ use crate::core::{
     C_COUNT_ENERGY, C_COUNT_ENERGY_EXACT, C_OPPONENT_HAS_EXCESS_HEART, C_SCORE_TOTAL_CHECK,
 };
 use crate::core::{O_DRAW, O_LOOK_DECK_DYNAMIC, O_REDUCE_SCORE, O_RETURN, O_SKIP_ACTIVATE_PHASE};
-use crate::test_helpers::{create_test_state, TestUtils};
+use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
 
 /// Test O_LOOK_DECK_DYNAMIC (91)
 /// Look at cards from deck equal to live score + v
 #[test]
 fn test_opcode_look_deck_dynamic() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;
@@ -52,9 +50,7 @@ fn test_opcode_look_deck_dynamic() {
 /// Reduce live score bonus by v
 #[test]
 fn test_opcode_reduce_score() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;
@@ -83,9 +79,7 @@ fn test_opcode_reduce_score() {
 /// Test O_REDUCE_SCORE doesn't go negative
 #[test]
 fn test_opcode_reduce_score_not_negative() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;
@@ -115,9 +109,7 @@ fn test_opcode_reduce_score_not_negative() {
 /// Set skip_next_activate flag
 #[test]
 fn test_opcode_skip_activate_phase() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;
@@ -150,9 +142,7 @@ fn test_opcode_skip_activate_phase() {
 /// Check if energy count equals val exactly
 #[test]
 fn test_condition_count_energy_exact() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;
@@ -232,9 +222,7 @@ fn test_condition_count_energy_exact() {
 /// Check if opponent has excess hearts
 #[test]
 fn test_condition_opponent_has_excess_heart() {
-    let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json");
-    let db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+    let db = load_real_db();
 
     let mut state = create_test_state();
     state.debug.debug_mode = true;

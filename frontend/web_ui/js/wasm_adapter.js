@@ -256,10 +256,10 @@ export class WasmAdapter {
     }
 
     enrichAction(id, state) {
-        // Logic to reverse-engineer action details from ID and State
+        const label = this.engine.get_action_label(id);
         const p = state.players[state.current_player];
 
-        if (id === ActionBases.PASS) return { id, desc: "Pass / Confirm" };
+        if (id === ActionBases.PASS) return { id, desc: label || "Pass / Confirm" };
 
         // Play Member (Simple)
         if (id >= ActionBases.HAND && id < ActionBases.HAND_CHOICE) {
@@ -359,7 +359,7 @@ export class WasmAdapter {
         // Mode Select
         if (id >= ActionBases.MODE && id < ActionBases.LIVESET) {
             const index = id - ActionBases.MODE;
-            return { id, type: 'SELECT_MODE', index, desc: `Select Mode ${index}` };
+            return { id, type: 'SELECT_MODE', index, desc: label || `Select Mode ${index}` };
         }
 
         // Live Set
@@ -372,18 +372,18 @@ export class WasmAdapter {
         if (id >= ActionBases.COLOR && id < ActionBases.COLOR + 7) {
             const colorIdx = id - ActionBases.COLOR;
             const colors = ["Pink", "Red", "Yellow", "Green", "Blue", "Purple", "All"];
-            return { id, type: 'SELECT_COLOR', index: colorIdx, desc: `Select Color: ${colors[colorIdx] || colorIdx}` };
+            return { id, type: 'SELECT_COLOR', index: colorIdx, desc: label || `Select Color: ${colors[colorIdx] || colorIdx}` };
         }
 
         // Stage Slot Selection
         if (id >= ActionBases.STAGE_SLOTS && id < ActionBases.STAGE_SLOTS + 3) {
             const slotIdx = id - ActionBases.STAGE_SLOTS;
-            return { id, type: 'SELECT_SLOT', index: slotIdx, desc: `Select Slot ${slotIdx}` };
+            return { id, type: 'SELECT_SLOT', index: slotIdx, desc: label || `Select Slot ${slotIdx}` };
         }
 
         // Generic Interaction Choice (LOOK_AND_CHOOSE, etc.)
         if (id >= ActionBases.CHOICE) {
-            return { id, type: 'SELECT', index: id - ActionBases.CHOICE, desc: `Choice ${id - ActionBases.CHOICE}` };
+            return { id, type: 'SELECT', index: id - ActionBases.CHOICE, desc: label || `Choice ${id - ActionBases.CHOICE}` };
         }
 
         // Fallback

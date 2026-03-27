@@ -1,3 +1,5 @@
+"""Normalize authored ability instructions into a compact debug-friendly index."""
+
 from __future__ import annotations
 
 import json
@@ -105,28 +107,45 @@ def _normalize_scalar(value: Any) -> Any:
 
 def frame_to_compact(frame: dict[str, Any]) -> dict[str, Any]:
     """Convert a verbose frame (potentially with bytecode/semantic) to a compact authored-style frame."""
-    compact = {}
+    compact: dict[str, Any] = {}
 
     # Try to extract from semantic first (preferred)
     semantic = frame.get("semantic", {})
     if isinstance(semantic, dict) and semantic:
         compact["op"] = semantic.get("opcode_name") or frame.get("op")
+        options: dict[str, Any] = {}
         if "value" in semantic:
-            compact["value"] = semantic["value"]
+            options["value"] = semantic["value"]
         if "attr" in semantic:
-            compact["attr"] = semantic["attr"]
+            options["filter"] = semantic["attr"]
         if "slot" in semantic:
-            compact["slot"] = semantic["slot"]
+            options["slot"] = semantic["slot"]
+        if "params" in semantic:
+            options["params"] = semantic["params"]
+        if options:
+            compact["options"] = options
         return _normalize_scalar(compact)
 
     # Fallback to direct fields
     compact["op"] = frame.get("op") or frame.get("opcode_name")
-    for field in ["value", "attr", "slot"]:
+    options: dict[str, Any] = {}
+    for field in ["value", "attr", "slot", "params", "filter", "count", "target", "comparison"]:
         if field in frame:
-            compact[field] = frame[field]
+            key = "filter" if field == "attr" else field
+            options[key] = frame[field]
+    if frame.get("negated", frame.get("is_negated", False)):
+        options["negated"] = True
+    if options:
+        compact["options"] = options
 
     return _normalize_scalar(compact)
 def _resolve_opcode_name(frame: dict[str, Any], lookups: Any) -> str:
+    if isinstance(frame.get("op"), str) and frame.get("op"):
+        return str(frame["op"]).upper()
+
+    if frame == {"Return": {}}:
+        return "RETURN"
+
     opcode_name = frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind")
     if isinstance(opcode_name, str) and opcode_name:
         return opcode_name.upper()
@@ -135,7 +154,7 @@ def _resolve_opcode_name(frame: dict[str, Any], lookups: Any) -> str:
     if isinstance(opcode_id, int):
         return lookups.opcodes_by_id.get(opcode_id, f"OP_{opcode_id}")
 
-    return "RETURN" if frame == {"Return": {}} else "OP_0"
+    return "OP_0"
 
 
 def _resolve_opcode_id(frame: dict[str, Any], opcode_name: str, lookups: Any) -> int:
@@ -152,11 +171,7 @@ def _resolve_opcode_id(frame: dict[str, Any], opcode_name: str, lookups: Any) ->
 
 def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None = None) -> dict[str, Any]:
     if frame == "Return":
-        base: dict[str, Any] = {
-            "op": "RETURN",
-            "opcode_id": int(lookups.ids_by_opcode.get("RETURN", 1)),
-            "rust_opcode": "O_RETURN",
-        }
+        base: dict[str, Any] = {"op": "RETURN", "rust_opcode": "O_RETURN"}
         if frame_index is not None:
             base["frame_index"] = frame_index
         return base
@@ -166,9 +181,9 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
         if key == "Return":
             return _normalize_authored_frame("Return", lookups, frame_index)
         if isinstance(payload, dict):
-            frame = {"kind": key, **payload}
+            frame = {"op": key, **payload}
         else:
-            frame = {"kind": key, "value": payload}
+            frame = {"op": key, "value": payload}
 
     if isinstance(frame, dict) and isinstance(frame.get("semantic"), dict):
         frame = frame_to_compact(frame)
@@ -177,26 +192,46 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
         raise ValueError(f"unsupported frame payload: {frame!r}")
 
     opcode_name = _resolve_opcode_name(frame, lookups)
-    opcode_id = _resolve_opcode_id(frame, opcode_name, lookups)
     normalized: dict[str, Any] = {
         "op": opcode_name,
-        "opcode_id": opcode_id,
-        "rust_opcode": str(frame.get("rust_opcode") or frame.get("rust_opcode_name") or f"O_{opcode_name}"),
     }
 
-    for field in ("value", "attr", "slot", "params"):
-        if field in frame:
-            normalized_value = _normalize_scalar(frame.get(field))
-            if normalized_value not in (None, False, 0, "", [], {}):
-                normalized[field] = normalized_value
+    if isinstance(frame.get("options"), dict):
+        options = _normalize_scalar(frame["options"])
+        if isinstance(options, dict) and options:
+            normalized["options"] = options
+            for alias in ("value", "count", "filter", "slot", "params", "target", "comparison"):
+                if alias in options:
+                    normalized[alias] = _normalize_scalar(options[alias])
+            if options.get("negated"):
+                normalized["negated"] = True
+    else:
+        options = {}
+        for field in ("value", "attr", "slot", "params", "filter", "count", "target", "comparison"):
+            if field in frame:
+                normalized_value = _normalize_scalar(frame.get(field))
+                if normalized_value not in (None, False, 0, "", [], {}):
+                    options["filter" if field == "attr" else field] = normalized_value
+        if frame.get("negated", frame.get("is_negated", False)):
+            options["negated"] = True
+        if options:
+            normalized["options"] = options
+            for alias in ("value", "count", "filter", "slot", "params", "target", "comparison"):
+                if alias in options:
+                    normalized[alias] = options[alias]
+            if options.get("negated"):
+                normalized["negated"] = True
 
-    slot = frame.get("slot") if isinstance(frame.get("slot"), dict) else normalized.get("slot")
-    if isinstance(slot, dict) and slot.get("is_dynamic") and isinstance(normalized.get("value"), int):
-        normalized["value"] = int(unpack_v_scalar_dynamic(int(normalized["value"]))["base_value"])
+    options = normalized.get("options")
+    slot = options.get("slot") if isinstance(options, dict) else None
+    if isinstance(slot, dict) and slot.get("is_dynamic") and isinstance(options, dict) and isinstance(options.get("value"), int):
+        options["value"] = int(unpack_v_scalar_dynamic(int(options["value"]))["base_value"])
+        normalized["value"] = options["value"]
 
-    negated = frame.get("negated", frame.get("is_negated", False))
-    if bool(negated):
-        normalized["negated"] = True
+    if isinstance(frame.get("rust_opcode"), str) and frame["rust_opcode"]:
+        normalized["rust_opcode"] = frame["rust_opcode"]
+    elif opcode_name != "RETURN":
+        normalized["rust_opcode"] = f"O_{opcode_name}"
 
     explicit_index = frame.get("frame_index", frame.get("ability_frame_index", frame_index))
     if isinstance(explicit_index, int) and explicit_index >= 0:
@@ -208,15 +243,14 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
     return normalized
 
 
-def _signature_payload(trigger_id: int, frames: list[dict[str, Any]], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    signature_frames: list[dict[str, Any]] = []
-    for frame in frames:
+def _signature_payload(trigger_id: int, instructions: list[dict[str, Any]], metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    signature_instructions: list[dict[str, Any]] = []
+    for frame in instructions:
         signature_frame: dict[str, Any] = {"op": frame["op"]}
-        for field in ("value", "attr", "slot", "negated", "params"):
-            if field in frame:
-                signature_frame[field] = frame[field]
-        signature_frames.append(signature_frame)
-    payload = {"trigger": trigger_id, "frames": signature_frames}
+        if isinstance(frame.get("options"), dict) and frame["options"]:
+            signature_frame["options"] = frame["options"]
+        signature_instructions.append(signature_frame)
+    payload = {"trigger": trigger_id, "instructions": signature_instructions}
     if metadata:
         metadata_fields = ("is_once_per_turn", "requires_selection", "choice_flags", "choice_count")
         for field in metadata_fields:
@@ -225,8 +259,8 @@ def _signature_payload(trigger_id: int, frames: list[dict[str, Any]], metadata: 
     return payload
 
 
-def frame_signature(trigger_id: int, frames: list[dict[str, Any]], lookups: Any, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
-    payload = _signature_payload(trigger_id, frames, metadata)
+def frame_signature(trigger_id: int, instructions: list[dict[str, Any]], lookups: Any, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+    payload = _signature_payload(trigger_id, instructions, metadata)
     signature_source = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     signature_hash = sha1(signature_source.encode("utf-8")).hexdigest()
     return {
@@ -250,21 +284,56 @@ def _normalize_cards(entry: dict[str, Any]) -> tuple[list[Any], list[dict[str, A
     return cards, card_refs
 
 
-def _render_pseudocode(frames: list[dict[str, Any]], lookups: Any) -> str:
+def _render_pseudocode(instructions: list[dict[str, Any]], lookups: Any) -> str:
     return ""
 
 
-def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
+def _extract_ability_text(card_refs: list[dict[str, Any]], card_db: dict[str, Any] | None) -> str:
+    if not card_db or not card_refs:
+        return ""
+    
+    # Try to find the first card reference that has an ability index
+    for ref in card_refs:
+        db_name = ref.get("db")
+        card_id = str(ref.get("card_id"))
+        ab_idx = ref.get("ability_index")
+        
+        if not db_name or not card_id or ab_idx is None:
+            continue
+            
+        db = card_db.get(db_name)
+        if not db:
+            continue
+            
+        card_data = db.get(card_id)
+        if not card_data:
+            continue
+            
+        original_text = card_data.get("original_text", "")
+        if not original_text:
+            continue
+            
+        # Try to split by lines and pick the one for ab_idx
+        lines = [line.strip() for line in original_text.split("\n") if line.strip()]
+        if 0 <= ab_idx < len(lines):
+            return lines[ab_idx]
+            
+        return original_text
+        
+    return ""
+
+
+def _normalize_entry(entry: dict[str, Any], lookups: Any, card_db: dict[str, Any] | None = None) -> dict[str, Any]:
     trigger_id = _resolve_trigger_id(entry.get("trigger_id", entry.get("trigger")), lookups)
     trigger = _trigger_name(trigger_id, lookups)
-    raw_frames = entry.get("frames", []) if isinstance(entry.get("frames"), list) else []
-    frames = [_normalize_authored_frame(frame, lookups, idx) for idx, frame in enumerate(raw_frames)]
-    signature = frame_signature(trigger_id, frames, lookups, metadata=entry)
+    raw_instructions = entry.get("instructions", entry.get("frames", [])) if isinstance(entry.get("instructions", entry.get("frames", [])), list) else []
+    instructions = [_normalize_authored_frame(frame, lookups, idx) for idx, frame in enumerate(raw_instructions)]
+    signature = frame_signature(trigger_id, instructions, lookups, metadata=entry)
     cards, card_refs = _normalize_cards(entry)
 
-    opcode_sequence = [frame["op"] for frame in frames]
-    rust_opcode_sequence = [frame["rust_opcode"] for frame in frames]
+    opcode_sequence = [frame["op"] for frame in instructions]
     opcode_names = list(dict.fromkeys(opcode_sequence))
+    rust_opcode_sequence = [f"O_{op}" for op in opcode_sequence]
 
     normalized = {
         "signature": signature["signature"],
@@ -272,14 +341,15 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
         "signature_source": signature["signature_source"],
         "trigger_id": trigger_id,
         "trigger": trigger,
-        "frame_count": len(frames),
+        "frame_count": len(instructions),
         "opcode_sequence": opcode_sequence,
         "opcode_names": opcode_names,
         "rust_opcode_sequence": rust_opcode_sequence,
-        "frames": frames,
+        "instructions": instructions,
         "cards": cards,
         "card_refs": card_refs,
-        "pseudocode": _render_pseudocode(frames, lookups) or str(entry.get("pseudocode", "")),
+        "original_text": entry.get("original_text", _extract_ability_text(card_refs, card_db)),
+        "pseudocode": _render_pseudocode(instructions, lookups) or str(entry.get("pseudocode", "")),
         "source_mode": entry.get("source_mode", "frame_authored"),
     }
 
@@ -297,15 +367,24 @@ def _normalize_entry(entry: dict[str, Any], lookups: Any) -> dict[str, Any]:
     return normalized
 
 
-def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
+def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
     lookups = MetadataLookups(metadata)
-    entries = [_normalize_entry(entry, lookups) for entry in payload.get("abilities", [])]
+    entries = [_normalize_entry(entry, lookups, card_db) for entry in payload.get("abilities", [])]
     entries.sort(key=lambda entry: (entry["trigger"], -len(entry["cards"]), entry["signature_hash"]))
     return {
         "generated_at": _utc_now(),
         "source": str(payload.get("source", ROOT_DIR / "data" / "ability_frames.json")),
         "metadata_source": str(payload.get("metadata_source", ROOT_DIR / "data" / "metadata.json")),
         "schema": "ability_frames.flat.v2",
+        "documentation": {
+            "purpose": "Normalized semantic frame source used to build runtime card data.",
+            "read_first": "Each ability is instruction-based. Empty bytecode is expected here; inspect instructions and frame_count instead.",
+            "related_files": {
+                "data/ability_frames.json": "Authored frame input",
+                "data/metadata.json": "Opcode, slot, and filter metadata",
+                "data/cards_compiled.json": "Compiled runtime card database",
+            },
+        },
         "summary": {
             "card_count": int(payload.get("summary", {}).get("card_count", 0)),
             "ability_count": int(payload.get("summary", {}).get("ability_count", 0)),
@@ -315,14 +394,14 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
     }
 
 
-def build_compact_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
+def build_compact_ability_index(compiled_data: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
     if not isinstance(compiled_data.get("abilities"), list):
         raise ValueError("ability frame compaction now requires authored frame data")
 
-    return normalize_authored_ability_index(compiled_data, metadata)
+    return normalize_authored_ability_index(compiled_data, metadata, card_db)
 
 
-def build_runtime_ability_index(payload: dict[str, Any], metadata: dict[str, Any]) -> dict[str, Any]:
-    normalized = normalize_authored_ability_index(payload, metadata)
+def build_runtime_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
+    normalized = normalize_authored_ability_index(payload, metadata, card_db)
     normalized["schema"] = "ability_frame_index.flat.v2"
     return normalized

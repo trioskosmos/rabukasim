@@ -39,17 +39,31 @@ pub fn handle_select_mode(
                 flip_ctx.player_id = 1 - (ctx.player_id as u8);
             }
 
-            let suspended = suspend_choice(
+            let choice_ctx: &AbilityContext = if is_opponent { &flip_ctx } else { &*ctx };
+            let options = if !is_opponent {
+                crate::core::logic::ActionFactory::infer_all_select_mode_options(
+                    db,
+                    ctx.source_card_id,
+                    ctx.ability_index,
+                    v as i16,
+                )
+            } else {
+                Vec::new()
+            };
+
+            let suspended = crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice_with_options(
                 state,
                 db,
                 ctx,
-                if is_opponent { &flip_ctx } else { ctx },
+                choice_ctx,
                 frame_idx,
                 crate::core::enums::O_SELECT_MODE,
                 0,
                 choice_type,
                 0,
                 v as i16,
+                options,
+                Vec::new(),
             );
 
             if matches!(suspended, HandlerResult::Suspend) {

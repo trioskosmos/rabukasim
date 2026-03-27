@@ -1,5 +1,5 @@
 use crate::core::enums::ChoiceType;
-use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, FILTER_IS_OPTIONAL};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
@@ -52,7 +52,7 @@ pub fn handle_select_cards(
 
     if state.debug.debug_mode {
         state.trace_internal(&format!(
-            "BC_SELECT_CARDS: [phase={:?}] zone={} optional={} variable={} looked={} {}",
+            "FRAME_SELECT_CARDS: [phase={:?}] zone={} optional={} variable={} looked={} {}",
             state.phase,
             effective_zone,
             is_optional,
@@ -86,12 +86,12 @@ pub fn handle_select_cards(
         && is_variable_selection
         && ctx.v_remaining == VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT
     {
-        if ctx.choice_index == 0 || ctx.choice_index == CHOICE_DONE {
+        if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_DONE {
             cancel_optional_selection(state);
             return HandlerResult::Continue;
         }
 
-        if ctx.choice_index == 1 {
+        if ctx.choice_index == CHOICE_NO {
             ctx.choice_index = -1;
             ctx.v_remaining = 0;
         }
@@ -118,12 +118,12 @@ pub fn handle_select_cards(
     }
 
     if is_optional && v == 99 && ctx.v_remaining == optional_prompt_marker {
-        if ctx.choice_index == 0 || ctx.choice_index == CHOICE_DONE {
+        if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_DONE {
             cancel_optional_selection(state);
             return HandlerResult::Continue;
         }
 
-        if ctx.choice_index == 1 {
+        if ctx.choice_index == CHOICE_NO {
             ctx.choice_index = -1;
             ctx.v_remaining = v as i16;
         }

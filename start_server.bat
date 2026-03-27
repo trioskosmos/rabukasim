@@ -14,7 +14,7 @@ uv run python tools/sync_metadata.py
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
-set DO_FULL=0
+set DO_FULL=1
 set DEBUG_ARG=
 set NN_FEATURES=--features nn
 for %%a in (%*) do (
@@ -30,23 +30,17 @@ echo [build] Building Python extension (maturin)...
 uv run maturin develop
 if errorlevel 1 goto CMD_FAIL
 
-echo [build] Running full frame rebuild...
-uv run python tools/build_cards.py %DEBUG_ARG%
+echo [build] Preparing compiled ability artifacts...
+uv run python tools/build_cards.py --force --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
-goto SYNC_ASSETS
+goto RUN_SERVER
 
 :FAST_FRAME_SYNC
-echo [build] Syncing frame-native ability artifacts...
-uv run python tools/sync_ability_frame_index.py
-if errorlevel 1 goto CMD_FAIL
-uv run python tools/codegen_abilities.py
+echo [build] Preparing compiled ability artifacts...
+uv run python tools/build_cards.py --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 
-:SYNC_ASSETS
-echo [build] Synchronizing frontend assets...
-uv run python tools/sync_launcher_assets.py
-if errorlevel 1 goto CMD_FAIL
-
+:RUN_SERVER
 echo [run] Starting Rust server...
 if "%DEBUG_ARG%"=="--debug" echo [run] Debug mode enabled.
 

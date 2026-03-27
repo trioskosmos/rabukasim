@@ -452,11 +452,8 @@ impl MainPhaseController for GameState {
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded_action = ActionFactory::parse_action(action);
-        let mut response_original_phase = Phase::Main;
-        let mut response_original_current_player = self.current_player;
+        let response_origin = pending_response_origin(self);
         if let Some(pi) = self.interaction_stack.last().cloned() {
-            response_original_phase = pi.original_phase;
-            response_original_current_player = pi.original_current_player;
             let choice_idx = match decoded_action {
                 DecodedAction::Pass => 99,
                 DecodedAction::SelectMode { mode_idx } => mode_idx,
@@ -568,17 +565,11 @@ impl ResponseController for GameState {
                         return Ok(());
                     }
 
-                    if self.interaction_stack.is_empty() {
-                        self.phase = if pi.original_phase == Phase::Response
-                            || pi.original_phase == Phase::Setup
-                        {
-                            Phase::Main
-                        } else {
-                            pi.original_phase
-                        };
-                    }
-                    self.current_player = pi.original_current_player;
-                    self.clear_execution_id();
+                    crate::core::logic::interpreter::restore_response_state(
+                        self,
+                        response_origin.0,
+                        response_origin.1,
+                    );
                     self.check_win_condition();
                     return Ok(());
                 }
@@ -619,28 +610,17 @@ impl ResponseController for GameState {
                         }
                     }
 
-                    if self.interaction_stack.is_empty() {
-                        self.phase = if pi.original_phase == Phase::Response
-                            || pi.original_phase == Phase::Setup
-                        {
-                            Phase::Main
-                        } else {
-                            pi.original_phase
-                        };
-                    }
-                    self.current_player = pi.original_current_player;
-                    self.clear_execution_id();
+                    crate::core::logic::interpreter::restore_response_state(
+                        self,
+                        response_origin.0,
+                        response_origin.1,
+                    );
                     self.check_win_condition();
                     return Ok(());
                 }
             }
 
-            let declined_ll_bp2_live_start = choice_idx == 1
-                && pi.ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                && pending_member_ability(db, pi.ctx.source_card_id, pi.ctx.ability_index)
-                    .map(is_optional_live_start_discard_count_ability)
-                    .unwrap_or(false);
-            if declined_ll_bp2_live_start {
+            if is_optional_live_start_discard_decline(db, &pi.ctx, choice_idx) {
                 if let Some(execution_id) = self.ui.current_execution_id {
                     self.ui.cancelled_execution_ids.insert(execution_id);
                 }
@@ -648,15 +628,11 @@ impl ResponseController for GameState {
         }
 
         if self.interaction_stack.is_empty() {
-            self.phase = if response_original_phase == Phase::Response
-                || response_original_phase == Phase::Setup
-            {
-                Phase::Main
-            } else {
-                response_original_phase
-            };
-            self.current_player = response_original_current_player;
-            self.clear_execution_id();
+            crate::core::logic::interpreter::restore_response_state(
+                self,
+                response_origin.0,
+                response_origin.1,
+            );
             self.check_win_condition();
             return Ok(());
         }
@@ -687,6 +663,12 @@ impl ResponseController for GameState {
             None
         };
 
+        let pending_choice_type = self
+            .interaction_stack
+            .last()
+            .map(|pi| pi.choice_type)
+            .unwrap_or(ChoiceType::None);
+
         let slot_idx = ctx_res.area_idx as usize;
         let ab_idx_call = if ctx_res.ability_index < 0 {
             0
@@ -695,9 +677,19 @@ impl ResponseController for GameState {
         };
         let target_slot = ctx_res.target_slot as i32;
 
+        if pending_choice_type == ChoiceType::SelectStage {
+            self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
+            return Ok(());
+        }
+
         self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
 
         self.clear_execution_id();
+        crate::core::logic::interpreter::restore_response_state(
+            self,
+            response_origin.0,
+            response_origin.1,
+        );
         self.check_win_condition(); // Check if ability caused a win
         Ok(())
     }
@@ -799,8 +791,10 @@ impl ResponseController for GameState {
         }
 
         let p_idx = self.current_player as usize;
-        if self.phase == Phase::Response {
-            let (cid, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
+        let stack_len_before = self.interaction_stack.len();
+        if self.phase == Phase::Response || !self.interaction_stack.is_empty() {
+            let response_origin = pending_response_origin(self);
+            let (cid, ctx) = if let Some(pi) = self.interaction_stack.last() {
                 let restored_phase = pi.ctx.original_phase.unwrap_or_else(|| {
                     if pi.original_phase == Phase::Setup {
                         self.phase
@@ -814,7 +808,7 @@ impl ResponseController for GameState {
                 if target_slot >= 0 {
                     c.target_slot = target_slot as i16;
                 }
-                (pi.card_id, c, restored_phase, pi.original_current_player)
+                (pi.card_id, c)
             } else {
                 return Err("No pending interaction".to_string());
             };
@@ -830,6 +824,7 @@ impl ResponseController for GameState {
                         ),
                         slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
                         is_negated: false,
+                        is_cost: false,
                         params: serde_json::Value::Null,
                     },
                     crate::core::logic::models::AbilityFrame::Return,
@@ -844,10 +839,9 @@ impl ResponseController for GameState {
             // discard cost inside a legacy sequence, the PASS action (99) should jump past it.
             // If the interpreter returns without suspending, we need to restore phase.
 
-            // For virtual semantic frames (pi.card_id == -1), we must pop.
-            // For actual abilities, we pop because resolve_ability will use ctx.choice_index
-            // to jump or skip, and if it doesn't suspend again, we restore the phase below.
-            self.interaction_stack.pop();
+            // Keep the current response window open while nested prompts are still pending.
+            // If the ability resolves without introducing a deeper suspension, we'll drop
+            // the current interaction after the resolver finishes.
 
             if let Some(frames) = semantic_frames {
                 let _ = crate::core::logic::interpreter::resolve_semantic_frames(
@@ -863,19 +857,20 @@ impl ResponseController for GameState {
                 return Err("Card not found".to_string());
             }
 
-            if self.phase == Phase::Response {
-                self.process_rule_checks(db);
-                return Ok(());
-            }
-
             self.process_rule_checks(db);
 
-            let declined_ll_bp2_live_start_cleanup = choice_idx == 1
-                && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
-                    .map(is_optional_live_start_discard_count_ability)
-                    .unwrap_or(false);
-            if declined_ll_bp2_live_start_cleanup {
+            if self.interaction_stack.len() <= stack_len_before {
+                while self
+                    .interaction_stack
+                    .last()
+                    .map(|pi| pi.card_id == cid)
+                    .unwrap_or(false)
+                {
+                    self.interaction_stack.pop();
+                }
+            }
+
+            if is_optional_live_start_discard_decline(db, &ctx, choice_idx) {
                 let p_idx = ctx.player_id as usize;
                 let slot_idx = ctx.area_idx as usize;
                 if slot_idx < STAGE_SLOT_COUNT {
@@ -884,49 +879,37 @@ impl ResponseController for GameState {
             }
 
             // Restore phase only if no new suspension occurred
-            if self.interaction_stack.is_empty() {
-                let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
-                let was_cancelled = current_execution_id > 0
-                    && self
-                        .ui
-                        .cancelled_execution_ids
-                        .remove(&current_execution_id);
-                let suppress_resolve_trigger = choice_idx == 1
-                    && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-                    && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
-                        .map(is_optional_live_start_discard_count_ability)
-                        .unwrap_or(false);
-                if !was_cancelled {
-                    let res_trigger = match ctx.trigger_type {
-                        crate::core::enums::TriggerType::OnLiveStart => {
-                            Some(crate::core::enums::TriggerType::OnAbilityResolve)
-                        }
-                        crate::core::enums::TriggerType::OnLiveSuccess => {
-                            Some(crate::core::enums::TriggerType::OnAbilitySuccess)
-                        }
-                        _ => None,
-                    };
+            let current_execution_id = self.ui.current_execution_id.unwrap_or(0);
+            let was_cancelled = current_execution_id > 0
+                && self
+                    .ui
+                    .cancelled_execution_ids
+                    .remove(&current_execution_id);
+            let suppress_resolve_trigger = is_optional_live_start_discard_decline(db, &ctx, choice_idx);
+            if !was_cancelled {
+                let res_trigger = match ctx.trigger_type {
+                    crate::core::enums::TriggerType::OnLiveStart => {
+                        Some(crate::core::enums::TriggerType::OnAbilityResolve)
+                    }
+                    crate::core::enums::TriggerType::OnLiveSuccess => {
+                        Some(crate::core::enums::TriggerType::OnAbilitySuccess)
+                    }
+                    _ => None,
+                };
 
-                    if let Some(t) = res_trigger {
-                        if !suppress_resolve_trigger {
-                            let mut res_ctx = ctx.clone();
-                            res_ctx.target_card_id = cid;
-                            self.trigger_abilities_from(db, t, &res_ctx, 0);
-                        }
+                if let Some(t) = res_trigger {
+                    if !suppress_resolve_trigger {
+                        let mut res_ctx = ctx.clone();
+                        res_ctx.target_card_id = cid;
+                        self.trigger_abilities_from(db, t, &res_ctx, 0);
                     }
                 }
-                if self.debug.debug_mode {
-                    println!(
-                        "[DEBUG_RES] Restoring phase. orig_phase={:?}, stack_len={}",
-                        orig_phase,
-                        self.interaction_stack.len()
-                    );
-                }
-                if self.interaction_stack.is_empty() {
-                    self.phase = orig_phase;
-                }
-                self.current_player = orig_cp;
             }
+            crate::core::logic::interpreter::restore_response_state(
+                self,
+                response_origin.0,
+                response_origin.1,
+            );
             return Ok(());
         }
 
@@ -1056,6 +1039,26 @@ impl ResponseController for GameState {
         self.process_rule_checks(db);
         Ok(())
     }
+}
+
+fn is_optional_live_start_discard_decline(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    choice_idx: i32,
+) -> bool {
+    choice_idx == 1
+        && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
+        && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
+            .map(is_optional_live_start_discard_count_ability)
+            .unwrap_or(false)
+}
+
+fn pending_response_origin(state: &GameState) -> (Phase, u8) {
+    state
+        .interaction_stack
+        .last()
+        .map(|pi| (pi.original_phase, pi.original_current_player))
+        .unwrap_or((state.phase, state.current_player))
 }
 
 #[cfg(test)]
@@ -1213,11 +1216,16 @@ impl GameState {
         choice_idx: i32,
         start_ab_idx: usize,
     ) -> Result<(), String> {
-        let (card_id, ctx, orig_phase) = if let Some(pi) = self.interaction_stack.last() {
+        let stack_len_before = self.interaction_stack.len();
+        let (card_id, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
             let mut c = pi.ctx.clone();
             c.choice_index = choice_idx as i16;
-            c.original_phase = Some(pi.original_phase);
-            (pi.card_id, c, pi.original_phase)
+            let restored_phase = pi
+                .ctx
+                .original_phase
+                .unwrap_or(pi.original_phase);
+            c.original_phase = Some(restored_phase);
+            (pi.card_id, c, pi.original_phase, pi.original_current_player)
         } else {
             return Err("No pending interaction found in Response phase".to_string());
         };
@@ -1233,11 +1241,6 @@ impl GameState {
             );
         }
 
-        self.phase = orig_phase;
-        // Don't force phase to Main - let the ability execution determine phase transitions
-        // If there are more effects to process, they should handle phase changes appropriately
-        self.interaction_stack.pop();
-
         self.trigger_event(
             db,
             TriggerType::OnPlay,
@@ -1247,11 +1250,24 @@ impl GameState {
             start_ab_idx,
             ctx.choice_index,
         );
+        self.phase = orig_phase;
+        self.process_rule_checks(db);
+
+        if self.interaction_stack.len() <= stack_len_before {
+            while self
+                .interaction_stack
+                .last()
+                .map(|pi| pi.card_id == card_id)
+                .unwrap_or(false)
+            {
+                self.interaction_stack.pop();
+            }
+        }
+
         if self.phase == Phase::Response {
-            self.process_rule_checks(db);
             return Ok(());
         }
-        self.process_rule_checks(db);
+        self.current_player = orig_cp;
         Ok(())
     }
 

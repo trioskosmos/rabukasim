@@ -1,17 +1,12 @@
 #![allow(unused_imports)]
 use crate::core::generated_constants::ACTION_BASE_CHOICE;
 use crate::core::logic::{CardDatabase, GameState, Phase, PlayerState};
+use crate::test_helpers::load_real_db;
 use smallvec::smallvec;
 
 #[test]
 fn test_yell_persistence_and_selection() {
-    let db_path = std::path::Path::new("../data/cards_compiled.json");
-    if !db_path.exists() {
-        println!("Skipping test: cards_compiled.json not found");
-        return;
-    }
-    let json_str = std::fs::read_to_string(db_path).unwrap();
-    let db = CardDatabase::from_json(&json_str).unwrap();
+    let db = load_real_db();
 
     let mut state = GameState::default();
 

@@ -233,7 +233,7 @@ pub struct UIState {
     #[serde(default)]
     pub cancelled_execution_ids: HashSet<u32>,
     #[serde(default)]
-    #[serde(alias = "bytecode_log")]
+    #[serde(alias = "bytecode_log", alias = "frame_log")]
     pub semantic_log: Vec<String>,
     #[serde(skip)]
     pub processing_trigger_queue: bool,
@@ -296,13 +296,22 @@ impl GameState {
         }
     }
 
+    pub fn resolve_instructions<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        instructions: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, instructions, ctx_in);
+    }
+
     pub fn resolve_words<B: AsRef<[i32]>>(
         &mut self,
         db: &CardDatabase,
         words: B,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, words, ctx_in);
+        self.resolve_instructions(db, words, ctx_in);
     }
 
     pub fn resolve_bytecode<B: AsRef<[i32]>>(
@@ -311,7 +320,7 @@ impl GameState {
         bytecode: B,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_words(db, bytecode, ctx_in);
+        self.resolve_instructions(db, bytecode, ctx_in);
     }
 
     pub fn resolve_words_cref(
@@ -320,7 +329,16 @@ impl GameState {
         words: &Vec<i32>,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, words, ctx_in);
+        self.resolve_instructions(db, words, ctx_in);
+    }
+
+    pub fn resolve_instructions_cref(
+        &mut self,
+        db: &CardDatabase,
+        instructions: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, instructions, ctx_in);
     }
 
     pub fn resolve_bytecode_cref(
@@ -329,7 +347,7 @@ impl GameState {
         bytecode: &Vec<i32>,
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_words_cref(db, bytecode, ctx_in);
+        self.resolve_instructions_cref(db, bytecode, ctx_in);
     }
 
     pub fn resolve_words_slice(
@@ -338,7 +356,7 @@ impl GameState {
         words: &[i32],
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_frames(db, words, ctx_in);
+        self.resolve_instructions(db, words, ctx_in);
     }
 
     pub fn resolve_bytecode_slice(
@@ -347,7 +365,7 @@ impl GameState {
         bytecode: &[i32],
         ctx_in: &AbilityContext,
     ) {
-        self.resolve_words_slice(db, bytecode, ctx_in);
+        self.resolve_instructions(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(

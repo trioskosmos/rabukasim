@@ -15,6 +15,8 @@ pub enum AbilityFrame {
     Draw {
         count: i32,
         slot: DecodedSlot,
+        #[serde(default)]
+        is_cost: bool,
     },
     Semantic {
         opcode: i32,
@@ -24,44 +26,70 @@ pub enum AbilityFrame {
         #[serde(default)]
         is_negated: bool,
         #[serde(default)]
+        is_cost: bool,
+        #[serde(default)]
         params: Value,
     },
     RecoverLive {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        params: Value,
+        #[serde(default)]
+        is_cost: bool,
     },
     RecoverMember {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        params: Value,
+        #[serde(default)]
+        is_cost: bool,
     },
     LookAndChoose {
-        params: DecodedLookAndChoose,
+        count: i32,
+        choose_count: i32,
+        reveal: bool,
+        dest_discard: bool,
+        char_id_1: u8,
+        char_id_2: u8,
+        char_id_3: u8,
         filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        is_cost: bool,
     },
     SelectMember {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        is_cost: bool,
     },
     MoveMember {
         filter: CardFilter,
         slot: DecodedSlot,
         #[serde(default)]
         from_slot: i32,
+        #[serde(default)]
+        is_cost: bool,
     },
     MetaRule {
         rule_type: i32,
         filter: CardFilter,
         slot: DecodedSlot,
+        #[serde(default)]
+        is_cost: bool,
     },
     Raw {
         opcode: i32,
         value: i32,
         attr: u64,
         slot: i32,
+        #[serde(default)]
+        is_cost: bool,
     },
 }
 
@@ -82,6 +110,7 @@ impl Default for AbilityFrame {
             value: 0,
             attr: 0,
             slot: 0,
+            is_cost: false,
         }
     }
 }
@@ -96,7 +125,49 @@ pub struct AbilityFrameComponents<'a> {
     pub raw_attr: u64,
     pub raw_slot: i32,
     pub is_negated: bool,
+    pub is_cost: bool,
     pub params: Option<&'a Value>,
+}
+
+fn decode_look_and_choose_value(
+    value: &Value,
+    fallback_value: i32,
+) -> DecodedLookAndChoose {
+    if let Ok(decoded) = serde_json::from_value::<DecodedLookAndChoose>(value.clone()) {
+        return decoded;
+    }
+
+    if let Some(obj) = value.as_object() {
+        let mut decoded = DecodedLookAndChoose::default();
+        if let Some(v) = obj.get("count").and_then(|v| v.as_u64()) {
+            decoded.count = v as u8;
+        } else {
+            decoded.count = DecodedLookAndChoose::decode(fallback_value).count;
+        }
+        if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
+            decoded.choose_count = v as u8;
+        } else {
+            decoded.choose_count = decoded.count.max(1);
+        }
+        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
+            decoded.char_id_1 = v as u8;
+        }
+        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
+            decoded.char_id_2 = v as u8;
+        }
+        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
+            decoded.char_id_3 = v as u8;
+        }
+        if let Some(v) = obj.get("reveal").and_then(|v| v.as_bool()) {
+            decoded.reveal = v;
+        }
+        if let Some(v) = obj.get("dest_discard").and_then(|v| v.as_bool()) {
+            decoded.dest_discard = v;
+        }
+        return decoded;
+    }
+
+    DecodedLookAndChoose::decode(fallback_value)
 }
 
 impl AbilityFrame {
@@ -263,7 +334,18 @@ impl AbilityFrame {
             .or_else(|| frame.get("opcode"))
             .and_then(|v| v.as_i64())
             .unwrap_or(0) as i32;
-        let value = payload
+        let value_json = payload
+            .get("value")
+            .or_else(|| payload.get("count"))
+            .or_else(|| payload.get("rule_type"))
+            .or_else(|| payload.get("params"))
+            .or_else(|| payload.get("v"))
+            .or_else(|| frame.get("value"))
+            .or_else(|| frame.get("rule_type"))
+            .or_else(|| frame.get("v"))
+            .cloned()
+            .unwrap_or(Value::Null);
+        let value = value_json
             .get("value")
             .or_else(|| payload.get("count"))
             .or_else(|| payload.get("rule_type"))
@@ -296,17 +378,70 @@ impl AbilityFrame {
             .or_else(|| frame.get("negated"))
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
+        let options = frame
+            .get("options")
+            .or_else(|| payload.get("options"))
+            .cloned()
+            .unwrap_or(Value::Null);
         let params = payload
             .get("params")
             .or_else(|| frame.get("params"))
             .cloned()
             .unwrap_or(Value::Null);
-        let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params)) {
+        let is_cost = payload
+            .get("is_cost")
+            .or_else(|| frame.get("is_cost"))
+            .or_else(|| params.get("is_cost"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let params = if params.is_null() {
+            options
+                .get("params")
+                .cloned()
+                .unwrap_or(Value::Null)
+        } else {
+            params
+        };
+        let params_for_filter = if params.is_null() {
+            options.clone()
+        } else {
+            params.clone()
+        };
+        let recover_params = params_for_filter.clone();
+        let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params_for_filter)) {
             CardFilter::from_attr((filter.to_attr() as u64 | filter_attr) as i64)
         } else {
             filter
         };
+        let filter = if options
+            .get("is_cost")
+            .or_else(|| options.get("is_cost_type"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false)
+        {
+            let mut filter = filter;
+            filter.is_cost_type = true;
+            filter
+        } else {
+            filter
+        };
+        let filter = if options
+            .get("optional")
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false)
+        {
+            let mut filter = filter;
+            filter.is_optional = true;
+            filter
+        } else {
+            filter
+        };
         let mut slot = slot;
+        if let Some(options_slot) = options.get("slot") {
+            if let Ok(decoded_slot) = serde_json::from_value::<DecodedSlot>(options_slot.clone()) {
+                slot = decoded_slot;
+            }
+        }
         if let Some(params_obj) = params.as_object() {
             let from_zone = params_obj
                 .get("FROM")
@@ -325,6 +460,11 @@ impl AbilityFrame {
         }
         let opcode_key = if !kind.is_empty() { kind } else { opcode_name };
         let opcode_key = Self::normalize_frame_kind(opcode_key);
+        let decoded_hint = payload
+            .get("decoded")
+            .or_else(|| frame.get("decoded"))
+            .and_then(|value| value.as_str())
+            .unwrap_or("");
 
         let resolved_opcode_id = if opcode_id != 0 {
             opcode_id
@@ -351,45 +491,79 @@ impl AbilityFrame {
                     filter,
                     slot,
                     is_negated,
+                    is_cost: false,
                     params,
                 };
             }
         }
 
+        if opcode_key == "NOP" && decoded_hint.contains("UNIQUE_NAMES_COUNT") {
+            let mut params_obj = params.as_object().cloned().unwrap_or_default();
+            params_obj.insert(
+                "raw_cond".to_string(),
+                Value::String("UNIQUE_NAMES_COUNT".to_string()),
+            );
+            params_obj.insert("MIN".to_string(), Value::from(value.max(0)));
+            return AbilityFrame::Semantic {
+                opcode: 0,
+                value,
+                filter,
+                slot,
+                is_negated,
+                is_cost: false,
+                params: Value::Object(params_obj),
+            };
+        }
+
         match opcode_key.as_str() {
             "RETURN" => AbilityFrame::Return,
-            "DRAW" => AbilityFrame::Draw { count: value, slot },
+            "DRAW" => AbilityFrame::Draw { count: value, slot, is_cost },
             "RECOVER_LIVE" => AbilityFrame::RecoverLive {
                 count: value,
                 filter,
                 slot,
+                params: recover_params.clone(),
+                is_cost,
             },
             "RECOVER_MEMBER" => AbilityFrame::RecoverMember {
                 count: value,
                 filter,
                 slot,
+                params: recover_params.clone(),
+                is_cost,
             },
-            "LOOK_AND_CHOOSE" => AbilityFrame::LookAndChoose {
-                params: serde_json::from_value(params.clone())
-                    .ok()
-                    .unwrap_or_else(|| DecodedLookAndChoose::decode(value)),
-                filter,
-                slot,
-            },
+            "LOOK_AND_CHOOSE" => {
+                let decoded = decode_look_and_choose_value(&value_json, value);
+                AbilityFrame::LookAndChoose {
+                    count: decoded.count as i32,
+                    choose_count: decoded.choose_count as i32,
+                    reveal: decoded.reveal,
+                    dest_discard: decoded.dest_discard,
+                    char_id_1: decoded.char_id_1,
+                    char_id_2: decoded.char_id_2,
+                    char_id_3: decoded.char_id_3,
+                    filter,
+                    slot,
+                    is_cost,
+                }
+            }
             "SELECT_MEMBER" => AbilityFrame::SelectMember {
                 count: value,
                 filter,
                 slot,
+                is_cost,
             },
             "MOVE_MEMBER" => AbilityFrame::MoveMember {
                 filter,
                 slot,
                 from_slot: 0,
+                is_cost,
             },
             "META_RULE" => AbilityFrame::MetaRule {
                 rule_type: value,
                 filter: filter,
                 slot,
+                is_cost,
             },
             _ => AbilityFrame::Semantic {
                 opcode: resolved_opcode_id,
@@ -397,6 +571,7 @@ impl AbilityFrame {
                 filter,
                 slot,
                 is_negated,
+                is_cost,
                 params,
             },
         }
@@ -420,6 +595,7 @@ impl AbilityFrame {
                 filter,
                 slot,
                 is_negated: true,
+                is_cost: false,
                 params: Value::Null,
             };
         }
@@ -429,36 +605,54 @@ impl AbilityFrame {
             O_DRAW => AbilityFrame::Draw {
                 count: instr.v,
                 slot,
+                is_cost: false,
             },
             O_RECOVER_LIVE => AbilityFrame::RecoverLive {
                 count: instr.v,
                 filter,
                 slot,
+                params: Value::Null,
+                is_cost: false,
             },
             O_RECOVER_MEMBER => AbilityFrame::RecoverMember {
                 count: instr.v,
                 filter,
                 slot,
+                params: Value::Null,
+                is_cost: false,
             },
-            O_LOOK_AND_CHOOSE => AbilityFrame::LookAndChoose {
-                params: DecodedLookAndChoose::decode(instr.v),
-                filter,
-                slot,
-            },
+            O_LOOK_AND_CHOOSE => {
+                let decoded = DecodedLookAndChoose::decode(instr.v);
+                AbilityFrame::LookAndChoose {
+                    count: decoded.count as i32,
+                    choose_count: decoded.choose_count as i32,
+                    reveal: decoded.reveal,
+                    dest_discard: decoded.dest_discard,
+                    char_id_1: decoded.char_id_1,
+                    char_id_2: decoded.char_id_2,
+                    char_id_3: decoded.char_id_3,
+                    filter,
+                    slot,
+                    is_cost: false,
+                }
+            }
             O_SELECT_MEMBER => AbilityFrame::SelectMember {
                 count: instr.v,
                 filter,
                 slot,
+                is_cost: false,
             },
             O_MOVE_MEMBER => AbilityFrame::MoveMember {
                 filter,
                 slot,
                 from_slot: 0,
+                is_cost: false,
             },
             O_META_RULE => AbilityFrame::MetaRule {
                 rule_type: instr.v,
                 filter: CardFilter::from_attr(instr.a),
                 slot,
+                is_cost: false,
             },
             _ => AbilityFrame::Semantic {
                 opcode,
@@ -466,17 +660,19 @@ impl AbilityFrame {
                 filter,
                 slot,
                 is_negated: false,
+                is_cost: false,
                 params: Value::Null,
             },
         }
     }
 
-    pub fn new(opcode: i32, value: i32, attr: i64, raw_s: i32) -> Self {
+    pub fn new(opcode: i32, value: i32, attr: i64, raw_s: i32, is_cost: bool) -> Self {
         AbilityFrame::Raw {
             opcode,
             value,
             attr: attr as u64,
             slot: raw_s,
+            is_cost,
         }
     }
 
@@ -572,6 +768,7 @@ impl AbilityFrame {
                 filter: CardFilter::from_attr(runtime_attr as i64),
                 slot,
                 is_negated: false,
+                is_cost: false,
                 params: effect.params.clone(),
             };
         }
@@ -580,6 +777,7 @@ impl AbilityFrame {
             runtime_value,
             runtime_attr as i64,
             runtime_slot,
+            false,
         )
     }
 
@@ -596,6 +794,10 @@ impl AbilityFrame {
             AbilityFrame::MetaRule { .. } => O_META_RULE,
             AbilityFrame::Raw { opcode, .. } => *opcode,
         }
+    }
+
+    pub fn is_cost(&self) -> bool {
+        self.components().is_cost
     }
 
     pub fn components(&self) -> AbilityFrameComponents<'_> {
@@ -618,9 +820,10 @@ impl AbilityFrame {
                 raw_attr: 0,
                 raw_slot: 0,
                 is_negated,
+                is_cost: false,
                 params: None,
             },
-            AbilityFrame::Draw { count, slot } => AbilityFrameComponents {
+            AbilityFrame::Draw { count, slot, is_cost } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: *count,
@@ -629,6 +832,7 @@ impl AbilityFrame {
                 raw_attr: 0,
                 raw_slot: slot.to_raw(),
                 is_negated,
+                is_cost: *is_cost,
                 params: None,
             },
             AbilityFrame::Semantic {
@@ -636,6 +840,7 @@ impl AbilityFrame {
                 filter,
                 slot,
                 params,
+                is_cost,
                 ..
             } => AbilityFrameComponents {
                 raw_opcode,
@@ -646,22 +851,15 @@ impl AbilityFrame {
                 raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
+                is_cost: *is_cost,
                 params: Some(params),
             },
             AbilityFrame::RecoverLive {
                 count,
                 filter,
                 slot,
-            }
-            | AbilityFrame::RecoverMember {
-                count,
-                filter,
-                slot,
-            }
-            | AbilityFrame::SelectMember {
-                count,
-                filter,
-                slot,
+                params,
+                is_cost,
             } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
@@ -671,10 +869,46 @@ impl AbilityFrame {
                 raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
+                is_cost: *is_cost,
+                params: Some(params),
+            },
+            AbilityFrame::RecoverMember {
+                count,
+                filter,
+                slot,
+                params,
+                is_cost,
+            } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *count,
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr() as u64,
+                raw_slot: slot.to_raw(),
+                is_negated,
+                is_cost: *is_cost,
+                params: Some(params),
+            },
+            AbilityFrame::SelectMember {
+                count,
+                filter,
+                slot,
+                is_cost,
+            } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: *count,
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr() as u64,
+                raw_slot: slot.to_raw(),
+                is_negated,
+                is_cost: *is_cost,
                 params: None,
             },
-            AbilityFrame::LookAndChoose { filter, slot, .. }
-            | AbilityFrame::MoveMember { filter, slot, .. } => AbilityFrameComponents {
+            AbilityFrame::LookAndChoose { filter, slot, is_cost, .. }
+            | AbilityFrame::MoveMember { filter, slot, is_cost, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: self.value(),
@@ -683,9 +917,10 @@ impl AbilityFrame {
                 raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
+                is_cost: *is_cost,
                 params: None,
             },
-            AbilityFrame::MetaRule { filter, slot, .. } => AbilityFrameComponents {
+            AbilityFrame::MetaRule { filter, slot, is_cost, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: self.value(),
@@ -694,10 +929,11 @@ impl AbilityFrame {
                 raw_attr: filter.to_attr() as u64,
                 raw_slot: slot.to_raw(),
                 is_negated,
+                is_cost: *is_cost,
                 params: None,
             },
             AbilityFrame::Raw {
-                value, attr, slot, ..
+                value, attr, slot, is_cost, ..
             } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
@@ -707,6 +943,7 @@ impl AbilityFrame {
                 raw_attr: *attr,
                 raw_slot: *slot,
                 is_negated,
+                is_cost: *is_cost,
                 params: None,
             },
         }
@@ -719,7 +956,25 @@ impl AbilityFrame {
             AbilityFrame::Semantic { value, .. } => *value,
             AbilityFrame::RecoverLive { count, .. } => *count,
             AbilityFrame::RecoverMember { count, .. } => *count,
-            AbilityFrame::LookAndChoose { params, .. } => params.to_raw(),
+            AbilityFrame::LookAndChoose {
+                count,
+                choose_count,
+                reveal,
+                dest_discard,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                ..
+            } => crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+                count: *count as u8,
+                choose_count: *choose_count as u8,
+                reveal: *reveal,
+                dest_discard: *dest_discard,
+                char_id_1: *char_id_1,
+                char_id_2: *char_id_2,
+                char_id_3: *char_id_3,
+            }
+            .to_raw(),
             AbilityFrame::SelectMember { count, .. } => *count,
             AbilityFrame::MoveMember { .. } => 0,
             AbilityFrame::MetaRule { rule_type, .. } => *rule_type,
@@ -784,7 +1039,24 @@ impl AbilityFrame {
         &self,
     ) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
         match self {
-            AbilityFrame::LookAndChoose { params, .. } => *params,
+            AbilityFrame::LookAndChoose {
+                count,
+                choose_count,
+                reveal,
+                dest_discard,
+                char_id_1,
+                char_id_2,
+                char_id_3,
+                ..
+            } => crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+                count: *count as u8,
+                choose_count: *choose_count as u8,
+                reveal: *reveal,
+                dest_discard: *dest_discard,
+                char_id_1: *char_id_1,
+                char_id_2: *char_id_2,
+                char_id_3: *char_id_3,
+            },
             _ => crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(
                 self.value(),
             ),
@@ -888,7 +1160,7 @@ impl Serialize for FrameProgram {
     {
         if let Some(raw) = &self.raw_program {
             let has_structured_frames = raw
-                .get("frames")
+                .get("instructions")
                 .and_then(|v| v.as_array())
                 .map(|frames| !frames.is_empty())
                 .unwrap_or(false);
@@ -899,7 +1171,7 @@ impl Serialize for FrameProgram {
 
             let mut merged = raw.as_object().cloned().unwrap_or_default();
             merged.insert(
-                "frames".to_string(),
+                "instructions".to_string(),
                 Value::Array(
                     self.frames
                         .iter()
@@ -912,7 +1184,7 @@ impl Serialize for FrameProgram {
 
         let mut map = serde_json::Map::new();
         map.insert(
-            "frames".to_string(),
+            "instructions".to_string(),
             Value::Array(
                 self.frames
                     .iter()
@@ -931,7 +1203,8 @@ impl<'de> Deserialize<'de> for FrameProgram {
     {
         let raw_program = Value::deserialize(deserializer)?;
         let frames = raw_program
-            .get("frames")
+            .get("instructions")
+            .or_else(|| raw_program.get("frames"))
             .and_then(|v| v.as_array())
             .map(|frames| {
                 frames
@@ -967,7 +1240,7 @@ impl FrameProgram {
         Self {
             frames,
             raw_program: Some(serde_json::json!({
-                "frames": [],
+                "instructions": [],
                 "bytecode": words,
             })),
         }
@@ -1409,6 +1682,7 @@ impl Ability {
                                     mut slot,
                                     is_negated,
                                     params,
+                                    ..
                                 } => {
                                     slot.is_reveal_until_live = true;
                                     AbilityFrame::Semantic {
@@ -1417,6 +1691,7 @@ impl Ability {
                                         filter,
                                         slot,
                                         is_negated,
+                                        is_cost: false,
                                         params,
                                     }
                                 }
@@ -1425,6 +1700,7 @@ impl Ability {
                                     value,
                                     attr,
                                     slot,
+                                    ..
                                 } => {
                                     let mut decoded_slot = DecodedSlot::decode(slot);
                                     decoded_slot.is_reveal_until_live = true;
@@ -1433,6 +1709,7 @@ impl Ability {
                                         value,
                                         attr,
                                         slot: decoded_slot.to_raw(),
+                                        is_cost: false,
                                     }
                                 }
                                 other => other,
@@ -1499,6 +1776,7 @@ impl Ability {
                                             mut slot,
                                             is_negated,
                                             params,
+                                            ..
                                         } => {
                                             slot.is_reveal_until_live = true;
                                             AbilityFrame::Semantic {
@@ -1507,6 +1785,7 @@ impl Ability {
                                                 filter,
                                                 slot,
                                                 is_negated,
+                                                is_cost: false,
                                                 params,
                                             }
                                         }
@@ -1515,6 +1794,7 @@ impl Ability {
                                             value,
                                             attr,
                                             slot,
+                                            ..
                                         } => {
                                             let mut decoded_slot = DecodedSlot::decode(slot);
                                             decoded_slot.is_reveal_until_live = true;
@@ -1523,6 +1803,7 @@ impl Ability {
                                                 value,
                                                 attr,
                                                 slot: decoded_slot.to_raw(),
+                                                is_cost: false,
                                             }
                                         }
                                         other => other,
@@ -1609,6 +1890,7 @@ mod tests {
                     value: 3,
                     attr: 0x1122_3344_5566_7788,
                     slot: 9,
+                    is_cost: false,
                 },
             ],
             raw_program: None,
@@ -1626,7 +1908,8 @@ mod tests {
                 opcode: 204,
                 value: 3,
                 attr: 0x1122_3344_5566_7788,
-                slot: 9
+                slot: 9,
+                is_cost: false,
             }
             .to_instruction()
         );
@@ -1666,20 +1949,57 @@ mod tests {
         let serialized = serde_json::to_value(&frame_program).unwrap();
         assert_eq!(
             serialized
-                .get("frames")
+                .get("instructions")
                 .and_then(|v| v.as_array())
                 .map(|v| v.len()),
             Some(2)
         );
         assert_eq!(
             serialized
-                .get("frames")
+                .get("instructions")
                 .and_then(|v| v.as_array())
                 .and_then(|frames| frames.first())
                 .and_then(|frame| frame.get("RecoverLive"))
                 .and_then(|frame| frame.get("slot"))
                 .map(|slot| slot.is_object()),
             Some(true)
+        );
+    }
+
+    #[test]
+    fn recover_live_json_params_survive_decode() {
+        let raw = serde_json::json!({
+            "RecoverLive": {
+                "count": 1,
+                "slot": 0,
+                "params": {
+                    "special_id": "Same Name"
+                }
+            }
+        });
+
+        let frame = AbilityFrame::from_json_value(&raw);
+        match &frame {
+            AbilityFrame::RecoverLive {
+                filter, params, ..
+            } => {
+                assert_eq!(filter.special_id, 4);
+                assert_eq!(
+                    params.get("special_id").and_then(|v| v.as_str()),
+                    Some("Same Name")
+                );
+            }
+            other => panic!("expected RecoverLive frame, got {:?}", other),
+        }
+
+        let components = frame.components();
+        assert_eq!(components.filter.special_id, 4);
+        assert_eq!(
+            components
+                .params
+                .and_then(|value| value.get("special_id"))
+                .and_then(|value| value.as_str()),
+            Some("Same Name")
         );
     }
 }

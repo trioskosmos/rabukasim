@@ -3,7 +3,7 @@
 //!
 //! # Test Architecture Overview
 //!
-//! This engine includes 568 comprehensive tests organized into multiple categories:
+//! This engine includes 531 active library tests organized into multiple categories:
 //!
 //! ## Test Categories
 //!
@@ -13,9 +13,9 @@
 //! - **Coverage**: Q1-Q300+ official rulings
 //! - **Command**: `cargo test --lib qa`
 //!
-//! ### 2. Opcode & Bytecode Tests (~150 tests)
+//! ### 2. Opcode & Instruction Tests (~150 tests)
 //! - **Locations**: `opcode_*.rs` modules (opcode_tests, opcode_coverage_gap_2, etc.)
-//! - **Purpose**: Individual bytecode instruction validation
+//! - **Purpose**: Individual instruction validation
 //! - **Coverage**: O_DRAW, O_REVEAL_UNTIL, O_LOOK_DECK, etc.
 //! - **Command**: `cargo test --lib opcode`
 //!
@@ -28,14 +28,14 @@
 //! ### 4. Edge Cases & Stress Tests (~75 tests)
 //! - **Locations**: Various regression and special-case test files
 //! - **Purpose**: Rare scenarios, stress tests, regression prevention
-//! - **Coverage**: Complex bytecode sequences, boundary conditions
+//! - **Coverage**: Complex instruction sequences, boundary conditions
 //! - **Command**: `cargo test --lib edge` or `cargo test --lib stress`
 //!
 //! ## Performance Metrics
 //!
-//! - **Full Suite**: 568 tests in ~17-18 seconds (parallelized)
+//! - **Full Suite**: 531 active library tests in the fast path
 //! - **Single-threaded**: ~70 seconds (deterministic ordering)
-//! - **Parallelization**: Auto-scales to CPU core count (4-8 threads typical)
+//! - **Parallelization**: Build uses `-j 4`; runtime can use `--test-threads=N`
 //! - **Memory**: ~200MB peak during execution
 //!
 //! ## Running Tests
@@ -107,9 +107,9 @@
 //! 4. Test command: `cargo test --lib test_regression`
 //!
 //! ### For Stress/Edge Cases
-//! 1. Add test to `../tests/edge_cases/stress_rare_bytecode_sequences.rs`
+//! 1. Add test to `../tests/edge_cases/stress_rare_instruction_sequences.rs`
 //! 2. Name: `test_stress_scenario_name`
-//! 3. Document complexity metrics (bytecode length, nesting depth, etc.)
+//! 3. Document complexity metrics (instruction length, nesting depth, etc.)
 //! 4. Test command: `cargo test --lib test_stress`
 //!
 //! ## Test Isolation Issue (Known)

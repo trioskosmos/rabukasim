@@ -7,7 +7,7 @@ use super::*;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
-use crate::core::models::CHOICE_DONE;
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, TARGET_SLOT_STAGE};
 
 #[path = "flow_select_resolve.rs"]
 mod flow_select_resolve;
@@ -98,7 +98,7 @@ pub fn handle_select_ops(
         && (frame_filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 
     if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
-        if ctx.choice_index == 0 || ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+        if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
             ctx.choice_index = -1;
 
             ctx.v_remaining = -1;
@@ -122,16 +122,16 @@ pub fn handle_select_ops(
     }
 
     if is_optional && op == O_SELECT_MEMBER {
-        if ctx.choice_index == 1 || ctx.choice_index == CHOICE_DONE {
+        if ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
             ctx.choice_index = -1;
             return HandlerResult::SetCond(false);
         }
-        if ctx.choice_index == 0 {
+        if ctx.choice_index == CHOICE_YES {
             ctx.choice_index = -1;
         }
     }
 
-    let is_targeted_select_member_cost = slot_info.target_slot == 4 && resolved_filter_attr != 0;
+    let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
         (resolved_filter_attr & !0x3) | 1
     } else {
@@ -140,7 +140,7 @@ pub fn handle_select_ops(
 
     if state.debug.debug_mode && op == O_SELECT_MEMBER {
         state.trace_internal(&format!(
-            "BC_SELECT_MEMBER: [phase={:?}] source_zone={} filter=[{}] {}",
+            "FRAME_SELECT_MEMBER: [phase={:?}] source_zone={} filter=[{}] {}",
             state.phase,
             slot_info.source_zone as u8,
             logging::describe_filter_attr(

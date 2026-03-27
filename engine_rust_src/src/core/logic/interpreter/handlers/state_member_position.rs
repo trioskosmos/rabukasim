@@ -58,7 +58,7 @@ pub fn handle_place_under(
         &mut next_ctx,
         0,
         p_idx,
-        &AbilityFrame::new(O_PLACE_ENERGY_UNDER_MEMBER, 0, a, 0),
+        &AbilityFrame::new(O_PLACE_ENERGY_UNDER_MEMBER, 0, a, 0, true),
         a,
     );
 }

@@ -202,9 +202,6 @@ fn apply_reduce_cost_modifiers(
         frame_idx += 1;
 
         let op = frame.opcode();
-        if state.debug.debug_mode && !state.ui.silent {
-            println!("[DEBUG] apply_reduce_cost_modifiers: frame_idx={}, opcode={}", frame_idx - 1, op);
-        }
         if op != O_REDUCE_COST && op != O_INCREASE_COST {
             continue;
         }
@@ -222,9 +219,6 @@ fn apply_reduce_cost_modifiers(
             .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
-
-        println!("[DEBUG] apply_reduce_cost_modifiers: is_dynamic={}, compare_acc={}, per_card={:?}, source_zone={:?}",
-            frame_data.slot.is_dynamic, frame_data.filter.compare_accumulated, per_card, frame_data.slot.source_zone);
 
         if frame_data.slot.is_dynamic
             || frame_data.filter.compare_accumulated
@@ -536,11 +530,12 @@ pub fn get_member_cost(
     // These are not part of the board aura because the source card is not on stage yet.
     if !state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
         if let Some(target_m) = db.get_member(card_id) {
+            let hand_idx = state.players[p_idx].hand.iter().position(|&id| id == card_id);
             let ctx = AbilityContext {
                 source_card_id: card_id,
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
-                area_idx: slot_idx,
+                area_idx: if let Some(idx) = hand_idx { 200 + idx as i16 } else { -1 },
                 is_static_eval: true,
                 ..Default::default()
             };
@@ -548,9 +543,9 @@ pub fn get_member_cost(
                 if state.debug.debug_mode && !state.ui.silent {
                     println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
                 }
-                if ab.trigger == TriggerType::Constant {
+                if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart) {
                     if state.debug.debug_mode && !state.ui.silent {
-                        println!("[DEBUG] get_member_cost: Applying Constant ab#{}", idx);
+                        println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
                     }
                     apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
                 }

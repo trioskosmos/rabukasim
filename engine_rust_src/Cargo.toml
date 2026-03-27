@@ -4,6 +4,9 @@ version = "0.1.2"
 edition = "2021"
 # Keep cargo test focused on the library + explicit tests.
 autobins = false
+autotests = false
+autobenches = false
+autoexamples = false
 
 [lints.rust]
 unused_crate_dependencies = "allow"

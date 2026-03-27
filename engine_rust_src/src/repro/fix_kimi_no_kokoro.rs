@@ -1,16 +1,11 @@
 #![allow(unused_imports)]
 use crate::core::logic::{ChoiceType, CardDatabase, GameState, Phase};
+use crate::test_helpers::load_real_db;
 
 // use serde_json::json;
 #[test]
 fn test_kimi_no_kokoro_prevention() {
-    let db_path = std::path::Path::new("../data/cards_compiled.json");
-    if !db_path.exists() {
-        println!("Skipping test: cards_compiled.json not found");
-        return;
-    }
-    let json_str = std::fs::read_to_string(db_path).unwrap();
-    let db = CardDatabase::from_json(&json_str).unwrap();
+    let db = load_real_db();
 
     let kimi_no_kokoro_id = 431;
     // ...

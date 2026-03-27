@@ -8,7 +8,7 @@ linker = "rust-lld.exe"
 # rustflags = ["-Zthreads=8"]
 
 [env]
-# RUST_TEST_THREADS = "1"
+RUST_TEST_THREADS = "12"
 
 [alias]
 # Build and install the extension into the current Python environment

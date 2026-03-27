@@ -259,6 +259,7 @@ impl CardDatabase {
                                 filter,
                                 slot,
                                 is_negated: false,
+                                is_cost: false,
                                 params: serde_json::Value::Null,
                             };
                         }
@@ -495,13 +496,13 @@ impl CardDatabase {
                 .and_then(Self::parse_u8_value)
             {
                 if let Some(program) = ability.frame_program.as_mut() {
-                    if let Some(AbilityFrame::LookAndChoose { params, .. }) = program
+                    if let Some(AbilityFrame::LookAndChoose { choose_count: frame_choose_count, .. }) = program
                         .frames
                         .iter_mut()
                         .find(|frame| frame.opcode() == O_LOOK_AND_CHOOSE)
                     {
-                        if params.choose_count == 0 {
-                            params.choose_count = choose_count;
+                        if *frame_choose_count == 0 {
+                            *frame_choose_count = choose_count as i32;
                         }
                     }
                 }
@@ -1154,6 +1155,18 @@ impl CardDatabase {
                 }
                 if derived.choice_count > 0 {
                     ab.choice_count = ab.choice_count.max(derived.choice_count);
+                }
+            }
+
+            if ab.choice_count > 0 {
+                if let Some(frame_program) = ab.frame_program.as_mut() {
+                    for frame in &mut frame_program.frames {
+                        if let AbilityFrame::LookAndChoose { choose_count, .. } = frame {
+                            if *choose_count == 0 {
+                                *choose_count = ab.choice_count as i32;
+                            }
+                        }
+                    }
                 }
             }
 

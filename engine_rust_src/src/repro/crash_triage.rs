@@ -1,12 +1,7 @@
 use crate::core::logic::*;
 use std::collections::HashMap;
 use std::io::Write;
-
-fn load_real_db() -> CardDatabase {
-    let json_str = std::fs::read_to_string("../data/cards_compiled.json")
-        .expect("Failed to read cards_compiled.json at ../data/");
-    CardDatabase::from_json(&json_str).expect("Failed to parse CardDatabase")
-}
+use crate::test_helpers::load_real_db;
 
 use crate::test_helpers::ZoneSnapshot;
 

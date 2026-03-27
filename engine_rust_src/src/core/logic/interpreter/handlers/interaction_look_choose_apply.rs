@@ -50,6 +50,9 @@ pub fn apply_look_choice(
     }
 
     if reveal_flag {
+        if !state.players[p_idx].revealed_cards.contains(&chosen) {
+            state.players[p_idx].revealed_cards.push(chosen);
+        }
         let new_ctx = AbilityContext {
             source_card_id: chosen,
             player_id: p_idx as u8,

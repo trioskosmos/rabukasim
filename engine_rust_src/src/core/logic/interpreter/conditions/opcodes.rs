@@ -3,6 +3,7 @@ use super::counts::resolve_count;
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::constants::*;
+use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condition;
 use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
@@ -552,8 +553,22 @@ fn check_condition_with_parts(
                 diff >= val
             }
         }
-        C_HAS_EXCESS_HEART => player.excess_hearts > 0,
-        C_NOT_HAS_EXCESS_HEART => player.excess_hearts == 0,
+        C_HAS_EXCESS_HEART => {
+            let target_player = if filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
+                opponent
+            } else {
+                player
+            };
+            target_player.excess_hearts > 0
+        }
+        C_NOT_HAS_EXCESS_HEART => {
+            let target_player = if filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
+                opponent
+            } else {
+                player
+            };
+            target_player.excess_hearts == 0
+        }
         C_TOTAL_BLADES => {
             let mut total = 0u32;
             for slot_idx in 0..3 {
@@ -755,6 +770,7 @@ fn check_condition_with_parts(
             compare_i32(count, val, slot)
         }
         311 => {
+            let filter = CardFilter::from_attr(attr as i64);
             let area_override = params
                 .and_then(|value| value.as_object())
                 .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
@@ -770,53 +786,93 @@ fn check_condition_with_parts(
             let (self_cost, opp_cost) = if let Some(idx) = area_override {
                 let s_cid = player.stage[idx];
                 let o_cid = opponent.stage[idx];
-                let s_cost =
-                    if s_cid >= 0 && (attr == 0 || state.card_matches_filter(db, s_cid, attr)) {
-                        db.get_member(s_cid).map_or(0, |m| m.cost as i32)
-                    } else {
-                        0
-                    };
-                let o_cost =
-                    if o_cid >= 0 && (attr == 0 || state.card_matches_filter(db, o_cid, attr)) {
-                        db.get_member(o_cid).map_or(0, |m| m.cost as i32)
-                    } else {
-                        0
-                    };
+                let s_cost = if s_cid >= 0
+                    && state.card_matches_filter_with_struct(
+                        db,
+                        s_cid,
+                        Some((p_idx as u8, idx as i16)),
+                        &filter,
+                        ctx,
+                    )
+                {
+                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
+                let o_cost = if o_cid >= 0
+                    && state.card_matches_filter_with_struct(
+                        db,
+                        o_cid,
+                        Some(((1 - p_idx) as u8, idx as i16)),
+                        &filter,
+                        ctx,
+                    )
+                {
+                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
                 (s_cost, o_cost)
             } else if area_val >= 1 && area_val <= 3 {
-                let idx = area_val as usize;
+                let idx = (area_val - 1) as usize;
                 let s_cid = player.stage[idx];
                 let o_cid = opponent.stage[idx];
-                let s_cost =
-                    if s_cid >= 0 && (attr == 0 || state.card_matches_filter(db, s_cid, attr)) {
-                        db.get_member(s_cid).map_or(0, |m| m.cost as i32)
-                    } else {
-                        0
-                    };
-                let o_cost =
-                    if o_cid >= 0 && (attr == 0 || state.card_matches_filter(db, o_cid, attr)) {
-                        db.get_member(o_cid).map_or(0, |m| m.cost as i32)
-                    } else {
-                        0
-                    };
+                let s_cost = if s_cid >= 0
+                    && state.card_matches_filter_with_struct(
+                        db,
+                        s_cid,
+                        Some((p_idx as u8, idx as i16)),
+                        &filter,
+                        ctx,
+                    )
+                {
+                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
+                let o_cost = if o_cid >= 0
+                    && state.card_matches_filter_with_struct(
+                        db,
+                        o_cid,
+                        Some(((1 - p_idx) as u8, idx as i16)),
+                        &filter,
+                        ctx,
+                    )
+                {
+                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
                 (s_cost, o_cost)
             } else {
-                let s_cost: i32 = player
-                    .stage
-                    .iter()
-                    .filter(|&&id| {
-                        id >= 0 && (attr == 0 || state.card_matches_filter(db, id, attr))
-                    })
-                    .map(|&id| db.get_member(id).map_or(0, |m| m.cost as i32))
-                    .sum();
-                let o_cost: i32 = opponent
-                    .stage
-                    .iter()
-                    .filter(|&&id| {
-                        id >= 0 && (attr == 0 || state.card_matches_filter(db, id, attr))
-                    })
-                    .map(|&id| db.get_member(id).map_or(0, |m| m.cost as i32))
-                    .sum();
+                let mut s_cost = 0;
+                for (idx, &id) in player.stage.iter().enumerate() {
+                    if id >= 0
+                        && state.card_matches_filter_with_struct(
+                            db,
+                            id,
+                            Some((p_idx as u8, idx as i16)),
+                            &filter,
+                            ctx,
+                        )
+                    {
+                        s_cost += db.get_member(id).map_or(0, |m| m.cost as i32);
+                    }
+                }
+                let mut o_cost = 0;
+                for (idx, &id) in opponent.stage.iter().enumerate() {
+                    if id >= 0
+                        && state.card_matches_filter_with_struct(
+                            db,
+                            id,
+                            Some(((1 - p_idx) as u8, idx as i16)),
+                            &filter,
+                            ctx,
+                        )
+                    {
+                        o_cost += db.get_member(id).map_or(0, |m| m.cost as i32);
+                    }
+                }
                 (s_cost, o_cost)
             };
             compare_i32(self_cost, opp_cost + val, slot)

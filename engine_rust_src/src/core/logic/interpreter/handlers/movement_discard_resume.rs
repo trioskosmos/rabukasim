@@ -1,6 +1,7 @@
 use crate::core::enums::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, Zone};
@@ -26,16 +27,12 @@ pub fn handle_discard_resume(
     next_ctx: &mut AbilityContext,
     moved_cards: &mut Vec<i32>,
 ) -> HandlerResult {
-    if is_optional
-        && (next_ctx.choice_index == 0
-            || next_ctx.choice_index == 99
-            || next_ctx.choice_index == CHOICE_DONE)
-    {
+    if is_optional && next_ctx.choice_index == CHOICE_DONE {
         finish_pending_interaction(state);
         return HandlerResult::SetCond(false);
     }
 
-    if next_ctx.choice_index == CHOICE_DONE || next_ctx.choice_index == 99 {
+    if next_ctx.choice_index == CHOICE_DONE {
         if (next_ctx.v_remaining > 0) || (next_ctx.v_remaining == -1 && count > 0) {
             if matches!(
                 suspend_choice(
@@ -109,11 +106,11 @@ pub fn handle_discard_resume(
         if !still_available {
             if ctx.source_card_id == 444 || ctx.source_card_id == 4540 {
                 eprintln!(
-                    "[DEBUG_MOV_RESUME_NOFOLLOW] removed_cid={} choice_type={:?} remaining={} stack={}",
+                    "[DEBUG_MOV_RESUME_NOFOLLOW] removed_cid={} choice_type={:?} remaining={} {}",
                     removed_cid,
                     choice_type,
                     next_ctx.v_remaining,
-                    state.interaction_stack.len()
+                    logging::describe_context(next_ctx)
                 );
             }
             crate::core::logic::interpreter::suspension::finish_pending_interaction(state);

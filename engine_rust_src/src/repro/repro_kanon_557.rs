@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
+    use crate::core::logic::{AbilityContext, GameState, TriggerType};
+    use crate::test_helpers::load_real_db;
 
     #[test]
     fn test_kanon_557_repro() {
-        let json = std::fs::read_to_string("../data/cards_compiled.json").unwrap();
-        let db = CardDatabase::from_json(&json).unwrap();
+        let db = load_real_db();
         let mut state = GameState::default();
 
         // Setup player 0 with 7 energy cards

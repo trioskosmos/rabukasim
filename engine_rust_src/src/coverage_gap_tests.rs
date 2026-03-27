@@ -497,6 +497,7 @@ fn test_frame_program_only_ability_executes() {
                 AbilityFrame::Draw {
                     count: 1,
                     slot: Default::default(),
+                    is_cost: false,
                 },
                 AbilityFrame::Return,
             ],
@@ -545,6 +546,7 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
                 AbilityFrame::Draw {
                     count: 1,
                     slot: Default::default(),
+                    is_cost: false,
                 },
                 AbilityFrame::Return,
             ],

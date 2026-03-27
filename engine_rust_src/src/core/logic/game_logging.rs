@@ -70,7 +70,7 @@ impl GameState {
     pub fn trace_internal(&mut self, msg: &str) {
         if self.debug.debug_mode {
             if self.debug.trace_log.len() < 2000 {
-                let trace_msg = format!("[TRC] {}", msg);
+                let trace_msg = format!("[FRAME_TRACE] {}", msg);
                 self.debug.trace_log.push(trace_msg);
             }
         }

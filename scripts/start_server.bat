@@ -14,14 +14,6 @@ uv run python tools/sync_metadata.py
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
-echo [build] Compiling frame data...
-uv run python -m compiler.main --export-profile runtime
-if errorlevel 1 goto CMD_FAIL
-
-echo [build] Syncing authored ability frames into runtime index...
-uv run python tools/sync_ability_frame_index.py --input data/ability_frames.json --metadata data/metadata.json --output data/ability_frame_index.json
-if errorlevel 1 goto CMD_FAIL
-
 set DO_FULL=0
 set DEBUG_ARG=
 for %%a in (%*) do (
@@ -29,6 +21,13 @@ for %%a in (%*) do (
     if /i "%%~a"=="--debug" set DEBUG_ARG=--debug
     if /i "%%~a"=="-d" set DEBUG_ARG=--debug
 )
+
+set BUILD_ARGS=--sync-launcher-assets
+if %DO_FULL% equ 1 set BUILD_ARGS=--force --sync-launcher-assets
+
+echo [build] Preparing compiled ability artifacts...
+uv run python tools/build_cards.py %BUILD_ARGS%
+if errorlevel 1 goto CMD_FAIL
 
 if %DO_FULL% neq 1 goto SKIP_MATURIN
 echo [build] Building Python extension (maturin)...

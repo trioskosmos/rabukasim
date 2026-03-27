@@ -1,6 +1,7 @@
 use super::*;
 use crate::core::logic::interpreter::handlers::state_score_slots::apply_to_target_slots;
 use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::interpreter::logging;
 
 pub fn handle_transform_color(
     state: &mut GameState,
@@ -34,8 +35,12 @@ pub fn handle_transform_blades(
     let _ = p_idx;
     if !state.ui.silent && state.debug.debug_mode {
         println!(
-            "[DEBUG] O_TRANSFORM_BLADES: target_p={}, target_slot={}, resolved_slot={}, v={}",
-            target_p, target_slot, resolved_slot, v
+            "[DEBUG] O_TRANSFORM_BLADES: target_p={} target_slot={} resolved_slot={} v={} {}",
+            target_p,
+            target_slot,
+            resolved_slot,
+            v,
+            logging::describe_slot(slot_info)
         );
     }
     apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
@@ -43,10 +48,11 @@ pub fn handle_transform_blades(
     });
     if !state.ui.silent && state.debug.debug_mode {
         println!(
-            "[DEBUG] O_TRANSFORM_BLADES Result: slot_0_override={}, slot_1_override={}, slot_2_override={}",
+            "[DEBUG] O_TRANSFORM_BLADES Result: slot_0_override={} slot_1_override={} slot_2_override={} {}",
             state.players[target_p].blade_overrides[0],
             state.players[target_p].blade_overrides[1],
-            state.players[target_p].blade_overrides[2]
+            state.players[target_p].blade_overrides[2],
+            logging::describe_slot(slot_info)
         );
     }
     let _ = slot_info;

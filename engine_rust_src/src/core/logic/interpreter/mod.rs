@@ -18,7 +18,10 @@ use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
-pub use suspension::{get_choice_text, resolve_target_slot, suspend_interaction};
+pub use suspension::{
+    capture_response_origin, get_choice_text, restore_response_state, resolve_target_slot,
+    suspend_interaction,
+};
 
 use std::collections::HashSet;
 use std::fmt;
@@ -77,6 +80,44 @@ fn begin_execution(state: &mut GameState, ctx_in: &AbilityContext) -> bool {
     execution_started
 }
 
+fn infer_source_area_idx(state: &GameState, ctx: &AbilityContext) -> i16 {
+    if ctx.area_idx >= 0 || ctx.source_card_id < 0 {
+        return ctx.area_idx;
+    }
+
+    let player = &state.players[ctx.player_id as usize];
+    let mut resolved_area_idx: Option<i16> = None;
+
+    for (slot_idx, &cid) in player.stage.iter().enumerate() {
+        if cid == ctx.source_card_id {
+            let area_idx = slot_idx as i16;
+            if resolved_area_idx.replace(area_idx).is_some() {
+                return -1;
+            }
+        }
+    }
+
+    for (slot_idx, &cid) in player.discard.iter().enumerate() {
+        if cid == ctx.source_card_id {
+            let area_idx = 100 + slot_idx as i16;
+            if resolved_area_idx.replace(area_idx).is_some() {
+                return -1;
+            }
+        }
+    }
+
+    for (slot_idx, &cid) in player.hand.iter().enumerate() {
+        if cid == ctx.source_card_id {
+            let area_idx = 200 + slot_idx as i16;
+            if resolved_area_idx.replace(area_idx).is_some() {
+                return -1;
+            }
+        }
+    }
+
+    resolved_area_idx.unwrap_or(-1)
+}
+
 fn finish_execution(state: &mut GameState, ctx_in: &AbilityContext, execution_started: bool) {
     if execution_started {
         state.clear_execution_id();
@@ -126,6 +167,14 @@ fn should_accumulate_count(frame_data: &AbilityFrameComponents<'_>) -> bool {
             | crate::core::generated_constants::C_COUNT_SUCCESS_LIVE
             | 307
     )
+}
+
+fn is_pure_nop(frame_data: &AbilityFrameComponents<'_>) -> bool {
+    frame_data.opcode == crate::core::enums::O_NOP as i32
+        && frame_data.value == 0
+        && frame_data.raw_attr == 0
+        && frame_data.raw_slot == 0
+        && frame_data.params.is_none()
 }
 
 fn log_frame_step(
@@ -256,6 +305,7 @@ pub fn resolve_semantic_frames(
 
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
+    ctx.area_idx = infer_source_area_idx(state, &ctx);
     let start_idx = ctx_in.program_counter as usize;
     let mut effect_idx = start_idx;
     let mut cond = true;
@@ -279,7 +329,7 @@ pub fn resolve_semantic_frames(
             ctx.choice_index = ctx_in.choice_index;
         }
 
-        if frame_data.opcode == crate::core::enums::O_NOP as i32 {
+        if is_pure_nop(&frame_data) {
             if let Some(ref mut set) = state.debug.executed_opcodes {
                 set.insert(frame_data.opcode);
             }
@@ -291,6 +341,13 @@ pub fn resolve_semantic_frames(
                 set.insert(frame_data.opcode);
             }
             break;
+        }
+
+        if state.debug.debug_mode {
+            println!(
+                "[DEBUG RESOLVE] {}",
+                logging::describe_frame_semantics(&frame_data, &ctx, db)
+            );
         }
 
         log_frame_step(state, db, &ctx, &frame_data, ip);
@@ -386,7 +443,7 @@ pub fn resolve_semantic_frames(
                     finish_execution(state, ctx_in, execution_started);
                     return Err(err);
                 }
-                if state.phase == Phase::Response {
+                if !state.interaction_stack.is_empty() {
                     return Ok(());
                 }
             }
@@ -539,7 +596,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         state.clear_execution_id();
 
         // If the interpreter suspended, we must stop processing the queue
-        if state.phase == Phase::Response {
+        if !state.interaction_stack.is_empty() {
             break;
         }
     }

@@ -160,7 +160,9 @@ impl GameState {
             auto_pick: false,
             ..Default::default()
         };
-        ctx.capture_state_raw(self.phase, self.current_player);
+        let (origin_phase, origin_current_player) =
+            super::interpreter::capture_response_origin(self);
+        ctx.capture_state_raw(origin_phase, origin_current_player);
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
     }
 
@@ -185,7 +187,9 @@ impl GameState {
                 choice_index: choice,
                 ..Default::default()
             };
-            ctx.capture_state_raw(self.phase, self.current_player);
+            let (origin_phase, origin_current_player) =
+                super::interpreter::capture_response_origin(self);
+            ctx.capture_state_raw(origin_phase, origin_current_player);
             self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
         }
     }

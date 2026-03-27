@@ -1,4 +1,5 @@
 use super::*;
+use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_STAGE, ZONE_DISCARD, ZONE_HAND};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::logging;
@@ -10,8 +11,8 @@ fn selected_target_key(source_zone: u8, slot_idx: i32) -> i32 {
 
 fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u8) -> Vec<i32> {
     match source_zone {
-        6 => state.players[target_player].hand.to_vec(),
-        7 => state.players[target_player].discard.to_vec(),
+        x if x == ZONE_HAND as u8 => state.players[target_player].hand.to_vec(),
+        x if x == ZONE_DISCARD as u8 => state.players[target_player].discard.to_vec(),
         _ => state.players[target_player].stage.to_vec(),
     }
 }
@@ -118,7 +119,7 @@ pub fn resolve_select_choice(
                 interaction.target_slot,
             )
             .target_slot
-                == 4
+                == TARGET_SLOT_STAGE
                 && (interaction.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK)
                     != 0
         })
@@ -130,7 +131,7 @@ pub fn resolve_select_choice(
         return HandlerResult::Continue;
     }
 
-    if source_zone == 6 || source_zone == 7 {
+    if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
         ctx.target_slot = choice as i16;
     } else {
         ctx.target_slot = choice as i16;
@@ -168,7 +169,7 @@ pub fn resolve_select_choice(
 
     if state.debug.debug_mode {
         state.trace_internal(&format!(
-            "BC_SELECT_RESOLVE: [phase={:?}] choice={} cid={} source_zone={} selected_cards={} remaining={} {}",
+            "FRAME_SELECT_RESOLVE: [phase={:?}] choice={} cid={} source_zone={} selected_cards={} remaining={} {}",
             state.phase,
             choice,
             selected_cid,

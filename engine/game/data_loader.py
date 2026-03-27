@@ -105,9 +105,9 @@ class CardDataLoader:
                 entry = sparse_index.get(key)
                 if entry is not None:
                     ability.sparse_frame_index = entry
-                    frames = entry.get("frames", []) if isinstance(entry, dict) else []
-                    if isinstance(frames, list) and frames and not getattr(ability, "frame_program", None):
-                        ability.frame_program = {"frames": copy.deepcopy(frames)}
+                    instructions = entry.get("instructions", entry.get("frames", [])) if isinstance(entry, dict) else []
+                    if isinstance(instructions, list) and instructions and not getattr(ability, "frame_program", None):
+                        ability.frame_program = {"instructions": copy.deepcopy(instructions)}
 
     def load(self) -> Tuple[Dict[int, MemberCard], Dict[int, LiveCard], Dict[int, Any]]:
         # Auto-detect compiled file

@@ -1,5 +1,7 @@
 use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
+use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
+use crate::core::logic::interpreter::costs::check_frame_cost;
 use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState, MemberCard};
 
 pub struct MainPhaseGenerator;
@@ -18,6 +20,121 @@ fn has_activated_stage(card: &MemberCard) -> bool {
 
 fn has_activated_hand(card: &MemberCard) -> bool {
     card.has_activated_hand
+}
+
+fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
+    ab.sparse_frame_index
+        .as_ref()
+        .and_then(|entry| entry.get("frame_program"))
+        .and_then(|value| value.get("instructions"))
+        .and_then(|value| value.as_array())
+        .map(|instructions| {
+            instructions.iter().any(|frame| {
+                let opcode = frame
+                    .get("semantic")
+                    .and_then(|semantic| semantic.get("opcode_name"))
+                    .or_else(|| frame.get("opcode"))
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("");
+                let source_zone = frame
+                    .get("semantic")
+                    .and_then(|semantic| semantic.get("slot"))
+                    .or_else(|| frame.get("slot"))
+                    .and_then(|slot| slot.get("source_zone"))
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("");
+                opcode.eq_ignore_ascii_case("MOVE_MEMBER")
+                    && source_zone.eq_ignore_ascii_case("DECK_TOP")
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn ability_costs_payable(
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    ab: &crate::core::logic::Ability,
+) -> bool {
+    // 1. Check legacy costs if any
+    if !ab.costs.is_empty() {
+        if !ab.costs.iter().all(|c| state.check_cost(db, p_idx, c, ctx)) {
+            return false;
+        }
+    }
+
+    // 2. Check frame-based costs
+    for frame in ab.frames() {
+        let frame_data = frame.components();
+        let implicit_deck_cost = matches!(
+            frame_data.opcode,
+            O_MOVE_MEMBER | O_MOVE_TO_DISCARD | O_MOVE_TO_DECK
+        ) && matches!(
+            frame_data.slot.source_zone,
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
+        );
+        if frame.is_cost() || implicit_deck_cost {
+            if !check_frame_cost(state, db, p_idx, &frame, ctx) {
+                return false;
+            }
+        }
+    }
+
+    // 3. Check frame-based choice preconditions that must be available before activation.
+    for frame in ab.frames() {
+        if let crate::core::logic::models::AbilityFrame::LookAndChoose {
+            choose_count,
+            slot,
+            is_cost,
+            ..
+        } = frame
+        {
+            if is_cost {
+                continue;
+            }
+
+            let required = choose_count.max(1) as usize;
+            let available = match slot.source_zone {
+                Zone::Hand => state.players[p_idx].hand.iter().filter(|&&cid| cid >= 0).count(),
+                Zone::Discard => {
+                    state.players[p_idx].discard.iter().filter(|&&cid| cid >= 0).count()
+                }
+                Zone::Stage => state.players[p_idx]
+                    .stage
+                    .iter()
+                    .filter(|&&cid| cid >= 0)
+                    .count(),
+                Zone::LiveSet | Zone::SuccessPile => state.players[p_idx]
+                    .success_lives
+                    .iter()
+                    .filter(|&&cid| cid >= 0)
+                    .count(),
+                Zone::Yell => state.players[p_idx].yell_cards.iter().filter(|&&cid| cid >= 0).count(),
+                Zone::Energy => state.players[p_idx]
+                    .energy_zone
+                    .iter()
+                    .filter(|&&cid| cid >= 0)
+                    .count(),
+                Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
+                    state.players[p_idx].deck.len() + state.players[p_idx].discard.len()
+                }
+                _ => 0,
+            };
+
+            if available < required {
+                return false;
+            }
+        }
+    }
+
+    if ability_requires_deck_top_window(ab)
+        && state.players[p_idx].deck.len() < DECK_TOP_LOOK_WINDOW
+    {
+        return false;
+    }
+
+    true
 }
 
 impl ActionGenerator for MainPhaseGenerator {
@@ -192,10 +309,8 @@ impl ActionGenerator for MainPhaseGenerator {
                                         .conditions
                                         .iter()
                                         .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
-                                    let cost_ok = ab
-                                        .costs
-                                        .iter()
-                                        .all(|c| state.check_cost(db, p_idx, c, &ctx));
+                                    let cost_ok =
+                                        ability_costs_payable(state, db, p_idx, &ctx, ab);
 
                                     if cond_ok
                                         && cost_ok
@@ -247,10 +362,8 @@ impl ActionGenerator for MainPhaseGenerator {
                                     .conditions
                                     .iter()
                                     .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
-                                let cost_ok = ab
-                                    .costs
-                                    .iter()
-                                    .all(|c| state.check_cost(db, p_idx, c, &ctx));
+                                let cost_ok =
+                                    ability_costs_payable(state, db, p_idx, &ctx, ab);
                                 if cond_ok
                                     && cost_ok
                                     && state.check_once_per_turn(

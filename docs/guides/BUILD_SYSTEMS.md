@@ -43,10 +43,10 @@ Required for the GitHub Pages / PWA version of the game.
   - `engine_rust.d.ts` (optional)
 
 ## 4. Card Data Compilation
-The engine (both Rust and Python) reads from `cards_compiled.json`. Always run this after editing `data/cards.json`.
+The engine (both Rust and Python) reads from `cards_compiled.json`. Use the consolidated build entrypoint after editing `data/cards.json` or `data/ability_frames.json`.
 
 - **Command**:
   ```bash
-  uv run python -m compiler.main
+  uv run python tools/build_cards.py --force
   ```
-- **Output**: `data/cards_compiled.json` (Automatically copied to `engine/data/`).
+- **Output**: `data/cards_compiled.json`, `data/ability_frame_index.json`, generated Rust fast paths, and `engine/data/cards_compiled.json`.

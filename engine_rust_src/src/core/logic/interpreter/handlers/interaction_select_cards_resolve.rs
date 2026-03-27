@@ -2,6 +2,8 @@ use super::*;
 use crate::core::enums::Zone;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::remove_card_from_zone;
+use crate::core::logic::interpreter::suspension::finish_pending_interaction;
+use crate::core::models::TriggerType;
 
 fn choice_type_for_zone(effective_zone: u8) -> ChoiceType {
     match effective_zone {
@@ -63,12 +65,42 @@ pub fn resolve_select_cards(
         ctx.selected_cards.push(chosen);
 
         let dest_zone = slot_info.dest_zone as u8;
+        if dest_zone == 0 && !state.players[p_idx].revealed_cards.contains(&chosen) {
+            state.players[p_idx].revealed_cards.push(chosen);
+        }
         if dest_zone != 0 {
             let actual_source = source_zone_for_choice(slot_info.source_zone as u8);
             let found = remove_card_from_zone(state, db, ctx, p_idx, actual_source, chosen);
 
             if found {
-                place_chosen_card(state, p_idx, chosen, dest_zone);
+                if dest_zone == 4 {
+                    let slot = choice as usize;
+                    let play_card = ctx.selected_cards.last().copied().unwrap_or(chosen);
+                    if slot < 3 && play_card >= 0 {
+                        if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
+                            state.players[p_idx].push_discard_card(cid as i32);
+                        }
+                        state.players[p_idx].stage[slot] = play_card;
+                        if slot_info.is_wait {
+                            state.players[p_idx].set_tapped(slot, true);
+                        }
+                        state.players[p_idx].set_moved(slot, true);
+                        state.register_played_member(p_idx, play_card, db);
+                        finish_pending_interaction(state);
+                        let new_ctx = AbilityContext {
+                            source_card_id: play_card,
+                            player_id: p_idx as u8,
+                            activator_id: p_idx as u8,
+                            area_idx: slot as i16,
+                            ..Default::default()
+                        };
+                        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+                    } else {
+                        state.players[p_idx].gain_hand_card(play_card);
+                    }
+                } else {
+                    place_chosen_card(state, p_idx, chosen, dest_zone);
+                }
             }
         }
 

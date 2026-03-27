@@ -33,12 +33,21 @@ fn resolve_dynamic_multiplier(
             _ => None,
         });
 
+    let count_opcode = count_opcode.or_else(|| {
+        if frame_data.slot.is_dynamic && frame_data.slot.remainder_zone >= 200 {
+            Some(frame_data.slot.remainder_zone as i32)
+        } else {
+            None
+        }
+    });
+
     count_opcode.map(|opcode| {
+        let filter_attr = frame_data.filter.to_attr();
         let mut count = resolve_count(
             state,
             db,
             opcode,
-            frame_data.raw_attr,
+            filter_attr,
             frame_data.raw_slot,
             ctx,
             0,
@@ -49,7 +58,7 @@ fn resolve_dynamic_multiplier(
         // excluding the source card when it is part of the counted zone.
         if frame_data.opcode == O_REDUCE_COST
             && frame_data.filter.special_id == 0
-            && frame_data.raw_attr == 0
+            && filter_attr == 0
             && count > 0
         {
             let p_idx = ctx.player_id as usize;

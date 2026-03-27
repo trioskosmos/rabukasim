@@ -4,12 +4,14 @@ use crate::core::logic::ability_patterns::{
 };
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::{
     Ability, AbilityContext, ActionReceiver, CardDatabase, ChoiceType, GameState,
     PendingInteraction,
 };
+use crate::core::models::CHOICE_DONE;
 
 pub struct ResponseGenerator;
 
@@ -70,7 +72,7 @@ fn add_slot_actions<R: ActionReceiver + ?Sized>(receiver: &mut R, slots: &[i32],
 }
 
 fn add_optional_done<R: ActionReceiver + ?Sized>(receiver: &mut R) {
-    receiver.add_action(0);
+    receiver.add_action((ACTION_BASE_CHOICE + CHOICE_DONE as i32) as usize);
 }
 
 fn should_enable_targeted_live_bonus(state: &GameState, pi: &PendingInteraction) -> bool {
@@ -185,45 +187,19 @@ impl ResponseGenerator {
             return;
         };
         if state.debug.debug_mode {
-            println!(
-                "[DEBUG_RESP] choice_type={:?} opcode={} filter={:X} target_slot={} area_idx={} source_card_id={} ability_index={} v_remaining={}",
-                pi.choice_type,
-                pi.effect_opcode,
-                pi.filter_attr,
-                pi.target_slot,
-                pi.ctx.area_idx,
-                pi.ctx.source_card_id,
-                pi.ctx.ability_index,
-                pi.v_remaining
-            );
+            println!("[DEBUG_RESP] {}", logging::describe_pending_interaction(pi));
         }
         if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
             eprintln!(
-                "[RESP_SHAPE] choice_type={:?} opcode={} filter={:X} target_slot={} card_id={} source={} ability_index={} v_remaining={} ctx_v_accum={}",
-                pi.choice_type,
-                pi.effect_opcode,
-                pi.filter_attr,
-                pi.target_slot,
-                pi.card_id,
-                pi.ctx.source_card_id,
-                pi.ability_index,
-                pi.v_remaining,
-                pi.ctx.v_accumulated
+                "[RESP_SHAPE] {}",
+                logging::describe_pending_interaction(pi)
             );
         }
         if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
             eprintln!(
-                "[RESP_MAKI] p_idx={} choice_type={:?} opcode={} filter={:X} target_slot={} card_id={} source={} ability_index={} v_remaining={} ctx_v_accum={} targeted_cost={}",
+                "[RESP_MAKI] p_idx={} {} targeted_cost={}",
                 p_idx,
-                pi.choice_type,
-                pi.effect_opcode,
-                pi.filter_attr,
-                pi.target_slot,
-                pi.card_id,
-                pi.ctx.source_card_id,
-                pi.ability_index,
-                pi.v_remaining,
-                pi.ctx.v_accumulated,
+                logging::describe_pending_interaction(pi),
                 pi.target_slot == 4
                     && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
             );
@@ -234,14 +210,8 @@ impl ResponseGenerator {
             || pi.ctx.source_card_id == 4540
         {
             eprintln!(
-                "[RESP_Q154] choice_type={:?} opcode={} filter={:X} target_slot={} ability_index={} v_remaining={} ctx_v_accum={} selected_cards={:?} discard_len={} discard={:?}",
-                pi.choice_type,
-                pi.effect_opcode,
-                pi.filter_attr,
-                pi.target_slot,
-                pi.ability_index,
-                pi.v_remaining,
-                pi.ctx.v_accumulated,
+                "[RESP_Q154] {} selected_cards={:?} discard_len={} discard={:?}",
+                logging::describe_pending_interaction(pi),
                 pi.ctx.selected_cards,
                 state.players[p_idx].discard.len(),
                 state.players[p_idx].discard
@@ -392,14 +362,9 @@ impl ResponseGenerator {
                 let is_position_change_choice = Self::is_position_change_prompt(pi);
                 if is_position_change_choice {
                     if state.debug.debug_mode {
-                        println!(
-                            "[DEBUG_POS] SelectStage op={} choice_type={:?} filter={:X} area_idx={} source_card_id={} ability_index={}",
-                            pi.effect_opcode,
-                            pi.choice_type,
-                            pi.filter_attr,
-                            pi.ctx.area_idx,
-                            pi.ctx.source_card_id,
-                            pi.ctx.ability_index
+                    println!(
+                            "[DEBUG_POS] SelectStage {}",
+                            logging::describe_pending_interaction(pi)
                         );
                     }
                     self.generate_position_change_destinations(
@@ -853,10 +818,19 @@ impl ResponseGenerator {
                 );
             }
             _ => {
+                let no_filter = final_filter_attr
+                    & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
+                    == 0;
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
-                    let filter_only =
-                        final_filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-                    if state.card_matches_filter_with_ctx(db, cid, filter_only, &pi.ctx) {
+                    if no_filter
+                        || state.card_matches_filter_with_ctx(
+                            db,
+                            cid,
+                            final_filter_attr
+                                & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                            &pi.ctx,
+                        )
+                    {
                         receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
                     }
                 }
@@ -876,8 +850,9 @@ impl ResponseGenerator {
     ) {
         if state.debug.debug_mode {
             println!(
-                "[DEBUG] generate_select_member_actions: p_idx={}, filter_attr={:X}",
-                p_idx, filter_attr
+                "[DEBUG] generate_select_member_actions: p_idx={}, filter=[{}]",
+                p_idx,
+                logging::describe_filter_attr(crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(filter_attr as i64))
             );
         }
         let mut filter_attr = filter_attr;
@@ -1084,7 +1059,28 @@ impl ResponseGenerator {
                                         - player.tapped_energy_count() as i32;
                                     available >= first_frame.value()
                                 }
-                                O_MOVE_TO_DISCARD => true,
+                                O_MOVE_TO_DISCARD => {
+                                    let source_zone = first_frame.dslot().source_zone;
+                                    let available = match source_zone {
+                                        Zone::Hand => state.players[p_idx].hand.len() as i32,
+                                        Zone::Stage => state.players[p_idx]
+                                            .stage
+                                            .iter()
+                                            .filter(|&&c| c >= 0)
+                                            .count() as i32,
+                                        Zone::LiveSet | Zone::SuccessPile => {
+                                            state.players[p_idx].success_lives.len() as i32
+                                        }
+                                        Zone::Energy => state.players[p_idx].energy_zone.len()
+                                            as i32,
+                                        Zone::Deck
+                                        | Zone::DeckTop
+                                        | Zone::DeckBottom
+                                        | Zone::Default => state.players[p_idx].deck.len() as i32,
+                                        _ => 0,
+                                    };
+                                    available >= first_frame.value()
+                                }
                                 _ => true,
                             };
                         }

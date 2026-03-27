@@ -60,12 +60,11 @@ pub enum DecodedAction {
 pub struct ActionFactory;
 
 impl ActionFactory {
-    fn infer_select_mode_label(
-        state: &super::game::GameState,
+    pub fn infer_select_mode_label(
+        pi: &crate::core::logic::models::PendingInteraction,
         db: &CardDatabase,
         mode_idx: i32,
     ) -> Option<String> {
-        let pi = state.interaction_stack.last()?;
         let card_id = if pi.card_id != -1 {
             pi.card_id
         } else {
@@ -111,6 +110,29 @@ impl ActionFactory {
         } else {
             Some(friendly_label)
         }
+    }
+
+    pub fn infer_all_select_mode_options(
+        db: &CardDatabase,
+        card_id: i32,
+        ability_index: i16,
+        num_modes: i16,
+    ) -> Vec<serde_json::Value> {
+        let mut options = Vec::new();
+        // Create a temporary interaction for label inference
+        let pi = crate::core::logic::models::PendingInteraction {
+            card_id,
+            ability_index,
+            v_remaining: num_modes,
+            ..Default::default()
+        };
+
+        for i in 0..num_modes {
+            let label = Self::infer_select_mode_label(&pi, db, i as i32)
+                .unwrap_or_else(|| format!("Mode {}", i + 1));
+            options.push(serde_json::Value::String(label));
+        }
+        options
     }
 }
 
@@ -276,7 +298,8 @@ impl ActionFactory {
 
         let decoded = Self::parse_action(action_id);
         if let DecodedAction::SelectMode { mode_idx } = decoded {
-            if let Some(pi) = state.interaction_stack.last() {
+            let pi = state.interaction_stack.last();
+            if let Some(pi) = pi {
                 let card_id = if pi.card_id != -1 {
                     pi.card_id
                 } else {
@@ -319,8 +342,10 @@ impl ActionFactory {
                 }
             }
 
-            if let Some(label) = Self::infer_select_mode_label(state, db, mode_idx) {
-                return label;
+            if let Some(pi) = pi {
+                if let Some(label) = Self::infer_select_mode_label(pi, db, mode_idx) {
+                    return label;
+                }
             }
         }
 

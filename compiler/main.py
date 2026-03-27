@@ -1,7 +1,8 @@
+"""Compile authored cards into runtime data backed by instruction lists."""
+
 from __future__ import annotations
 
 import argparse
-import datetime
 import json
 import multiprocessing
 import os
@@ -32,7 +33,7 @@ from engine.models.ability import (
     TargetType,
     TriggerType,
 )
-from engine.models.ability_ir import SEMANTIC_FORM_VERSION, VersionGate
+from engine.models.structured_instruction_ir import SEMANTIC_FORM_VERSION
 from engine.models.card import EnergyCard, LiveCard, MemberCard
 from engine.models.enums import CHAR_MAP, Unit
 from engine.models.opcodes import Opcode
@@ -40,7 +41,7 @@ from tools import frame_codec
 
 # O(total_abilities) -> O(unique_abilities)
 _ABILITY_COMPILATION_CACHE: dict[str, dict[str, Any]] = {}
-_bytecode_compile_errors: list[str] = []
+_instruction_compile_errors: list[str] = []
 
 # Worker-local adapters (initialized once per process)
 _MEMBER_ADAPTER: TypeAdapter[MemberCard] | None = None
@@ -91,6 +92,7 @@ def _init_worker(ability_cache: dict[str, dict[str, Any]], sparse_mapping: dict,
 def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
     exclude_ability_fields = {
         "instructions": True,
+        "bytecode": True,
         "raw_text": True,
         "pseudocode": True,
         "filters": True,
@@ -152,6 +154,25 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
+            "source_files": {
+                "cards": input_path,
+                "ability_frames": str(ABILITY_FRAME_SOURCE_PATH),
+                "ability_index": "data/ability_frame_index.json",
+                "metadata": "data/metadata.json",
+                "card_id_mapping": "data/card_id_mapping.json",
+            },
+            "execution_model": "frame_program_only",
+            "documentation": {
+                "purpose": "Compiled card database used by the engine and debug tools.",
+                "read_first": "Abilities are instruction-list based. If the instruction list looks empty, inspect frame_program.instructions and frame_count instead.",
+                "related_files": {
+                    "data/cards.json": "Authored card source",
+                    "data/ability_frame_index.yaml": "Authored frame source",
+                    "data/ability_frame_index.json": "Normalized frame index",
+                    "data/metadata.json": "Opcode, slot, and filter metadata",
+                    "data/card_id_mapping.json": "Stable card ID mapping",
+                },
+            },
             "semantic_form_version": SEMANTIC_FORM_VERSION,
             "semantic_form_enabled": export_profile != "runtime",
             "export_profile": export_profile,
@@ -195,7 +216,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
     success_count = 0
     errors = []
-    validation_issues = []  # Bytecode validation
+    validation_issues = []  # Instruction validation
 
     # Pre-create adapters
     member_adapter = TypeAdapter(MemberCard)
@@ -281,7 +302,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             raw_text="",
             trigger=TriggerType(trigger_id),
             effects=[], conditions=[], costs=[],
-            frame_program={"frames": frames}
+            frame_program={"instructions": frames}
         )
         
         try:
@@ -306,13 +327,23 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     if not quiet:
         print(f"Pre-compiled {len(unique_ability_cache)} unique abilities.")
 
+    try:
+        worker_count = int(os.environ.get("LOVECA_COMPILER_WORKERS", multiprocessing.cpu_count()))
+    except (TypeError, ValueError):
+        worker_count = multiprocessing.cpu_count()
+    worker_count = max(1, worker_count)
+
     if not quiet:
-        print(f"Compiling {len(worker_args)} cards using {multiprocessing.cpu_count()} cores...")
-    
-    # Pass pre-loaded data to workers to minimize I/O contention
+        print(f"Compiling {len(worker_args)} cards using {worker_count} worker(s)...")
+
+    # Pass pre-loaded data to workers to minimize I/O contention.
     init_args = (unique_ability_cache, _sparse_manager.mapping, _manual_translations_en)
-    with multiprocessing.Pool(initializer=_init_worker, initargs=init_args) as pool:
-        results = pool.map(_process_card_worker, worker_args)
+    if worker_count == 1:
+        _init_worker(*init_args)
+        results = [_process_card_worker(args) for args in worker_args]
+    else:
+        with multiprocessing.Pool(processes=worker_count, initializer=_init_worker, initargs=init_args) as pool:
+            results = pool.map(_process_card_worker, worker_args)
         
     for res_type, pk, data, err in results:
         if err:
@@ -350,16 +381,17 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             }
             print(f"[FRAME WARNING] Authored frame source not found: {ability_frames_path}")
 
-        normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata)
+        card_db = {"member_db": compiled_data["member_db"], "live_db": compiled_data["live_db"]}
+        normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata, card_db=card_db)
 
         # --- Generate Semantic Ability Index (canonical JSON) ---
         sparse_index_path = "data/ability_frame_index.json"
-        from tools import semantic_frame_index as semantic_index
-
-        sparse_index = semantic_index.build_semantic_ability_index(
+        sparse_index = frame_codec.build_runtime_ability_index(
             normalized_ability_frames,
             metadata,
+            card_db=card_db,
         )
+        sparse_index["schema"] = "ability_frame_index.semantic.v1"
         frame_codec.dump_json(Path(sparse_index_path), sparse_index)
         if not quiet:
             print(f"Generating {sparse_index_path}...")
@@ -376,7 +408,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     # ============================================================
     #  COMPILATION SUMMARY
     # ============================================================
-    total_errors = len(errors) + len(_bytecode_compile_errors) + len(validation_issues)
+    total_errors = len(errors) + len(_instruction_compile_errors) + len(validation_issues)
     sep_thick = "=" * 60
     sep_thin = "-" * 60
     if not quiet or total_errors > 0:
@@ -415,9 +447,9 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
                 line = line[:197] + "..."
             print(line)
 
-    if not quiet or (total_errors > 0 and (errors or _bytecode_compile_errors)):
+    if not quiet or (total_errors > 0 and (errors or _instruction_compile_errors)):
         _print_grouped_errors("CARD PARSE ERRORS", errors)
-        _print_grouped_errors("BYTECODE COMPILE ERRORS", _bytecode_compile_errors)
+        _print_grouped_errors("INSTRUCTION COMPILE ERRORS", _instruction_compile_errors)
 
         print(f"\n{sep_thin}")
         print("  FRAME PIPELINE")
@@ -426,7 +458,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         print(f"  Frame entries loaded: {len(_sparse_manager.mapping)}")
 
         if total_errors == 0:
-            print("\n  All cards compiled from frames and validated successfully!")
+            print("\n  All cards compiled from instruction lists and validated successfully!")
         print(sep_thick)
 
     # Write detailed log for reference (with full tracebacks)
@@ -486,23 +518,19 @@ SYN_FLAG_LIFE_LEAD = 1 << 4
 COST_FLAG_DISCARD = 0x01
 
 
-# Global compilation version gate (can be overridden per compilation run)
-_COMPILATION_VERSION_GATE: VersionGate = VersionGate(
-    semantic_version=SEMANTIC_FORM_VERSION
-)
-
 _COMPILED_CARD_DB_CACHE: dict[str, Any] | None = None
-
-
-# Removed _build_frame_program and _frame_program_frame_from_model helpers
-# as they are replaced by Ability.to_frame_program() for direct emission.
 
 
 def _iter_ability_frames(ability):
     frame_program = getattr(ability, "frame_program", None)
-    frames = frame_program.get("frames") if isinstance(frame_program, dict) else None
-    if isinstance(frames, list) and frames:
-        for frame in frames:
+    instructions = None
+    if isinstance(frame_program, dict):
+        instructions = frame_program.get("instructions", [])
+    if isinstance(instructions, list) and instructions:
+        for frame in instructions:
+            if frame == "Return":
+                yield "RETURN", {"op": "RETURN"}
+                continue
             if isinstance(frame, dict):
                 op_name = str(frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind") or "").upper()
                 if op_name:
@@ -516,17 +544,16 @@ def _compile_abilities_for_export(
     abilities: list,
     card_no: str,
     scope: str,
-    version_gate: VersionGate = None,
     export_profile: str = "full",
 ) -> None:
     """
-    Compile abilities for export with optional version gating.
-    
+    Compile abilities for export from canonical frame instructions.
+
     Args:
         abilities: List of Ability objects to compile
         card_no: Card number for error reporting
         scope: Scope string ("MEMBER" or "LIVE") for error reporting
-        version_gate: Optional VersionGate for controlling compilation version
+        export_profile: Export profile for pruning inspection-only fields
     """
     
     for idx, ab in enumerate(abilities):
@@ -535,8 +562,10 @@ def _compile_abilities_for_export(
         # Use signature-based memoization to avoid redundant compilation of identical abilities.
         # Signature is derived from the frame_program structure and trigger.
         frame_program = getattr(ab, "frame_program", None)
-        frames_list = frame_program.get("frames", []) if isinstance(frame_program, dict) else []
-        sig = hashlib.sha1(json.dumps([frames_list, int(ab.trigger)], sort_keys=True).encode()).hexdigest()
+        instructions_list = []
+        if isinstance(frame_program, dict):
+            instructions_list = frame_program.get("instructions", [])
+        sig = hashlib.sha1(json.dumps([instructions_list, int(ab.trigger)], sort_keys=True).encode()).hexdigest()
         
         if sig in _ABILITY_COMPILATION_CACHE:
             cached = _ABILITY_COMPILATION_CACHE[sig]
@@ -547,15 +576,14 @@ def _compile_abilities_for_export(
             continue
 
         try:
-            if not frames_list:
-                frames_list = ab.to_frame_program()
-                ab.frame_program = {"frames": frames_list}
-            # Bytecode generation removed in favor of direct frame emission.
+            if not instructions_list:
+                instructions_list = ab.to_frame_program()
+                ab.frame_program = {"instructions": instructions_list}
         except Exception as e:
             import traceback
 
             tb_str = traceback.format_exc()
-            _bytecode_compile_errors.append(f"[{scope}] {card_no} ab#{idx}: {e}\n{tb_str}")
+            _instruction_compile_errors.append(f"[{scope}] {card_no} ab#{idx}: {e}\n{tb_str}")
             continue
 
         try:
@@ -563,7 +591,7 @@ def _compile_abilities_for_export(
             # Store in cache after successful compilation
             # Note: compute_flags (which updates ab.ability_flags etc.) is called LATER in parse_member/parse_live.
             # We will finalize this cache entry AFTER compute_flags if we want to cache everything.
-            # For now, just cache the heavy bytecode/semantic parts.
+            # For now, just cache the heavy instruction/semantic parts.
             _ABILITY_COMPILATION_CACHE[sig] = {
                 "semantic_form": dict(ab.semantic_form),
             }
@@ -571,7 +599,7 @@ def _compile_abilities_for_export(
             import traceback
 
             tb_str = traceback.format_exc()
-            _bytecode_compile_errors.append(f"[{scope} SEMANTIC] {card_no} ab#{idx}: {e}\n{tb_str}")
+            _instruction_compile_errors.append(f"[{scope} SEMANTIC] {card_no} ab#{idx}: {e}\n{tb_str}")
 
 # Load manual translations
 MANUAL_TRANSLATIONS_EN_PATH = "data/manual_translations_en.json"
@@ -725,19 +753,27 @@ _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
-    frames = list(entry.get("frames", []) or [])
-    ability = Ability(
-        raw_text=raw_text,
-        trigger=TriggerType(trigger_id),
-        effects=[],
-        conditions=[],
-        costs=[],
-        is_once_per_turn=_coerce_bool(entry.get("is_once_per_turn", False)),
-        requires_selection=_coerce_bool(entry.get("requires_selection", False)),
-        choice_flags=_coerce_int(entry.get("choice_flags", 0)),
-        choice_count=_coerce_int(entry.get("choice_count", 0)),
+    instructions = list(entry.get("instructions", entry.get("frames", [])) or [])
+    ability = _ability_from_dict(
+        {
+            "trigger": trigger_id,
+            "effects": entry.get("effects", []),
+            "conditions": entry.get("conditions", []),
+            "costs": entry.get("costs", []),
+            "is_once_per_turn": entry.get("is_once_per_turn", False),
+            "requires_selection": entry.get("requires_selection", False),
+            "choice_flags": entry.get("choice_flags", 0),
+            "choice_count": entry.get("choice_count", 0),
+            "modal_options": entry.get("modal_options", []),
+            "option_names": entry.get("option_names", []),
+            "pseudocode": entry.get("pseudocode", ""),
+            "filters": entry.get("filters", []),
+            "frame_program": {"instructions": instructions},
+        }
     )
-    ability.frame_program = {"frames": frames}
+    ability.raw_text = raw_text
+    ability.frame_program = {"instructions": instructions}
+    ability.frame_count = len(instructions)
     try:
         ability.build_semantic_form()
     except Exception:
@@ -748,7 +784,10 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
 def _card_has_ability_source(data: dict[str, Any]) -> bool:
     return any(str(data.get(key, "")).strip() for key in ("ability", "original_text")) or bool(
         data.get("abilities")
-    ) or bool(isinstance(data.get("frame_program"), dict) and data["frame_program"].get("frames"))
+    ) or bool(
+        isinstance(data.get("frame_program"), dict)
+        and (data["frame_program"].get("instructions") or data["frame_program"].get("frames"))
+    )
 
 def _ability_from_dict(payload: dict[str, Any]) -> Ability:
     effects: list[Effect] = []
@@ -823,7 +862,6 @@ def _ability_from_dict(payload: dict[str, Any]) -> Ability:
         )
 
     frame_program = _frame_program_from_payload(payload)
-    frame_program = _frame_program_from_payload(payload)
     ability = Ability(
         raw_text=str(payload.get("raw_text", payload.get("original_text", ""))),
         trigger=TriggerType(int(payload.get("trigger", 0))),
@@ -841,6 +879,10 @@ def _ability_from_dict(payload: dict[str, Any]) -> Ability:
         filters=list(payload.get("filters", [])) if isinstance(payload.get("filters"), list) else [],
         option_names=list(payload.get("option_names", [])) if isinstance(payload.get("option_names"), list) else [],
     )
+    if isinstance(frame_program, dict):
+        instructions = frame_program.get("instructions", frame_program.get("frames", []))
+        if isinstance(instructions, list):
+            ability.frame_count = len(instructions)
     try:
         ability.build_semantic_form()
     except Exception:
@@ -1312,14 +1354,14 @@ def check_parity(input_path, output_path):
     print("WARNING: Parity check FAILED. Source file has changed since last compilation.")
     print(f"Stored cards:   {stored_hash}")
     print(f"Current cards:   {current_hash}")
-    print(f"Stored frames:   {stored_ability_hash}")
-    print(f"Current frames:  {current_ability_hash}")
+    print(f"Stored instructions:   {stored_ability_hash}")
+    print(f"Current instructions:  {current_ability_hash}")
     return False
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Compile raw card data into frame-first card JSON with optional version gating"
+        description="Compile raw card data into frame-first card JSON"
     )
     parser.add_argument("--input", default="data/cards.json", help="Path to raw cards.json")
     parser.add_argument("--output", default="data/cards_compiled.json", help="Output path")
@@ -1337,8 +1379,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # Version gating for bytecode is deprecated. Frame format is now the primary unit.
-
     if args.check:
         if check_parity(args.input, args.output):
             sys.exit(0)
@@ -1347,43 +1387,3 @@ if __name__ == "__main__":
 
     _load_translations_if_present(quiet=args.quiet)
     compile_cards(args.input, args.output, quiet=args.quiet, export_profile=args.export_profile)
-
-    # Update hash in the output file
-    if not args.quiet:
-        print("Updating source hash in compiled file...")
-    compiled_data = load_json(args.output)
-    if compiled_data:
-        if "meta" not in compiled_data:
-            compiled_data["meta"] = {}
-        compiled_data["meta"]["source_hash"] = calculate_hash(args.input)
-        compiled_data["meta"]["ability_source_hash"] = calculate_hash(SPARSE_INDEX_PATH)
-        compiled_data["meta"]["generated_by"] = "compiler/main.py"
-        compiled_data["meta"]["generated_at"] = datetime.datetime.now().isoformat()
-        with open(args.output, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(compiled_data, f, ensure_ascii=False, indent=2)
-
-    # Copy to both data/ and engine/data/ for compatibility with all scripts
-    import shutil
-
-    root_data_path = os.path.join(os.getcwd(), "data", "cards_compiled.json")
-    engine_data_path = os.path.join(os.getcwd(), "engine", "data", "cards_compiled.json")
-
-    # Sync to root data/
-    if os.path.abspath(args.output) != os.path.abspath(root_data_path):
-        try:
-            shutil.copy(args.output, root_data_path)
-            if not args.quiet:
-                print(f"Copied compiled data to {root_data_path}")
-        except Exception as e:
-            if not args.quiet:
-                print(f"Warning: Failed to copy to root data directory: {e}")
-
-    # Sync to engine/data/ to keep paths consistent
-    try:
-        os.makedirs(os.path.dirname(engine_data_path), exist_ok=True)
-        shutil.copy(root_data_path, engine_data_path)
-        if not args.quiet:
-            print(f"Synced compiled data to {engine_data_path}")
-    except Exception as e:
-        if not args.quiet:
-            print(f"Warning: Failed to sync to engine/data directory: {e}")

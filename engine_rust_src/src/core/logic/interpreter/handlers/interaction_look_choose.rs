@@ -1,7 +1,10 @@
 use crate::core::enums::{ChoiceType, TriggerType};
-use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
+use crate::core::logic::constants::{
+    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
+};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_LOOK_AND_CHOOSE;
@@ -38,37 +41,45 @@ pub fn handle_look_and_choose(
         source_zone_bits as i32
     };
     let lc = frame.look_choose();
-    let look_count = lc.count as usize;
+    let look_count = lc.count.max(1) as usize;
     let reveal_flag = lc.reveal;
     let dest_discard_v = lc.dest_discard;
     let compiled_choice_count = frame.look_choose().choose_count.max(1);
+    if state.debug.debug_mode {
+        println!(
+            "[DEBUG_LOOK_FRAME] {} look_count={} choose_count={}",
+            logging::describe_frame_semantics(&frame_data, ctx, db),
+            look_count,
+            compiled_choice_count
+        );
+    }
 
     if state.players[p_idx].looked_cards.is_empty() {
-        let reveal_count = if source_zone == 6 {
+        let reveal_count = if source_zone == ZONE_HAND {
             state.players[p_idx].hand.len()
-        } else if source_zone == 7 {
+        } else if source_zone == ZONE_DISCARD {
             state.players[p_idx].discard.len()
-        } else if source_zone == 15 {
+        } else if source_zone == ZONE_YELL {
             state.players[p_idx].yell_cards.len()
         } else {
             look_count
         };
         match source_zone {
-            6 => {
+            ZONE_HAND => {
                 for _ in 0..reveal_count {
                     if let Some(cid) = state.players[p_idx].pop_hand_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
             }
-            7 => {
+            ZONE_DISCARD => {
                 for _ in 0..reveal_count {
                     if let Some(cid) = state.players[p_idx].pop_discard_card() {
                         state.players[p_idx].looked_cards.push(cid);
                     }
                 }
             }
-            15 => {
+            ZONE_YELL => {
                 let y = std::mem::take(&mut state.players[p_idx].yell_cards);
                 state.players[p_idx].looked_cards.extend(y);
             }
@@ -86,9 +97,17 @@ pub fn handle_look_and_choose(
     }
 
     if ctx.choice_index == -1 {
-        let choice_type = if source_zone == 6 {
+        if state.debug.debug_mode {
+            println!(
+                "[DEBUG_LOOK] suspend: source_zone={} looked_cards={:?} {}",
+                source_zone,
+                state.players[p_idx].looked_cards,
+                logging::describe_context(ctx)
+            );
+        }
+        let choice_type = if source_zone == ZONE_HAND {
             ChoiceType::SelectHandDiscard
-        } else if source_zone == 7 {
+        } else if source_zone == ZONE_DISCARD {
             ChoiceType::SelectDiscardPlay
         } else {
             ChoiceType::LookAndChoose
@@ -124,6 +143,14 @@ pub fn handle_look_and_choose(
             }
             return HandlerResult::Suspend;
         }
+    }
+    if state.debug.debug_mode {
+        println!(
+            "[DEBUG_LOOK] resolve: choice={} looked_cards={:?} {}",
+            ctx.choice_index,
+            state.players[p_idx].looked_cards,
+            logging::describe_context(ctx)
+        );
     }
     interaction_look_choose_resolve::resolve_look_choice(
         state,

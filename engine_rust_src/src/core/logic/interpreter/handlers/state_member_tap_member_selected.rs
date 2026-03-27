@@ -1,6 +1,7 @@
 use super::*;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
@@ -55,15 +56,13 @@ pub fn handle_tap_member_selected(
                 .unwrap_or(false))
     {
         eprintln!(
-            "[TAP_SELECTED] optional={} select_member={} filter={:X} fixed_match={} needs_selection={} a={:X} v={} resolved_slot={}",
+            "[TAP_SELECTED] optional={} select_member={} fixed_match={} needs_selection={} resolved_slot={} {}",
             is_optional,
             is_select_member_choice,
-            filter_attr,
             fixed_slot_matches,
             needs_selection,
-            a,
-            frame_data.value,
-            resolved_slot
+            resolved_slot,
+            logging::describe_frame_semantics(&frame_data, ctx, db)
         );
     }
     let active_optional_prompt = state
@@ -74,16 +73,14 @@ pub fn handle_tap_member_selected(
 
     if ctx.source_card_id == 4196 {
         eprintln!(
-            "[TAP_SELECTED2] optional={} select_member={} filter={:X} resolved_slot={} choice_index={} v_remaining={} needs_selection={} done={} active_optional={}",
+            "[TAP_SELECTED2] optional={} select_member={} resolved_slot={} needs_selection={} done={} active_optional={} {}",
             is_optional,
             is_select_member_choice,
-            filter_attr,
             resolved_slot,
-            ctx.choice_index,
-            ctx.v_remaining,
             needs_selection,
             is_choice_done,
-            active_optional_prompt
+            active_optional_prompt,
+            logging::describe_frame_semantics(&frame_data, ctx, db)
         );
     }
 

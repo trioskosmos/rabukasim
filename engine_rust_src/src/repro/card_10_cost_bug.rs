@@ -287,6 +287,7 @@ mod tests {
     fn test_card_10_reduce_cost_opcode_per_card_filter() {
         let mut state = GameState::default();
         let db = load_real_db();
+        state.debug.debug_mode = true;
 
         state.players[0].hand = vec![10, 121, 124, 100, 200].into();
         state.players[0].energy_zone = vec![1, 2, 3, 4, 5].into();
@@ -302,9 +303,14 @@ mod tests {
             ..AbilityContext::default()
         };
 
-        // Get the real bytecode from card 10
+        // Use the normalized frame program from the real database.
         let card_10 = db.get_member(10).expect("Card 10 should exist");
-        let ability_0_bytecode = card_10.abilities[0].bytecode();
+        let ability_0_frames = card_10.abilities[0]
+            .frame_program
+            .as_ref()
+            .expect("Card 10 ability 0 should have a frame program")
+            .frames
+            .clone();
 
         println!("Test REDUCE_COST opcode:");
         println!("  Hand size: {}", state.players[0].hand.len());
@@ -314,7 +320,7 @@ mod tests {
 
         state.resolve_semantic_frames(
             &db,
-            &FrameProgram::from_words(&ability_0_bytecode).frames,
+            &ability_0_frames,
             &ctx,
         );
 
@@ -346,7 +352,12 @@ mod tests {
 
         let db = load_real_db();
         let card_10 = db.get_member(10).expect("Card 10 should exist");
-        let ability_0_bytecode = card_10.abilities[0].bytecode();
+        let ability_0_frames = card_10.abilities[0]
+            .frame_program
+            .as_ref()
+            .expect("Card 10 ability 0 should have a frame program")
+            .frames
+            .clone();
 
         for (hand_cards, expected_other_count) in hand_sizes {
             let mut state = GameState::default();
@@ -362,7 +373,7 @@ mod tests {
             // Apply card 10's real ability bytecode
             state.resolve_semantic_frames(
                 &db,
-                &FrameProgram::from_words(&ability_0_bytecode).frames,
+                &ability_0_frames,
                 &ctx,
             );
 

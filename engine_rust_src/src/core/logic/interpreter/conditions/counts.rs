@@ -12,25 +12,6 @@ fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize
     }
 }
 
-fn extend_positive_ids(ids: &mut smallvec::SmallVec<[i32; 32]>, cards: &[i32]) {
-    ids.extend(cards.iter().copied().filter(|&id| id >= 0));
-}
-
-fn matches_count_filter(
-    state: &GameState,
-    db: &CardDatabase,
-    id: i32,
-    filter_attr: u64,
-    filter: &CardFilter,
-    ctx: &AbilityContext,
-) -> bool {
-    if state.debug.debug_mode {
-        state.card_matches_filter_with_ctx_logs(db, id, filter_attr, ctx)
-    } else {
-        state.card_matches_filter_with_struct(db, id, filter, ctx)
-    }
-}
-
 pub fn resolve_count_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -121,38 +102,49 @@ pub fn resolve_count(
         let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
 
         use smallvec::SmallVec;
-        let mut ids = SmallVec::<[i32; 32]>::new();
+        let mut ids = SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+
+        fn extend_with_slot(
+            ids: &mut SmallVec<[(i32, Option<(u8, i16)>); 32]>,
+            cards: &[i32],
+            p_idx: u8,
+            base_slot: i16,
+        ) {
+            for (i, &id) in cards.iter().enumerate() {
+                if id >= 0 {
+                    let s_idx = if base_slot >= 0 { base_slot + i as i16 } else { -1 };
+                    ids.push((id, if s_idx >= 0 { Some((p_idx, s_idx)) } else { None }));
+                }
+            }
+        }
 
         if !only_opponent {
             if check_stage {
-                extend_positive_ids(&mut ids, &player.stage);
+                extend_with_slot(&mut ids, &player.stage, p_idx as u8, 0);
             }
             if check_discard {
-                extend_positive_ids(&mut ids, &player.discard);
+                extend_with_slot(&mut ids, &player.discard, p_idx as u8, 100);
             }
             if check_hand {
-                extend_positive_ids(&mut ids, &player.hand);
+                extend_with_slot(&mut ids, &player.hand, p_idx as u8, 200);
             }
             if check_success {
-                extend_positive_ids(&mut ids, &player.success_lives);
+                extend_with_slot(&mut ids, &player.success_lives, p_idx as u8, -1);
             }
         }
         if include_opponent {
             if check_stage {
-                extend_positive_ids(&mut ids, &opponent.stage);
+                extend_with_slot(&mut ids, &opponent.stage, (1 - p_idx) as u8, 0);
             }
             if check_discard {
-                extend_positive_ids(&mut ids, &opponent.discard);
+                extend_with_slot(&mut ids, &opponent.discard, (1 - p_idx) as u8, 100);
             }
             if check_hand {
-                extend_positive_ids(&mut ids, &opponent.hand);
+                extend_with_slot(&mut ids, &opponent.hand, (1 - p_idx) as u8, 200);
             }
             if check_success {
-                extend_positive_ids(&mut ids, &opponent.success_lives);
+                extend_with_slot(&mut ids, &opponent.success_lives, (1 - p_idx) as u8, -1);
             }
-        }
-        if state.debug.debug_mode && !state.ui.silent {
-            eprintln!("[DEBUG_COUNT] ids.len() = {}, op = {}, check_hand = {}, check_stage = {}", ids.len(), op, check_hand, check_stage);
         }
 
         let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
@@ -184,10 +176,12 @@ pub fn resolve_count(
 
         let filter = CardFilter::from_attr(filter_attr as i64);
 
+        let filter = CardFilter::from_attr(filter_attr as i64);
+
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
-            for id in ids {
-                let matched = matches_count_filter(state, db, id, filter_attr, &filter, ctx);
+            for (id, slot) in ids {
+                let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
                 if matched {
                     if let Some(m) = db.get_member(id) {
                         names.insert(m.name.clone());
@@ -198,26 +192,12 @@ pub fn resolve_count(
             }
             names.len() as i32
         } else {
-            let final_filter_struct = filter.clone();
-            let final_filter_attr = filter_attr;
-
             let mut res = 0;
-            for &id in &ids {
-                let matched = matches_count_filter(
-                    state,
-                    db,
-                    id,
-                    final_filter_attr,
-                    &final_filter_struct,
-                    ctx,
-                );
+            for (id, slot) in ids {
+                let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
                 if matched {
                     res += 1;
                 }
-                eprintln!(
-                    "[DEBUG_COUNT] ID: {}, matched: {}, filter_attr: {:X}, special_id: {}",
-                    id, matched, final_filter_attr, final_filter_struct.special_id
-                );
             }
             res
         }

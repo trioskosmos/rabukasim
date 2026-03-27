@@ -4,6 +4,7 @@ mod tests {
     use crate::core::logic::card_db::CardDatabase;
     use crate::core::logic::game::{ActionReceiver, GameState};
     use crate::test_helpers::Action;
+    use crate::test_helpers::load_real_db;
 
     struct TestReceiver {
         actions: Vec<Action>,
@@ -22,10 +23,8 @@ mod tests {
         }
     }
 
-    fn load_db() -> CardDatabase {
-        let json_str = std::fs::read_to_string("../data/cards_compiled.json")
-            .expect("Failed to read cards_compiled.json");
-        CardDatabase::from_json(&json_str).expect("Failed to parse CardDatabase")
+    fn load_db() -> &'static CardDatabase {
+        load_real_db()
     }
 
     fn new_receiver() -> TestReceiver {

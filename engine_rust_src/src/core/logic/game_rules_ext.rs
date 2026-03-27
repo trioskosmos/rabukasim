@@ -176,7 +176,7 @@ impl GameState {
         filter_attr: u64,
         ctx: &AbilityContext,
     ) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false)
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false, None)
     }
 
     pub fn card_matches_filter_with_ctx_logs(
@@ -186,17 +186,18 @@ impl GameState {
         filter_attr: u64,
         ctx: &AbilityContext,
     ) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, true)
+        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, true, None)
     }
 
     pub fn card_matches_filter_with_struct(
         &self,
         db: &CardDatabase,
         cid: i32,
+        checked_slot: Option<(u8, i16)>,
         filter: &CardFilter,
         ctx: &AbilityContext,
     ) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, 0, Some(filter), ctx, false)
+        self.card_matches_filter_with_ctx_internal(db, cid, 0, Some(filter), ctx, false, checked_slot)
     }
 
     fn card_matches_filter_with_ctx_internal(
@@ -207,6 +208,7 @@ impl GameState {
         filter_struct: Option<&CardFilter>,
         ctx: &AbilityContext,
         debug: bool,
+        provided_slot: Option<(u8, i16)>,
     ) -> bool {
         if cid == -1 {
             return false;
@@ -231,7 +233,7 @@ impl GameState {
         let requires_stage_scan = needs_dynamic_hearts
             || filter.is_tapped
             || filter.target_player != 0
-            || filter.special_id == 3 // NOT_SELF
+            || (filter.special_id == 3 && provided_slot.is_none()) // NOT_SELF (only needs scan if slot unknown)
             || filter.zone_mask == 4 // Explicit STAGE check
             || filter.keyword_energy
             || filter.keyword_member;
@@ -280,9 +282,9 @@ impl GameState {
         }
 
         if debug {
-            filter.matches_with_logs(db, self, cid, ctx, None, false, None)
+            filter.matches_with_logs(db, self, cid, ctx, provided_slot, false, None)
         } else {
-            filter.matches(self, db, cid, None, false, None, ctx)
+            filter.matches(self, db, cid, provided_slot, false, None, ctx)
         }
     }
 

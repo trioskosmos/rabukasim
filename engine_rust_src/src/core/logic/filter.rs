@@ -126,6 +126,7 @@ impl CardFilter {
                 3 => 255, // Both (always pass later)
                 _ => ctx.player_id,
             };
+            println!("[DEBUG_FILTER] Target Player check. Filter: {}, Actual: {:?}, Card: {}", self.target_player, inferred_owner, cid);
 
             if target_p != 255 {
                 let matches_owner = if let Some((p_idx, _)) = checked_slot {
@@ -135,6 +136,7 @@ impl CardFilter {
                 };
 
                 if matches_owner == Some(false) {
+                    println!("[DEBUG_FILTER] Target Player FAILED. Filter: {}, Actual: {:?}", target_p, matches_owner);
                     return false;
                 }
             }
@@ -161,9 +163,11 @@ impl CardFilter {
                 if self.group_id == 101 {
                     // Special case for AQOURS_OR_SAINT_SNOW
                     if !m.groups.contains(&1) && !m.groups.contains(&11) {
+                        if state.debug.debug_mode { println!("[DEBUG_FILTER] Group fails (AQ/SS). Card: {}, Groups: {:?}", cid, m.groups); }
                         return false;
                     }
                 } else if !m.groups.contains(&self.group_id) {
+                    if state.debug.debug_mode { println!("[DEBUG_FILTER] Group fails. Card: {}, Filter Group: {}, Card Groups: {:?}", cid, self.group_id, m.groups); }
                     return false;
                 }
             } else if let Some(l) = db.get_live(cid) {
@@ -451,7 +455,6 @@ impl CardFilter {
                 }
                 3 => {
                     // special_id=3: NOT_SELF (skips card itself)
-                    // IDENTITY FIX: Use slot index if available, fallback to card ID
                     if let Some((p_idx, s_idx)) = checked_slot {
                         if p_idx == ctx.player_id && s_idx == ctx.area_idx {
                             return false;
@@ -507,7 +510,7 @@ impl CardFilter {
                     }
                 }
 
-                // Fallback to string contains
+                // Fallback to name containment when masks are unavailable.
                 let looked_name = if let Some(looked_m) = db.get_member(looked_cid) {
                     &looked_m.name
                 } else if let Some(looked_l) = db.get_live(looked_cid) {

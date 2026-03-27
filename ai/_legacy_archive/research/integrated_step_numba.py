@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit, prange
 
-from engine.game.fast_logic import (
+from engine.archive.deprecated_v1_engine.game.fast_logic import (
     get_base_id,
     move_to_trash,
     resolve_bytecode,

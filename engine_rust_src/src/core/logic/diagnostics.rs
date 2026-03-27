@@ -1,5 +1,6 @@
 use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::player::PlayerState;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::CardDatabase;
 use crate::core::logic::GameState;
 
@@ -40,6 +41,15 @@ impl GameState {
                 print!("(Empty)");
             }
             for &cid in &p.hand {
+                print!("{} ", cid);
+            }
+            println!();
+
+            print!("  [LOOKED] ");
+            if p.looked_cards.is_empty() {
+                print!("(Empty)");
+            }
+            for &cid in &p.looked_cards {
                 print!("{} ", cid);
             }
             println!();
@@ -98,6 +108,15 @@ impl GameState {
             }
             println!();
 
+            print!("  [SUCCESS] ");
+            if p.success_lives.is_empty() {
+                print!("(Empty)");
+            }
+            for &cid in &p.success_lives {
+                print!("{} ", cid);
+            }
+            println!();
+
             println!();
         }
 
@@ -117,6 +136,23 @@ impl GameState {
                 );
             }
             println!();
+        }
+
+        println!("--- EXECUTION ---");
+        println!(
+            "  trigger_depth={} execution_id={:?} current_phase={:?}",
+            self.core.trigger_depth, self.ui.current_execution_id, self.phase
+        );
+        println!(
+            "  queued_triggers={} interaction_stack={}",
+            self.core.trigger_queue.len(),
+            self.interaction_stack.len()
+        );
+        if let Some(pi) = self.interaction_stack.last() {
+            println!(
+                "  top_interaction: {}",
+                logging::describe_pending_interaction(pi)
+            );
         }
 
         println!(

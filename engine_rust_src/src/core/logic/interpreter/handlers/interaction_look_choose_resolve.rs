@@ -1,8 +1,10 @@
 use super::interaction_look_choose_apply::apply_look_choice;
 use super::interaction_look_choose_finalize::finalize_look_choice;
 use super::*;
+use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
@@ -25,6 +27,22 @@ pub fn resolve_look_choice(
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
     let semantic_attr = filter_attr_from_params(_frame.components().params);
+    if state.debug.debug_mode {
+        println!(
+            "[DEBUG_LOOK_RESOLVE] choice={} revealed={:?} semantic_attr=[{}] source_zone={} rem_dest={} dest_discard={} {}",
+            choice,
+            revealed,
+            logging::describe_filter_attr(
+                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
+                    semantic_attr.unwrap_or(a as u64) as i64
+                )
+            ),
+            source_zone,
+            rem_dest,
+            dest_discard_v,
+            logging::describe_context(ctx)
+        );
+    }
     if choice == CHOICE_DONE as i32 {
         state.players[p_idx].looked_cards.retain(|c| *c != -1);
         return HandlerResult::Continue;
@@ -47,7 +65,7 @@ pub fn resolve_look_choice(
                     chosen,
                 );
 
-                if source_zone == 7 {
+                if source_zone == ZONE_DISCARD as i32 {
                     if let Some(member) = db.get_member(chosen) {
                         ctx.v_accumulated = (ctx.v_accumulated - member.cost as i16).max(0);
                     }
@@ -60,9 +78,17 @@ pub fn resolve_look_choice(
                 };
                 if rem > 0 && revealed.iter().any(|&c| c != -1) {
                     state.players[p_idx].looked_cards = revealed.clone();
-                    let choice_type = if source_zone == 6 {
+                    if state.debug.debug_mode {
+                        println!(
+                            "[DEBUG_LOOK_RESOLVE] suspending remainder rem={} looked_cards={:?} {}",
+                            rem,
+                            state.players[p_idx].looked_cards,
+                            logging::describe_context(ctx)
+                        );
+                    }
+                    let choice_type = if source_zone == ZONE_HAND as i32 {
                         ChoiceType::SelectHandDiscard
-                    } else if source_zone == 7 {
+                    } else if source_zone == ZONE_DISCARD as i32 {
                         ChoiceType::SelectDiscardPlay
                     } else {
                         ChoiceType::LookAndChoose

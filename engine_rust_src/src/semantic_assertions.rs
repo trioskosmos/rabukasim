@@ -2,7 +2,7 @@
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::{CardDatabase, ChoiceType, GameState, Phase};
 use crate::core::models::{AbilityContext, TriggerType};
-use crate::test_helpers::{create_test_state, Action as EngineAction, ZoneSnapshot};
+use crate::test_helpers::{create_test_state, load_real_db, Action as EngineAction, ZoneSnapshot};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -129,9 +129,7 @@ impl SemanticAssertionEngine {
             println!("DEBUG TRUTH LOADED: {:?}", c);
         }
 
-        let compiled_str = std::fs::read_to_string("../data/cards_compiled.json")
-            .expect("Failed to read cards_compiled.json");
-        let mut db = CardDatabase::from_json(&compiled_str).expect("Failed to parse CardDatabase");
+        let mut db = load_real_db().clone();
 
         // Inject Universal Teammates into the DB for audit/oracle use
         for i in 5000..5100 {

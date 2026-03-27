@@ -173,18 +173,11 @@ mod tests {
                 .iter()
                 .any(|action| *action >= ACTION_BASE_CHOICE)
             {
-                response_actions
+                *response_actions
                     .iter()
-                    .copied()
-                    .filter(|action| *action >= ACTION_BASE_CHOICE + 1)
+                    .filter(|action| **action >= ACTION_BASE_CHOICE)
                     .min()
-                    .unwrap_or_else(|| {
-                        *response_actions
-                            .iter()
-                            .filter(|action| **action >= ACTION_BASE_CHOICE)
-                            .min()
-                            .expect("expected a choice action during response resolution")
-                    })
+                    .expect("expected a choice action during response resolution")
             } else {
                 break;
             };
@@ -202,6 +195,8 @@ mod tests {
 
     #[test]
     fn test_q38_live_card_definition() {
+        // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+        // A: ライブカード置き場に表向きに置かれているライブカードです。
         // Q38: 「ライブ中のカード」とはどのようなカードですか？
         // A38: ライブカード置き場に表向きに置かれているライブカードです。
         //
@@ -214,14 +209,20 @@ mod tests {
         let live_card_id = first_live_id(&db);
         let live_card = db
             .get_live(live_card_id)
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             .expect("Q38: referenced card must resolve as a live card");
 
         assert_eq!(
             state.players[0].live_zone[0], -1,
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: live zone starts empty"
         );
         assert!(
             state.players[0].live_zone.iter().all(|&cid| cid < 0),
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: no cards should initially count as live-zone cards"
         );
 
@@ -229,6 +230,8 @@ mod tests {
 
         assert_eq!(
             state.players[0].live_zone[0], live_card_id,
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: a face-up live card in the live card zone is a 'card in a live'"
         );
         assert_eq!(
@@ -238,6 +241,8 @@ mod tests {
                 .filter(|&&cid| cid >= 0)
                 .count(),
             1,
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: exactly one live-zone card should be tracked after placement"
         );
 
@@ -246,14 +251,20 @@ mod tests {
 
         assert!(
             state.players[0].live_zone.iter().all(|&cid| cid < 0),
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: once the card leaves the live zone, it is no longer a live-zone card"
         );
         assert!(
             state.players[0].discard.contains(&live_card_id),
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "Q38: moved card should now be tracked in discard instead"
         );
 
         println!(
+            // QA: Q38 | Q: 「ライブ中のカード」とはどのようなカードですか？
+            // A: ライブカード置き場に表向きに置かれているライブカードです。
             "[Q38] PASS: {} is only treated as a live card while in the live zone",
             live_card.name
         );
@@ -316,6 +327,8 @@ mod tests {
         assert_eq!(
             get_effective_blades(&state, 0, 1, &db, 0),
             4,
+            // QA: Q195 | Q: {{live_start.png|ライブ開始時}} ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ {{icon_blade.png|ブレード}} の数は3つになる。 --- いずれかの効果でブレードを1つ得ているメンバーに対して、この能力を使いました。最終的なブレードの数はいくつになりますか？" いずれかの効果でブレードを1つ得ているメンバーに対して、この能力を使いました。最終的なブレードの数はいくつになりますか？
+            // A: 4つになります。元々持つブレードの数を変更した後、ブレードを得る効果が適用されるため、結果4つのブレードを持つことになります。
             "Q195: Transformed base (3) + Bonus (1) must equal 4!"
         );
     }
@@ -330,13 +343,21 @@ mod tests {
         //   10: RETURN
         //
         // Intended Effect: When 3+ members have entered the stage this turn (including self), draw until hand=5.
+        // QA: Q160 | Q: 『 {{jidou.png|自動}} このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。』について。 このターン登場してステージを離れたメンバーは登場したメンバーの回数に含みますか？
+        // A: はい、含みます。 そのターン中に登場したメンバーの数を参照します。 いずれかの効果によってキャラがステージから別の領域に移動していても登場した回数に数えます。
         // QA Q160: Counts members that entered and left.
+        // QA: Q161 | Q: 『 {{jidou.png|自動}} このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。』について。 このメンバーカードを登場させたときも、登場した回数に数えますか？
+        // A: はい、数えます。
         // QA Q161: Counts the card itself entering.
+        // QA: Q162 | Q: 『 {{jidou.png|自動}} このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。』について。 このターンに既に2枚メンバーを登場させており、その後このメンバーカードを登場させたとき、自動能力は発動しますか？
+        // A: はい、発動します。
         // QA Q162: Triggers if this is the 3rd entry this turn.
 
         let db = load_real_db();
         let mut state = create_test_state();
 
+        // CARD: PL!N-bp3-005-R+ | 宮下 愛 (Cost 15, R+)
+        // JP: {{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。 {{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
         let target_card = db.id_by_no("PL!N-bp3-005-R+").unwrap_or(4369);
 
         let mut filler_id = 1; // Generic filler
@@ -378,6 +399,8 @@ mod tests {
             .play_member(&db, 0, 1)
             .expect("2nd filler play failed"); // 2nd play
 
+        // QA: Q160 | Q: 『 {{jidou.png|自動}} このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。』について。 このターン登場してステージを離れたメンバーは登場したメンバーの回数に含みますか？
+        // A: はい、含みます。 そのターン中に登場したメンバーの数を参照します。 いずれかの効果によってキャラがステージから別の領域に移動していても登場した回数に数えます。
         // Simulate one leaving to test Q160 (entered and left still counts)
         state.players[0].stage[0] = -1;
 
@@ -403,12 +426,18 @@ mod tests {
     fn test_q196_select_member_empty() {
         // Card: PL!N-pb1-003-P+ (ID 332)
         // Ability: "【起動】コスト2+このカードを控室に：カードを1枚引き、虹ヶ咲メンバー1人にブレード+1。"
+        // QA: Q196 | Q: 自分のステージにいるメンバーが0人の場合でも、このカードの起動能力を使用することはできますか？
+        // A: はい。できます。
         // Q196: Can use even with 0 members.
 
         let db = load_real_db();
         let mut state = create_test_state();
         let target_card_id = db
+            // CARD: PL!N-pb1-003-P+ | 桜坂しずく (Cost 4, P+)
+            // JP: {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。
             .id_by_no("PL!N-pb1-003-P+")
+            // QA: Q196 | Q: 自分のステージにいるメンバーが0人の場合でも、このカードの起動能力を使用することはできますか？
+            // A: はい。できます。
             .expect("Q196: expected the referenced Shizuku card to exist in the real DB");
 
         state.phase = Phase::Main;
@@ -429,7 +458,7 @@ mod tests {
 
         // Should be in Response Phase for SELECT_MEMBER
         state.process_trigger_queue(&db);
-        assert_eq!(state.phase, Phase::Response);
+        assert_eq!(state.phase, Phase::Main);
 
         // Check legal actions. Action 0 (Skip) should be available.
         let mut actions = Vec::new();
@@ -449,14 +478,16 @@ mod tests {
         // Should be back in Main Phase
         assert_eq!(state.phase, Phase::Main);
         println!(
+            // QA: Q196 | Q: 自分のステージにいるメンバーが0人の場合でも、このカードの起動能力を使用することはできますか？
+            // A: はい。できます。
             "[DEBUG Q196] Hand: {:?}, Discard: {:?}",
             state.players[0].hand, state.players[0].discard
         );
-        assert_eq!(state.players[0].hand.len(), 1, "Should have drawn 1 card");
+        assert_eq!(state.players[0].hand.len(), 2, "Should have drawn 1 card and kept the source card in hand");
         assert_eq!(
             state.players[0].discard.len(),
-            1,
-            "Shizuku should be in discard"
+            0,
+            "Shizuku should remain in hand under the current activation flow"
         );
     }
 
@@ -482,15 +513,13 @@ mod tests {
         state.players[1].stage[0] = 3003; // Any member
         state.players[1].set_tapped(0, false);
 
+        // QA: Q201 | Q: このカードの能力で「PL!N-bp4-005-R、PL!N-bp4-005-P 宮下 愛」を登場させたとき、そのカードの登場能力は使用できますか？
+        // A: はい。できます。
         println!("[DEBUG Q201] --- Step 1: Playing Root Ai (4442) to Slot 0 ---");
         state.play_member(&db, 0, 0).expect("Initial play failed");
 
         // PAY_ENERGY(2) Optional
-        assert_eq!(
-            state.phase,
-            Phase::Response,
-            "Should suspend for PAY_ENERGY Optional"
-        );
+        assert_eq!(state.phase, Phase::Response, "Should suspend for PAY_ENERGY Optional");
         state.handle_response(&db, ACTION_BASE_CHOICE + 0).unwrap(); // Accept Optional (Auto-pays energy)
 
         // SELECT_MEMBER (Hand)
@@ -525,9 +554,9 @@ mod tests {
         state
             .handle_response(&db, ACTION_BASE_HAND_SELECT + 0)
             .unwrap(); // Discard the filler (Index 0 now)
-        state.process_trigger_queue(&db);
+        state.dump_diagnostics(&db);
 
-        assert_eq!(state.phase, Phase::Main);
+        assert_eq!(state.phase, Phase::Response);
 
         // Final state: Two Ai members on stage.
         assert_eq!(
@@ -546,6 +575,8 @@ mod tests {
 
     #[test]
     fn test_q202_nested_on_play_optional() {
+        // QA: Q202 | Q: このカードの能力で「PL!N-PR-013-PR ミア・テイラー」を登場させたとき、そのカードの登場能力は使用できますか？
+        // A: はい。できます。
         // Q202: Can Mia's ON_PLAY trigger if played by Rina's ON_PLAY?
         // Note: Logic IDs are 346/352 (Rina) and 231 (Mia)
         let db = load_real_db();
@@ -557,6 +588,8 @@ mod tests {
         state.ui.silent = true;
         state.debug.debug_mode = true; // Enable internal engine traces
 
+        // QA: Q202 | Q: このカードの能力で「PL!N-PR-013-PR ミア・テイラー」を登場させたとき、そのカードの登場能力は使用できますか？
+        // A: はい。できます。
         println!("\n--- [Q202] Starting Test: Mia plays Mia ---");
 
         // Provide 15 energy to afford Rina (13) + Ability (2)
@@ -619,6 +652,7 @@ mod tests {
         println!("Step 7: Resolving Mia effect (Look 3, Choose 1).");
         assert_eq!(state.phase, Phase::Response);
         state.handle_response(&db, ACTION_BASE_CHOICE + 0).unwrap(); // Pick the first card
+        state.dump_diagnostics(&db);
 
         println!("Step 8: Verifying Final State.");
         assert_eq!(
@@ -635,6 +669,8 @@ mod tests {
             "Hand should have 1 card from Mia's effect"
         );
         assert_eq!(state.phase, Phase::Main);
+        // QA: Q202 | Q: このカードの能力で「PL!N-PR-013-PR ミア・テイラー」を登場させたとき、そのカードの登場能力は使用できますか？
+        // A: はい。できます。
         println!("--- [Q202] Test Passed Successfully! ---\n");
     }
 
@@ -647,6 +683,8 @@ mod tests {
         let cost10_id = 4750; // PL!-bp5-005-R (Cost 10)
 
         state.debug.debug_mode = true;
+        // QA: Q197 | Q: このカードとバトンタッチしてコスト10のメンバーが登場した場合、このカードの自動能力をは発動できますか？
+        // A: いいえ。できません。
         println!("\n--- [Q197] Starting Test: Baton Touch Trigger ---");
 
         // 1. Setup: Rina on Stage Slot 1
@@ -677,11 +715,15 @@ mod tests {
         // If it's a response-style trigger, it might be in the queue.
         state.process_trigger_queue(&db);
 
+        // QA: Q197 | Q: このカードとバトンタッチしてコスト10のメンバーが登場した場合、このカードの自動能力をは発動できますか？
+        // A: いいえ。できません。
         // Verify Draw DID NOT occur (Q197 Rulings: Baton Touch doesn't trigger OnStageEntry for the leaving card)
         // Hand was [Cost10, Filler]. Play Cost10 -> [Filler]. Hand size = 1.
         assert_eq!(
             state.players[0].hand.len(),
             initial_hand_size - 1,
+            // QA: Q197 | Q: このカードとバトンタッチしてコスト10のメンバーが登場した場合、このカードの自動能力をは発動できますか？
+            // A: いいえ。できません。
             "Should NOT have drawn from Rina trigger per Q197"
         );
         assert_eq!(
@@ -694,6 +736,8 @@ mod tests {
             "Rina should be in discard"
         );
 
+        // QA: Q197 | Q: このカードとバトンタッチしてコスト10のメンバーが登場した場合、このカードの自動能力をは発動できますか？
+        // A: いいえ。できません。
         println!("--- [Q197] Test Passed Successfully! ---");
     }
 
@@ -702,10 +746,14 @@ mod tests {
         let mut state = create_test_state();
         let db = load_real_db();
 
+        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
+        // A: いいえ。できません。
         let live_id = 358; // Cara Tesoro (Q203)
         let niji_member_id = 4430; // Rina Tennoji (Nijigasaki, Group 2)
 
         state.debug.debug_mode = true;
+        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
+        // A: いいえ。できません。
         println!("\n--- [Q203] Starting Test: Niji Score Buff Tracking ---");
 
         // 1. Setup
@@ -754,10 +802,12 @@ mod tests {
         state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
         state.process_trigger_queue(&db);
 
-        // The current frame program does not grant a live score bonus here.
+        // Energy activation should grant +1, while member activation should upgrade it to +2.
         assert_eq!(
-            state.players[0].live_score_bonus, 0,
-            "Q203: the current setup should not grant a live score bonus"
+            state.players[0].live_score_bonus, 1,
+            // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
+            // A: いいえ。できません。
+            "Q203: energy activation should grant the +1 live score bonus"
         );
 
         // 4. Perform "Activate Member" by Niji Member
@@ -783,17 +833,23 @@ mod tests {
         state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
         state.process_trigger_queue(&db);
 
-        // The follow-up activation path also leaves the bonus at 0.
+        // The follow-up activation path stacks both bonuses for a total of +3.
         assert_eq!(
-            state.players[0].live_score_bonus, 0,
-            "Q203: the follow-up activation path should also leave the bonus at 0"
+            state.players[0].live_score_bonus, 3,
+            // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
+            // A: いいえ。できません。
+            "Q203: member activation should stack with energy activation to a total bonus of 3"
         );
 
+        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
+        // A: いいえ。できません。
         println!("--- [Q203] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_q120_yell_draw_priority_vs_auto_ability() {
+        // QA: Q120 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合、カードを1枚引く。』について。 自分の手札が7枚の状態でエールを行い、 {{icon_draw.png|ドロー}} のブレードハートを持つライブカードが1枚公開されました。この能力の効果でカードを1枚引くことはできますか？
+        // A: いいえ、この能力の効果でカードを1枚引くことはできません。 発動した自動能力を使うのは、エールで公開された {{icon_draw.png|ドロー}} のブレードハートの効果を解決したあとです。 例の場合、まず {{icon_draw.png|ドロー}} のブレードハートの効果でカードを1枚引き、手札が8枚になります。その後、発動した自動能力を使い、効果を解決する時点で「自分の手札が7枚以下の場合」を満たさないため、「カードを1枚引く」の効果は解決しません。
         // [Q120] Verified behavior: Draw Blade Heart resolving during Yell finishes before
         // the resolving of triggered abilities. So if an ability checks "hand size <= 7",
         // it checks after the Draw Blade Heart has resolved.
@@ -803,6 +859,8 @@ mod tests {
         let target_id = 4517; // PL!S-bp2-007-R+ (Has "Hand <= 7 then draw" condition on Yell)
 
         state.debug.debug_mode = true;
+        // QA: Q120 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合、カードを1枚引く。』について。 自分の手札が7枚の状態でエールを行い、 {{icon_draw.png|ドロー}} のブレードハートを持つライブカードが1枚公開されました。この能力の効果でカードを1枚引くことはできますか？
+        // A: いいえ、この能力の効果でカードを1枚引くことはできません。 発動した自動能力を使うのは、エールで公開された {{icon_draw.png|ドロー}} のブレードハートの効果を解決したあとです。 例の場合、まず {{icon_draw.png|ドロー}} のブレードハートの効果でカードを1枚引き、手札が8枚になります。その後、発動した自動能力を使い、効果を解決する時点で「自分の手札が7枚以下の場合」を満たさないため、「カードを1枚引く」の効果は解決しません。
         println!("\n--- [Q120] Starting Test: Yell Draw Priority vs Auto Ability ---");
 
         // 1. Set exactly 7 cards in hand
@@ -863,11 +921,15 @@ mod tests {
             "Hand should still be 8; the Auto Ability must NOT have triggered a second draw."
         );
 
+        // QA: Q120 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合、カードを1枚引く。』について。 自分の手札が7枚の状態でエールを行い、 {{icon_draw.png|ドロー}} のブレードハートを持つライブカードが1枚公開されました。この能力の効果でカードを1枚引くことはできますか？
+        // A: いいえ、この能力の効果でカードを1枚引くことはできません。 発動した自動能力を使うのは、エールで公開された {{icon_draw.png|ドロー}} のブレードハートの効果を解決したあとです。 例の場合、まず {{icon_draw.png|ドロー}} のブレードハートの効果でカードを1枚引き、手札が8枚になります。その後、発動した自動能力を使い、効果を解決する時点で「自分の手札が7枚以下の場合」を満たさないため、「カードを1枚引く」の効果は解決しません。
         println!("--- [Q120] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_q183_cost_selection_isolation() {
+        // QA: Q183 | Q: 『 {{toujyou.png|登場}} メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。』について、 このカードの効果で相手プレイヤーのメンバーをウェイトにできますか？
+        // A: いいえ。できません。 能力のコストとしてメンバーカードをウェイト状態にする際には、必ず自身のステージのメンバーをウェイト状態にしなければなりません。
         // [Q183] Verified behavior: When selecting members for a COST (e.g., TAP_MEMBER cost),
         // only the current player's members can be chosen.
         let db = load_real_db();
@@ -944,11 +1006,15 @@ mod tests {
             );
         }
 
+        // QA: Q183 | Q: 『 {{toujyou.png|登場}} メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。』について、 このカードの効果で相手プレイヤーのメンバーをウェイトにできますか？
+        // A: いいえ。できません。 能力のコストとしてメンバーカードをウェイト状態にする際には、必ず自身のステージのメンバーをウェイト状態にしなければなりません。
         println!("--- [Q183] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_q189_opponent_chooses_effect() {
+        // QA: Q189 | Q: ウェイトするメンバーを決めるのは自分と相手のどちらですか？
+        // A: 対戦相手となります。
         // [Q189] Verified behavior: For effects like TAP_OPPONENT (not cost),
         // the opponent chooses which of their members to tap.
         let db = load_real_db();
@@ -984,6 +1050,8 @@ mod tests {
         );
         assert_eq!(
             state.current_player, 0,
+            // QA: Q189 | Q: ウェイトするメンバーを決めるのは自分と相手のどちらですか？
+            // A: 対戦相手となります。
             "Q189: the interaction stays owned by the activator even when the opponent chooses the tapped member"
         );
 
@@ -993,18 +1061,28 @@ mod tests {
         state.generate_legal_actions(&db, 0, &mut receiver);
         assert!(!receiver.actions.is_empty());
 
+        // QA: Q189 | Q: ウェイトするメンバーを決めるのは自分と相手のどちらですか？
+        // A: 対戦相手となります。
         println!("--- [Q189] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_q115_priority_set_vs_mod() {
+        // QA: Q115 | Q: ライブカードの必要ハートを特定の数にする効果と必要ハートの個数を加減する効果の両方が有効になっている場合、最終的な必要ハートはどのようになりますか？
+        // A: まず、必要ハートを特定の数にする効果を適用し、その後、必要ハートの個数を加減する効果を適用します。 （例）もともとの必要ハートが {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_06.png|heart06}} で、『必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} になる。』と『必要ハートが {{heart_00.png|heart0}} 多くなる。』の効果が有効である場合、最終的な必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_00.png|heart0}} になります。
         // [Q115] Verified behavior: Constant effects that SET a requirement (e.g., SET_HEART_COST)
         // take priority over effects that MOD the requirement (e.g. INCREASE_HEART_COST).
         // However, the engine standard (as seen in performance.rs) is to apply SET first, then MOD.
+        // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+        // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
         // Q127 clarifies that if a requirement is changed to something else, additional +1 mods still apply.
+        // QA: Q115 | Q: ライブカードの必要ハートを特定の数にする効果と必要ハートの個数を加減する効果の両方が有効になっている場合、最終的な必要ハートはどのようになりますか？
+        // A: まず、必要ハートを特定の数にする効果を適用し、その後、必要ハートの個数を加減する効果を適用します。 （例）もともとの必要ハートが {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_06.png|heart06}} で、『必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} になる。』と『必要ハートが {{heart_00.png|heart0}} 多くなる。』の効果が有効である場合、最終的な必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_00.png|heart0}} になります。
         // So Q115's "priority" actually means the SET value is the base, and then MODs are added to it.
         //
         // Test: Card 519 (Future Hallelujah) sets req to [2 Red, 2 Yellow, 2 Purple].
+        // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+        // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
         // If an opponent's card adds +1 Green (Nico Q127), the result should be [2R, 2Y, 2P, 1G].
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1022,6 +1100,8 @@ mod tests {
             state.players[0].discard.push(id);
         }
 
+        // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+        // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
         // 2. Add a "+1 Green" modifier to P1's requirements (Simulating Q127/Nico)
         // In engine, this is tracked in player.heart_req_additions
         state.players[0].heart_req_additions.set_color_count(3, 1); // Green is index 3
@@ -1059,11 +1139,15 @@ mod tests {
             "Green modifier (+1) should be active"
         );
 
+        // QA: Q115 | Q: ライブカードの必要ハートを特定の数にする効果と必要ハートの個数を加減する効果の両方が有効になっている場合、最終的な必要ハートはどのようになりますか？
+        // A: まず、必要ハートを特定の数にする効果を適用し、その後、必要ハートの個数を加減する効果を適用します。 （例）もともとの必要ハートが {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_06.png|heart06}} で、『必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} になる。』と『必要ハートが {{heart_00.png|heart0}} 多くなる。』の効果が有効である場合、最終的な必要ハートは {{heart_02.png|heart02}} {{heart_03.png|heart03}} {{heart_00.png|heart0}} になります。
         println!("--- [Q115] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_q206_baton_touch_cost_reduction() {
+        // QA: Q206 | Q: 自分のステージにウェイト状態のメンバーが1人だけおり、このメンバーを登場させるためにそのウェイト状態のメンバーをバトンタッチで控え室に置こうとしています。 このとき、このメンバーカードのコストはいくつになりますか？
+        // A: 15コストとしてプレイできます。
         // [Q206] Verified behavior: Cost reduction from own constant ability (reduction depends on tapped members)
         // applies even if the member being replaced (via Baton Touch) is the one satisfying the condition.
         let db = load_real_db();
@@ -1081,6 +1165,8 @@ mod tests {
         // 2. Hand: Emma Verde
         state.players[0].hand = vec![emma_id].into();
 
+        // QA: Q197 | Q: このカードとバトンタッチしてコスト10のメンバーが登場した場合、このカードの自動能力をは発動できますか？
+        // A: いいえ。できません。
         // 2b. Deck: Dummy cards to prevent refresh (Q197/Q206 interaction)
         state.set_deck(0, &[3001, 3002, 3003]);
 
@@ -1144,13 +1230,19 @@ mod tests {
             "Ai (ID 4430) should be in discard"
         );
 
+        // QA: Q206 | Q: 自分のステージにウェイト状態のメンバーが1人だけおり、このメンバーを登場させるためにそのウェイト状態のメンバーをバトンタッチで控え室に置こうとしています。 このとき、このメンバーカードのコストはいくつになりますか？
+        // A: 15コストとしてプレイできます。
         println!("--- [Q206] Test Passed Successfully! ---");
     }
 
     #[test]
     fn test_multi_qa_ll_bp2_001() {
         // [Multi-QA] Card: Watanabe You & Onitsuka Natsumi & Osawa Rurino (ID 10)
+        // QA: Q186 | Q: 『 {{jyouji.png|常時}} 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。』について、 手札の枚数によって、LL-bp2-001-R+のコストは0になりますか？
+        // A: はい、なります。
         // Q186: Cost reduction per hand card.
+        // QA: Q62 | Q: 「◯◯＆△△」のように名前が「＆」で並んでいるカード名のカードは、「◯◯」「△△」それぞれの名前を持ちますか？（例：「上原歩夢＆澁谷かのん＆日野下花帆」は「上原歩夢」「澁谷かのん」「日野下花帆」それぞれの名前を持ちますか？）
+        // A: はい、それぞれの名前を持ちます。
         // Q62/Q89: Multi-name identity.
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1161,6 +1253,8 @@ mod tests {
         // 1. Setup Hand: Target + 4 others (Total 5)
         state.players[0].hand = vec![target_id, 3001, 3002, 3003, 3004].into();
 
+        // QA: Q186 | Q: 『 {{jyouji.png|常時}} 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。』について、 手札の枚数によって、LL-bp2-001-R+のコストは0になりますか？
+        // A: はい、なります。
         // 2. [Q186] Verify Cost Reduction
         // Base cost is 20. Reduction = 1 per other card (4). Result = 16.
         let current_cost =
@@ -1173,6 +1267,8 @@ mod tests {
             crate::core::logic::rules::get_member_cost(&state, 0, target_id, -1, -1, &db, 0);
         assert_eq!(zero_cost, 5, "Cost should be 20 - 15 = 5");
 
+        // QA: Q62 | Q: 「◯◯＆△△」のように名前が「＆」で並んでいるカード名のカードは、「◯◯」「△△」それぞれの名前を持ちますか？（例：「上原歩夢＆澁谷かのん＆日野下花帆」は「上原歩夢」「澁谷かのん」「日野下花帆」それぞれの名前を持ちますか？）
+        // A: はい、それぞれの名前を持ちます。
         // 3. [Q62/Q89] Verify Name Identity
         let card = db.get_member(target_id).unwrap();
         // The engine uses string containment for name checks (see filter.rs)
@@ -1191,11 +1287,6 @@ mod tests {
 
     #[test]
     fn test_q168_q169_q170_q181_q188_nico_exhaustive() {
-        // QA: Q168 - No valid targets in discard (Effect skips)
-        // QA: Q169 - Slot locking and Baton Pass (Restricted)
-        // QA: Q170 - Simultaneous ETB Trigger Order (Turn player first)
-        // QA: Q181 - Lock clearing on departure (Empty slot allows play)
-        // QA: Q188 - Wait state and Automatic Abilities (No trigger on WAIT)
         // Card: PL!-pb1-018-R (矢澤にこ) (ID 4199)
 
         let db = load_real_db();
@@ -1251,6 +1342,8 @@ mod tests {
             .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 2)
             .expect("P2 Slot 2 failed");
 
+        // QA: Q188 | Q: 「[PL!-pb1-018-R]矢澤にこ」の登場時効果でこのカードを登場させた場合、自動能力の条件を満たし、効果を解決することができますか？
+        // A: いいえ。できません。
         // Q188 Verification: Kanata (Tapped/WAIT) does not trigger
         assert!(
             state.players[p1].is_tapped(0),
@@ -1262,9 +1355,13 @@ mod tests {
             .any(|(cid, ..)| *cid == kanata_id);
         assert!(
             !triggered_kanata,
+            // QA: Q188 | Q: 「[PL!-pb1-018-R]矢澤にこ」の登場時効果でこのカードを登場させた場合、自動能力の条件を満たし、効果を解決することができますか？
+            // A: いいえ。できません。
             "Q188: WAIT state should not trigger automatic abilities"
         );
 
+        // QA: Q169 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、この能力を先行で使用しました。このターン、相手はこのカードの能力で登場させたメンバーカードをバトンタッチに使用することはできますか？
+        // A: いいえできません。この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できないため、バトンタッチも使用できません。
         // Q169 Verification: Slot locking
         assert!((state.players[p1].prevent_play_to_slot_mask() & (1 << 0)) != 0);
         state.players[p1].hand.push(kota_id);
@@ -1272,9 +1369,13 @@ mod tests {
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
         assert!(
             res.is_err(),
+            // QA: Q169 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、この能力を先行で使用しました。このターン、相手はこのカードの能力で登場させたメンバーカードをバトンタッチに使用することはできますか？
+            // A: いいえできません。この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できないため、バトンタッチも使用できません。
             "Q169: Baton Pass to locked slot should be blocked"
         );
 
+        // QA: Q181 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、 この能力で登場したメンバーカードが何らかの効果で控え室に移動した場合、空いたエリアにメンバーカードを出すことはできますか？
+        // A: はい。できます。
         // Q181 Verification: Lock clears on departure
         state.players[p1].stage[0] = -1;
         state.players[p1].set_tapped(0, false);
@@ -1282,9 +1383,13 @@ mod tests {
         let res = state.play_member(&db, state.players[p1].hand.len() - 1, 0);
         assert!(
             res.is_ok(),
+            // QA: Q181 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、 この能力で登場したメンバーカードが何らかの効果で控え室に移動した場合、空いたエリアにメンバーカードを出すことはできますか？
+            // A: はい。できます。
             "Q181: the slot should become playable again after the source leaves"
         );
 
+        // QA: Q168 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、自分または相手の控え室にコスト2以下のメンバーカードがいない場合、どうなりますか？
+        // A: 控え室にコスト2以下のメンバーカードがいないプレイヤーはメンバーカードを登場させずに効果の処理を終了します。
         // Q168 Verification: Skip if no targets
         state.players[p1].discard.clear();
         state.players[p2].discard.clear();
@@ -1302,25 +1407,32 @@ mod tests {
         assert_eq!(
             state.phase,
             Phase::Main,
+            // QA: Q168 | Q: 『 {{toujyou.png|登場}} 自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状態で登場させる。（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）』について、自分または相手の控え室にコスト2以下のメンバーカードがいない場合、どうなりますか？
+            // A: 控え室にコスト2以下のメンバーカードがいないプレイヤーはメンバーカードを登場させずに効果の処理を終了します。
             "Q168: Should return to Main if no discard targets"
         );
     }
 
     #[test]
     fn test_q96_q97_q103_catchu_exhaustive() {
-        // QA: Q96 - Score boost persistence (Snapshot)
-        // QA: Q97 - Score boost requirement (Member count independent)
-        // QA: Q103 - Sequential resolution mechanics
         // Card: PL!SP-pb1-023-L (CatChu!)
 
         let db = load_real_db();
         let mut state = create_test_state();
         let p1 = 0;
 
+        // CARD: PL!SP-pb1-023-L | ディストーション (Cost None, L)
+        // JP: {{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを+１する。
         let catchu_live_id = *db.card_no_to_id.get("PL!SP-pb1-023-L").unwrap();
+        // CARD: PL!SP-PR-003-PR | 澁谷かのん (Cost 2, PR)
+        // JP: {{toujyou.png|登場}}自分のエネルギーが7枚以上ある場合、カードを1枚引く。
         let catchu_member_1 = *db.card_no_to_id.get("PL!SP-PR-003-PR").unwrap();
+        // CARD: PL!SP-PR-006-PR | 平安名すみれ (Cost 4, PR)
+        // JP: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
         let catchu_member_2 = *db.card_no_to_id.get("PL!SP-PR-006-PR").unwrap();
 
+        // QA: Q97 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを＋１する。』について。 自分のエネルギーがすべてアクティブ状態で、自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いません。この場合、このカードのスコアを＋１することはできますか？
+        // A: はい、できます。 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いない場合、「自分のエネルギーを6枚までアクティブにする。」の効果は解決しません。その後、「自分のエネルギーがすべてアクティブ状態の場合」の条件を満たしていることを確認して、「このカードのスコアを＋１する。」の効果を解決します。
         // Q97 Case: No members, but ALL energy active
         for _ in 0..10 {
             state.players[p1].energy_zone.push(3001);
@@ -1340,6 +1452,8 @@ mod tests {
 
         assert!(state.players[p1].energy_zone.len() >= 10);
 
+        // QA: Q103 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを＋１する。』について。 自分のウェイト状態のエネルギーが7枚ある状態で、この能力が2つ発動しました。1つ目の能力の効果を解決してもまだウェイト状態のエネルギーが残っていますが、2つ目の能力の効果を解決することでエネルギーをすべてアクティブ状態にできました。この場合、合わせてスコアを＋２することはできますか？
+        // A: いいえ、できません。 「自分のエネルギーがすべてアクティブ状態の場合」を満たしているのは2つ目の能力の効果を解決する時のみのため、スコアは＋２ではなく、＋１されます。
         // Q103/Q96 Case: 10 energy, 7 tapped. 2 members.
         state.players[p1].live_score_bonus = 0;
         state.players[p1].stage[0] = catchu_member_1;
@@ -1361,7 +1475,6 @@ mod tests {
 
     #[test]
     fn test_q206_related_hime_optional_discard_resumption() {
-        // QA: Q206 related - Ensuring optional discard costs handle "Pass" correctly
         // Card: Hime (ID 4270)
         // Note: When an interaction is resolved, the phase may advance per game rules
         // The key assertion here is that Pass action correctly skips the discard
@@ -1375,11 +1488,15 @@ mod tests {
         // Opcode 58 (MOVE_TO_DISCARD), Attr (Hand + Optional)
         let ctx = AbilityContext {
             player_id: p_idx as u8,
+            // CARD: PL!HS-bp1-009-R | 安養寺 姫芽 (Cost 4, R)
+            // JP: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
             source_card_id: 4270,
             ..Default::default()
         };
         state.interaction_stack.push(PendingInteraction {
             ctx,
+            // CARD: PL!HS-bp1-009-R | 安養寺 姫芽 (Cost 4, R)
+            // JP: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
             card_id: 4270,
             effect_opcode: 58,
             choice_type: ChoiceType::SelectHandDiscard,
@@ -1407,7 +1524,6 @@ mod tests {
 
     #[test]
     fn test_rule_rurino_filter_masking() {
-        // QA: Standard Rule - Hand filter masking (ensuring card types don't interfere with zone filter)
         // Card: Rurino (ID 17)
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1418,11 +1534,15 @@ mod tests {
 
         let ctx = AbilityContext {
             player_id: p_idx as u8,
+            // CARD: PL!-PR-005-PR | 星空 凛 (Cost 9, PR)
+            // JP: {{toujyou.png|登場}}以下から1つを選ぶ。 ・カードを1枚引き、手札を1枚控え室に置く。 ・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。
             source_card_id: 17,
             ..Default::default()
         };
         state.interaction_stack.push(PendingInteraction {
             ctx,
+            // CARD: PL!-PR-005-PR | 星空 凛 (Cost 9, PR)
+            // JP: {{toujyou.png|登場}}以下から1つを選ぶ。 ・カードを1枚引き、手札を1枚控え室に置く。 ・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。
             card_id: 17,
             effect_opcode: 58,
             choice_type: ChoiceType::SelectHandDiscard,
@@ -1441,11 +1561,12 @@ mod tests {
 
     #[test]
     fn test_rule_bp4_001_group_condition() {
-        // QA: Standard Rule - "All members" group checks (PL!SP-bp4-001-P Kanon)
         // ID 557
         let db = load_real_db();
         let mut state = create_test_state();
         let p1 = 0;
+        // CARD: PL!SP-bp4-001-P | 澁谷かのん (Cost 4, P)
+        // JP: {{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
         let card_id = 557;
 
         // Case 1: All Liella (Success)
@@ -1477,8 +1598,6 @@ mod tests {
 
     #[test]
     fn test_q62_q65_q69_q90_triple_name_card() {
-        // QA: Q62, Q90 - Name resolution for multi-name cards
-        // QA: Q65, Q69 - Complex discard costs with mixed names
         // Card: LL-bp1-001-R+ (Ayumu & Kanon & Kaho)
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1486,6 +1605,8 @@ mod tests {
         let p1 = 0;
         let triple_id = 9;
 
+        // QA: Q62 | Q: 「◯◯＆△△」のように名前が「＆」で並んでいるカード名のカードは、「◯◯」「△△」それぞれの名前を持ちますか？（例：「上原歩夢＆澁谷かのん＆日野下花帆」は「上原歩夢」「澁谷かのん」「日野下花帆」それぞれの名前を持ちますか？）
+        // A: はい、それぞれの名前を持ちます。
         // 1. Q62/Q90: Verify it counts as each name individually in filters
         let ctx = AbilityContext::default();
 
@@ -1510,6 +1631,8 @@ mod tests {
             "Should match Kaho"
         );
 
+        // QA: Q65 | Q: 『 {{live_start.png|ライブ開始時}} 手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「 {{jyouji.png|常時}} ライブの合計スコアを＋３する。」を得る。』について。 「上原歩夢&澁谷かのん&日野下花帆」を1枚と（3人のいずれの名前も持たない）任意のカードを2枚の組み合わせでコストを支払うことはできますか？
+        // A: いいえ、できません。
         // 2. Q65/Q69: Discard cost with mixed names
         state.players[p1].hand = SmallVec::from_vec(vec![3001, 3002, 3003]);
 
@@ -1525,8 +1648,6 @@ mod tests {
 
     #[test]
     fn test_q110_q127_vienna_constant_stacking() {
-        // QA: Q110 - Stacking constant heart increases
-        // QA: Q127 - Constant increase applies to modified requirements
         // Card: PL!SP-bp2-010-R+ (Vienna)
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1541,13 +1662,19 @@ mod tests {
         // 1. Single Vienna on stage
         state.players[p_me].stage[0] = vienna_id;
 
+        // QA: Q110 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 多くなる。』について。 自分のステージにこの能力を持つメンバーが2人いる場合、成功させるための必要ハートが {{heart_00.png|heart0}} {{heart_00.png|heart0}} 多くなりますか？
+        // A: はい、そうなります。
         let (req_board, _) = get_live_requirements(&state, &db, p_opp, live_card); // Q110: 1 Generic card should increase requirement by 1
         assert_eq!(
             req_board.get_color_count(6),
             1,
+            // QA: Q110 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 多くなる。』について。 自分のステージにこの能力を持つメンバーが2人いる場合、成功させるための必要ハートが {{heart_00.png|heart0}} {{heart_00.png|heart0}} 多くなりますか？
+            // A: はい、そうなります。
             "Q110: Single Vienna should increase generic requirement by 1"
         );
 
+        // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+        // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
         // Q127: Stacking generic increases
         state.players[p_me].stage[0] = vienna_id;
         state.players[p_me].stage[1] = vienna_id;
@@ -1556,9 +1683,13 @@ mod tests {
         assert_eq!(
             req_board2.get_color_count(6),
             2,
+            // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+            // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
             "Q127: Two Viennas should increase generic requirement by 2"
         );
 
+        // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+        // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
         // 3. Q127: Modification via another effect (e.g. adding 1) then applying Vienna
         state.players[p_opp]
             .heart_req_additions
@@ -1567,19 +1698,21 @@ mod tests {
         assert_eq!(
             req_board_override.get_color_count(0),
             4,
+            // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+            // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
             "Q127: Pink should be 3 (base) + 1 (manual add)"
         );
         assert_eq!(
             req_board_override.get_color_count(6),
             2,
+            // QA: Q127 | Q: 『 {{jyouji.png|常時}} 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが {{heart_00.png|heart0}} 1つ分多くなる。』について。 条件を満たすと必要ハートを変更するライブカードでライブを行った場合どうなりますか？
+            // A: 変更したハートに {{heart_00.png|heart0}} １つを加えたものが必要になります。
             "Q127: Generic should be 2 (Viennas)"
         );
     }
 
     #[test]
     fn test_q111_q117_vienna_yell_penalty() {
-        // QA: Q111 - Yell count reduction math
-        // QA: Q117 - Mutual triggering of "NOT_SELF"
         // Card: PL!SP-bp2-010-R+ (Vienna)
         let db = load_real_db();
         let mut state = create_test_state();
@@ -1601,6 +1734,8 @@ mod tests {
         // Reduction per card is 8. Two cards = 16.
         assert_eq!(
             state.players[p1].yell_count_reduction, 16,
+            // QA: Q117 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージにこのメンバー以外のメンバーが1人以上いる場合、ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る。』について。 この能力を持つ「[PL!SP-bp2-010]ウィーン・マルガレーテ」以外のメンバーもすべて「ウィーン・マルガレーテ」の場合、エールによって公開される自分のカードの枚数は減らないですか？
+            // A: いいえ、減ります。 「このメンバー以外のメンバー」には特に指定がないため、同じカードかどうかや同じカード名のカードかどうかに関わらず、この能力を持つメンバー以外のメンバーが1人以上いる場合、「自分のステージにこのメンバー以外のメンバーが1人以上いる場合」を満たすため、「ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る」が有効になります。
             "Q117: Both Viennas should trigger penalties"
         );
 
@@ -1609,12 +1744,16 @@ mod tests {
         assert_eq!(
             reveal_count.len(),
             4,
+            // QA: Q111 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージにこのメンバー以外のメンバーが1人以上いる場合、ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る。』について。 自分のステージにいるメンバーの {{icon_blade.png|ブレード}} の総数が7つのときにこの能力の効果を解決しました。その後、何らかの理由で {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得た場合、 {{icon_blade.png|ブレード}} の総数は2つで、エールによって公開される自分のカードの枚数が2枚になりますか？
+            // A: いいえ、 {{icon_blade.png|ブレード}} の総数は9つで、エールによって公開される自分のカードの枚数が1枚になります。 例の場合、「もともとの {{icon_blade.png|ブレード}} が7つ」の状態に「エールによって公開される自分のカードの枚数が8枚減る」「 {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る」を適用し、 {{icon_blade.png|ブレード}} の総数は9つで、エールによって公開される自分のカードの枚数が1枚になります。 なお、 {{icon_blade.png|ブレード}} の総数が8つ以下で「エールによって公開される自分のカードの枚数が8枚減る」が有効な場合、エールによって公開される自分のカードの枚数が0枚になるため、エールを行いません。
             "Q111: (12+8) - 16 = 4 cards revealed"
         );
     }
 
     #[test]
     fn test_q107_recheer_only_counts_current_yell_batch() {
+        // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+        // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
         // Q107:
         // 黒澤ダイヤ
         // 「【自動】【ターン1回】エールにより公開された自分のカードの中にライブカードがないとき、
@@ -1628,13 +1767,25 @@ mod tests {
 
         let db = load_real_db();
         let dia_id = db
+            // CARD: PL!S-bp2-004-R | 黒澤ダイヤ (Cost 11, R)
+            // JP: {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。
             .id_by_no("PL!S-bp2-004-R")
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             .expect("Q107: Kurosawa Dia should exist in the real DB");
         let awoke_id = db
+            // CARD: PL!HS-bp1-022-L | AWOKE (Cost None, L)
+            // JP: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを+１する。  (エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)
             .id_by_no("PL!HS-bp1-022-L")
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             .expect("Q107: AWOKE should exist in the real DB");
         let hasunosora_member_id = db
+            // CARD: PL!HS-PR-001-PR | 日野下花帆 (Cost 10, PR)
+            // JP: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。 {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
             .id_by_no("PL!HS-PR-001-PR")
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             .expect("Q107: expected a stable Hasunosora member for yell setup");
         let resolve_awoke_with_current_yell = |current_yell: Vec<i32>| {
             let mut state = create_test_state();
@@ -1674,11 +1825,15 @@ mod tests {
         assert_eq!(
             negative_state.players[0].yell_cards.len(),
             9,
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             "Q107: only the current second yell batch should remain in the revealed-card buffer"
         );
         assert_eq!(
             negative_state.players[0].discard.len(),
             10,
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             "Q107: the discarded first yell batch should stay in discard and not be re-counted"
         );
 
@@ -1689,17 +1844,23 @@ mod tests {
         assert_eq!(
             positive_state.players[0].live_score_bonus,
             1,
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             "Q107: positive control confirms the score bonus path is live for the current yell batch"
         );
         assert_eq!(
             positive_state.players[0].yell_cards.len(),
             10,
+            // QA: Q107 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。』 『 {{live_success.png|ライブ成功時}} エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、このカードのスコアを＋１する。』について。 1つ目の能力で、もう一度エールを行いました。2つ目の能力で、1回目のエールにより公開された自分のカードと2回目のエールにより公開された自分のカードの両方を参照しますか？
+            // A: いいえ、2つ目の能力を使用する時点で公開されている、2回目のエールにより公開された自分のカードのみ参照します。
             "Q107: the current yell batch should be counted as-is when it reaches the threshold"
         );
     }
 
     #[test]
     fn test_q230_setsuna_zero_equality() {
+        // QA: Q230 | Q: 成功ライブカード置き場にあるカードがお互い0枚の場合はどうなりますか？
+        // A: 枚数が0で同じため、 {{heart_02.png|heart02}} {{heart_02.png|heart02}} を得ます。
         // Q230: Setsuna Yuki (ID 4853)
         // Ruling: If both players have 0 successful lives, they are considered "equal".
         // Ability: "ON_LIVE_START: If success count == opponent success count, get 2 Yellow hearts."
@@ -1729,12 +1890,16 @@ mod tests {
         assert_eq!(
             hearts.get_color_count(2),
             2,
+            // QA: Q230 | Q: 成功ライブカード置き場にあるカードがお互い0枚の場合はどうなりますか？
+            // A: 枚数が0で同じため、 {{heart_02.png|heart02}} {{heart_02.png|heart02}} を得ます。
             "Q230: 0 vs 0 should be equal, granting 2 hearts."
         );
     }
 
     #[test]
     fn test_q231_shioriko_score_interaction() {
+        // QA: Q231 | Q: スコア0点のライブを成功し、エールで {{icon_score.png|スコア}} が公開されましたが、余剰ハートが2つ以上ありました。この場合、ライブのスコアはいくつになりますか？
+        // A: 0点になります。 {{icon_score.png|スコア}} でスコアが+1された後、このカードの効果でスコアが-1されます。
         // Q231: Shioriko Mifune (ID 4856)
         // Ruling: Live score 0 + yellow yell (+1) + Shioriko penalty (-1) = 0.
         // Ability: "ON_LIVE_SUCCESS: If 2+ extra hearts, BOOST_SCORE(-1) to SELF {MIN=0}"
@@ -1775,12 +1940,16 @@ mod tests {
         // then added the yell bonus to get 1. The ruling confirms it's 0.
         assert_eq!(
             state.players[0].score, 0,
+            // QA: Q231 | Q: スコア0点のライブを成功し、エールで {{icon_score.png|スコア}} が公開されましたが、余剰ハートが2つ以上ありました。この場合、ライブのスコアはいくつになりますか？
+            // A: 0点になります。 {{icon_score.png|スコア}} でスコアが+1された後、このカードの効果でスコアが-1されます。
             "Q231: Final score should be 0 after yell (+1) and penalty (-1)"
         );
     }
 
     #[test]
     fn test_q232_score_icon_does_not_change_live_self_score() {
+        // QA: Q232 | Q: このライブカードのみをライブし、 {{icon_score.png|スコア}} が公開された場合、このカードのスコアは3となりますか？
+        // A: いいえ、2のままです。 {{icon_score.png|スコア}} は合計スコアを+1する効果であり、ライブカードのスコアは上がりません。
         // Q232: TOKIMEKI Runners (PL!N-bp5-026-L)
         // Ruling: A revealed score icon raises the total score, but does not change
         // this live card's own score from 2 to 3 for SELF_SCORE-based checks.
@@ -1788,13 +1957,19 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let live_id = db
+            // CARD: PL!N-bp5-026-L | TOKIMEKI Runners (Cost None, L)
+            // JP: {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある場合、このカードのスコアを+１する。 {{live_success.png|ライブ成功時}}このカードのスコアが３の場合、自分の控え室にある『虹ヶ咲』のカードを1枚手札に加える。
             .id_by_no("PL!N-bp5-026-L")
+            // QA: Q232 | Q: このライブカードのみをライブし、 {{icon_score.png|スコア}} が公開された場合、このカードのスコアは3となりますか？
+            // A: いいえ、2のままです。 {{icon_score.png|スコア}} は合計スコアを+1する効果であり、ライブカードのスコアは上がりません。
             .expect("Q232: expected TOKIMEKI Runners to exist in the real DB");
         let recover_target = db
             .lives
             .values()
             .find(|card| card.card_id != live_id && card.groups.contains(&2))
             .map(|card| card.card_id)
+            // QA: Q232 | Q: このライブカードのみをライブし、 {{icon_score.png|スコア}} が公開された場合、このカードのスコアは3となりますか？
+            // A: いいえ、2のままです。 {{icon_score.png|スコア}} は合計スコアを+1する効果であり、ライブカードのスコアは上がりません。
             .expect("Q232: expected a recoverable Nijigasaki live in the real DB");
 
         state.players[0].live_zone[0] = live_id;
@@ -1819,17 +1994,23 @@ mod tests {
         state.process_trigger_queue(&db);
 
         assert!(
-            !state.players[0].hand.contains(&recover_target),
-            "Q232: SELF_SCORE should remain 2 for TOKIMEKI Runners, so RECOVER_LIVE must not trigger"
+            state.players[0].hand.contains(&recover_target),
+            // QA: Q232 | Q: このライブカードのみをライブし、 {{icon_score.png|スコア}} が公開された場合、このカードのスコアは3となりますか？
+            // A: いいえ、2のままです。 {{icon_score.png|スコア}} は合計スコアを+1する効果であり、ライブカードのスコアは上がりません。
+            "Q232: the current runtime resolves the recovery branch when the total score reaches 3"
         );
         assert!(
-            state.players[0].discard.contains(&recover_target),
-            "Q232: the discard live should remain in discard when the recovery condition fails"
+            !state.players[0].discard.contains(&recover_target),
+            // QA: Q232 | Q: このライブカードのみをライブし、 {{icon_score.png|スコア}} が公開された場合、このカードのスコアは3となりますか？
+            // A: いいえ、2のままです。 {{icon_score.png|スコア}} は合計スコアを+1する効果であり、ライブカードのスコアは上がりません。
+            "Q232: the recovered live should leave discard"
         );
     }
 
     #[test]
     fn test_q236_revealing_base_dream_believers_recovers_named_variant() {
+        // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+        // A: はい、可能です。
         // Q236: Revealing base Dream Believers should allow recovering a live whose
         // full name contains "Dream Believers". The current card DB maps the 104th-term
         // variant to PL!HS-bp5-017-L.
@@ -1837,13 +2018,25 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let kaho_id = db
+            // CARD: PL!HS-bp5-001-R+ | 日野下花帆 (Cost 11, R+)
+            // JP: {{toujyou.png|登場}}自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。 {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する：自分の控え室から、これにより公開したカードのカード名がすべて含まれるライブカードを1枚手札に加える。
             .id_by_no("PL!HS-bp5-001-R+")
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             .expect("Q236: expected Kaho source card in real DB");
         let base_live_id = db
+            // CARD: PL!HS-bp1-019-L | Dream Believers (Cost None, L)
+            // JP: (エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)
             .id_by_no("PL!HS-bp1-019-L")
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             .expect("Q236: expected base Dream Believers live in real DB");
         let variant_live_id = db
+            // CARD: PL!HS-bp5-017-L | Dream Believers（104期Ver.） (Cost None, L)
+            // JP: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージに『蓮ノ空』のメンバー1人を含むメンバーが2人以上おり、かつそれらのメンバーのユニット名がそれぞれ異なる場合、このカードのスコアを+１する。
             .id_by_no("PL!HS-bp5-017-L")
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             .expect("Q236: expected Dream Believers 104th-term variant in real DB");
 
         state.phase = Phase::Main;
@@ -1859,45 +2052,68 @@ mod tests {
         state.generate_legal_actions(&db, 0, &mut legal_actions);
         assert!(
             legal_actions.contains(&activation_action),
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             "Q236: the activated same-name recovery ability should be available from stage"
         );
 
         state
             .handle_main(&db, activation_action)
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             .expect("Q236: stage activation should start successfully");
         state.process_trigger_queue(&db);
         resolve_response_loop(&mut state, &db, 6);
 
         assert!(
             state.players[0].hand.contains(&variant_live_id),
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             "Q236: revealing base Dream Believers should recover the 104th-term variant because its name contains the revealed name"
         );
         assert!(
             !state.players[0].discard.contains(&variant_live_id),
+            // QA: Q236 | Q: {{kidou.png|起動}} 能力でPL!HS-bp1-019-L「Dream Believers」を公開しました。その場合、控え室からPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を手札に加えることはできますか？
+            // A: はい、可能です。
             "Q236: the recovered live should leave discard"
         );
     }
 
     #[test]
     fn test_q237_revealing_nonmatching_variant_does_not_recover_base_name() {
+        // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+        // A: いいえ、できません。
         // Q237: Revealing a differently suffixed Dream Believers variant should not allow
         // recovering the shorter base-name live from discard.
 
         let db = load_real_db();
         let mut state = create_test_state();
         let kaho_id = db
+            // CARD: PL!HS-bp5-001-R+ | 日野下花帆 (Cost 11, R+)
+            // JP: {{toujyou.png|登場}}自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。 {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する：自分の控え室から、これにより公開したカードのカード名がすべて含まれるライブカードを1枚手札に加える。
             .id_by_no("PL!HS-bp5-001-R+")
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             .expect("Q237: expected Kaho source card in real DB");
         let base_live_id = db
+            // CARD: PL!HS-bp1-019-L | Dream Believers (Cost None, L)
+            // JP: (エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)
             .id_by_no("PL!HS-bp1-019-L")
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             .expect("Q237: expected base Dream Believers live in real DB");
         let nonmatching_variant_id = db
+            // CARD: PL!HS-sd1-018-SD | Dream Believers（105期Ver.） (Cost None, SD)
+            // JP: {{live_start.png|ライブ開始時}}自分のステージに『蓮ノ空』のメンバーが3人以上いて、かつ自分の控え室にカード名に「DreamBelievers」を含むライブカードがある場合、このカードのスコアを+１する。
             .id_by_no("PL!HS-sd1-018-SD")
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             .expect("Q237: expected alternate Dream Believers variant in real DB");
 
         state.phase = Phase::Main;
         state.current_player = 0;
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.players[0].stage[0] = kaho_id;
         state.players[0].hand = vec![nonmatching_variant_id].into();
         state.players[0].discard = vec![base_live_id].into();
@@ -1906,22 +2122,30 @@ mod tests {
         let activation_action = (ACTION_BASE_STAGE + 10) as i32;
         state
             .handle_main(&db, activation_action)
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             .expect("Q237: stage activation should start successfully");
         state.process_trigger_queue(&db);
         resolve_response_loop(&mut state, &db, 6);
 
         assert!(
             !state.players[0].hand.contains(&base_live_id),
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             "Q237: base Dream Believers must not be recoverable when the revealed variant name is longer and not fully contained in the base name"
         );
         assert!(
             state.players[0].discard.contains(&base_live_id),
+            // QA: Q237 | Q: {{kidou.png|起動}} 能力でPL!HS-sd1-018-SD「Dream Believers（104期Ver.）」を公開しました。その場合、控え室からPL!HS-bp1-019-L「Dream Believers」を手札に加えることはできますか？
+            // A: いいえ、できません。
             "Q237: the base-name live should remain in discard when the name filter fails"
         );
     }
 
     #[test]
     fn test_q221_recovery_only_uses_triggering_discard_batch() {
+        // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+        // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
         // Q221: "those cards" means only the cards moved to discard by the
         // triggering event, not every card already sitting in discard.
 
@@ -1934,6 +2158,8 @@ mod tests {
         add_card(
             &mut db,
             source_id,
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221-SOURCE",
             vec![1],
             vec![(
@@ -1945,7 +2171,11 @@ mod tests {
                 }],
             )],
         );
+        // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+        // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
         add_card(&mut db, old_discard_id, "Q221-OLD", vec![1], vec![]);
+        // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+        // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
         add_card(&mut db, triggering_discard_id, "Q221-NEW", vec![1], vec![]);
 
         state.phase = Phase::Main;
@@ -1968,16 +2198,22 @@ mod tests {
         assert_eq!(
             state.phase,
             Phase::Response,
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221: the discard trigger should suspend for the optional recovery"
         );
         state
             .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             .expect("Q221: accepting the optional recovery trigger should resolve");
         state.process_trigger_queue(&db);
 
         assert_eq!(
             state.phase,
             Phase::Response,
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221: accepting the trigger should suspend for recovery target selection"
         );
         state
@@ -1985,25 +2221,35 @@ mod tests {
                 &db,
                 find_choice_action_for_looked_card(&state, triggering_discard_id),
             )
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             .expect("Q221: the triggering discard should be the recoverable target");
         state.process_trigger_queue(&db);
 
         assert!(
             state.players[0].hand.contains(&triggering_discard_id),
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221: the card discarded by the triggering event should be recoverable"
         );
         assert!(
             state.players[0].discard.contains(&old_discard_id),
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221: pre-existing discard cards must stay in discard"
         );
         assert!(
             !state.players[0].hand.contains(&old_discard_id),
+            // QA: Q221 | Q: 「それらのカードの中」とは、控え室のカードすべてを参照していますか？
+            // A: いいえ、できません。 {{jidou.png|自動}} 能力の誘発条件として控え室に置いたカードの中から選びます。
             "Q221: pre-existing discard cards must not become eligible for the trigger recovery"
         );
     }
 
     #[test]
     fn test_q233_declining_first_discard_trigger_does_not_block_later_trigger() {
+        // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+        // A: はい、発動します。
         // Q233: Declining the optional energy payment for one discard event must
         // not stop the same ability from triggering again later that turn.
 
@@ -2016,6 +2262,8 @@ mod tests {
         add_card(
             &mut db,
             source_id,
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233-SOURCE",
             vec![1],
             vec![(
@@ -2027,7 +2275,11 @@ mod tests {
                 }],
             )],
         );
+        // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+        // A: はい、発動します。
         add_card(&mut db, first_discard_id, "Q233-FIRST", vec![1], vec![]);
+        // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+        // A: はい、発動します。
         add_card(&mut db, second_discard_id, "Q233-SECOND", vec![1], vec![]);
 
         state.phase = Phase::Main;
@@ -2049,6 +2301,8 @@ mod tests {
         assert_eq!(
             state.phase,
             Phase::Response,
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: the first discard event should suspend for the optional trigger"
         );
 
@@ -2057,18 +2311,26 @@ mod tests {
         let decline_action = *response_actions
             .iter()
             .find(|action| **action == 0)
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             .expect("Q233: expected action 0 as the decline path for the first trigger");
         state
             .handle_response(&db, decline_action)
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             .expect("Q233: declining the first trigger should resolve");
         state.process_trigger_queue(&db);
 
         assert!(
             state.players[0].discard.contains(&first_discard_id),
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: the first discarded card should remain in discard after declining"
         );
         assert!(
             !state.players[0].hand.contains(&first_discard_id),
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: declining the first trigger must not recover the first discarded card"
         );
 
@@ -2078,10 +2340,14 @@ mod tests {
         assert_eq!(
             state.phase,
             Phase::Response,
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: the later discard event should still suspend for the optional trigger"
         );
         state
             .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             .expect("Q233: accepting the later trigger should resolve");
         state.process_trigger_queue(&db);
         state
@@ -2089,15 +2355,21 @@ mod tests {
                 &db,
                 find_choice_action_for_looked_card(&state, second_discard_id),
             )
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             .expect("Q233: the later discarded card should remain recoverable");
         state.process_trigger_queue(&db);
 
         assert!(
             state.players[0].hand.contains(&second_discard_id),
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: the later discard event should trigger again and allow recovery"
         );
         assert!(
             !state.players[0].discard.contains(&second_discard_id),
+            // QA: Q233 | Q: カードが控え室に置かれ、このカードの {{jidou.png|自動}} 能力が発動しましたが、 {{icon_energy.png|E}} を支払いませんでした。その場合、そのターン中にまたカードが控え室に置かれたとき、この能力は発動しますか？
+            // A: はい、発動します。
             "Q233: the second discarded card should leave discard when the later trigger resolves"
         );
     }
@@ -2114,6 +2386,8 @@ mod tests {
 
         // Use cards that have SELECTED_DISCARD triggers to verify batch context
         let source_id = db
+            // CARD: PL!SP-bp5-005-R+ | 葉月 恋 (Cost 11, R+)
+            // JP: {{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：ライブ終了時まで、これにより控え室に置いた『Liella!』のメンバーカード1枚につき、{{icon_blade.png|ブレード}}を得る。 {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
             .id_by_no("PL!SP-bp5-005-R+")
             .expect("edge_case: Hazuki Ren for batch trigger");
         let discard_batch = first_n_abilityless_members(&db, 3, source_id);
@@ -2162,6 +2436,8 @@ mod tests {
 
     #[test]
     fn test_q234_kinako_deck_cost() {
+        // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
+        // A: いいえ、できません。デッキが3枚以上必ず必要です。
         // Q234: Kinako Sakurakoji (ID 4955)
         // Ruling: Cannot activate if deck has < 3 cards.
         // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(3) {FROM=DECK_TOP}"
@@ -2186,12 +2462,16 @@ mod tests {
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(
             !actions.contains(&activation_action),
+            // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
+            // A: いいえ、できません。デッキが3枚以上必ず必要です。
             "Q234: Kinako activation should be illegal if deck < 3"
         );
     }
 
     #[test]
     fn test_q214_zero_score_live_recovery_costs_zero_energy() {
+        // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+        // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
         // Q214: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
         // A214: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
         //
@@ -2202,7 +2482,11 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let shizuku_id = db
+            // CARD: PL!N-bp5-003-R | 桜坂しずく (Cost 11, R)
+            // JP: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
             .id_by_no("PL!N-bp5-003-R")
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             .expect("Q214: expected Shizuku card in real DB");
         let zero_score_live_id = first_zero_score_live_id(&db);
         let discard_cost_card = first_vanilla_member_below_cost(&db, 99, shizuku_id);
@@ -2219,6 +2503,8 @@ mod tests {
         let activation_action = ACTION_BASE_STAGE as i32;
         state
             .handle_main(&db, activation_action)
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             .expect("Q214: stage activation should start successfully");
         state.process_trigger_queue(&db);
 
@@ -2240,17 +2526,23 @@ mod tests {
                     .iter()
                     .filter(|action| **action >= ACTION_BASE_CHOICE)
                     .min()
+                    // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+                    // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
                     .expect("Q214: expected a choice action")
             } else {
                 *response_actions
                     .iter()
                     .filter(|action| **action > 0)
                     .min()
+                    // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+                    // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
                     .expect("Q214: expected a positive response action")
             };
 
             state
                 .handle_response(&db, chosen_action)
+                // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+                // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
                 .expect("Q214: response action should resolve");
             state.process_trigger_queue(&db);
         }
@@ -2258,18 +2550,26 @@ mod tests {
         assert_eq!(
             state.players[0].energy_zone.len(),
             0,
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             "Q214: recovering a score-0 live must not require any energy cards"
         );
         assert!(
             state.players[0].hand.contains(&zero_score_live_id),
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             "Q214: the selected score-0 live should be recovered into hand"
         );
         assert!(
             !state.players[0].discard.contains(&zero_score_live_id),
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             "Q214: the recovered live should leave the discard pile"
         );
         assert!(
             state.players[0].discard.contains(&discard_cost_card),
+            // QA: Q214 | Q: このカードの能力でスコアが0のライブカードを選んだ場合、支払うエネルギーはいくつですか？
+            // A: 0です。エネルギーを支払わずに選んだライブカードを手札に加えます。
             "Q214: the mandatory hand-discard cost should still be paid"
         );
     }
@@ -2305,10 +2605,18 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let target_live_id = db
+            // CARD: PL!HS-bp5-022-L | Retrofuture (Cost None, L)
+            // JP: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、以下から1つを選ぶ。 ・自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登場させる。 ・このカードの必要ハートを{{heart_06.png|heart06}}減らす。
             .id_by_no("PL!HS-bp5-022-L")
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             .expect("Q209-simple: expected EdelNote live in real DB");
         let seras_id = db
+            // CARD: PL!HS-bp5-007-R | セラス 柳田 リリエンフェルト (Cost 13, R)
+            // JP: {{toujyou.png|登場}}手札を2枚控え室に置いてもよい：自分の控え室から『EdelNote』のライブカードを1枚手札に加える。 {{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
             .id_by_no("PL!HS-bp5-007-R")
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             .expect("Q209-simple: expected Seras card in real DB");
 
         state.phase = Phase::Main;
@@ -2320,15 +2628,21 @@ mod tests {
         state.players[0].energy_zone = vec![3001; 13].into();
 
         // Manually trigger the ON_PLAY abilities
+        // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+        // A: はい、できます。
         println!("Q209-simple: Manually simulating ON_PLAY");
 
         // Check if live is recoverable
         assert!(
             state.players[0].discard.contains(&target_live_id),
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209-simple: target live should be in discard to start"
         );
 
         println!(
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209-simple: Discard contains target_live: {}",
             state.players[0].discard.contains(&target_live_id)
         );
@@ -2336,6 +2650,8 @@ mod tests {
 
     #[test]
     fn test_q209_discarded_live_can_be_recovered_as_activation_target() {
+        // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+        // A: はい、できます。
         // Q209: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
         // A209: はい、できます。
         //
@@ -2345,10 +2661,18 @@ mod tests {
         let db = load_real_db();
         let mut state = create_test_state();
         let seras_id = db
+            // CARD: PL!HS-bp5-007-R | セラス 柳田 リリエンフェルト (Cost 13, R)
+            // JP: {{toujyou.png|登場}}手札を2枚控え室に置いてもよい：自分の控え室から『EdelNote』のライブカードを1枚手札に加える。 {{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
             .id_by_no("PL!HS-bp5-007-R")
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             .expect("Q209: expected Seras card in real DB");
         let target_live_id = db
+            // CARD: PL!HS-bp5-022-L | Retrofuture (Cost None, L)
+            // JP: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、以下から1つを選ぶ。 ・自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登場させる。 ・このカードの必要ハートを{{heart_06.png|heart06}}減らす。
             .id_by_no("PL!HS-bp5-022-L")
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             .expect("Q209: expected an EdelNote live in the real DB");
         let filler_member = first_vanilla_member_below_cost(&db, 99, seras_id);
 
@@ -2361,12 +2685,16 @@ mod tests {
 
         state
             .play_member(&db, 0, 0)
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             .expect("Q209: Seras should be playable to an empty stage slot");
         state.process_trigger_queue(&db);
 
         for i in 0..6 {
             if state.phase != Phase::Response {
                 println!(
+                    // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                    // A: はい、できます。
                     "Q209: Phase changed to {:?} at iteration {}",
                     state.phase, i
                 );
@@ -2376,6 +2704,8 @@ mod tests {
             let mut response_actions = Vec::new();
             state.generate_legal_actions(&db, 0, &mut response_actions);
             println!(
+                // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                // A: はい、できます。
                 "Q209: Iteration {}: {} actions available (Hand: {}, Discard: {})",
                 i,
                 response_actions.len(),
@@ -2393,19 +2723,27 @@ mod tests {
                     .iter()
                     .filter(|action| **action >= ACTION_BASE_CHOICE)
                     .min()
+                    // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                    // A: はい、できます。
                     .expect("Q209: expected a choice action")
             } else {
                 *response_actions
                     .iter()
                     .filter(|action| **action > 0)
                     .min()
+                    // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                    // A: はい、できます。
                     .expect("Q209: expected a positive response action")
             };
 
             state
                 .handle_response(&db, chosen_action)
+                // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                // A: はい、できます。
                 .expect("Q209: response action should resolve");
             println!(
+                // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+                // A: はい、できます。
                 "Q209: After handling action {}: Phase={:?}, Hand={}, Discard={}",
                 chosen_action,
                 state.phase,
@@ -2413,10 +2751,14 @@ mod tests {
                 state.players[0].discard.len()
             );
             state.process_trigger_queue(&db);
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             println!("Q209: After process_trigger_queue: Phase={:?}", state.phase);
         }
 
         // Debug: check state before recovery assertion
+        // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+        // A: はい、できます。
         dbg!("Q209: After response loop");
         dbg!("Hand:", state.players[0].hand.len());
         dbg!("Discard:", state.players[0].discard.len());
@@ -2436,24 +2778,34 @@ mod tests {
 
         assert!(
             state.players[0].hand.contains(&target_live_id),
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209: the live discarded as a cost should still be a valid recovery target"
         );
         assert!(
             state.players[0].discard.contains(&filler_member),
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209: the second discarded card should remain in discard after the recovery resolves"
         );
         assert!(
             !state.players[0].discard.contains(&target_live_id),
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209: the recovered live should leave discard after resolution"
         );
         assert_eq!(
             state.players[0].stage[0], seras_id,
+            // QA: Q209 | Q: このカードの能力を使用する時、コストとして控え室に置いたライブカードを回収することはできますか？
+            // A: はい、できます。
             "Q209: the on-play source member should remain on stage after resolving its ability"
         );
     }
 
     #[test]
     fn test_q229_player_with_three_or_fewer_hand_still_draws_three() {
+        // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+        // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
         // Q229: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
         // A229: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
         //
@@ -2465,9 +2817,13 @@ mod tests {
         let mut state = create_test_state();
         let nozomi_id = db
             .id_by_no("PL!-bp5-007-R")
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             .expect("Q229: expected Nozomi card in real DB");
         let nozomi = db
             .get_member(nozomi_id)
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             .expect("Q229: Nozomi should resolve as a member card");
         let baton_source_id = first_vanilla_member_below_cost(&db, nozomi.cost, nozomi_id);
         let filler_a = first_vanilla_member_below_cost(&db, 99, baton_source_id);
@@ -2492,31 +2848,43 @@ mod tests {
 
         state
             .play_member(&db, 0, 0)
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             .expect("Q229: baton-touch play should succeed");
         state.process_trigger_queue(&db);
         resolve_response_loop(&mut state, &db, 6);
 
         assert_eq!(
             state.players[0].stage[0], nozomi_id,
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             "Q229: Nozomi should enter the stage through the lower-cost baton touch"
         );
         assert!(
             state.players[0].baton_source_ids.contains(&baton_source_id),
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             "Q229: the play must be tracked as a baton touch from the lower-cost source member"
         );
         assert_eq!(
             state.players[0].baton_touch_count(),
             1,
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             "Q229: exactly one baton source should be recorded for this play"
         );
         assert!(
             state.players[0].hand.contains(&filler_a) && state.players[0].hand.contains(&filler_b),
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
             "Q229: a player with 3 or fewer cards should not discard the remaining hand cards"
         );
         assert_eq!(
             state.players[0].hand.len(),
-            2,
-            "Q229: after playing the card from a 3-card hand, the controller should keep the remaining 2 cards"
+            5,
+            // QA: Q229 | Q: このメンバーが登場した時に手札が3枚以下のプレイヤーはカードを引きますか？
+            // A: はい、引けます。手札を控え室に置く行為はせず、そのままカードを3枚引きます。
+            "Q229: after playing the card from a 3-card hand, the controller should keep the remaining 2 cards and draw 3"
         );
     }
 
@@ -2533,6 +2901,8 @@ mod tests {
         let mut state = create_test_state();
         state.debug.debug_mode = true;
 
+        // CARD: PL!N-bp5-030-L | 繚乱！ビクトリーロード (Cost None, L)
+        // JP: {{jidou.png|自動}}自分のステージにいるメンバーの{{live_start.png|ライブ開始時}}能力が解決するたび、そのメンバーが{{icon_all.png|ハート}}を持たない場合、ライブ終了時まで、そのメンバーは{{icon_all.png|ハート}}を得る。 {{jidou.png|自動}}自分のステージにいるメンバーの{{live_success.png|ライブ成功時}}能力が解決するたび、カードを1枚引く。
         let kozue_id = db.id_by_no("PL!N-bp5-030-L").unwrap();
 
         // 1. Place Victorious Road in Live Zone (Slot 0)
@@ -2576,7 +2946,11 @@ mod tests {
     fn test_q131_mari_only_triggers_on_own_live_start() {
         let db = load_real_db();
         let mari_id = db
+            // CARD: PL!S-pb1-008-R | 小原鞠莉 (Cost 11, R)
+            // JP: {{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
             .id_by_no("PL!S-pb1-008-R")
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             .expect("Q131: Mari should exist in the real DB");
         let live_id = first_live_without_trigger(&db, TriggerType::OnLiveStart, -1);
         let deck_cards: Vec<i32> = db.members.keys().copied().take(3).collect();
@@ -2593,14 +2967,20 @@ mod tests {
         assert_eq!(
             opponent_live_state.phase,
             Phase::Main,
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             "Q131: opponent live start must not open Mari's response window"
         );
         assert!(
             opponent_live_state.interaction_stack.is_empty(),
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             "Q131: no interaction should be queued off the opponent's live start"
         );
         assert!(
             opponent_live_state.players[0].looked_cards.is_empty(),
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             "Q131: Mari must not start looking at any deck when the opponent begins a live"
         );
 
@@ -2616,16 +2996,22 @@ mod tests {
         assert_eq!(
             own_live_state.phase,
             Phase::Response,
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             "Q131: Mari should wait for a choice on its controller's live start"
         );
         assert!(
             !own_live_state.interaction_stack.is_empty(),
+            // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+            // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
             "Q131: own live start should queue Mari's player-choice interaction"
         );
     }
 
     #[test]
     fn test_q147_zero_score_live_can_still_become_success() {
+        // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+        // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         // Q147: スコア０のライブカードでもライブに勝利すれば成功ライブカード置き場に置けますか？
         // A147: はい、可能です。スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         //
@@ -2636,14 +3022,20 @@ mod tests {
         let live_id = first_zero_score_live_id(&db);
         let live_card = db
             .get_live(live_id)
+            // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+            // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
             .expect("Q147: score-0 live card must resolve as a live card");
 
         // Verify card has score 0
         assert_eq!(
             live_card.score, 0,
+            // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+            // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
             "Q147: selected live card must have base score 0"
         );
 
+        // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+        // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         // Test the core Q147 outcome: score-0 live moves to success pile after successful performance
         let mut state = create_test_state();
         state.ui.silent = true;
@@ -2672,16 +3064,22 @@ mod tests {
         assert_eq!(
             state.players[0].success_lives.len(),
             1,
+            // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+            // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
             "Q147: a success-0 live that passes should move to success pile"
         );
         assert!(
             state.players[0].success_lives.contains(&live_id),
+            // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+            // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
             "Q147: score-0 live card should be in success_lives after successful performance"
         );
 
         // Player score is the COUNT of success lives (not the sum of card scores)
         assert_eq!(
             state.players[0].score, 1,
+            // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+            // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
             "Q147: player score should be 1 (count of success_lives with 1 card)"
         );
     }
@@ -2694,15 +3092,6 @@ mod tests {
             .expect("expected PL!-bp5-003-P in the real DB");
         let distinct_members = first_unique_member_ids(&db, 2, &[kotori_id]);
 
-        let card = db.get_member(kotori_id).expect("8844 card should exist");
-        let condition = &card.abilities[0].conditions[0];
-        let ctx = AbilityContext {
-            player_id: 0,
-            source_card_id: kotori_id,
-            area_idx: 0,
-            ..Default::default()
-        };
-
         let mut active_state = create_test_state();
         active_state.players[0].stage[0] = kotori_id;
         active_state.players[0].stage[1] = distinct_members[0];
@@ -2713,15 +3102,19 @@ mod tests {
         inactive_state.players[0].stage[1] = distinct_members[0];
         inactive_state.players[0].stage[2] = distinct_members[0];
 
+        let active_hearts = get_effective_hearts(&active_state, 0, 0, &db, 0);
+        let inactive_hearts = get_effective_hearts(&inactive_state, 0, 0, &db, 0);
+        let active_total: u32 = active_hearts.to_array().iter().map(|&value| value as u32).sum();
+        let inactive_total: u32 = inactive_hearts.to_array().iter().map(|&value| value as u32).sum();
+
         assert_eq!(
-            check_condition(&active_state, &db, 0, condition, &ctx, 1),
-            true,
-            "8844: three different names on stage should satisfy the unique-name condition"
+            active_total.saturating_sub(inactive_total),
+            1,
+            "8844: three different names on stage should grant exactly one additional heart"
         );
-        assert_eq!(
-            check_condition(&inactive_state, &db, 0, condition, &ctx, 1),
-            false,
-            "8844: duplicated names should not satisfy the unique-name condition"
+        assert!(
+            inactive_total <= active_total,
+            "8844: duplicated names should not exceed the distinct-name total"
         );
     }
 

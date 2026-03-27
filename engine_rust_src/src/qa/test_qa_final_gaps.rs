@@ -6,6 +6,8 @@ mod qa_remaining_gaps {
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
+    // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+    // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
     /// Q131: Live start abilities should NOT trigger when opponent initiates live
     /// Real test: Verify conditional ability fire only on self-initiated live
     #[test]
@@ -33,6 +35,8 @@ mod qa_remaining_gaps {
         assert!(!opponent_live_start.is_empty() || true, "B's abilities may trigger");
     }
 
+    // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+    // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
     /// Q147: Score modifications snapshot at ability resolution time, not maintained
     /// Real test: Verify score change doesn't retroactively update stored bonuses
     #[test]
@@ -62,6 +66,8 @@ mod qa_remaining_gaps {
             "Score should remain unchanged after hand reduction");
     }
 
+    // QA: Q148 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージにいるメンバーが持つ {{icon_blade.png|ブレード}} の合計が10以上の場合、このカードを成功させるための必要ハートは {{heart_00.png|heart0}} {{heart_00.png|heart0}} 少なくなる。』について。 この能力で自分のステージにいるウェイト状態のメンバーの {{icon_blade.png|ブレード}} は含みますか？
+    // A: はい、含みます。
     /// Q148: Wait state members' blades count in ability conditions
     /// Real test: "ステージのメンバーが持つブレードの合計が10以上の場合"
     /// includes wait state members
@@ -87,6 +93,8 @@ mod qa_remaining_gaps {
         assert_eq!(total_blades, 11, "Wait state blades should be included");
     }
 
+    // QA: Q149 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを＋１する。』について。 ハートの総数とはどのハートのことですか？
+    // A: メンバーが持つ基本ハートの数を、色を無視して数えた値のことです。 例えば、 {{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_01.png|heart01}} {{heart_06.png|heart06}} を持つメンバーの場合、そのメンバーのハートの数は5つとなります。
     /// Q149: Heart total (basic hearts only, not blade hearts)
     /// Real test: Verify blade hearts from yell don't count in "heart total" conditions
     #[test]
@@ -115,6 +123,8 @@ mod qa_remaining_gaps {
         assert_eq!(total_with_blades, 5);
     }
 
+    // QA: Q150 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを＋１する。』について。 自分のステージに、ハートの数が2,3,5のメンバーがいます。相手のステージには、ハートの数が3,6のメンバーがいます。このとき、ライブ成功時の効果は発動しますか？
+    // A: はい、発動します。 自分のステージのいるメンバーのハートの総数は10、相手のステージにいるメンバーのハートの総数は9となり、自分のほうが多いため発動します。
     /// Q150: Surplus heart has specific definition with color requirements
     /// Real test: "必要ハート" vs actual ハート showing surplus calculation
     #[test]
@@ -145,6 +155,8 @@ mod qa_remaining_gaps {
             "Blade hearts count as hearts for surplus calculation");
     }
 
+    // QA: Q174 | Q: 『 {{live_success.png|ライブ成功時}} このターン、自分が余剰ハートに {{heart_04.png|heart04}} を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。』について、ステージに緑ハートがなくエールによってALLハートを3枚獲得してライブ成功した時、ライブ成功時能力は使えますか？
+    // A: いいえ。使えません。
     /// Q174: Group name vs unit name - "同じユニット名" uses 'unit', not 'group'
     /// Real test: Select cards from same unit for cost matching
     #[test]
@@ -168,6 +180,8 @@ mod qa_remaining_gaps {
         assert!(!cost_cards.contains(&card3));
     }
 
+    // QA: Q175 | Q: 『 {{live_start.png|ライブ開始時}} 手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、 {{heart_04.png|heart04}} {{heart_04.png|heart04}} {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る。』などについて、この能力を使用しているメンバーカードと同じユニットの必要はありますか？
+    // A: いいえ、同じユニットである必要はありません。 手札から控え室に置くカードのユニットが同じである必要があります。ただし、「μ's」や「Aqours」など、グループ名は参照できません。
     /// Q175: Cost reduction modifies selection eligibility
     /// Real test: Card with reduced cost becomes eligible for cost-based selections
     #[test]
@@ -203,6 +217,8 @@ mod qa_remaining_gaps {
         assert!(!too_low);
     }
 
+    // QA: Q176 | Q: 『 {{kidou.png|起動}} {{turn1.png|ターン1回}} {{icon_energy.png|E}} {{icon_energy.png|E}} :自分の手札を相手は見ないで１枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時までこのメンバーは「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。』について、公開するのは自分の手札ですか？相手の手札ですか？
+    // A: 自分の手札を公開します。
     /// Q176: Opponent effect resolution (forced full resolution)
     /// Real test: When opponent card triggers effect on us, must fully resolve it
     #[test]
@@ -231,6 +247,8 @@ mod qa_remaining_gaps {
             "Follow-up discard must execute");
     }
 
+    // QA: Q177 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} 自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト４以下のメンバーがウェイト状態になったとき、カードを１枚引く。』について、条件を満たした場合でも自動能力の効果を解決しないことはできますか？
+    // A: いいえ、必ず解決する必要があります。
     /// Q177: Mandatory auto ability vs optional cost
     /// Real test: Auto ability with conditional MUST fire, but cost is optional
     #[test]
@@ -265,6 +283,8 @@ mod qa_remaining_gaps {
             "No effect without cost payment");
     }
 
+    // QA: Q180 | Q: 『 {{toujyou.png|登場}} このターン、自分と相手のステージにいるメンバーは、効果によってはアクティブにならない。』について、この効果が発動したターンにアクティブフェイズを迎えました。そのアクティブフェイズでメンバーをアクティブにできますか？
+    // A: はい、できます。
     /// Q180: Area movement vs "cannot activate" effects
     /// Real test: Active phase state changes (wait->active) override ability restrictions
     #[test]
@@ -291,6 +311,8 @@ mod qa_remaining_gaps {
             "Active phase should change wait to active despite restriction");
     }
 
+    // QA: Q183 | Q: 『 {{toujyou.png|登場}} メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。』について、 このカードの効果で相手プレイヤーのメンバーをウェイトにできますか？
+    // A: いいえ。できません。 能力のコストとしてメンバーカードをウェイト状態にする際には、必ず自身のステージのメンバーをウェイト状態にしなければなりません。
     /// Q183: Cost effect can only target own board
     /// Real test: "メンバーをウェイトにする" cost from own ability
     #[test]
@@ -320,6 +342,8 @@ mod qa_remaining_gaps {
         assert!(!can_target_opp, "Cannot target opponent member for cost");
     }
 
+    // QA: Q184 | Q: エネルギーカードをメンバーカードの下に置いているとき、メンバーカードの下に置かれたエネルギーカードはエネルギーの数として数えますか？
+    // A: いいえ。数えません。 エネルギーの枚数を参照する際、メンバーカードの下に置かれたエネルギーカードは参照しません。
     /// Q184: Energy under member is separate from energy zone
     /// Real test: Under-member energy doesn't count toward energy total
     #[test]
@@ -349,6 +373,8 @@ mod qa_remaining_gaps {
             "Under-member energy follows member movement");
     }
 
+    // QA: Q185 | Q: {{live_start.png|ライブ開始時}} 能力による質問への回答が「クッキー＆クリームよりもあなた」でした。 この場合、どの回答として扱いますか？
+    // A: 質問者と回答者のお互いが正しく認識できる場合、回答が一字一句同じものである必要はありません。 対戦相手がどの回答として答えたのか確認をしてください。
     /// Q185: Opponent ability card response selection
     /// Real test: "相手はそれらのカードのうち1枚を選ぶ"
     /// Opponent must fully engage with selection, ability fully resolves
@@ -379,6 +405,8 @@ mod qa_remaining_gaps {
         assert!(hand_size > 0, "Card should enter hand after opponent selection");
     }
 
+    // QA: Q186 | Q: 『 {{jyouji.png|常時}} 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。』について、 手札の枚数によって、LL-bp2-001-R+のコストは0になりますか？
+    // A: はい、なります。
     /// Q186: Reduced cost validation in cost-exact effects
     /// Real test: "公開したカードのコストの合計が、10、20、30..."
     /// with ability that reduces costs mid-selection

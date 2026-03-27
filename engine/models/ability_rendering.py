@@ -7,12 +7,11 @@ from .ability_descriptions import (
     TRIGGER_DESCRIPTIONS_JP,
 )
 from .ability_filter import format_filter_attr
-from .ability_ir import SemanticAbility, SemanticCondition, SemanticCost, SemanticEffect
 from .generated_enums import AbilityCostType, ConditionType, TargetType
 
 
 def build_semantic_form(ability: Any) -> Dict[str, Any]:
-    semantic_effects: List[SemanticEffect] = []
+    semantic_effects: List[Dict[str, Any]] = []
     for eff in ability.effects:
         try:
             params_copy = eff.params.copy() if hasattr(eff.params, "copy") else dict(eff.params or {})
@@ -20,16 +19,16 @@ def build_semantic_form(ability: Any) -> Dict[str, Any]:
             params_copy = {}
 
         semantic_effects.append(
-            SemanticEffect(
-                effect_type=eff.effect_type.name if hasattr(eff.effect_type, "name") else str(eff.effect_type),
-                value=eff.value,
-                target=eff.target.name if hasattr(eff.target, "name") else str(eff.target),
-                params=params_copy,
-                is_optional=eff.is_optional,
-            )
+            {
+                "type": eff.effect_type.name if hasattr(eff.effect_type, "name") else str(eff.effect_type),
+                "value": eff.value,
+                "target": eff.target.name if hasattr(eff.target, "name") else str(eff.target),
+                "params": params_copy,
+                "optional": eff.is_optional,
+            }
         )
 
-    semantic_conditions: List[SemanticCondition] = []
+    semantic_conditions: List[Dict[str, Any]] = []
     for cond in ability.conditions:
         try:
             params_upper = {k.upper(): v for k, v in cond.params.items() if isinstance(k, str)}
@@ -45,24 +44,24 @@ def build_semantic_form(ability: Any) -> Dict[str, Any]:
                 filter_summary = ""
 
         semantic_conditions.append(
-            SemanticCondition(
-                condition_type=cond.type.name if hasattr(cond.type, "name") else str(cond.type),
-                value=cond.value if hasattr(cond, "value") else 0,
-                comparison=comp_str,
-                filter_summary=filter_summary,
-                area=str(cond.params.get("area", "")).upper() if cond.params else "",
-                is_negated=cond.is_negated if hasattr(cond, "is_negated") else False,
-            )
+            {
+                "type": cond.type.name if hasattr(cond.type, "name") else str(cond.type),
+                "value": cond.value if hasattr(cond, "value") else 0,
+                "comparison": comp_str,
+                "filter": filter_summary,
+                "area": str(cond.params.get("area", "")).upper() if cond.params else "",
+                "negated": cond.is_negated if hasattr(cond, "is_negated") else False,
+            }
         )
 
-    semantic_costs: List[SemanticCost] = []
+    semantic_costs: List[Dict[str, Any]] = []
     for cost in ability.costs:
         semantic_costs.append(
-            SemanticCost(
-                cost_type=cost.type.name if hasattr(cost.type, "name") else str(cost.type),
-                value=cost.value,
-                is_optional=cost.is_optional,
-            )
+            {
+                "type": cost.type.name if hasattr(cost.type, "name") else str(cost.type),
+                "value": cost.value,
+                "optional": cost.is_optional,
+            }
         )
 
     instructions_summary = ""
@@ -79,17 +78,16 @@ def build_semantic_form(ability: Any) -> Dict[str, Any]:
                 parts.append(f"Cost({instr.type.name})")
         instructions_summary = " -> ".join(parts)
 
-    semantic_form = SemanticAbility(
-        trigger=ability.trigger.name if hasattr(ability.trigger, "name") else str(ability.trigger),
-        effects=semantic_effects,
-        conditions=semantic_conditions,
-        costs=semantic_costs,
-        is_once_per_turn=ability.is_once_per_turn,
-        description=ability.pseudocode or ability.raw_text,
-        instructions_summary=instructions_summary,
-    )
-
-    ability.semantic_form = semantic_form.to_dict()
+    ability.semantic_form = {
+        "semantic_version": 1,
+        "trigger": ability.trigger.name if hasattr(ability.trigger, "name") else str(ability.trigger),
+        "effects": semantic_effects,
+        "conditions": semantic_conditions,
+        "costs": semantic_costs,
+        "once_per_turn": ability.is_once_per_turn,
+        "description": ability.pseudocode or ability.raw_text,
+        "instructions_summary": instructions_summary,
+    }
     return ability.semantic_form
 
 
@@ -105,15 +103,15 @@ def reconstruct_text(ability: Any, lang: str = "en") -> str:
     for cost in ability.costs:
         if is_jp:
             if cost.type == AbilityCostType.ENERGY:
-                parts.append(f"(コスト: エネルギー{cost.value})")
+                parts.append(f"(繧ｳ繧ｹ繝・ 繧ｨ繝阪Ν繧ｮ繝ｼ{cost.value})")
             elif cost.type == AbilityCostType.TAP_SELF:
-                parts.append("(コスト: 自分をレスト)")
+                parts.append("(繧ｳ繧ｹ繝・ 閾ｪ蛻・ｒ繝ｬ繧ｹ繝・")
             elif cost.type == AbilityCostType.DISCARD_HAND:
-                parts.append(f"(コスト: 手札を{cost.value}枚捨てる)")
+                parts.append(f"(繧ｳ繧ｹ繝・ 謇区惆 {cost.value} 譫壽昏縺ｦ繧・")
             elif cost.type == AbilityCostType.SACRIFICE_SELF:
-                parts.append("(コスト: 自分を退場)")
+                parts.append("(繧ｳ繧ｹ繝・ 閾ｪ蛻・ｒ騾蝣ｴ)")
             else:
-                parts.append(f"(コスト: {cost.type.name} {cost.value})")
+                parts.append(f"(繧ｳ繧ｹ繝・ {cost.type.name} {cost.value})")
         else:
             if cost.type == AbilityCostType.ENERGY:
                 parts.append(f"(Cost: Pay {cost.value} Energy)")
@@ -149,15 +147,15 @@ def reconstruct_text(ability: Any, lang: str = "en") -> str:
             desc = template
 
         if eff.params.get("per_energy"):
-            desc += " per Energy" if not is_jp else " / エネルギーごと"
+            desc += " per Energy" if not is_jp else " / 繧ｨ繝阪Ν繧ｮ繝ｼ縺斐→"
         if eff.params.get("per_member"):
-            desc += " per Member" if not is_jp else " / メンバーごと"
+            desc += " per Member" if not is_jp else " / 繝｡繝ｳ繝舌・縺斐→"
         if eff.params.get("per_live"):
-            desc += " per Live" if not is_jp else " / ライブごと"
+            desc += " per Live" if not is_jp else " / 繝ｩ繧､繝悶＃縺ｨ"
         if eff.target == TargetType.MEMBER_SELECT:
-            desc += " (Choose member)" if not is_jp else " (対象を選ぶ)"
+            desc += " (Choose member)" if not is_jp else " (蟇ｾ雎｡繧帝∈縺ｶ)"
         if eff.target in (TargetType.OPPONENT, getattr(TargetType, "OPPONENT_HAND", TargetType.OPPONENT)):
-            if ("opponent" not in desc.lower() and not is_jp) or (is_jp and "相手" not in desc):
+            if "opponent" not in desc.lower():
                 desc += " (Opponent)" if not is_jp else " (相手)"
         parts.append(desc)
 
@@ -172,7 +170,7 @@ def reconstruct_text(ability: Any, lang: str = "en") -> str:
                         option_descs.append(option_template.format(**option_context))
                     except KeyError:
                         option_descs.append(option_template)
-                label = f"Option {index}" if not is_jp else f"選択肢{index}"
+                label = f"Option {index}" if not is_jp else f"驕ｸ謚櫁い{index}"
                 parts.append(f"[{label}: {' + '.join(option_descs)}]")
 
     return " ".join(parts)

@@ -12,44 +12,104 @@ pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
 }
 
+fn normalize_visible_phase(original_phase: Phase) -> Phase {
+    if original_phase == Phase::Response || original_phase == Phase::Setup {
+        Phase::Main
+    } else {
+        original_phase
+    }
+}
+
+fn sync_interaction_phase(
+    state: &mut GameState,
+    original_phase: Phase,
+    original_current_player: u8,
+) {
+    if state.debug.debug_mode {
+        println!("[DEBUG_SYNC] stack_len={} original_phase={:?}", state.interaction_stack.len(), original_phase);
+    }
+    if let Some(player_id) = state.interaction_stack.last().map(|pi| pi.ctx.player_id) {
+        state.phase = Phase::Response;
+        state.current_player = player_id;
+        if state.debug.debug_mode {
+            println!("[DEBUG_SYNC] Set phase to Response due to non-empty stack");
+        }
+    } else {
+        state.phase = normalize_visible_phase(original_phase);
+        state.current_player = original_current_player;
+        state.clear_execution_id();
+        if state.debug.debug_mode {
+            println!("[DEBUG_SYNC] Restored to {:?} because stack is empty", state.phase);
+        }
+    }
+}
+
+fn has_selection_follow_up(db: &CardDatabase, ctx: &AbilityContext, instr_ip: usize) -> bool {
+    let frames = db
+        .get_member(ctx.source_card_id)
+        .map(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+        .flatten()
+        .map(|ability| ability.frames())
+        .or_else(|| {
+            db.get_live(ctx.source_card_id)
+                .map(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
+                .flatten()
+                .map(|ability| ability.frames())
+        });
+
+    frames
+        .and_then(|frames| frames.get(instr_ip + 1).map(|next_frame| next_frame.opcode()))
+        .map(|opcode| opcode == 57)
+        .unwrap_or(false)
+}
+
 const ALWAYS_SUSPEND_TYPES: &[ChoiceType] = &[
     ChoiceType::Optional,
     ChoiceType::LookAndChoose,
     ChoiceType::ColorSelect,
     ChoiceType::TapO,
     ChoiceType::TapMSelect,
-    ChoiceType::SelectMember,
-    ChoiceType::SelectLive,
-    ChoiceType::SelectPlayer,
     ChoiceType::SelectDiscardPlay,
     ChoiceType::SelectStage,
     ChoiceType::SelectStageEmpty,
     ChoiceType::SelectLiveSlot,
     ChoiceType::SelectMode,
-    ChoiceType::SelectHandDiscard,
-    ChoiceType::SelectHandPlay,
     ChoiceType::SelectCardsOrder,
     ChoiceType::OrderDeck,
-    ChoiceType::RecovM,
-    ChoiceType::RecovL,
 ];
 
 pub fn finish_pending_interaction(state: &mut GameState) {
     let popped = state.interaction_stack.pop();
-    if state.interaction_stack.is_empty() {
-        let original_phase = popped
-            .as_ref()
-            .map(|pi| pi.original_phase)
-            .unwrap_or(state.phase);
-        state.phase = if original_phase == Phase::Response || original_phase == Phase::Setup {
-            Phase::Main
-        } else {
-            original_phase
-        };
-        if let Some(pi) = popped {
-            state.current_player = pi.original_current_player;
-        }
-        state.clear_execution_id();
+    let original_phase = popped
+        .as_ref()
+        .map(|pi| pi.original_phase)
+        .unwrap_or(state.phase);
+    let original_current_player = popped
+        .as_ref()
+        .map(|pi| pi.original_current_player)
+        .unwrap_or(state.current_player);
+    sync_interaction_phase(state, original_phase, original_current_player);
+}
+
+pub fn restore_response_state(
+    state: &mut GameState,
+    original_phase: Phase,
+    original_current_player: u8,
+) {
+    sync_interaction_phase(state, original_phase, original_current_player);
+}
+
+pub fn capture_response_origin(state: &GameState) -> (Phase, u8) {
+    if let Some(pi) = state
+        .interaction_stack
+        .iter()
+        .find(|pi| pi.original_phase != Phase::Response && pi.original_phase != Phase::Setup)
+    {
+        (pi.original_phase, pi.original_current_player)
+    } else if let Some(pi) = state.interaction_stack.last() {
+        (pi.original_phase, pi.original_current_player)
+    } else {
+        (state.phase, state.current_player)
     }
 }
 
@@ -109,64 +169,55 @@ pub fn suspend_interaction(
     if state.debug.debug_mode {
         if let Some(interaction) = state.interaction_stack.last() {
             state.trace_internal(&format!(
-                "BC_SUSPEND: [phase={:?}] {}",
+                "FRAME_SUSPEND: [phase={:?}] {}",
                 state.phase,
                 logging::describe_pending_interaction(interaction)
             ));
         }
     }
     let chooser_p_idx = ctx.player_id;
-    state.phase = Phase::Response;
-    state.current_player = chooser_p_idx;
-
     let mut final_actions = actions;
     if final_actions.is_empty() {
+        let saved_phase = state.phase;
+        let saved_current_player = state.current_player;
+        state.phase = Phase::Response;
+        state.current_player = chooser_p_idx;
         state.generate_legal_actions(db, chooser_p_idx as usize, &mut final_actions);
+        state.phase = saved_phase;
+        state.current_player = saved_current_player;
     }
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
-
-    let _actions_len = final_actions.len();
-    let is_optional_prompt = (filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
-    if is_optional_prompt && final_actions.len() == 1 && final_actions[0] == 0 {
-        if state.debug.debug_mode {
-            println!(
-                "[DEBUG] Auto-skipping degenerate optional prompt: {:?}",
-                choice_type
-            );
-        }
-        state.trace_internal(&format!(
-            "BC_SUSPEND_SKIP_OPTIONAL: [phase={:?}] choice_type={} v_remaining={} {}",
-            state.phase,
-            choice_type.as_str(),
-            v_remaining,
-            logging::describe_context(ctx)
-        ));
-        state.interaction_stack.pop();
-        state.phase = original_phase;
-        state.current_player = original_cp;
-        return false;
-    }
 
     let should_check_skip = !ALWAYS_SUSPEND_TYPES.contains(&choice_type);
 
     if state.debug.debug_mode {
         println!(
-            "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}",
+            "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}, {}",
             choice_type,
             v_remaining,
-            final_actions.len()
+            final_actions.len(),
+            logging::describe_context(ctx)
         );
     }
 
-    if should_check_skip && final_actions.is_empty() && choice_type != ChoiceType::OpponentChoose {
+    let should_skip = if final_actions.is_empty() {
+        true
+    } else if final_actions.len() == 1 && final_actions.contains(&0) {
+        !has_selection_follow_up(db, ctx, instr_ip)
+    } else {
+        false
+    };
+
+    if should_check_skip && should_skip && choice_type != ChoiceType::OpponentChoose {
         if state.debug.debug_mode {
             println!(
-                "[DEBUG] Softlock prevented: {:?} has no legal actions. Skipping suspension.",
-                choice_type
+                "[DEBUG] Softlock prevented: {:?} has no legal actions. Skipping suspension. {}",
+                choice_type,
+                logging::describe_context(ctx)
             );
         }
         state.trace_internal(&format!(
-            "BC_SUSPEND_SKIP: [phase={:?}] choice_type={} v_remaining={} {}",
+            "FRAME_SUSPEND_SKIP: [phase={:?}] choice_type={} v_remaining={} {}",
             state.phase,
             choice_type.as_str(),
             v_remaining,
@@ -177,6 +228,10 @@ pub fn suspend_interaction(
         state.current_player = original_cp;
         return false;
     }
+
+    state.phase = Phase::Response;
+    state.current_player = chooser_p_idx;
+
     true
 }
 

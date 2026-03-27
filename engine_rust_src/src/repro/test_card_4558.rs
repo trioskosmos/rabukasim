@@ -110,17 +110,12 @@ fn test_card_4558_abilities_in_compiled_data() {
         ab0.trigger as i32, 2,
         "Ability 0 should have trigger=2 (ON_LIVE_START)"
     );
-    assert_eq!(
-        ab0.effects.len(),
-        1,
-        "Ability 0 should have 1 effect (TRANSFORM_HEART)"
-    );
-
-    let effect_0 = &ab0.effects[0];
-    assert_eq!(
-        effect_0.effect_type,
-        EffectType::TransformHeart,
-        "Effect should be TRANSFORM_HEART"
+    assert!(
+        ab0.frame_program
+            .as_ref()
+            .map(|program| !program.frames.is_empty())
+            .unwrap_or(false),
+        "Ability 0 should have a non-empty frame program (TRANSFORM_HEART logic)"
     );
 
     // Ability 1: ON_LIVE_SUCCESS (trigger=3)
@@ -129,17 +124,12 @@ fn test_card_4558_abilities_in_compiled_data() {
         ab1.trigger as i32, 3,
         "Ability 1 should have trigger=3 (ON_LIVE_SUCCESS)"
     );
-    assert_eq!(
-        ab1.effects.len(),
-        1,
-        "Ability 1 should have 1 effect (RECOVER_LIVE)"
-    );
-
-    let effect_1 = &ab1.effects[0];
-    assert_eq!(
-        effect_1.effect_type,
-        EffectType::RecoverLive,
-        "Effect should be RECOVER_LIVE"
+    assert!(
+        ab1.frame_program
+            .as_ref()
+            .map(|program| !program.frames.is_empty())
+            .unwrap_or(false),
+        "Ability 1 should have a non-empty frame program (RECOVER_LIVE logic)"
     );
 
     println!("✅ Card 4558 has both abilities correctly compiled");

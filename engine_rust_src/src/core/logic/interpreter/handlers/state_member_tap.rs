@@ -1,6 +1,7 @@
 use crate::core::enums::*;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -27,13 +28,12 @@ pub fn handle_set_tapped(
 
     if !state.ui.silent {
         eprintln!(
-            "[TRACE] SET_TAPPED: p_idx={}, resolved_slot={}, v={}, optional={}, choice_index={}, v_remaining={}",
+            "[TRACE] SET_TAPPED: p_idx={} resolved_slot={} v={} optional={} {}",
             p_idx,
             resolved_slot,
             frame_data.value,
             is_optional,
-            ctx.choice_index,
-            ctx.v_remaining,
+            logging::describe_context(ctx),
         );
     }
 

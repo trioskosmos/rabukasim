@@ -1,6 +1,7 @@
 pub mod ability_patterns;
 pub mod action_factory;
 pub mod action_gen;
+pub mod ability_manifest;
 pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;

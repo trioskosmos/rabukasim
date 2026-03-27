@@ -1,5 +1,6 @@
 use super::constants::*;
 use crate::core::enums::*;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::{AbilityContext, CardDatabase, Cost, GameState, TriggerType};
 
@@ -218,6 +219,84 @@ pub fn check_cost(
         return true;
     }
     result
+}
+
+pub fn check_frame_cost(
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    frame: &AbilityFrame,
+    ctx: &AbilityContext,
+) -> bool {
+    let comp = frame.components();
+    if !comp.is_cost {
+        return true;
+    }
+
+    match comp.opcode {
+        O_PAY_ENERGY | O_ACTIVATE_ENERGY => {
+            let available = state.players[p_idx].energy_zone.len() as i32
+                - state.players[p_idx].tapped_energy_count() as i32;
+            available >= comp.value
+        }
+        O_MOVE_TO_DISCARD | O_MOVE_TO_DECK | O_MOVE_MEMBER => {
+            let source_zone = comp.slot.source_zone;
+            let available = match source_zone {
+                Zone::Hand => {
+                    let mut count = 0;
+                    for &cid in &state.players[p_idx].hand {
+                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
+                            count += 1;
+                        }
+                    }
+                    count
+                }
+                Zone::Stage => {
+                    let mut count = 0;
+                    for i in 0..3 {
+                        let cid = state.players[p_idx].stage[i];
+                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
+                            count += 1;
+                        }
+                    }
+                    count
+                }
+                Zone::LiveSet | Zone::SuccessPile => {
+                    let mut count = 0;
+                    for &cid in &state.players[p_idx].success_lives {
+                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
+                            count += 1;
+                        }
+                    }
+                    count
+                }
+                Zone::Energy => state.players[p_idx].energy_zone.len() as i32,
+                Zone::Discard => state.players[p_idx].discard.len() as i32,
+                Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
+                    state.players[p_idx].deck.len() as i32
+                }
+                _ => 0,
+            };
+            available >= comp.value
+        }
+        O_SET_TAPPED | O_TAP_MEMBER => {
+            let required = comp.value.max(0) as usize;
+            if required == 0 {
+                return ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3
+                    && !state.players[p_idx].is_tapped(ctx.area_idx as usize);
+            }
+            let untapped = (0..3)
+                .filter(|&i| state.players[p_idx].stage[i] >= 0 && !state.players[p_idx].is_tapped(i))
+                .count();
+            untapped >= required
+        }
+        O_TAP_ENERGY => {
+            let available = state.players[p_idx].energy_zone.len() as i32
+                - state.players[p_idx].tapped_energy_count() as i32;
+            available >= comp.value
+        }
+        _ => true,
+    }
 }
 
 pub fn pay_cost(
@@ -550,3 +629,4 @@ pub fn pay_cost(
     }
     result
 }
+

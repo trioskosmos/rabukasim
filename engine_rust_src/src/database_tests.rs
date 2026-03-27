@@ -67,73 +67,157 @@ fn test_bytecode_sanity_all_cards() {
 }
 
 #[test]
-fn test_sparse_ability_index_is_loaded() {
+fn test_ability_manifest_covers_production_database() {
     let card_db =
         CardDatabase::from_json(DB_JSON).expect("Failed to parse production CardDatabase");
+    let cards_payload: Value = serde_json::from_str(DB_JSON)
+        .expect("Failed to parse production cards_compiled.json");
+    let metadata: Value = serde_json::from_str(METADATA_JSON)
+        .expect("Failed to parse metadata.json");
 
-    let mut checked = 0usize;
+    let manifest = crate::core::logic::ability_manifest::AbilityManifest::build(
+        &cards_payload,
+        &metadata,
+        "test-generated".to_string(),
+        "data/cards_compiled.json".to_string(),
+        "data/metadata.json".to_string(),
+    );
 
-    for card in card_db.members.values() {
-        for (_ability_index, ability) in card.abilities.iter().enumerate() {
-            let sparse = ability
-                .sparse_frame_index
-                .as_ref()
-                .expect("ability_frame_index.json should be attached to production abilities");
-            let frames = sparse
-                .get("frames")
-                .and_then(|v| v.as_array())
-                .expect("sparse ability entry should contain frames");
+    assert_eq!(manifest.schema, crate::core::logic::ability_manifest::MANIFEST_SCHEMA);
 
-            assert!(
-                !frames.is_empty(),
-                "sparse ability entry should not be empty"
-            );
-            assert!(
-                sparse
-                    .get("source_words")
-                    .and_then(|v| v.as_array())
-                    .is_some(),
-                "sparse ability entry should preserve source_words"
-            );
-            assert!(
-                sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
-                "sparse ability entry should expose pseudocode"
-            );
-            checked += 1;
-        }
-    }
+    let source_card_count = card_db
+        .members
+        .values()
+        .filter(|card| !card.abilities.is_empty())
+        .count()
+        + card_db
+            .lives
+            .values()
+            .filter(|card| !card.abilities.is_empty())
+            .count();
+    let source_ability_count = card_db
+        .members
+        .values()
+        .map(|card| card.abilities.len())
+        .sum::<usize>()
+        + card_db
+            .lives
+            .values()
+            .map(|card| card.abilities.len())
+            .sum::<usize>();
 
-    for card in card_db.lives.values() {
-        for (_ability_index, ability) in card.abilities.iter().enumerate() {
-            let sparse = ability
-                .sparse_frame_index
-                .as_ref()
-                .expect("ability_frame_index.json should be attached to production abilities");
-            let frames = sparse
-                .get("frames")
-                .and_then(|v| v.as_array())
-                .expect("sparse ability entry should contain frames");
+    assert_eq!(manifest.summary.card_count, source_card_count);
+    assert_eq!(manifest.summary.ability_count, source_ability_count);
+    assert_eq!(manifest.summary.card_count, manifest.cards.len());
 
-            assert!(
-                !frames.is_empty(),
-                "sparse ability entry should not be empty"
-            );
-            assert!(
-                sparse
-                    .get("source_words")
-                    .and_then(|v| v.as_array())
-                    .is_some(),
-                "sparse ability entry should preserve source_words"
-            );
-            assert!(
-                sparse.get("pseudocode").and_then(|v| v.as_str()).is_some(),
-                "sparse ability entry should expose pseudocode"
-            );
-            checked += 1;
-        }
-    }
+    let bp1 = manifest
+        .card_by_no("LL-bp1-001-R+")
+        .expect("LL-bp1-001-R+ should be present in the manifest");
+    assert_eq!(bp1.ability_count, 2);
 
-    assert!(checked > 0, "expected at least one ability to verify");
+    let bp2 = manifest
+        .card_by_no("LL-bp2-001-R+")
+        .expect("LL-bp2-001-R+ should be present in the manifest");
+    assert_eq!(bp2.ability_count, 3);
+    assert!(bp2
+        .abilities
+        .iter()
+        .any(|ability| ability.flow_pattern == "prompted_branching"));
+}
+
+#[test]
+fn test_ability_manifest_round_trips_and_represents_real_cards() {
+    let cards_payload: Value = serde_json::from_str(DB_JSON)
+        .expect("Failed to parse production cards_compiled.json");
+    let metadata: Value = serde_json::from_str(METADATA_JSON)
+        .expect("Failed to parse metadata.json");
+
+    let manifest = crate::core::logic::ability_manifest::AbilityManifest::build(
+        &cards_payload,
+        &metadata,
+        "test-generated".to_string(),
+        "data/cards_compiled.json".to_string(),
+        "data/metadata.json".to_string(),
+    );
+
+    let serialized = serde_json::to_value(&manifest).expect("manifest should serialize to JSON");
+    let round_trip: crate::core::logic::ability_manifest::AbilityManifest = serde_json::from_value(serialized)
+        .expect("manifest should deserialize from JSON");
+
+    let bp1 = round_trip
+        .card_by_no("LL-bp1-001-R+")
+        .expect("LL-bp1-001-R+ should survive a round trip");
+    assert_eq!(bp1.abilities[0].trigger, "ON_PLAY");
+    assert_eq!(bp1.abilities[0].flow_pattern, "optional_effect");
+    assert_eq!(bp1.abilities[0].frame_count, 2);
+    assert_eq!(bp1.abilities[0].opcode_sequence, vec!["RECOVER_MEMBER", "RETURN"]);
+    assert_eq!(bp1.abilities[0].frames[0].role, "cost");
+
+    assert_eq!(bp1.abilities[1].trigger, "ON_LIVE_START");
+    assert_eq!(bp1.abilities[1].flow_pattern, "optional_branching");
+    assert_eq!(bp1.abilities[1].opcode_sequence, vec!["MOVE_TO_DISCARD", "JUMP_IF_FALSE", "BOOST_SCORE", "RETURN"]);
+    assert_eq!(bp1.abilities[1].frames[0].role, "cost");
+    assert_eq!(bp1.abilities[1].frames[1].role, "control");
+    assert_eq!(bp1.abilities[1].frames[2].role, "effect");
+    assert!(bp1.abilities[1].summary.starts_with("Optional cost:"));
+
+    let bp2 = round_trip
+        .card_by_no("LL-bp2-001-R+")
+        .expect("LL-bp2-001-R+ should survive a round trip");
+    assert_eq!(bp2.abilities[2].trigger, "ON_LIVE_START");
+    assert_eq!(bp2.abilities[2].flow_pattern, "prompted_branching");
+    assert_eq!(bp2.abilities[2].frames[0].role, "prompt");
+    assert_eq!(bp2.abilities[2].frames[1].role, "control");
+    assert_eq!(bp2.abilities[2].frames[2].role, "effect");
+    assert!(bp2.abilities[2].summary.contains("Choose"));
+
+    let first_frame_value = serde_json::to_value(&bp1.abilities[0].frames[0])
+        .expect("frame should serialize");
+    let first_frame: crate::core::logic::ability_manifest::AbilityManifestFrame =
+        serde_json::from_value(first_frame_value).expect("frame should deserialize");
+    assert_eq!(first_frame.opcode, "RECOVER_MEMBER");
+
+    let raw_member = card_db_lookup_member(&cards_payload, 9).expect("production card 9 should exist");
+    let ability = raw_member
+        .get("abilities")
+        .and_then(|value| value.as_array())
+        .and_then(|abilities| abilities.first())
+        .expect("card 9 should have at least one ability");
+    let raw_program = ability
+        .get("frame_program")
+        .expect("card 9 ability should have a frame program");
+    let round_program: FrameProgram = serde_json::from_value(raw_program.clone())
+        .expect("frame program should deserialize");
+    let round_program_value = serde_json::to_value(&round_program)
+        .expect("frame program should serialize");
+    let round_program_again: FrameProgram = serde_json::from_value(round_program_value)
+        .expect("frame program should deserialize again");
+    assert_eq!(round_program.frames.len(), round_program_again.frames.len());
+
+    let ability_value = db_member_ability(&cards_payload, 9, 1);
+    let ability_round_trip: Ability = serde_json::from_value(ability_value.clone())
+        .expect("ability should deserialize into Ability");
+    let ability_round_trip_json = serde_json::to_value(&ability_round_trip)
+        .expect("ability should serialize back to JSON");
+    let ability_round_trip_again: Ability = serde_json::from_value(ability_round_trip_json)
+        .expect("ability should round trip again");
+    assert_eq!(ability_round_trip.trigger, ability_round_trip_again.trigger);
+    assert!(ability_round_trip_again.frame_program.is_some());
+}
+
+fn card_db_lookup_member(cards_payload: &Value, card_id: i32) -> Option<&Value> {
+    cards_payload
+        .get("member_db")
+        .and_then(|db| db.get(card_id.to_string()))
+}
+
+fn db_member_ability(cards_payload: &Value, card_id: i32, ability_index: usize) -> Value {
+    card_db_lookup_member(cards_payload, card_id)
+        .and_then(|card| card.get("abilities"))
+        .and_then(|abilities| abilities.as_array())
+        .and_then(|abilities| abilities.get(ability_index))
+        .cloned()
+        .expect("ability should exist")
 }
 
 fn verify_ability_bytecode(card_no: &str, ab_idx: usize, ab: &Ability, opcodes: &mut HashSet<i32>) {

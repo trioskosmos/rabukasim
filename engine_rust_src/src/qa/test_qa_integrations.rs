@@ -6,6 +6,8 @@ mod qa_advanced_interactions {
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
+    // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
+    // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
     /// Q131-Q132 Combined: Live start and live success timing with initiative
     /// Critical: "ライブ開始時" and "ライブ成功時" abilities have ownership requirements
     #[test]
@@ -50,6 +52,8 @@ mod qa_advanced_interactions {
             "A's live_success should trigger since A won");
     }
 
+    // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+    // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
     /// Q147-Q150 Combined: Score and heart calculations with bonus edge cases
     /// Verify: Bonuses snapshot, heart totals exclude blade, surplus counted correctly
     #[test]
@@ -101,6 +105,8 @@ mod qa_advanced_interactions {
         assert!(final_score >= score_base);
     }
 
+    // QA: Q174 | Q: 『 {{live_success.png|ライブ成功時}} このターン、自分が余剰ハートに {{heart_04.png|heart04}} を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。』について、ステージに緑ハートがなくエールによってALLハートを3枚獲得してライブ成功した時、ライブ成功時能力は使えますか？
+    // A: いいえ。使えません。
     /// Q174-Q175 Combined: Unit vs Group with cost modification
     /// Verify: Unit name matching, cost reduction affects selection eligibility
     #[test]
@@ -142,6 +148,8 @@ mod qa_advanced_interactions {
         assert!(is_eligible_6, "6 should be <= 6");
     }
 
+    // QA: Q176 | Q: 『 {{kidou.png|起動}} {{turn1.png|ターン1回}} {{icon_energy.png|E}} {{icon_energy.png|E}} :自分の手札を相手は見ないで１枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時までこのメンバーは「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。』について、公開するのは自分の手札ですか？相手の手札ですか？
+    // A: 自分の手札を公開します。
     /// Q176-Q177 Combined: Mandatory vs Optional in opponent context
     /// Verify: Opponent abilities must fully resolve, but some costs are optional
     #[test]
@@ -194,6 +202,8 @@ mod qa_advanced_interactions {
         }
     }
 
+    // QA: Q180 | Q: 『 {{toujyou.png|登場}} このターン、自分と相手のステージにいるメンバーは、効果によってはアクティブにならない。』について、この効果が発動したターンにアクティブフェイズを迎えました。そのアクティブフェイズでメンバーをアクティブにできますか？
+    // A: はい、できます。
     /// Q180-Q183 Combined: State changes vs ability restrictions + cost targeting
     /// Verify: Wait->active state change bypasses "cannot activate", cost targets own
     #[test]
@@ -232,6 +242,8 @@ mod qa_advanced_interactions {
         assert!(!can_pay_opp, "Cannot select opponent member for cost");
     }
 
+    // QA: Q184 | Q: エネルギーカードをメンバーカードの下に置いているとき、メンバーカードの下に置かれたエネルギーカードはエネルギーの数として数えますか？
+    // A: いいえ。数えません。 エネルギーの枚数を参照する際、メンバーカードの下に置かれたエネルギーカードは参照しません。
     /// Q184-Q185-Q186 Combined: Energy zones + opponent resolution + cost validation
     /// Verify: Under-member energy separate, opponent choices force resolution,
     /// cost validation with modifiers
@@ -299,6 +311,8 @@ mod qa_advanced_interactions {
     }
 
     /// Integration test: Full round with multiple Q&A rule interactions
+    // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+    // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
     /// Real: Q147 (snapshot) + Q174 (unit) + Q184 (energy) + Q185 (opponent) + Q186 (cost)
     #[test]
     fn test_integration_full_rules_chain() {
@@ -308,6 +322,8 @@ mod qa_advanced_interactions {
         game.set_hand_size(Player::A, 7);
         game.set_hand_size(Player::B, 5);
 
+        // QA: Q174 | Q: 『 {{live_success.png|ライブ成功時}} このターン、自分が余剰ハートに {{heart_04.png|heart04}} を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。』について、ステージに緑ハートがなくエールによってALLハートを3枚獲得してライブ成功した時、ライブ成功時能力は使えますか？
+        // A: いいえ。使えません。
         // Add stage members (Q174: same unit check)
         let members = vec![
             Card::member("PL!SP-bp1-001").with_unit("5yncri5e!"),
@@ -317,6 +333,8 @@ mod qa_advanced_interactions {
             game.place_member(Player::A, m.clone(), [Slot::Left, Slot::Center][i]);
         }
 
+        // QA: Q184 | Q: エネルギーカードをメンバーカードの下に置いているとき、メンバーカードの下に置かれたエネルギーカードはエネルギーの数として数えますか？
+        // A: いいえ。数えません。 エネルギーの枚数を参照する際、メンバーカードの下に置かれたエネルギーカードは参照しません。
         // Add energy (Q184: under-member)
         game.add_energy_to_zone(Player::A, 3);
         game.place_energy_under_member(Player::A, Slot::Center, 1);
@@ -325,6 +343,8 @@ mod qa_advanced_interactions {
         game.set_active_player(Player::A);
         game.enter_performance_phase(Player::A);
 
+        // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+        // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         // Setup live card with bonuses (Q147: snapshot)
         let live = Card::live("PL!-bp3-023")
             .with_base_score(5);
@@ -334,6 +354,8 @@ mod qa_advanced_interactions {
         game.apply_live_start_abilities(Player::A);
         let score_after_start = game.get_live_card_score(Player::A, 0);
 
+        // QA: Q185 | Q: {{live_start.png|ライブ開始時}} 能力による質問への回答が「クッキー＆クリームよりもあなた」でした。 この場合、どの回答として扱いますか？
+        // A: 質問者と回答者のお互いが正しく認識できる場合、回答が一字一句同じものである必要はありません。 対戦相手がどの回答として答えたのか確認をしてください。
         // Opponent's turn (Q185: mandatory resolution)
         game.set_active_player(Player::B);
         let opp_effect_card = Card::member("PL!-pb1-015");
@@ -342,12 +364,16 @@ mod qa_advanced_interactions {
         // Opponent effect forces our hand to change
         game.force_hand_modification(Player::A, 2); // Reduce to 5
 
+        // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
+        // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
         // Back to performance - check score didn't retroactively change (Q147)
         game.set_active_player(Player::A);
         let score_unchanged = game.get_live_card_score(Player::A, 0);
         assert_eq!(score_unchanged, score_after_start,
             "Score should not retroactively change");
 
+        // QA: Q186 | Q: 『 {{jyouji.png|常時}} 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。』について、 手札の枚数によって、LL-bp2-001-R+のコストは0になりますか？
+        // A: はい、なります。
         // Complete live with cost validation (Q186)
         game.set_live_hearts(Player::A, vec!["heart_02", "heart_02", "heart_03", "heart_01", "heart_04"]);
         game.apply_live_start_blade_hearts(2);

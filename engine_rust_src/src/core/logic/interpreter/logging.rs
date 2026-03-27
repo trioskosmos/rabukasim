@@ -368,6 +368,44 @@ fn join_parts(parts: Vec<String>) -> String {
     }
 }
 
+fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
+    let card_texts = db
+        .get_member(card_id)
+        .map(|card| {
+            (
+                card.original_text.as_str(),
+                card.ability_text.as_str(),
+                card.original_text_en.as_str(),
+            )
+        })
+        .or_else(|| {
+            db.get_live(card_id).map(|card| {
+                (
+                    card.original_text.as_str(),
+                    card.ability_text.as_str(),
+                    card.original_text_en.as_str(),
+                )
+            })
+        });
+
+    let Some((jp, ability, en)) = card_texts else {
+        return "text=-".to_string();
+    };
+
+    let mut parts = Vec::new();
+    if !jp.is_empty() {
+        parts.push(format!("jp={}", truncate_text(jp.to_string(), 160)));
+    }
+    if !ability.is_empty() {
+        parts.push(format!("ability={}", truncate_text(ability.to_string(), 160)));
+    }
+    if !en.is_empty() {
+        parts.push(format!("en={}", truncate_text(en.to_string(), 160)));
+    }
+
+    join_parts(parts)
+}
+
 pub fn describe_filter_attr(filter: DecodedFilterAttr) -> String {
     let mut parts = Vec::new();
 
@@ -518,7 +556,7 @@ pub fn describe_frame_semantics(
         .unwrap_or("System");
 
     format!(
-        "card={} {} raw[a={},s={}] filter=[{}] slot=[{}] params=[{}] {}",
+        "card={} {} raw[a={},s={}] filter=[{}] slot=[{}] params=[{}] {} {}",
         card_name,
         describe_trace_step(
             frame.opcode,
@@ -532,6 +570,7 @@ pub fn describe_frame_semantics(
         describe_filter_attr(DecodedFilterAttr::decode(frame.filter.to_attr() as i64)),
         describe_slot(frame.slot),
         describe_params(frame.params),
+        describe_card_texts(db, ctx.source_card_id),
         describe_context(ctx)
     )
 }

@@ -143,7 +143,6 @@ pub fn handle_look_deck_dynamic(
             }
         }
     }
-
     let _ = ctx;
     HandlerResult::Continue
 }

@@ -800,9 +800,9 @@ def main():
     if args.test:
         import subprocess
         rust_dir = args.rust_dir or os.path.join(base_path, "engine_rust_src")
-        print(f"Running: cargo test {args.test} -- --nocapture")
+        print(f"Running: cargo test --lib {args.test} -j 4 -- --nocapture")
         result = subprocess.run(
-            ["cargo", "test", args.test, "--", "--nocapture"],
+            ["cargo", "test", "--lib", args.test, "-j", "4", "--", "--nocapture"],
             cwd=rust_dir, text=True, encoding="utf-8", errors="replace"
         )
         sys.exit(result.returncode)

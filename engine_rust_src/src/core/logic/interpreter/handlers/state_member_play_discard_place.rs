@@ -1,4 +1,5 @@
 use super::*;
+use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
@@ -15,7 +16,7 @@ pub fn handle_discard_placement(
     if state.players[target_p_idx].looked_cards.is_empty() {
         return HandlerResult::Continue;
     }
-    if ctx.choice_index == 99 {
+    if ctx.choice_index == CHOICE_DONE {
         return HandlerResult::Continue;
     }
 

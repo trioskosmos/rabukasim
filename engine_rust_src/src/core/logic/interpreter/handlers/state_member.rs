@@ -5,6 +5,7 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::enums::*;
 
 use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -135,15 +136,10 @@ pub fn handle_member_state(
             let filter_target = (filter_attr & 0x3) as u8;
             if state.debug.debug_mode && ctx.source_card_id == 4196 {
                 eprintln!(
-                    "[STATE_TAP] v={} a={:X} filter={:X} filter_target={} resolved_slot={} choice_index={} v_remaining={} area_idx={}",
-                    v,
-                    a,
-                    filter_attr,
+                    "[STATE_TAP] filter_target={} resolved_slot={} {}",
                     filter_target,
                     resolved_slot,
-                    ctx.choice_index,
-                    ctx.v_remaining,
-                    ctx.area_idx
+                    logging::describe_frame_semantics(&frame_data, ctx, db)
                 );
             }
 
@@ -168,29 +164,26 @@ pub fn handle_member_state(
 
             if state.debug.debug_mode && ctx.source_card_id == 4196 {
                 eprintln!(
-                    "[STATE_TAP] target_p_idx={} stage={:?} tapped={:?}",
+                    "[STATE_TAP] target_p_idx={} stage={:?} tapped={:?} {}",
                     target_p_idx,
                     state.players[target_p_idx].stage,
                     [
                         state.players[target_p_idx].is_tapped(0),
                         state.players[target_p_idx].is_tapped(1),
                         state.players[target_p_idx].is_tapped(2),
-                    ]
+                    ],
+                    logging::describe_context(ctx)
                 );
             }
 
             if ctx.source_card_id == 4196 {
                 eprintln!(
-                    "[STATE_TAP_SEL] target_slot={} resolved_slot={} select_member={} ability_filter={:X} a={:X} cond={}",
-                    target_slot,
-                    resolved_slot,
-                    is_select_member_choice,
-                    ability_filter_attr,
-                    a,
+                    "[STATE_TAP_SEL] cond={} {}",
                     target_slot == 4
                         && (is_select_member_choice || ability_filter_attr != 0)
                         && a & 0x02 == 0
-                        && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice)
+                        && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice),
+                    logging::describe_frame_semantics(&frame_data, ctx, db)
                 );
             }
 
