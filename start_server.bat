@@ -1,6 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+set UV_CACHE_DIR=%~dp0.uv-cache
+set UV_PYTHON_INSTALL_DIR=%~dp0.uv-python
 where cargo >nul 2>&1
 if errorlevel 1 goto NO_CARGO
 
@@ -9,7 +11,7 @@ if errorlevel 1 goto NO_UV
 
 echo [build] Checking for stale processes and syncing metadata...
 powershell -NoProfile -Command "$ppid=(Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name='cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | Stop-Process -Force -ErrorAction SilentlyContinue; taskkill /F /IM rabuka_launcher.exe /T 2>$null; Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
-uv run python tools/sync_metadata.py
+uv run --isolated --managed-python --python 3.12 python tools/sync_metadata.py
 
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
@@ -27,17 +29,17 @@ for %%a in (%*) do (
 if %DO_FULL% neq 1 goto FAST_FRAME_SYNC
 
 echo [build] Building Python extension (maturin)...
-uv run maturin develop
+uv run --isolated --managed-python --python 3.12 maturin develop
 if errorlevel 1 goto CMD_FAIL
 
 echo [build] Preparing compiled ability artifacts...
-uv run python tools/build_cards.py --force --sync-launcher-assets
+uv run --isolated --managed-python --python 3.12 python tools/build_cards.py --force --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 goto RUN_SERVER
 
 :FAST_FRAME_SYNC
 echo [build] Preparing compiled ability artifacts...
-uv run python tools/build_cards.py --sync-launcher-assets
+uv run --isolated --managed-python --python 3.12 python tools/build_cards.py --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 
 :RUN_SERVER

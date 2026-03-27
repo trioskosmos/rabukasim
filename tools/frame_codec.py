@@ -96,12 +96,12 @@ def _normalize_scalar(value: Any) -> Any:
             if key in {"raw", "source_words", "signature", "signature_hash", "signature_source"}:
                 continue
             normalized_item = _normalize_scalar(item)
-            if normalized_item not in (None, False, 0, "", [], {}):
+            if normalized_item not in (None, "", [], {}):
                 normalized[key] = normalized_item
         return normalized
     if isinstance(value, list):
         normalized_list = [_normalize_scalar(item) for item in value]
-        return [item for item in normalized_list if item not in (None, False, 0, "", [], {})]
+        return [item for item in normalized_list if item not in (None, "", [], {})]
     return value
 
 
@@ -114,14 +114,33 @@ def frame_to_compact(frame: dict[str, Any]) -> dict[str, Any]:
     if isinstance(semantic, dict) and semantic:
         compact["op"] = semantic.get("opcode_name") or frame.get("op")
         options: dict[str, Any] = {}
-        if "value" in semantic:
-            options["value"] = semantic["value"]
-        if "attr" in semantic:
-            options["filter"] = semantic["attr"]
-        if "slot" in semantic:
-            options["slot"] = semantic["slot"]
-        if "params" in semantic:
-            options["params"] = semantic["params"]
+        for key in (
+            "value",
+            "count",
+            "choose_count",
+            "reveal",
+            "dest_discard",
+            "char_id_1",
+            "char_id_2",
+            "char_id_3",
+            "attr",
+            "filter",
+            "slot",
+            "params",
+            "target",
+            "comparison",
+            "rule_type",
+            "is_cost",
+            "optional",
+            "is_negated",
+            "negated",
+            "decoded",
+        ):
+            if key in semantic and semantic[key] not in (None, "", [], {}):
+                mapped_key = "filter" if key == "attr" else ("negated" if key == "is_negated" else key)
+                options[mapped_key] = semantic[key]
+        if isinstance(frame.get("decoded"), str) and frame["decoded"]:
+            compact["decoded"] = frame["decoded"]
         if options:
             compact["options"] = options
         return _normalize_scalar(compact)
@@ -129,14 +148,37 @@ def frame_to_compact(frame: dict[str, Any]) -> dict[str, Any]:
     # Fallback to direct fields
     compact["op"] = frame.get("op") or frame.get("opcode_name")
     options: dict[str, Any] = {}
-    for field in ["value", "attr", "slot", "params", "filter", "count", "target", "comparison"]:
+    for field in [
+        "value",
+        "count",
+        "choose_count",
+        "reveal",
+        "dest_discard",
+        "char_id_1",
+        "char_id_2",
+        "char_id_3",
+        "attr",
+        "slot",
+        "params",
+        "filter",
+        "target",
+        "comparison",
+        "rule_type",
+        "is_cost",
+        "optional",
+        "is_negated",
+        "negated",
+        "decoded",
+    ]:
         if field in frame:
-            key = "filter" if field == "attr" else field
+            key = "filter" if field == "attr" else ("negated" if field == "is_negated" else field)
             options[key] = frame[field]
     if frame.get("negated", frame.get("is_negated", False)):
         options["negated"] = True
     if options:
         compact["options"] = options
+    if isinstance(frame.get("decoded"), str) and frame["decoded"]:
+        compact["decoded"] = frame["decoded"]
 
     return _normalize_scalar(compact)
 def _resolve_opcode_name(frame: dict[str, Any], lookups: Any) -> str:
@@ -203,6 +245,9 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
             for alias in ("value", "count", "filter", "slot", "params", "target", "comparison"):
                 if alias in options:
                     normalized[alias] = _normalize_scalar(options[alias])
+            for alias in ("choose_count", "reveal", "dest_discard", "char_id_1", "char_id_2", "char_id_3", "rule_type", "is_cost"):
+                if alias in options:
+                    normalized[alias] = _normalize_scalar(options[alias])
             if options.get("negated"):
                 normalized["negated"] = True
     else:
@@ -210,13 +255,16 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
         for field in ("value", "attr", "slot", "params", "filter", "count", "target", "comparison"):
             if field in frame:
                 normalized_value = _normalize_scalar(frame.get(field))
-                if normalized_value not in (None, False, 0, "", [], {}):
+                if normalized_value not in (None, "", [], {}):
                     options["filter" if field == "attr" else field] = normalized_value
         if frame.get("negated", frame.get("is_negated", False)):
             options["negated"] = True
         if options:
             normalized["options"] = options
             for alias in ("value", "count", "filter", "slot", "params", "target", "comparison"):
+                if alias in options:
+                    normalized[alias] = options[alias]
+            for alias in ("choose_count", "reveal", "dest_discard", "char_id_1", "char_id_2", "char_id_3", "rule_type", "is_cost"):
                 if alias in options:
                     normalized[alias] = options[alias]
             if options.get("negated"):
@@ -237,8 +285,8 @@ def _normalize_authored_frame(frame: Any, lookups: Any, frame_index: int | None 
     if isinstance(explicit_index, int) and explicit_index >= 0:
         normalized["frame_index"] = explicit_index
 
-        if isinstance(frame.get("source_words"), list) and frame["source_words"]:
-            normalized["source_words"] = [int(word) for word in frame["source_words"]]
+    if isinstance(frame.get("source_words"), list) and frame["source_words"]:
+        normalized["source_words"] = [int(word) for word in frame["source_words"]]
 
     return normalized
 

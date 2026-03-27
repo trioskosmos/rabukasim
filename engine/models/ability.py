@@ -129,15 +129,6 @@ class Ability:
                 self.frame_count = len(normalized)
                 return normalized
 
-        sparse_frame_index = getattr(self, "sparse_frame_index", None)
-        if isinstance(sparse_frame_index, dict):
-            frames = sparse_frame_index.get("instructions", [])
-            if isinstance(frames, list) and frames:
-                normalized = [normalize_frame(frame, idx) for idx, frame in enumerate(frames)]
-                self.frame_program = {"instructions": copy.deepcopy(normalized)}
-                self.frame_count = len(normalized)
-                return normalized
-
         from compiler.ability_compiler import build_frame_program
 
         frames = build_frame_program(self)

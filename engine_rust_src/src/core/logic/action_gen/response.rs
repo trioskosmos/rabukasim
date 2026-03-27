@@ -55,14 +55,6 @@ where
     }
 }
 
-fn add_stage_actions<R, F>(receiver: &mut R, count: usize, base_action: i32, mut include: F)
-where
-    R: ActionReceiver + ?Sized,
-    F: FnMut(usize) -> bool,
-{
-    add_indexed_actions(receiver, count, base_action, |idx| include(idx));
-}
-
 fn add_slot_actions<R: ActionReceiver + ?Sized>(receiver: &mut R, slots: &[i32], base_action: i32) {
     for (i, &cid) in slots.iter().enumerate() {
         if cid >= 0 {
@@ -186,9 +178,6 @@ impl ResponseGenerator {
         } else {
             return;
         };
-        if state.debug.debug_mode {
-            println!("[DEBUG_RESP] {}", logging::describe_pending_interaction(pi));
-        }
         if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
             eprintln!(
                 "[RESP_SHAPE] {}",
@@ -271,9 +260,11 @@ impl ResponseGenerator {
                 receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
                 receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
                 if is_targeted_select_member_cost {
-                    add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
-                        state.players[p_idx].stage[i] >= 0
-                    });
+                    for i in 0..3 {
+                        if state.players[p_idx].stage[i] >= 0 {
+                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                        }
+                    }
                     add_optional_done(receiver);
                 }
                 return;
@@ -350,19 +341,16 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectSwapSource => {
-                add_stage_actions(
-                    receiver,
-                    player.success_lives.len(),
-                    ACTION_BASE_STAGE_SLOTS,
-                    |_| true,
-                );
+                for i in 0..player.success_lives.len() {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
                 return;
             }
             ChoiceType::SelectStage => {
                 let is_position_change_choice = Self::is_position_change_prompt(pi);
                 if is_position_change_choice {
                     if state.debug.debug_mode {
-                    println!(
+                        println!(
                             "[DEBUG_POS] SelectStage {}",
                             logging::describe_pending_interaction(pi)
                         );
@@ -371,38 +359,43 @@ impl ResponseGenerator {
                         db, state, receiver, pi, abilities, p_idx,
                     );
                 } else {
-                    add_indexed_actions(receiver, 3, ACTION_BASE_CHOICE, |i| {
-                        (player.prevent_play_to_slot_mask() & (1 << i)) == 0
-                    });
+                    for slot_idx in 0..3 {
+                        let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+                        let legal = match pi.effect_opcode {
+                            crate::core::enums::O_PLAY_MEMBER_FROM_HAND
+                            | crate::core::enums::O_PLAY_MEMBER_FROM_DISCARD => {
+                                !prevented && !player.is_moved(slot_idx)
+                            }
+                            _ => !prevented,
+                        };
+                        if legal {
+                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as usize);
+                        }
+                    }
                 }
                 return;
             }
             ChoiceType::SelectStageEmpty => {
-                // Count empty slots first to check if forced
-                let mut empty_slots = Vec::new();
-                for i in 0..3 {
-                    if player.stage[i] == -1 && (player.prevent_play_to_slot_mask() & (1 << i)) == 0
-                    {
-                        empty_slots.push(i);
-                    }
-                }
-                // If only one empty slot, auto-select it (forced choice)
-                if empty_slots.len() == 1 {
-                    receiver.add_action((ACTION_BASE_CHOICE + empty_slots[0] as i32) as usize);
-                } else {
-                    // Multiple or no choices - present all
-                    for i in empty_slots {
-                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                for slot_idx in 0..3 {
+                    let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+                    let occupied = player.stage[slot_idx] >= 0;
+                    if !prevented && !occupied {
+                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as usize);
                     }
                 }
                 return;
             }
             ChoiceType::SelectStageEmptyBaton => {
-                add_indexed_actions(receiver, 3, ACTION_BASE_CHOICE, |i| {
-                    player.stage[i] == -1
-                        && (player.prevent_play_to_slot_mask() & (1 << i) as u8) == 0
-                        && player.baton_source_slots.contains(&i)
-                });
+                for slot_idx in 0..3 {
+                    let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+                    let occupied = player.stage[slot_idx] >= 0;
+                    if !prevented
+                        && !occupied
+                        && player.baton_source_slots.contains(&slot_idx)
+                    {
+                        receiver.add_action((ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as usize);
+                    }
+                }
                 return;
             }
             ChoiceType::SelectLiveSlot => {
@@ -719,6 +712,40 @@ impl ResponseGenerator {
 }
 
 impl ResponseGenerator {
+    fn select_mode_branch_head(
+        pi: &PendingInteraction,
+        ability: &Ability,
+        mode_idx: usize,
+    ) -> Option<crate::core::logic::models::AbilityFrame> {
+        if let Some(frames) = ability.get_modal_option_frames(mode_idx) {
+            if let Some(frame) = frames
+                .into_iter()
+                .find(|frame| !matches!(frame.opcode(), O_NOP | O_RETURN))
+            {
+                return Some(frame);
+            }
+        }
+
+        let frames = ability.frames();
+        let select_idx = pi.ctx.program_counter as usize;
+        if select_idx >= frames.len() || frames[select_idx].opcode() != O_SELECT_MODE {
+            return None;
+        }
+
+        let branch_offset_idx = select_idx + 1 + mode_idx;
+        if branch_offset_idx >= frames.len() {
+            return None;
+        }
+
+        let target_idx =
+            select_idx + 2 + mode_idx + frames[branch_offset_idx].raw_value().max(0) as usize;
+        frames
+            .iter()
+            .skip(target_idx)
+            .find(|frame| !matches!(frame.opcode(), O_NOP | O_RETURN))
+            .cloned()
+    }
+
     fn generate_look_and_choose_actions<R: ActionReceiver + ?Sized>(
         &self,
         db: &CardDatabase,
@@ -796,7 +823,9 @@ impl ResponseGenerator {
                 }
             }
             ChoiceType::SelectStage => {
-                add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |_| true);
+                for i in 0..3 {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
             }
             ChoiceType::SelectLiveSlot => {
                 add_indexed_actions(
@@ -918,16 +947,20 @@ impl ResponseGenerator {
         if (pi.choice_type == ChoiceType::TapMSelect || is_targeted_select_member_cost)
             && filter_only == 0
         {
-            add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
-                player.stage[i] >= 0
-            });
+            for i in 0..3 {
+                if player.stage[i] >= 0 {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
             add_optional_done(receiver);
             return;
         }
         if is_targeted_select_member_cost {
-            add_stage_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
-                player.stage[i] >= 0
-            });
+            for i in 0..3 {
+                if player.stage[i] >= 0 {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                }
+            }
             add_optional_done(receiver);
             return;
         }
@@ -1050,40 +1083,17 @@ impl ResponseGenerator {
                 };
 
                 if let Some(ab) = abs.get(ab_idx_real) {
-                    if let Some(option_frames) = ab.get_modal_option_frames(i as usize) {
-                        if let Some(first_frame) = option_frames.first() {
-                            option_valid = match first_frame.opcode() {
-                                O_PAY_ENERGY => {
-                                    let player = &state.players[p_idx];
-                                    let available = player.energy_zone.len() as i32
-                                        - player.tapped_energy_count() as i32;
-                                    available >= first_frame.value()
-                                }
-                                O_MOVE_TO_DISCARD => {
-                                    let source_zone = first_frame.dslot().source_zone;
-                                    let available = match source_zone {
-                                        Zone::Hand => state.players[p_idx].hand.len() as i32,
-                                        Zone::Stage => state.players[p_idx]
-                                            .stage
-                                            .iter()
-                                            .filter(|&&c| c >= 0)
-                                            .count() as i32,
-                                        Zone::LiveSet | Zone::SuccessPile => {
-                                            state.players[p_idx].success_lives.len() as i32
-                                        }
-                                        Zone::Energy => state.players[p_idx].energy_zone.len()
-                                            as i32,
-                                        Zone::Deck
-                                        | Zone::DeckTop
-                                        | Zone::DeckBottom
-                                        | Zone::Default => state.players[p_idx].deck.len() as i32,
-                                        _ => 0,
-                                    };
-                                    available >= first_frame.value()
-                                }
-                                _ => true,
-                            };
-                        }
+                    if let Some(first_frame) = Self::select_mode_branch_head(pi, ab, i as usize) {
+                        option_valid = match first_frame.opcode() {
+                            O_PAY_ENERGY => {
+                                let player = &state.players[p_idx];
+                                let available = player.energy_zone.len() as i32
+                                    - player.tapped_energy_count() as i32;
+                                available >= first_frame.value()
+                            }
+                            O_MOVE_TO_DISCARD => true,
+                            _ => true,
+                        };
                     }
                 }
             }

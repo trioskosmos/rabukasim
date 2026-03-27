@@ -24,10 +24,10 @@ pub fn handle_play_member_from_hand(
         ctx.v_remaining
     };
 
-    if remaining == 2 {
-        if ctx.choice_index == -1 {
-            if matches!(
-                suspend_choice(
+        if remaining == 2 {
+            if ctx.choice_index == -1 {
+                if matches!(
+                    suspend_choice(
                     state,
                     db,
                     ctx,
@@ -46,6 +46,7 @@ pub fn handle_play_member_from_hand(
         }
         let h_idx = ctx.choice_index as usize;
         if h_idx < state.players[p_idx].hand.len() {
+            ctx.selected_hand_idx = h_idx as i16;
             ctx.target_slot = h_idx as i16;
             ctx.v_remaining = 1;
             ctx.choice_index = -1;
@@ -55,6 +56,22 @@ pub fn handle_play_member_from_hand(
         if ctx.choice_index == -1 {
             let mut next_ctx = ctx.clone();
             next_ctx.player_id = p_idx as u8;
+            if ctx.selected_hand_idx >= 0 {
+                let chosen_card_id = state.players[p_idx]
+                    .hand
+                    .get(ctx.selected_hand_idx as usize)
+                    .copied()
+                    .unwrap_or(-1);
+                next_ctx.target_card_id = chosen_card_id;
+                if chosen_card_id >= 0 {
+                    next_ctx.selected_cards = smallvec::smallvec![chosen_card_id];
+                }
+            } else if next_ctx.target_card_id < 0 {
+                if let Some(&chosen_card_id) = ctx.selected_cards.last() {
+                    next_ctx.target_card_id = chosen_card_id;
+                }
+            }
+            next_ctx.target_slot = ctx.selected_hand_idx;
             if matches!(
                 suspend_choice(
                     state,
@@ -76,7 +93,7 @@ pub fn handle_play_member_from_hand(
 
         let slot_idx = ctx.choice_index as usize;
         if slot_idx < 3 {
-            let h_idx = ctx.target_slot as usize;
+            let h_idx = ctx.selected_hand_idx as usize;
             return state_member_play_resolve::finalize_play_member_from_hand(
                 state, db, ctx, p_idx, h_idx, slot_idx,
             );

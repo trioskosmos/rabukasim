@@ -5,16 +5,16 @@ if TYPE_CHECKING:
 
 
 def _describe_ability(ability: "Ability") -> str:
-    sparse = getattr(ability, "frame_program", None) or getattr(ability, "sparse_frame_index", None)
-    if isinstance(sparse, dict):
-        pseudocode = sparse.get("pseudocode")
+    frame_program = getattr(ability, "frame_program", None)
+    if isinstance(frame_program, dict):
+        pseudocode = frame_program.get("pseudocode")
         if pseudocode:
             return str(pseudocode)
 
-        frames = sparse.get("frames")
-        if isinstance(frames, list) and frames:
+        instructions = frame_program.get("instructions")
+        if isinstance(instructions, list) and instructions:
             parts = []
-            for frame in frames[:4]:
+            for frame in instructions[:4]:
                 if isinstance(frame, dict):
                     decoded = frame.get("decoded") or frame.get("op") or frame.get("opcode")
                     if decoded:

@@ -14,6 +14,7 @@
 //! ## State-Action Integrity:
 //! The `GameState` is designed to be highly serializable. It works in tandem with
 //! the `interpreter` to resolve complex card effects while maintaining state consistency.
+//!
 
 // use rand::SeedableRng;
 // use rand::rngs::SmallRng;
@@ -67,6 +68,9 @@ impl GameState {
     }
 
     pub fn sync_cached_stats(&mut self, db: &CardDatabase, p_idx: usize) {
+        if !self.ui.silent {
+            self.log(format!("Rule 3.3.1 (9.6, 9.7): Syncing cached member attributes on Stage for Player {}.", p_idx));
+        }
         let mut total_hearts = HeartBoard::default();
         let mut total_blades = 0;
         let mut slot_blades = [0u32; 3];
@@ -118,12 +122,23 @@ impl GameState {
                 self.resolve_deck_refresh(player_idx);
             }
             if let Some(card_id) = self.players[player_idx].pop_deck_card() {
+                if !self.ui.silent {
+                    self.log(format!("Rule 4.10.2 (4.1.2, Q40): Player {} draws card ID {}.", player_idx, card_id));
+                }
                 self.players[player_idx].draw_hand_card(card_id, t);
+            } else {
+                if !self.ui.silent {
+                    self.log(format!("Rule 10.5.1: Player {} cannot draw from empty deck. Game Over.", player_idx));
+                }
+                break;
             }
         }
     }
 
     pub fn draw_energy_cards(&mut self, player_idx: usize, count: i32) {
+        if !self.ui.silent && count > 0 {
+            self.log(format!("Rule 5.7.1 (4.1.4, 4.3.1, 4.10): Player {} draws {} energy cards from Energy Deck to Energy Area.", player_idx, count));
+        }
         for _ in 0..count {
             if let Some(cid) = self.core.players[player_idx].energy_deck.pop() {
                 self.core.players[player_idx].push_energy_card(cid, false);
@@ -133,13 +148,16 @@ impl GameState {
 
     pub fn pay_energy(&mut self, player_idx: usize, count: i32) {
         let mut paid = 0;
-        let player = &mut self.core.players[player_idx];
-        for i in 0..player.energy_zone.len() {
+        let energy_len = self.core.players[player_idx].energy_zone.len();
+        for i in 0..energy_len {
             if paid >= count {
                 break;
             }
-            if !player.is_energy_tapped(i) {
-                player.set_energy_tapped(i, true);
+            if !self.core.players[player_idx].is_energy_tapped(i) {
+                self.core.players[player_idx].set_energy_tapped(i, true);
+                if !self.ui.silent {
+                    self.log(format!("Rule 2.11.1 (4.1.4, 5.5.1.1): Energy Card at index {} for player {} is now tapped [レスト].", i, player_idx));
+                }
                 paid += 1;
             }
         }
@@ -147,13 +165,16 @@ impl GameState {
 
     pub fn activate_energy(&mut self, player_idx: usize, count: i32) {
         let mut activated = 0;
-        let player = &mut self.core.players[player_idx];
-        for i in 0..player.energy_zone.len() {
+        let energy_len = self.core.players[player_idx].energy_zone.len();
+        for i in 0..energy_len {
             if activated >= count {
                 break;
             }
-            if player.is_energy_tapped(i) {
-                player.set_energy_tapped(i, false);
+            if self.core.players[player_idx].is_energy_tapped(i) {
+                self.core.players[player_idx].set_energy_tapped(i, false);
+                if !self.ui.silent {
+                    self.log(format!("Rule 2.11.2 (4.1.4, 5.8.1): Energy Card at index {} for player {} is now active [アクティブ].", i, player_idx));
+                }
                 activated += 1;
             }
         }
@@ -232,6 +253,10 @@ impl GameState {
     ) {
         let was_tapped = self.core.players[player_idx].is_tapped(slot_idx);
         self.core.players[player_idx].set_tapped(slot_idx, tapped);
+        if !self.ui.silent && tapped != was_tapped {
+            let state_str = if tapped { "tapped [レスト]" } else { "untapped [アクティブ]" };
+            self.log(format!("Rule 2.11 (2.10.1, 2.14.1): Member in Slot {} changed orientation to {}.", slot_idx + 1, state_str));
+        }
 
         // When member becomes tapped (not untapped), trigger ON_MEMBER_TAP abilities on opponent
         if tapped && !was_tapped {

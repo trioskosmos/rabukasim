@@ -214,10 +214,15 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
         details = format!(" ({})", desc);
     }
 
-    let a_hex = if a != 0 {
-        format!("0x{:012X}", a)
+    let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
+        let attr_desc = describe_filter_attr(DecodedFilterAttr::decode(a));
+        if attr_desc == "-" {
+            "-".to_string()
+        } else {
+            format!("[{}]", attr_desc)
+        }
     } else {
-        "0".to_string()
+        "-".to_string()
     };
 
     // Check if the opcode might have a target slot in `s`
@@ -226,82 +231,6 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
         "S:{:?}/{} -> D:{:?}/{}",
         slot.source_zone, slot.target_slot, slot.dest_zone, slot.area_idx
     );
-
-    // Filter decoding if 'a' is non-zero and we are not in a NOP/RETURN op
-    let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
-        let f = crate::core::logic::filter::CardFilter::from_attr(a);
-        let mut f_parts = Vec::new();
-
-        // Basic Type/Player info
-        match f.target_player {
-            1 => f_parts.push("Self".to_string()),
-            2 => f_parts.push("Opponent".to_string()),
-            3 => f_parts.push("Both".to_string()),
-            _ => {}
-        }
-
-        match f.card_type {
-            1 => f_parts.push("Member".to_string()),
-            2 => f_parts.push("Live".to_string()),
-            3 => f_parts.push("Energy".to_string()),
-            _ => {}
-        }
-
-        // Zone info
-        if f.zone_mask > 0 {
-            let zone_name = match f.zone_mask {
-                4 => "Stage",
-                6 => "Hand",
-                7 => "Discard",
-                13 => "Success",
-                _ => "OtherZone",
-            };
-            f_parts.push(format!("Zone:{}", zone_name));
-        }
-
-        // Identity
-        if f.char_id_1 > 0 {
-            f_parts.push(format!("Char:{}", f.char_id_1));
-        }
-        if f.group_enabled {
-            f_parts.push(format!("Group:{}", f.group_id));
-        }
-        if f.unit_enabled {
-            f_parts.push(format!("Unit:{}", f.unit_id));
-        }
-
-        // Status/Values
-        if f.is_tapped {
-            f_parts.push("Tapped".to_string());
-        }
-        if f.has_blade_heart {
-            f_parts.push("HasBlade".to_string());
-        }
-        if f.not_has_blade_heart {
-            f_parts.push("NoBlade".to_string());
-        }
-        if f.value_enabled {
-            f_parts.push(format!(
-                "V{}{}",
-                if f.is_le { "<=" } else { ">=" },
-                f.value_threshold
-            ));
-        }
-        if f.color_mask > 0 {
-            f_parts.push(format!("Color:0x{:X}", f.color_mask));
-        }
-        if f.is_optional {
-            f_parts.push("Optional".to_string());
-        }
-
-        if f_parts.is_empty() {
-            a_hex
-        } else {
-            format!("[{}]", f_parts.join(","))
-        }
-    } else {
-        a_hex
-    };
 
     format!(
         "{:<15} | v:{:<4} a:{:<25} s:{:<15}{}",
@@ -556,7 +485,7 @@ pub fn describe_frame_semantics(
         .unwrap_or("System");
 
     format!(
-        "card={} {} raw[a={},s={}] filter=[{}] slot=[{}] params=[{}] {} {}",
+        "card={} {} filter=[{}] slot=[{}] params=[{}] {} {}",
         card_name,
         describe_trace_step(
             frame.opcode,
@@ -565,8 +494,6 @@ pub fn describe_frame_semantics(
             frame.raw_slot,
             frame.is_negated
         ),
-        frame.raw_attr,
-        frame.raw_slot,
         describe_filter_attr(DecodedFilterAttr::decode(frame.filter.to_attr() as i64)),
         describe_slot(frame.slot),
         describe_params(frame.params),

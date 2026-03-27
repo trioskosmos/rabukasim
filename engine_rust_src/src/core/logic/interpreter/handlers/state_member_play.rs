@@ -8,6 +8,9 @@ mod state_member_play_hand;
 #[path = "state_member_play_resolve.rs"]
 mod state_member_play_resolve;
 
+pub use state_member_play_resolve::finalize_play_member_from_hand;
+pub use state_member_play_resolve::finalize_play_member_from_discard;
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_hand(
     state: &mut GameState,

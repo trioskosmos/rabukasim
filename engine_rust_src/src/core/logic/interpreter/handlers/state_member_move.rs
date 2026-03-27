@@ -161,6 +161,9 @@ pub fn handle_move_member(
     if is_optional {
         let tap_idx = tap_slot(needs_choice);
         if tap_idx < 3 && state.players[target_p_idx].stage[tap_idx] >= 0 {
+            if !state.ui.silent {
+                state.log(format!("Rule 11.9, Rule 11.9.1: Tapping member as part of [ポジションチェンジ] (Position Change) for Player {}.", target_p_idx));
+            }
             state.players[target_p_idx].set_tapped(tap_idx, true);
         }
         ctx.v_remaining = -1;
@@ -168,6 +171,9 @@ pub fn handle_move_member(
     }
 
     if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {
+        if !state.ui.silent {
+            state.log("Rule 11.9, Rule 11.9.1, Rule 11.9.2: Performing [ポジションチェンジ] (Position Change).".to_string());
+        }
         let src_cid = state.players[target_p_idx].stage[src_slot];
         if src_cid >= 0 {
             let dst_cid = state.players[target_p_idx].stage[dst_slot];

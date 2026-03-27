@@ -176,8 +176,6 @@ pub fn resolve_count(
 
         let filter = CardFilter::from_attr(filter_attr as i64);
 
-        let filter = CardFilter::from_attr(filter_attr as i64);
-
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
             for (id, slot) in ids {

@@ -109,7 +109,8 @@ impl CardFilter {
                         || player.energy_zone.iter().any(|&card_id| card_id == cid)
                         || player.success_lives.iter().any(|&card_id| card_id == cid)
                         || player.live_zone.iter().any(|&card_id| card_id == cid)
-                        || player.yell_cards.iter().any(|&card_id| card_id == cid);
+                        || player.yell_cards.iter().any(|&card_id| card_id == cid)
+                        || player.looked_cards.iter().any(|&card_id| card_id == cid);
                     if owns_card {
                         Some(p_idx as u8)
                     } else {

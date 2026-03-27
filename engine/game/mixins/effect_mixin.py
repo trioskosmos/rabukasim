@@ -112,9 +112,7 @@ class EffectMixin:
         p = self.players[player_id]
         cid = context.get("card_id", -1)
         self.current_resolving_ability = ability
-        self.current_resolving_ability_frame = getattr(ability, "frame_program", None) or getattr(
-            ability, "sparse_frame_index", None
-        )
+        self.current_resolving_ability_frame = getattr(ability, "frame_program", None)
         area = context.get("area", -1)
         if area >= 0 and p.stage[area] >= 0:
             cid = p.stage[area]

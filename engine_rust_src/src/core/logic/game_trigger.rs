@@ -29,6 +29,50 @@ pub(super) fn resolution_trigger_matches_context(
         .unwrap_or(true)
 }
 
+fn build_trigger_context(
+    state: &GameState,
+    p_idx: usize,
+    source_cid: i32,
+    slot: i16,
+    trigger: TriggerType,
+    choice: i16,
+) -> AbilityContext {
+    let mut ctx = AbilityContext {
+        player_id: p_idx as u8,
+        activator_id: p_idx as u8,
+        source_card_id: source_cid,
+        area_idx: slot,
+        trigger_type: trigger,
+        choice_index: choice,
+        auto_pick: false,
+        ..Default::default()
+    };
+    let (origin_phase, origin_current_player) = super::interpreter::capture_response_origin(state);
+    ctx.capture_state_raw(origin_phase, origin_current_player);
+    ctx
+}
+
+fn ability_from_db<'a>(
+    db: &'a CardDatabase,
+    cid: i32,
+    is_live: bool,
+    ab_idx: usize,
+) -> Option<&'a super::models::Ability> {
+    if is_live {
+        db.get_live(cid)?.abilities.get(ab_idx)
+    } else {
+        db.get_member(cid)?.abilities.get(ab_idx)
+    }
+}
+
+fn card_name_from_db<'a>(db: &'a CardDatabase, cid: i32, is_live: bool) -> Option<&'a str> {
+    if is_live {
+        db.get_live(cid).map(|card| card.name.as_str())
+    } else {
+        db.get_member(cid).map(|card| card.name.as_str())
+    }
+}
+
 impl GameState {
     pub fn process_trigger_queue(&mut self, db: &CardDatabase) {
         if self.core.trigger_depth > 0 {
@@ -130,10 +174,12 @@ impl GameState {
         is_live: bool,
         trigger: TriggerType,
     ) {
-        println!(
-            "[DEBUG] Enqueueing trigger: {:?} for cid={}, ab_idx={}",
-            trigger, cid, ab_idx
-        );
+        if !self.ui.silent {
+            self.log(format!(
+                "Rule 9.7.3: Automatic ability wait state: Trigger {:?} queued for cid={}, ab_idx={}",
+                trigger, cid, ab_idx
+            ));
+        }
         self.core
             .trigger_queue
             .push_back((cid, ab_idx, ctx, is_live, trigger));
@@ -150,19 +196,7 @@ impl GameState {
         start_ab_idx: usize,
         choice: i16,
     ) {
-        let mut ctx = AbilityContext {
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            source_card_id: source_cid,
-            area_idx: slot,
-            trigger_type: trigger,
-            choice_index: choice,
-            auto_pick: false,
-            ..Default::default()
-        };
-        let (origin_phase, origin_current_player) =
-            super::interpreter::capture_response_origin(self);
-        ctx.capture_state_raw(origin_phase, origin_current_player);
+        let ctx = build_trigger_context(self, p_idx, source_cid, slot, trigger, choice);
         self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
     }
 
@@ -178,18 +212,7 @@ impl GameState {
         let cp = self.current_player as usize;
         for i in 0..2 {
             let p_idx = (cp + i) % 2;
-            let mut ctx = AbilityContext {
-                player_id: p_idx as u8,
-                activator_id: p_idx as u8,
-                source_card_id: source_cid,
-                area_idx: slot,
-                trigger_type: trigger,
-                choice_index: choice,
-                ..Default::default()
-            };
-            let (origin_phase, origin_current_player) =
-                super::interpreter::capture_response_origin(self);
-            ctx.capture_state_raw(origin_phase, origin_current_player);
+            let ctx = build_trigger_context(self, p_idx, source_cid, slot, trigger, choice);
             self.trigger_abilities_from(db, trigger, &ctx, start_ab_idx);
         }
     }
@@ -285,93 +308,42 @@ impl GameState {
             ab_ctx.source_card_id = cid;
             ab_ctx.ability_index = ab_idx as i16;
 
-            let (ability, conditions, _pseudocode) = if is_live {
-                let ab = &db.get_live(def_cid).unwrap().abilities[ab_idx as usize];
-                (ab, &ab.conditions, &ab.pseudocode)
-            } else {
-                let ab = &db.get_member(def_cid).unwrap().abilities[ab_idx as usize];
-                (ab, &ab.conditions, &ab.pseudocode)
+            let Some(ability) = ability_from_db(db, def_cid, is_live, ab_idx as usize) else {
+                continue;
             };
-            let frames = ability.frames();
-
+            let conditions = &ability.conditions;
             // Unified logging: TRIGGER events now go to both turn_history and rule_log
-            let card_name = if is_live {
-                db.get_live(cid).unwrap().name.clone()
-            } else {
-                db.get_member(cid).unwrap().name.clone()
-            };
+            let card_name = card_name_from_db(db, cid, is_live).unwrap_or("Unknown");
             let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
             self.log_event(
                 "TRIGGER",
-                &format!("[{}] Triggered for {}", trigger_str, card_name),
+                &format!(
+                    "Rule 9.7.1 (Q221): [{}] Trigger condition met for {}. (Ability is queued for resolution even if source leaves zone later).",
+                    trigger_str, card_name
+                ),
                 cid,
                 ab_idx as i16,
                 p_idx as u8,
                 None,
-                true, // Also log to rule_log for visibility
+                true,
             );
 
-            let costs = if is_live {
-                &db.get_live(def_cid).unwrap().abilities[ab_idx as usize].costs
-            } else {
-                &db.get_member(def_cid).unwrap().abilities[ab_idx as usize].costs
-            };
+            let costs = &ability.costs;
 
             let skip_precheck_for_compensation =
                 is_live && should_skip_inline_live_precheck(ability);
 
-            // Check conditions before resolving the semantic frame sequence
+            // Trigger enqueueing only prechecks top-level authored conditions.
+            // Inline frame conditions are branch/control-flow logic and must be
+            // evaluated by the interpreter in sequence rather than flattened here.
             let mut all_met = true;
             if !skip_precheck_for_compensation {
-                if frames.is_empty() {
-                    for cond in conditions {
-                        if !super::interpreter::conditions::check_condition(
-                            self, db, p_idx, cond, &ab_ctx, 1,
-                        ) {
-                            all_met = false;
-                            break;
-                        }
-                    }
-                } else {
-                    let mut saw_condition = false;
-                    for frame in &frames {
-                        let frame_data = frame.components();
-                        let has_raw_condition = frame_data
-                            .params
-                            .and_then(|value| value.as_object())
-                            .map(|params| {
-                                params.get("raw_cond").is_some() || params.get("RAW_COND").is_some()
-                            })
-                            .unwrap_or(false);
-                        let is_condition = has_raw_condition
-                            || (frame_data.opcode
-                                >= crate::core::logic::constants::CONDITION_START_1
-                                && frame_data.opcode
-                                    <= crate::core::logic::constants::CONDITION_END_1)
-                            || (frame_data.opcode
-                                >= crate::core::logic::constants::CONDITION_START_2
-                                && frame_data.opcode
-                                    <= crate::core::logic::constants::CONDITION_END_2);
-
-                        if !is_condition {
-                            if saw_condition {
-                                break;
-                            }
-                            continue;
-                        }
-
-                        saw_condition = true;
-                        let passed = super::interpreter::conditions::check_condition_frame(
-                            self,
-                            db,
-                            &frame_data,
-                            &ab_ctx,
-                            1,
-                        );
-                        if !passed {
-                            all_met = false;
-                            break;
-                        }
+                for cond in conditions {
+                    if !super::interpreter::conditions::check_condition(
+                        self, db, p_idx, cond, &ab_ctx, 1,
+                    ) {
+                        all_met = false;
+                        break;
                     }
                 }
             }

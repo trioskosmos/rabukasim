@@ -60,7 +60,7 @@ pub fn handle_set_tapped(
                 ctx,
                 ctx,
                 frame_idx,
-                O_SET_TAPPED,
+                crate::core::O_SET_TAPPED,
                 resolved_slot as i32,
                 ChoiceType::Optional,
                 frame_data.raw_attr,
@@ -89,6 +89,13 @@ pub fn handle_set_tapped(
     };
 
     if let Some(slot) = tap_slot {
+        if !state.ui.silent {
+            if should_tap {
+                state.log(format!("Rule 5.1, Rule 5.1.1: [メンバーをアピール済みにする] (Tapping) Member at Player {} Slot {}.", p_idx, slot + 1));
+            } else {
+                state.log(format!("Rule 5.2, Rule 5.2.1: [メンバーをアピール済みから元に戻す] (Untapping) Member at Player {} Slot {}.", p_idx, slot + 1));
+            }
+        }
         state.players[p_idx].set_tapped(slot, should_tap);
     }
 
@@ -126,7 +133,7 @@ pub fn handle_tap_opponent(
             &choice_ctx,
             &choice_ctx,
             frame_idx,
-            O_TAP_OPPONENT,
+            crate::core::O_TAP_OPPONENT,
             0,
             ChoiceType::TapO,
             a as u64,
@@ -151,7 +158,7 @@ pub fn handle_tap_opponent(
                     &choice_ctx,
                     &choice_ctx,
                     frame_idx,
-                    O_TAP_OPPONENT,
+                    crate::core::O_TAP_OPPONENT,
                     0,
                     ChoiceType::TapO,
                     a as u64,

@@ -63,8 +63,8 @@ fn test_meta_rule_pl_sp_bp1_024_l_heart_buffs() {
     state.players[0].live_zone[0] = card_id;
 
     // Setup: Place Kanon and Keke on stage
-    let kanon_id = find_member_by_name(&db, "澁谷かのん").unwrap_or(100);
-    let keke_id = find_member_by_name(&db, "唐可可").unwrap_or(101);
+    let kanon_id = find_card_id(&db, "PL!SP-PR-003-PR");
+    let keke_id = find_card_id(&db, "PL!SP-PR-004-PR");
     state.players[0].stage[0] = kanon_id;
     state.players[0].stage[1] = keke_id;
 
@@ -118,8 +118,8 @@ fn test_meta_rule_pl_sp_bp1_024_l_live_success_draw() {
     let card_id = find_card_id(&db, "PL!SP-bp1-024-L");
 
     // Setup: Place Kanon and Keke on stage
-    let kanon_id = find_member_by_name(&db, "澁谷かのん").unwrap_or(100);
-    let keke_id = find_member_by_name(&db, "唐可可").unwrap_or(101);
+    let kanon_id = find_card_id(&db, "PL!SP-PR-003-PR");
+    let keke_id = find_card_id(&db, "PL!SP-PR-004-PR");
     state.players[0].stage[0] = kanon_id;
     state.players[0].stage[1] = keke_id;
     state.players[0].live_zone[0] = card_id;
@@ -158,7 +158,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_no_draw_without_both() {
     let card_id = find_card_id(&db, "PL!SP-bp1-024-L");
 
     // Setup: Only Kanon on stage (no Keke)
-    let kanon_id = find_member_by_name(&db, "澁谷かのん").unwrap_or(100);
+    let kanon_id = find_card_id(&db, "PL!SP-PR-003-PR");
     state.players[0].stage[0] = kanon_id;
     state.players[0].stage[1] = -1; // Empty slot
     state.players[0].live_zone[0] = card_id;

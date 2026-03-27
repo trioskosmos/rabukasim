@@ -107,6 +107,7 @@ impl HandlerRegistry {
         // Centralized Dispatch Match
 
         match op {
+            O_NOP => choice_prompt::handle_optional_nop(state, db, ctx, frame, frame_idx),
             O_SELECT_MODE => {
                 select_mode::handle_select_mode(state, db, ctx, frame, frame_idx, frames)
             }

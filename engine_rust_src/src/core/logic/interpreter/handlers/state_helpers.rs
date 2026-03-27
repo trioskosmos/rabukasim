@@ -77,6 +77,16 @@ pub fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Opt
                 .find(|ability| ability.raw_text.contains("VALUE_GE("))
         })?;
 
+    let has_structured_branching = ability.frames().iter().any(|frame| {
+        let opcode = frame.opcode();
+        opcode == crate::core::enums::O_JUMP_IF_FALSE
+            || opcode == crate::core::enums::O_JUMP
+            || crate::core::logic::interpreter::is_condition_opcode(opcode)
+    });
+    if has_structured_branching {
+        return None;
+    }
+
     let raw_text = ability.raw_text.as_str();
     let marker = "VALUE_GE(";
     let start = raw_text.find(marker)? + marker.len();

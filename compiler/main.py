@@ -33,8 +33,8 @@ from engine.models.ability import (
     TargetType,
     TriggerType,
 )
-from engine.models.structured_instruction_ir import SEMANTIC_FORM_VERSION
 from engine.models.card import EnergyCard, LiveCard, MemberCard
+from engine.models.ability_frames import frame_program_instructions, normalize_frame
 from engine.models.enums import CHAR_MAP, Unit
 from engine.models.opcodes import Opcode
 from tools import frame_codec
@@ -71,6 +71,33 @@ def _coerce_enum(enum_cls: Any, v: Any, default: Any) -> Any:
 
 def _dict_or_empty(v: Any) -> dict:
     return v if isinstance(v, dict) else {}
+
+
+def _compact_frame_program(frame_program: Any) -> dict[str, Any]:
+    compacted: list[dict[str, Any]] = []
+    for idx, frame in enumerate(frame_program_instructions(frame_program)):
+        compacted.append(normalize_frame(frame, idx))
+    return {"instructions": compacted}
+
+
+def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(card_dump, dict):
+        return card_dump
+
+    abilities = card_dump.get("abilities")
+    if isinstance(abilities, list):
+        compacted_abilities = []
+        for ability in abilities:
+            if not isinstance(ability, dict):
+                compacted_abilities.append(ability)
+                continue
+            compacted_ability = dict(ability)
+            if "frame_program" in compacted_ability:
+                compacted_ability["frame_program"] = _compact_frame_program(compacted_ability["frame_program"])
+            compacted_abilities.append(compacted_ability)
+        card_dump["abilities"] = compacted_abilities
+
+    return card_dump
 
 
 def _init_worker(ability_cache: dict[str, dict[str, Any]], sparse_mapping: dict, manual_translations: dict):
@@ -126,10 +153,14 @@ def _process_card_worker(args):
         if ctype == "メンバー":
             card = parse_member(packed_id, card_no, item, export_profile=export_profile)
             dumped = _MEMBER_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
+            if export_profile == "runtime":
+                dumped = _compact_runtime_card_dump(dumped)
             return ("member", str(packed_id), dumped, None)
         elif ctype == "ライブ":
             card = parse_live(packed_id, card_no, item, export_profile=export_profile)
             dumped = _LIVE_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
+            if export_profile == "runtime":
+                dumped = _compact_runtime_card_dump(dumped)
             return ("live", str(packed_id), dumped, None)
         else:
             card = parse_energy(packed_id, card_no, item)
@@ -140,7 +171,7 @@ def _process_card_worker(args):
         return (None, card_no, None, f"[CARD PARSE] {card_no}: {e}\n{traceback.format_exc()}")
 
 
-def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "full"):
+def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "runtime"):
     if not quiet:
         print(f"Loading raw cards from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
@@ -154,28 +185,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
-            "source_files": {
-                "cards": input_path,
-                "ability_frames": str(ABILITY_FRAME_SOURCE_PATH),
-                "ability_index": "data/ability_frame_index.json",
-                "metadata": "data/metadata.json",
-                "card_id_mapping": "data/card_id_mapping.json",
-            },
             "execution_model": "frame_program_only",
-            "documentation": {
-                "purpose": "Compiled card database used by the engine and debug tools.",
-                "read_first": "Abilities are instruction-list based. If the instruction list looks empty, inspect frame_program.instructions and frame_count instead.",
-                "related_files": {
-                    "data/cards.json": "Authored card source",
-                    "data/ability_frame_index.yaml": "Authored frame source",
-                    "data/ability_frame_index.json": "Normalized frame index",
-                    "data/metadata.json": "Opcode, slot, and filter metadata",
-                    "data/card_id_mapping.json": "Stable card ID mapping",
-                },
-            },
-            "semantic_form_version": SEMANTIC_FORM_VERSION,
-            "semantic_form_enabled": export_profile != "runtime",
-            "export_profile": export_profile,
         },
     }
 
@@ -342,8 +352,18 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         _init_worker(*init_args)
         results = [_process_card_worker(args) for args in worker_args]
     else:
-        with multiprocessing.Pool(processes=worker_count, initializer=_init_worker, initargs=init_args) as pool:
-            results = pool.map(_process_card_worker, worker_args)
+        try:
+            with multiprocessing.Pool(
+                processes=worker_count, initializer=_init_worker, initargs=init_args
+            ) as pool:
+                results = pool.map(_process_card_worker, worker_args)
+        except (OSError, PermissionError, RuntimeError) as exc:
+            if not quiet:
+                print(
+                    f"Warning: multiprocessing unavailable ({exc}); falling back to single-worker compilation."
+                )
+            _init_worker(*init_args)
+            results = [_process_card_worker(args) for args in worker_args]
         
     for res_type, pk, data, err in results:
         if err:
@@ -751,27 +771,35 @@ SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
-def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ability:
+def _build_ability_from_sparse_entry(
+    entry: dict[str, Any],
+    raw_text: str,
+    ability_index: int,
+    legacy_payload: dict[str, Any] | None = None,
+) -> Ability:
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
     instructions = list(entry.get("instructions", entry.get("frames", [])) or [])
-    ability = _ability_from_dict(
-        {
-            "trigger": trigger_id,
-            "effects": entry.get("effects", []),
-            "conditions": entry.get("conditions", []),
-            "costs": entry.get("costs", []),
-            "is_once_per_turn": entry.get("is_once_per_turn", False),
-            "requires_selection": entry.get("requires_selection", False),
-            "choice_flags": entry.get("choice_flags", 0),
-            "choice_count": entry.get("choice_count", 0),
-            "modal_options": entry.get("modal_options", []),
-            "option_names": entry.get("option_names", []),
-            "pseudocode": entry.get("pseudocode", ""),
-            "filters": entry.get("filters", []),
-            "frame_program": {"instructions": instructions},
-        }
+    ability_raw_text = _select_ability_raw_text(raw_text, ability_index, entry)
+    payload = dict(legacy_payload or {})
+    payload["trigger"] = trigger_id
+    payload["is_once_per_turn"] = entry.get(
+        "is_once_per_turn", payload.get("is_once_per_turn", False)
     )
-    ability.raw_text = raw_text
+    payload["requires_selection"] = entry.get(
+        "requires_selection", payload.get("requires_selection", False)
+    )
+    payload["choice_flags"] = entry.get("choice_flags", payload.get("choice_flags", 0))
+    payload["choice_count"] = entry.get("choice_count", payload.get("choice_count", 0))
+    payload["modal_options"] = entry.get("modal_options", payload.get("modal_options", []))
+    payload["option_names"] = entry.get("option_names", payload.get("option_names", []))
+    payload["pseudocode"] = entry.get("pseudocode", payload.get("pseudocode", ""))
+    payload["filters"] = entry.get("filters", payload.get("filters", []))
+    ability = _ability_from_dict(payload)
+    ability.raw_text = ability_raw_text
+    if not ability.costs:
+        inferred_costs = _infer_activation_costs_from_raw_text(ability_raw_text)
+        if inferred_costs:
+            ability.costs = inferred_costs
     ability.frame_program = {"instructions": instructions}
     ability.frame_count = len(instructions)
     try:
@@ -779,6 +807,79 @@ def _build_ability_from_sparse_entry(entry: dict[str, Any], raw_text: str) -> Ab
     except Exception:
         pass
     return ability
+
+
+def _split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
+    """Split authored ability text into trigger-sized sections when multiple abilities share a card."""
+    if not raw_text:
+        return []
+
+    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+    if not lines:
+        return []
+
+    trigger_line = re.compile(r"^\{\{[^}]+\}\}")
+    sections: list[list[str]] = []
+    current: list[str] = []
+
+    for line in lines:
+        if trigger_line.match(line) and current:
+            sections.append(current)
+            current = [line]
+        else:
+            current.append(line)
+
+    if current:
+        sections.append(current)
+
+    return ["\n".join(section).strip() for section in sections if section]
+
+
+def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str, Any]) -> str:
+    """Select the most specific authored text for an ability before cost inference."""
+    entry_text = str(entry.get("raw_text", "") or entry.get("pseudocode", "") or "").strip()
+    if entry_text:
+        return entry_text
+
+    sections = _split_raw_text_into_ability_sections(raw_text)
+    if sections:
+        if 0 <= ability_index < len(sections):
+            return sections[ability_index]
+        if len(sections) == 1:
+            return sections[0]
+
+    return raw_text
+
+
+def _infer_activation_costs_from_raw_text(raw_text: str) -> list[Cost]:
+    """Backfill obvious activation costs from authored card text when sparse data omits them."""
+    if not raw_text:
+        return []
+
+    # Costs usually appear before the first explicit ability separator.
+    prefix = raw_text.split("：", 1)[0].split(":", 1)[0]
+    inferred: list[Cost] = []
+
+    energy_count = prefix.count("{{icon_energy.png|E}}")
+    if energy_count > 0:
+        inferred.append(
+            Cost(
+                type=AbilityCostType.ENERGY,
+                value=energy_count,
+                params={},
+            )
+        )
+
+    if "手札を1枚控え室に置く" in prefix:
+        inferred.append(
+            Cost(
+                type=AbilityCostType.DISCARD_HAND,
+                value=1,
+                params={},
+            )
+        )
+
+    return inferred
 
 
 def _card_has_ability_source(data: dict[str, Any]) -> bool:
@@ -912,6 +1013,18 @@ def _effect_from_dict(payload: dict[str, Any]) -> Effect:
     )
 
 
+def _frame_program_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    frame_program = payload.get("frame_program")
+    if isinstance(frame_program, dict):
+        return _compact_frame_program(frame_program)
+
+    instructions = payload.get("instructions", payload.get("frames", []))
+    if isinstance(instructions, list):
+        return _compact_frame_program({"instructions": list(instructions)})
+
+    return {"instructions": []}
+
+
 def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
     if not _card_has_ability_source(data):
         return []
@@ -919,6 +1032,11 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
     abilities: list[Ability] = []
     used_sparse = False
     raw_text = str(data.get("ability", data.get("original_text", "")))
+    legacy_abilities = (
+        list(data.get("abilities", []))
+        if isinstance(data.get("abilities"), list)
+        else []
+    )
 
     for ab_idx in range(10):
         entry = _sparse_manager.get_ability(card_no, ab_idx)
@@ -927,7 +1045,8 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
                 break
             continue
 
-        abilities.append(_build_ability_from_sparse_entry(entry, raw_text))
+        legacy_payload = legacy_abilities[ab_idx] if ab_idx < len(legacy_abilities) and isinstance(legacy_abilities[ab_idx], dict) else None
+        abilities.append(_build_ability_from_sparse_entry(entry, raw_text, ab_idx, legacy_payload))
         used_sparse = True
 
     if used_sparse:
@@ -1374,7 +1493,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--export-profile",
         choices=["full", "runtime"],
-        default="full",
+        default="runtime",
         help="Export schema profile: 'full' keeps inspection fields, 'runtime' prunes inspection-only fields",
     )
     args = parser.parse_args()

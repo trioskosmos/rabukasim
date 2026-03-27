@@ -1,4 +1,4 @@
-use super::common::{parse_condition_type, MAX_CONDITION_CHECK_DEPTH};
+use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
 use super::opcodes::check_condition_opcode;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
@@ -796,7 +796,7 @@ pub fn check_condition(
     if state.debug.debug_ignore_conditions {
         return true;
     }
-    if depth > MAX_CONDITION_CHECK_DEPTH {
+    if depth > CONDITION_CHECK_MAX_DEPTH {
         return false;
     }
 

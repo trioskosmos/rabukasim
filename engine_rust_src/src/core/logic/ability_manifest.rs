@@ -339,54 +339,71 @@ fn opcode_name(metadata: &Value, frame: &Value) -> String {
     "UNKNOWN".to_string()
 }
 
+fn object_field<'a>(value: &'a Value, key: &str) -> Option<&'a Value> {
+    value.get(key).and_then(|item| item.is_object().then_some(item))
+}
+
+fn frame_field<'a>(frame: &'a Value, key: &str) -> Option<&'a Value> {
+    object_field(frame, key)
+        .or_else(|| frame.get("semantic").and_then(|semantic| object_field(semantic, key)))
+}
+
+fn bool_flag(value: &Value, key: &str) -> bool {
+    value.get(key).and_then(Value::as_bool).unwrap_or(false)
+}
+
+fn semantic_value<'a>(frame: &'a Value, key: &str) -> Option<&'a Value> {
+    frame.get("semantic").and_then(|semantic| semantic.get(key))
+}
+
+fn semantic_flag(value: &Value, key: &str) -> bool {
+    semantic_value(value, key).and_then(Value::as_bool).unwrap_or(false)
+}
+
+fn semantic_text_contains(value: &Value, needle: &str) -> bool {
+    semantic_value(value, "decoded")
+        .and_then(Value::as_str)
+        .map(|decoded| decoded.to_ascii_lowercase().contains(needle))
+        .unwrap_or(false)
+}
+
 fn frame_attr(frame: &Value) -> Option<&Value> {
-    frame.get("attr").and_then(|value| value.is_object().then_some(value)).or_else(|| {
-        frame
-            .get("semantic")
-            .and_then(|semantic| semantic.get("attr"))
-            .and_then(|value| value.is_object().then_some(value))
-    })
+    frame_field(frame, "attr")
 }
 
 fn frame_slot(frame: &Value) -> Option<&Value> {
-    frame.get("slot").and_then(|value| value.is_object().then_some(value)).or_else(|| {
-        frame
-            .get("semantic")
-            .and_then(|semantic| semantic.get("slot"))
-            .and_then(|value| value.is_object().then_some(value))
-    })
+    frame_field(frame, "slot")
 }
 
 fn is_optional_frame(frame: &Value) -> bool {
-    if frame
-        .get("attr")
-        .and_then(|attr| attr.get("is_optional"))
-        .and_then(Value::as_i64)
-        .unwrap_or(0)
-        != 0
-    {
-        return true;
-    }
-
-    frame
-        .get("semantic")
-        .and_then(|semantic| semantic.get("decoded"))
-        .and_then(Value::as_str)
-        .map(|decoded| decoded.to_ascii_lowercase().contains("optional"))
-        .unwrap_or(false)
+    bool_flag(frame, "optional")
+        || frame
+            .get("filter")
+            .and_then(|filter| filter.get("is_optional"))
+            .and_then(Value::as_i64)
+            .unwrap_or(0)
+            != 0
+        || semantic_value(frame, "filter")
+            .and_then(|filter| filter.get("is_optional"))
+            .and_then(Value::as_i64)
+            .unwrap_or(0)
+            != 0
+        || frame
+            .get("attr")
+            .and_then(|attr| attr.get("is_optional"))
+            .and_then(Value::as_i64)
+            .unwrap_or(0)
+            != 0
+        || semantic_flag(frame, "optional")
+        || semantic_flag(frame, "is_optional")
+        || semantic_flag(frame, "optional_effect")
+        || semantic_text_contains(frame, "optional")
+        || semantic_text_contains(frame, "may")
+        || semantic_text_contains(frame, "もよい")
 }
 
 fn is_negated_frame(frame: &Value) -> bool {
-    frame
-        .get("is_negated")
-        .and_then(Value::as_bool)
-        .unwrap_or(false)
-        || frame.get("negated").and_then(Value::as_bool).unwrap_or(false)
-        || frame
-            .get("semantic")
-            .and_then(|semantic| semantic.get("negated"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false)
+    bool_flag(frame, "is_negated") || bool_flag(frame, "negated") || semantic_flag(frame, "negated")
 }
 
 fn friendly_zone(zone: Option<&Value>) -> String {
@@ -422,17 +439,14 @@ fn compact_value(value: &Value) -> Value {
     match value {
         Value::Object(map) => {
             let mut out = Map::new();
-            for (key, item) in map {
-                let keep = match item {
-                    Value::Null => false,
-                    Value::String(text) => !text.is_empty(),
-                    Value::Array(items) => !items.is_empty(),
-                    Value::Object(obj) => !obj.is_empty(),
-                    _ => true,
-                };
-                if keep {
-                    out.insert(key.clone(), compact_value(item));
-                }
+            for (key, item) in map.iter().filter(|(_, item)| match item {
+                Value::Null => false,
+                Value::String(text) => !text.is_empty(),
+                Value::Array(items) => !items.is_empty(),
+                Value::Object(obj) => !obj.is_empty(),
+                _ => true,
+            }) {
+                out.insert(key.clone(), compact_value(item));
             }
             Value::Object(out)
         }

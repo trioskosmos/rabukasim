@@ -1,4 +1,3 @@
-use crate::core::enums::EffectType;
 use crate::core::logic::*;
 use crate::test_helpers::{create_test_state, load_real_db};
 

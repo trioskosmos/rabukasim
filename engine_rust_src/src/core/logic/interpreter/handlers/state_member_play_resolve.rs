@@ -1,5 +1,55 @@
 use super::*;
 
+fn finish_member_play(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: usize,
+    tapped: bool,
+) -> HandlerResult {
+    if let Some(old) = state.handle_member_leaves_stage(p_idx, slot_idx, db, ctx) {
+        state.players[p_idx].push_discard_card(old);
+    }
+    state.players[p_idx].stage[slot_idx] = card_id;
+    state.players[p_idx].set_tapped(slot_idx, tapped);
+    state.players[p_idx].set_moved(slot_idx, true);
+    state.register_played_member(p_idx, card_id, db);
+
+    let new_ctx = AbilityContext {
+        source_card_id: card_id,
+        player_id: p_idx as u8,
+        activator_id: ctx.activator_id,
+        area_idx: slot_idx as i16,
+        target_slot: slot_idx as i16,
+        choice_index: -1,
+        trigger_type: TriggerType::OnPlay,
+        ..Default::default()
+    };
+
+    if !state.ui.silent {
+        state.log(format!(
+            "Rule 11.3, Rule 11.3.1, Rule 11.3.2: Broadcasting [騾具ｽｻ陜｣・ｴ] (On Play) triggers for card {}.",
+            card_id
+        ));
+    }
+
+    state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+    if !state.trigger_queue.is_empty() {
+        state.process_trigger_queue(db);
+    }
+    if !state.interaction_stack.is_empty() {
+        ctx.choice_index = -1;
+        ctx.v_remaining = 0;
+        return HandlerResult::Suspend;
+    }
+
+    ctx.choice_index = -1;
+    ctx.v_remaining = 0;
+    HandlerResult::Continue
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn finalize_play_member_from_hand(
     state: &mut GameState,
@@ -9,38 +59,32 @@ pub fn finalize_play_member_from_hand(
     h_idx: usize,
     slot_idx: usize,
 ) -> HandlerResult {
-    if h_idx >= state.players[p_idx].hand.len() || slot_idx >= 3 {
+    if slot_idx >= 3 || state.players[p_idx].is_moved(slot_idx) {
         return HandlerResult::Continue;
     }
 
-    let Some(cid) = state.players[p_idx].remove_hand_card(h_idx) else {
+    let resolved_hand_idx = if ctx.target_card_id >= 0 {
+        state.players[p_idx]
+            .hand
+            .iter()
+            .position(|&card_id| card_id == ctx.target_card_id)
+    } else if ctx.selected_hand_idx >= 0 {
+        Some(ctx.selected_hand_idx as usize)
+    } else if h_idx < state.players[p_idx].hand.len() {
+        Some(h_idx)
+    } else {
+        None
+    };
+
+    let Some(hand_idx) = resolved_hand_idx else {
         return HandlerResult::Continue;
     };
 
-    if let Some(old) = state.handle_member_leaves_stage(p_idx, slot_idx, db, ctx) {
-        state.players[p_idx].push_discard_card(old);
-    }
-    state.players[p_idx].stage[slot_idx] = cid;
-    state.players[p_idx].set_tapped(slot_idx, false);
-    state.players[p_idx].set_moved(slot_idx, true);
-    state.register_played_member(p_idx, cid, db);
+    let Some(card_id) = state.players[p_idx].remove_hand_card(hand_idx) else {
+        return HandlerResult::Continue;
+    };
 
-        let new_ctx = AbilityContext {
-            source_card_id: cid,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            area_idx: slot_idx as i16,
-            ..Default::default()
-        };
-        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-        if !state.interaction_stack.is_empty() {
-            ctx.choice_index = -1;
-            ctx.v_remaining = 0;
-            return HandlerResult::Suspend;
-        }
-    ctx.choice_index = -1;
-    ctx.v_remaining = 0;
-    HandlerResult::Continue
+    finish_member_play(state, db, ctx, p_idx, card_id, slot_idx, false)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -69,40 +113,20 @@ pub fn finalize_play_member_from_discard(
         }
     }
 
-    if let Some(pos) = state.players[target_p_idx]
+    let Some(pos) = state.players[target_p_idx]
         .discard
         .iter()
         .position(|&cid| cid == card_id)
-    {
-        let pos = pos as usize;
-        state.players[target_p_idx].remove_discard_card(pos);
-        if let Some(old) = state.handle_member_leaves_stage(target_p_idx, slot_idx, db, ctx) {
-            state.players[target_p_idx].push_discard_card(old);
-        }
-        state.players[target_p_idx].stage[slot_idx] = card_id;
-        state.players[target_p_idx].set_tapped(slot_idx, true);
-        state.players[target_p_idx].set_moved(slot_idx, true);
-        state.register_played_member(target_p_idx, card_id, db);
-        ctx.repeat_count = ctx.repeat_count.saturating_sub(1);
-        let old = state.players[target_p_idx].prevent_play_to_slot_mask();
-        state.players[target_p_idx].set_prevent_play_to_slot_mask(old | (1 << slot_idx) as u8);
+    else {
+        ctx.choice_index = -1;
+        ctx.v_remaining = 0;
+        return HandlerResult::Continue;
+    };
 
-        let new_ctx = AbilityContext {
-            source_card_id: card_id,
-            player_id: target_p_idx as u8,
-            activator_id: ctx.activator_id,
-            area_idx: slot_idx as i16,
-            ..Default::default()
-        };
-        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-        if !state.interaction_stack.is_empty() {
-            ctx.choice_index = -1;
-            ctx.v_remaining = 0;
-            return HandlerResult::Suspend;
-        }
-    }
+    state.players[target_p_idx].remove_discard_card(pos);
+    ctx.repeat_count = ctx.repeat_count.saturating_sub(1);
+    let mask = state.players[target_p_idx].prevent_play_to_slot_mask();
+    state.players[target_p_idx].set_prevent_play_to_slot_mask(mask | (1 << slot_idx) as u8);
 
-    ctx.choice_index = -1;
-    ctx.v_remaining = 0;
-    HandlerResult::Continue
+    finish_member_play(state, db, ctx, target_p_idx, card_id, slot_idx, true)
 }

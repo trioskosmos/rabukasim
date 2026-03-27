@@ -8,10 +8,13 @@ pub fn handle_discard_placement(
     db: &CardDatabase,
     ctx: &mut AbilityContext,
     target_p_idx: usize,
+    filter_attr_base: u64,
     empty_slot_only: bool,
+    baton_slot_only: bool,
     is_total_cost: bool,
     frame_idx: usize,
     remaining: i16,
+    s: i32,
 ) -> HandlerResult {
     if state.players[target_p_idx].looked_cards.is_empty() {
         return HandlerResult::Continue;
@@ -20,7 +23,28 @@ pub fn handle_discard_placement(
         return HandlerResult::Continue;
     }
 
-    let card_id = state.players[target_p_idx].looked_cards.remove(0);
+    let card_id = if ctx.target_card_id >= 0 {
+        ctx.target_card_id
+    } else {
+        state.players[target_p_idx]
+            .looked_cards
+            .first()
+            .copied()
+            .unwrap_or(-1)
+    };
+    if card_id < 0 {
+        return HandlerResult::Continue;
+    }
+
+    if let Some(pos) = state.players[target_p_idx]
+        .looked_cards
+        .iter()
+        .position(|&cid| cid == card_id)
+    {
+        state.players[target_p_idx].looked_cards.remove(pos);
+    } else {
+        return HandlerResult::Continue;
+    }
     state.players[target_p_idx].looked_cards.clear();
 
     let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
@@ -79,7 +103,20 @@ pub fn handle_discard_placement(
     };
     if should_continue {
         ctx.choice_index = -1;
-        return HandlerResult::Branch(frame_idx);
+        ctx.v_remaining = next_remaining;
+        return state_member_play_discard_select::handle_discard_selection(
+            state,
+            db,
+            ctx,
+            frame_idx,
+            target_p_idx,
+            filter_attr_base,
+            empty_slot_only,
+            baton_slot_only,
+            is_total_cost,
+            next_remaining,
+            s,
+        );
     }
 
     HandlerResult::Continue

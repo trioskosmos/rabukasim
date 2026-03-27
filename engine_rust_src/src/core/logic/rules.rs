@@ -36,6 +36,24 @@ thread_local! {
     static ON_DEMAND_AURA_QUERY: Cell<bool> = const { Cell::new(false) };
 }
 
+fn stage_card_id(state: &GameState, player_idx: usize, slot_idx: usize) -> i32 {
+    state.players[player_idx].stage[slot_idx]
+}
+
+fn iter_stage_cards(state: &GameState, player_idx: usize) -> impl Iterator<Item = (usize, i32)> + '_ {
+    (0..3).map(move |slot_idx| (slot_idx, stage_card_id(state, player_idx, slot_idx)))
+}
+
+fn stage_has_cost_13_or_more(state: &GameState, db: &CardDatabase) -> bool {
+    (0..2).any(|player_idx| {
+        state.players[player_idx]
+            .stage
+            .iter()
+            .copied()
+            .any(|cid| cid >= 0 && db.get_member(cid).map(|m| m.cost >= 13).unwrap_or(false))
+    })
+}
+
 fn ability_conditions_met(
     state: &GameState,
     db: &CardDatabase,
@@ -43,11 +61,13 @@ fn ability_conditions_met(
     ab: &Ability,
     ctx: &AbilityContext,
 ) -> bool {
-    if !ab.conditions.is_empty() {
-        return ab
+    if !ab.conditions.is_empty()
+        && !ab
             .conditions
             .iter()
-            .all(|condition| check_condition(state, db, player_idx, condition, ctx, 1));
+            .all(|condition| check_condition(state, db, player_idx, condition, ctx, 1))
+    {
+        return false;
     }
 
     let frames = ab.frames();
@@ -55,7 +75,6 @@ fn ability_conditions_met(
         return true;
     }
 
-    let mut saw_condition = false;
     for frame in &frames {
         let frame_data = frame.components();
         let has_raw_condition = frame_data
@@ -68,13 +87,9 @@ fn ability_conditions_met(
             || (frame_data.opcode >= CONDITION_START_2 && frame_data.opcode <= CONDITION_END_2);
 
         if !is_condition {
-            if saw_condition {
-                break;
-            }
             continue;
         }
 
-        saw_condition = true;
         if !check_condition_frame(state, db, &frame_data, ctx, 1) {
             return false;
         }
@@ -825,8 +840,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
     }
 
     // 1. Constant abilities from members on stage
-    for source_slot in 0..3 {
-        let cid = state.players[player_idx].stage[source_slot];
+    for (source_slot, cid) in iter_stage_cards(state, player_idx) {
         if cid < 0 {
             continue;
         }
@@ -957,7 +971,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
     // 2. Granted constant abilities from members on stage or in live zone
     for slot_idx in 0..6 {
         let cid = if slot_idx < 3 {
-            state.players[player_idx].stage[slot_idx]
+            stage_card_id(state, player_idx, slot_idx)
         } else {
             state.players[player_idx].live_zone[slot_idx - 3]
         };
@@ -1171,6 +1185,10 @@ fn apply_aura_modifier(
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
+            if ctx.source_card_id == 410 && op == O_ADD_BLADES && !stage_has_cost_13_or_more(state, db)
+            {
+                return;
+            }
             if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             } else if (a & 0xFFFFFFFF) == 1 && (a >> 32) > 0x00FFFFFF {

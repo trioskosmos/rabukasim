@@ -2,6 +2,42 @@ use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrame;
 
+fn suspend_discard_prompt(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_idx: usize,
+    target_p_idx: usize,
+    filter_attr: u64,
+    remaining: i16,
+    s: i32,
+) -> HandlerResult {
+    let mut target_ctx = ctx.clone();
+    target_ctx.player_id = target_p_idx as u8;
+    target_ctx.v_remaining = remaining;
+    target_ctx.v_accumulated = ctx.v_accumulated;
+    target_ctx.choice_index = -1;
+    if matches!(
+        suspend_choice(
+            state,
+            db,
+            &target_ctx,
+            &target_ctx,
+            frame_idx,
+            O_PLAY_MEMBER_FROM_DISCARD,
+            s,
+            ChoiceType::SelectDiscardPlay,
+            filter_attr,
+            remaining,
+        ),
+        HandlerResult::Suspend
+    ) {
+        HandlerResult::Suspend
+    } else {
+        HandlerResult::Continue
+    }
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_selection(
     state: &mut GameState,
@@ -67,28 +103,43 @@ pub fn handle_discard_selection(
             return HandlerResult::Continue;
         }
 
-        let mut target_ctx = filter_ctx.clone();
-        target_ctx.choice_index = -1;
-
-        if ctx.choice_index == -1 {
-            if matches!(
-                suspend_choice(
-                    state,
-                    db,
-                    &target_ctx,
-                    &target_ctx,
-                    frame_idx,
-                    O_PLAY_MEMBER_FROM_DISCARD,
-                    s,
-                    ChoiceType::SelectDiscardPlay,
-                    filter_attr,
-                    remaining,
-                ),
-                HandlerResult::Suspend
-            ) {
-                return HandlerResult::Suspend;
-            }
+        if ctx.source_card_id == 420 {
+            eprintln!(
+                "[DBG420_SELECT] remaining={} repeat={} looked={:?} selected={:?}",
+                remaining,
+                ctx.repeat_count,
+                state.players[target_p_idx].looked_cards,
+                ctx.selected_cards
+            );
         }
+
+        return suspend_discard_prompt(
+            state,
+            db,
+            &filter_ctx,
+            frame_idx,
+            target_p_idx,
+            filter_attr,
+            remaining,
+            s,
+        );
+    }
+
+    if ctx.choice_index == -1 {
+        let mut filter_attr = filter_attr_base;
+        if is_total_cost {
+            filter_attr |= 1u64 << 60;
+        }
+        return suspend_discard_prompt(
+            state,
+            db,
+            ctx,
+            frame_idx,
+            target_p_idx,
+            filter_attr,
+            remaining,
+            s,
+        );
     }
 
     let idx = ctx.choice_index as usize;
@@ -96,8 +147,7 @@ pub fn handle_discard_selection(
 
     if idx < cards_len {
         let cid = state.players[target_p_idx].looked_cards[idx];
-        state.players[target_p_idx].looked_cards.clear();
-        state.players[target_p_idx].looked_cards.push(cid);
+        state.players[target_p_idx].looked_cards.remove(idx);
 
         let selected_cost = db
             .get_member(cid)
@@ -108,6 +158,7 @@ pub fn handle_discard_selection(
         } else {
             remaining.saturating_sub(1)
         };
+        ctx.v_remaining = next_remaining;
         let mut target_ctx = ctx.clone();
         target_ctx.player_id = target_p_idx as u8;
         target_ctx.v_remaining = next_remaining;
@@ -116,8 +167,27 @@ pub fn handle_discard_selection(
         if !target_ctx.selected_cards.contains(&cid) {
             target_ctx.selected_cards.push(cid);
         }
+        if !ctx.selected_cards.contains(&cid) {
+            ctx.selected_cards.push(cid);
+        }
         target_ctx.choice_index = -1;
         ctx.choice_index = -1;
+        ctx.target_card_id = cid;
+        target_ctx.target_card_id = cid;
+        if let Some(top) = state.interaction_stack.last_mut() {
+            top.ctx.selected_cards = target_ctx.selected_cards.clone();
+            top.ctx.target_card_id = cid;
+        }
+
+        if ctx.source_card_id == 420 {
+            eprintln!(
+                "[DBG420_PICK] cid={} next_remaining={} repeat={} selected={:?}",
+                cid,
+                next_remaining,
+                ctx.repeat_count,
+                target_ctx.selected_cards
+            );
+        }
 
         let choice_type = if baton_slot_only {
             ChoiceType::SelectStageEmptyBaton

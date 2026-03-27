@@ -6,6 +6,7 @@ use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condition;
 use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::models::Condition;
@@ -96,6 +97,13 @@ fn check_condition_with_parts(
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
+    let excess_heart_player = |target_player: u8| -> &crate::core::logic::player::PlayerState {
+        match target_player {
+            1 => player,
+            2 => opponent,
+            _ => player,
+        }
+    };
 
     let get_cid = || {
         if ctx.source_card_id >= 0 {
@@ -113,16 +121,28 @@ fn check_condition_with_parts(
 
     if state.debug.debug_mode {
         if !state.ui.silent {
+            let attr_desc = logging::describe_filter_attr(DecodedFilterAttr::decode(attr as i64));
             println!(
-                "[DEBUG] Condition Opcode: {}, Value: {}, Attr: {}, Slot: {} (Area: {}), Source: {:?}",
-                op, val, attr, real_slot, area_val, cid
+                "[DEBUG] Condition Opcode: {} | {} | attr=[{}] | slot={} (area={}), source={:?}",
+                op,
+                logging::describe_condition(op, val, attr),
+                attr_desc,
+                real_slot,
+                area_val,
+                cid
             );
         }
     }
 
     let result = match op {
-        0 => true,
-        C_TURN_1 => state.turn == 1,
+        0 => compare_i32(
+            resolve_count(state, db, C_COUNT_SUCCESS_LIVE, attr, slot, ctx, depth),
+            val,
+            slot,
+        ),
+        C_TURN_1 => {
+            state.turn == 1
+        }
         C_HAS_MEMBER => {
             let p_target = if filter.target_player == 2 {
                 1 - p_idx
@@ -179,7 +199,12 @@ fn check_condition_with_parts(
             val,
             slot,
         ),
-        C_IS_CENTER => ctx.area_idx == 1,
+        C_IS_CENTER => {
+            if !state.ui.silent {
+                eprintln!("Rule 11.6, Rule 11.6.1, Rule 11.6.2, Rule 11.6.3, Rule 11.6.4: Checking [センター] (Center) slot restriction.");
+            }
+            ctx.area_idx == 1
+        }
         C_COUNT_HAND => compare_i32(
             resolve_count(state, db, op, attr, slot, ctx, depth),
             val,
@@ -230,11 +255,10 @@ fn check_condition_with_parts(
                 false
             }
         }
-        C_COUNT_SUCCESS_LIVE => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
+        C_COUNT_SUCCESS_LIVE => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            compare_i32(count, val, slot)
+        }
         C_OPPONENT_HAS => {
             let p_opp = 1 - p_idx;
             state.players[p_opp]
@@ -253,7 +277,7 @@ fn check_condition_with_parts(
                 my_lives - opp_lives
             };
             if val == 0 {
-                diff > 0
+                diff >= 0
             } else {
                 diff >= val
             }
@@ -333,14 +357,8 @@ fn check_condition_with_parts(
         }
         C_SCORE_COMPARE => {
             let my_score = player.score as i32;
-            let target_score = if (attr & 0x20) != 0 || (val > 0 && opponent.score == 0) {
-                val
-            } else if val > 0 {
-                opponent.score as i32 + val
-            } else {
-                opponent.score as i32
-            };
-            compare_i32(my_score, target_score, slot)
+            let opp_score = opponent.score as i32;
+            compare_i32(my_score, opp_score + val, slot)
         }
         C_HAS_CHOICE => !state.interaction_stack.is_empty(),
         C_OPPONENT_CHOICE => state
@@ -363,16 +381,24 @@ fn check_condition_with_parts(
             (opp_energy - my_energy) >= val
         }
         C_HAS_KEYWORD => {
-            if (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
+            if filter.keyword_energy || (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
+                if filter.group_enabled || (attr & FILTER_GROUP_ENABLE) != 0 {
+                    let group_id = if filter.group_enabled {
+                        filter.group_id as u64
+                    } else {
+                        (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F
+                    };
                     return (player.activated_energy_group_mask & (1 << group_id)) != 0;
                 }
                 return player.activated_energy_group_mask != 0;
             }
-            if (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
+            if filter.keyword_member || (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
+                if filter.group_enabled || (attr & FILTER_GROUP_ENABLE) != 0 {
+                    let group_id = if filter.group_enabled {
+                        filter.group_id as u64
+                    } else {
+                        (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F
+                    };
                     return (player.activated_member_group_mask & (1 << group_id)) != 0;
                 }
                 return player.activated_member_group_mask != 0;
@@ -491,20 +517,35 @@ fn check_condition_with_parts(
             let cid = ctx.source_card_id;
             cid >= 0 && player.discard.contains(&(cid as i32))
         }
-        C_AREA_CHECK => ctx.area_idx == (val - 1) as i16,
+        C_AREA_CHECK => {
+            if !state.ui.silent {
+                if val == 1 {
+                    eprintln!("Rule 11.7, Rule 11.7.1, Rule 11.7.2, Rule 11.7.3, Rule 11.7.4: Checking [左サイド] (Left Side) slot restriction.");
+                } else if val == 3 {
+                    eprintln!("Rule 11.8, Rule 11.8.1, Rule 11.8.2, Rule 11.8.3, Rule 11.8.4: Checking [右サイド] (Right Side) slot restriction.");
+                } else if val == 2 {
+                     eprintln!("Rule 11.6: Checking [センター] (Center) slot restriction via AreaCheck.");
+                }
+            }
+            ctx.area_idx == (val - 1) as i16
+        }
         C_COST_LEAD => {
-            let self_cost: i32 = player
+            let self_cost = player
                 .stage
-                .iter()
-                .filter(|&&id| id >= 0)
-                .map(|&id| db.get_member(id).map_or(0, |m| m.cost as i32))
-                .sum();
-            let opp_cost: i32 = opponent
+                .get(1)
+                .copied()
+                .filter(|&id| id >= 0)
+                .and_then(|id| db.get_member(id))
+                .map(|m| m.cost as i32)
+                .unwrap_or(0);
+            let opp_cost = opponent
                 .stage
-                .iter()
-                .filter(|&&id| id >= 0)
-                .map(|&id| db.get_member(id).map_or(0, |m| m.cost as i32))
-                .sum();
+                .get(1)
+                .copied()
+                .filter(|&id| id >= 0)
+                .and_then(|id| db.get_member(id))
+                .map(|m| m.cost as i32)
+                .unwrap_or(0);
             let reversed = (attr & 0x01) != 0;
             let diff = if reversed {
                 opp_cost - self_cost
@@ -554,20 +595,10 @@ fn check_condition_with_parts(
             }
         }
         C_HAS_EXCESS_HEART => {
-            let target_player = if filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
-                opponent
-            } else {
-                player
-            };
-            target_player.excess_hearts > 0
+            excess_heart_player(filter.target_player).excess_hearts > 0
         }
         C_NOT_HAS_EXCESS_HEART => {
-            let target_player = if filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
-                opponent
-            } else {
-                player
-            };
-            target_player.excess_hearts == 0
+            excess_heart_player(filter.target_player).excess_hearts == 0
         }
         C_TOTAL_BLADES => {
             let mut total = 0u32;
@@ -591,9 +622,23 @@ fn check_condition_with_parts(
             total >= val as u32
         }
         C_COST_COMPARE => {
-            let cid = get_cid();
-            if cid >= 0 {
-                if let Some(m) = db.get_member(cid) {
+            let compare_player = if filter.target_player == 2 {
+                opponent
+            } else {
+                player
+            };
+            let compare_cid = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
+                let staged = compare_player.stage[ctx.area_idx as usize];
+                if staged >= 0 {
+                    staged
+                } else {
+                    get_cid()
+                }
+            } else {
+                get_cid()
+            };
+            if compare_cid >= 0 {
+                if let Some(m) = db.get_member(compare_cid) {
                     let is_le = (attr & 0x40000000) != 0;
                     if is_le {
                         m.cost as i32 <= val

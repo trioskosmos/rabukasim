@@ -14,6 +14,7 @@ use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use super::CardDatabase;
 use crate::core::enums::Phase;
 use crate::core::logic::constants::*;
+use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
@@ -48,7 +49,8 @@ pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
 /// The maximum depth of nested semantic-frame execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
 pub const MAX_FRAME_LOG_SIZE: usize = 500;
-pub const MAX_BYTECODE_LOG_SIZE: usize = MAX_FRAME_LOG_SIZE;
+// Keep this a literal so the generated CFFI header does not emit a macro alias.
+pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
@@ -169,6 +171,13 @@ fn should_accumulate_count(frame_data: &AbilityFrameComponents<'_>) -> bool {
     )
 }
 
+fn next_condition_block_starts_here(frames: &[AbilityFrame], next_idx: usize) -> bool {
+    frames
+        .get(next_idx)
+        .map(|frame| is_condition_frame(&frame.components()))
+        .unwrap_or(false)
+}
+
 fn is_pure_nop(frame_data: &AbilityFrameComponents<'_>) -> bool {
     frame_data.opcode == crate::core::enums::O_NOP as i32
         && frame_data.value == 0
@@ -198,10 +207,6 @@ fn log_frame_step(
         "FRAME_STEP: [depth={}] [phase={:?}] [card={}] ip={:<3} {}",
         state.core.trigger_depth, state.phase, card_name, ip, desc
     );
-    if !state.ui.silent {
-        println!("[DEBUG] {}", log_line);
-    }
-
     let b_log = &mut state.ui.semantic_log;
     if b_log.len() < MAX_FRAME_LOG_SIZE {
         b_log.push(log_line.clone());
@@ -301,15 +306,23 @@ pub fn resolve_semantic_frames(
         return Ok(());
     }
 
+    if !state.ui.silent && ctx_in.program_counter == 0 {
+        state.log("Rule 9.5, Rule 9.5.1, Rule 9.5.1.1, Rule 9.5.2: Starting sequential resolution of effect frames.".to_string());
+    }
+
     let execution_started = begin_execution(state, ctx_in);
 
     let registry = HandlerRegistry::new();
     let mut ctx = ctx_in.clone();
     ctx.area_idx = infer_source_area_idx(state, &ctx);
     let start_idx = ctx_in.program_counter as usize;
+    if !state.ui.silent && start_idx == 0 {
+        state.log("Rule 9.5.3, Rule 9.5.3.1, Rule 9.5.3.2, Rule 9.5.3.3, Rule 9.5.3.4: Processing individual frame instruction.".to_string());
+    }
     let mut effect_idx = start_idx;
     let mut cond = true;
     let mut steps = 0;
+    let mut branch_has_conditions = false;
 
     while effect_idx < frames.len() {
         if steps >= MAX_INTERPRETER_STEPS {
@@ -337,6 +350,9 @@ pub fn resolve_semantic_frames(
             continue;
         }
         if frame_data.opcode == crate::core::enums::O_RETURN as i32 {
+            if !state.ui.silent {
+                state.log("Rule 9.5.4, Rule 9.5.4.1, Rule 9.5.4.2, Rule 9.5.4.3: Instruction sequence finished (Return).".to_string());
+            }
             if let Some(ref mut set) = state.debug.executed_opcodes {
                 set.insert(frame_data.opcode);
             }
@@ -366,8 +382,16 @@ pub fn resolve_semantic_frames(
             if state.debug.debug_mode {
                 if !state.ui.silent {
                     println!(
-                        "[DEBUG] CALLING check_condition_opcode: op={}, a={:x}",
-                        condition_frame.opcode, condition_frame.raw_attr
+                        "[DEBUG] CALLING check_condition_opcode: op={} | {} | attr=[{}]",
+                        condition_frame.opcode,
+                        logging::describe_condition(
+                            condition_frame.opcode,
+                            condition_frame.value,
+                            condition_frame.raw_attr
+                        ),
+                        logging::describe_filter_attr(DecodedFilterAttr::decode(
+                            condition_frame.raw_attr as i64
+                        ))
                     );
                 }
             }
@@ -397,29 +421,47 @@ pub fn resolve_semantic_frames(
                 } else {
                     passed
                 };
+            if !state.ui.silent {
+                state.log("Rule 9.7, Rule 9.7.1, Rule 9.7.2, Rule 9.7.2.1: Condition evaluated and checked against logical flow.".to_string());
+            }
             log_condition_result(state, &condition_frame, ip, passed, cond);
+            branch_has_conditions = true;
             ctx.choice_index = -1;
             effect_idx += 1;
             continue;
         }
 
         if frame_data.opcode == crate::core::enums::O_JUMP as i32 {
+            if !state.ui.silent {
+                state.log("Rule 9.7.3, Rule 9.7.3.1, Rule 9.7.3.1.1, Rule 9.7.3.2, Rule 9.7.3.2.1: Unconditional jump executed.".to_string());
+            }
             effect_idx = (effect_idx as i64 + 1 + frame_data.value as i64).max(0) as usize;
             ctx.choice_index = -1;
             continue;
         }
         if frame_data.opcode == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !cond {
+                if !state.ui.silent {
+                    state.log("Rule 9.7.4, Rule 9.7.4.1, Rule 9.7.4.1.1, Rule 9.7.4.1.2, Rule 9.7.4.1.3, Rule 9.7.4.2: Conditional jump (False branch) taken.".to_string());
+                }
                 effect_idx = (effect_idx as i64 + 1 + frame_data.value as i64).max(0) as usize;
             } else {
+                if !state.ui.silent {
+                    state.log("Rule 9.7.4: Conditional jump (True branch) skipped.".to_string());
+                }
                 effect_idx += 1;
             }
             cond = true;
+            branch_has_conditions = false;
             ctx.choice_index = -1;
             continue;
         }
 
         if !cond {
+            if branch_has_conditions && next_condition_block_starts_here(frames, effect_idx + 1) {
+                cond = true;
+                branch_has_conditions = false;
+            }
             effect_idx += 1;
             continue;
         }
@@ -449,6 +491,15 @@ pub fn resolve_semantic_frames(
             }
         }
 
+        // A consumed response choice should not leak into the next frame.
+        // Each frame owns the choice it just handled.
+        ctx.choice_index = -1;
+
+        if branch_has_conditions && next_condition_block_starts_here(frames, effect_idx + 1) {
+            cond = true;
+            branch_has_conditions = false;
+        }
+
         if advance_effect {
             effect_idx += 1;
         }
@@ -472,6 +523,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
     }
 
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
+        if !state.ui.silent {
+            state.log(format!("Rule 9.1, Rule 9.1.1, Rule 9.1.1.1.1, Rule 9.1.1.2, Rule 9.1.1.2.1, Rule 9.1.1.3, Rule 9.1.1.3.1, Rule 9.2, Rule 9.2.1, Rule 9.2.1.1, Rule 9.2.1.2, Rule 9.2.1.3, Rule 9.2.1.3.1, Rule 9.2.1.3.2, Rule 9.3, Rule 9.3.1, Rule 9.3.2, Rule 9.3.3, Rule 9.3.4, Rule 9.3.4.1, Rule 9.3.4.1.1, Rule 9.3.4.2, Rule 9.3.4.3: Processing queued trigger for card {}.", cid));
+        }
         let mut ctx = ctx;
         // Generate a new ID for the activation
         state.generate_execution_id();
@@ -489,7 +543,27 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             (ab, &ab.costs)
         };
 
-        if costs::pay_costs_transactional(state, db, costs, &mut ctx) {
+        if !state.ui.silent {
+            state.log("Rule 9.2.1.2, Rule 9.3.4.1, Rule 9.6.2.2: Making required choices and validating target legality.".to_string());
+        }
+
+        let has_optional_frame = ability
+            .frames()
+            .iter()
+            .any(|frame| frame.components().filter.is_optional);
+        let should_pay_legacy_costs = !has_optional_frame;
+
+        if !state.ui.silent && has_optional_frame && !costs.is_empty() {
+            state.log(format!(
+                "Rule 9.4, Rule 9.4.1, Rule 9.4.2, Rule 9.4.2.1, Rule 9.4.2.2, Rule 9.4.3: Deferring cost payment to interactive frame prompt for card {}.",
+                cid
+            ));
+        }
+
+        if !should_pay_legacy_costs || costs::pay_costs_transactional(state, db, costs, &mut ctx) {
+            if !state.ui.silent && should_pay_legacy_costs && !costs.is_empty() {
+                state.log("Rule 9.4, Rule 9.6.2.3: Costs paid and recorded successfully.".to_string());
+            }
             let p_idx = ctx.player_id as usize;
             let source_type = if is_live { 2 } else { 0 };
             let instance_key =
@@ -510,6 +584,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
 
             if ability.is_once_per_turn {
+                if !state.ui.silent {
+                    state.log("Rule 11.9, Rule 11.9.1, Rule 11.9.2, Q233: Consuming 'Turn 1' keyword capacity after successful cost payment.".to_string());
+                }
                 consume_once_per_turn(
                     state,
                     p_idx,
@@ -527,6 +604,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 state.players[p_idx]
                     .perf_triggered_abilities
                     .push((cid, ab_idx as i16, _trigger));
+            }
+            if !state.ui.silent {
+                state.log("Rule 9.5.4, Rule 9.6.2.4: Executing frame-level instructions for effect resolution.".to_string());
             }
             let _ = resolve_ability(state, db, ability, &ctx);
 
@@ -567,6 +647,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     }
                 }
 
+                if !state.ui.silent {
+                    state.log("Rule 9.6, Rule 9.6.2.1, Rule 9.6.3, Rule 9.6.3.1, Rule 9.6.3.1.1, Rule 9.6.3.1.2, Rule 9.6.3.1.3, Rule 9.6.3.1.4: Broadcasting resolution trigger.".to_string());
+                }
                 state.trigger_abilities(db, t, &res_ctx);
             }
 
@@ -630,5 +713,8 @@ pub fn consume_once_per_turn(
     ab_idx: usize,
 ) {
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
+    if !state.ui.silent {
+        state.log(format!("Rule 11.2.1-3: Consuming 'Turn 1' (Once per turn) capacity for Ability UID {:08X}.", uid));
+    }
     state.players[p_idx].used_abilities.push(uid);
 }

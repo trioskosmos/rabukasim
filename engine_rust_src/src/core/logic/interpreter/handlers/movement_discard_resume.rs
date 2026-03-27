@@ -29,7 +29,7 @@ pub fn handle_discard_resume(
 ) -> HandlerResult {
     if is_optional && next_ctx.choice_index == CHOICE_DONE {
         finish_pending_interaction(state);
-        return HandlerResult::SetCond(false);
+        return HandlerResult::Return;
     }
 
     if next_ctx.choice_index == CHOICE_DONE {

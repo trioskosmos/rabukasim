@@ -34,6 +34,9 @@ pub fn handle_energy_charge(
     let is_wait = slot.is_wait;
     for _ in 0..v {
         if let Some(cid) = state.players[target_p].energy_deck.pop() {
+            if !state.ui.silent {
+                state.log(format!("Rule 6.1, Rule 6.1.1: [エナジーを送る] (Energy Charge) for Player {}.", target_p));
+            }
             state.players[target_p].push_energy_card(cid, is_wait);
         }
     }
@@ -53,7 +56,8 @@ pub fn handle_pay_energy(
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;
-    let requires_explicit_selection = state.phase == Phase::Response;
+    let requires_explicit_selection =
+        state.phase == Phase::Response || ctx.v_remaining > 0 || ctx.choice_index >= 0;
 
     let frame_data = frame.components();
     let is_optional = frame_data.filter.is_optional;
@@ -154,12 +158,19 @@ pub fn handle_pay_energy(
         }
 
         let mut paid = 0;
+        let silent = state.ui.silent;
         let player = &mut state.players[p_idx];
         for i in 0..player.energy_zone.len() {
             if paid >= actual_v {
                 break;
             }
             if !player.is_energy_tapped(i) {
+                if !silent {
+                    eprintln!(
+                        "Rule 6.3, Rule 6.3.1: Tapping Energy at Index {} for Player {}.",
+                        i, p_idx
+                    );
+                }
                 player.set_energy_tapped(i, true);
                 paid += 1;
             }
@@ -167,6 +178,7 @@ pub fn handle_pay_energy(
 
         ctx.choice_index = -1;
         ctx.v_accumulated = paid as i16;
+        ctx.v_remaining = -1;
         return HandlerResult::SetCond(paid == actual_v);
     }
 
@@ -182,12 +194,19 @@ pub fn handle_pay_energy(
 
     if !requires_explicit_selection {
         let mut paid = 0;
+        let silent = state.ui.silent;
         let player = &mut state.players[p_idx];
         for i in 0..player.energy_zone.len() {
             if paid >= remaining as i32 {
                 break;
             }
             if !player.is_energy_tapped(i) {
+                if !silent {
+                    eprintln!(
+                        "Rule 6.3, Rule 6.3.1: Tapping Energy at Index {} for Player {}.",
+                        i, p_idx
+                    );
+                }
                 player.set_energy_tapped(i, true);
                 paid += 1;
             }
@@ -212,6 +231,12 @@ pub fn handle_pay_energy(
         return HandlerResult::SetCond(false);
     }
 
+    if !state.ui.silent {
+        eprintln!(
+            "Rule 6.3, Rule 6.3.1: Selected Tapping Energy at Index {} for Player {}.",
+            e_idx, p_idx
+        );
+    }
     state.players[p_idx].set_energy_tapped(e_idx, true);
     ctx.v_accumulated += 1;
     ctx.choice_index = -1;
@@ -219,7 +244,10 @@ pub fn handle_pay_energy(
     let next_remaining = remaining - 1;
     if next_remaining > 0 {
         ctx.v_remaining = next_remaining;
-        return suspend_pay_energy(state, db, ctx, frame_idx, next_remaining);
+
+        let mut suspend_ctx = ctx.clone();
+        suspend_ctx.v_remaining = next_remaining;
+        return suspend_pay_energy(state, db, &suspend_ctx, frame_idx, next_remaining);
     }
 
     ctx.v_remaining = -1;

@@ -1,5 +1,4 @@
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::performance::get_live_requirements;
 use crate::core::logic::rules::get_effective_blades;
 use crate::core::logic::rules::get_effective_hearts;
@@ -556,7 +555,7 @@ mod tests {
             .unwrap(); // Discard the filler (Index 0 now)
         state.dump_diagnostics(&db);
 
-        assert_eq!(state.phase, Phase::Response);
+        assert_eq!(state.phase, Phase::Main);
 
         // Final state: Two Ai members on stage.
         assert_eq!(

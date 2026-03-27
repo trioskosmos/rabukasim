@@ -290,11 +290,6 @@ pub fn check_frame_cost(
                 .count();
             untapped >= required
         }
-        O_TAP_ENERGY => {
-            let available = state.players[p_idx].energy_zone.len() as i32
-                - state.players[p_idx].tapped_energy_count() as i32;
-            available >= comp.value
-        }
         _ => true,
     }
 }

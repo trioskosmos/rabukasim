@@ -69,6 +69,7 @@ pub fn handle_score_hearts(
         O_ADD_HEARTS => {
             return state_score_stats::handle_add_hearts(
                 state,
+                db,
                 ctx,
                 p_idx,
                 &frame_data,
@@ -79,6 +80,7 @@ pub fn handle_score_hearts(
         O_SET_HEARTS => {
             return state_score_stats::handle_set_hearts(
                 state,
+                db,
                 ctx,
                 p_idx,
                 &frame_data,

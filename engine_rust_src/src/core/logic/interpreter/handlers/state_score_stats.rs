@@ -1,13 +1,39 @@
 use super::*;
 use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::logic::CardDatabase;
 
 #[path = "state_score_slots.rs"]
 mod state_score_slots;
 #[path = "state_score_transforms.rs"]
 mod state_score_transforms;
 
-fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) -> usize {
+fn infer_source_heart_color(db: &CardDatabase, source_card_id: i32) -> Option<usize> {
+    let counts = if let Some(m) = db.get_member(source_card_id) {
+        Some(&m.hearts)
+    } else if let Some(l) = db.get_live(source_card_id) {
+        Some(&l.required_hearts)
+    } else {
+        None
+    }?;
+
+    let mut found = None;
+    for (idx, &count) in counts.iter().enumerate() {
+        if count > 0 {
+            if found.is_some() {
+                return None;
+            }
+            found = Some(idx);
+        }
+    }
+    found
+}
+
+fn decode_heart_color(
+    db: &CardDatabase,
+    frame: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+) -> usize {
     if let Some(color) = decode_heart_type_from_params(frame.params) {
         return color;
     }
@@ -26,7 +52,8 @@ fn decode_heart_color(frame: &AbilityFrameComponents<'_>, ctx: &AbilityContext) 
         0 => ctx.selected_color as usize,
         7 => 6,
         raw if raw <= 6 => raw as usize,
-        _ => ctx.selected_color as usize,
+        _ => infer_source_heart_color(db, ctx.source_card_id)
+            .unwrap_or(ctx.selected_color as usize),
     }
 }
 
@@ -93,13 +120,19 @@ pub fn handle_set_blades(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_add_hearts(
     state: &mut GameState,
+    db: &CardDatabase,
     ctx: &AbilityContext,
     p_idx: usize,
     frame: &AbilityFrameComponents<'_>,
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
-    let color = decode_heart_color(frame, ctx);
+    let color = decode_heart_color(db, frame, ctx);
+    let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+        ctx.area_idx as i32
+    } else {
+        resolved_slot
+    };
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
             state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, frame.value as i32);
@@ -138,13 +171,19 @@ pub fn handle_add_hearts(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_set_hearts(
     state: &mut GameState,
+    db: &CardDatabase,
     ctx: &AbilityContext,
     p_idx: usize,
     frame: &AbilityFrameComponents<'_>,
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
-    let color = decode_heart_color(frame, ctx);
+    let color = decode_heart_color(db, frame, ctx);
+    let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+        ctx.area_idx as i32
+    } else {
+        resolved_slot
+    };
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
             state.players[p_idx].heart_buffs[slot_idx].set_color_count(color, frame.value as u8);

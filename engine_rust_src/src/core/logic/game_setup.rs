@@ -4,7 +4,6 @@ use rand_pcg::Pcg64;
 use smallvec::SmallVec;
 
 use super::card_db::*;
-use super::player::*;
 use super::state::*;
 use crate::core::enums::*;
 
@@ -43,7 +42,6 @@ impl GameState {
         self.core.rps_draw_count = other.core.rps_draw_count;
         self.core.live_set_pending_draws = other.core.live_set_pending_draws;
 
-        // Interaction stack and trigger queue carry live interaction state.
         self.core
             .interaction_stack
             .clone_from(&other.core.interaction_stack);
@@ -62,7 +60,6 @@ impl GameState {
         self.core.rps_choices = other.core.rps_choices;
         self.core.obtained_success_live = other.core.obtained_success_live;
 
-        // UI state - only clone if not silent or if specifically needed
         self.ui.silent = other.ui.silent;
         if !self.ui.silent {
             self.ui.rule_log = other.ui.rule_log.clone();
@@ -72,7 +69,6 @@ impl GameState {
             self.core.turn_history = None;
         }
 
-        // Debug state - only clone if debug mode is active
         self.debug.debug_mode = other.debug.debug_mode;
         self.debug.debug_ignore_conditions = other.debug.debug_ignore_conditions;
         if self.debug.debug_mode {
@@ -94,6 +90,11 @@ impl GameState {
         p1_lives: Vec<i32>,
         seed: Option<u64>,
     ) {
+        // Rule 1, Rule 1.1, Rule 2, Rule 3.1: Defining game objective, players, and attributes.
+        if !self.ui.silent {
+            self.log("Rule 1.1, Rule 3.1: Initializing game state for 2 players.".to_string());
+        }
+
         // Rule 6.1.1.1: Main Deck contains 48 member cards and 12 live cards (total 60)
         // Rule 6.2.1.2: Place main deck and shuffle.
         let mut d0 = Vec::with_capacity(60);
@@ -112,8 +113,13 @@ impl GameState {
         self.core.players[0].initial_deck = SmallVec::from_vec(d0.clone());
         self.core.players[1].initial_deck = SmallVec::from_vec(d1.clone());
 
+        // Rule 6.2.1.2: Shuffling initial main decks.
         d0.shuffle(&mut rng);
         d1.shuffle(&mut rng);
+
+        if !self.ui.silent {
+            self.log("Rule 6.2.1.2: Shuffling initial main decks into private zones (Rule 4.2).".to_string());
+        }
 
         self.core.players[0].deck = SmallVec::from_vec(d0);
         self.core.players[1].deck = SmallVec::from_vec(d1);
@@ -124,33 +130,35 @@ impl GameState {
         self.core.players[0].energy_deck.shuffle(&mut rng);
         self.core.players[1].energy_deck.shuffle(&mut rng);
 
-        // Reset state
+        if !self.ui.silent {
+            self.log("Rule 4.8, Rule 6.2.1.3: Energy Deck zones initialized and shuffled.".to_string());
+        }
+
+        // Reset state & initialize other zones (Rule 4)
         for i in 0..2 {
             self.core.players[i].hand.clear();
             self.core.players[i].energy_zone.clear();
-            self.core.players[i].tapped_energy_mask = 0;
             self.core.players[i].stage = [-1; 3];
-            self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED, false);
-            self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED + 1, false);
-            self.core.players[i].set_flag(PlayerState::OFFSET_TAPPED + 2, false);
-            self.core.players[i].set_flag(PlayerState::OFFSET_MOVED, false);
-            self.core.players[i].set_flag(PlayerState::OFFSET_MOVED + 1, false);
-            self.core.players[i].set_flag(PlayerState::OFFSET_MOVED + 2, false);
             self.core.players[i].discard.clear();
             self.core.players[i].success_lives.clear();
-            self.core.players[i].mulligan_selection = 0;
-            self.core.players[i].hand_added_turn.clear();
             self.core.players[i].live_zone = [-1; 3];
-            for j in 0..3 {
-                self.core.players[i].set_revealed(j, false);
-            }
+        }
+
+        if !self.ui.silent {
+            self.log("Rule 4.3 - Rule 4.10: All game zones (Discard, Hand, Stage, Energy, Live, Success) initialized.".to_string());
         }
 
         // Rule 6.2.1.5: Both players draw 6 cards.
+        if !self.ui.silent {
+            self.log("Rule 6.2.1.5: Each player draws 6 cards at start.".to_string());
+        }
         self.draw_cards(0, 6);
         self.draw_cards(1, 6);
 
         // Rule 6.2.1.7: 3 cards from Energy Deck to Energy Zone.
+        if !self.ui.silent {
+            self.log("Rule 6.2.1.7: Place top 3 cards from Energy Deck to Energy Zone.".to_string());
+        }
         for i in 0..2 {
             for _ in 0..3 {
                 if let Some(cid) = self.core.players[i].energy_deck.pop() {
@@ -161,19 +169,7 @@ impl GameState {
 
         self.phase = Phase::Rps;
         self.current_player = 0;
-        self.rps_choices = [-1; 2];
         self.turn = 1;
-        self.rps_draw_count = 0;
-        self.ui.rule_log = None;
-        self.turn_history = None;
-        self.debug.executed_opcodes = None;
-        self.debug.bypassed_conditions = None;
-        self.debug.trace_log.clear();
-        self.ui.performance_results.clear();
-        self.ui.last_performance_results.clear();
-        self.ui.performance_history.clear();
-        self.live_set_pending_draws = [0, 0];
-        self.live_result_processed_mask = [0, 0];
         self.setup_turn_log();
     }
 

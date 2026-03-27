@@ -49,8 +49,7 @@ pub fn handle_play_member_from_discard(
     let is_total_cost =
         (filter_attr_base & (1u64 << 60)) != 0 || (filter_attr_base & (1u64 << 50)) != 0;
 
-    let is_fresh_chain = state.players[target_p_idx].looked_cards.is_empty();
-    let remaining = if is_fresh_chain || ctx.v_remaining == -1 {
+    let remaining = if ctx.v_remaining == -1 {
         if ctx.repeat_count <= 0 {
             ctx.repeat_count = v as i16;
         }
@@ -58,8 +57,10 @@ pub fn handle_play_member_from_discard(
             ctx.v_accumulated = ((filter_attr_base
                 >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
                 & 0x1F) as i16;
+            ctx.v_accumulated
+        } else {
+            v as i16
         }
-        v as i16
     } else {
         ctx.v_remaining
     };
@@ -110,9 +111,12 @@ pub fn handle_play_member_from_discard(
         db,
         ctx,
         target_p_idx,
+        filter_attr_base,
         empty_slot_only,
+        baton_slot_only,
         is_total_cost,
         frame_idx,
         remaining,
+        s,
     );
 }

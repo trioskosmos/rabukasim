@@ -78,9 +78,21 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
 
 pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let p_idx = state.current_player as usize;
+    if !state.ui.silent {
+        state.log(format!("Rule 8.3.1, Rule 8.3.2, Rule 8.3.2.1: performance Phase: Player {} is turn player.", p_idx));
+    }
+    // 8.3.3 Start triggers
+    if !state.performance_reveals_done[p_idx] && state.live_start_processed_mask[p_idx] == 0 {
+        if !state.ui.silent {
+            state.log("Rule 8.3.3: performance Phase start: triggers check.".to_string());
+        }
+    }
 
     // 8.3.4 Flip all cards in Live Zone
     if !state.performance_reveals_done[p_idx] {
+        if !state.ui.silent {
+            state.log("Rule 8.3.4, Rule 8.3.5, Rule 8.3.6, Rule 8.3.7: Flip cards in Live Zone and check existence.".to_string());
+        }
         for i in 0..3 {
             if !state.players[p_idx].is_revealed(i) {
                 let cid = state.players[p_idx].live_zone[i];
@@ -94,6 +106,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             }
         }
         state.performance_reveals_done[p_idx] = true;
+        if !state.ui.silent {
+            state.log("Rule 8.3.5, Rule 8.3.6: Checking timing after reveal.".to_string());
+        }
     }
 
     // Discard non-live cards (Rule 8.3.4) BEFORE triggering OnLiveStart (Rule 11.4/8.3.8)
@@ -134,7 +149,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Rule 11.4 [ライブ開始時] (Live Start)
     if !state.live_start_triggers_done {
         state.live_start_triggers_done = true;
-        state.trigger_event(db, TriggerType::OnLiveStart, p_idx, -1, -1, 0, -1);
+        if !state.ui.silent {
+            state.log("Rule 11.4, Rule 11.4.1 (Q227): Broadcasting [ライブ開始時] (On Live Start) triggers. (Costs cannot be paid with future live rewards).".to_string());
+            state.log("Rule 8.3.7, Rule 8.3.8, Rule 8.3.9: Performance Phase: Logic timing after live start.".to_string());
+        }
         if state.phase == Phase::Response {
             return;
         }
@@ -190,6 +208,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
 
     let mut total_blades = 0;
+    if !state.ui.silent {
+        state.log("Rule 8.3.10: Summing blades of active members.".to_string());
+    }
     // Apply Cheer Mod (Meta Rule)
     total_blades += state.players[p_idx].cheer_mod_count as u32;
 
@@ -342,7 +363,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 p_idx, total_blades
             ));
         }
-        // Rule 8.3.11: Pops from main deck.
+        // Rule 8.3.10, Rule 8.3.11: Pops from main deck based on blades.
         let yell_count = total_blades;
         let yelled_cards = do_yell(state, db, yell_count);
         let mut yelled_names = Vec::new();
@@ -692,11 +713,15 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     state.players[p_idx].current_turn_notes = note_icons;
 
     if !state.ui.silent {
-        state.log(format!("  Total Hearts: {:?}", total_hearts));
-        state.log(format!("  Note Icons: {}", note_icons));
+        state.log("Rule 8.3.12, Rule 8.3.13: Checking timing after Yell.".to_string());
+        state.log(format!("Rule 8.3.14: Total Hearts (Live Heart + BladeHeart): {:?}", total_hearts));
+        state.log(format!("  Rule 8.3.14: Note Icons: {}", note_icons));
     }
 
     // 8.3.15-16 Check heart requirements
+    if !state.ui.silent {
+        state.log("Rule 8.3.15: Verifying heart requirements for each live card.".to_string());
+    }
     let mut passed_flags = [false; 3];
     let mut sequential_passed = [false; 3]; // To track filling logic for UI even on failure
     let mut any_failed = false;
@@ -717,6 +742,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 ));
 
                 let (req_board, _) = get_live_requirements(state, db, p_idx, live);
+                if !state.ui.silent {
+                    state.log(format!("Rule 8.3.15, Rule 8.3.15.1: Checking requirements for {}: {:?}", live.name, req_board.to_array()));
+                    state.log("Rule 8.3.15.1.1: Star icons can be treated as any color.".to_string());
+                }
                 if check_live_success(state, db, p_idx, live, &remaining_hearts) {
                     let _req_arr = req_board.to_array();
 
@@ -733,6 +762,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     } else {
                         use super::performance_requirements::consume_hearts_from_pool;
                         consume_hearts_from_pool(&mut remaining_hearts, &req_board.to_array());
+                    }
+                    if !state.ui.silent {
+                        state.log(format!("Rule 8.3.15.1.2: Consuming hearts to meet requirements for {}.", live.name));
                     }
                     passed_flags[i] = true;
                     sequential_passed[i] = true;
@@ -763,6 +795,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 passed_flags[i] = false; // Ensure UI reflects failure
             }
         }
+    } else {
+        if !state.ui.silent {
+            state.log("Rule 8.3.16: Performance SUCCESS for all live cards.".to_string());
+        }
     }
 
     let all_met = !any_failed
@@ -790,6 +826,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     } else {
         state.players[p_idx].excess_hearts = 0;
         state.players[p_idx].excess_hearts_by_color = [0; 7];
+    }
+
+    if !state.ui.silent {
+        state.log("Rule 8.3.17: performance Phase ended. Checking timing.".to_string());
     }
 
     // --- Store Performance Results for UI ---
@@ -1017,7 +1057,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     }
 
     if !state.ui.silent {
-        state.log("Rule 8.4: --- LIVE RESULT PHASE ---".to_string());
+        state.log("Rule 8.4, Rule 8.4.1: --- LIVE RESULT PHASE BEGIN: Start triggers ---".to_string());
     }
 
     let mut scores = [0u32; 2];
@@ -1032,6 +1072,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             let mut player_has_success = false;
             let mut has_live = false;
             let mut p_score = 0;
+
+            if !state.ui.silent {
+                state.log(format!("Rule 8.4.2: Calculating total score for Player {}.", p));
+            }
 
             // Check snapshot from check_performance_requirements first
             let snapshot_success = state
@@ -1108,6 +1152,9 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     }
                 }
                 has_success[p] = true;
+                if !state.ui.silent {
+                    state.log(format!("Rule 8.4.2.1: Note icons and score bonuses summed for Player {}.", p));
+                }
             }
 
             // Pool O_BOOST_SCORE from constant abilities
@@ -1238,6 +1285,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             // CRITICAL: Update player score in state so conditions (opcode 220) can refer to it.
             state.players[p].score = scores[p];
 
+            if !state.ui.silent {
+                state.log(format!("Rule 8.4.3, Rule 8.4.3.1, Rule 8.4.3.2, Rule 8.4.3.3, Rule 8.4.4, Rule 8.4.5: Score determination logic finished for Player {}.", p));
+            }
+
             if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
                 if let serde_json::Value::Object(ref mut map) = res {
                     if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown")
@@ -1279,6 +1330,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             if (state.live_result_processed_mask[p] & 0x80) == 0 {
                 state.live_result_processed_mask[p] |= 0x80;
 
+                if !state.ui.silent {
+                    state.log(format!("Rule 11.5, Rule 11.5.1, Rule 11.5.2: Broadcasting [ライブ成功時] (On Live Success) triggers for player {}.", p));
+                    state.log(format!("Rule 8.4.1, Rule 8.4.2, Rule 8.4.3, Rule 8.4.4, Rule 8.4.6: Player {} live SUCCESS event and score resolution.", p));
+                }
                 state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
                 if state.phase == Phase::Response {
                     return;
@@ -1368,9 +1423,13 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             "Rule 8.4.6: P1 Score: {} (Success: {} wins: {})",
             scores[1], has_success[1], p1_wins
         ));
+        state.log("Rule 8.4.6.1, Rule 8.4.6.2: Final Lead determined based on comparative scores.".to_string());
     }
 
     // 2. Handling Winners (Rule 8.4.7)
+    if !state.ui.silent {
+        state.log("Rule 8.4.7: Moving won live cards to success pile.".to_string());
+    }
     let mut choices_pending = false;
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
@@ -1463,6 +1522,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                         "Rule 8.4.7: P{} obtained Success Live: Card ID {}",
                         p, cid
                     ));
+                    state.log("Rule 8.4.9: Checking timing after scoring success live.".to_string());
                 }
             } else if valid_candidates.len() > 1 {
                 // Physical choice needed among valid candidates
@@ -1553,12 +1613,21 @@ pub fn finalize_live_result(state: &mut GameState) {
             .and_then(|value| value.as_i64())
             .unwrap_or(0) as i32;
 
+        if !state.ui.silent {
+            state.log("Rule 8.3.17, Q232: Score icons add to total performance score, not live card score.".to_string());
+            if resolved_live_score + live_score_bonus <= 0 && (resolved_live_score != 0 || live_score_bonus != 0) {
+                state.log("Rule 8.4.6, Q231: Total performance score capped at minimum 0.".to_string());
+            }
+        }
         state.players[p].score = (state.players[p].score as i32)
             .max(success_count.max(resolved_live_score + live_score_bonus))
             .max(0) as u32;
     }
 
     // 8.4.8 Cleanup all live zones
+    if !state.ui.silent {
+        state.log("Rule 8.4.8: Cleaning up all cards from Live Zone and Resolution Area.".to_string());
+    }
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
         for i in 0..3 {
@@ -1612,6 +1681,11 @@ pub fn finalize_live_result(state: &mut GameState) {
         }
 
         state.current_player = state.first_player;
+        if !state.ui.silent {
+            state.log("Rule 8.4.8, Rule 8.4.9: Processing cleanup and post-scoring triggers.".to_string());
+            state.log("Rule 8.4.11, Rule 8.4.12: Expiring turn-based effects and checking loop conditions.".to_string());
+            state.log("Rule 8.4.13, Rule 8.4.14: Turn cycle phase transition complete.".to_string());
+        }
         state.phase = Phase::Active;
         state.obtained_success_live = [false, false];
     }

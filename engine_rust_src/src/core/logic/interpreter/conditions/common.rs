@@ -1,7 +1,7 @@
 use crate::core::logic::constants::*;
 use crate::core::logic::ConditionType;
 
-pub const MAX_CONDITION_CHECK_DEPTH: u32 = 8;
+pub const CONDITION_CHECK_MAX_DEPTH: u32 = 8;
 
 /// Compare an i32 value against a target with optional comparison mode from slot.
 /// Slot encoding: 0 = equal, 1 = greater, 2 = less, 3 = greater-or-equal, 4 = less-or-equal

@@ -471,10 +471,11 @@ class CardReporter:
         return ", ".join(parts)
 
     def _format_frame_program(self, fp: dict) -> str:
-        if not fp or "frames" not in fp:
+        instructions = fp.get("instructions", fp.get("frames", [])) if isinstance(fp, dict) else []
+        if not fp or not instructions:
             return "  (no frames)"
         lines = []
-        for i, frame in enumerate(fp["frames"]):
+        for i, frame in enumerate(instructions):
             if isinstance(frame, str):
                 lines.append(f"  [{i:02d}] {frame}")
                 continue

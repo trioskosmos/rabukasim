@@ -11,10 +11,21 @@ fn main() {
 
     println!("cargo:rerun-if-env-changed=LOVECA_SKIP_ABILITY_PIPELINE");
     println!("cargo:rerun-if-env-changed=LOVECA_RUN_ABILITY_PIPELINE");
+    println!("cargo:rerun-if-env-changed=UV_CACHE_DIR");
+    println!("cargo:rerun-if-env-changed=UV_PYTHON_INSTALL_DIR");
     for rel in [
         "data/cards.json",
-        "data/ability_frames.json",
+        "data/ability_frame_index.yaml",
+        "data/ability_frame_index.json",
+        "data/consolidated_abilities.json",
+        "data/cards_compiled.json",
         "data/metadata.json",
+        "compiler/main.py",
+        "tools/build_cards.py",
+        "tools/abilities/pipeline.py",
+        "tools/frame_codec.py",
+        "tools/bytecode_codec.py",
+        "engine/models/ability_frames.py",
     ] {
         println!("cargo:rerun-if-changed={}", workspace_root.join(rel).display());
     }
@@ -24,16 +35,29 @@ fn main() {
         return;
     }
 
-    if env::var_os("LOVECA_RUN_ABILITY_PIPELINE").is_none() {
-        println!(
-            "cargo:warning=Skipping ability pipeline during build; set LOVECA_RUN_ABILITY_PIPELINE=1 to regenerate artifacts"
-        );
-        return;
+    if let Err(message) = run_pipeline(
+        &workspace_root,
+        &[
+            "uv",
+            "run",
+            "--isolated",
+            "--managed-python",
+            "--python",
+            "3.12",
+            "python",
+            "tools/build_cards.py",
+            "--quiet",
+        ],
+    )
+    .or_else(|_| {
+        run_pipeline(
+            &workspace_root,
+            &["python", "tools/build_cards.py", "--quiet"],
+        )
+    })
+    {
+        println!("cargo:warning=Skipping ability pipeline during build: {}", message);
     }
-
-    run_pipeline(&workspace_root, &["uv", "run", "python", "tools/prepare_ability_pipeline.py", "--quiet"])
-        .or_else(|_| run_pipeline(&workspace_root, &["python", "tools/prepare_ability_pipeline.py", "--quiet"]))
-        .unwrap_or_else(|message| panic!("{message}"));
 }
 
 fn run_pipeline(workspace_root: &Path, args: &[&str]) -> Result<(), String> {

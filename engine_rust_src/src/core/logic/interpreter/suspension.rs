@@ -25,61 +25,21 @@ fn sync_interaction_phase(
     original_phase: Phase,
     original_current_player: u8,
 ) {
-    if state.debug.debug_mode {
-        println!("[DEBUG_SYNC] stack_len={} original_phase={:?}", state.interaction_stack.len(), original_phase);
-    }
     if let Some(player_id) = state.interaction_stack.last().map(|pi| pi.ctx.player_id) {
         state.phase = Phase::Response;
         state.current_player = player_id;
-        if state.debug.debug_mode {
-            println!("[DEBUG_SYNC] Set phase to Response due to non-empty stack");
-        }
     } else {
         state.phase = normalize_visible_phase(original_phase);
         state.current_player = original_current_player;
         state.clear_execution_id();
-        if state.debug.debug_mode {
-            println!("[DEBUG_SYNC] Restored to {:?} because stack is empty", state.phase);
-        }
     }
 }
 
-fn has_selection_follow_up(db: &CardDatabase, ctx: &AbilityContext, instr_ip: usize) -> bool {
-    let frames = db
-        .get_member(ctx.source_card_id)
-        .map(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-        .flatten()
-        .map(|ability| ability.frames())
-        .or_else(|| {
-            db.get_live(ctx.source_card_id)
-                .map(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-                .flatten()
-                .map(|ability| ability.frames())
-        });
-
-    frames
-        .and_then(|frames| frames.get(instr_ip + 1).map(|next_frame| next_frame.opcode()))
-        .map(|opcode| opcode == 57)
-        .unwrap_or(false)
-}
-
-const ALWAYS_SUSPEND_TYPES: &[ChoiceType] = &[
-    ChoiceType::Optional,
-    ChoiceType::LookAndChoose,
-    ChoiceType::ColorSelect,
-    ChoiceType::TapO,
-    ChoiceType::TapMSelect,
-    ChoiceType::SelectDiscardPlay,
-    ChoiceType::SelectStage,
-    ChoiceType::SelectStageEmpty,
-    ChoiceType::SelectLiveSlot,
-    ChoiceType::SelectMode,
-    ChoiceType::SelectCardsOrder,
-    ChoiceType::OrderDeck,
-];
-
 pub fn finish_pending_interaction(state: &mut GameState) {
     let popped = state.interaction_stack.pop();
+    if !state.ui.silent && popped.is_some() {
+        state.log("Rule 11.2.1: Popping interaction from stack (LIFO).".to_string());
+    }
     let original_phase = popped
         .as_ref()
         .map(|pi| pi.original_phase)
@@ -166,6 +126,9 @@ pub fn suspend_interaction(
         execution_id,
         ..Default::default()
     });
+    if !state.ui.silent {
+        state.log("Rule 11.2.2: Pushing new interaction to stack.".to_string());
+    }
     if state.debug.debug_mode {
         if let Some(interaction) = state.interaction_stack.last() {
             state.trace_internal(&format!(
@@ -188,8 +151,6 @@ pub fn suspend_interaction(
     }
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
 
-    let should_check_skip = !ALWAYS_SUSPEND_TYPES.contains(&choice_type);
-
     if state.debug.debug_mode {
         println!(
             "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}, {}",
@@ -200,37 +161,17 @@ pub fn suspend_interaction(
         );
     }
 
-    let should_skip = if final_actions.is_empty() {
-        true
-    } else if final_actions.len() == 1 && final_actions.contains(&0) {
-        !has_selection_follow_up(db, ctx, instr_ip)
-    } else {
-        false
-    };
-
-    if should_check_skip && should_skip && choice_type != ChoiceType::OpponentChoose {
-        if state.debug.debug_mode {
-            println!(
-                "[DEBUG] Softlock prevented: {:?} has no legal actions. Skipping suspension. {}",
-                choice_type,
-                logging::describe_context(ctx)
-            );
-        }
-        state.trace_internal(&format!(
-            "FRAME_SUSPEND_SKIP: [phase={:?}] choice_type={} v_remaining={} {}",
-            state.phase,
-            choice_type.as_str(),
-            v_remaining,
-            logging::describe_context(ctx)
-        ));
-        state.interaction_stack.pop();
-        state.phase = original_phase;
-        state.current_player = original_cp;
-        return false;
-    }
-
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
+
+    if state.debug.debug_mode {
+        println!(
+            "[DEBUG_SUSPEND_DONE] choice_type={:?} phase={:?} stack_len={}",
+            choice_type,
+            state.phase,
+            state.interaction_stack.len()
+        );
+    }
 
     true
 }

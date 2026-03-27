@@ -28,7 +28,11 @@ use std::fs;
 // use crate::core::generated_constants::*; // Re-exported by enums.rs
 use super::models::*;
 
-const EMBEDDED_ABILITY_FRAMES_JSON: &str = include_str!("../../../../data/ability_frames.json");
+// Consolidated abilities is the single runtime-friendly view of the authored
+// frame data. Keep the legacy frame index only as a fallback so older exports
+// still load, but make the canonical path obvious.
+const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =
+    include_str!("../../../../data/consolidated_abilities.json");
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
     include_str!("../../../../data/ability_frame_index.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
@@ -285,9 +289,10 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
-        let authored = Self::load_sparse_ability_index_from_json(EMBEDDED_ABILITY_FRAMES_JSON);
-        if !authored.is_empty() {
-            return authored;
+        let consolidated =
+            Self::load_sparse_ability_index_from_json(EMBEDDED_CONSOLIDATED_ABILITIES_JSON);
+        if !consolidated.is_empty() {
+            return consolidated;
         }
 
         let embedded = Self::load_sparse_ability_index_from_json(EMBEDDED_ABILITY_FRAME_INDEX_JSON);
@@ -296,8 +301,8 @@ impl CardDatabase {
         }
 
         for path in [
-            "data/ability_frames.json",
-            "../data/ability_frames.json",
+            "data/consolidated_abilities.json",
+            "../data/consolidated_abilities.json",
             "data/ability_frame_index.json",
             "../data/ability_frame_index.json",
         ] {
@@ -474,8 +479,12 @@ impl CardDatabase {
             let entry = index.get(&key).cloned().unwrap_or_else(|| {
                 Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
             });
-            ability.sparse_frame_index = Some(entry.clone());
-            if ability.frame_program.is_none() {
+            if ability
+                .frame_program
+                .as_ref()
+                .map(|program| program.frames.is_empty())
+                .unwrap_or(true)
+            {
                 let program = Self::sparse_entry_to_frame_program(&entry);
                 if program.frames.is_empty() {
                     return Err(serde::de::Error::custom(format!(
@@ -1051,7 +1060,7 @@ impl CardDatabase {
                                         .and_then(|effect| effect.params.get("choose_count"))
                                         .and_then(Self::parse_u8_value)
                                         .unwrap_or(0);
-                                    ab.choice_count = if effect_pick > 0 { effect_pick } else { 3 };
+                                    ab.choice_count = if effect_pick > 0 { effect_pick } else { 1 };
                                 }
                             }
                         }
@@ -1103,7 +1112,7 @@ impl CardDatabase {
                         O_ORDER_DECK => {
                             ab.choice_flags |= CHOICE_FLAG_ORDER;
                             if ab.choice_count == 0 {
-                                ab.choice_count = 3;
+                                ab.choice_count = 1;
                             }
                         }
                         _ => {}

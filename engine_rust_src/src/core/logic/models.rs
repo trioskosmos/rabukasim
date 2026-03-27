@@ -147,7 +147,7 @@ fn decode_look_and_choose_value(
         if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
             decoded.choose_count = v as u8;
         } else {
-            decoded.choose_count = decoded.count.max(1);
+            decoded.choose_count = 1;
         }
         if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
             decoded.char_id_1 = v as u8;
@@ -257,12 +257,22 @@ impl AbilityFrame {
     }
 
     fn normalize_frame_kind(kind: &str) -> String {
+        if kind.is_empty() {
+            return String::new();
+        }
+
+        if kind.chars().any(|ch| ch == '_') {
+            return kind.to_ascii_uppercase();
+        }
+
         let mut normalized = String::with_capacity(kind.len() + 4);
-        for (index, ch) in kind.chars().enumerate() {
-            if ch.is_ascii_uppercase() && index > 0 {
+        let mut prev_is_lower_or_digit = false;
+        for ch in kind.chars() {
+            if ch.is_ascii_uppercase() && prev_is_lower_or_digit {
                 normalized.push('_');
             }
             normalized.push(ch.to_ascii_uppercase());
+            prev_is_lower_or_digit = ch.is_ascii_lowercase() || ch.is_ascii_digit();
         }
         normalized
     }
@@ -271,16 +281,98 @@ impl AbilityFrame {
         match kind {
             "RETURN" => O_RETURN,
             "DRAW" => O_DRAW,
+            "NOP" => O_NOP,
+            "PAY_ENERGY" => O_PAY_ENERGY,
+            "PAY_ENERGY_DYNAMIC" => O_PAY_ENERGY_DYNAMIC,
+            "ENERGY_CHARGE" => O_ENERGY_CHARGE,
+            "ACTIVATE_ENERGY" => O_ACTIVATE_ENERGY,
+            "PLACE_ENERGY_UNDER_MEMBER" => O_PLACE_ENERGY_UNDER_MEMBER,
             "RECOVER_LIVE" => O_RECOVER_LIVE,
             "RECOVER_MEMBER" => O_RECOVER_MEMBER,
             "LOOK_AND_CHOOSE" => O_LOOK_AND_CHOOSE,
             "SELECT_MEMBER" => O_SELECT_MEMBER,
+            "SELECT_LIVE" => O_SELECT_LIVE,
+            "SELECT_PLAYER" => O_SELECT_PLAYER,
             "SELECT_CARDS" => O_SELECT_CARDS,
+            "SELECT_MODE" => O_SELECT_MODE,
             "MOVE_MEMBER" => O_MOVE_MEMBER,
             "MOVE_TO_DECK" => O_MOVE_TO_DECK,
             "MOVE_TO_DISCARD" => O_MOVE_TO_DISCARD,
+            "PLAY_MEMBER_FROM_HAND" => O_PLAY_MEMBER_FROM_HAND,
+            "PLAY_MEMBER_FROM_DISCARD" => O_PLAY_MEMBER_FROM_DISCARD,
+            "PLAY_LIVE_FROM_DISCARD" => O_PLAY_LIVE_FROM_DISCARD,
+            "TAP_MEMBER" => O_TAP_MEMBER,
+            "TAP_OPPONENT" => O_TAP_OPPONENT,
+            "SET_TAPPED" => O_SET_TAPPED,
+            "COLOR_SELECT" => O_COLOR_SELECT,
+            "TRIGGER_REMOTE" => O_TRIGGER_REMOTE,
             "META_RULE" => O_META_RULE,
+            "ADD_TO_HAND" => O_ADD_TO_HAND,
+            "DRAW_UNTIL" => O_DRAW_UNTIL,
+            "REVEAL_UNTIL" => O_REVEAL_UNTIL,
+            "LOOK_DECK" => O_LOOK_DECK,
+            "LOOK_DECK_DYNAMIC" => O_LOOK_DECK_DYNAMIC,
+            "LOOK_REORDER_DISCARD" => O_LOOK_REORDER_DISCARD,
+            "ORDER_DECK" => O_ORDER_DECK,
+            "SEARCH_DECK" => O_SEARCH_DECK,
+            "BOOST_SCORE" => O_BOOST_SCORE,
+            "SET_SCORE" => O_SET_SCORE,
+            "REDUCE_SCORE" => O_REDUCE_SCORE,
+            "ADD_BLADES" => O_ADD_BLADES,
+            "ADD_HEARTS" => O_ADD_HEARTS,
+            "SET_BLADES" => O_SET_BLADES,
+            "SET_HEARTS" => O_SET_HEARTS,
+            "TRANSFORM_BLADES" => O_TRANSFORM_BLADES,
+            "TRANSFORM_HEART" => O_TRANSFORM_HEART,
+            "TRANSFORM_COLOR" => O_TRANSFORM_COLOR,
+            "REPEAT_ABILITY" => O_REPEAT_ABILITY,
+            "LOSE_EXCESS_HEARTS" => O_LOSE_EXCESS_HEARTS,
+            "SKIP_ACTIVATE_PHASE" => O_SKIP_ACTIVATE_PHASE,
+            "SET_HEART_COST" => O_SET_HEART_COST,
+            "RESTRICTION" => O_RESTRICTION,
+            "PREVENT_ACTIVATE" => O_PREVENT_ACTIVATE,
+            "PREVENT_BATON_TOUCH" => O_PREVENT_BATON_TOUCH,
+            "PREVENT_PLAY_TO_SLOT" => O_PREVENT_PLAY_TO_SLOT,
+            "PREVENT_SET_TO_SUCCESS_PILE" => O_PREVENT_SET_TO_SUCCESS_PILE,
+            "MODIFY_SCORE_RULE" => O_MODIFY_SCORE_RULE,
+            "GRANT_ABILITY" => O_GRANT_ABILITY,
+            "INCREASE_COST" => O_INCREASE_COST,
+            "REDUCE_COST" => O_REDUCE_COST,
+            "INCREASE_HEART_COST" => O_INCREASE_HEART_COST,
+            "REDUCE_HEART_REQ" => O_REDUCE_HEART_REQ,
+            "REDUCE_LIVE_SET_LIMIT" => O_REDUCE_LIVE_SET_LIMIT,
+            "REDUCE_YELL_COUNT" => O_REDUCE_YELL_COUNT,
+            "SWAP_CARDS" => O_SWAP_CARDS,
+            "SWAP_AREA" => O_SWAP_AREA,
+            "SET_TARGET_SELF" => O_SET_TARGET_SELF,
+            "SET_TARGET_OPPONENT" => O_SET_TARGET_OPPONENT,
+            "BATON_TOUCH_MOD" => O_BATON_TOUCH_MOD,
+            "PLACE_UNDER" => O_PLACE_UNDER,
+            "FORMALTION_CHANGE" => O_FORMATION_CHANGE,
+            "FORMATION_CHANGE" => O_FORMATION_CHANGE,
+            "CHEER_REVEAL" => O_CHEER_REVEAL,
+            "REVEAL_CARDS" => O_REVEAL_CARDS,
+            "CALC_SUM_COST" => O_CALC_SUM_COST,
+            "DIV_VALUE" => O_DIV_VALUE,
+            "APPLY_RULES" => O_META_RULE,
+            "GROUP_FILTER" => C_GROUP_FILTER,
+            "SCORE_COMPARE" => C_SCORE_COMPARE,
+            "HAS_KEYWORD" => C_HAS_KEYWORD,
+            "ALL_CARDS_MATCH" => 309,
             _ => 0,
+        }
+    }
+
+    fn decoded_hint_name(decoded_hint: &str) -> Option<String> {
+        let token = decoded_hint
+            .split(|ch: char| ch.is_whitespace() || ch == '|')
+            .find(|part| !part.is_empty())?;
+        let token = token.trim_end_matches('?');
+        let token = token.strip_prefix("CHECK_").unwrap_or(token);
+        if token.is_empty() {
+            None
+        } else {
+            Some(token.to_ascii_uppercase())
         }
     }
 
@@ -413,6 +505,18 @@ impl AbilityFrame {
         } else {
             filter
         };
+        let filter = if let Some(structured_filter) = payload
+            .get("filter")
+            .or_else(|| options.get("filter"))
+            .cloned()
+            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
+        {
+            let mut structured_filter = structured_filter;
+            structured_filter.is_enabled = true;
+            structured_filter
+        } else {
+            filter
+        };
         let filter = if options
             .get("is_cost")
             .or_else(|| options.get("is_cost_type"))
@@ -465,9 +569,15 @@ impl AbilityFrame {
             .or_else(|| frame.get("decoded"))
             .and_then(|value| value.as_str())
             .unwrap_or("");
+        let decoded_hint_name = Self::decoded_hint_name(decoded_hint);
 
         let resolved_opcode_id = if opcode_id != 0 {
             opcode_id
+        } else if opcode_key == "NOP" {
+            decoded_hint_name
+                .as_deref()
+                .map(Self::opcode_id_from_frame_kind)
+                .unwrap_or(0)
         } else {
             Self::opcode_id_from_frame_kind(opcode_key.as_str())
         };
@@ -497,22 +607,25 @@ impl AbilityFrame {
             }
         }
 
-        if opcode_key == "NOP" && decoded_hint.contains("UNIQUE_NAMES_COUNT") {
-            let mut params_obj = params.as_object().cloned().unwrap_or_default();
-            params_obj.insert(
-                "raw_cond".to_string(),
-                Value::String("UNIQUE_NAMES_COUNT".to_string()),
-            );
-            params_obj.insert("MIN".to_string(), Value::from(value.max(0)));
-            return AbilityFrame::Semantic {
-                opcode: 0,
-                value,
-                filter,
-                slot,
-                is_negated,
-                is_cost: false,
-                params: Value::Object(params_obj),
-            };
+        if opcode_key == "NOP" {
+            if let Some(decoded_name) = decoded_hint_name.as_deref() {
+                if resolved_opcode_id == 0 {
+                    let mut params_obj = params.as_object().cloned().unwrap_or_default();
+                    params_obj.insert("raw_cond".to_string(), Value::String(decoded_name.to_string()));
+                    if decoded_name == "UNIQUE_NAMES_COUNT" {
+                        params_obj.insert("MIN".to_string(), Value::from(value.max(0)));
+                    }
+                    return AbilityFrame::Semantic {
+                        opcode: 0,
+                        value,
+                        filter,
+                        slot,
+                        is_negated,
+                        is_cost: false,
+                        params: Value::Object(params_obj),
+                    };
+                }
+            }
         }
 
         match opcode_key.as_str() {
@@ -587,17 +700,20 @@ impl AbilityFrame {
 
         let filter = CardFilter::from_attr(instr.a);
         let slot = DecodedSlot::decode(instr.raw_s);
-
-        if is_negated {
-            return AbilityFrame::Semantic {
+        let semantic = |opcode, value, is_negated, params| {
+            AbilityFrame::Semantic {
                 opcode,
-                value: instr.v,
+                value,
                 filter,
                 slot,
-                is_negated: true,
+                is_negated,
                 is_cost: false,
-                params: Value::Null,
-            };
+                params,
+            }
+        };
+
+        if is_negated {
+            return semantic(opcode, instr.v, true, Value::Null);
         }
 
         match opcode {
@@ -650,19 +766,11 @@ impl AbilityFrame {
             },
             O_META_RULE => AbilityFrame::MetaRule {
                 rule_type: instr.v,
-                filter: CardFilter::from_attr(instr.a),
-                slot,
-                is_cost: false,
-            },
-            _ => AbilityFrame::Semantic {
-                opcode,
-                value: instr.v,
                 filter,
                 slot,
-                is_negated: false,
                 is_cost: false,
-                params: Value::Null,
             },
+            _ => semantic(opcode, instr.v, false, Value::Null),
         }
     }
 
@@ -1382,6 +1490,7 @@ pub struct AbilityContext {
     pub source_card_id: i32,
     pub target_card_id: i32,
     pub target_slot: i16,
+    pub selected_hand_idx: i16,
     pub choice_index: i16,
     /// Accumulated value (e.g. remaining cost limit for multi-card plays)
     pub v_accumulated: i16,
@@ -1443,6 +1552,7 @@ impl Default for AbilityContext {
             source_card_id: -1,
             target_card_id: -1,
             target_slot: -1,
+            selected_hand_idx: -1,
             choice_index: -1,
             selected_color: 0,
             program_counter: 0,
@@ -1579,8 +1689,6 @@ pub struct Ability {
     pub preparsed_modifiers: Vec<PreparsedModifier>,
     #[serde(default, skip_serializing)]
     pub opcodes_mask: u128,
-    #[serde(default, skip_serializing)]
-    pub sparse_frame_index: Option<serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frame_program: Option<FrameProgram>,
 }
@@ -1601,20 +1709,11 @@ impl std::hash::Hash for Ability {
         self.choice_count.hash(state);
         self.preparsed_modifiers.hash(state);
         self.opcodes_mask.hash(state);
-        self.sparse_frame_index.hash(state);
         self.frame_program.hash(state);
     }
 }
 
 impl Ability {
-    fn resolved_frame_program(&self) -> Option<FrameProgram> {
-        self.frame_program.clone()
-    }
-
-    pub fn semantic_frame_program(&self) -> Option<FrameProgram> {
-        self.resolved_frame_program()
-    }
-
     pub fn words(&self) -> Vec<i32> {
         self.frame_program
             .as_ref()
@@ -1630,121 +1729,8 @@ impl Ability {
     }
 
     pub fn frames(&self) -> Vec<AbilityFrame> {
-        self.resolved_frame_program()
+        self.frame_program.clone()
             .map_or_else(Vec::new, |frame_program| frame_program.frames)
-    }
-
-    fn modal_branch_frames_from_program(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
-        let program = self.resolved_frame_program()?;
-        let select_idx = program
-            .frames
-            .iter()
-            .position(|frame| matches!(frame.opcode(), O_SELECT_MODE | O_OPPONENT_CHOOSE))?;
-        let branch_idx = select_idx + 1 + choice_idx;
-        let branch = program.frames.get(branch_idx)?;
-        let target = if branch.opcode() == O_JUMP {
-            let target_idx = branch_idx + 1 + branch.value() as usize;
-            program.frames.get(target_idx)?
-        } else {
-            branch
-        };
-        Some(vec![target.clone()])
-    }
-
-    fn legacy_modal_option_frames_from_effects(
-        &self,
-        choice_idx: usize,
-    ) -> Option<Vec<AbilityFrame>> {
-        let effect = self.effects.first()?;
-        let options = effect.modal_options.as_array()?;
-        options
-            .get(choice_idx)
-            .and_then(|option| option.as_array())
-            .map(|effects| {
-                let mut frames = Vec::new();
-                for effect_val in effects {
-                    if let Ok(effect) = serde_json::from_value::<Effect>(effect_val.clone()) {
-                        let mut frame = AbilityFrame::from_effect(&effect);
-                        if matches!(frame.opcode(), O_REVEAL_UNTIL)
-                            && effect_val
-                                .get("params")
-                                .and_then(|value| value.as_object())
-                                .and_then(|params| params.get("card_type"))
-                                .and_then(|value| value.as_str())
-                                .map(|value| value.eq_ignore_ascii_case("live"))
-                                .unwrap_or(false)
-                        {
-                            frame = match frame {
-                                AbilityFrame::Semantic {
-                                    opcode,
-                                    value,
-                                    filter,
-                                    mut slot,
-                                    is_negated,
-                                    params,
-                                    ..
-                                } => {
-                                    slot.is_reveal_until_live = true;
-                                    AbilityFrame::Semantic {
-                                        opcode,
-                                        value,
-                                        filter,
-                                        slot,
-                                        is_negated,
-                                        is_cost: false,
-                                        params,
-                                    }
-                                }
-                                AbilityFrame::Raw {
-                                    opcode,
-                                    value,
-                                    attr,
-                                    slot,
-                                    ..
-                                } => {
-                                    let mut decoded_slot = DecodedSlot::decode(slot);
-                                    decoded_slot.is_reveal_until_live = true;
-                                    AbilityFrame::Raw {
-                                        opcode,
-                                        value,
-                                        attr,
-                                        slot: decoded_slot.to_raw(),
-                                        is_cost: false,
-                                    }
-                                }
-                                other => other,
-                            };
-                        }
-                        frames.push(frame);
-                    }
-                }
-                frames
-            })
-    }
-
-    fn semantic_optional_mode_frames(&self) -> Option<Vec<AbilityFrame>> {
-        if self.trigger != TriggerType::OnLiveSuccess {
-            return None;
-        }
-
-        let frames = self.frames();
-        if frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE) {
-            return None;
-        }
-
-        let option_frames: Vec<AbilityFrame> = frames
-            .into_iter()
-            .filter(|frame| {
-                frame.filter().is_optional
-                    && matches!(frame.opcode(), O_ENERGY_CHARGE | O_RECOVER_MEMBER)
-            })
-            .collect();
-
-        if option_frames.is_empty() {
-            None
-        } else {
-            Some(option_frames)
-        }
     }
 
     fn resolve_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
@@ -1817,8 +1803,20 @@ impl Ability {
             }
         }
 
-        if let Some(frames) = self.semantic_optional_mode_frames() {
-            return frames.get(choice_idx).cloned().map(|frame| vec![frame]);
+        if self.trigger == TriggerType::OnLiveSuccess {
+            let frames = self.frames();
+            if !frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE) {
+                let option_frames: Vec<AbilityFrame> = frames
+                    .into_iter()
+                    .filter(|frame| {
+                        frame.filter().is_optional
+                            && matches!(frame.opcode(), O_ENERGY_CHARGE | O_RECOVER_MEMBER)
+                    })
+                    .collect();
+                if let Some(frame) = option_frames.get(choice_idx) {
+                    return Some(vec![frame.clone()]);
+                }
+            }
         }
 
         if let Some(options) = self.modal_options.as_array() {
@@ -1837,12 +1835,94 @@ impl Ability {
                 });
         }
 
-        if let Some(frames) = self.modal_branch_frames_from_program(choice_idx) {
-            return Some(frames);
+        if let Some(program) = self.frame_program.as_ref() {
+            if let Some(select_idx) = program
+                .frames
+                .iter()
+                .position(|frame| matches!(frame.opcode(), O_SELECT_MODE | O_OPPONENT_CHOOSE))
+            {
+                let branch_idx = select_idx + 1 + choice_idx;
+                if let Some(branch) = program.frames.get(branch_idx) {
+                    let target = if branch.opcode() == O_JUMP {
+                        let target_idx = branch_idx + 1 + branch.value() as usize;
+                        program.frames.get(target_idx)
+                    } else {
+                        Some(branch)
+                    };
+                    if let Some(frame) = target {
+                        return Some(vec![frame.clone()]);
+                    }
+                }
+            }
         }
 
-        if let Some(frames) = self.legacy_modal_option_frames_from_effects(choice_idx) {
-            return Some(frames);
+        if let Some(effect) = self.effects.first() {
+            if let Some(options) = effect.modal_options.as_array() {
+                return options
+                    .get(choice_idx)
+                    .and_then(|option| option.as_array())
+                    .map(|effects| {
+                        let mut frames = Vec::new();
+                        for effect_val in effects {
+                            if let Ok(effect) = serde_json::from_value::<Effect>(effect_val.clone())
+                            {
+                                let mut frame = AbilityFrame::from_effect(&effect);
+                                if matches!(frame.opcode(), O_REVEAL_UNTIL)
+                                    && effect_val
+                                        .get("params")
+                                        .and_then(|value| value.as_object())
+                                        .and_then(|params| params.get("card_type"))
+                                        .and_then(|value| value.as_str())
+                                        .map(|value| value.eq_ignore_ascii_case("live"))
+                                        .unwrap_or(false)
+                                {
+                                    frame = match frame {
+                                        AbilityFrame::Semantic {
+                                            opcode,
+                                            value,
+                                            filter,
+                                            mut slot,
+                                            is_negated,
+                                            params,
+                                            ..
+                                        } => {
+                                            slot.is_reveal_until_live = true;
+                                            AbilityFrame::Semantic {
+                                                opcode,
+                                                value,
+                                                filter,
+                                                slot,
+                                                is_negated,
+                                                is_cost: false,
+                                                params,
+                                            }
+                                        }
+                                        AbilityFrame::Raw {
+                                            opcode,
+                                            value,
+                                            attr,
+                                            slot,
+                                            ..
+                                        } => {
+                                            let mut decoded_slot = DecodedSlot::decode(slot);
+                                            decoded_slot.is_reveal_until_live = true;
+                                            AbilityFrame::Raw {
+                                                opcode,
+                                                value,
+                                                attr,
+                                                slot: decoded_slot.to_raw(),
+                                                is_cost: false,
+                                            }
+                                        }
+                                        other => other,
+                                    };
+                                }
+                                frames.push(frame);
+                            }
+                        }
+                        frames
+                    });
+            }
         }
 
         None
@@ -1853,13 +1933,25 @@ impl Ability {
     }
 
     pub fn modal_option_count(&self) -> usize {
-        if let Some(frames) = self.semantic_optional_mode_frames() {
-            return frames.len();
-        }
-
         if let Some(effect) = self.effects.first() {
             if let Some(options) = effect.modal_options.as_array() {
                 return options.len();
+            }
+        }
+
+        if self.trigger == TriggerType::OnLiveSuccess {
+            let frames = self.frames();
+            if !frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE) {
+                let count = frames
+                    .into_iter()
+                    .filter(|frame| {
+                        frame.filter().is_optional
+                            && matches!(frame.opcode(), O_ENERGY_CHARGE | O_RECOVER_MEMBER)
+                    })
+                    .count();
+                if count > 0 {
+                    return count;
+                }
             }
         }
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 """Keep compiled card metadata readable while preserving the instruction list."""
 
-import datetime
 import hashlib
 import json
 import os
@@ -27,6 +26,13 @@ FRAME_INDEX_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 FRAME_INDEX_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 FRAME_INDEX_CARDS_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 FRAME_INDEX_HASH_PATH = ROOT_DIR / "data" / ".ability_frame_sync_hash"
+SOURCE_HASH_FILES = [
+    ROOT_DIR / "compiler" / "main.py",
+    ROOT_DIR / "tools" / "frame_codec.py",
+    ROOT_DIR / "tools" / "build_cards.py",
+    ROOT_DIR / "tools" / "abilities" / "pipeline.py",
+    ROOT_DIR / "engine" / "models" / "ability_frames.py",
+]
 
 
 @dataclass(slots=True)
@@ -54,6 +60,14 @@ def _calculate_hash(path: Path) -> str | None:
         return None
     with open(path, "rb") as handle:
         return hashlib.sha256(handle.read()).hexdigest()
+
+
+def _calculate_combined_hash(paths: list[Path]) -> str:
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update((path.as_posix() + "=").encode("utf-8"))
+        digest.update((_calculate_hash(path) or "").encode("utf-8"))
+    return digest.hexdigest()
 
 
 def _dump_json_if_changed(path: Path, payload: dict, quiet: bool) -> bool:
@@ -98,9 +112,15 @@ def _cards_are_current() -> bool:
     meta = compiled_data.get("meta", {})
     stored_hash = meta.get("source_hash")
     stored_ability_hash = meta.get("ability_source_hash")
+    stored_compiler_hash = meta.get("compiler_source_hash")
     current_hash = compiler_main.calculate_hash(str(CARDS_INPUT_PATH))
     current_ability_hash = compiler_main.calculate_hash(compiler_main.SPARSE_INDEX_PATH)
-    return stored_hash == current_hash and stored_ability_hash == current_ability_hash
+    current_compiler_hash = _calculate_combined_hash(SOURCE_HASH_FILES)
+    return (
+        stored_hash == current_hash
+        and stored_ability_hash == current_ability_hash
+        and stored_compiler_hash == current_compiler_hash
+    )
 
 
 def _update_cards_meta() -> None:
@@ -109,35 +129,25 @@ def _update_cards_meta() -> None:
         return
 
     meta = compiled_data.setdefault("meta", {})
+    for key in (
+        "documentation",
+        "source_files",
+        "semantic_form_enabled",
+        "semantic_form_version",
+        "export_profile",
+    ):
+        meta.pop(key, None)
     meta["source_hash"] = compiler_main.calculate_hash(str(CARDS_INPUT_PATH))
     meta["ability_source_hash"] = compiler_main.calculate_hash(compiler_main.SPARSE_INDEX_PATH)
+    meta["compiler_source_hash"] = _calculate_combined_hash(SOURCE_HASH_FILES)
     meta["generated_by"] = "tools/abilities/pipeline.py"
-    meta["generated_at"] = datetime.datetime.now().isoformat()
-    meta["source_files"] = {
-        "cards": str(CARDS_INPUT_PATH),
-        "ability_frames": str(compiler_main.ABILITY_FRAME_SOURCE_PATH),
-        "ability_index": "data/ability_frame_index.json",
-        "metadata": "data/metadata.json",
-        "card_id_mapping": "data/card_id_mapping.json",
-    }
     meta["execution_model"] = "frame_program_only"
-    meta["documentation"] = {
-        "purpose": "Compiled card database used by the engine and debug tools.",
-        "read_first": "Abilities are instruction-based. If instructions look empty, inspect frame_program.instructions and frame_count instead.",
-        "related_files": {
-            "data/cards.json": "Authored card source",
-            "data/ability_frame_index.yaml": "Authored frame source",
-            "data/ability_frame_index.json": "Normalized frame index",
-            "data/metadata.json": "Opcode, slot, and filter metadata",
-            "data/card_id_mapping.json": "Stable card ID mapping",
-        },
-    }
 
     with open(CARDS_OUTPUT_PATH, "w", encoding="utf-8", newline="\n") as handle:
         json.dump(compiled_data, handle, ensure_ascii=False, indent=2)
 
 
-def prepare_cards(*, force: bool = False, quiet: bool = False, export_profile: str = "runtime") -> bool:
+def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
     cards_changed = force or not _cards_are_current()
     if cards_changed:
         _log("Compiling cards from authored sources", quiet)
@@ -145,7 +155,7 @@ def prepare_cards(*, force: bool = False, quiet: bool = False, export_profile: s
             str(CARDS_INPUT_PATH),
             str(CARDS_OUTPUT_PATH),
             quiet=quiet,
-            export_profile=export_profile,
+            export_profile="runtime",
         )
         _update_cards_meta()
     else:
@@ -202,11 +212,10 @@ def prepare_runtime(
     *,
     force: bool = False,
     quiet: bool = False,
-    export_profile: str = "runtime",
     sync_assets: bool = False,
 ) -> PrepareResult:
     result = PrepareResult()
-    result.cards_changed = prepare_cards(force=force, quiet=quiet, export_profile=export_profile)
+    result.cards_changed = prepare_cards(force=force, quiet=quiet)
     result.frame_index_changed = prepare_frame_index(force=force, quiet=quiet)
     result.rust_codegen_changed = prepare_rust_codegen(quiet=quiet)
     if sync_assets:

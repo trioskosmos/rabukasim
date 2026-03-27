@@ -20,8 +20,20 @@ fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
     [pi.card_id, pi.ctx.source_card_id]
 }
 
-fn preferred_ability_index(pi: &PendingInteraction) -> Option<usize> {
-    usize::try_from(pi.ability_index).ok()
+fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
+    ability.frames().iter().any(|frame| frame.opcode() == opcode)
+}
+
+fn matches_pending_ability(ability: &Ability, pi: &PendingInteraction) -> bool {
+    if pi.choice_type == ChoiceType::SelectMode && is_distinct_optional_mode_live_ability(ability) {
+        return true;
+    }
+
+    ability_uses_opcode(ability, pi.effect_opcode)
+        || (pi.choice_type == ChoiceType::SelectMember
+            && ability_uses_opcode(ability, O_SELECT_MEMBER))
+        || (pi.choice_type == ChoiceType::SelectMode
+            && ability_uses_opcode(ability, O_SELECT_MODE))
 }
 
 fn find_matching_live_ability<'a, F>(
@@ -32,14 +44,14 @@ fn find_matching_live_ability<'a, F>(
 where
     F: FnMut(&Ability) -> bool,
 {
-    let ability_index = preferred_ability_index(pi);
+    let preferred_index = usize::try_from(pi.ability_index).ok();
 
     for live_card_id in pending_live_card_ids(pi) {
         let Some(card) = db.get_live(live_card_id) else {
             continue;
         };
 
-        if let Some(index) = ability_index {
+        if let Some(index) = preferred_index {
             if let Some(ability) = card.abilities.get(index) {
                 if matches(ability) {
                     return Some(ability);
@@ -59,27 +71,6 @@ pub fn pending_live_ability<'a>(
     db: &'a CardDatabase,
     pi: &PendingInteraction,
 ) -> Option<&'a Ability> {
-    fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
-        ability
-            .frames()
-            .iter()
-            .any(|frame| frame.opcode() == opcode)
-    }
-
-    fn ability_matches_pending(ability: &Ability, pi: &PendingInteraction) -> bool {
-        if pi.choice_type == ChoiceType::SelectMode
-            && is_distinct_optional_mode_live_ability(ability)
-        {
-            return true;
-        }
-
-        ability_uses_opcode(ability, pi.effect_opcode)
-            || (pi.choice_type == ChoiceType::SelectMember
-                && ability_uses_opcode(ability, O_SELECT_MEMBER))
-            || (pi.choice_type == ChoiceType::SelectMode
-                && ability_uses_opcode(ability, O_SELECT_MODE))
-    }
-
     if matches!(
         pi.choice_type,
         ChoiceType::SelectMode | ChoiceType::RecovM | ChoiceType::RecovL | ChoiceType::Optional
@@ -91,7 +82,7 @@ pub fn pending_live_ability<'a>(
         }
     }
 
-    find_matching_live_ability(db, pi, |ability| ability_matches_pending(ability, pi))
+    find_matching_live_ability(db, pi, |ability| matches_pending_ability(ability, pi))
 }
 
 pub fn pending_member_ability<'a>(
@@ -180,36 +171,29 @@ pub fn pending_targeted_live_heart_bonus(
 ) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
     let frames = ability.frames();
+    let [draw, discard, select_effect, follow_up, boost] = frames.as_slice() else {
+        return None;
+    };
+
     if ability.trigger != TriggerType::OnLiveStart
-        || frames.len() != 5
-        || frames
-            .iter()
-            .filter(|frame| frame.opcode() == O_SELECT_MEMBER)
-            .count()
-            != 1
-        || frames
-            .iter()
-            .filter(|frame| frame.opcode() == O_ADD_HEARTS)
-            .count()
-            != 1
-        || frames.get(0).map(|frame| frame.opcode()) != Some(O_DRAW)
-        || frames.get(1).map(|frame| frame.opcode()) != Some(O_MOVE_TO_DISCARD)
-        || frames.get(4).map(|frame| frame.opcode()) != Some(O_BOOST_SCORE)
+        || draw.opcode() != O_DRAW
+        || discard.opcode() != O_MOVE_TO_DISCARD
+        || select_effect.opcode() != O_SELECT_MEMBER
+        || follow_up.opcode() != O_ADD_HEARTS
+        || boost.opcode() != O_BOOST_SCORE
     {
         return None;
     }
 
     let is_target_selection_step = pi.effect_opcode == O_SELECT_MEMBER
         || pi.choice_type == ChoiceType::SelectMember
-        || (pi.filter_attr & !0x3) == frames.get(2)?.attr();
+        || (pi.filter_attr & !0x3) == select_effect.attr();
     let is_vacuous_discard_step =
         pi.effect_opcode == O_MOVE_TO_DISCARD && pi.choice_type == ChoiceType::SelectHandDiscard;
     if !is_target_selection_step && !is_vacuous_discard_step {
         return None;
     }
 
-    let select_effect = frames.get(2)?;
-    let follow_up = frames.get(3)?;
     Some((select_effect.attr(), follow_up.attr() as u8))
 }
 

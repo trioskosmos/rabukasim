@@ -25,6 +25,16 @@ class AbilityFrame:
         return data
 
 
+def frame_program_instructions(frame_program: Any) -> list[Any]:
+    if not isinstance(frame_program, dict):
+        return []
+
+    instructions = frame_program.get("instructions", frame_program.get("frames", []))
+    if isinstance(instructions, list):
+        return instructions
+    return []
+
+
 def _strip_empty(value: Any) -> Any:
     if isinstance(value, dict):
         cleaned: Dict[str, Any] = {}
@@ -32,12 +42,12 @@ def _strip_empty(value: Any) -> Any:
             if key in {"raw", "signature", "signature_hash", "signature_source"}:
                 continue
             normalized = _strip_empty(item)
-            if normalized not in (None, False, 0, "", [], {}):
+            if normalized not in (None, "", [], {}):
                 cleaned[key] = normalized
         return cleaned
     if isinstance(value, list):
         cleaned_list = [_strip_empty(item) for item in value]
-        return [item for item in cleaned_list if item not in (None, False, 0, "", [], {})]
+        return [item for item in cleaned_list if item not in (None, "", [], {})]
     return value
 
 
@@ -74,18 +84,63 @@ def _coerce_options(frame: Any) -> Dict[str, Any]:
 
     if isinstance(frame.get("semantic"), dict):
         semantic = frame["semantic"]
-        if semantic.get("value") is not None:
-            options.setdefault("value", semantic.get("value"))
-        if semantic.get("attr") is not None:
-            options.setdefault("filter", semantic.get("attr"))
-        if semantic.get("slot") is not None:
-            options.setdefault("slot", semantic.get("slot"))
-        if semantic.get("params") is not None:
-            options.setdefault("params", semantic.get("params"))
+        semantic_keys = (
+            "value",
+            "count",
+            "choose_count",
+            "reveal",
+            "dest_discard",
+            "char_id_1",
+            "char_id_2",
+            "char_id_3",
+            "attr",
+            "filter",
+            "slot",
+            "params",
+            "target",
+            "comparison",
+            "rule_type",
+            "is_cost",
+            "optional",
+            "is_negated",
+            "negated",
+            "opcode",
+            "opcode_id",
+            "opcode_name",
+            "kind",
+            "op",
+        )
+        for key in semantic_keys:
+            if key in semantic and semantic[key] not in (None, "", [], {}):
+                mapped_key = "filter" if key == "attr" else ("negated" if key == "is_negated" else key)
+                options.setdefault(mapped_key, copy.deepcopy(semantic[key]))
 
-    for key in ("value", "count", "filter", "attr", "slot", "params", "target", "comparison", "is_cost", "cost"):
+    for key in (
+        "value",
+        "count",
+        "choose_count",
+        "reveal",
+        "dest_discard",
+        "char_id_1",
+        "char_id_2",
+        "char_id_3",
+        "filter",
+        "attr",
+        "slot",
+        "params",
+        "target",
+        "comparison",
+        "rule_type",
+        "opcode",
+        "opcode_id",
+        "opcode_name",
+        "kind",
+        "is_cost",
+        "cost",
+        "optional",
+    ):
         if key in frame and frame[key] not in (None, "", [], {}):
-            mapped_key = "filter" if key == "attr" else ("is_cost" if key == "cost" else key)
+            mapped_key = "filter" if key == "attr" else ("is_cost" if key == "cost" else ("negated" if key == "is_negated" else key))
             options.setdefault(mapped_key, copy.deepcopy(frame[key]))
 
     if frame.get("is_negated", frame.get("negated", False)):
@@ -94,7 +149,7 @@ def _coerce_options(frame: Any) -> Dict[str, Any]:
     if "op" in frame and frame["op"] == "RETURN":
         return {}
 
-    return {key: value for key, value in _strip_empty(options).items() if value not in (None, False, 0, "", [], {})}
+    return {key: value for key, value in _strip_empty(options).items() if value not in (None, "", [], {})}
 
 
 def normalize_frame(frame: Any, frame_index: int | None = None) -> Dict[str, Any]:
@@ -127,6 +182,9 @@ def normalize_frame(frame: Any, frame_index: int | None = None) -> Dict[str, Any
         for alias in ("value", "count", "filter", "slot", "params", "target", "comparison", "is_cost"):
             if alias in options:
                 normalized[alias] = copy.deepcopy(options[alias])
+        for alias in ("choose_count", "reveal", "dest_discard", "char_id_1", "char_id_2", "char_id_3", "rule_type"):
+            if alias in options:
+                normalized[alias] = copy.deepcopy(options[alias])
         if options.get("negated"):
             normalized["negated"] = True
 
@@ -134,6 +192,10 @@ def normalize_frame(frame: Any, frame_index: int | None = None) -> Dict[str, Any
         normalized["rust_opcode"] = frame["rust_opcode"]
     elif opcode != "RETURN":
         normalized["rust_opcode"] = f"O_{opcode}"
+
+    decoded = frame.get("decoded")
+    if isinstance(decoded, str) and decoded:
+        normalized["decoded"] = decoded
 
     explicit_index = frame.get("frame_index", frame.get("ability_frame_index", frame_index))
     if isinstance(explicit_index, int) and explicit_index >= 0:

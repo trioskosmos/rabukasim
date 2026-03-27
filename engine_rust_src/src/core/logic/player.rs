@@ -266,16 +266,16 @@ impl PlayerState {
     pub const OFFSET_PREVENT_SUCCESS_PILE: u8 = 27;
     pub const OFFSET_PREVENT_PLAY_TO_SLOT: u8 = 29;
 
-    pub const MASK_TAPPED: u32 = 0b111 << 3;
-    pub const MASK_MOVED: u32 = 0b111 << 6;
-    pub const MASK_REVEALED: u32 = 0b111 << 9;
-    pub const MASK_BATON_COUNT: u32 = 0b11 << 14;
-    pub const MASK_BATON_LIMIT: u32 = 0b11 << 16;
-    pub const MASK_PLAY_COUNT: u32 = 0b11111 << 18;
-    pub const MASK_PREVENT_ACTIVATE: u32 = 0b11 << 23;
-    pub const MASK_PREVENT_BATON: u32 = 0b11 << 25;
-    pub const MASK_PREVENT_SUCCESS_PILE: u32 = 0b11 << 27;
-    pub const MASK_PREVENT_PLAY_TO_SLOT: u32 = 0b111 << 29;
+    pub const MASK_TAPPED: u32 = 56;
+    pub const MASK_MOVED: u32 = 448;
+    pub const MASK_REVEALED: u32 = 3584;
+    pub const MASK_BATON_COUNT: u32 = 49152;
+    pub const MASK_BATON_LIMIT: u32 = 196608;
+    pub const MASK_PLAY_COUNT: u32 = 8126464;
+    pub const MASK_PREVENT_ACTIVATE: u32 = 25165824;
+    pub const MASK_PREVENT_BATON: u32 = 100663296;
+    pub const MASK_PREVENT_SUCCESS_PILE: u32 = 402653184;
+    pub const MASK_PREVENT_PLAY_TO_SLOT: u32 = 3758096384;
 
     pub fn get_flag(&self, bit: u8) -> bool {
         (self.flags >> bit) & 1 == 1

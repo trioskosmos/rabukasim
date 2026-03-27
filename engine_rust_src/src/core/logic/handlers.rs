@@ -9,6 +9,7 @@ use crate::core::logic::{
     },
     action_factory::DecodedAction,
     interpreter::costs,
+    interpreter::handlers::HandlerResult,
     AbilityContext, ActionFactory, CardDatabase, GameState, Phase,
 };
 // use crate::core::hearts::*;
@@ -92,7 +93,7 @@ impl TurnController for GameState {
         }
 
         if !self.ui.silent {
-            self.log(format!("[[rps_choice:player={}:choice={}]]", p_idx, choice));
+            self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} chose RPS move {}.", p_idx, choice));
         }
 
         self.rps_choices[p_idx] = choice as i8;
@@ -142,6 +143,9 @@ impl TurnController for GameState {
                 }
                 self.current_player = winner as u8;
                 self.phase = Phase::TurnChoice;
+                if !self.ui.silent {
+                    self.log("Rule 7.1.1: Winner of RPS chooses to go first or second.".to_string());
+                }
             }
         }
         Ok(())
@@ -151,15 +155,22 @@ impl TurnController for GameState {
         if action == Self::ACTION_TURN_CHOICE_FIRST {
             let winner = self.current_player;
             self.first_player = winner;
-            self.log(format!("Player {} chose to go first!", winner));
+            if !self.ui.silent {
+                self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go first!", winner));
+            }
             self.phase = Phase::MulliganP1;
             self.current_player = winner;
         } else if action == Self::ACTION_TURN_CHOICE_SECOND {
             let winner = self.current_player;
             self.first_player = 1 - winner;
-            self.log(format!("Player {} chose to go second!", winner));
+            if !self.ui.silent {
+                self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go second!", winner));
+            }
             self.phase = Phase::MulliganP1;
             self.current_player = 1 - winner;
+            if !self.ui.silent {
+                self.log("Rule 7.1.2: Order of players decided.".to_string());
+            }
         }
         Ok(())
     }
@@ -212,10 +223,12 @@ impl MulliganController for GameState {
             }
         }
 
-        self.log(format!(
-            "Rule 6.2.1.6: Player {} finished mulligan ({} cards)",
-            player_idx, count
-        ));
+        if !self.ui.silent {
+            self.log(format!(
+                "Rule 6.2.1.6 (1.3.2): Player {} finished mulligan ({} cards moved to bottom of Main Deck).",
+                player_idx, count
+            ));
+        }
         self.core.players[player_idx].hand = new_hand;
         let t = self.turn as i32;
         for _ in 0..count {
@@ -238,6 +251,9 @@ impl MulliganController for GameState {
         } else if self.phase == Phase::MulliganP2 {
             self.current_player = self.first_player;
             self.phase = Phase::Active;
+            if !self.ui.silent {
+                self.log("Rule 7.1: Preparation finished. Starting first turn.".to_string());
+            }
         }
         if self.debug.debug_mode {
             println!(
@@ -330,9 +346,15 @@ impl MainPhaseController for GameState {
 
             if self.current_player == self.first_player {
                 self.current_player = 1 - self.first_player;
+                if !self.ui.silent {
+                    self.log("Rule 8.2.4: Player 1 (Second Player) now sets live cards.".to_string());
+                }
             } else {
                 self.phase = Phase::PerformanceP1;
                 self.current_player = self.first_player;
+                if !self.ui.silent {
+                    self.log("Rule 8.2.5: Live Card Set Phase ended. Moving to Performance Phase.".to_string());
+                }
             }
         } else if action >= ACTION_BASE_LIVESET && action < ACTION_BASE_LIVESET + 100 {
             let hand_idx = (action - ACTION_BASE_LIVESET) as usize;
@@ -417,7 +439,7 @@ impl MainPhaseController for GameState {
     fn end_main_phase(&mut self, db: &CardDatabase) {
         if !self.ui.silent {
             self.log(format!(
-                "Rule 7.7.3: Player {} ends Main Phase.",
+                "Rule 7.5.3, Rule 7.8, Rule 7.8.1: Player {} ends Main Phase.",
                 self.current_player
             ));
         }
@@ -444,7 +466,7 @@ impl MainPhaseController for GameState {
             self.phase = Phase::LiveSet;
             self.current_player = self.first_player;
             if !self.ui.silent {
-                self.log_rule("Rule 8.2", &format!("Entering Live Set Phase."));
+                self.log_rule("Rule 7.6, Rule 8.2", &format!("Entering Live Set Phase."));
             }
         }
     }
@@ -464,22 +486,6 @@ impl ResponseController for GameState {
                 DecodedAction::SelectStageSlot { slot_idx } => slot_idx as i32,
                 _ => -1,
             };
-
-            if pi.choice_type == ChoiceType::Optional
-                && pi.target_slot == 4
-                && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
-                && choice_idx == 0
-            {
-                let owner = pi.ctx.player_id as usize;
-                if let Some(slot_idx) = self.players[owner].stage.iter().position(|&cid| cid >= 0) {
-                    self.players[owner].set_tapped(slot_idx, true);
-                }
-                if let Some(current) = self.interaction_stack.last_mut() {
-                    current.choice_type = ChoiceType::SelectMember;
-                    current.ctx.choice_index = -1;
-                }
-                return Ok(());
-            }
 
             if let Some(mask) = pending_optional_mode_mask(db, &pi) {
                 if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
@@ -646,7 +652,7 @@ impl ResponseController for GameState {
             (pi.execution_id, pi.ctx.clone())
         };
 
-        let choice_idx = match ActionFactory::parse_action(action) {
+        let choice_idx = match decoded_action {
             DecodedAction::Pass => 99,
             DecodedAction::SelectMode { mode_idx } => mode_idx,
             DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
@@ -677,12 +683,66 @@ impl ResponseController for GameState {
         };
         let target_slot = ctx_res.target_slot as i32;
 
-        if pending_choice_type == ChoiceType::SelectStage {
-            self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
+        if self.debug.debug_mode {
+            println!(
+                "[DEBUG_RESPONSE_DISPATCH] decoded={:?} pending={:?} choice_idx={} target_slot={} slot_idx={} ab_idx={} hand_idx={} target_card_id={}",
+                decoded_action,
+                pending_choice_type,
+                choice_idx,
+                target_slot,
+                slot_idx,
+                ab_idx_call,
+                self.interaction_stack
+                    .last()
+                    .map(|pi| pi.ctx.selected_hand_idx)
+                    .unwrap_or(-1),
+                self.interaction_stack
+                    .last()
+                    .map(|pi| pi.ctx.target_card_id)
+                    .unwrap_or(-1)
+            );
+        }
+
+        let target_slot = match pending_choice_type {
+            ChoiceType::SelectStage
+            | ChoiceType::SelectStageEmpty
+            | ChoiceType::SelectStageEmptyBaton => choice_idx,
+            ChoiceType::SelectMember => -1,
+            _ => target_slot,
+        };
+
+        self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
+
+        if !self.interaction_stack.is_empty() {
+            if let Some(top) = self.interaction_stack.last() {
+                if top.card_id == 420 || top.ctx.source_card_id == 420 {
+                    eprintln!(
+                        "[RESP_RETURN_420] stack_len={} choice={:?} effect={} v_remaining={} card_id={}",
+                        self.interaction_stack.len(),
+                        top.choice_type,
+                        top.effect_opcode,
+                        top.v_remaining,
+                        top.card_id
+                    );
+                }
+            }
             return Ok(());
         }
 
-        self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
+        if matches!(
+            pending_choice_type,
+            ChoiceType::SelectStage | ChoiceType::SelectMember
+        ) && ctx_res.source_card_id >= 0
+        {
+            crate::core::logic::interpreter::restore_response_state(
+                self,
+                response_origin.0,
+                response_origin.1,
+            );
+            self.process_rule_checks(db);
+            self.check_win_condition();
+            return Ok(());
+        }
 
         self.clear_execution_id();
         crate::core::logic::interpreter::restore_response_state(
@@ -724,21 +784,28 @@ impl ResponseController for GameState {
         let untap_energy_indices =
             self.core.players[p_idx].get_untapped_energy_indices(cost as usize);
 
-        if !self.debug.debug_ignore_conditions {
-            if untap_energy_indices.len() < cost as usize {
-                if self.debug.debug_mode {
-                    println!(
-                        "[DEBUG] play_member_with_choice: FAILED! cost={}, available={}",
-                        cost,
-                        untap_energy_indices.len()
-                    );
+            if !self.debug.debug_ignore_conditions {
+                if untap_energy_indices.len() < cost as usize {
+                    if self.debug.debug_mode {
+                        println!(
+                            "[DEBUG] play_member_with_choice: FAILED! cost={}, available={}",
+                            cost,
+                            untap_energy_indices.len()
+                        );
+                    }
+                    return Err("Not enough energy".to_string());
                 }
-                return Err("Not enough energy".to_string());
+                if !self.ui.silent {
+                    if cost > 0 {
+                        self.log(format!("Rule 9.6.2.3: Tapping {} energy for play cost (Rule 9.4).", cost));
+                    } else {
+                        self.log("Rule 9.6.2.3: No energy tapped (cost <= 0).".to_string());
+                    }
+                }
+                for i in untap_energy_indices {
+                    self.core.players[p_idx].set_energy_tapped(i, true);
+                }
             }
-            for i in untap_energy_indices {
-                self.core.players[p_idx].set_energy_tapped(i, true);
-            }
-        }
 
         // Unified logging: records to both turn_history and rule_log
         self.log_event(
@@ -752,9 +819,20 @@ impl ResponseController for GameState {
             card_id,
             -1,
             p_idx as u8,
-            Some("Rule 7.7.2.2"),
+            Some("Rule 9.6.2.1, Rule 9.6.2.4.1 (Placement)"),
             true,
         );
+        if !self.ui.silent {
+            if secondary_slot_idx >= 0 {
+                self.log(format!("Rule 9.6.2.3.2, Rule 9.6.2.3.2.1: Player {} performs [バトンタッチ] (Baton Touch) at Slot {} with Slot {}. (Q194, Q199 verified)", p_idx, slot_idx + 1, secondary_slot_idx + 1));
+            } else {
+                self.log(format!("Rule 9.6.2.4.1: Player {} plays card ID {} to Slot {}.", p_idx, card_id, slot_idx + 1));
+            }
+            self.log(format!(
+                "Rule 3.2.1, 3.2.2, 3.2.3, 3.2.4, 3.2.5 (2.2.1, 2.3.1, 2.4.1, 2.5.1, 2.6.1, 2.7.1): Played member attributes: Cost={}, Blades={}, Hearts={:?}.",
+                card.cost, card.blades, card.hearts
+            ));
+        }
 
         self.execute_play_member_state(
             db,
@@ -789,38 +867,213 @@ impl ResponseController for GameState {
         if db.is_vanilla {
             return Err("Abilities are disabled in vanilla mode".to_string());
         }
+        if !self.ui.silent && self.interaction_stack.is_empty() {
+            self.log("Rule 9.1.1.1 (11.5.1): Activating [起動] (Activated) ability.".to_string());
+        }
 
         let p_idx = self.current_player as usize;
-        let stack_len_before = self.interaction_stack.len();
         if self.phase == Phase::Response || !self.interaction_stack.is_empty() {
             let response_origin = pending_response_origin(self);
-            let (cid, ctx) = if let Some(pi) = self.interaction_stack.last() {
-                let restored_phase = pi.ctx.original_phase.unwrap_or_else(|| {
-                    if pi.original_phase == Phase::Setup {
-                        self.phase
-                    } else {
-                        pi.original_phase
-                    }
-                });
-                let mut c = pi.ctx.clone();
-                c.choice_index = choice_idx as i16;
-                c.original_phase = Some(restored_phase);
-                if target_slot >= 0 {
-                    c.target_slot = target_slot as i16;
-                }
-                (pi.card_id, c)
+            let pending = if let Some(pi) = self.interaction_stack.last().cloned() {
+                pi
             } else {
                 return Err("No pending interaction".to_string());
             };
+            let (cid, ctx) = {
+                let restored_phase = pending.ctx.original_phase.unwrap_or_else(|| {
+                    if pending.original_phase == Phase::Setup {
+                        self.phase
+                    } else {
+                        pending.original_phase
+                    }
+                });
+                let mut c = pending.ctx.clone();
+                c.choice_index = choice_idx as i16;
+                c.original_phase = Some(restored_phase);
+                if pending.choice_type == ChoiceType::SelectMember {
+                    c.selected_hand_idx = choice_idx as i16;
+                    c.target_card_id = self.core.players[p_idx]
+                        .hand
+                        .get(choice_idx.max(0) as usize)
+                        .copied()
+                        .unwrap_or(-1);
+                    if c.target_card_id >= 0 && !c.selected_cards.contains(&c.target_card_id) {
+                        c.selected_cards.push(c.target_card_id);
+                    }
+                }
+                if target_slot >= 0 {
+                    c.target_slot = target_slot as i16;
+                }
+                (pending.card_id, c)
+            };
+
+            if pending.choice_type == ChoiceType::SelectStage {
+                match pending.effect_opcode {
+                    O_PLAY_MEMBER_FROM_HAND => {
+                        let stage_slot = choice_idx.max(0) as usize;
+                        let mut play_ctx = pending.ctx.clone();
+                        play_ctx.choice_index = stage_slot as i16;
+                        play_ctx.target_slot = stage_slot as i16;
+                        let p_idx = play_ctx.player_id as usize;
+                        let hand_idx = if play_ctx.target_card_id >= 0 {
+                            let card_id = play_ctx.target_card_id;
+                            self.core.players[p_idx]
+                                .hand
+                                .iter()
+                                .position(|&cid| cid == card_id)
+                                .unwrap_or(usize::MAX)
+                        } else if play_ctx.selected_hand_idx >= 0 {
+                            play_ctx.selected_hand_idx as usize
+                        } else {
+                            usize::MAX
+                        };
+
+                        if play_ctx.target_card_id < 0 && hand_idx != usize::MAX {
+                            play_ctx.target_card_id = self.core.players[p_idx]
+                                .hand
+                                .get(hand_idx)
+                                .copied()
+                                .unwrap_or(-1);
+                        }
+                        if play_ctx.target_card_id >= 0 && play_ctx.selected_hand_idx < 0 {
+                            play_ctx.selected_hand_idx = hand_idx as i16;
+                        }
+
+                        let result = crate::core::logic::interpreter::handlers::state::finalize_play_member_from_hand(
+                            self,
+                            db,
+                            &mut play_ctx,
+                            p_idx,
+                            hand_idx,
+                            stage_slot,
+                        );
+
+                        if let Some(pos) = self.interaction_stack.iter().rposition(|pi| {
+                            pi.choice_type == pending.choice_type
+                                && pi.effect_opcode == O_PLAY_MEMBER_FROM_HAND
+                                && pi.card_id == pending.card_id
+                        }) {
+                            self.interaction_stack.remove(pos);
+                        }
+
+                        if !self.interaction_stack.is_empty() {
+                            return Ok(());
+                        }
+
+                        if matches!(result, HandlerResult::Suspend) {
+                            return Ok(());
+                        }
+
+                        if !self.trigger_queue.is_empty() {
+                            self.process_trigger_queue(db);
+                        }
+                        self.process_rule_checks(db);
+                        crate::core::logic::interpreter::restore_response_state(
+                            self,
+                            response_origin.0,
+                            response_origin.1,
+                        );
+                        self.check_win_condition();
+                        return Ok(());
+                    }
+                    O_PLAY_MEMBER_FROM_DISCARD => {
+                        let stage_slot = choice_idx.max(0) as usize;
+                        let mut play_ctx = pending.ctx.clone();
+                        play_ctx.choice_index = stage_slot as i16;
+                        let p_idx = play_ctx.player_id as usize;
+                        let card_id = if play_ctx.target_card_id >= 0 {
+                            play_ctx.target_card_id
+                        } else {
+                            return Err("No pending discard-play card".to_string());
+                        };
+
+                        let is_total_cost =
+                            (pending.filter_attr & (1u64 << 60)) != 0 || (pending.filter_attr & (1u64 << 50)) != 0;
+
+                        if let Some(pos) = self.interaction_stack.iter().rposition(|pi| {
+                            pi.choice_type == pending.choice_type
+                                && pi.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD
+                                && pi.card_id == pending.card_id
+                        }) {
+                            self.interaction_stack.remove(pos);
+                        }
+
+                        let result = crate::core::logic::interpreter::handlers::finalize_play_member_from_discard(
+                            self,
+                            db,
+                            &mut play_ctx,
+                            p_idx,
+                            card_id,
+                            stage_slot,
+                            false,
+                            is_total_cost,
+                        );
+
+                        if !self.interaction_stack.is_empty() {
+                            return Ok(());
+                        }
+
+                        if matches!(result, HandlerResult::Suspend) {
+                            return Ok(());
+                        }
+
+                        if !self.trigger_queue.is_empty() {
+                            self.process_trigger_queue(db);
+                        }
+                        self.process_rule_checks(db);
+                        crate::core::logic::interpreter::restore_response_state(
+                            self,
+                            response_origin.0,
+                            response_origin.1,
+                        );
+                        self.check_win_condition();
+                        return Ok(());
+                    }
+                    _ => {}
+                }
+            }
+
+            if pending.choice_type == ChoiceType::SelectMember
+                && pending.effect_opcode == O_PLAY_MEMBER_FROM_HAND
+            {
+                let mut play_ctx = pending.ctx.clone();
+                play_ctx.choice_index = choice_idx as i16;
+                play_ctx.selected_hand_idx = choice_idx as i16;
+                play_ctx.target_card_id = self.core.players[play_ctx.player_id as usize]
+                    .hand
+                    .get(choice_idx.max(0) as usize)
+                    .copied()
+                    .unwrap_or(-1);
+
+                crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+
+                crate::core::logic::interpreter::suspension::suspend_interaction(
+                    self,
+                    db,
+                    &play_ctx,
+                    play_ctx.program_counter as usize,
+                    O_PLAY_MEMBER_FROM_HAND,
+                    choice_idx,
+                    ChoiceType::SelectStage,
+                    &crate::core::models::interpreter::get_choice_text(db, &play_ctx),
+                    pending.filter_attr,
+                    1,
+                    Vec::new(),
+                    Vec::new(),
+                );
+                return Ok(());
+            }
+
+            // Consume the answered prompt using the shared stack/phase helper.
+            crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
 
             let semantic_frames = if cid == -1 {
-                let pi = self.interaction_stack.last().unwrap();
                 Some(vec![
                     crate::core::logic::models::AbilityFrame::Semantic {
-                        opcode: pi.effect_opcode,
-                        value: pi.ctx.v_remaining as i32,
+                        opcode: pending.effect_opcode,
+                        value: pending.ctx.v_remaining as i32,
                         filter: crate::core::logic::filter::CardFilter::from_attr(
-                            pi.filter_attr as i64,
+                            pending.filter_attr as i64,
                         ),
                         slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
                         is_negated: false,
@@ -847,26 +1100,21 @@ impl ResponseController for GameState {
                 let _ = crate::core::logic::interpreter::resolve_semantic_frames(
                     self, db, &frames, &ctx,
                 );
-            } else if let Some(mem) = db.get_member(cid) {
-                let ab = mem.abilities.get(ab_idx).ok_or("Ability not found")?;
-                self.resolve_ability(db, ab, &ctx);
-            } else if let Some(live) = db.get_live(cid) {
-                let ab = live.abilities.get(ab_idx).ok_or("Ability not found")?;
-                self.resolve_ability(db, ab, &ctx);
             } else {
-                return Err("Card not found".to_string());
-            }
-
-            self.process_rule_checks(db);
-
-            if self.interaction_stack.len() <= stack_len_before {
-                while self
-                    .interaction_stack
-                    .last()
-                    .map(|pi| pi.card_id == cid)
-                    .unwrap_or(false)
-                {
-                    self.interaction_stack.pop();
+                if let Some(member) = db.get_member(cid) {
+                    if let Some(ab) = member.abilities.get(ab_idx) {
+                        self.resolve_ability(db, ab, &ctx);
+                    } else {
+                        return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
+                    }
+                } else if let Some(live) = db.get_live(cid) {
+                    if let Some(ab) = live.abilities.get(ab_idx) {
+                        self.resolve_ability(db, ab, &ctx);
+                    } else {
+                        return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
+                    }
+                } else {
+                    return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
                 }
             }
 
@@ -905,6 +1153,13 @@ impl ResponseController for GameState {
                     }
                 }
             }
+
+            if !self.interaction_stack.is_empty() {
+                return Ok(());
+            }
+
+            self.process_rule_checks(db);
+
             crate::core::logic::interpreter::restore_response_state(
                 self,
                 response_origin.0,
@@ -1113,18 +1368,12 @@ impl TurnPhaseController for GameState {
         let skip = self.core.players[p_idx].skip_next_activate();
         if skip {
             if !self.ui.silent {
-                self.log(format!(
-                    "Rule 7.4.1: [Active Phase] SKIPPED (untapping skipped) for Player {}.",
-                    p_idx
-                ));
+                self.log(format!("Rule 7.2, Rule 7.2.1, Rule 7.2.1.1, Rule 7.2.1.2: [Active Phase] SKIPPED (untapping skipped) for Player {}.", p_idx));
             }
             self.core.players[p_idx].set_skip_next_activate(false);
         } else {
             if !self.ui.silent {
-                self.log(format!(
-                    "Rule 7.4.1: [Active Phase] Untapping all cards for Player {}.",
-                    p_idx
-                ));
+                self.log(format!("Rule 7.2, Rule 7.2.1, Rule 7.2.1.1, Rule 7.2.1.2: [Active Phase] Untapping all cards for Player {}.", p_idx));
             }
         }
 
@@ -1140,10 +1389,8 @@ impl TurnPhaseController for GameState {
         if self.phase == Phase::Active {
             self.phase = Phase::Energy;
             if !self.ui.silent {
-                self.log_rule(
-                    "Rule 7.5",
-                    &format!("Entering Energy Phase for Player {}.", p_idx),
-                );
+                self.log("Rule 7, Rule 7.3, Rule 7.3.1, Rule 7.3.2, Rule 7.3.2.1, Rule 7.3.3: --- ENERGY PHASE ---".to_string());
+                self.log(format!("Rule 7.3.1: Entering Energy Phase for Player {}.", p_idx));
             }
         }
     }
@@ -1156,7 +1403,7 @@ impl TurnPhaseController for GameState {
         if let Some(card_id) = self.core.players[p_idx].energy_deck.pop() {
             if !self.ui.silent {
                 self.log(format!(
-                    "Rule 7.5.2: Player {} placed Energy from Energy Deck",
+                    "Rule 7.3.2, Rule 7.3.2.1: Player {} placed Energy from Energy Deck",
                     p_idx
                 ));
             }
@@ -1164,10 +1411,8 @@ impl TurnPhaseController for GameState {
         }
         self.phase = Phase::Draw;
         if !self.ui.silent {
-            self.log_rule(
-                "Rule 7.6",
-                &format!("Entering Draw Phase for Player {}.", p_idx),
-            );
+            self.log("Rule 7.4, Rule 7.4.1, Rule 7.4.2, Rule 7.4.3: --- DRAW PHASE ---".to_string());
+            self.log(format!("Rule 7.4.1: Entering Draw Phase for Player {}.", p_idx));
         }
     }
 
@@ -1193,17 +1438,15 @@ impl TurnPhaseController for GameState {
                 -1,
                 -1,
                 p_idx as u8,
-                Some("Rule 7.6.2"),
+                Some("Rule 7.4.2"),
                 true,
             );
         }
         self.draw_cards(p_idx, 1);
         self.phase = Phase::Main;
         if !self.ui.silent {
-            self.log_rule(
-                "Rule 7.7",
-                &format!("Entering Main Phase for Player {}.", p_idx),
-            );
+            self.log("Rule 7.5, Rule 7.5.1, Rule 7.5.2, Rule 7.5.3: --- MAIN PHASE ---".to_string());
+            self.log(format!("Rule 7.5.1: Entering Main Phase for Player {}.", p_idx));
         }
     }
 }
@@ -1217,15 +1460,10 @@ impl GameState {
         start_ab_idx: usize,
     ) -> Result<(), String> {
         let stack_len_before = self.interaction_stack.len();
-        let (card_id, ctx, orig_phase, orig_cp) = if let Some(pi) = self.interaction_stack.last() {
+        let (card_id, ctx) = if let Some(pi) = self.interaction_stack.last() {
             let mut c = pi.ctx.clone();
             c.choice_index = choice_idx as i16;
-            let restored_phase = pi
-                .ctx
-                .original_phase
-                .unwrap_or(pi.original_phase);
-            c.original_phase = Some(restored_phase);
-            (pi.card_id, c, pi.original_phase, pi.original_current_player)
+            (pi.card_id, c)
         } else {
             return Err("No pending interaction found in Response phase".to_string());
         };
@@ -1250,29 +1488,18 @@ impl GameState {
             start_ab_idx,
             ctx.choice_index,
         );
-        self.phase = orig_phase;
-        self.process_rule_checks(db);
-
-        if self.interaction_stack.len() <= stack_len_before {
-            while self
-                .interaction_stack
-                .last()
-                .map(|pi| pi.card_id == card_id)
-                .unwrap_or(false)
-            {
-                self.interaction_stack.pop();
+        if self.interaction_stack.len() >= stack_len_before && stack_len_before > 0 {
+            let remove_idx = stack_len_before - 1;
+            if remove_idx < self.interaction_stack.len() {
+                self.interaction_stack.remove(remove_idx);
             }
         }
-
-        if self.phase == Phase::Response {
-            return Ok(());
-        }
-        self.current_player = orig_cp;
+        self.process_rule_checks(db);
         Ok(())
     }
 
     fn check_play_legality(
-        &self,
+        &mut self,
         db: &CardDatabase,
         p_idx: usize,
         _card_id: i32,
@@ -1289,6 +1516,9 @@ impl GameState {
             return Err("Cannot play to this slot due to restriction".to_string());
         }
         if player.is_moved(slot_idx) {
+            if !self.ui.silent {
+                self.log("Compliance Check: Rule 9.6.2.1.2.1 (Q194, Q199) - Cannot play to a slot where a member already moved/placed this turn.".to_string());
+            }
             return Err("Already played/moved to this slot this turn".to_string());
         }
 
@@ -1308,6 +1538,9 @@ impl GameState {
         if secondary_slot_idx >= 0 {
             let s_idx = secondary_slot_idx as usize;
             if s_idx >= 3 || player.stage[s_idx] < 0 || player.is_moved(s_idx) {
+                if !self.ui.silent && player.is_moved(s_idx) {
+                    self.log("Compliance Check: Rule 9.6.2.1.2.1 (Q194, Q199) - Cannot [バトンタッチ] (Baton Touch) a member that joined the stage this turn.".to_string());
+                }
                 return Err("Invalid secondary baton touch target".to_string());
             }
         }
@@ -1327,6 +1560,9 @@ impl GameState {
     ) {
         let old_card_id = self.core.players[p_idx].stage[slot_idx];
         if old_card_id >= 0 {
+            if !self.ui.silent {
+                self.log("Rule 11.6, Rule 11.6.4 (Q24, Q27): Performing [バトンタッチ] (Baton Touch) replacing 1 member.".to_string());
+            }
             self.core.players[p_idx]
                 .set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             self.core.players[p_idx].baton_source_ids.push(old_card_id);
@@ -1353,6 +1589,9 @@ impl GameState {
             if let Some(old) = self.handle_member_leaves_stage(p_idx, s_idx, db, &leave_ctx) {
                 self.core.players[p_idx].push_discard_card(old);
             }
+            if !self.ui.silent {
+                self.log("Rule 11.6, Rule 11.6.4 (Q24): Performing secondary [バトンタッチ] (Baton Touch).".to_string());
+            }
             self.core.players[p_idx].set_moved(s_idx, true);
         }
 
@@ -1367,6 +1606,9 @@ impl GameState {
                 ..Default::default()
             };
             if let Some(old) = self.handle_member_leaves_stage(p_idx, slot_idx, db, &leave_ctx) {
+                if !self.ui.silent {
+                    self.log(format!("Rule 11.6.3 (4.11.2): Moving old member {} to Discard.", old));
+                }
                 self.core.players[p_idx].push_discard_card(old);
             }
         }

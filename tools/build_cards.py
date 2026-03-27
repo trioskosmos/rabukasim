@@ -21,12 +21,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Also sync launcher/frontend assets after preparing ability artifacts",
     )
-    parser.add_argument(
-        "--export-profile",
-        choices=["full", "runtime"],
-        default="runtime",
-        help="Compiler export profile to use for cards_compiled.json",
-    )
     return parser.parse_args()
 
 def print_status(message, is_done=False):
@@ -43,7 +37,6 @@ def main():
     result = prepare_runtime(
         force=args.force,
         quiet=args.quiet,
-        export_profile=args.export_profile,
         sync_assets=args.sync_launcher_assets,
     )
     if args.quiet:

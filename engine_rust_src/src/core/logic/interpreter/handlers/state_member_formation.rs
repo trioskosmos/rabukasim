@@ -93,6 +93,10 @@ pub fn handle_formation_change(
         let perm_idx = ctx.choice_index as usize;
         ctx.choice_index = -1;
 
+        if !state.ui.silent {
+            state.log("Rule 11.10, Rule 11.10.1, Rule 11.10.2: Performing [フォーメーションチェンジ] (Formation Change).".to_string());
+        }
+
         if perm_idx < 6 {
             let perms = [
                 [0, 1, 2],

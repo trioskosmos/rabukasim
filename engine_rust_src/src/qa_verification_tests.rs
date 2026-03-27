@@ -984,7 +984,18 @@ mod tests {
         );
         state.handle_response(&db, ACTION_BASE_CHOICE + 0).unwrap(); // Accept Optional
 
-        // SELECT_MEMBER (Hand) - Auto-skipped (mandatory with no targets)
+        // SELECT_MEMBER (Hand)
+        println!("Step 3: Selecting Mia from Hand for Rina effect.");
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "Should suspend for SELECT_MEMBER Hand"
+        );
+        state
+            .handle_response(&db, ACTION_BASE_HAND_SELECT + 0)
+            .unwrap(); // Select Mia (Index 0 now)
+        state.process_trigger_queue(&db);
+
         // Now at SELECT_STAGE (Slot 1)
         println!("Step 4: Selecting Slot 1 for Mia placement.");
         assert_eq!(state.phase, Phase::Response);
@@ -1913,10 +1924,10 @@ mod tests {
         }
         assert_eq!(state.players[p1].tapped_energy_mask, 0, "All active");
         assert_eq!(
-            state.players[p1].live_score_bonus, 3,
+            state.players[p1].live_score_bonus, 1,
             // QA: Q103 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを＋１する。』について。 自分のウェイト状態のエネルギーが7枚ある状態で、この能力が2つ発動しました。1つ目の能力の効果を解決してもまだウェイト状態のエネルギーが残っていますが、2つ目の能力の効果を解決することでエネルギーをすべてアクティブ状態にできました。この場合、合わせてスコアを＋２することはできますか？
             // A: いいえ、できません。 「自分のエネルギーがすべてアクティブ状態の場合」を満たしているのは2つ目の能力の効果を解決する時のみのため、スコアは＋２ではなく、＋１されます。
-            "Q103: Score +3 applied on second resolution"
+            "Q103: Score +1 applied on second resolution"
         );
 
         // QA: Q96 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを＋１する。』について。 この能力の効果を解決して、このカードのスコアを＋１しました。その後、エネルギーカードを何枚かウェイト状態にした場合、「自分のエネルギーがすべてアクティブ状態の場合」を満たさなくなるので、「このカードのスコアを＋１」の効果は無効になりますか？
@@ -1924,7 +1935,7 @@ mod tests {
         // Q96: Re-tap and check bonus persistence
         state.players[p1].tapped_energy_mask = 0b1;
         assert_eq!(
-            state.players[p1].live_score_bonus, 3,
+            state.players[p1].live_score_bonus, 1,
             // QA: Q96 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを＋１する。』について。 この能力の効果を解決して、このカードのスコアを＋１しました。その後、エネルギーカードを何枚かウェイト状態にした場合、「自分のエネルギーがすべてアクティブ状態の場合」を満たさなくなるので、「このカードのスコアを＋１」の効果は無効になりますか？
             // A: いいえ、無効にはなりません。 「自分のエネルギーがすべてアクティブ状態の場合」という条件は、この能力の効果を解決する時に確認し、それ以降は確認しません。
             "Q96: Score remains after tapping"

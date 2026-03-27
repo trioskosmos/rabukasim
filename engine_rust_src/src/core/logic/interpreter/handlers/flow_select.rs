@@ -68,34 +68,39 @@ pub fn handle_select_ops(
                 a as u64
             }
         });
-    let legacy_move_member_follow_up = if op == O_SELECT_MEMBER {
-        let source_ability = db
-            .get_member(ctx.source_card_id)
+    let next_frame = if op == O_SELECT_MEMBER {
+        db.get_member(ctx.source_card_id)
             .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
             .or_else(|| {
                 db.get_live(ctx.source_card_id)
                     .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-            });
-
-        let next_frame = source_ability.and_then(|ability| ability.get_frame(frame_idx + 1));
-
-        next_frame
-            .map(|next| {
-                matches!(
-                    next.opcode(),
-                    O_MOVE_MEMBER | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD
-                )
             })
-            .unwrap_or(false)
+            .and_then(|ability| ability.get_frame(frame_idx + 1))
     } else {
-        false
+        None
     };
+    let legacy_move_member_follow_up = next_frame
+        .as_ref()
+        .map(|next| {
+            matches!(
+                next.opcode(),
+                O_MOVE_MEMBER | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD
+            )
+        })
+        .unwrap_or(false);
+    let mut effective_slot_info = slot_info;
+    if op == O_SELECT_MEMBER {
+        if let Some(next) = next_frame.as_ref() {
+            effective_slot_info.source_zone = match next.opcode() {
+                O_PLAY_MEMBER_FROM_HAND => crate::core::enums::Zone::Hand,
+                O_PLAY_MEMBER_FROM_DISCARD => crate::core::enums::Zone::Discard,
+                _ => effective_slot_info.source_zone,
+            };
+        }
+    }
 
     let supports_partial_completion =
         op == O_SELECT_MEMBER && v > 1 && !legacy_move_member_follow_up;
-
-    let is_optional = op == O_SELECT_MEMBER
-        && (frame_filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
 
     if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
         if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
@@ -115,22 +120,6 @@ pub fn handle_select_ops(
         ctx.v_remaining = -1;
     }
 
-    if is_optional && ctx.choice_index == CHOICE_DONE {
-        ctx.choice_index = -1;
-
-        return HandlerResult::Continue;
-    }
-
-    if is_optional && op == O_SELECT_MEMBER {
-        if ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
-            ctx.choice_index = -1;
-            return HandlerResult::SetCond(false);
-        }
-        if ctx.choice_index == CHOICE_YES {
-            ctx.choice_index = -1;
-        }
-    }
-
     let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
         (resolved_filter_attr & !0x3) | 1
@@ -142,7 +131,7 @@ pub fn handle_select_ops(
         state.trace_internal(&format!(
             "FRAME_SELECT_MEMBER: [phase={:?}] source_zone={} filter=[{}] {}",
             state.phase,
-            slot_info.source_zone as u8,
+            effective_slot_info.source_zone as u8,
             logging::describe_filter_attr(
                 crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
                     filter_attr as i64
@@ -154,7 +143,7 @@ pub fn handle_select_ops(
 
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
         let target_player = resolve_select_member_target_player(
-            slot_info,
+            effective_slot_info,
             filter_attr,
             p_idx,
             is_targeted_select_member_cost,
@@ -163,7 +152,7 @@ pub fn handle_select_ops(
         ctx.selected_target_keys.clear();
 
         for (slot_idx, &cid) in
-            cards_for_source_zone(state, target_player, slot_info.source_zone as u8)
+            cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
                 .iter()
                 .enumerate()
         {
@@ -176,16 +165,6 @@ pub fn handle_select_ops(
 
         return HandlerResult::Continue;
     }
-
-    let matching_cards = |cards: &[i32]| -> Vec<i32> {
-        cards
-            .iter()
-            .copied()
-            .filter(|&cid| {
-                cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-            })
-            .collect()
-    };
 
     if ctx.choice_index == -1 {
         let choice_type = match op {
@@ -206,31 +185,42 @@ pub fn handle_select_ops(
         };
 
         let select_member_target_player = resolve_select_member_target_player(
-            slot_info,
+            effective_slot_info,
             filter_attr,
             p_idx,
             is_targeted_select_member_cost,
         );
+        let mut structured_filter = frame_components.filter;
+        structured_filter.is_enabled = true;
 
-        if is_optional && op == O_SELECT_MEMBER {
-            let has_legal_target = !matching_cards(cards_for_source_zone(
-                state,
-                select_member_target_player,
-                slot_info.source_zone as u8,
-            ))
-            .is_empty();
-
-            if !has_legal_target {
-                return HandlerResult::Continue;
-            }
-        }
+        let matching_cards = |target_player: usize| -> Vec<i32> {
+            cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
+                .iter()
+                .enumerate()
+                .filter_map(|(slot_idx, &cid)| {
+                    if cid >= 0
+                        && state.card_matches_filter_with_struct(
+                            db,
+                            cid,
+                            Some((target_player as u8, slot_idx as i16)),
+                            &structured_filter,
+                            ctx,
+                        )
+                    {
+                        Some(cid)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
 
         if op == O_SELECT_MEMBER {
-            let looked_cards = matching_cards(cards_for_source_zone(
-                state,
-                select_member_target_player,
-                slot_info.source_zone as u8,
-            ));
+            let looked_cards = matching_cards(select_member_target_player);
+            if looked_cards.is_empty() {
+                return HandlerResult::Continue;
+            }
+
             state.players[select_member_target_player].looked_cards = looked_cards.into();
         }
 
@@ -266,10 +256,10 @@ pub fn handle_select_ops(
             a,
             s,
             p_idx,
-            slot_info,
-            supports_partial_completion,
-            partial_selection_prompt,
-            legacy_move_member_follow_up,
+                effective_slot_info,
+                supports_partial_completion,
+                partial_selection_prompt,
+                legacy_move_member_follow_up,
         );
     }
 

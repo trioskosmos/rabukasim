@@ -91,11 +91,6 @@ class AbilityCompiler:
         if instructions:
             return instructions
 
-        sparse_frame_index = getattr(ability, "sparse_frame_index", None)
-        instructions = self._frame_program_frames(sparse_frame_index)
-        if instructions:
-            return instructions
-
         instructions = self._hydrate_instruction_frames(ability)
 
         frames_out: list[Union[str, Dict[str, Any]]] = []

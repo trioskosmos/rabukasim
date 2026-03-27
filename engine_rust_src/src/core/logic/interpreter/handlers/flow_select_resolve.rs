@@ -131,13 +131,6 @@ pub fn resolve_select_choice(
         return HandlerResult::Continue;
     }
 
-    if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
-        ctx.target_slot = choice as i16;
-    } else {
-        ctx.target_slot = choice as i16;
-        ctx.area_idx = choice as i16;
-    }
-
     let target_player = if is_targeted_select_member_cost {
         ctx.player_id as usize
     } else {
@@ -147,6 +140,13 @@ pub fn resolve_select_choice(
         let source_cards = cards_for_source_zone(state, target_player, source_zone);
         source_cards.get(choice as usize).copied().unwrap_or(-1)
     };
+    if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
+        ctx.selected_hand_idx = choice as i16;
+        ctx.target_card_id = selected_cid;
+    } else {
+        ctx.target_slot = choice as i16;
+        ctx.area_idx = choice as i16;
+    }
     if selected_cid >= 0 && !ctx.selected_cards.contains(&selected_cid) {
         ctx.selected_cards.push(selected_cid);
     }

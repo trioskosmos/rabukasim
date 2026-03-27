@@ -23,19 +23,13 @@ fn has_activated_hand(card: &MemberCard) -> bool {
 }
 
 fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
-    ab.sparse_frame_index
+    ab.frame_program
         .as_ref()
-        .and_then(|entry| entry.get("frame_program"))
-        .and_then(|value| value.get("instructions"))
+        .and_then(|program| program.raw_program.as_ref())
+        .and_then(|raw| raw.get("instructions"))
         .and_then(|value| value.as_array())
         .map(|instructions| {
             instructions.iter().any(|frame| {
-                let opcode = frame
-                    .get("semantic")
-                    .and_then(|semantic| semantic.get("opcode_name"))
-                    .or_else(|| frame.get("opcode"))
-                    .and_then(|value| value.as_str())
-                    .unwrap_or("");
                 let source_zone = frame
                     .get("semantic")
                     .and_then(|semantic| semantic.get("slot"))
@@ -43,8 +37,7 @@ fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
                     .and_then(|slot| slot.get("source_zone"))
                     .and_then(|value| value.as_str())
                     .unwrap_or("");
-                opcode.eq_ignore_ascii_case("MOVE_MEMBER")
-                    && source_zone.eq_ignore_ascii_case("DECK_TOP")
+                source_zone.eq_ignore_ascii_case("DECK_TOP")
             })
         })
         .unwrap_or(false)
@@ -119,7 +112,6 @@ fn ability_costs_payable(
                 Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
                     state.players[p_idx].deck.len() + state.players[p_idx].discard.len()
                 }
-                _ => 0,
             };
 
             if available < required {

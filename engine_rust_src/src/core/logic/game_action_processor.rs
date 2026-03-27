@@ -130,6 +130,10 @@ impl GameState {
             return None;
         }
 
+        if !self.ui.silent {
+            self.log(format!("Rule 4.5.4 (4.1.3, 4.5.1): Member card ID {} leaves Stage Slot {}.", cid, slot + 1));
+        }
+
         let mut leave_ctx = ctx.clone();
         leave_ctx.source_card_id = cid;
         leave_ctx.area_idx = slot as i16;
@@ -160,6 +164,10 @@ impl GameState {
     ) {
         if moved_cards.is_empty() {
             return;
+        }
+
+        if !self.ui.silent {
+            self.log(format!("Rule 4.11.2: Moving {} cards to Discard for Player {}.", moved_cards.len(), p_idx));
         }
 
         let mut discard_ctx = ctx.clone();

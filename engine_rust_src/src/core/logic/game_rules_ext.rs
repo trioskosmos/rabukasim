@@ -70,6 +70,9 @@ impl GameState {
     }
 
     pub fn process_rule_checks(&mut self, db: &CardDatabase) {
+        if !self.ui.silent {
+            self.log("Rule 10.1, Rule 10.1.2: Performing check timing (State-Based Actions).".to_string());
+        }
         for i in 0..2 {
             // 1. Deck Refresh (Rule 4.4.2)
             if self.core.players[i].deck.is_empty() && !self.core.players[i].discard.is_empty() {
