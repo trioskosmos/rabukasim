@@ -1,0 +1,108 @@
+{
+  "_schema_version": "2.0",
+  "_description": "Unified semantic card format - replaces bytecode with structured effects",
+  "_migration_notes": [
+    "No more frame_program with opcodes",
+    "No more redundant opcode_id/opcode_name/rust_opcode",
+    "No more bit-packed filters (target_slot: 6, remainder_zone: 204)",
+    "Effects are semantic: 'move_cards', 'modify_score', not O_RECOVER_MEMBER"
+  ],
+  
+  "member_db": {
+    "9": {
+      "card_id": 9,
+      "card_no": "LL-bp1-001-R+",
+      "name": "上原歩夢&澁谷かのん&日野下花帆",
+      "name_en": "Ayumu Uehara & Kanon Shibuya & Hana Hinosaka",
+      
+      "stats": {
+        "cost": 20,
+        "hearts": [3, 0, 0, 3, 0, 3, 0],
+        "blade_hearts": [0, 0, 0, 0, 0, 0, 0],
+        "blades": 5
+      },
+      
+      "attributes": {
+        "groups": [2, 3, 4],
+        "units": [],
+        "characters": [21, 41, 201]
+      },
+      
+      "abilities": [
+        {
+          "id": "entry_recover",
+          "trigger": "on_entry",
+          "timing": "immediate",
+          "optional": false,
+          "once_per_turn": false,
+          
+          "costs": [],
+          
+          "targeting": {
+            "selectable": true,
+            "min_choices": 0,
+            "max_choices": 1,
+            "filter": {
+              "card_type": "member",
+              "zone": "discard",
+              "owner": "self"
+            }
+          },
+          
+          "effects": [
+            {
+              "type": "move_cards",
+              "cards": "selected",
+              "from": "discard",
+              "to": "hand",
+              "cause": "ability"
+            }
+          ]
+        },
+        
+        {
+          "id": "live_start_discard_for_score",
+          "trigger": "live_start",
+          "timing": "player_choice",
+          "optional": true,
+          "once_per_turn": false,
+          
+          "costs": [
+            {
+              "type": "discard_specific",
+              "cards": [
+                {"character": "上原歩夢", "location": "hand"},
+                {"character": "澁谷かのん", "location": "hand"},
+                {"character": "日野下花帆", "location": "hand"}
+              ],
+              "count": 3,
+              "combination": "any_mix"
+            }
+          ],
+          
+          "effects": [
+            {
+              "type": "grant_temporary_ability",
+              "duration": "until_live_end",
+              "ability": {
+                "trigger": "continuous",
+                "effects": [
+                  {
+                    "type": "modify_score",
+                    "amount": 3,
+                    "operation": "add"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      
+      "source_text": {
+        "ja": "{{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+３する。」を得る。",
+        "en": ""
+      }
+    }
+  }
+}
