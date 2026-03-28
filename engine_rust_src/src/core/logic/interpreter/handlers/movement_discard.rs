@@ -113,11 +113,17 @@ pub fn handle_move_to_discard(
         ctx.selected_cards = next_ctx.selected_cards.clone();
     }
 
-    // TAP_SELF check
-    if moved_cards.iter().any(|&cid| db.get_live(cid).is_some())
+    // TAP_SELF check - inline simple version
+    let should_tap_self = moved_cards.iter().any(|&cid| db.get_live(cid).is_some())
         && ctx.area_idx >= 0 && ctx.area_idx < 3
-        && has_tap_self_effect(db, ctx)
-    {
+        && source_ability(db, ctx).map(|ability| {
+            ability.effects.iter().any(|effect| {
+                effect.runtime_opcode == O_NOP
+                    && effect.params.get("raw_effect").and_then(|v| v.as_str()) == Some("TAP_SELF")
+            })
+        }).unwrap_or(false);
+    
+    if should_tap_self {
         state.players[p_idx].set_tapped(ctx.area_idx as usize, true);
     }
 
@@ -138,7 +144,7 @@ pub fn handle_move_to_discard(
     HandlerResult::Continue
 }
 
-// === Inlined helper functions (consolidated from 3 separate modules) ===
+// === Inlined helper functions ===
 
 fn is_until_size_op(frame_data: &AbilityFrameComponents<'_>) -> bool {
     frame_data.params.as_ref()
@@ -152,13 +158,25 @@ fn is_deck_zone(zone: Zone) -> bool {
     matches!(zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
 }
 
-fn has_tap_self_effect(db: &CardDatabase, ctx: &AbilityContext) -> bool {
-    source_ability(db, ctx).map(|ability| {
-        ability.effects.iter().any(|effect| {
-            effect.runtime_opcode == O_NOP
-                && effect.params.get("raw_effect").and_then(|v| v.as_str()) == Some("TAP_SELF")
-        })
-    }).unwrap_or(false)
+/// Check if more cards are available for selection
+fn has_available_filtered(
+    state: &GameState,
+    db: &CardDatabase,
+    player_idx: usize,
+    zone: Zone,
+    filter_attr: u64,
+    ctx: &AbilityContext,
+) -> bool {
+    match zone {
+        Zone::Hand => state.players[player_idx].hand.iter().any(|&c| {
+            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+        }),
+        Zone::Stage => state.players[player_idx].stage.iter().any(|&c| {
+            if c < 0 { return false; }
+            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+        }),
+        _ => true,
+    }
 }
 
 /// Prepare discard prompt - returns true if suspended for player input
@@ -285,7 +303,7 @@ fn handle_selected_discard(
 
     // Check if more cards needed
     if next_ctx.v_remaining > 0 {
-        let still_available = count_available_filtered(state, db, target_player_idx, source_zone, filter_attr, next_ctx);
+        let still_available = has_available_filtered(state, db, target_player_idx, source_zone, filter_attr, next_ctx);
 
         if !still_available {
             finish_pending_interaction(state);
@@ -318,24 +336,4 @@ fn handle_selected_discard(
     }
 
     HandlerResult::Continue
-}
-
-fn count_available_filtered(
-    state: &GameState,
-    db: &CardDatabase,
-    player_idx: usize,
-    zone: Zone,
-    filter_attr: u64,
-    ctx: &AbilityContext,
-) -> bool {
-    match zone {
-        Zone::Hand => state.players[player_idx].hand.iter().any(|&c| {
-            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
-        }),
-        Zone::Stage => state.players[player_idx].stage.iter().any(|&c| {
-            if c < 0 { return false; }
-            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
-        }),
-        _ => true,
-    }
 }

@@ -503,11 +503,97 @@ impl CardDatabase {
     }
 
     fn attach_sparse_ability_index(
-        _card_no: &str,
-        _abilities: &mut [Ability],
-        _index: &HashMap<String, Value>,
+        card_no: &str,
+        abilities: &mut [Ability],
+        index: &HashMap<String, Value>,
     ) -> serde_json::Result<()> {
-        // No-op: Abilities now come pre-compiled from Python with all data attached
+        for (ability_index, ability) in abilities.iter_mut().enumerate() {
+            let key = format!("{}#{}", card_no, ability_index);
+            let entry = index.get(&key).cloned().unwrap_or_else(|| {
+                Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
+            });
+            if ability
+                .frame_program
+                .as_ref()
+                .map(|program| program.frames.is_empty())
+                .unwrap_or(true)
+            {
+                let program = Self::sparse_entry_to_frame_program(&entry);
+                if program.frames.is_empty() {
+                    return Err(serde::de::Error::custom(format!(
+                        "sparse ability index entry for {} ability {} produced empty frame program",
+                        card_no, ability_index
+                    )));
+                }
+                ability.frame_program = Some(program);
+            }
+            if let Some(choose_count) = ability
+                .effects
+                .iter()
+                .find(|effect| {
+                    effect.runtime_opcode == O_LOOK_AND_CHOOSE
+                        || effect.effect_type == EffectType::LookAndChoose
+                })
+                .and_then(|effect| effect.params.get("choose_count"))
+                .and_then(Self::parse_u8_value)
+            {
+                if let Some(program) = ability.frame_program.as_mut() {
+                    if let Some(AbilityFrame::LookAndChoose { choose_count: frame_choose_count, .. }) = program
+                        .frames
+                        .iter_mut()
+                        .find(|frame| frame.opcode() == O_LOOK_AND_CHOOSE)
+                    {
+                        if *frame_choose_count == 0 {
+                            *frame_choose_count = choose_count as i32;
+                        }
+                    }
+                }
+            }
+            // Only sync frame_program data to effects if effects are not already populated
+            // (i.e., from the new semantic compiler output)
+            if ability.effects.is_empty() {
+                if let Some(program) = ability.frame_program.as_ref() {
+                    let mut meaningful_frames = program
+                        .frames
+                        .iter()
+                        .filter(|frame| frame.opcode() != O_RETURN);
+                    for effect in ability.effects.iter_mut() {
+                        let Some(frame) = meaningful_frames.next() else {
+                            break;
+                        };
+                        let components = frame.components();
+                        let needs_params = effect.params.is_null()
+                            || effect
+                                .params
+                                .as_object()
+                                .map(|params| !params.contains_key("choices"))
+                                .unwrap_or(true);
+                        if needs_params {
+                            if let Some(params) = components.params {
+                                effect.params = params.clone();
+                            }
+                        }
+                        if effect.runtime_opcode == 0 {
+                            effect.runtime_opcode = components.raw_opcode;
+                        }
+                        if effect.runtime_value == 0 {
+                            effect.runtime_value = components.value;
+                        }
+                        if effect.runtime_attr == 0 {
+                            effect.runtime_attr = components.raw_attr;
+                        }
+                        if effect.runtime_slot == 0 {
+                            effect.runtime_slot = components.raw_slot;
+                        }
+                    }
+                }
+            }
+            if ability.pseudocode.is_empty() {
+                if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
+                    ability.pseudocode = pseudo.to_string();
+                }
+            }
+        }
         Ok(())
     }
 
@@ -1905,77 +1991,7 @@ struct DerivedChoiceMetadata {
     choice_count: u8,
 }
 
-fn frame_choice_count(frame: &AbilityFrame) -> u8 {
-    let value = frame.value();
-    match frame.opcode() {
-        O_LOOK_AND_CHOOSE => frame.look_choose().choose_count.max(1),
-        O_SELECT_MODE => value.max(1) as u8,
-        O_COLOR_SELECT => frame
-            .components()
-            .params
-            .and_then(|value| value.as_object())
-            .and_then(|params| params.get("choices").or_else(|| params.get("CHOICES")))
-            .and_then(|value| value.as_array())
-            .map(|choices| choices.len().max(1) as u8)
-            .unwrap_or(6),
-        O_ORDER_DECK | O_LOOK_REORDER_DISCARD => value.max(3).max(1) as u8,
-        O_SELECT_CARDS => value.max(1) as u8,
-        O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_SELECT_MEMBER | O_SELECT_LIVE
-        | O_SELECT_PLAYER | O_MOVE_TO_DISCARD | O_TAP_MEMBER | O_TAP_OPPONENT
-        | O_ACTIVATE_MEMBER | O_SET_TAPPED | O_PAY_ENERGY | O_MOVE_TO_DECK => value.max(1) as u8,
-        _ => value.max(1) as u8,
-    }
-}
 
-fn derive_choice_metadata(program: &FrameProgram) -> DerivedChoiceMetadata {
-    let mut metadata = DerivedChoiceMetadata::default();
-
-    for frame in &program.frames {
-        let opcode = frame.opcode();
-        let is_optional = frame.filter().is_optional;
-
-        if is_optional {
-            metadata.requires_selection = true;
-        }
-
-        match opcode {
-            O_LOOK_AND_CHOOSE => {
-                metadata.requires_selection = true;
-                metadata.choice_flags |= CHOICE_FLAG_LOOK;
-                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
-            }
-            O_SELECT_MODE => {
-                metadata.requires_selection = true;
-                metadata.choice_flags |= CHOICE_FLAG_MODE;
-                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
-            }
-            O_COLOR_SELECT => {
-                metadata.requires_selection = true;
-                metadata.choice_flags |= CHOICE_FLAG_COLOR;
-                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
-            }
-            O_ORDER_DECK | O_LOOK_REORDER_DISCARD => {
-                metadata.requires_selection = true;
-                metadata.choice_flags |= CHOICE_FLAG_ORDER;
-                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
-            }
-            O_SELECT_CARDS | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER
-            | O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER | O_MOVE_TO_DISCARD
-            | O_MOVE_TO_DECK | O_TAP_MEMBER | O_TAP_OPPONENT | O_ACTIVATE_MEMBER | O_SET_TAPPED
-            | O_PAY_ENERGY => {
-                metadata.requires_selection = true;
-                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
-            }
-            _ => {}
-        }
-    }
-
-    if metadata.choice_flags != 0 {
-        metadata.requires_selection = true;
-    }
-
-    metadata
-}
 
 /// Derive choice metadata directly from semantic effects/conditions/costs.
 /// This is the semantic migration path - reading from structured data instead of frame_program.
@@ -2211,28 +2227,6 @@ fn compute_ability_flags_from_effects(ab: &Ability) -> u64 {
 }
 
 /// Check if ability has a specific opcode by examining semantic effects.
-fn has_opcode_from_effects(ab: &Ability, target_op: i32) -> bool {
-    for effect in &ab.effects {
-        let opcode = if effect.runtime_opcode != 0 {
-            effect.runtime_opcode
-        } else {
-            effect_type_to_opcode(effect.effect_type)
-        };
-        if opcode == target_op {
-            return true;
-        }
-    }
-
-    // Also check costs
-    for cost in &ab.costs {
-        let opcode = cost_type_to_opcode(cost.cost_type);
-        if opcode == target_op {
-            return true;
-        }
-    }
-
-    false
-}
 
 pub const CHARACTER_NAMES: [&str; 78] = [
     "", // 0
