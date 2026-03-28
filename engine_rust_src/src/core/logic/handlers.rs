@@ -9,7 +9,6 @@ use crate::core::logic::{
     },
     action_factory::DecodedAction,
     interpreter::costs,
-    interpreter::handlers::HandlerResult,
     AbilityContext, ActionFactory, CardDatabase, GameState, PendingInteraction, Phase,
 };
 // use crate::core::hearts::*;
@@ -955,7 +954,7 @@ impl ResponseController for GameState {
                             return Ok(());
                         }
 
-                        if matches!(result, HandlerResult::Suspend) {
+                        if matches!(result, crate::core::logic::interpreter::HandlerResult::Suspend) {
                             return Ok(());
                         }
 
@@ -981,11 +980,6 @@ impl ResponseController for GameState {
                             return Err("No pending discard-play card".to_string());
                         }
 
-                        let is_total_cost = (pending.filter_attr & (1u64 << 60)) != 0
-                            || (pending.filter_attr & (1u64 << 50)) != 0;
-                        let frame_idx = play_ctx.program_counter as usize;
-                        let remaining = play_ctx.v_remaining;
-
                         if let Some(pos) = self.interaction_stack.iter().rposition(|pi| {
                             pi.choice_type == pending.choice_type
                                 && pi.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD
@@ -993,6 +987,11 @@ impl ResponseController for GameState {
                         }) {
                             self.interaction_stack.remove(pos);
                         }
+
+                        let is_total_cost = (pending.filter_attr & (1u64 << 60)) != 0
+                            || (pending.filter_attr & (1u64 << 50)) != 0;
+                        let frame_idx = play_ctx.program_counter as usize;
+                        let remaining = play_ctx.v_remaining;
 
                         let result = crate::core::logic::interpreter::handlers::state::handle_discard_placement(
                             self,
@@ -1012,7 +1011,7 @@ impl ResponseController for GameState {
                             return Ok(());
                         }
 
-                        if matches!(result, HandlerResult::Suspend) {
+                        if matches!(result, crate::core::logic::interpreter::HandlerResult::Suspend) {
                             return Ok(());
                         }
 

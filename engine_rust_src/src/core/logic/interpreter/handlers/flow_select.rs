@@ -20,6 +20,19 @@ fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u
     }
 }
 
+fn resolve_select_member_target_player(
+    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
+    filter_attr: u64,
+    p_idx: usize,
+    is_targeted_select_member_cost: bool,
+) -> usize {
+    if is_targeted_select_member_cost {
+        return p_idx;
+    }
+
+    resolve_target_player(slot_info, filter_attr, p_idx)
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
@@ -54,13 +67,7 @@ pub fn handle_select_ops(
     };
     let resolved_filter_attr = filter_attr_from_params(frame_components.params)
         .map(|attr| attr | frame_filter_attr)
-        .unwrap_or_else(|| {
-            if frame_filter_attr != 0 {
-                frame_filter_attr
-            } else {
-                a as u64
-            }
-        });
+        .unwrap_or_else(|| if frame_filter_attr != 0 { frame_filter_attr } else { a as u64 });
     let next_frame = if op == O_SELECT_MEMBER {
         db.get_member(ctx.source_card_id)
             .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
@@ -96,10 +103,7 @@ pub fn handle_select_ops(
         op == O_SELECT_MEMBER && v > 1 && !legacy_move_member_follow_up;
 
     if supports_partial_completion && ctx.v_remaining == partial_selection_prompt {
-        if ctx.choice_index == CHOICE_YES
-            || ctx.choice_index == CHOICE_NO
-            || ctx.choice_index == CHOICE_DONE
-        {
+        if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
             ctx.choice_index = -1;
 
             ctx.v_remaining = -1;
@@ -116,8 +120,7 @@ pub fn handle_select_ops(
         ctx.v_remaining = -1;
     }
 
-    let is_targeted_select_member_cost =
-        slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
+    let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
         (resolved_filter_attr & !0x3) | 1
     } else {
@@ -139,7 +142,12 @@ pub fn handle_select_ops(
     }
 
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
-        let target_player = if is_targeted_select_member_cost { p_idx } else { resolve_target_player(effective_slot_info, filter_attr, p_idx) };
+        let target_player = resolve_select_member_target_player(
+            effective_slot_info,
+            filter_attr,
+            p_idx,
+            is_targeted_select_member_cost,
+        );
         ctx.selected_cards.clear();
         ctx.selected_target_keys.clear();
 
@@ -176,43 +184,60 @@ pub fn handle_select_ops(
             _ => p_idx as u8,
         };
 
-        let select_member_target_player = if is_targeted_select_member_cost { p_idx } else { resolve_target_player(effective_slot_info, filter_attr, p_idx) };
-        let matching_cards: Vec<i32> = cards_for_source_zone(state, select_member_target_player, effective_slot_info.source_zone as u8)
-            .iter()
-            .enumerate()
-            .filter_map(|(slot_idx, &cid)| {
-                if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, resolved_filter_attr, ctx) {
-                    Some(cid)
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let select_member_target_player = resolve_select_member_target_player(
+            effective_slot_info,
+            filter_attr,
+            p_idx,
+            is_targeted_select_member_cost,
+        );
+        let matching_cards = |target_player: usize| -> Vec<i32> {
+            cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
+                .iter()
+                .enumerate()
+                .filter_map(|(slot_idx, &cid)| {
+                    if cid >= 0
+                        && state.card_matches_filter_with_ctx(
+                            db,
+                            cid,
+                            resolved_filter_attr,
+                            ctx,
+                        )
+                    {
+                        Some(cid)
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
 
         if op == O_SELECT_MEMBER {
-            let looked_cards = if matching_cards.is_empty() {
-                state.players[select_member_target_player]
-                    .stage
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(slot_idx, &cid)| {
-                        if cid >= 0
-                            && state.card_matches_filter_with_struct(
-                                db,
-                                cid,
-                                Some((select_member_target_player as u8, slot_idx as i16)),
-                                &structured_filter,
-                                ctx,
-                            )
-                        {
-                            Some(cid)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<i32>>()
-            } else {
-                matching_cards
+            let looked_cards = {
+                let cards = matching_cards(select_member_target_player);
+                if cards.is_empty() {
+                    state.players[select_member_target_player]
+                        .stage
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(slot_idx, &cid)| {
+                            if cid >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    cid,
+                                    Some((select_member_target_player as u8, slot_idx as i16)),
+                                    &structured_filter,
+                                    ctx,
+                                )
+                            {
+                                Some(cid)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<i32>>()
+                } else {
+                    cards
+                }
             };
             if looked_cards.is_empty() {
                 return HandlerResult::Continue;
@@ -253,10 +278,10 @@ pub fn handle_select_ops(
             a,
             s,
             p_idx,
-            effective_slot_info,
-            supports_partial_completion,
-            partial_selection_prompt,
-            legacy_move_member_follow_up,
+                effective_slot_info,
+                supports_partial_completion,
+                partial_selection_prompt,
+                legacy_move_member_follow_up,
         );
     }
 

@@ -26,7 +26,10 @@ pub fn resolve_look_choice(
 ) -> HandlerResult {
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
+    let frame_look_choose = _frame.look_choose();
     let semantic_attr = filter_attr_from_params(_frame.components().params);
+    let allow_multi_pick = frame_look_choose.choose_count > 1
+        && frame_look_choose.choose_count < frame_look_choose.count;
     if state.debug.debug_mode {
         println!(
             "[DEBUG_LOOK_RESOLVE] choice={} revealed={:?} semantic_attr=[{}] source_zone={} rem_dest={} dest_discard={} {}",
@@ -71,6 +74,46 @@ pub fn resolve_look_choice(
                     }
                 }
 
+                let rem = if ctx.v_remaining > 0 {
+                    ctx.v_remaining - 1
+                } else {
+                    0
+                };
+                if allow_multi_pick && rem > 0 && revealed.iter().any(|&c| c != -1) {
+                    state.players[p_idx].looked_cards = revealed.clone();
+                    if state.debug.debug_mode {
+                        println!(
+                            "[DEBUG_LOOK_RESOLVE] suspending remainder rem={} looked_cards={:?} {}",
+                            rem,
+                            state.players[p_idx].looked_cards,
+                            logging::describe_context(ctx)
+                        );
+                    }
+                    let choice_type = if source_zone == ZONE_HAND as i32 {
+                        ChoiceType::SelectHandDiscard
+                    } else if source_zone == ZONE_DISCARD as i32 {
+                        ChoiceType::SelectDiscardPlay
+                    } else {
+                        ChoiceType::LookAndChoose
+                    };
+                    if matches!(
+                        suspend_choice(
+                            state,
+                            db,
+                            ctx,
+                            ctx,
+                            frame_idx,
+                            O_LOOK_AND_CHOOSE,
+                            s,
+                            choice_type,
+                            semantic_attr.unwrap_or(a as u64),
+                            rem,
+                        ),
+                        HandlerResult::Suspend
+                    ) {
+                        return HandlerResult::Suspend;
+                    }
+                }
             }
         }
     }

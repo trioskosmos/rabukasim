@@ -1,0 +1,74 @@
+﻿cargo : warning: unused variable: `filter`
+発生場所 行:1 文字:1
++ cargo test --quiet --manifest-path engine_rust_src/Cargo.toml 2>&1 |  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: unused variable: `filter 
+   `:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   --> src\core\logic\effects.rs:632:36
+    |
+632 |         AbilityFrame::MoveMember { filter, slot, from_slot, .. } => {
+    |                                    ^^^^^^ help: try ignoring the field: `
+filter: _`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by defau
+lt
+
+warning: unused variable: `filter`
+   --> src\core\logic\effects.rs:641:45
+    |
+641 |         AbilityFrame::MetaRule { rule_type, filter, slot, .. } => {
+    |                                             ^^^^^^ help: try ignoring the
+ field: `filter: _`
+
+warning: variable does not need to be mutable
+   --> src\qa\batch_card_specific.rs:775:13
+    |
+775 |         let mut ctx = AbilityContext {
+    |             ----^^^
+    |             |
+    |             help: remove this `mut`
+    |
+    = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `instr`
+   --> src\qa\batch_card_specific.rs:783:13
+    |
+783 |         let instr =
+    |             ^^^^^ help: if this is intentional, prefix it with an undersc
+ore: `_instr`
+
+warning: variable does not need to be mutable
+    --> src\qa_verification_tests.rs:1213:13
+     |
+1213 |         let mut ctx = AbilityContext {
+     |             ----^^^
+     |             |
+     |             help: remove this `mut`
+
+warning: variable does not need to be mutable
+  --> src\debug_q203.rs:61:13
+   |
+61 |         let mut ctx = AbilityContext {
+   |             ----^^^
+   |             |
+   |             help: remove this `mut`
+
+warning: function `find_member_by_name` is never used
+  --> src\meta_rule_card_tests.rs:35:4
+   |
+35 | fn find_member_by_name(db: &CardDatabase, name_pattern: &str) -> Option...
+   |    ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+
+running 529 tests
+....................................................................................... 87/529
+....................................................................................... 174/529
+....................................................................................... 261/529
+....................................................................................... 348/529
+....................................................................................... 435/529
+....................................................................................... 522/529
+......
