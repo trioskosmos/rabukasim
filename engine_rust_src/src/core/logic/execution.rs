@@ -1,5 +1,5 @@
 use crate::core::heuristics::{
-    EvalMode, Heuristic, LegacyHeuristic, OriginalHeuristic, SimpleHeuristic,
+    EvalMode, Heuristic, OriginalHeuristic, SimpleHeuristic,
 };
 use crate::core::logic::{CardDatabase, GameState, Phase, ACTION_SPACE};
 use crate::core::mcts::{SearchHorizon, MCTS};
@@ -271,12 +271,10 @@ impl GameState {
     ) -> (i32, u32) {
         let h0: Box<dyn Heuristic> = match p0_heuristic_id {
             1 => Box::new(SimpleHeuristic),
-            2 => Box::new(LegacyHeuristic::default()),
             _ => Box::new(OriginalHeuristic::default()),
         };
         let h1: Box<dyn Heuristic> = match p1_heuristic_id {
             1 => Box::new(SimpleHeuristic),
-            2 => Box::new(LegacyHeuristic::default()),
             _ => Box::new(OriginalHeuristic::default()),
         };
 

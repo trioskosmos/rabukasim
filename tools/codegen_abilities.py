@@ -21,7 +21,7 @@ OPCODES = {
 }
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DB_PATH = ROOT_DIR / "data" / "ability_frames.json"
+DB_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 OUT_PATH = ROOT_DIR / "engine_rust_src" / "src" / "core" / "hardcoded.rs"
 
 

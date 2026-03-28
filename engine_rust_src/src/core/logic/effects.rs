@@ -629,7 +629,7 @@ pub fn frame_to_effect(frame: &AbilityFrame) -> Option<Effect> {
             })
         }
         
-        AbilityFrame::MoveMember { filter, slot, from_slot, .. } => {
+        AbilityFrame::MoveMember { filter: _, slot, from_slot, .. } => {
             let target = if slot.is_opponent { TargetType::Opponent } else { TargetType::Player };
             Some(Effect::MoveMember {
                 from_slot: *from_slot,
@@ -638,7 +638,7 @@ pub fn frame_to_effect(frame: &AbilityFrame) -> Option<Effect> {
             })
         }
         
-        AbilityFrame::MetaRule { rule_type, filter, slot, .. } => {
+        AbilityFrame::MetaRule { rule_type, filter: _, slot, .. } => {
             let _target = if slot.is_opponent { TargetType::Opponent } else { TargetType::Player };
             Some(Effect::MetaRule {
                 rule_type: *rule_type,

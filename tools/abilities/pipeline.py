@@ -15,23 +15,22 @@ PROJECT_ROOT = os.path.abspath(str(ROOT_DIR))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
-from compiler import main as compiler_main
+from engine.compiler import main as compiler_main
 from tools import codegen_abilities, frame_codec, sync_launcher_assets
 
 CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
 CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 ENGINE_CARDS_OUTPUT_PATH = ROOT_DIR / "engine" / "data" / "cards_compiled.json"
-FRAME_INDEX_INPUT_PATH = ROOT_DIR / "data" / "ability_frames.json"
+FRAME_INDEX_INPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 FRAME_INDEX_METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 FRAME_INDEX_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 FRAME_INDEX_CARDS_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 FRAME_INDEX_HASH_PATH = ROOT_DIR / "data" / ".ability_frame_sync_hash"
 SOURCE_HASH_FILES = [
-    ROOT_DIR / "compiler" / "main.py",
+    ROOT_DIR / "engine" / "compiler" / "main.py",
     ROOT_DIR / "tools" / "frame_codec.py",
     ROOT_DIR / "tools" / "build_cards.py",
     ROOT_DIR / "tools" / "abilities" / "pipeline.py",
-    ROOT_DIR / "engine" / "models" / "ability_frames.py",
 ]
 
 

@@ -20,12 +20,10 @@ fn main() {
         "data/consolidated_abilities.json",
         "data/cards_compiled.json",
         "data/metadata.json",
-        "compiler/main.py",
+        "engine/compiler/main.py",
         "tools/build_cards.py",
         "tools/abilities/pipeline.py",
         "tools/frame_codec.py",
-        "tools/bytecode_codec.py",
-        "engine/models/ability_frames.py",
     ] {
         println!("cargo:rerun-if-changed={}", workspace_root.join(rel).display());
     }
@@ -54,9 +52,8 @@ fn main() {
             &workspace_root,
             &["python", "tools/build_cards.py", "--quiet"],
         )
-    })
-    {
-        println!("cargo:warning=Skipping ability pipeline during build: {}", message);
+    }) {
+        panic!("Ability pipeline failed: {}", message);
     }
 }
 

@@ -25,8 +25,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
-// use crate::core::generated_constants::*; // Redundant due to enums.rs re-export
-// use crate::core::generated_constants::*; // Re-exported by enums.rs
 use super::models::*;
 
 // Consolidated abilities is the single runtime-friendly view of the authored
@@ -505,97 +503,11 @@ impl CardDatabase {
     }
 
     fn attach_sparse_ability_index(
-        card_no: &str,
-        abilities: &mut [Ability],
-        index: &HashMap<String, Value>,
+        _card_no: &str,
+        _abilities: &mut [Ability],
+        _index: &HashMap<String, Value>,
     ) -> serde_json::Result<()> {
-        for (ability_index, ability) in abilities.iter_mut().enumerate() {
-            let key = format!("{}#{}", card_no, ability_index);
-            let entry = index.get(&key).cloned().unwrap_or_else(|| {
-                Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
-            });
-            if ability
-                .frame_program
-                .as_ref()
-                .map(|program| program.frames.is_empty())
-                .unwrap_or(true)
-            {
-                let program = Self::sparse_entry_to_frame_program(&entry);
-                if program.frames.is_empty() {
-                    return Err(serde::de::Error::custom(format!(
-                        "sparse ability index entry for {} ability {} produced empty frame program",
-                        card_no, ability_index
-                    )));
-                }
-                ability.frame_program = Some(program);
-            }
-            if let Some(choose_count) = ability
-                .effects
-                .iter()
-                .find(|effect| {
-                    effect.runtime_opcode == O_LOOK_AND_CHOOSE
-                        || effect.effect_type == EffectType::LookAndChoose
-                })
-                .and_then(|effect| effect.params.get("choose_count"))
-                .and_then(Self::parse_u8_value)
-            {
-                if let Some(program) = ability.frame_program.as_mut() {
-                    if let Some(AbilityFrame::LookAndChoose { choose_count: frame_choose_count, .. }) = program
-                        .frames
-                        .iter_mut()
-                        .find(|frame| frame.opcode() == O_LOOK_AND_CHOOSE)
-                    {
-                        if *frame_choose_count == 0 {
-                            *frame_choose_count = choose_count as i32;
-                        }
-                    }
-                }
-            }
-            // Only sync frame_program data to effects if effects are not already populated
-            // (i.e., from the new semantic compiler output)
-            if ability.effects.is_empty() {
-                if let Some(program) = ability.frame_program.as_ref() {
-                    let mut meaningful_frames = program
-                        .frames
-                        .iter()
-                        .filter(|frame| frame.opcode() != O_RETURN);
-                    for effect in ability.effects.iter_mut() {
-                        let Some(frame) = meaningful_frames.next() else {
-                            break;
-                        };
-                        let components = frame.components();
-                        let needs_params = effect.params.is_null()
-                            || effect
-                                .params
-                                .as_object()
-                                .map(|params| !params.contains_key("choices"))
-                                .unwrap_or(true);
-                        if needs_params {
-                            if let Some(params) = components.params {
-                                effect.params = params.clone();
-                            }
-                        }
-                        if effect.runtime_opcode == 0 {
-                            effect.runtime_opcode = components.raw_opcode;
-                        }
-                        if effect.runtime_value == 0 {
-                            effect.runtime_value = components.value;
-                        }
-                        if effect.runtime_attr == 0 {
-                            effect.runtime_attr = components.raw_attr;
-                        }
-                        if effect.runtime_slot == 0 {
-                            effect.runtime_slot = components.raw_slot;
-                        }
-                    }
-                }
-            }
-            if ability.pseudocode.is_empty() {
-                if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
-                    ability.pseudocode = pseudo.to_string();
-                }
-            }
-        }
+        // No-op: Abilities now come pre-compiled from Python with all data attached
         Ok(())
     }
 
@@ -614,6 +526,13 @@ impl CardDatabase {
 
     fn parse_semantic_frame(frame: &Value) -> AbilityFrame {
         AbilityFrame::from_json_value(frame)
+    }
+
+    fn parse_u8_value(value: &Value) -> Option<u8> {
+        value
+            .as_u64()
+            .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
+            .map(|v| v as u8)
     }
 
     #[allow(dead_code)]
@@ -880,13 +799,6 @@ impl CardDatabase {
         Some(decoded)
     }
 
-    fn parse_u8_value(value: &Value) -> Option<u8> {
-        value
-            .as_u64()
-            .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
-            .map(|v| v as u8)
-    }
-
     #[allow(dead_code)]
     fn opcode_id_from_name(opcode_name: &str) -> i32 {
         match opcode_name {
@@ -1056,6 +968,7 @@ impl CardDatabase {
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
 
+            // Primary path: derive from frame_program if available
             if let Some(frame_program) = ab.frame_program.as_ref() {
                 for frame in &frame_program.frames {
                     let op = frame.opcode();
@@ -1192,21 +1105,93 @@ impl CardDatabase {
                 }
             }
 
+            // Semantic migration path: derive from effects/conditions/costs directly
+            // This supplements or replaces frame_program-based derivation
+            let semantic_derived = derive_choice_metadata_from_semantic(ab);
+            let semantic_flags = compute_ability_flags_from_effects(ab);
+
+            // Merge semantic-derived data
+            if semantic_derived.requires_selection {
+                ab.requires_selection = true;
+            }
+            if semantic_derived.choice_flags != 0 {
+                ab.choice_flags |= semantic_derived.choice_flags;
+            }
+            if semantic_derived.choice_count > 0 {
+                ab.choice_count = ab.choice_count.max(semantic_derived.choice_count);
+            }
+            ability_flags_for_ab |= semantic_flags;
+
+            // Build opcodes_mask from effects and costs
+            for effect in &ab.effects {
+                let opcode = if effect.runtime_opcode != 0 {
+                    effect.runtime_opcode
+                } else {
+                    effect_type_to_opcode(effect.effect_type)
+                };
+                ab.opcodes_mask |= 1u128 << (opcode as u32 % 128);
+            }
+            for cost in &ab.costs {
+                let opcode = cost_type_to_opcode(cost.cost_type);
+                if opcode != O_NOP {
+                    ab.opcodes_mask |= 1u128 << (opcode as u32 % 128);
+                }
+            }
+            ability_opcodes_mask |= ab.opcodes_mask;
+            trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+
+            // Check for multi-baton from effects
+            for effect in &ab.effects {
+                if effect.effect_type == EffectType::BatonTouchMod && effect.value >= 2 {
+                    has_multi_baton = true;
+                }
+            }
+
+            // Derive preparsed_modifiers from effects
+            for effect in &ab.effects {
+                let opcode = if effect.runtime_opcode != 0 {
+                    effect.runtime_opcode
+                } else {
+                    effect_type_to_opcode(effect.effect_type)
+                };
+                if [
+                    O_ADD_BLADES,
+                    O_ADD_HEARTS,
+                    O_BUFF_POWER,
+                    O_REDUCE_COST,
+                    O_INCREASE_COST,
+                    O_SET_HEART_COST,
+                ]
+                .contains(&opcode)
+                {
+                    ab.preparsed_modifiers.push(PreparsedModifier {
+                        op: opcode,
+                        val: effect.value,
+                        attr: effect.runtime_attr,
+                        slot: effect.runtime_slot,
+                    });
+                }
+            }
+
+            // Check for unflagged logic by examining if all effects have known opcodes
+            for effect in &ab.effects {
+                let opcode = if effect.runtime_opcode != 0 {
+                    effect.runtime_opcode
+                } else {
+                    effect_type_to_opcode(effect.effect_type)
+                };
+                if !flagged_ops.contains(&opcode) && opcode != O_NOP && opcode != O_RETURN {
+                    unflagged_logic_present = true;
+                }
+            }
+
+            // Frame program fallback for conditions (if effects/conditions not populated)
             let semantic_program = ab.frame_program.as_ref().cloned();
             if let Some(frame_program) = semantic_program.as_ref() {
-                let derived = derive_choice_metadata(frame_program);
-                if derived.requires_selection {
-                    ab.requires_selection = true;
-                }
-                if derived.choice_flags != 0 {
-                    ab.choice_flags |= derived.choice_flags;
-                }
-                if derived.choice_count > 0 {
-                    ab.choice_count = ab.choice_count.max(derived.choice_count);
-                }
                 if ab.conditions.is_empty() {
                     ab.conditions = Self::derive_conditions_from_frame_program(frame_program);
                 }
+                // Handle special case for NotHasExcessHeart condition
                 if ab
                     .raw_text
                     .contains("相手が余剰のハートを持たず")
@@ -1990,6 +1975,263 @@ fn derive_choice_metadata(program: &FrameProgram) -> DerivedChoiceMetadata {
     }
 
     metadata
+}
+
+/// Derive choice metadata directly from semantic effects/conditions/costs.
+/// This is the semantic migration path - reading from structured data instead of frame_program.
+fn derive_choice_metadata_from_semantic(ab: &Ability) -> DerivedChoiceMetadata {
+    let mut metadata = DerivedChoiceMetadata::default();
+
+    // Check effects for choice-requiring opcodes
+    for effect in &ab.effects {
+        let opcode = if effect.runtime_opcode != 0 {
+            effect.runtime_opcode
+        } else {
+            effect_type_to_opcode(effect.effect_type)
+        };
+        let value = effect.value;
+        let is_optional = effect.is_optional;
+
+        if is_optional {
+            metadata.requires_selection = true;
+        }
+
+        match opcode {
+            O_LOOK_AND_CHOOSE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_LOOK;
+                // Get choose_count from effect params
+                let choose_count = effect
+                    .params
+                    .get("choose_count")
+                    .and_then(|v| v.as_u64())
+                    .map(|v| v as u8)
+                    .unwrap_or(1);
+                metadata.choice_count = metadata.choice_count.max(choose_count.max(1));
+            }
+            O_SELECT_MODE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_MODE;
+                // Get option count from modal_options or value
+                let mode_count = if let Some(options) = effect.modal_options.as_array() {
+                    options.len() as u8
+                } else {
+                    value.max(1) as u8
+                };
+                metadata.choice_count = metadata.choice_count.max(mode_count.max(2));
+            }
+            O_COLOR_SELECT => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_COLOR;
+                // Get choice count from params.choices
+                let choices = effect
+                    .params
+                    .get("choices")
+                    .or_else(|| effect.params.get("CHOICES"))
+                    .and_then(|v| v.as_array())
+                    .map(|arr| arr.len() as u8)
+                    .unwrap_or(6);
+                metadata.choice_count = metadata.choice_count.max(choices.max(1));
+            }
+            O_ORDER_DECK | O_LOOK_REORDER_DISCARD => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_ORDER;
+                metadata.choice_count = metadata.choice_count.max(3);
+            }
+            O_SELECT_CARDS | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER
+            | O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER | O_MOVE_TO_DISCARD
+            | O_MOVE_TO_DECK | O_TAP_MEMBER | O_TAP_OPPONENT | O_ACTIVATE_MEMBER | O_SET_TAPPED
+            | O_PAY_ENERGY => {
+                metadata.requires_selection = true;
+                metadata.choice_count = metadata.choice_count.max(value.max(1) as u8);
+            }
+            _ => {}
+        }
+    }
+
+    // Check costs for choice requirements
+    for cost in &ab.costs {
+        let opcode = cost_type_to_opcode(cost.cost_type);
+        if matches!(
+            opcode,
+            O_SELECT_CARDS
+                | O_SELECT_MEMBER
+                | O_SELECT_LIVE
+                | O_SELECT_PLAYER
+                | O_PAY_ENERGY
+                | O_TAP_MEMBER
+                | O_MOVE_TO_DISCARD
+                | O_MOVE_TO_DECK
+        ) {
+            metadata.requires_selection = true;
+            metadata.choice_count = metadata.choice_count.max(cost.value.max(1) as u8);
+        }
+        if cost.is_optional {
+            metadata.requires_selection = true;
+        }
+    }
+
+    if metadata.choice_flags != 0 {
+        metadata.requires_selection = true;
+    }
+
+    metadata
+}
+
+/// Map EffectType to opcode for semantic derivation.
+fn effect_type_to_opcode(effect_type: EffectType) -> i32 {
+    match effect_type {
+        EffectType::Draw => O_DRAW,
+        EffectType::LookAndChoose => O_LOOK_AND_CHOOSE,
+        EffectType::SelectMode => O_SELECT_MODE,
+        EffectType::ColorSelect => O_COLOR_SELECT,
+        EffectType::OrderDeck => O_ORDER_DECK,
+        EffectType::SelectCards => O_SELECT_CARDS,
+        EffectType::SelectMember => O_SELECT_MEMBER,
+        EffectType::SelectLive => O_SELECT_LIVE,
+        EffectType::SelectPlayer => O_SELECT_PLAYER,
+        EffectType::RecoverLive => O_RECOVER_LIVE,
+        EffectType::RecoverMember => O_RECOVER_MEMBER,
+        EffectType::MoveMember => O_MOVE_MEMBER,
+        EffectType::MoveToDiscard => O_MOVE_TO_DISCARD,
+        EffectType::MoveToDeck => O_MOVE_TO_DECK,
+        EffectType::TapMember => O_TAP_MEMBER,
+        EffectType::TapOpponent => O_TAP_OPPONENT,
+        EffectType::ActivateMember => O_ACTIVATE_MEMBER,
+        EffectType::SetTapped => O_SET_TAPPED,
+        EffectType::PayEnergy => O_PAY_ENERGY,
+        EffectType::SearchDeck => O_SEARCH_DECK,
+        EffectType::LookDeck => O_LOOK_DECK,
+        EffectType::BoostScore => O_BOOST_SCORE,
+        EffectType::ReduceCost => O_REDUCE_COST,
+        EffectType::ReduceHeartReq => O_REDUCE_HEART_REQ,
+        EffectType::TransformColor => O_TRANSFORM_COLOR,
+        EffectType::MetaRule => O_META_RULE,
+        EffectType::AddBlades => O_ADD_BLADES,
+        EffectType::AddHearts => O_ADD_HEARTS,
+        EffectType::SwapCards => O_SWAP_CARDS,
+        EffectType::SwapArea => O_SWAP_AREA,
+        EffectType::PreventBatonTouch => O_PREVENT_BATON_TOUCH,
+        EffectType::PreventActivate => O_PREVENT_ACTIVATE,
+        EffectType::PreventPlayToSlot => O_PREVENT_PLAY_TO_SLOT,
+        EffectType::GrantAbility => O_GRANT_ABILITY,
+        EffectType::IncreaseCost => O_INCREASE_COST,
+        EffectType::SetHeartCost => O_SET_HEART_COST,
+        EffectType::ModifyScoreRule => O_MODIFY_SCORE_RULE,
+        EffectType::RevealCards => O_REVEAL_CARDS,
+        EffectType::RevealUntil => O_REVEAL_UNTIL,
+        EffectType::AddToHand => O_ADD_TO_HAND,
+        EffectType::PlayMemberFromHand => O_PLAY_MEMBER_FROM_HAND,
+        EffectType::PlayMemberFromDiscard => O_PLAY_MEMBER_FROM_DISCARD,
+        EffectType::PlayLiveFromDiscard => O_PLAY_LIVE_FROM_DISCARD,
+        EffectType::SetScore => O_SET_SCORE,
+        EffectType::ReduceScore => O_REDUCE_SCORE,
+        EffectType::SetBlades => O_SET_BLADES,
+        EffectType::SetHearts => O_SET_HEARTS,
+        EffectType::BatonTouchMod => O_BATON_TOUCH_MOD,
+        EffectType::TransformBlades => O_TRANSFORM_BLADES,
+        EffectType::TransformHeart => O_TRANSFORM_HEART,
+        EffectType::BuffPower => O_BUFF_POWER,
+        EffectType::Immunity => O_IMMUNITY,
+        EffectType::FormationChange => O_FORMATION_CHANGE,
+        EffectType::PlaceUnder => O_PLACE_UNDER,
+        EffectType::Restriction => O_RESTRICTION,
+        EffectType::CheerReveal => O_CHEER_REVEAL,
+        EffectType::ReduceLiveSetLimit => O_REDUCE_LIVE_SET_LIMIT,
+        EffectType::ReduceYellCount => O_REDUCE_YELL_COUNT,
+        EffectType::LoseExcessHearts => O_LOSE_EXCESS_HEARTS,
+        EffectType::SkipActivatePhase => O_SKIP_ACTIVATE_PHASE,
+        EffectType::PayEnergyDynamic => O_PAY_ENERGY_DYNAMIC,
+        EffectType::PlaceEnergyUnderMember => O_PLACE_ENERGY_UNDER_MEMBER,
+        EffectType::CalcSumCost => O_CALC_SUM_COST,
+        EffectType::LookReorderDiscard => O_LOOK_REORDER_DISCARD,
+        EffectType::DivValue => O_DIV_VALUE,
+        EffectType::SetTargetSelf => O_SET_TARGET_SELF,
+        EffectType::SetTargetOpponent => O_SET_TARGET_OPPONENT,
+        EffectType::OpponentChoose => O_OPPONENT_CHOOSE,
+        EffectType::TriggerRemote => O_TRIGGER_REMOTE,
+        EffectType::LookDeckDynamic => O_LOOK_DECK_DYNAMIC,
+        EffectType::EnergyCharge => O_ENERGY_CHARGE,
+        EffectType::DrawUntil => O_DRAW_UNTIL,
+        EffectType::AddStageEnergy => O_ADD_STAGE_ENERGY,
+        _ => O_NOP,
+    }
+}
+
+/// Map AbilityCostType to opcode for semantic derivation.
+fn cost_type_to_opcode(cost_type: AbilityCostType) -> i32 {
+    match cost_type {
+        AbilityCostType::Energy => O_PAY_ENERGY,
+        AbilityCostType::TapSelf => O_SET_TAPPED,
+        AbilityCostType::TapMember => O_TAP_MEMBER,
+        AbilityCostType::DiscardHand => O_MOVE_TO_DISCARD,
+        AbilityCostType::DiscardTopDeck => O_MOVE_TO_DISCARD,
+        AbilityCostType::DiscardMember => O_MOVE_TO_DISCARD,
+        AbilityCostType::DiscardLive => O_MOVE_TO_DISCARD,
+        AbilityCostType::DiscardEnergy => O_MOVE_TO_DISCARD,
+        AbilityCostType::ReturnHand => O_MOVE_MEMBER,
+        AbilityCostType::SacrificeSelf => O_MOVE_TO_DISCARD,
+        AbilityCostType::ReturnMemberToDeck => O_MOVE_TO_DECK,
+        AbilityCostType::ReturnLiveToDeck => O_MOVE_TO_DECK,
+        AbilityCostType::ReturnDiscardToDeck => O_MOVE_TO_DECK,
+        AbilityCostType::PlaceEnergyFromDeck => COST_PLACE_ENERGY_FROM_DECK,
+        _ => O_NOP,
+    }
+}
+
+/// Compute ability flags directly from semantic effects (semantic migration path).
+fn compute_ability_flags_from_effects(ab: &Ability) -> u64 {
+    let mut flags = 0u64;
+
+    for effect in &ab.effects {
+        let opcode = if effect.runtime_opcode != 0 {
+            effect.runtime_opcode
+        } else {
+            effect_type_to_opcode(effect.effect_type)
+        };
+
+        match opcode {
+            O_DRAW | O_LOOK_AND_CHOOSE | O_RETURN => flags |= FLAG_DRAW as u64,
+            O_SEARCH_DECK => flags |= FLAG_SEARCH as u64,
+            O_RECOVER_LIVE | O_RECOVER_MEMBER => flags |= FLAG_RECOVER as u64,
+            O_ADD_BLADES | O_ADD_HEARTS => flags |= FLAG_BUFF as u64,
+            O_MOVE_MEMBER | O_SWAP_CARDS => flags |= FLAG_MOVE as u64,
+            O_TAP_OPPONENT | O_TAP_MEMBER => flags |= FLAG_TAP as u64,
+            O_ENERGY_CHARGE => flags |= FLAG_CHARGE as u64,
+            O_ACTIVATE_MEMBER | O_SET_TAPPED => flags |= FLAG_TEMPO as u64,
+            O_REDUCE_COST => flags |= FLAG_REDUCE as u64,
+            O_BOOST_SCORE => flags |= FLAG_BOOST as u64,
+            O_TRANSFORM_COLOR => flags |= FLAG_TRANSFORM as u64,
+            O_REDUCE_HEART_REQ => flags |= FLAG_WIN_COND as u64,
+            _ => {}
+        }
+    }
+
+    flags
+}
+
+/// Check if ability has a specific opcode by examining semantic effects.
+fn has_opcode_from_effects(ab: &Ability, target_op: i32) -> bool {
+    for effect in &ab.effects {
+        let opcode = if effect.runtime_opcode != 0 {
+            effect.runtime_opcode
+        } else {
+            effect_type_to_opcode(effect.effect_type)
+        };
+        if opcode == target_op {
+            return true;
+        }
+    }
+
+    // Also check costs
+    for cost in &ab.costs {
+        let opcode = cost_type_to_opcode(cost.cost_type);
+        if opcode == target_op {
+            return true;
+        }
+    }
+
+    false
 }
 
 pub const CHARACTER_NAMES: [&str; 78] = [
