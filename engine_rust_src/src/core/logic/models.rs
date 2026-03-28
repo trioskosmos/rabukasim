@@ -376,6 +376,36 @@ impl AbilityFrame {
         }
     }
 
+    fn first_field<'a>(value: &'a Value, keys: &[&str]) -> Option<&'a Value> {
+        keys.iter().find_map(|key| value.get(*key))
+    }
+
+    fn first_str<'a>(value: &'a Value, keys: &[&str]) -> Option<&'a str> {
+        Self::first_field(value, keys).and_then(Value::as_str)
+    }
+
+    fn first_i64(value: &Value, keys: &[&str]) -> Option<i64> {
+        Self::first_field(value, keys).and_then(Value::as_i64)
+    }
+
+    fn first_cloned_value(value: &Value, keys: &[&str]) -> Value {
+        Self::first_field(value, keys).cloned().unwrap_or(Value::Null)
+    }
+
+    fn zone_from_text(value: &str) -> Option<Zone> {
+        match value.trim().to_ascii_uppercase().as_str() {
+            "HAND" | "CARD_HAND" => Some(Zone::Hand),
+            "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
+            "STAGE" => Some(Zone::Stage),
+            "DECK" => Some(Zone::Deck),
+            "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
+            "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
+            "ENERGY" => Some(Zone::Energy),
+            "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
+            _ => None,
+        }
+    }
+
     pub(crate) fn from_json_value(frame: &Value) -> Self {
         if matches!(frame.as_str(), Some("Return" | "RETURN")) {
             return AbilityFrame::Return;
@@ -411,42 +441,16 @@ impl AbilityFrame {
             }
         }
 
-        let opcode_name = payload
-            .get("opcode_name")
-            .or_else(|| payload.get("op"))
-            .or_else(|| frame.get("opcode_name"))
-            .or_else(|| frame.get("op"))
-            .and_then(|v| v.as_str())
+        let opcode_name = Self::first_str(payload, &["opcode_name", "op"])
+            .or_else(|| Self::first_str(frame, &["opcode_name", "op"]))
             .unwrap_or("");
-        let opcode_id = payload
-            .get("opcode_id")
-            .or_else(|| payload.get("opcode"))
-            .or_else(|| payload.get("op"))
-            .or_else(|| frame.get("opcode_id"))
-            .or_else(|| frame.get("opcode"))
-            .and_then(|v| v.as_i64())
+        let opcode_id = Self::first_i64(payload, &["opcode_id", "opcode", "op"])
+            .or_else(|| Self::first_i64(frame, &["opcode_id", "opcode"]))
             .unwrap_or(0) as i32;
-        let value_json = payload
-            .get("value")
-            .or_else(|| payload.get("count"))
-            .or_else(|| payload.get("rule_type"))
-            .or_else(|| payload.get("params"))
-            .or_else(|| payload.get("v"))
-            .or_else(|| frame.get("value"))
-            .or_else(|| frame.get("rule_type"))
-            .or_else(|| frame.get("v"))
-            .cloned()
-            .unwrap_or(Value::Null);
-        let value = value_json
-            .get("value")
-            .or_else(|| payload.get("count"))
-            .or_else(|| payload.get("rule_type"))
-            .or_else(|| payload.get("params"))
-            .or_else(|| payload.get("v"))
-            .or_else(|| frame.get("value"))
-            .or_else(|| frame.get("rule_type"))
-            .or_else(|| frame.get("v"))
-            .and_then(|v| v.as_i64())
+        let value_json = Self::first_cloned_value(payload, &["value", "count", "rule_type", "params", "v"]);
+        let value = Self::first_i64(&value_json, &["value"])
+            .or_else(|| Self::first_i64(payload, &["count", "rule_type", "v"]))
+            .or_else(|| Self::first_i64(frame, &["value", "rule_type", "v"]))
             .unwrap_or(0) as i32;
         let filter = filter_attr_from_params(Some(payload))
             .map(|attr| CardFilter::from_attr(attr as i64))
@@ -470,16 +474,18 @@ impl AbilityFrame {
             .or_else(|| frame.get("negated"))
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
-        let options = frame
-            .get("options")
-            .or_else(|| payload.get("options"))
-            .cloned()
-            .unwrap_or(Value::Null);
-        let params = payload
-            .get("params")
-            .or_else(|| frame.get("params"))
-            .cloned()
-            .unwrap_or(Value::Null);
+        let options = Self::first_cloned_value(frame, &["options"]);
+        let options = if options.is_null() {
+            Self::first_cloned_value(payload, &["options"])
+        } else {
+            options
+        };
+        let params = Self::first_cloned_value(payload, &["params"]);
+        let params = if params.is_null() {
+            Self::first_cloned_value(frame, &["params"])
+        } else {
+            params
+        };
         let is_cost = payload
             .get("is_cost")
             .or_else(|| frame.get("is_cost"))
@@ -564,10 +570,8 @@ impl AbilityFrame {
         }
         let opcode_key = if !kind.is_empty() { kind } else { opcode_name };
         let opcode_key = Self::normalize_frame_kind(opcode_key);
-        let decoded_hint = payload
-            .get("decoded")
-            .or_else(|| frame.get("decoded"))
-            .and_then(|value| value.as_str())
+        let decoded_hint = Self::first_str(payload, &["decoded"])
+            .or_else(|| Self::first_str(frame, &["decoded"]))
             .unwrap_or("");
         let decoded_hint_name = Self::decoded_hint_name(decoded_hint);
 
@@ -795,20 +799,6 @@ impl AbilityFrame {
         let mut runtime_slot = effect.runtime_slot;
         let mut slot = DecodedSlot::decode(runtime_slot);
 
-        let zone_from_text = |value: &str| -> Option<Zone> {
-            match value.trim().to_ascii_uppercase().as_str() {
-                "HAND" | "CARD_HAND" => Some(Zone::Hand),
-                "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
-                "STAGE" => Some(Zone::Stage),
-                "DECK" => Some(Zone::Deck),
-                "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
-                "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
-                "ENERGY" => Some(Zone::Energy),
-                "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
-                _ => None,
-            }
-        };
-
         if let Some(destination) = effect
             .params
             .as_object()
@@ -827,7 +817,7 @@ impl AbilityFrame {
             .as_object()
             .and_then(|params| params.get("source").or_else(|| params.get("SOURCE")))
             .and_then(|value| value.as_str())
-            .and_then(zone_from_text)
+            .and_then(Self::zone_from_text)
         {
             slot.source_zone = source;
         }
@@ -841,7 +831,7 @@ impl AbilityFrame {
                     .or_else(|| params.get("DESTINATION"))
             })
             .and_then(|value| value.as_str())
-            .and_then(zone_from_text)
+            .and_then(Self::zone_from_text)
         {
             slot.dest_zone = dest_zone;
         }
@@ -968,19 +958,8 @@ impl AbilityFrame {
                 slot,
                 params,
                 is_cost,
-            } => AbilityFrameComponents {
-                raw_opcode,
-                opcode,
-                value: *count,
-                filter: *filter,
-                slot: *slot,
-                raw_attr: filter.to_attr() as u64,
-                raw_slot: slot.to_raw(),
-                is_negated,
-                is_cost: *is_cost,
-                params: Some(params),
-            },
-            AbilityFrame::RecoverMember {
+            }
+            | AbilityFrame::RecoverMember {
                 count,
                 filter,
                 slot,
@@ -1016,19 +995,8 @@ impl AbilityFrame {
                 params: None,
             },
             AbilityFrame::LookAndChoose { filter, slot, is_cost, .. }
-            | AbilityFrame::MoveMember { filter, slot, is_cost, .. } => AbilityFrameComponents {
-                raw_opcode,
-                opcode,
-                value: self.value(),
-                filter: *filter,
-                slot: *slot,
-                raw_attr: filter.to_attr() as u64,
-                raw_slot: slot.to_raw(),
-                is_negated,
-                is_cost: *is_cost,
-                params: None,
-            },
-            AbilityFrame::MetaRule { filter, slot, is_cost, .. } => AbilityFrameComponents {
+            | AbilityFrame::MoveMember { filter, slot, is_cost, .. }
+            | AbilityFrame::MetaRule { filter, slot, is_cost, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: self.value(),
@@ -1062,8 +1030,9 @@ impl AbilityFrame {
             AbilityFrame::Return => 0,
             AbilityFrame::Draw { count, .. } => *count,
             AbilityFrame::Semantic { value, .. } => *value,
-            AbilityFrame::RecoverLive { count, .. } => *count,
-            AbilityFrame::RecoverMember { count, .. } => *count,
+            AbilityFrame::RecoverLive { count, .. }
+            | AbilityFrame::RecoverMember { count, .. }
+            | AbilityFrame::SelectMember { count, .. } => *count,
             AbilityFrame::LookAndChoose {
                 count,
                 choose_count,
@@ -1083,7 +1052,6 @@ impl AbilityFrame {
                 char_id_3: *char_id_3,
             }
             .to_raw(),
-            AbilityFrame::SelectMember { count, .. } => *count,
             AbilityFrame::MoveMember { .. } => 0,
             AbilityFrame::MetaRule { rule_type, .. } => *rule_type,
             AbilityFrame::Raw { value, .. } => *value,
@@ -1094,13 +1062,13 @@ impl AbilityFrame {
         match self {
             AbilityFrame::Return => 0,
             AbilityFrame::Draw { .. } => 0,
-            AbilityFrame::Semantic { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::RecoverLive { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::RecoverMember { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::LookAndChoose { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::SelectMember { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::MoveMember { filter, .. } => filter.to_attr() as u64,
-            AbilityFrame::MetaRule { filter, .. } => filter.to_attr() as u64,
+            AbilityFrame::Semantic { filter, .. }
+            | AbilityFrame::RecoverLive { filter, .. }
+            | AbilityFrame::RecoverMember { filter, .. }
+            | AbilityFrame::LookAndChoose { filter, .. }
+            | AbilityFrame::SelectMember { filter, .. }
+            | AbilityFrame::MoveMember { filter, .. }
+            | AbilityFrame::MetaRule { filter, .. } => filter.to_attr() as u64,
             AbilityFrame::Raw { attr, .. } => *attr,
         }
     }
@@ -1119,13 +1087,13 @@ impl AbilityFrame {
         match self {
             AbilityFrame::Return => 0,
             AbilityFrame::Draw { .. } => 0,
-            AbilityFrame::Semantic { slot, .. } => slot.to_raw(),
-            AbilityFrame::RecoverLive { slot, .. } => slot.to_raw(),
-            AbilityFrame::RecoverMember { slot, .. } => slot.to_raw(),
-            AbilityFrame::LookAndChoose { slot, .. } => slot.to_raw(),
-            AbilityFrame::SelectMember { slot, .. } => slot.to_raw(),
-            AbilityFrame::MoveMember { slot, .. } => slot.to_raw(),
-            AbilityFrame::MetaRule { slot, .. } => slot.to_raw(),
+            AbilityFrame::Semantic { slot, .. }
+            | AbilityFrame::RecoverLive { slot, .. }
+            | AbilityFrame::RecoverMember { slot, .. }
+            | AbilityFrame::LookAndChoose { slot, .. }
+            | AbilityFrame::SelectMember { slot, .. }
+            | AbilityFrame::MoveMember { slot, .. }
+            | AbilityFrame::MetaRule { slot, .. } => slot.to_raw(),
             AbilityFrame::Raw { slot, .. } => *slot,
         }
     }
@@ -1196,12 +1164,12 @@ impl AbilityFrame {
 
     pub fn filter(&self) -> CardFilter {
         match self {
-            AbilityFrame::Semantic { filter, .. } => *filter,
-            AbilityFrame::RecoverLive { filter, .. } => *filter,
-            AbilityFrame::RecoverMember { filter, .. } => *filter,
-            AbilityFrame::LookAndChoose { filter, .. } => *filter,
-            AbilityFrame::SelectMember { filter, .. } => *filter,
-            AbilityFrame::MoveMember { filter, .. } => *filter,
+            AbilityFrame::Semantic { filter, .. }
+            | AbilityFrame::RecoverLive { filter, .. }
+            | AbilityFrame::RecoverMember { filter, .. }
+            | AbilityFrame::LookAndChoose { filter, .. }
+            | AbilityFrame::SelectMember { filter, .. }
+            | AbilityFrame::MoveMember { filter, .. } => *filter,
             AbilityFrame::MetaRule { filter, .. } => CardFilter::from_attr(filter.to_attr() as i64),
             AbilityFrame::Raw { attr, .. } => CardFilter::from_attr((*attr) as i64),
             _ => CardFilter::default(),
@@ -1210,13 +1178,13 @@ impl AbilityFrame {
 
     pub fn dslot(&self) -> DecodedSlot {
         match self {
-            AbilityFrame::Semantic { slot, .. } => *slot,
-            AbilityFrame::RecoverLive { slot, .. } => *slot,
-            AbilityFrame::RecoverMember { slot, .. } => *slot,
-            AbilityFrame::LookAndChoose { slot, .. } => *slot,
-            AbilityFrame::SelectMember { slot, .. } => *slot,
-            AbilityFrame::MoveMember { slot, .. } => *slot,
-            AbilityFrame::MetaRule { slot, .. } => *slot,
+            AbilityFrame::Semantic { slot, .. }
+            | AbilityFrame::RecoverLive { slot, .. }
+            | AbilityFrame::RecoverMember { slot, .. }
+            | AbilityFrame::LookAndChoose { slot, .. }
+            | AbilityFrame::SelectMember { slot, .. }
+            | AbilityFrame::MoveMember { slot, .. }
+            | AbilityFrame::MetaRule { slot, .. } => *slot,
             AbilityFrame::Raw { slot, .. } => DecodedSlot::decode(*slot),
             _ => DecodedSlot::default(),
         }

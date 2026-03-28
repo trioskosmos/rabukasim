@@ -24,10 +24,10 @@ pub fn handle_play_member_from_hand(
         ctx.v_remaining
     };
 
-        if remaining == 2 {
-            if ctx.choice_index == -1 {
-                if matches!(
-                    suspend_choice(
+    if remaining == 2 {
+        if ctx.choice_index == -1 {
+            if matches!(
+                suspend_choice(
                     state,
                     db,
                     ctx,
@@ -71,7 +71,6 @@ pub fn handle_play_member_from_hand(
                     next_ctx.target_card_id = chosen_card_id;
                 }
             }
-            next_ctx.target_slot = ctx.selected_hand_idx;
             if matches!(
                 suspend_choice(
                     state,

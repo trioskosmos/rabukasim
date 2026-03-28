@@ -24,6 +24,29 @@ fn suspend_pay_energy(
     )
 }
 
+fn tap_energy_cards_with_logging(state: &mut GameState, p_idx: usize, count: usize) -> usize {
+    let tapped_indices = crate::core::logic::interpreter::costs::tap_first_untapped_energy(
+        state,
+        p_idx,
+        count,
+    );
+
+    if !state.ui.silent {
+        for idx in &tapped_indices {
+            eprintln!(
+                "Rule 6.3, Rule 6.3.1: Tapping Energy at Index {} for Player {}.",
+                idx, p_idx
+            );
+        }
+    }
+
+    for idx in &tapped_indices {
+        state.players[p_idx].set_energy_tapped(*idx, true);
+    }
+
+    tapped_indices.len()
+}
+
 pub fn handle_energy_charge(
     state: &mut GameState,
     p_idx: usize,
@@ -157,29 +180,12 @@ pub fn handle_pay_energy(
             return HandlerResult::SetCond(false);
         }
 
-        let mut paid = 0;
-        let silent = state.ui.silent;
-        let player = &mut state.players[p_idx];
-        for i in 0..player.energy_zone.len() {
-            if paid >= actual_v {
-                break;
-            }
-            if !player.is_energy_tapped(i) {
-                if !silent {
-                    eprintln!(
-                        "Rule 6.3, Rule 6.3.1: Tapping Energy at Index {} for Player {}.",
-                        i, p_idx
-                    );
-                }
-                player.set_energy_tapped(i, true);
-                paid += 1;
-            }
-        }
+        let paid = tap_energy_cards_with_logging(state, p_idx, actual_v as usize);
 
         ctx.choice_index = -1;
         ctx.v_accumulated = paid as i16;
         ctx.v_remaining = -1;
-        return HandlerResult::SetCond(paid == actual_v);
+        return HandlerResult::SetCond(paid == actual_v as usize);
     }
 
     let remaining = if ctx.v_remaining > 0 {
@@ -193,29 +199,12 @@ pub fn handle_pay_energy(
     }
 
     if !requires_explicit_selection {
-        let mut paid = 0;
-        let silent = state.ui.silent;
-        let player = &mut state.players[p_idx];
-        for i in 0..player.energy_zone.len() {
-            if paid >= remaining as i32 {
-                break;
-            }
-            if !player.is_energy_tapped(i) {
-                if !silent {
-                    eprintln!(
-                        "Rule 6.3, Rule 6.3.1: Tapping Energy at Index {} for Player {}.",
-                        i, p_idx
-                    );
-                }
-                player.set_energy_tapped(i, true);
-                paid += 1;
-            }
-        }
+        let paid = tap_energy_cards_with_logging(state, p_idx, remaining as usize);
 
         ctx.v_accumulated += paid as i16;
         ctx.v_remaining = -1;
         ctx.choice_index = -1;
-        return HandlerResult::SetCond(paid == remaining as i32);
+        return HandlerResult::SetCond(paid == remaining as usize);
     }
 
     if ctx.choice_index == -1 {

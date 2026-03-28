@@ -891,12 +891,21 @@ impl ResponseController for GameState {
                 c.choice_index = choice_idx as i16;
                 c.original_phase = Some(restored_phase);
                 if pending.choice_type == ChoiceType::SelectMember {
-                    c.selected_hand_idx = choice_idx as i16;
-                    c.target_card_id = self.core.players[p_idx]
-                        .hand
+                    let selected_card_id = self
+                        .core
+                        .players[p_idx]
+                        .looked_cards
                         .get(choice_idx.max(0) as usize)
                         .copied()
+                        .or_else(|| {
+                            self.core.players[p_idx]
+                                .hand
+                                .get(choice_idx.max(0) as usize)
+                                .copied()
+                        })
                         .unwrap_or(-1);
+                    c.selected_hand_idx = choice_idx as i16;
+                    c.target_card_id = selected_card_id;
                     if c.target_card_id >= 0 && !c.selected_cards.contains(&c.target_card_id) {
                         c.selected_cards.push(c.target_card_id);
                     }
@@ -910,7 +919,36 @@ impl ResponseController for GameState {
             if pending.choice_type == ChoiceType::SelectStage {
                 match pending.effect_opcode {
                     O_PLAY_MEMBER_FROM_HAND => {
-                        let stage_slot = choice_idx.max(0) as usize;
+                        let stage_slot = pending
+                            .actions
+                            .get(choice_idx.max(0) as usize)
+                            .copied()
+                            .and_then(|action| match ActionFactory::parse_action(action) {
+                                DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
+                                DecodedAction::SelectChoice { choice_idx } => {
+                                    Some(choice_idx.max(0) as usize)
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or_else(|| choice_idx.max(0) as usize);
+                        let stage_slot = if stage_slot < 3 {
+                            let player = &self.core.players[p_idx];
+                            let prevented = (player.prevent_play_to_slot_mask() & (1 << stage_slot)) != 0;
+                            if !prevented && !player.is_moved(stage_slot) {
+                                stage_slot
+                            } else {
+                                (0..3)
+                                    .find(|&slot_idx| {
+                                        let prevented =
+                                            (player.prevent_play_to_slot_mask() & (1 << slot_idx))
+                                                != 0;
+                                        !prevented && !player.is_moved(slot_idx)
+                                    })
+                                    .unwrap_or(stage_slot)
+                            }
+                        } else {
+                            stage_slot
+                        };
                         let mut play_ctx = pending.ctx.clone();
                         play_ctx.choice_index = stage_slot as i16;
                         play_ctx.target_slot = stage_slot as i16;
@@ -921,21 +959,15 @@ impl ResponseController for GameState {
                                 .hand
                                 .iter()
                                 .position(|&cid| cid == card_id)
-                                .unwrap_or(usize::MAX)
-                        } else if play_ctx.selected_hand_idx >= 0 {
-                            play_ctx.selected_hand_idx as usize
                         } else {
-                            usize::MAX
+                            None
                         };
 
-                        if play_ctx.target_card_id < 0 && hand_idx != usize::MAX {
-                            play_ctx.target_card_id = self.core.players[p_idx]
-                                .hand
-                                .get(hand_idx)
-                                .copied()
-                                .unwrap_or(-1);
-                        }
-                        if play_ctx.target_card_id >= 0 && play_ctx.selected_hand_idx < 0 {
+                        let Some(hand_idx) = hand_idx else {
+                            return Err("No selected hand card".to_string());
+                        };
+
+                        if play_ctx.selected_hand_idx < 0 {
                             play_ctx.selected_hand_idx = hand_idx as i16;
                         }
 
@@ -977,18 +1009,29 @@ impl ResponseController for GameState {
                         return Ok(());
                     }
                     O_PLAY_MEMBER_FROM_DISCARD => {
-                        let stage_slot = choice_idx.max(0) as usize;
+                        let stage_slot = pending
+                            .actions
+                            .get(choice_idx.max(0) as usize)
+                            .copied()
+                            .and_then(|action| match ActionFactory::parse_action(action) {
+                                DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
+                                DecodedAction::SelectChoice { choice_idx } => {
+                                    Some(choice_idx.max(0) as usize)
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or_else(|| choice_idx.max(0) as usize);
                         let mut play_ctx = pending.ctx.clone();
                         play_ctx.choice_index = stage_slot as i16;
                         let p_idx = play_ctx.player_id as usize;
-                        let card_id = if play_ctx.target_card_id >= 0 {
-                            play_ctx.target_card_id
-                        } else {
+                        if play_ctx.target_card_id < 0 {
                             return Err("No pending discard-play card".to_string());
-                        };
+                        }
 
                         let is_total_cost =
                             (pending.filter_attr & (1u64 << 60)) != 0 || (pending.filter_attr & (1u64 << 50)) != 0;
+                        let frame_idx = play_ctx.program_counter as usize;
+                        let remaining = play_ctx.v_remaining;
 
                         if let Some(pos) = self.interaction_stack.iter().rposition(|pi| {
                             pi.choice_type == pending.choice_type
@@ -998,15 +1041,18 @@ impl ResponseController for GameState {
                             self.interaction_stack.remove(pos);
                         }
 
-                        let result = crate::core::logic::interpreter::handlers::finalize_play_member_from_discard(
+                        let result = crate::core::logic::interpreter::handlers::state::handle_discard_placement(
                             self,
                             db,
                             &mut play_ctx,
                             p_idx,
-                            card_id,
-                            stage_slot,
+                            pending.filter_attr,
+                            false,
                             false,
                             is_total_cost,
+                            frame_idx,
+                            remaining,
+                            stage_slot as i32,
                         );
 
                         if !self.interaction_stack.is_empty() {
@@ -1033,31 +1079,40 @@ impl ResponseController for GameState {
                 }
             }
 
-            if pending.choice_type == ChoiceType::SelectMember
-                && pending.effect_opcode == O_PLAY_MEMBER_FROM_HAND
+            if pending.choice_type == ChoiceType::SelectDiscardPlay
+                && pending.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD
             {
-                let mut play_ctx = pending.ctx.clone();
-                play_ctx.choice_index = choice_idx as i16;
-                play_ctx.selected_hand_idx = choice_idx as i16;
-                play_ctx.target_card_id = self.core.players[play_ctx.player_id as usize]
-                    .hand
-                    .get(choice_idx.max(0) as usize)
-                    .copied()
+                let pick_idx = choice_idx.max(0) as usize;
+                let selected_card_id = self
+                    .core
+                    .players
+                    .get(p_idx)
+                    .and_then(|player| player.looked_cards.get(pick_idx).copied())
                     .unwrap_or(-1);
+                if selected_card_id < 0 {
+                    return Err("No selected discard card".to_string());
+                }
+
+                let mut play_ctx = pending.ctx.clone();
+                play_ctx.choice_index = -1;
+                play_ctx.target_card_id = selected_card_id;
+                play_ctx.v_remaining = pending.v_remaining;
+                if !play_ctx.selected_cards.contains(&selected_card_id) {
+                    play_ctx.selected_cards.push(selected_card_id);
+                }
 
                 crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
-
                 crate::core::logic::interpreter::suspension::suspend_interaction(
                     self,
                     db,
                     &play_ctx,
                     play_ctx.program_counter as usize,
-                    O_PLAY_MEMBER_FROM_HAND,
-                    choice_idx,
+                    O_PLAY_MEMBER_FROM_DISCARD,
+                    -1,
                     ChoiceType::SelectStage,
                     &crate::core::models::interpreter::get_choice_text(db, &play_ctx),
                     pending.filter_attr,
-                    1,
+                    pending.v_remaining,
                     Vec::new(),
                     Vec::new(),
                 );

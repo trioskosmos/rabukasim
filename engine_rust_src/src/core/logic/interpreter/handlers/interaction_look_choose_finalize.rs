@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 #[allow(clippy::too_many_arguments)]
 pub fn finalize_look_choice(
     state: &mut GameState,
-    _db: &CardDatabase,
-    _ctx: &mut AbilityContext,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
     p_idx: usize,
     _slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     _target_slot: u8,
@@ -20,7 +20,13 @@ pub fn finalize_look_choice(
 ) -> HandlerResult {
     revealed.retain(|c| *c != -1);
     if !revealed.is_empty() {
-        let dest = if dest_discard_v {
+        let is_8844_draw_branch = db
+            .get_member(ctx.source_card_id)
+            .map(|member| member.card_no == "PL!-bp5-003-P")
+            .unwrap_or(false);
+        let dest = if is_8844_draw_branch && source_zone == 8 {
+            6
+        } else if dest_discard_v {
             7
         } else if rem_dest > 0 {
             rem_dest as i32

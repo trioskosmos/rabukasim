@@ -122,6 +122,18 @@ pub fn handle_tap_opponent(
     }
 
     if ctx.choice_index == -1 {
+        let occupied_slots: Vec<usize> = state.players[target_p_idx]
+            .stage
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, &cid)| (cid >= 0).then_some(idx))
+            .collect();
+
+        if occupied_slots.len() == 1 {
+            state.set_member_tapped(target_p_idx, occupied_slots[0], true, db);
+            return HandlerResult::Continue;
+        }
+
         if !state.ui.silent && state.debug.debug_mode {
             println!("[DEBUG] O_TAP_OPPONENT: Suspending for opponent.");
         }

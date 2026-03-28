@@ -37,27 +37,12 @@ pub fn handle_optional_nop(
         return HandlerResult::Continue;
     }
 
-    let source_ability = db
-        .get_member(ctx.source_card_id)
-        .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-        .or_else(|| {
-            db.get_live(ctx.source_card_id)
-                .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-        });
-    let has_future_prompt = source_ability
-        .map(|ability| {
-            ability
-                .frames()
-                .iter()
-                .skip(frame_idx + 1)
-                .any(|next| is_interactive_frame(next) || next.filter().is_optional)
-        })
-        .unwrap_or(false);
-
     let choice_type = if is_interactive_frame(frame) {
         if frame_data.slot.target_slot == 4 {
             ChoiceType::SelectStage
-        } else if frame_data.slot.source_zone as u8 == 6 || frame_data.filter.target_player != 0 {
+        } else if frame_data.opcode == O_SELECT_CARDS {
+            ChoiceType::SelectCards
+        } else if frame_data.opcode == O_SELECT_MEMBER {
             ChoiceType::SelectMember
         } else {
             ChoiceType::Optional

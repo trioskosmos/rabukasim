@@ -138,10 +138,15 @@ pub fn resolve_select_choice(
     };
     let selected_cid = {
         let source_cards = cards_for_source_zone(state, target_player, source_zone);
-        source_cards.get(choice as usize).copied().unwrap_or(-1)
+        let idx = if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
+            choice.saturating_sub(1) as usize
+        } else {
+            choice as usize
+        };
+        source_cards.get(idx).copied().unwrap_or(-1)
     };
     if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
-        ctx.selected_hand_idx = choice as i16;
+        ctx.selected_hand_idx = if choice > 0 { choice - 1 } else { choice } as i16;
         ctx.target_card_id = selected_cid;
     } else {
         ctx.target_slot = choice as i16;

@@ -60,14 +60,14 @@ pub fn handle_select_ops(
     let partial_selection_prompt = -1000 - (v as i16);
     let frame_components = _frame.components();
     let frame_filter_attr = frame_components.filter.to_attr();
-    let resolved_filter_attr =
-        filter_attr_from_params(frame_components.params).unwrap_or_else(|| {
-            if frame_filter_attr != 0 {
-                frame_filter_attr
-            } else {
-                a as u64
-            }
-        });
+    let structured_filter = {
+        let mut filter = frame_components.filter;
+        filter.is_enabled = true;
+        filter
+    };
+    let resolved_filter_attr = filter_attr_from_params(frame_components.params)
+        .map(|attr| attr | frame_filter_attr)
+        .unwrap_or_else(|| if frame_filter_attr != 0 { frame_filter_attr } else { a as u64 });
     let next_frame = if op == O_SELECT_MEMBER {
         db.get_member(ctx.source_card_id)
             .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
@@ -190,20 +190,16 @@ pub fn handle_select_ops(
             p_idx,
             is_targeted_select_member_cost,
         );
-        let mut structured_filter = frame_components.filter;
-        structured_filter.is_enabled = true;
-
         let matching_cards = |target_player: usize| -> Vec<i32> {
             cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
                 .iter()
                 .enumerate()
                 .filter_map(|(slot_idx, &cid)| {
                     if cid >= 0
-                        && state.card_matches_filter_with_struct(
+                        && state.card_matches_filter_with_ctx(
                             db,
                             cid,
-                            Some((target_player as u8, slot_idx as i16)),
-                            &structured_filter,
+                            resolved_filter_attr,
                             ctx,
                         )
                     {
@@ -216,10 +212,36 @@ pub fn handle_select_ops(
         };
 
         if op == O_SELECT_MEMBER {
-            let looked_cards = matching_cards(select_member_target_player);
+            let looked_cards = {
+                let cards = matching_cards(select_member_target_player);
+                if cards.is_empty() {
+                    state.players[select_member_target_player]
+                        .stage
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(slot_idx, &cid)| {
+                            if cid >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    cid,
+                                    Some((select_member_target_player as u8, slot_idx as i16)),
+                                    &structured_filter,
+                                    ctx,
+                                )
+                            {
+                                Some(cid)
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<i32>>()
+                } else {
+                    cards
+                }
+            };
             if looked_cards.is_empty() {
                 return HandlerResult::Continue;
-            }
+            };
 
             state.players[select_member_target_player].looked_cards = looked_cards.into();
         }

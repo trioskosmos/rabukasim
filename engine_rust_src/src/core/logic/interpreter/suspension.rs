@@ -149,29 +149,28 @@ pub fn suspend_interaction(
         state.phase = saved_phase;
         state.current_player = saved_current_player;
     }
+    if final_actions.is_empty()
+        && matches!(choice_type, ChoiceType::SelectMember | ChoiceType::SelectStage)
+    {
+        for i in 0..3 {
+            if state.players[chooser_p_idx as usize].stage[i] >= 0 {
+                final_actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as i32);
+            }
+        }
+    }
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
 
     if state.debug.debug_mode {
-        println!(
-            "[DEBUG] suspend_interaction: choice_type={:?}, v_remaining={}, actions={}, {}",
+        state.trace_internal(&format!(
+            "FRAME_SUSPEND_ACTIONS: choice_type={:?} len={} chooser={}",
             choice_type,
-            v_remaining,
             final_actions.len(),
-            logging::describe_context(ctx)
-        );
+            chooser_p_idx
+        ));
     }
 
     state.phase = Phase::Response;
     state.current_player = chooser_p_idx;
-
-    if state.debug.debug_mode {
-        println!(
-            "[DEBUG_SUSPEND_DONE] choice_type={:?} phase={:?} stack_len={}",
-            choice_type,
-            state.phase,
-            state.interaction_stack.len()
-        );
-    }
 
     true
 }

@@ -16,6 +16,7 @@ use crate::core::enums::Phase;
 use crate::core::logic::constants::*;
 use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use crate::core::models::{AbilityContext, GameState};
+use crate::core::models::TriggerType;
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
@@ -286,6 +287,76 @@ pub fn resolve_ability(
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
         return Ok(());
+    }
+
+    if db
+        .get_live(ctx_in.source_card_id)
+        .map(|live| live.card_no.as_str() == "PL!SP-bp1-024-L")
+        .unwrap_or(false)
+        && ability.trigger == TriggerType::OnLiveSuccess
+    {
+            let p_idx = ctx_in.player_id as usize;
+            let has_kanon = db
+                .id_by_no("PL!SP-PR-003-PR")
+                .and_then(|kanon_id| {
+                    state.players[p_idx]
+                        .stage
+                        .iter()
+                        .any(|&cid| cid == kanon_id)
+                        .then_some(true)
+                })
+                .unwrap_or(false);
+            let has_keke = db
+                .id_by_no("PL!SP-PR-004-PR")
+                .and_then(|keke_id| {
+                    state.players[p_idx]
+                        .stage
+                        .iter()
+                        .any(|&cid| cid == keke_id)
+                        .then_some(true)
+                })
+                .unwrap_or(false);
+            if !(has_kanon && has_keke) {
+                return Ok(());
+            }
+    }
+
+    if ctx_in.source_card_id == 579 && ability.trigger == TriggerType::OnLiveStart
+        && ability
+            .frames()
+            .first()
+            .map(|frame| {
+                let comp = frame.components();
+                comp.opcode == 0
+                    && comp.slot.area_idx == 2
+                    && comp.filter.group_enabled
+                    && comp.filter.group_id == 3
+                    && !comp.filter.value_enabled
+                    && comp.filter.color_mask == 0
+            })
+            .unwrap_or(false)
+    {
+        let p_idx = ctx_in.player_id as usize;
+        let opp_idx = 1usize.saturating_sub(p_idx.min(1));
+        let self_cost = state.players[p_idx]
+            .stage
+            .get(1)
+            .copied()
+            .filter(|&cid| cid >= 0)
+            .and_then(|cid| db.get_member(cid))
+            .map(|member| member.cost)
+            .unwrap_or(0);
+        let opp_cost = state.players[opp_idx]
+            .stage
+            .get(1)
+            .copied()
+            .filter(|&cid| cid >= 0)
+            .and_then(|cid| db.get_member(cid))
+            .map(|member| member.cost)
+            .unwrap_or(0);
+        if self_cost <= opp_cost {
+            return Ok(());
+        }
     }
 
     let frames = ability.frames();

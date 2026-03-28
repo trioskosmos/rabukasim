@@ -142,16 +142,25 @@ pub fn handle_meta_rule(
         return HandlerResult::SetCond(all_active);
     }
 
-    if frame.opcode() == O_META_RULE
-        && matches!(rule_type.as_deref(), Some("CHEER_MOD"))
-    {
+    let is_cheer_mod = frame.opcode() == O_META_RULE
+        && (matches!(rule_type.as_deref(), Some("CHEER_MOD"))
+            || matches!(rule_name.as_deref(), Some("CHEER_MOD"))
+            || matches!(raw_effect, Some("CHEER_MOD"))
+            || a == 0
+            || a == 10);
+
+    if is_cheer_mod {
         state.players[target_p_idx].cheer_mod_count = state.players[target_p_idx]
             .cheer_mod_count
             .saturating_add(v as u16);
         return HandlerResult::Continue;
     }
 
-    if frame.opcode() == O_META_RULE && (a == 0 || a == 10) {
+    if frame.opcode() == O_META_RULE
+        && rule_type.is_none()
+        && rule_name.is_none()
+        && raw_effect.is_none()
+    {
         state.players[target_p_idx].cheer_mod_count = state.players[target_p_idx]
             .cheer_mod_count
             .saturating_add(v as u16);

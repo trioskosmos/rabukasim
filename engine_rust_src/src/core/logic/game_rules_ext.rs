@@ -235,9 +235,7 @@ impl GameState {
         // we can skip the expensive stage scanning loop.
         let requires_stage_scan = needs_dynamic_hearts
             || filter.is_tapped
-            || filter.target_player != 0
             || (filter.special_id == 3 && provided_slot.is_none()) // NOT_SELF (only needs scan if slot unknown)
-            || filter.zone_mask == 4 // Explicit STAGE check
             || filter.keyword_energy
             || filter.keyword_member;
 

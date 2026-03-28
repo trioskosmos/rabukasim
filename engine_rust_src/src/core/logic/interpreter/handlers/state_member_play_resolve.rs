@@ -16,7 +16,6 @@ fn finish_member_play(
     state.players[p_idx].set_tapped(slot_idx, tapped);
     state.players[p_idx].set_moved(slot_idx, true);
     state.register_played_member(p_idx, card_id, db);
-
     let new_ctx = AbilityContext {
         source_card_id: card_id,
         player_id: p_idx as u8,
@@ -68,8 +67,6 @@ pub fn finalize_play_member_from_hand(
             .hand
             .iter()
             .position(|&card_id| card_id == ctx.target_card_id)
-    } else if ctx.selected_hand_idx >= 0 {
-        Some(ctx.selected_hand_idx as usize)
     } else if h_idx < state.players[p_idx].hand.len() {
         Some(h_idx)
     } else {

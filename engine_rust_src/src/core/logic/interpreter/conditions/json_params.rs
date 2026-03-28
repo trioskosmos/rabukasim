@@ -618,65 +618,23 @@ pub fn evaluate_raw_condition(
             }
         }
         "UNIQUE_NAMES_COUNT" => {
-            let mut name_pool = Vec::<String>::new();
-            let mut stage_name_options = Vec::<Vec<usize>>::new();
+            let mut names = std::collections::HashSet::<String>::new();
             for &cid in &state.players[ctx.player_id as usize].stage {
                 if cid < 0 {
                     continue;
                 }
-                if let Some(member) = db.get_member(cid) {
-                    let mut options = Vec::new();
-                    for part in member.name.split(['&', '＆']) {
-                        let normalized = part.trim();
-                        if !normalized.is_empty() {
-                            let name_index = if let Some(existing_index) =
-                                name_pool.iter().position(|existing| existing == normalized)
-                            {
-                                existing_index
-                            } else {
-                                name_pool.push(normalized.to_string());
-                                name_pool.len() - 1
-                            };
-                            if !options.contains(&name_index) {
-                                options.push(name_index);
-                            }
-                        }
-                    }
-                    if !options.is_empty() {
-                        stage_name_options.push(options);
+                let name = db
+                    .get_member(cid)
+                    .map(|member| member.name.clone())
+                    .or_else(|| db.get_live(cid).map(|live| live.name.clone()));
+                if let Some(name) = name {
+                    let normalized = name.trim();
+                    if !normalized.is_empty() {
+                        names.insert(normalized.to_string());
                     }
                 }
             }
-
-            fn assign_name(
-                card_index: usize,
-                options: &[Vec<usize>],
-                owner: &mut [Option<usize>],
-                seen: &mut [bool],
-            ) -> bool {
-                for &name_idx in &options[card_index] {
-                    if seen[name_idx] {
-                        continue;
-                    }
-                    seen[name_idx] = true;
-                    if owner[name_idx].is_none()
-                        || assign_name(owner[name_idx].unwrap(), options, owner, seen)
-                    {
-                        owner[name_idx] = Some(card_index);
-                        return true;
-                    }
-                }
-                false
-            }
-
-            let mut owner = vec![None; name_pool.len()];
-            let mut count = 0;
-            for i in 0..stage_name_options.len() {
-                let mut seen = vec![false; name_pool.len()];
-                if assign_name(i, &stage_name_options, &mut owner, &mut seen) {
-                    count += 1;
-                }
-            }
+            let count = names.len() as i32;
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 count == eq as i32
@@ -799,7 +757,6 @@ pub fn check_condition(
     if depth > CONDITION_CHECK_MAX_DEPTH {
         return false;
     }
-
     let mut val = cond.value;
     let mut attr = cond.attr;
     let mut slot = cond.target_slot as i32;

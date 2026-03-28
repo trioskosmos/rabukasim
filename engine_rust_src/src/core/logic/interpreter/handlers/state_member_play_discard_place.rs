@@ -45,7 +45,6 @@ pub fn handle_discard_placement(
     } else {
         return HandlerResult::Continue;
     }
-    state.players[target_p_idx].looked_cards.clear();
 
     let resolved_slot = if ctx.choice_index >= 600 && ctx.choice_index < 603 {
         ctx.choice_index - 600
@@ -103,6 +102,7 @@ pub fn handle_discard_placement(
     };
     if should_continue {
         ctx.choice_index = -1;
+        ctx.target_card_id = -1;
         ctx.v_remaining = next_remaining;
         return state_member_play_discard_select::handle_discard_selection(
             state,

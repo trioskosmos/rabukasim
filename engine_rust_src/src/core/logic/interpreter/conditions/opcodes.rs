@@ -97,14 +97,6 @@ fn check_condition_with_parts(
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
-    let excess_heart_player = |target_player: u8| -> &crate::core::logic::player::PlayerState {
-        match target_player {
-            1 => player,
-            2 => opponent,
-            _ => player,
-        }
-    };
-
     let get_cid = || {
         if ctx.source_card_id >= 0 {
             ctx.source_card_id
@@ -118,7 +110,6 @@ fn check_condition_with_parts(
     let cid = get_cid();
     let area_val = slot_info.area_idx;
     let real_slot = slot & 0xFF;
-
     if state.debug.debug_mode {
         if !state.ui.silent {
             let attr_desc = logging::describe_filter_attr(DecodedFilterAttr::decode(attr as i64));
@@ -595,10 +586,20 @@ fn check_condition_with_parts(
             }
         }
         C_HAS_EXCESS_HEART => {
-            excess_heart_player(filter.target_player).excess_hearts > 0
+            match filter.target_player {
+                1 => player.excess_hearts > 0,
+                2 => opponent.excess_hearts > 0,
+                3 => player.excess_hearts > 0 || opponent.excess_hearts > 0,
+                _ => player.excess_hearts > 0,
+            }
         }
         C_NOT_HAS_EXCESS_HEART => {
-            excess_heart_player(filter.target_player).excess_hearts == 0
+            match filter.target_player {
+                1 => player.excess_hearts == 0,
+                2 => opponent.excess_hearts == 0,
+                3 => player.excess_hearts == 0 && opponent.excess_hearts == 0,
+                _ => player.excess_hearts == 0,
+            }
         }
         C_TOTAL_BLADES => {
             let mut total = 0u32;
@@ -622,35 +623,31 @@ fn check_condition_with_parts(
             total >= val as u32
         }
         C_COST_COMPARE => {
-            let compare_player = if filter.target_player == 2 {
-                opponent
+            let slot_idx = if area_val >= 1 && area_val <= 3 {
+                Some((area_val - 1) as usize)
+            } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
+                Some(ctx.area_idx as usize)
             } else {
-                player
+                None
             };
-            let compare_cid = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                let staged = compare_player.stage[ctx.area_idx as usize];
-                if staged >= 0 {
-                    staged
-                } else {
-                    get_cid()
-                }
-            } else {
-                get_cid()
+
+            let compare_slot = |cards: &[i32], idx: usize| -> i32 {
+                cards
+                    .get(idx)
+                    .copied()
+                    .filter(|&cid| cid >= 0)
+                    .and_then(|cid| db.get_member(cid))
+                    .map(|m| m.cost as i32)
+                    .unwrap_or(0)
             };
-            if compare_cid >= 0 {
-                if let Some(m) = db.get_member(compare_cid) {
-                    let is_le = (attr & 0x40000000) != 0;
-                    if is_le {
-                        m.cost as i32 <= val
-                    } else {
-                        m.cost as i32 >= val
-                    }
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
+
+            let Some(idx) = slot_idx else {
+                return false;
+            };
+
+            let self_cost = compare_slot(&player.stage, idx);
+            let opp_cost = compare_slot(&opponent.stage, idx);
+            self_cost > opp_cost
         }
         C_BLADE_COMPARE => {
             let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
@@ -831,28 +828,12 @@ fn check_condition_with_parts(
             let (self_cost, opp_cost) = if let Some(idx) = area_override {
                 let s_cid = player.stage[idx];
                 let o_cid = opponent.stage[idx];
-                let s_cost = if s_cid >= 0
-                    && state.card_matches_filter_with_struct(
-                        db,
-                        s_cid,
-                        Some((p_idx as u8, idx as i16)),
-                        &filter,
-                        ctx,
-                    )
-                {
+                let s_cost = if s_cid >= 0 {
                     db.get_member(s_cid).map_or(0, |m| m.cost as i32)
                 } else {
                     0
                 };
-                let o_cost = if o_cid >= 0
-                    && state.card_matches_filter_with_struct(
-                        db,
-                        o_cid,
-                        Some(((1 - p_idx) as u8, idx as i16)),
-                        &filter,
-                        ctx,
-                    )
-                {
+                let o_cost = if o_cid >= 0 {
                     db.get_member(o_cid).map_or(0, |m| m.cost as i32)
                 } else {
                     0
@@ -862,28 +843,12 @@ fn check_condition_with_parts(
                 let idx = (area_val - 1) as usize;
                 let s_cid = player.stage[idx];
                 let o_cid = opponent.stage[idx];
-                let s_cost = if s_cid >= 0
-                    && state.card_matches_filter_with_struct(
-                        db,
-                        s_cid,
-                        Some((p_idx as u8, idx as i16)),
-                        &filter,
-                        ctx,
-                    )
-                {
+                let s_cost = if s_cid >= 0 {
                     db.get_member(s_cid).map_or(0, |m| m.cost as i32)
                 } else {
                     0
                 };
-                let o_cost = if o_cid >= 0
-                    && state.card_matches_filter_with_struct(
-                        db,
-                        o_cid,
-                        Some(((1 - p_idx) as u8, idx as i16)),
-                        &filter,
-                        ctx,
-                    )
-                {
+                let o_cost = if o_cid >= 0 {
                     db.get_member(o_cid).map_or(0, |m| m.cost as i32)
                 } else {
                     0
@@ -920,7 +885,7 @@ fn check_condition_with_parts(
                 }
                 (s_cost, o_cost)
             };
-            compare_i32(self_cost, opp_cost + val, slot)
+            compare_i32(self_cost, opp_cost + val, (slot_info.comparison as i32) << 4)
         }
         312 => compare_i32(ctx.v_accumulated as i32, val, slot),
         313 => {

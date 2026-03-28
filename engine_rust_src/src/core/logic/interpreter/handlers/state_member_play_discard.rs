@@ -5,6 +5,9 @@ mod state_member_play_discard_place;
 #[path = "state_member_play_discard_select.rs"]
 mod state_member_play_discard_select;
 
+pub use state_member_play_discard_place::handle_discard_placement;
+pub use state_member_play_discard_select::handle_discard_selection;
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_discard(
     state: &mut GameState,

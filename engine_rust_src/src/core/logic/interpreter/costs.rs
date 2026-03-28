@@ -32,6 +32,44 @@ fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost:
     resolved_cost
 }
 
+fn untapped_energy_count(state: &GameState, p_idx: usize) -> usize {
+    state.players[p_idx].energy_zone.len() - state.players[p_idx].tapped_energy_count() as usize
+}
+
+fn matches_filter_attr(state: &GameState, db: &CardDatabase, cid: i32, attr: u64) -> bool {
+    attr & FILTER_TYPE_MASK == 0 || state.card_matches_filter(db, cid, attr)
+}
+
+fn count_matching_cards<I>(state: &GameState, db: &CardDatabase, cards: I, attr: u64) -> usize
+where
+    I: IntoIterator<Item = i32>,
+{
+    cards
+        .into_iter()
+        .filter(|&cid| cid >= 0 && matches_filter_attr(state, db, cid, attr))
+        .count()
+}
+
+pub(crate) fn tap_first_untapped_energy(
+    state: &mut GameState,
+    p_idx: usize,
+    count: usize,
+) -> Vec<usize> {
+    let mut tapped_indices = Vec::new();
+    let energy_len = state.players[p_idx].energy_zone.len();
+
+    for idx in 0..energy_len {
+        if tapped_indices.len() >= count {
+            break;
+        }
+        if !state.players[p_idx].is_energy_tapped(idx) {
+            tapped_indices.push(idx);
+        }
+    }
+
+    tapped_indices
+}
+
 pub fn pay_costs_transactional(
     state: &mut GameState,
     db: &CardDatabase,
@@ -85,12 +123,11 @@ pub fn check_cost(
             attr = map_filter_string_to_attr(filter_str);
         }
     }
+    let has_filter = (attr & FILTER_TYPE_MASK) != 0;
     let result = match cost.cost_type {
         AbilityCostType::None => true,
         AbilityCostType::Energy => {
-            let available =
-                (player.energy_zone.len() as u32 - player.tapped_energy_mask.count_ones()) as i32;
-            available >= resolve_energy_cost(state, db, p_idx, cost)
+            untapped_energy_count(state, p_idx) as i32 >= resolve_energy_cost(state, db, p_idx, cost)
         }
         AbilityCostType::TapSelf => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
@@ -116,18 +153,11 @@ pub fn check_cost(
             }
         }
         AbilityCostType::TapEnergy => {
-            let untap_count =
-                player.energy_zone.len() as u32 - player.tapped_energy_mask.count_ones();
-            untap_count as usize >= val
+            untapped_energy_count(state, p_idx) >= val
         }
         AbilityCostType::DiscardHand => {
-            if (attr & FILTER_TYPE_MASK) != 0 {
-                player
-                    .hand
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
-                    .count()
-                    >= val
+            if has_filter {
+                count_matching_cards(state, db, player.hand.iter().copied(), attr) >= val
             } else {
                 player.hand.len() >= val
             }
@@ -140,13 +170,8 @@ pub fn check_cost(
             }
         }
         AbilityCostType::RevealHand => {
-            if (attr & FILTER_TYPE_MASK) != 0 {
-                player
-                    .hand
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
-                    .count()
-                    >= val
+            if has_filter {
+                count_matching_cards(state, db, player.hand.iter().copied(), attr) >= val
             } else {
                 player.hand.len() >= val
             }
@@ -168,37 +193,22 @@ pub fn check_cost(
         }
         AbilityCostType::ReturnDiscardToDeck => player.discard.len() >= val,
         AbilityCostType::ReturnHand => {
-            if (attr & FILTER_TYPE_MASK) != 0 {
-                player
-                    .stage
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
-                    .count()
-                    >= val
+            if has_filter {
+                count_matching_cards(state, db, player.stage.iter().copied(), attr) >= val
             } else {
                 player.stage.iter().filter(|&&id| id >= 0).count() >= val
             }
         }
         AbilityCostType::DiscardMember => {
-            if (attr & FILTER_TYPE_MASK) != 0 {
-                player
-                    .stage
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
-                    .count()
-                    >= val
+            if has_filter {
+                count_matching_cards(state, db, player.stage.iter().copied(), attr) >= val
             } else {
                 player.stage.iter().filter(|&&id| id >= 0).count() >= val
             }
         }
         AbilityCostType::DiscardSuccessLive => {
-            if (attr & FILTER_TYPE_MASK) != 0 {
-                player
-                    .success_lives
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, attr))
-                    .count()
-                    >= val
+            if has_filter {
+                count_matching_cards(state, db, player.success_lives.iter().copied(), attr) >= val
             } else {
                 player.success_lives.len() >= val
             }
@@ -235,41 +245,29 @@ pub fn check_frame_cost(
 
     match comp.opcode {
         O_PAY_ENERGY | O_ACTIVATE_ENERGY => {
-            let available = state.players[p_idx].energy_zone.len() as i32
-                - state.players[p_idx].tapped_energy_count() as i32;
-            available >= comp.value
+            untapped_energy_count(state, p_idx) as i32 >= comp.value
         }
         O_MOVE_TO_DISCARD | O_MOVE_TO_DECK | O_MOVE_MEMBER => {
             let source_zone = comp.slot.source_zone;
             let available = match source_zone {
-                Zone::Hand => {
-                    let mut count = 0;
-                    for &cid in &state.players[p_idx].hand {
-                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
-                            count += 1;
-                        }
-                    }
-                    count
-                }
-                Zone::Stage => {
-                    let mut count = 0;
-                    for i in 0..3 {
-                        let cid = state.players[p_idx].stage[i];
-                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
-                            count += 1;
-                        }
-                    }
-                    count
-                }
-                Zone::LiveSet | Zone::SuccessPile => {
-                    let mut count = 0;
-                    for &cid in &state.players[p_idx].success_lives {
-                        if cid >= 0 && state.card_matches_filter(db, cid, comp.filter.to_attr()) {
-                            count += 1;
-                        }
-                    }
-                    count
-                }
+                Zone::Hand => count_matching_cards(
+                    state,
+                    db,
+                    state.players[p_idx].hand.iter().copied(),
+                    comp.filter.to_attr(),
+                ) as i32,
+                Zone::Stage => count_matching_cards(
+                    state,
+                    db,
+                    state.players[p_idx].stage.iter().copied(),
+                    comp.filter.to_attr(),
+                ) as i32,
+                Zone::LiveSet | Zone::SuccessPile => count_matching_cards(
+                    state,
+                    db,
+                    state.players[p_idx].success_lives.iter().copied(),
+                    comp.filter.to_attr(),
+                ) as i32,
                 Zone::Energy => state.players[p_idx].energy_zone.len() as i32,
                 Zone::Discard => state.players[p_idx].discard.len() as i32,
                 Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
@@ -320,10 +318,7 @@ pub fn pay_cost(
         AbilityCostType::None => true,
         AbilityCostType::Energy => {
             let resolved_cost = resolve_energy_cost(state, db, p_idx, cost);
-            let untap_indices: Vec<usize> = (0..state.players[p_idx].energy_zone.len())
-                .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
-                .take(resolved_cost as usize)
-                .collect();
+            let untap_indices = tap_first_untapped_energy(state, p_idx, resolved_cost as usize);
             if untap_indices.len() < resolved_cost as usize {
                 return false;
             }
@@ -375,21 +370,14 @@ pub fn pay_cost(
             needed == 0
         }
         AbilityCostType::TapEnergy => {
-            let player = &mut state.players[p_idx];
-            let mut needed = cost.value as usize;
-            if needed == 0 {
-                return true;
+            let untap_indices = tap_first_untapped_energy(state, p_idx, cost.value as usize);
+            if untap_indices.len() < cost.value as usize {
+                return false;
             }
-            for i in 0..player.energy_zone.len() {
-                if !player.is_energy_tapped(i) {
-                    player.set_energy_tapped(i, true);
-                    needed -= 1;
-                    if needed == 0 {
-                        break;
-                    }
-                }
+            for idx in untap_indices {
+                state.players[p_idx].set_energy_tapped(idx, true);
             }
-            needed == 0
+            true
         }
         AbilityCostType::DiscardHand => {
             let count = cost.value as usize;

@@ -25,6 +25,7 @@ mod state_member_tap;
 
 pub use state_member_play::finalize_play_member_from_hand;
 pub use state_member_play::finalize_play_member_from_discard;
+pub use state_member_play::handle_discard_placement;
 
 pub fn handle_member_state(
     state: &mut GameState,

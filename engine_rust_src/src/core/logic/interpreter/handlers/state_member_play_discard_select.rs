@@ -103,16 +103,6 @@ pub fn handle_discard_selection(
             return HandlerResult::Continue;
         }
 
-        if ctx.source_card_id == 420 {
-            eprintln!(
-                "[DBG420_SELECT] remaining={} repeat={} looked={:?} selected={:?}",
-                remaining,
-                ctx.repeat_count,
-                state.players[target_p_idx].looked_cards,
-                ctx.selected_cards
-            );
-        }
-
         return suspend_discard_prompt(
             state,
             db,
@@ -177,16 +167,6 @@ pub fn handle_discard_selection(
         if let Some(top) = state.interaction_stack.last_mut() {
             top.ctx.selected_cards = target_ctx.selected_cards.clone();
             top.ctx.target_card_id = cid;
-        }
-
-        if ctx.source_card_id == 420 {
-            eprintln!(
-                "[DBG420_PICK] cid={} next_remaining={} repeat={} selected={:?}",
-                cid,
-                next_remaining,
-                ctx.repeat_count,
-                target_ctx.selected_cards
-            );
         }
 
         let choice_type = if baton_slot_only {

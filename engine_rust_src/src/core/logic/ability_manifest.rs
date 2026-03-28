@@ -352,6 +352,10 @@ fn bool_flag(value: &Value, key: &str) -> bool {
     value.get(key).and_then(Value::as_bool).unwrap_or(false)
 }
 
+fn frame_bool_flag(frame: &Value, key: &str) -> bool {
+    bool_flag(frame, key) || semantic_flag(frame, key)
+}
+
 fn semantic_value<'a>(frame: &'a Value, key: &str) -> Option<&'a Value> {
     frame.get("semantic").and_then(|semantic| semantic.get(key))
 }
@@ -360,8 +364,20 @@ fn semantic_flag(value: &Value, key: &str) -> bool {
     semantic_value(value, key).and_then(Value::as_bool).unwrap_or(false)
 }
 
+fn nested_flag_value(frame: &Value, key: &str, nested_key: &str) -> bool {
+    frame
+        .get(key)
+        .or_else(|| semantic_value(frame, key))
+        .and_then(|value| value.get(nested_key))
+        .and_then(Value::as_i64)
+        .unwrap_or(0)
+        != 0
+}
+
 fn semantic_text_contains(value: &Value, needle: &str) -> bool {
-    semantic_value(value, "decoded")
+    value
+        .get("decoded")
+        .or_else(|| semantic_value(value, "decoded"))
         .and_then(Value::as_str)
         .map(|decoded| decoded.to_ascii_lowercase().contains(needle))
         .unwrap_or(false)
@@ -377,33 +393,17 @@ fn frame_slot(frame: &Value) -> Option<&Value> {
 
 fn is_optional_frame(frame: &Value) -> bool {
     bool_flag(frame, "optional")
-        || frame
-            .get("filter")
-            .and_then(|filter| filter.get("is_optional"))
-            .and_then(Value::as_i64)
-            .unwrap_or(0)
-            != 0
-        || semantic_value(frame, "filter")
-            .and_then(|filter| filter.get("is_optional"))
-            .and_then(Value::as_i64)
-            .unwrap_or(0)
-            != 0
-        || frame
-            .get("attr")
-            .and_then(|attr| attr.get("is_optional"))
-            .and_then(Value::as_i64)
-            .unwrap_or(0)
-            != 0
-        || semantic_flag(frame, "optional")
-        || semantic_flag(frame, "is_optional")
-        || semantic_flag(frame, "optional_effect")
+        || nested_flag_value(frame, "filter", "is_optional")
+        || nested_flag_value(frame, "attr", "is_optional")
+        || frame_bool_flag(frame, "is_optional")
+        || frame_bool_flag(frame, "optional_effect")
         || semantic_text_contains(frame, "optional")
         || semantic_text_contains(frame, "may")
         || semantic_text_contains(frame, "もよい")
 }
 
 fn is_negated_frame(frame: &Value) -> bool {
-    bool_flag(frame, "is_negated") || bool_flag(frame, "negated") || semantic_flag(frame, "negated")
+    frame_bool_flag(frame, "is_negated") || frame_bool_flag(frame, "negated")
 }
 
 fn friendly_zone(zone: Option<&Value>) -> String {

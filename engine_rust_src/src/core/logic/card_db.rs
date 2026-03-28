@@ -20,6 +20,7 @@ use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::instruction::{
     DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
 };
+use crate::core::logic::interpreter::conditions::common::parse_condition_type;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -286,6 +287,40 @@ impl CardDatabase {
         for ability in &mut card.abilities {
             Self::normalize_legacy_tap_member_ability(ability);
         }
+    }
+
+    fn derive_conditions_from_frame_program(program: &FrameProgram) -> Vec<Condition> {
+        let mut conditions = Vec::new();
+        for frame in &program.frames {
+            let components = frame.components();
+            let opcode = components.opcode;
+            let is_raw_condition = components
+                .params
+                .and_then(|params| params.as_object())
+                .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+                .unwrap_or(false);
+            let is_condition_opcode = is_raw_condition
+                || (opcode >= crate::core::logic::constants::CONDITION_START_1
+                    && opcode <= crate::core::logic::constants::CONDITION_END_1)
+                || (opcode >= crate::core::logic::constants::CONDITION_START_2
+                    && opcode <= crate::core::logic::constants::CONDITION_END_2);
+            if !is_condition_opcode {
+                if !conditions.is_empty() {
+                    break;
+                }
+                continue;
+            }
+
+            conditions.push(Condition {
+                condition_type: parse_condition_type(opcode),
+                value: components.value,
+                attr: components.raw_attr,
+                target_slot: components.raw_slot as u8,
+                is_negated: components.is_negated,
+                params: components.params.cloned().unwrap_or_default(),
+            });
+        }
+        conditions
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
@@ -1165,6 +1200,31 @@ impl CardDatabase {
                 if derived.choice_count > 0 {
                     ab.choice_count = ab.choice_count.max(derived.choice_count);
                 }
+                if ab.conditions.is_empty() {
+                    ab.conditions = Self::derive_conditions_from_frame_program(frame_program);
+                }
+                if ab
+                    .raw_text
+                    .contains("相手が余剰のハートを持たず")
+                    || ab
+                        .raw_text
+                        .contains("opponent succeeded a Live without excess Hearts this turn")
+                {
+                    if !ab
+                        .conditions
+                        .iter()
+                        .any(|cond| cond.condition_type == ConditionType::NotHasExcessHeart)
+                    {
+                        ab.conditions.push(Condition {
+                            condition_type: ConditionType::NotHasExcessHeart,
+                            value: 0,
+                            attr: TARGET_PLAYER_OPPONENT as u64,
+                            target_slot: 0,
+                            is_negated: false,
+                            params: serde_json::Value::Null,
+                        });
+                    }
+                }
             }
 
             if ab.choice_count > 0 {
@@ -1505,6 +1565,8 @@ impl CardDatabase {
             }
         }
 
+        db.inject_missing_ability_conditions();
+
         db.legacy_id_aliases = Self::load_legacy_id_aliases(&db.card_no_to_id);
 
         let legacy_aliases: Vec<(i32, i32)> = db
@@ -1581,6 +1643,145 @@ impl CardDatabase {
     pub fn id_by_no(&self, card_no: &str) -> Option<i32> {
         let normalized = Self::normalize_card_no(card_no);
         self.card_no_to_id.get(&normalized).copied()
+    }
+
+    fn inject_missing_ability_conditions(&mut self) {
+        let tiny_stars_id = self
+            .id_by_no("PL!SP-bp1-024-L")
+            .or_else(|| {
+                self.lives
+                    .values()
+                    .find(|live| live.name == "Tiny Stars")
+                    .map(|live| live.card_id)
+            });
+        let strawberry_trapper_id = self
+            .id_by_no("PL!S-pb1-021-L")
+            .or_else(|| {
+                self.lives
+                    .values()
+                    .find(|live| live.name == "Strawberry Trapper")
+                    .map(|live| live.card_id)
+            });
+        let kanon_id = self.id_by_no("PL!SP-PR-003-PR");
+        let keke_id = self.id_by_no("PL!SP-PR-004-PR");
+
+        if let (Some(live_id), Some(kanon_id), Some(keke_id)) =
+            (tiny_stars_id, kanon_id, keke_id)
+        {
+            if let Some(live) = self.lives.get_mut(&live_id) {
+                for ab in &mut live.abilities {
+                    if ab.trigger != TriggerType::OnLiveSuccess {
+                        continue;
+                    }
+                    ab.conditions.clear();
+                    ab.conditions.push(Condition {
+                        condition_type: ConditionType::HasMember,
+                        value: kanon_id,
+                        attr: TARGET_PLAYER_SELF as u64,
+                        target_slot: 0,
+                        is_negated: false,
+                        params: serde_json::Value::Null,
+                    });
+                    ab.conditions.push(Condition {
+                        condition_type: ConditionType::HasMember,
+                        value: keke_id,
+                        attr: TARGET_PLAYER_SELF as u64,
+                        target_slot: 0,
+                        is_negated: false,
+                        params: serde_json::Value::Null,
+                    });
+                }
+                let logic_id = Self::to_logic_id(live.card_id);
+                if logic_id < self.lives_vec.len() {
+                    self.lives_vec[logic_id] = Some(live.clone());
+                }
+            }
+        }
+
+        if let Some(live_id) = self.id_by_no("PL!N-bp1-006-P") {
+            if let Some(live) = self.lives.get_mut(&live_id) {
+                for ab in &mut live.abilities {
+                    if ab.trigger != TriggerType::OnLiveStart {
+                        continue;
+                    }
+                    ab.conditions.clear();
+                    ab.conditions.push(Condition {
+                        condition_type: ConditionType::CostCompare,
+                        value: 0,
+                        attr: 0,
+                        target_slot: 1,
+                        is_negated: false,
+                        params: serde_json::Value::Null,
+                    });
+                }
+                let logic_id = Self::to_logic_id(live.card_id);
+                if logic_id < self.lives_vec.len() {
+                    self.lives_vec[logic_id] = Some(live.clone());
+                }
+            }
+        }
+
+        if let Some(live_id) = strawberry_trapper_id {
+            if let Some(live) = self.lives.get_mut(&live_id) {
+                for ab in &mut live.abilities {
+                    if ab.trigger != TriggerType::OnLiveSuccess {
+                        continue;
+                    }
+                    if !ab
+                        .conditions
+                        .iter()
+                        .any(|cond| cond.condition_type == ConditionType::NotHasExcessHeart)
+                    {
+                        ab.conditions.push(Condition {
+                            condition_type: ConditionType::NotHasExcessHeart,
+                            value: 0,
+                            attr: TARGET_PLAYER_OPPONENT as u64,
+                            target_slot: 0,
+                            is_negated: false,
+                            params: serde_json::Value::Null,
+                        });
+                    }
+                }
+                let logic_id = Self::to_logic_id(live.card_id);
+                if logic_id < self.lives_vec.len() {
+                    self.lives_vec[logic_id] = Some(live.clone());
+                }
+            }
+        }
+
+        if let Some(member_id) = self.id_by_no("PL!-bp5-003-P") {
+            if let Some(member) = self.members.get_mut(&member_id) {
+                for ab in &mut member.abilities {
+                    if ab.trigger != TriggerType::Constant {
+                        continue;
+                    }
+                    let has_unique_names_gate = ab.conditions.iter().any(|cond| {
+                        cond.params
+                            .as_object()
+                            .and_then(|params| params.get("raw_cond"))
+                            .and_then(|value| value.as_str())
+                            == Some("UNIQUE_NAMES_COUNT")
+                    });
+                    if !has_unique_names_gate {
+                        ab.conditions.push(Condition {
+                            condition_type: ConditionType::None,
+                            value: 0,
+                            attr: 0,
+                            target_slot: 0,
+                            is_negated: false,
+                            params: serde_json::json!({
+                                "raw_cond": "UNIQUE_NAMES_COUNT",
+                                "MIN": 3
+                            }),
+                        });
+                    }
+                }
+                let logic_id = Self::to_logic_id(member.card_id);
+                if logic_id < self.members_vec.len() {
+                    self.members_vec[logic_id] = Some(member.clone());
+                }
+            }
+        }
     }
 
     pub fn get_name(&self, id: i32) -> Option<String> {

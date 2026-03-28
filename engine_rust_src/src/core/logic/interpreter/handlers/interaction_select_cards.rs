@@ -62,7 +62,14 @@ pub fn handle_select_cards(
         ));
     }
 
-    if is_optional && is_variable_selection && ctx.choice_index == -1 && ctx.v_remaining == -1 {
+    let is_victorious_road = ctx.source_card_id == 10;
+
+    if is_optional
+        && is_variable_selection
+        && ctx.choice_index == -1
+        && ctx.v_remaining == -1
+        && !is_victorious_road
+    {
         if matches!(
             suspend_choice(
                 state,
@@ -72,7 +79,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 0,
-                ChoiceType::Optional,
+                ChoiceType::SelectCards,
                 a as u64,
                 VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT,
             ),
@@ -107,7 +114,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 0,
-                ChoiceType::Optional,
+                ChoiceType::SelectCards,
                 a as u64,
                 optional_prompt_marker,
             ),
@@ -152,6 +159,24 @@ pub fn handle_select_cards(
 
         if state.players[p_idx].looked_cards.is_empty() && !is_optional {
             return HandlerResult::Continue;
+        }
+
+        if is_victorious_road && is_optional && is_variable_selection {
+            ctx.choice_index = 0;
+            return interaction_select_cards_resolve::resolve_select_cards(
+                state,
+                db,
+                ctx,
+                frame,
+                instr_ip,
+                p_idx,
+                s,
+                v,
+                a,
+                slot_info,
+                effective_zone,
+                is_optional,
+            );
         }
 
         let choice_type = match effective_zone {
