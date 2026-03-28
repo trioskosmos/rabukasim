@@ -16,7 +16,14 @@ pub fn resolve_source_zone(slot: &DecodedSlot) -> Zone {
     } else if (SLOT_LIVE_0 as u8..=SLOT_LIVE_2 as u8).contains(&ts) {
         Zone::LiveSet
     } else {
-        Zone::Deck
+        // If no explicit zone and target_slot is not a specific zone indicator,
+        // check if area_idx is set in the slot - this indicates a stage context
+        // Valid stage slots are 0, 1, 2 (encoded as area_idx values 0-2 or 1-3 depending on encoding)
+        if slot.area_idx <= 3 {
+            Zone::Stage
+        } else {
+            Zone::Deck
+        }
     }
 }
 

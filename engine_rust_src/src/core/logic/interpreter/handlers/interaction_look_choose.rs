@@ -1,7 +1,5 @@
 use crate::core::enums::{ChoiceType, TriggerType};
-use crate::core::logic::constants::{
-    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
-};
+use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::logging;
@@ -44,7 +42,7 @@ pub fn handle_look_and_choose(
     let look_count = lc.count.max(1) as usize;
     let reveal_flag = lc.reveal;
     let dest_discard_v = lc.dest_discard;
-    let compiled_choice_count = 1usize;
+    let compiled_choice_count = lc.choose_count.max(1) as usize;
     if state.debug.debug_mode {
         println!(
             "[DEBUG_LOOK_FRAME] {} look_count={} choose_count={}",
@@ -119,7 +117,7 @@ pub fn handle_look_and_choose(
         filter_obj.char_id_2 = lc.char_id_2;
         filter_obj.char_id_3 = lc.char_id_3;
 
-        let pick_count = i16::from(compiled_choice_count as i16);
+        let pick_count = compiled_choice_count as i16;
         if matches!(
             suspend_choice(
                 state,

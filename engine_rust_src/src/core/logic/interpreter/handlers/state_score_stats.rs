@@ -52,8 +52,9 @@ fn decode_heart_color(
         0 => ctx.selected_color as usize,
         7 => 6,
         raw if raw <= 6 => raw as usize,
-        _ => infer_source_heart_color(db, ctx.source_card_id)
-            .unwrap_or(ctx.selected_color as usize),
+        _ => {
+            infer_source_heart_color(db, ctx.source_card_id).unwrap_or(ctx.selected_color as usize)
+        }
     }
 }
 

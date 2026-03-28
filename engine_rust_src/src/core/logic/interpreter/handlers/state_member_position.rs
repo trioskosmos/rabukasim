@@ -2,8 +2,6 @@
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
-#[path = "state_energy_place.rs"]
-mod state_energy_place;
 #[path = "state_member_formation.rs"]
 mod state_member_formation;
 #[path = "state_member_move.rs"]
@@ -21,30 +19,26 @@ pub fn handle_place_under(
     a: i64,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let slot = if ctx.area_idx >= 0 {
-        ctx.area_idx as usize
-    } else {
-        resolved_slot as usize
+    // Resolve target slot based on resolution mode
+    let slot = match resolved_slot {
+        // Use context area index (self/same member)
+        0 | 4 if ctx.area_idx >= 0 && ctx.area_idx < 3 => ctx.area_idx as usize,
+        // Use context target slot (for selected member)
+        10 if ctx.target_slot >= 0 && ctx.target_slot < 3 => ctx.target_slot as usize,
+        // Explicit slot 1 or 2
+        1 | 2 => resolved_slot as usize,
+        _ => return HandlerResult::Continue,
     };
-    if slot >= 3 {
-        return HandlerResult::Continue;
-    }
 
     let mut next_ctx = ctx.clone();
     next_ctx.player_id = p_idx as u8;
+
+    // Handle optional choice
     if a & 0x01 != 0 && next_ctx.choice_index == -1 {
         if matches!(
             suspend_choice(
-                state,
-                db,
-                ctx,
-                &next_ctx,
-                0,
-                O_PLACE_UNDER,
-                0,
-                ChoiceType::Optional,
-                a as u64,
-                -1,
+                state, db, ctx, &next_ctx, 0, O_PLACE_UNDER, 0,
+                ChoiceType::Optional, a as u64, -1,
             ),
             HandlerResult::Suspend
         ) {
@@ -52,15 +46,25 @@ pub fn handle_place_under(
         }
     }
 
-    return state_energy_place::handle_place_energy_under_member(
-        state,
-        db,
-        &mut next_ctx,
-        0,
-        p_idx,
-        &AbilityFrame::new(O_PLACE_ENERGY_UNDER_MEMBER, 0, a, 0, true),
-        a,
-    );
+    // Place energy from zone 0 (energy zone) under the member
+    if !state.players[p_idx].energy_zone.is_empty() {
+        let selected_idx = if next_ctx.choice_index >= 0 {
+            Some(next_ctx.choice_index as usize)
+        } else {
+            None
+        };
+
+        if let Some(idx) = selected_idx.filter(|&idx| idx < state.players[p_idx].energy_zone.len()) {
+            let energy_cid = state.players[p_idx].remove_energy_card(idx).unwrap();
+            state.players[p_idx].stage_energy[slot].push(energy_cid);
+        } else if let Some(cid) = state.players[p_idx].pop_deck_card() {
+            state.players[p_idx].stage_energy[slot].push(cid);
+        }
+    } else if let Some(cid) = state.players[p_idx].pop_deck_card() {
+        state.players[p_idx].stage_energy[slot].push(cid);
+    }
+
+    HandlerResult::Continue
 }
 
 pub fn handle_add_stage_energy(

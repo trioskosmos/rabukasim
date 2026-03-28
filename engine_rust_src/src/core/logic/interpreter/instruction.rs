@@ -86,12 +86,27 @@ impl From<DecodedSlotRaw> for DecodedSlot {
                 source_zone: raw.source_zone.unwrap_or_default(),
                 dest_zone: raw.dest_zone.unwrap_or_default(),
                 remainder_zone: raw.remainder_zone.unwrap_or_default(),
-                is_opponent: raw.is_opponent.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_reveal_until_live: raw.is_reveal_until_live.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_baton_slot: raw.is_baton_slot.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_empty_slot: raw.is_empty_slot.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_opponent: raw
+                    .is_opponent
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                is_reveal_until_live: raw
+                    .is_reveal_until_live
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                is_baton_slot: raw
+                    .is_baton_slot
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                is_empty_slot: raw
+                    .is_empty_slot
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 is_wait: raw.is_wait.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_dynamic: raw.is_dynamic.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_dynamic: raw
+                    .is_dynamic
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 area_idx: raw.area_idx.unwrap_or_default(),
             },
         }
@@ -539,39 +554,81 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
             DecodedFilterAttrRaw::Structured(raw) => Self {
                 target_player: raw.target_player.unwrap_or_default(),
                 card_type: raw.card_type.unwrap_or_default(),
-                group_enabled: raw.group_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                group_enabled: raw
+                    .group_enabled
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 group_id: raw.group_id.unwrap_or_default(),
-                is_tapped: raw.is_tapped.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                has_blade_heart: raw.has_blade_heart.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                not_has_blade_heart: raw.not_has_blade_heart.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                unique_names: raw.unique_names.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                unit_enabled: raw.unit_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_tapped: raw
+                    .is_tapped
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                has_blade_heart: raw
+                    .has_blade_heart
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                not_has_blade_heart: raw
+                    .not_has_blade_heart
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                unique_names: raw
+                    .unique_names
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                unit_enabled: raw
+                    .unit_enabled
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 unit_id: raw.unit_id.unwrap_or_default(),
-                value_enabled: raw.value_enabled.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                value_enabled: raw
+                    .value_enabled
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 value_threshold: raw.value_threshold.unwrap_or_default(),
                 is_le: raw.is_le.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_cost_type: raw.is_cost_type.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                is_cost_type: raw
+                    .is_cost_type
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
                 color_mask: raw.color_mask.unwrap_or_default(),
                 char_id_1: raw.char_id_1.unwrap_or_default(),
                 char_id_2: raw.char_id_2.unwrap_or_default(),
                 char_id_3: raw.char_id_3.unwrap_or_default(),
                 zone_mask: raw.zone_mask.unwrap_or_default(),
-                special_id: raw.special_id.map(|v| {
-                    if let Some(s) = v.as_str() {
-                        match s.to_uppercase().replace('_', " ").as_str() {
-                            "NOT MY" | "NOTMY" => 2,
-                            "NOT SELF" | "NOTSELF" => 3,
-                            _ => 0,
+                special_id: raw
+                    .special_id
+                    .map(|v| {
+                        if let Some(s) = v.as_str() {
+                            match s.to_uppercase().replace('_', " ").as_str() {
+                                "NOT MY" | "NOTMY" => 2,
+                                "NOT SELF" | "NOTSELF" => 3,
+                                _ => 0,
+                            }
+                        } else {
+                            v.as_u64().unwrap_or_default() as u8
                         }
-                    } else {
-                        v.as_u64().unwrap_or_default() as u8
-                    }
-                }).unwrap_or_default(),
-                is_setsuna: raw.is_setsuna.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                compare_accumulated: raw.compare_accumulated.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                is_optional: raw.is_optional.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                keyword_energy: raw.keyword_energy.map(|v| as_bool_robust(&v)).unwrap_or_default(),
-                keyword_member: raw.keyword_member.map(|v| as_bool_robust(&v)).unwrap_or_default(),
+                    })
+                    .unwrap_or_default(),
+                is_setsuna: raw
+                    .is_setsuna
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                compare_accumulated: raw
+                    .compare_accumulated
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                is_optional: raw
+                    .is_optional
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                keyword_energy: raw
+                    .keyword_energy
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                keyword_member: raw
+                    .keyword_member
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
             },
         }
     }

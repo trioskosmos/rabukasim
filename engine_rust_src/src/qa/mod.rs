@@ -8,18 +8,12 @@
 //!
 //! Tests are organized into batches by question number and coverage area:
 //!
-// QA: Q1 | Q: 商品はどこで購入できますか？
-// A: 全国のカードショップを中心にお買い求めいただけます。ラブカ公式サイトの各商品情報やお店を探すページにも、ショップ一覧が掲載されていますので参考にしてみてください。
-//! - **batch_1.rs**: Q1-Q50 - Early clarifications (basic rules, common scenarios)
-// QA: Q51 | Q: Aさんが先攻、Bさんが後攻のターンで、スコアが同じため両方のプレイヤーがライブに勝利して、Bさんは成功ライブカード置き場にカードを置きましたが、Aさんは既に成功ライブカード置き場にカードが2枚（ハーフデッキの場合は1枚）あったため、カードを置けませんでした。次のターンの先攻・後攻はどうなりますか？
-// A: Bさんが先攻、Aさんが後攻になります。この場合、Bさんだけが成功ライブカード置き場にカードを置いたので、次のターンはBさんが先攻になります。
 //! - **batch_2.rs**: Q51-Q100 - Mid-game mechanics (phase transitions, interactions)
 // QA: Q101 | Q: エールとしてカードをめくる処理の途中で、メインデッキが0枚になったためリフレッシュを行い、再開した処理の途中で、新しいメインデッキと控え室のカードが0枚になりました。どうすればいいですか？
 // A: 効果や処理は実行可能な限り解決し、一部でも実行可能な場合はその一部を解決します。まったく解決できない場合は何も行いません。 この場合、新しいメインデッキのカードがすべてめくられた時点で、エールとしてカードをめくる処理を終了します。 その後、何らかの理由でメインデッキにカードがなく控え室にカードがある状態になった時点で、リフレッシュを行います。
 //! - **batch_3.rs**: Q101-Q150 - Advanced interactions (complex card abilities)
 // QA: Q151 | Q: 『 {{kidou.png|起動}} {{center.png|センター}} {{turn1.png|ターン1回}} メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）』について。 この能力でウェイトにしたメンバーがステージから離れました。「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」の能力で合計スコアを＋１することはできますか？
 // A: いいえ、できません。 {{kidou.png|起動}} 能力の効果で {{jyouji.png|常時}} 能力を得たこのメンバーカードがステージから離れることで、この {{jyouji.png|常時}} 能力が無くなるため、合計スコアは＋１されません。
-//! - **batch_4_unmapped_qa.rs**: Q151+ - Latest rulings and edge cases
 //! - **batch_card_specific.rs**: Card-specific ability clarifications
 //! - **card_specific_ability_tests.rs**: Real database card edge cases
 //!
@@ -107,14 +101,11 @@
 //! - **Per Test**: Average 30ms
 //! - **DB Load**: ~0.5 seconds (one-time)
 
-mod batch_1;
 mod batch_2;
 mod batch_3;
-mod batch_4_unmapped_qa;
 mod batch_card_specific;
 mod batch_card_specific_real_gaps;
 mod card_specific_ability_tests;
 mod comprehensive_qa_suite;
-mod drafts;
 mod test_critical_gaps;
 mod test_rule_gaps;

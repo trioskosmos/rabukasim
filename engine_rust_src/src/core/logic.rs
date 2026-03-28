@@ -6,6 +6,7 @@ pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;
 pub mod diagnostics;
+pub mod effects;
 pub mod execution;
 pub mod filter;
 pub mod filter_attr_compat;

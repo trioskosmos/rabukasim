@@ -10,7 +10,7 @@ use crate::core::logic::{
     action_factory::DecodedAction,
     interpreter::costs,
     interpreter::handlers::HandlerResult,
-    AbilityContext, ActionFactory, CardDatabase, GameState, Phase,
+    AbilityContext, ActionFactory, CardDatabase, GameState, PendingInteraction, Phase,
 };
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
@@ -93,7 +93,10 @@ impl TurnController for GameState {
         }
 
         if !self.ui.silent {
-            self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} chose RPS move {}.", p_idx, choice));
+            self.log(format!(
+                "Rule 6.2.1.3 (7.1.1): Player {} chose RPS move {}.",
+                p_idx, choice
+            ));
         }
 
         self.rps_choices[p_idx] = choice as i8;
@@ -144,7 +147,9 @@ impl TurnController for GameState {
                 self.current_player = winner as u8;
                 self.phase = Phase::TurnChoice;
                 if !self.ui.silent {
-                    self.log("Rule 7.1.1: Winner of RPS chooses to go first or second.".to_string());
+                    self.log(
+                        "Rule 7.1.1: Winner of RPS chooses to go first or second.".to_string(),
+                    );
                 }
             }
         }
@@ -156,7 +161,10 @@ impl TurnController for GameState {
             let winner = self.current_player;
             self.first_player = winner;
             if !self.ui.silent {
-                self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go first!", winner));
+                self.log(format!(
+                    "Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go first!",
+                    winner
+                ));
             }
             self.phase = Phase::MulliganP1;
             self.current_player = winner;
@@ -164,7 +172,10 @@ impl TurnController for GameState {
             let winner = self.current_player;
             self.first_player = 1 - winner;
             if !self.ui.silent {
-                self.log(format!("Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go second!", winner));
+                self.log(format!(
+                    "Rule 6.2.1.3 (7.1.1): Player {} (winner) chose to go second!",
+                    winner
+                ));
             }
             self.phase = Phase::MulliganP1;
             self.current_player = 1 - winner;
@@ -347,13 +358,18 @@ impl MainPhaseController for GameState {
             if self.current_player == self.first_player {
                 self.current_player = 1 - self.first_player;
                 if !self.ui.silent {
-                    self.log("Rule 8.2.4: Player 1 (Second Player) now sets live cards.".to_string());
+                    self.log(
+                        "Rule 8.2.4: Player 1 (Second Player) now sets live cards.".to_string(),
+                    );
                 }
             } else {
                 self.phase = Phase::PerformanceP1;
                 self.current_player = self.first_player;
                 if !self.ui.silent {
-                    self.log("Rule 8.2.5: Live Card Set Phase ended. Moving to Performance Phase.".to_string());
+                    self.log(
+                        "Rule 8.2.5: Live Card Set Phase ended. Moving to Performance Phase."
+                            .to_string(),
+                    );
                 }
             }
         } else if action >= ACTION_BASE_LIVESET && action < ACTION_BASE_LIVESET + 100 {
@@ -490,17 +506,6 @@ impl ResponseController for GameState {
             if let Some(mask) = pending_optional_mode_mask(db, &pi) {
                 if matches!(decoded_action, DecodedAction::SelectMode { .. }) {
                     let ability = pending_live_ability(db, &pi).ok_or("Ability not found")?;
-                    if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
-                        eprintln!(
-                            "[MODE_HANDLE] choice_idx={} mask={:b} ability_count={} selected_cards={:?} v_accum={} frame0={:?}",
-                            choice_idx,
-                            mask,
-                            ability.modal_option_count(),
-                            pi.ctx.selected_cards,
-                            pi.ctx.v_accumulated,
-                            ability.get_modal_option_frames(choice_idx as usize)
-                        );
-                    }
                     let (selected_frame, remaining_mask) =
                         optional_mode_effect(ability, mask, choice_idx)
                             .ok_or("Invalid optional mode selection".to_string())?;
@@ -541,14 +546,6 @@ impl ResponseController for GameState {
                         let mut next_ctx = pi.ctx.clone();
                         if !next_ctx.selected_cards.contains(&choice_idx) {
                             next_ctx.selected_cards.push(choice_idx);
-                        }
-                        if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
-                            eprintln!(
-                                "[MODE_DEBUG_NEXT] choice_idx={} remaining_mask={:b} selected_cards={:?}",
-                                choice_idx,
-                                remaining_mask,
-                                next_ctx.selected_cards
-                            );
                         }
                         next_ctx.choice_index = -1;
                         next_ctx.v_accumulated = encode_optional_mode_mask(remaining_mask);
@@ -714,18 +711,6 @@ impl ResponseController for GameState {
         self.activate_ability_with_choice(db, slot_idx, ab_idx_call, choice_idx, target_slot)?;
 
         if !self.interaction_stack.is_empty() {
-            if let Some(top) = self.interaction_stack.last() {
-                if top.card_id == 420 || top.ctx.source_card_id == 420 {
-                    eprintln!(
-                        "[RESP_RETURN_420] stack_len={} choice={:?} effect={} v_remaining={} card_id={}",
-                        self.interaction_stack.len(),
-                        top.choice_type,
-                        top.effect_opcode,
-                        top.v_remaining,
-                        top.card_id
-                    );
-                }
-            }
             return Ok(());
         }
 
@@ -784,28 +769,31 @@ impl ResponseController for GameState {
         let untap_energy_indices =
             self.core.players[p_idx].get_untapped_energy_indices(cost as usize);
 
-            if !self.debug.debug_ignore_conditions {
-                if untap_energy_indices.len() < cost as usize {
-                    if self.debug.debug_mode {
-                        println!(
-                            "[DEBUG] play_member_with_choice: FAILED! cost={}, available={}",
-                            cost,
-                            untap_energy_indices.len()
-                        );
-                    }
-                    return Err("Not enough energy".to_string());
+        if !self.debug.debug_ignore_conditions {
+            if untap_energy_indices.len() < cost as usize {
+                if self.debug.debug_mode {
+                    println!(
+                        "[DEBUG] play_member_with_choice: FAILED! cost={}, available={}",
+                        cost,
+                        untap_energy_indices.len()
+                    );
                 }
-                if !self.ui.silent {
-                    if cost > 0 {
-                        self.log(format!("Rule 9.6.2.3: Tapping {} energy for play cost (Rule 9.4).", cost));
-                    } else {
-                        self.log("Rule 9.6.2.3: No energy tapped (cost <= 0).".to_string());
-                    }
-                }
-                for i in untap_energy_indices {
-                    self.core.players[p_idx].set_energy_tapped(i, true);
+                return Err("Not enough energy".to_string());
+            }
+            if !self.ui.silent {
+                if cost > 0 {
+                    self.log(format!(
+                        "Rule 9.6.2.3: Tapping {} energy for play cost (Rule 9.4).",
+                        cost
+                    ));
+                } else {
+                    self.log("Rule 9.6.2.3: No energy tapped (cost <= 0).".to_string());
                 }
             }
+            for i in untap_energy_indices {
+                self.core.players[p_idx].set_energy_tapped(i, true);
+            }
+        }
 
         // Unified logging: records to both turn_history and rule_log
         self.log_event(
@@ -826,7 +814,12 @@ impl ResponseController for GameState {
             if secondary_slot_idx >= 0 {
                 self.log(format!("Rule 9.6.2.3.2, Rule 9.6.2.3.2.1: Player {} performs [バトンタッチ] (Baton Touch) at Slot {} with Slot {}. (Q194, Q199 verified)", p_idx, slot_idx + 1, secondary_slot_idx + 1));
             } else {
-                self.log(format!("Rule 9.6.2.4.1: Player {} plays card ID {} to Slot {}.", p_idx, card_id, slot_idx + 1));
+                self.log(format!(
+                    "Rule 9.6.2.4.1: Player {} plays card ID {} to Slot {}.",
+                    p_idx,
+                    card_id,
+                    slot_idx + 1
+                ));
             }
             self.log(format!(
                 "Rule 3.2.1, 3.2.2, 3.2.3, 3.2.4, 3.2.5 (2.2.1, 2.3.1, 2.4.1, 2.5.1, 2.6.1, 2.7.1): Played member attributes: Cost={}, Blades={}, Hearts={:?}.",
@@ -891,9 +884,7 @@ impl ResponseController for GameState {
                 c.choice_index = choice_idx as i16;
                 c.original_phase = Some(restored_phase);
                 if pending.choice_type == ChoiceType::SelectMember {
-                    let selected_card_id = self
-                        .core
-                        .players[p_idx]
+                    let selected_card_id = self.core.players[p_idx]
                         .looked_cards
                         .get(choice_idx.max(0) as usize)
                         .copied()
@@ -919,36 +910,8 @@ impl ResponseController for GameState {
             if pending.choice_type == ChoiceType::SelectStage {
                 match pending.effect_opcode {
                     O_PLAY_MEMBER_FROM_HAND => {
-                        let stage_slot = pending
-                            .actions
-                            .get(choice_idx.max(0) as usize)
-                            .copied()
-                            .and_then(|action| match ActionFactory::parse_action(action) {
-                                DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
-                                DecodedAction::SelectChoice { choice_idx } => {
-                                    Some(choice_idx.max(0) as usize)
-                                }
-                                _ => None,
-                            })
-                            .unwrap_or_else(|| choice_idx.max(0) as usize);
-                        let stage_slot = if stage_slot < 3 {
-                            let player = &self.core.players[p_idx];
-                            let prevented = (player.prevent_play_to_slot_mask() & (1 << stage_slot)) != 0;
-                            if !prevented && !player.is_moved(stage_slot) {
-                                stage_slot
-                            } else {
-                                (0..3)
-                                    .find(|&slot_idx| {
-                                        let prevented =
-                                            (player.prevent_play_to_slot_mask() & (1 << slot_idx))
-                                                != 0;
-                                        !prevented && !player.is_moved(slot_idx)
-                                    })
-                                    .unwrap_or(stage_slot)
-                            }
-                        } else {
-                            stage_slot
-                        };
+                        let stage_slot =
+                            self.resolve_pending_stage_slot(&pending, choice_idx, p_idx);
                         let mut play_ctx = pending.ctx.clone();
                         play_ctx.choice_index = stage_slot as i16;
                         play_ctx.target_slot = stage_slot as i16;
@@ -1009,18 +972,8 @@ impl ResponseController for GameState {
                         return Ok(());
                     }
                     O_PLAY_MEMBER_FROM_DISCARD => {
-                        let stage_slot = pending
-                            .actions
-                            .get(choice_idx.max(0) as usize)
-                            .copied()
-                            .and_then(|action| match ActionFactory::parse_action(action) {
-                                DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
-                                DecodedAction::SelectChoice { choice_idx } => {
-                                    Some(choice_idx.max(0) as usize)
-                                }
-                                _ => None,
-                            })
-                            .unwrap_or_else(|| choice_idx.max(0) as usize);
+                        let stage_slot =
+                            self.resolve_pending_stage_slot(&pending, choice_idx, p_idx);
                         let mut play_ctx = pending.ctx.clone();
                         play_ctx.choice_index = stage_slot as i16;
                         let p_idx = play_ctx.player_id as usize;
@@ -1028,8 +981,8 @@ impl ResponseController for GameState {
                             return Err("No pending discard-play card".to_string());
                         }
 
-                        let is_total_cost =
-                            (pending.filter_attr & (1u64 << 60)) != 0 || (pending.filter_attr & (1u64 << 50)) != 0;
+                        let is_total_cost = (pending.filter_attr & (1u64 << 60)) != 0
+                            || (pending.filter_attr & (1u64 << 50)) != 0;
                         let frame_idx = play_ctx.program_counter as usize;
                         let remaining = play_ctx.v_remaining;
 
@@ -1160,16 +1113,25 @@ impl ResponseController for GameState {
                     if let Some(ab) = member.abilities.get(ab_idx) {
                         self.resolve_ability(db, ab, &ctx);
                     } else {
-                        return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
+                        return Err(format!(
+                            "Ability index {} not found on card {}",
+                            ab_idx, cid
+                        ));
                     }
                 } else if let Some(live) = db.get_live(cid) {
                     if let Some(ab) = live.abilities.get(ab_idx) {
                         self.resolve_ability(db, ab, &ctx);
                     } else {
-                        return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
+                        return Err(format!(
+                            "Ability index {} not found on card {}",
+                            ab_idx, cid
+                        ));
                     }
                 } else {
-                    return Err(format!("Ability index {} not found on card {}", ab_idx, cid));
+                    return Err(format!(
+                        "Ability index {} not found on card {}",
+                        ab_idx, cid
+                    ));
                 }
             }
 
@@ -1188,7 +1150,8 @@ impl ResponseController for GameState {
                     .ui
                     .cancelled_execution_ids
                     .remove(&current_execution_id);
-            let suppress_resolve_trigger = is_optional_live_start_discard_decline(db, &ctx, choice_idx);
+            let suppress_resolve_trigger =
+                is_optional_live_start_discard_decline(db, &ctx, choice_idx);
             if !was_cancelled {
                 let res_trigger = match ctx.trigger_type {
                     crate::core::enums::TriggerType::OnLiveStart => {
@@ -1445,7 +1408,10 @@ impl TurnPhaseController for GameState {
             self.phase = Phase::Energy;
             if !self.ui.silent {
                 self.log("Rule 7, Rule 7.3, Rule 7.3.1, Rule 7.3.2, Rule 7.3.2.1, Rule 7.3.3: --- ENERGY PHASE ---".to_string());
-                self.log(format!("Rule 7.3.1: Entering Energy Phase for Player {}.", p_idx));
+                self.log(format!(
+                    "Rule 7.3.1: Entering Energy Phase for Player {}.",
+                    p_idx
+                ));
             }
         }
     }
@@ -1466,8 +1432,13 @@ impl TurnPhaseController for GameState {
         }
         self.phase = Phase::Draw;
         if !self.ui.silent {
-            self.log("Rule 7.4, Rule 7.4.1, Rule 7.4.2, Rule 7.4.3: --- DRAW PHASE ---".to_string());
-            self.log(format!("Rule 7.4.1: Entering Draw Phase for Player {}.", p_idx));
+            self.log(
+                "Rule 7.4, Rule 7.4.1, Rule 7.4.2, Rule 7.4.3: --- DRAW PHASE ---".to_string(),
+            );
+            self.log(format!(
+                "Rule 7.4.1: Entering Draw Phase for Player {}.",
+                p_idx
+            ));
         }
     }
 
@@ -1500,14 +1471,53 @@ impl TurnPhaseController for GameState {
         self.draw_cards(p_idx, 1);
         self.phase = Phase::Main;
         if !self.ui.silent {
-            self.log("Rule 7.5, Rule 7.5.1, Rule 7.5.2, Rule 7.5.3: --- MAIN PHASE ---".to_string());
-            self.log(format!("Rule 7.5.1: Entering Main Phase for Player {}.", p_idx));
+            self.log(
+                "Rule 7.5, Rule 7.5.1, Rule 7.5.2, Rule 7.5.3: --- MAIN PHASE ---".to_string(),
+            );
+            self.log(format!(
+                "Rule 7.5.1: Entering Main Phase for Player {}.",
+                p_idx
+            ));
         }
     }
 }
 
 // Extracted helpers that remain in GameState impl but in this file
 impl GameState {
+    fn resolve_pending_stage_slot(
+        &self,
+        pending: &PendingInteraction,
+        choice_idx: i32,
+        p_idx: usize,
+    ) -> usize {
+        let stage_slot = pending
+            .actions
+            .get(choice_idx.max(0) as usize)
+            .copied()
+            .and_then(|action| match ActionFactory::parse_action(action) {
+                DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
+                DecodedAction::SelectChoice { choice_idx } => Some(choice_idx.max(0) as usize),
+                _ => None,
+            })
+            .unwrap_or_else(|| choice_idx.max(0) as usize);
+
+        if stage_slot >= 3 {
+            return stage_slot;
+        }
+
+        let player = &self.core.players[p_idx];
+        let is_open = |slot_idx: usize| {
+            let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+            !prevented && !player.is_moved(slot_idx)
+        };
+
+        if is_open(stage_slot) {
+            stage_slot
+        } else {
+            (0..3).find(|&slot_idx| is_open(slot_idx)).unwrap_or(stage_slot)
+        }
+    }
+
     fn resume_play_member(
         &mut self,
         db: &CardDatabase,
@@ -1662,7 +1672,10 @@ impl GameState {
             };
             if let Some(old) = self.handle_member_leaves_stage(p_idx, slot_idx, db, &leave_ctx) {
                 if !self.ui.silent {
-                    self.log(format!("Rule 11.6.3 (4.11.2): Moving old member {} to Discard.", old));
+                    self.log(format!(
+                        "Rule 11.6.3 (4.11.2): Moving old member {} to Discard.",
+                        old
+                    ));
                 }
                 self.core.players[p_idx].push_discard_card(old);
             }

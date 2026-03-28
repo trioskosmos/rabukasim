@@ -116,7 +116,9 @@ pub fn suspend_choice_with_options(
     let choice_text = get_choice_text(db, choice_ctx);
     if !state.ui.silent {
         let rule_msg = match choice_type {
-            ChoiceType::Optional => "Rule 12.2, Rule 12.2.1: Presenting voluntary (optional) choice to player.",
+            ChoiceType::Optional => {
+                "Rule 12.2, Rule 12.2.1: Presenting voluntary (optional) choice to player."
+            }
             _ => "Rule 12.2, Rule 12.2.2: Presenting mandatory choice to player.",
         };
         state.log(rule_msg.to_string());

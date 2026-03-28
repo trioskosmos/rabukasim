@@ -131,9 +131,7 @@ fn check_condition_with_parts(
             val,
             slot,
         ),
-        C_TURN_1 => {
-            state.turn == 1
-        }
+        C_TURN_1 => state.turn == 1,
         C_HAS_MEMBER => {
             let p_target = if filter.target_player == 2 {
                 1 - p_idx
@@ -515,7 +513,9 @@ fn check_condition_with_parts(
                 } else if val == 3 {
                     eprintln!("Rule 11.8, Rule 11.8.1, Rule 11.8.2, Rule 11.8.3, Rule 11.8.4: Checking [右サイド] (Right Side) slot restriction.");
                 } else if val == 2 {
-                     eprintln!("Rule 11.6: Checking [センター] (Center) slot restriction via AreaCheck.");
+                    eprintln!(
+                        "Rule 11.6: Checking [センター] (Center) slot restriction via AreaCheck."
+                    );
                 }
             }
             ctx.area_idx == (val - 1) as i16
@@ -585,22 +585,18 @@ fn check_condition_with_parts(
                 diff >= val
             }
         }
-        C_HAS_EXCESS_HEART => {
-            match filter.target_player {
-                1 => player.excess_hearts > 0,
-                2 => opponent.excess_hearts > 0,
-                3 => player.excess_hearts > 0 || opponent.excess_hearts > 0,
-                _ => player.excess_hearts > 0,
-            }
-        }
-        C_NOT_HAS_EXCESS_HEART => {
-            match filter.target_player {
-                1 => player.excess_hearts == 0,
-                2 => opponent.excess_hearts == 0,
-                3 => player.excess_hearts == 0 && opponent.excess_hearts == 0,
-                _ => player.excess_hearts == 0,
-            }
-        }
+        C_HAS_EXCESS_HEART => match filter.target_player {
+            1 => player.excess_hearts > 0,
+            2 => opponent.excess_hearts > 0,
+            3 => player.excess_hearts > 0 || opponent.excess_hearts > 0,
+            _ => player.excess_hearts > 0,
+        },
+        C_NOT_HAS_EXCESS_HEART => match filter.target_player {
+            1 => player.excess_hearts == 0,
+            2 => opponent.excess_hearts == 0,
+            3 => player.excess_hearts == 0 && opponent.excess_hearts == 0,
+            _ => player.excess_hearts == 0,
+        },
         C_TOTAL_BLADES => {
             let mut total = 0u32;
             for slot_idx in 0..3 {
@@ -885,7 +881,11 @@ fn check_condition_with_parts(
                 }
                 (s_cost, o_cost)
             };
-            compare_i32(self_cost, opp_cost + val, (slot_info.comparison as i32) << 4)
+            compare_i32(
+                self_cost,
+                opp_cost + val,
+                (slot_info.comparison as i32) << 4,
+            )
         }
         312 => compare_i32(ctx.v_accumulated as i32, val, slot),
         313 => {

@@ -153,6 +153,7 @@ fn test_card_579_ability_1_heart_filter() {
         source_card_id: target_id,
         area_idx: 1,
         trigger_type: TriggerType::OnLiveStart,
+        ability_index: 1, // Explicitly testing ability 1
         ..Default::default()
     };
 

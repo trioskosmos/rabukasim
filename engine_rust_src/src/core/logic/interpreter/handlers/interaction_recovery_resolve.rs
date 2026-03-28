@@ -1,12 +1,12 @@
 use super::*;
-use crate::core::models::TriggerType;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
     collect_zone_cards, normalized_source_zone, remove_card_from_zone,
 };
+use crate::core::logic::interpreter::logging;
 use crate::core::logic::models::AbilityFrame;
+use crate::core::models::TriggerType;
 use crate::core::models::Zone;
 
 pub fn resolve_recovery(
@@ -35,9 +35,11 @@ pub fn resolve_recovery(
     if state.debug.debug_mode {
         println!(
             "[DEBUG_RECOVERY_FILTER] attr=[{}] {}",
-            logging::describe_filter_attr(crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
-                frame_data.filter.to_attr() as i64
-            )),
+            logging::describe_filter_attr(
+                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
+                    frame_data.filter.to_attr() as i64
+                )
+            ),
             logging::describe_context(ctx)
         );
     }
@@ -109,7 +111,10 @@ pub fn resolve_recovery(
                 continue;
             };
 
-            if revealed_names.iter().any(|revealed_name| candidate_name.contains(revealed_name)) {
+            if revealed_names
+                .iter()
+                .any(|revealed_name| candidate_name.contains(revealed_name))
+            {
                 state.players[p_idx].looked_cards.push(*cid);
             }
         }
@@ -149,9 +154,11 @@ pub fn resolve_recovery(
         println!(
             "[DEBUG_RECOVERY] op={} attr=[{}] revealed={:?} selected={:?} candidates={:?} {}",
             logging::get_opcode_name(real_op),
-            logging::describe_filter_attr(crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
-                frame_data.filter.to_attr() as i64
-            )),
+            logging::describe_filter_attr(
+                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
+                    frame_data.filter.to_attr() as i64
+                )
+            ),
             revealed_names,
             selected_names,
             candidate_names,

@@ -150,7 +150,10 @@ pub fn suspend_interaction(
         state.current_player = saved_current_player;
     }
     if final_actions.is_empty()
-        && matches!(choice_type, ChoiceType::SelectMember | ChoiceType::SelectStage)
+        && matches!(
+            choice_type,
+            ChoiceType::SelectMember | ChoiceType::SelectStage
+        )
     {
         for i in 0..3 {
             if state.players[chooser_p_idx as usize].stage[i] >= 0 {

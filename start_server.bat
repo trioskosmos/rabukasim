@@ -1,8 +1,8 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-set UV_CACHE_DIR=%~dp0.uv-cache
-set UV_PYTHON_INSTALL_DIR=%~dp0.uv-python
+set "UV_CACHE_DIR=%~dp0.uv-cache"
+set "UV_PYTHON_INSTALL_DIR=%~dp0.uv-python"
 where cargo >nul 2>&1
 if errorlevel 1 goto NO_CARGO
 
@@ -10,15 +10,16 @@ where uv >nul 2>&1
 if errorlevel 1 goto NO_UV
 
 echo [build] Checking for stale processes and syncing metadata...
-powershell -NoProfile -Command "$ppid=(Get-CimInstance Win32_Process -Filter \"ProcessId=$PID\").ParentProcessId; Get-CimInstance Win32_Process -Filter \"Name='cmd.exe'\" | Where-Object { $_.CommandLine -like '*start_server.bat*' -and $_.ProcessId -ne $PID -and $_.ProcessId -ne $ppid } | Stop-Process -Force -ErrorAction SilentlyContinue; taskkill /F /IM rabuka_launcher.exe /T 2>$null; Get-NetTCPConnection -LocalPort 8000,8080,8888,3000,5000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }"
+rem Best-effort cleanup only. Keep startup quiet on systems that restrict process enumeration.
+taskkill /F /IM rabuka_launcher.exe /T >nul 2>nul
 uv run --isolated --managed-python --python 3.12 python tools/sync_metadata.py
 
 echo [build] Preparing environment...
 if not exist "data\cards.json" goto NO_DATA
 
-set DO_FULL=1
-set DEBUG_ARG=
-set NN_FEATURES=--features nn
+set "DO_FULL=0"
+set "DEBUG_ARG="
+set "NN_FEATURES=--features nn"
 for %%a in (%*) do (
     if /i "%%~a"=="--full"   set DO_FULL=1
     if /i "%%~a"=="--debug"  set DEBUG_ARG=--debug
@@ -26,16 +27,19 @@ for %%a in (%*) do (
     if /i "%%~a"=="--no-nn"  set NN_FEATURES=
 )
 
-if %DO_FULL% neq 1 goto FAST_FRAME_SYNC
+if not "%DO_FULL%"=="1" goto FAST_FRAME_SYNC
 
 echo [build] Building Python extension (maturin)...
 uv run --isolated --managed-python --python 3.12 maturin develop
-if errorlevel 1 goto CMD_FAIL
+if errorlevel 1 goto MATURIN_FAILED
 
 echo [build] Preparing compiled ability artifacts...
 uv run --isolated --managed-python --python 3.12 python tools/build_cards.py --force --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 goto RUN_SERVER
+
+:MATURIN_FAILED
+echo [warn] maturin develop failed; continuing without the Python extension.
 
 :FAST_FRAME_SYNC
 echo [build] Preparing compiled ability artifacts...

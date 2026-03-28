@@ -1,8 +1,83 @@
 use super::*;
+use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrame;
 
-#[path = "movement_deck_look_cards.rs"]
-mod movement_deck_look_cards;
+#[allow(clippy::too_many_arguments)]
+pub fn handle_look_cards(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame: &AbilityFrame,
+    p_idx: usize,
+    op: i32,
+    v: i32,
+    a: i64,
+    frame_idx: usize,
+    resolved_slot: i32,
+) -> HandlerResult {
+    let count = v as usize;
+    let filter_attr = filter_attr_from_params(frame.components().params).unwrap_or(a as u64);
+    if resolved_slot == 6 {
+        if ctx.choice_index == -1 && ctx.v_remaining == -1 {
+            state.players[p_idx].revealed_cards.clear();
+        }
+        if ctx.choice_index == -1 {
+            if matches!(
+                suspend_choice(
+                    state, db, ctx, ctx, frame_idx, op, 0,
+                    ChoiceType::RevealHand, filter_attr, v as i16,
+                ),
+                HandlerResult::Suspend
+            ) {
+                return HandlerResult::Suspend;
+            }
+        }
+        let choice = ctx.choice_index as usize;
+        if choice != CHOICE_DONE as usize && choice != CHOICE_ALL as usize && choice < state.players[p_idx].hand.len() {
+            let cid = state.players[p_idx].hand[choice];
+            if !state.players[p_idx].looked_cards.contains(&cid) {
+                state.players[p_idx].looked_cards.push(cid);
+            }
+            if !state.players[p_idx].revealed_cards.contains(&cid) {
+                state.players[p_idx].revealed_cards.push(cid);
+            }
+        }
+        if ctx.choice_index != CHOICE_DONE && ctx.choice_index != CHOICE_ALL && !(v > 0 && ctx.v_remaining == 1) {
+            let next_v = if v > 0 { (if ctx.v_remaining > 0 { ctx.v_remaining } else { v as i16 }) - 1 } else { 0 };
+            if next_v > 0 || v == 0 {
+                ctx.v_remaining = next_v;
+                if matches!(
+                    suspend_choice(state, db, ctx, ctx, frame_idx, op, 0, ChoiceType::RevealHand, filter_attr, next_v),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+        }
+    } else {
+        if state.players[p_idx].deck.len() < count {
+            state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
+            state.resolve_deck_refresh(p_idx);
+        }
+        let deck_len = state.players[p_idx].deck.len();
+        let mut revealed_cids = Vec::new();
+        for _ in 0..count.min(deck_len) {
+            if let Some(cid) = state.players[p_idx].pop_deck_card() {
+                state.players[p_idx].looked_cards.push(cid);
+                revealed_cids.push(cid);
+            }
+        }
+        if op != O_LOOK_DECK {
+            for cid in revealed_cids {
+                let mut new_ctx = ctx.clone();
+                new_ctx.source_card_id = cid;
+                state.trigger_abilities(db, TriggerType::OnReveal, &new_ctx);
+            }
+        }
+    }
+    HandlerResult::Continue
+}
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_reveal_until(
@@ -83,33 +158,6 @@ pub fn handle_reveal_until(
     }
 
     HandlerResult::Continue
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn handle_look_cards(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
-    p_idx: usize,
-    op: i32,
-    v: i32,
-    a: i64,
-    frame_idx: usize,
-    resolved_slot: i32,
-) -> HandlerResult {
-    movement_deck_look_cards::handle_look_cards(
-        state,
-        db,
-        ctx,
-        frame,
-        p_idx,
-        op,
-        v,
-        a,
-        frame_idx,
-        resolved_slot,
-    )
 }
 
 #[allow(clippy::too_many_arguments)]

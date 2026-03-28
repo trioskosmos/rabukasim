@@ -86,6 +86,11 @@ pub fn handle_move_to_discard(
     } else {
         ChoiceType::SelectDiscard
     };
+    let resumes_current_prompt = state
+        .interaction_stack
+        .last()
+        .map(|pi| pi.effect_opcode == O_MOVE_TO_DISCARD && pi.choice_type == choice_type)
+        .unwrap_or(false);
     let available_count = zone_available_count(state, target_player_idx, source_zone);
     if movement_discard_prompt::prepare_discard_prompt(
         state,

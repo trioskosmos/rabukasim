@@ -43,15 +43,7 @@ fn resolve_dynamic_multiplier(
 
     count_opcode.map(|opcode| {
         let filter_attr = frame_data.filter.to_attr();
-        let mut count = resolve_count(
-            state,
-            db,
-            opcode,
-            filter_attr,
-            frame_data.raw_slot,
-            ctx,
-            0,
-        );
+        let mut count = resolve_count(state, db, opcode, filter_attr, frame_data.raw_slot, ctx, 0);
 
         // Some legacy bytecode paths dropped NOT_SELF metadata for dynamic
         // REDUCE_COST effects in hand. Keep the authored-frame semantics by
@@ -104,14 +96,6 @@ pub fn handle_boost_score(
     p_idx: usize,
     target_p: usize,
 ) -> HandlerResult {
-    if ctx.v_accumulated >= 0 {
-        if let Some(min_required) = inline_value_ge_threshold(db, ctx) {
-            if (ctx.v_accumulated as i32) < min_required {
-                return HandlerResult::Continue;
-            }
-        }
-    }
-
     let frame_data = frame.components();
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
@@ -169,22 +153,12 @@ pub fn handle_reduce_cost(
 
 pub fn handle_set_score(
     state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
+    _db: &CardDatabase,
+    ctx: &AbilityContext,
     target_p: usize,
     v: i32,
 ) -> HandlerResult {
-    let mut applied_to_live_snapshot = false;
-    if db.get_live(ctx.source_card_id).is_some() {
-        applied_to_live_snapshot =
-            update_live_score_snapshot(state, target_p, ctx.source_card_id, ctx.area_idx, v);
-    }
-
-    if !applied_to_live_snapshot {
-        state.players[target_p].score = v.max(0) as u32;
-    } else {
-        state.players[target_p].score = v.max(0) as u32;
-    }
+    state.players[target_p].score = v.max(0) as u32;
     HandlerResult::Continue
 }
 

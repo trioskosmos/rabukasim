@@ -112,8 +112,19 @@ pub fn resolve_count(
         ) {
             for (i, &id) in cards.iter().enumerate() {
                 if id >= 0 {
-                    let s_idx = if base_slot >= 0 { base_slot + i as i16 } else { -1 };
-                    ids.push((id, if s_idx >= 0 { Some((p_idx, s_idx)) } else { None }));
+                    let s_idx = if base_slot >= 0 {
+                        base_slot + i as i16
+                    } else {
+                        -1
+                    };
+                    ids.push((
+                        id,
+                        if s_idx >= 0 {
+                            Some((p_idx, s_idx))
+                        } else {
+                            None
+                        },
+                    ));
                 }
             }
         }

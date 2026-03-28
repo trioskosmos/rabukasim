@@ -147,7 +147,7 @@ fn decode_look_and_choose_value(
         if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
             decoded.choose_count = v as u8;
         } else {
-            decoded.choose_count = 1;
+            decoded.choose_count = 0;
         }
         if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
             decoded.char_id_1 = v as u8;

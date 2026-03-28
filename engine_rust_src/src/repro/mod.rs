@@ -39,6 +39,8 @@ pub mod repro_color_filter;
 #[cfg(test)]
 pub mod repro_discard_bug;
 #[cfg(test)]
+pub mod repro_look_choose_count;
+#[cfg(test)]
 pub mod repro_flags;
 #[cfg(test)]
 pub mod repro_hazuki_500;

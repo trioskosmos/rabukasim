@@ -5,6 +5,7 @@
 pub mod conditions;
 pub mod constants;
 pub mod costs;
+pub mod direct_executor;
 pub mod handlers;
 pub mod instruction;
 pub mod logging;
@@ -12,16 +13,15 @@ pub mod suspension;
 
 use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use super::CardDatabase;
-use crate::core::enums::Phase;
+use crate::core::enums::{Phase, TriggerType};
 use crate::core::logic::constants::*;
 use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use crate::core::models::{AbilityContext, GameState};
-use crate::core::models::TriggerType;
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{HandlerRegistry, HandlerResult};
 pub use suspension::{
-    capture_response_origin, get_choice_text, restore_response_state, resolve_target_slot,
+    capture_response_origin, get_choice_text, resolve_target_slot, restore_response_state,
     suspend_interaction,
 };
 
@@ -34,18 +34,6 @@ pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new(
 pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
     GLOBAL_OPCODE_TRACKER.get_or_init(|| Mutex::new(HashSet::<i32>::new()))
 }
-
-// fn log_opcode_to_file(_op: i32) {
-//     use std::io::Write;
-//     let thread_name = std::thread::current().name().unwrap_or("unknown").to_string();
-//     if let Ok(mut file) = std::fs::OpenOptions::new()
-//         .create(true)
-//         .append(true)
-//         .open("reports/telemetry_raw.log")
-//     {
-//         let _ = writeln!(file, "[OPCODE] {} | Test: {}", _op, thread_name);
-//     }
-// }
 
 /// The maximum depth of nested semantic-frame execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
@@ -289,74 +277,30 @@ pub fn resolve_ability(
         return Ok(());
     }
 
+    // Card-specific gate: PL!SP-bp1-024-L (Nonfiction!!) requires both Kanon (PR-003) 
+    // and Keke (PR-004) on stage for its OnLiveSuccess ability.
+    // This is a workaround for incorrect bytecode conditions in the card data.
     if db
         .get_live(ctx_in.source_card_id)
         .map(|live| live.card_no.as_str() == "PL!SP-bp1-024-L")
         .unwrap_or(false)
         && ability.trigger == TriggerType::OnLiveSuccess
+        && !check_nonfiction_prerequisite(state, db, ctx_in)
     {
-            let p_idx = ctx_in.player_id as usize;
-            let has_kanon = db
-                .id_by_no("PL!SP-PR-003-PR")
-                .and_then(|kanon_id| {
-                    state.players[p_idx]
-                        .stage
-                        .iter()
-                        .any(|&cid| cid == kanon_id)
-                        .then_some(true)
-                })
-                .unwrap_or(false);
-            let has_keke = db
-                .id_by_no("PL!SP-PR-004-PR")
-                .and_then(|keke_id| {
-                    state.players[p_idx]
-                        .stage
-                        .iter()
-                        .any(|&cid| cid == keke_id)
-                        .then_some(true)
-                })
-                .unwrap_or(false);
-            if !(has_kanon && has_keke) {
-                return Ok(());
-            }
+        return Ok(());
     }
 
-    if ctx_in.source_card_id == 579 && ability.trigger == TriggerType::OnLiveStart
-        && ability
-            .frames()
-            .first()
-            .map(|frame| {
-                let comp = frame.components();
-                comp.opcode == 0
-                    && comp.slot.area_idx == 2
-                    && comp.filter.group_enabled
-                    && comp.filter.group_id == 3
-                    && !comp.filter.value_enabled
-                    && comp.filter.color_mask == 0
-            })
-            .unwrap_or(false)
+    // Card-specific gate: Card 579 (Nonfiction!! live) ability 0 OnLiveStart requires
+    // self center slot cost > opponent center slot cost.
+    // This is a workaround for incomplete bytecode implementation.
+    // ability_index of -1 means unknown/default, treat as ability 0 for this check.
+    let is_ability_0 = ctx_in.ability_index == 0 || ctx_in.ability_index == -1;
+    if ctx_in.source_card_id == 579
+        && is_ability_0
+        && ability.trigger == TriggerType::OnLiveStart
+        && !check_card_579_cost_gate(state, db, ctx_in)
     {
-        let p_idx = ctx_in.player_id as usize;
-        let opp_idx = 1usize.saturating_sub(p_idx.min(1));
-        let self_cost = state.players[p_idx]
-            .stage
-            .get(1)
-            .copied()
-            .filter(|&cid| cid >= 0)
-            .and_then(|cid| db.get_member(cid))
-            .map(|member| member.cost)
-            .unwrap_or(0);
-        let opp_cost = state.players[opp_idx]
-            .stage
-            .get(1)
-            .copied()
-            .filter(|&cid| cid >= 0)
-            .and_then(|cid| db.get_member(cid))
-            .map(|member| member.cost)
-            .unwrap_or(0);
-        if self_cost <= opp_cost {
-            return Ok(());
-        }
+        return Ok(());
     }
 
     let frames = ability.frames();
@@ -365,6 +309,45 @@ pub fn resolve_ability(
     } else {
         resolve_semantic_frames(state, db, &frames, ctx_in)
     }
+}
+
+/// Card-specific prerequisite: PL!SP-bp1-024-L (Nonfiction!!) requires both Kanon
+/// (PR-003) and Keke (PR-004) on stage for its OnLiveSuccess ability.
+/// This check works around incorrectly compiled bytecode conditions.
+fn check_nonfiction_prerequisite(
+    state: &GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+) -> bool {
+    let p_idx = ctx.player_id as usize;
+    let has_kanon = db
+        .id_by_no("PL!SP-PR-003-PR")
+        .map(|id| state.players[p_idx].stage.iter().any(|&cid| cid == id))
+        .unwrap_or(false);
+    let has_keke = db
+        .id_by_no("PL!SP-PR-004-PR")
+        .map(|id| state.players[p_idx].stage.iter().any(|&cid| cid == id))
+        .unwrap_or(false);
+    has_kanon && has_keke
+}
+
+/// Card-specific gate: Card 579 (Nonfiction!! live) OnLiveStart requires
+/// self center slot cost > opponent center slot cost to proceed.
+/// This check works around incomplete bytecode implementation.
+fn check_card_579_cost_gate(state: &GameState, db: &CardDatabase, ctx: &AbilityContext) -> bool {
+    let p_idx = ctx.player_id as usize;
+    let opp_idx = 1 - (p_idx.min(1));
+    let center_cost = |player_idx: usize| -> u32 {
+        state.players[player_idx]
+            .stage
+            .get(1)
+            .copied()
+            .filter(|&cid| cid >= 0)
+            .and_then(|cid| db.get_member(cid))
+            .map(|m| m.cost)
+            .unwrap_or(0)
+    };
+    center_cost(p_idx) > center_cost(opp_idx)
 }
 
 pub fn resolve_semantic_frames(
@@ -378,17 +361,19 @@ pub fn resolve_semantic_frames(
     }
 
     if !state.ui.silent && ctx_in.program_counter == 0 {
-        state.log("Rule 9.5, Rule 9.5.1, Rule 9.5.1.1, Rule 9.5.2: Starting sequential resolution of effect frames.".to_string());
+        state.log("Starting sequential resolution of effect frames.".to_string());
     }
 
     let execution_started = begin_execution(state, ctx_in);
 
-    let registry = HandlerRegistry::new();
+    // Use direct executor instead of HandlerRegistry
+    use crate::core::logic::interpreter::direct_executor::{execute_frame_direct, EffectResult};
+    
     let mut ctx = ctx_in.clone();
     ctx.area_idx = infer_source_area_idx(state, &ctx);
     let start_idx = ctx_in.program_counter as usize;
     if !state.ui.silent && start_idx == 0 {
-        state.log("Rule 9.5.3, Rule 9.5.3.1, Rule 9.5.3.2, Rule 9.5.3.3, Rule 9.5.3.4: Processing individual frame instruction.".to_string());
+        state.log("Processing individual frame instruction.".to_string());
     }
     let mut effect_idx = start_idx;
     let mut cond = true;
@@ -422,7 +407,7 @@ pub fn resolve_semantic_frames(
         }
         if frame_data.opcode == crate::core::enums::O_RETURN as i32 {
             if !state.ui.silent {
-                state.log("Rule 9.5.4, Rule 9.5.4.1, Rule 9.5.4.2, Rule 9.5.4.3: Instruction sequence finished (Return).".to_string());
+                state.log("Instruction sequence finished (Return).".to_string());
             }
             if let Some(ref mut set) = state.debug.executed_opcodes {
                 set.insert(frame_data.opcode);
@@ -493,7 +478,7 @@ pub fn resolve_semantic_frames(
                     passed
                 };
             if !state.ui.silent {
-                state.log("Rule 9.7, Rule 9.7.1, Rule 9.7.2, Rule 9.7.2.1: Condition evaluated and checked against logical flow.".to_string());
+                state.log("Condition evaluated and checked against logical flow.".to_string());
             }
             log_condition_result(state, &condition_frame, ip, passed, cond);
             branch_has_conditions = true;
@@ -504,7 +489,7 @@ pub fn resolve_semantic_frames(
 
         if frame_data.opcode == crate::core::enums::O_JUMP as i32 {
             if !state.ui.silent {
-                state.log("Rule 9.7.3, Rule 9.7.3.1, Rule 9.7.3.1.1, Rule 9.7.3.2, Rule 9.7.3.2.1: Unconditional jump executed.".to_string());
+                state.log("Unconditional jump executed.".to_string());
             }
             effect_idx = (effect_idx as i64 + 1 + frame_data.value as i64).max(0) as usize;
             ctx.choice_index = -1;
@@ -513,12 +498,12 @@ pub fn resolve_semantic_frames(
         if frame_data.opcode == crate::core::enums::O_JUMP_IF_FALSE as i32 {
             if !cond {
                 if !state.ui.silent {
-                    state.log("Rule 9.7.4, Rule 9.7.4.1, Rule 9.7.4.1.1, Rule 9.7.4.1.2, Rule 9.7.4.1.3, Rule 9.7.4.2: Conditional jump (False branch) taken.".to_string());
+                    state.log("Conditional jump (False branch) taken.".to_string());
                 }
                 effect_idx = (effect_idx as i64 + 1 + frame_data.value as i64).max(0) as usize;
             } else {
                 if !state.ui.silent {
-                    state.log("Rule 9.7.4: Conditional jump (True branch) skipped.".to_string());
+                    state.log("Conditional jump (True branch) skipped.".to_string());
                 }
                 effect_idx += 1;
             }
@@ -538,16 +523,18 @@ pub fn resolve_semantic_frames(
         }
 
         let mut advance_effect = true;
-        match registry.dispatch(state, db, &mut ctx, frame, &frame_data, effect_idx, frames) {
-            HandlerResult::Continue => {}
-            HandlerResult::SetCond(new_cond) => cond = new_cond,
-            HandlerResult::Suspend => return Ok(()),
-            HandlerResult::Return => break,
-            HandlerResult::Branch(new_effect_idx) => {
+        
+        // Use direct executor instead of HandlerRegistry
+        match execute_frame_direct(state, db, &mut ctx, frame, effect_idx, frames) {
+            EffectResult::Continue => {}
+            EffectResult::SetCond(new_cond) => cond = new_cond,
+            EffectResult::Suspend => return Ok(()),
+            EffectResult::Return => break,
+            EffectResult::Branch(new_effect_idx) => {
                 effect_idx = new_effect_idx;
                 advance_effect = false;
             }
-            HandlerResult::BranchToFrames(new_frames) => {
+            EffectResult::BranchToFrames(new_frames) => {
                 let mut branch_ctx = ctx.clone();
                 branch_ctx.program_counter = 0;
                 if let Err(err) =
@@ -595,7 +582,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
 
     while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         if !state.ui.silent {
-            state.log(format!("Rule 9.1, Rule 9.1.1, Rule 9.1.1.1.1, Rule 9.1.1.2, Rule 9.1.1.2.1, Rule 9.1.1.3, Rule 9.1.1.3.1, Rule 9.2, Rule 9.2.1, Rule 9.2.1.1, Rule 9.2.1.2, Rule 9.2.1.3, Rule 9.2.1.3.1, Rule 9.2.1.3.2, Rule 9.3, Rule 9.3.1, Rule 9.3.2, Rule 9.3.3, Rule 9.3.4, Rule 9.3.4.1, Rule 9.3.4.1.1, Rule 9.3.4.2, Rule 9.3.4.3: Processing queued trigger for card {}.", cid));
+            state.log(format!("Processing queued trigger for card {}.", cid));
         }
         let mut ctx = ctx;
         // Generate a new ID for the activation
@@ -633,7 +620,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
 
         if !should_pay_legacy_costs || costs::pay_costs_transactional(state, db, costs, &mut ctx) {
             if !state.ui.silent && should_pay_legacy_costs && !costs.is_empty() {
-                state.log("Rule 9.4, Rule 9.6.2.3: Costs paid and recorded successfully.".to_string());
+                state.log(
+                    "Rule 9.4, Rule 9.6.2.3: Costs paid and recorded successfully.".to_string(),
+                );
             }
             let p_idx = ctx.player_id as usize;
             let source_type = if is_live { 2 } else { 0 };
@@ -703,10 +692,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     continue;
                 }
                 let mut res_ctx = ctx.clone();
-                res_ctx.target_card_id = cid; // The member/card whose ability resolved
+                res_ctx.target_card_id = cid;
 
-                // CRITICAL FIX: Update area_idx to the physical slot where the card is.
-                // SLOT_CONTEXT (4) relies on area_idx pointing to the member's slot.
                 if !is_live {
                     let p_idx = ctx.player_id as usize;
                     if let Some(pos) = state.players[p_idx]
@@ -723,28 +710,6 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 }
                 state.trigger_abilities(db, t, &res_ctx);
             }
-
-            let _top_original_phase = state.interaction_stack.last().map(|pi| pi.original_phase);
-            let _top_original_player = state
-                .interaction_stack
-                .last()
-                .map(|pi| pi.original_current_player);
-            let _clear_same_card_interactions = |state: &mut GameState, card_id: i32| {
-                while state
-                    .interaction_stack
-                    .last()
-                    .map(|pi| pi.card_id == card_id)
-                    .unwrap_or(false)
-                {
-                    state.interaction_stack.pop();
-                }
-            };
-
-            let _stage_count = state.players[ctx.player_id as usize]
-                .stage
-                .iter()
-                .filter(|&&card_id| card_id >= 0)
-                .count();
         }
 
         state.clear_execution_id();
@@ -785,7 +750,10 @@ pub fn consume_once_per_turn(
 ) {
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     if !state.ui.silent {
-        state.log(format!("Rule 11.2.1-3: Consuming 'Turn 1' (Once per turn) capacity for Ability UID {:08X}.", uid));
+        state.log(format!(
+            "Rule 11.2.1-3: Consuming 'Turn 1' (Once per turn) capacity for Ability UID {:08X}.",
+            uid
+        ));
     }
     state.players[p_idx].used_abilities.push(uid);
 }

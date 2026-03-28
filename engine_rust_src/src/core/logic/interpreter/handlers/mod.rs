@@ -97,7 +97,8 @@ impl HandlerRegistry {
         let s = frame_data.raw_slot;
 
         if state.debug.debug_mode && !state.ui.silent {
-            let sem = crate::core::logic::interpreter::logging::describe_frame_words(op, v, a, s as i32);
+            let sem =
+                crate::core::logic::interpreter::logging::describe_frame_words(op, v, a, s as i32);
             println!(
                 "[DISPATCH] {} | player={} choice={} phase={:?}",
                 sem, ctx.player_id, ctx.choice_index, state.phase

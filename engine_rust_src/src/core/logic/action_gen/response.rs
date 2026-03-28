@@ -66,6 +66,19 @@ fn add_slot_actions<R: ActionReceiver + ?Sized>(receiver: &mut R, slots: &[i32],
     }
 }
 
+fn add_stage_slot_actions<R: ActionReceiver + ?Sized>(
+    receiver: &mut R,
+    player: &crate::core::logic::player::PlayerState,
+    allow_moved: bool,
+) {
+    for slot_idx in 0..3 {
+        let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+        if !prevented && (allow_moved || !player.is_moved(slot_idx)) {
+            receiver.add_action((ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as usize);
+        }
+    }
+}
+
 fn add_optional_done<R: ActionReceiver + ?Sized>(receiver: &mut R) {
     receiver.add_action((ACTION_BASE_CHOICE + CHOICE_DONE as i32) as usize);
 }
@@ -354,13 +367,7 @@ impl ResponseGenerator {
                         db, state, receiver, pi, abilities, p_idx,
                     );
                 } else {
-                    for slot_idx in 0..3 {
-                        let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
-                        let legal = !prevented;
-                        if legal {
-                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as usize);
-                        }
-                    }
+                    add_stage_slot_actions(receiver, player, true);
                 }
                 return;
             }
@@ -630,21 +637,7 @@ impl ResponseGenerator {
                     return;
                 }
                 if choice_type == ChoiceType::SelectStage {
-                    for i in 0..3 {
-                        let prevented = (player.prevent_play_to_slot_mask() & (1 << i)) != 0;
-                        let legal = match pi.effect_opcode {
-                            crate::core::enums::O_PLAY_MEMBER_FROM_HAND => {
-                                !prevented && !player.is_moved(i)
-                            }
-                            crate::core::enums::O_PLAY_MEMBER_FROM_DISCARD => {
-                                !prevented && !player.is_moved(i)
-                            }
-                            _ => !prevented,
-                        };
-                        if legal {
-                            receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                        }
-                    }
+                    add_stage_slot_actions(receiver, player, true);
                     return;
                 }
                 if choice_type == ChoiceType::MoveMemberDest {

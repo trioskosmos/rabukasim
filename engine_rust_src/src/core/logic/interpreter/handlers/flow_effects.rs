@@ -11,30 +11,30 @@ mod flow_meta_rule;
 
 pub fn handle_trigger_remote(
     state: &mut GameState,
-
     db: &CardDatabase,
-
     ctx: &mut AbilityContext,
-
     frame: &AbilityFrame,
-
     frame_idx: usize,
-
     v: i32,
-
     p_idx: usize,
-
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
-    let effect = current_effect(db, ctx, frame);
+    // Simplified effect lookup - get directly from ability at frame_idx
+    let ab_idx = usize::try_from(ctx.ability_index).ok();
+    let effect = ab_idx.and_then(|idx| {
+        db.get_live(ctx.source_card_id)
+            .and_then(|c| c.abilities.get(idx))
+            .or_else(|| db.get_member(ctx.source_card_id).and_then(|c| c.abilities.get(idx)))
+            .and_then(|a| a.effects.get(frame_idx))
+    });
 
     let from_discard = effect
-        .and_then(|effect| effect.params.get("from"))
-        .and_then(|value: &serde_json::Value| value.as_str())
-        .map(|value: &str| value.eq_ignore_ascii_case("DISCARD"))
+        .and_then(|e| e.params.get("from"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.eq_ignore_ascii_case("DISCARD"))
         .unwrap_or(false);
 
-    let filter_attr = effect.map(|effect| effect.runtime_attr).unwrap_or(0);
+    let filter_attr = effect.map(|e| e.runtime_attr).unwrap_or(0);
 
     let mut target_cid = -1;
 

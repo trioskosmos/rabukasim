@@ -326,7 +326,10 @@ fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
         parts.push(format!("jp={}", truncate_text(jp.to_string(), 160)));
     }
     if !ability.is_empty() {
-        parts.push(format!("ability={}", truncate_text(ability.to_string(), 160)));
+        parts.push(format!(
+            "ability={}",
+            truncate_text(ability.to_string(), 160)
+        ));
     }
     if !en.is_empty() {
         parts.push(format!("en={}", truncate_text(en.to_string(), 160)));

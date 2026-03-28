@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::core::enums::*;
-use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::filter::map_filter_string_to_attr;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, Cost, GameState, TriggerType};
 
 fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cost) -> i32 {
@@ -127,7 +127,8 @@ pub fn check_cost(
     let result = match cost.cost_type {
         AbilityCostType::None => true,
         AbilityCostType::Energy => {
-            untapped_energy_count(state, p_idx) as i32 >= resolve_energy_cost(state, db, p_idx, cost)
+            untapped_energy_count(state, p_idx) as i32
+                >= resolve_energy_cost(state, db, p_idx, cost)
         }
         AbilityCostType::TapSelf => {
             if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
@@ -152,9 +153,7 @@ pub fn check_cost(
                 untapped_count >= val
             }
         }
-        AbilityCostType::TapEnergy => {
-            untapped_energy_count(state, p_idx) >= val
-        }
+        AbilityCostType::TapEnergy => untapped_energy_count(state, p_idx) >= val,
         AbilityCostType::DiscardHand => {
             if has_filter {
                 count_matching_cards(state, db, player.hand.iter().copied(), attr) >= val
@@ -280,11 +279,14 @@ pub fn check_frame_cost(
         O_SET_TAPPED | O_TAP_MEMBER => {
             let required = comp.value.max(0) as usize;
             if required == 0 {
-                return ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3
+                return ctx.area_idx >= 0
+                    && (ctx.area_idx as usize) < 3
                     && !state.players[p_idx].is_tapped(ctx.area_idx as usize);
             }
             let untapped = (0..3)
-                .filter(|&i| state.players[p_idx].stage[i] >= 0 && !state.players[p_idx].is_tapped(i))
+                .filter(|&i| {
+                    state.players[p_idx].stage[i] >= 0 && !state.players[p_idx].is_tapped(i)
+                })
                 .count();
             untapped >= required
         }
@@ -612,4 +614,3 @@ pub fn pay_cost(
     }
     result
 }
-
