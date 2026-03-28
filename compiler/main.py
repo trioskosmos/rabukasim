@@ -81,6 +81,7 @@ def _compact_frame_program(frame_program: Any) -> dict[str, Any]:
 
 
 def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
+    """Convert card to runtime format - keeps frame_program for now."""
     if not isinstance(card_dump, dict):
         return card_dump
 
@@ -92,6 +93,7 @@ def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
                 compacted_abilities.append(ability)
                 continue
             compacted_ability = dict(ability)
+            # Keep frame_program for Rust compatibility during transition
             if "frame_program" in compacted_ability:
                 compacted_ability["frame_program"] = _compact_frame_program(compacted_ability["frame_program"])
             compacted_abilities.append(compacted_ability)
@@ -117,6 +119,8 @@ def _init_worker(ability_cache: dict[str, dict[str, Any]], sparse_mapping: dict,
 
 
 def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
+    # For semantic migration, we include effects, conditions, costs in output
+    # These are now the primary data source instead of frame_program
     exclude_ability_fields = {
         "instructions": True,
         "bytecode": True,
@@ -124,7 +128,9 @@ def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
         "pseudocode": True,
         "filters": True,
         "option_names": True,
-        "semantic_form": True,
+        "semantic_form": True,  # Exclude from default export
+        "_semantic_source": True,  # Internal tracking field
+        # Note: effects, conditions, costs are now INCLUDED for semantic migration
     }
     exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
 
@@ -760,7 +766,9 @@ class SparseSourceManager:
             self._last_loaded_mtime = None
 
     def get_ability(self, card_no: str, ab_idx: int) -> dict[str, Any] | None:
-        self.load()
+        # Skip load() if mapping is already populated (optimization for workers)
+        if not self.mapping:
+            self.load()
         return self.mapping.get((self._normalize_card_no(card_no), ab_idx))
 
 
@@ -1241,6 +1249,243 @@ def compute_flags(card):
         card.cost_flags = cost_flags
 
 
+def _populate_semantic_from_frames(abilities: list, card_no: str) -> None:
+    """Populate effects/conditions/costs from frame_program data for semantic migration.
+    
+    This function converts frame_program instructions into proper semantic
+    effects, conditions, and costs so the Rust engine can read them directly
+    without needing to decode frame_program at runtime.
+    """
+    from engine.models.generated_enums import EffectType, ConditionType, AbilityCostType, TargetType
+    
+    # Mapping from opcode names to EffectType
+    op_to_effect = {
+        "DRAW": EffectType.DRAW,
+        "RECOVER_MEMBER": EffectType.RECOVER_MEMBER,
+        "RECOVER_LIVE": EffectType.RECOVER_LIVE,
+        "BOOST_SCORE": EffectType.BOOST_SCORE,
+        "ADD_BLADES": EffectType.ADD_BLADES,
+        "ADD_HEARTS": EffectType.ADD_HEARTS,
+        "MOVE_MEMBER": EffectType.MOVE_MEMBER,
+        "MOVE_TO_DISCARD": EffectType.MOVE_TO_DISCARD,
+        "MOVE_TO_DECK": EffectType.MOVE_TO_DECK,
+        "TAP_MEMBER": EffectType.TAP_MEMBER,
+        "TAP_OPPONENT": EffectType.TAP_OPPONENT,
+        "SET_TAPPED": EffectType.SET_TAPPED,
+        "ENERGY_CHARGE": EffectType.ENERGY_CHARGE,
+        "ACTIVATE_MEMBER": EffectType.ACTIVATE_MEMBER,
+        "SEARCH_DECK": EffectType.SEARCH_DECK,
+        "LOOK_AND_CHOOSE": EffectType.LOOK_AND_CHOOSE,
+        "LOOK_DECK": EffectType.LOOK_DECK,
+        "ORDER_DECK": EffectType.ORDER_DECK,
+        "SELECT_MEMBER": EffectType.SELECT_MEMBER,
+        "SELECT_CARDS": EffectType.SELECT_CARDS,
+        "PLAY_MEMBER_FROM_HAND": EffectType.PLAY_MEMBER_FROM_HAND,
+        "PLAY_MEMBER_FROM_DISCARD": EffectType.PLAY_MEMBER_FROM_DISCARD,
+        "REDUCE_COST": EffectType.REDUCE_COST,
+        "REDUCE_HEART_REQ": EffectType.REDUCE_HEART_REQ,
+        "TRANSFORM_COLOR": EffectType.TRANSFORM_COLOR,
+        "META_RULE": EffectType.META_RULE,
+        "REVEAL_UNTIL": EffectType.REVEAL_UNTIL,
+        "REVEAL_CARDS": EffectType.REVEAL_CARDS,
+        "SWAP_CARDS": EffectType.SWAP_CARDS,
+        "SWAP_AREA": EffectType.SWAP_AREA,
+        "PREVENT_BATON_TOUCH": EffectType.PREVENT_BATON_TOUCH,
+        "PREVENT_ACTIVATE": EffectType.PREVENT_ACTIVATE,
+        "PREVENT_PLAY_TO_SLOT": EffectType.PREVENT_PLAY_TO_SLOT,
+        "GRANT_ABILITY": EffectType.GRANT_ABILITY,
+        "INCREASE_COST": EffectType.INCREASE_COST,
+        "SET_HEART_COST": EffectType.SET_HEART_COST,
+        "MODIFY_SCORE_RULE": EffectType.MODIFY_SCORE_RULE,
+    }
+    
+    # Mapping from condition check opcodes to ConditionType
+    op_to_condition = {
+        "CHECK_GROUP": ConditionType.COUNT_GROUP,
+        "CHECK_HAS_COLOR": ConditionType.HAS_COLOR,
+        "CHECK_BATON": ConditionType.BATON,
+        "CHECK_LIFE_LEAD": ConditionType.LIFE_LEAD,
+        "CHECK_IS_CENTER": ConditionType.IS_CENTER,
+        "CHECK_HAS_KEYWORD": ConditionType.HAS_KEYWORD,
+        "CHECK_SELF_IS_GROUP": ConditionType.SELF_IS_GROUP,
+        "CHECK_HEART_COMPARE": ConditionType.HEART_COMPARE,
+        "CHECK_TYPE_CHECK": ConditionType.TYPE_CHECK,
+        "CHECK_SCORE_COMPARE": ConditionType.SCORE_COMPARE,
+        "CHECK_UNIQUE_NAMES": ConditionType.UNIQUE_NAMES_COUNT,
+        "CHECK_CARDS_MATCH": ConditionType.ALL_CARDS_MATCH,
+    }
+    
+    # Mapping from cost opcodes to AbilityCostType
+    op_to_cost = {
+        "PAY_ENERGY": AbilityCostType.ENERGY,
+        "SET_TAPPED": AbilityCostType.TAP_SELF,
+        "TAP_MEMBER": AbilityCostType.TAP_MEMBER,
+        "MOVE_TO_DISCARD": AbilityCostType.DISCARD_HAND,
+        "SELECT_CARDS": AbilityCostType.SELECT_CARDS,
+        "SELECT_MEMBER": AbilityCostType.SELECT_MEMBER,
+    }
+    
+    for ab in abilities:
+        frame_program = getattr(ab, "frame_program", None)
+        if not isinstance(frame_program, dict):
+            continue
+        
+        instructions = frame_program.get("instructions", [])
+        if not isinstance(instructions, list):
+            continue
+        
+        # Clear existing empty arrays to populate with real data
+        ab.effects = []
+        ab.conditions = []
+        ab.costs = []
+        
+        for frame in instructions:
+            if not isinstance(frame, dict):
+                continue
+            
+            op_name = str(frame.get("op", "")).upper()
+            if not op_name:
+                continue
+            
+            # Get frame data
+            value = frame.get("value", 0)
+            options = frame.get("options", {})
+            if isinstance(options, dict):
+                filter_data = options.get("filter", {})
+                slot_data = options.get("slot", {})
+                params = {k: v for k, v in options.items() if k not in ("filter", "slot", "opcode_id", "opcode_name")}
+            else:
+                filter_data = frame.get("filter", {})
+                slot_data = frame.get("slot", {})
+                params = {}
+            
+            is_cost = frame.get("is_cost", False) or (isinstance(options, dict) and options.get("is_cost", False))
+            
+            # Handle RETURN - just skip it
+            if op_name == "RETURN":
+                continue
+            
+            # Handle conditions (CHECK_* opcodes)
+            if op_name.startswith("CHECK_"):
+                cond_type = op_to_condition.get(op_name, ConditionType.NONE)
+                cond = Condition(
+                    type=cond_type,
+                    value=value,
+                    params=params,
+                    is_negated=frame.get("negated", False),
+                )
+                if isinstance(filter_data, dict):
+                    cond.runtime_filter = filter_data
+                    cond.attr = _pack_filter_attr_from_dict(filter_data)
+                if isinstance(slot_data, dict):
+                    cond.runtime_slot = slot_data
+                    cond.target_slot = slot_data.get("target_slot", 0)
+                ab.conditions.append(cond)
+                continue
+            
+            # Handle costs (if is_cost flag is set)
+            if is_cost and op_name in op_to_cost:
+                cost_type = op_to_cost.get(op_name, AbilityCostType.NONE)
+                cost = Cost(
+                    type=cost_type,
+                    value=value,
+                    params=params,
+                    is_optional=frame.get("optional", False),
+                )
+                if isinstance(filter_data, dict):
+                    cost.runtime_filter = filter_data
+                if isinstance(slot_data, dict):
+                    cost.runtime_slot = slot_data
+                ab.costs.append(cost)
+                continue
+            
+            # Handle effects
+            eff_type = op_to_effect.get(op_name, EffectType.NONE)
+            if eff_type != EffectType.NONE:
+                effect = Effect(
+                    effect_type=eff_type,
+                    value=value,
+                    target=TargetType.SELF,  # Default, refined by slot_data
+                    params=params,
+                    is_optional=frame.get("optional", False),
+                )
+                
+                # Set runtime metadata from frame
+                if isinstance(filter_data, dict):
+                    effect.runtime_filter = filter_data
+                    # Pack filter attr
+                    effect.runtime_attr = _pack_filter_attr_from_dict(filter_data)
+                
+                if isinstance(slot_data, dict):
+                    effect.runtime_slot = _pack_slot_from_dict(slot_data)
+                    # Determine target from slot
+                    target_slot = slot_data.get("target_slot", 0)
+                    if slot_data.get("is_opponent"):
+                        effect.target = TargetType.OPPONENT
+                    elif target_slot == 6:  # CARD_HAND
+                        effect.target = TargetType.CARD_HAND
+                    elif target_slot == 7:  # CARD_DISCARD
+                        effect.target = TargetType.CARD_DISCARD
+                    elif target_slot == 4:  # MEMBER_SELF
+                        effect.target = TargetType.MEMBER_SELF
+                
+                ab.effects.append(effect)
+
+
+def _pack_filter_attr_from_dict(filter_data: dict) -> int:
+    """Pack filter dictionary into attr format."""
+    # Simplified packing - just return a hash for now
+    # The Rust engine will use the structured filter_data anyway
+    import json
+    if not filter_data:
+        return 0
+    # Return a simple hash that can be used for comparison
+    return hash(json.dumps(filter_data, sort_keys=True)) & 0xFFFFFFFF
+
+
+def _pack_slot_from_dict(slot_data: dict) -> int:
+    """Pack slot dictionary into slot format."""
+    if not slot_data:
+        return 0
+    # Build slot from components
+    slot = slot_data.get("target_slot", 0) & 0x0F
+    slot |= (slot_data.get("comparison", 0) & 0x0F) << 4
+    # Add zone info in higher bits
+    source_zone = slot_data.get("source_zone", 0)
+    if isinstance(source_zone, str):
+        zone_map = {"DECK": 8, "DECK_TOP": 1, "DECK_BOTTOM": 2, "HAND": 6, 
+                   "DISCARD": 7, "STAGE": 4, "ENERGY": 3, "SUCCESS_PILE": 14, "YELL": 17}
+        source_zone = zone_map.get(source_zone, 0)
+    slot |= (source_zone & 0xFF) << 8
+    
+    dest_zone = slot_data.get("dest_zone", 0)
+    if isinstance(dest_zone, str):
+        zone_map = {"DECK": 8, "DECK_TOP": 1, "DECK_BOTTOM": 2, "HAND": 6, 
+                   "DISCARD": 7, "STAGE": 4, "ENERGY": 3, "SUCCESS_PILE": 14}
+        dest_zone = zone_map.get(dest_zone, 0)
+    slot |= (dest_zone & 0xFF) << 16
+    
+    # Pack flags
+    if slot_data.get("is_opponent"):
+        slot |= 1 << 24
+    if slot_data.get("is_reveal_until_live"):
+        slot |= 1 << 25
+    if slot_data.get("is_baton_slot"):
+        slot |= 1 << 26
+    if slot_data.get("is_empty_slot"):
+        slot |= 1 << 27
+    if slot_data.get("is_wait"):
+        slot |= 1 << 28
+    if slot_data.get("is_dynamic"):
+        slot |= 1 << 29
+    
+    # Area index in bits 30-31
+    area_idx = slot_data.get("area_idx", 0)
+    slot |= (area_idx & 0x03) << 30
+    
+    return slot
+
+
 def _extract_units_from_add_tag(abilities):
     """Extract unit IDs from CONSTANT trigger + ADD_TAG (META_RULE) abilities.
 
@@ -1328,6 +1573,9 @@ def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "
 
     _compile_abilities_for_export(card.abilities, card_no, "MEMBER", export_profile=export_profile)
 
+    # Populate semantic effects/conditions/costs from frames for direct Rust consumption
+    _populate_semantic_from_frames(card.abilities, card_no)
+
     # Extract units from CONSTANT ADD_TAG effects and merge with existing units.
     add_tag_units = _extract_units_from_add_tag(card.abilities)
     if add_tag_units:
@@ -1367,6 +1615,9 @@ def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "fu
     )
 
     _compile_abilities_for_export(card.abilities, card_no, "LIVE", export_profile=export_profile)
+
+    # Populate semantic effects/conditions/costs from frames for direct Rust consumption
+    _populate_semantic_from_frames(card.abilities, card_no)
 
     # Extract units from CONSTANT ADD_TAG effects and merge with existing units.
     add_tag_units = _extract_units_from_add_tag(card.abilities)

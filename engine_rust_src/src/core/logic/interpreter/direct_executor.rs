@@ -3,14 +3,6 @@
 //! This module provides direct execution of AbilityFrame variants without
 //! the HandlerRegistry indirection, replacing the VM loop with simple
 //! sequential execution.
-//!
-//! Also includes unified semantic frame types for the new JSON format.
-
-pub mod unified_types;
-#[cfg(test)]
-mod unified_tests;
-
-pub use unified_types::*;
 
 use crate::core::logic::interpreter::handlers::{HandlerRegistry, HandlerResult};
 use crate::core::logic::models::AbilityFrame;

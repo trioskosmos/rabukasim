@@ -551,38 +551,42 @@ impl CardDatabase {
                     }
                 }
             }
-            if let Some(program) = ability.frame_program.as_ref() {
-                let mut meaningful_frames = program
-                    .frames
-                    .iter()
-                    .filter(|frame| frame.opcode() != O_RETURN);
-                for effect in ability.effects.iter_mut() {
-                    let Some(frame) = meaningful_frames.next() else {
-                        break;
-                    };
-                    let components = frame.components();
-                    let needs_params = effect.params.is_null()
-                        || effect
-                            .params
-                            .as_object()
-                            .map(|params| !params.contains_key("choices"))
-                            .unwrap_or(true);
-                    if needs_params {
-                        if let Some(params) = components.params {
-                            effect.params = params.clone();
+            // Only sync frame_program data to effects if effects are not already populated
+            // (i.e., from the new semantic compiler output)
+            if ability.effects.is_empty() {
+                if let Some(program) = ability.frame_program.as_ref() {
+                    let mut meaningful_frames = program
+                        .frames
+                        .iter()
+                        .filter(|frame| frame.opcode() != O_RETURN);
+                    for effect in ability.effects.iter_mut() {
+                        let Some(frame) = meaningful_frames.next() else {
+                            break;
+                        };
+                        let components = frame.components();
+                        let needs_params = effect.params.is_null()
+                            || effect
+                                .params
+                                .as_object()
+                                .map(|params| !params.contains_key("choices"))
+                                .unwrap_or(true);
+                        if needs_params {
+                            if let Some(params) = components.params {
+                                effect.params = params.clone();
+                            }
                         }
-                    }
-                    if effect.runtime_opcode == 0 {
-                        effect.runtime_opcode = components.raw_opcode;
-                    }
-                    if effect.runtime_value == 0 {
-                        effect.runtime_value = components.value;
-                    }
-                    if effect.runtime_attr == 0 {
-                        effect.runtime_attr = components.raw_attr;
-                    }
-                    if effect.runtime_slot == 0 {
-                        effect.runtime_slot = components.raw_slot;
+                        if effect.runtime_opcode == 0 {
+                            effect.runtime_opcode = components.raw_opcode;
+                        }
+                        if effect.runtime_value == 0 {
+                            effect.runtime_value = components.value;
+                        }
+                        if effect.runtime_attr == 0 {
+                            effect.runtime_attr = components.raw_attr;
+                        }
+                        if effect.runtime_slot == 0 {
+                            effect.runtime_slot = components.raw_slot;
+                        }
                     }
                 }
             }

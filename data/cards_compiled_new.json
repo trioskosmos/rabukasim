@@ -5565,12 +5565,8 @@
   },
   "meta": {
     "version": "1.0",
-    "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards.json",
+    "source": "data/cards.json",
     "ability_source": "data/ability_frame_index.yaml",
-    "execution_model": "frame_program_only",
-    "source_hash": "74ce8c4e24e5bbf66a8ca40fae08b99d0a54c654fa84b2f3ebf4ab8cee47c391",
-    "ability_source_hash": "5dc8ba4eeb9baad034b559d56364dfb5859c3fa8730bdff717397531c9d72399",
-    "compiler_source_hash": "71e5add912fe0a8110207439dc5a23c6c701576e930e4bca835c87944bc9bd20",
-    "generated_by": "tools/abilities/pipeline.py"
+    "execution_model": "frame_program_only"
   }
 }
