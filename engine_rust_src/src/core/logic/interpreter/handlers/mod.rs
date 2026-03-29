@@ -39,6 +39,9 @@ use crate::core::enums::*;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+/// Static singleton instance of HandlerRegistry for zero-cost dispatch.
+static HANDLER_REGISTRY: HandlerRegistry = HandlerRegistry;
+
 /// Result of an opcode handler execution
 
 #[derive(Debug)]
@@ -70,6 +73,11 @@ pub struct HandlerRegistry;
 impl HandlerRegistry {
     pub fn new() -> Self {
         Self
+    }
+
+    /// Returns the static singleton instance for zero-cost access.
+    pub fn get() -> &'static HandlerRegistry {
+        &HANDLER_REGISTRY
     }
 
     /// Dispatches an opcode to its implementation.

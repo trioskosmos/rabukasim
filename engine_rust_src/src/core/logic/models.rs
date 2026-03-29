@@ -1098,19 +1098,6 @@ impl AbilityFrame {
         }
     }
 
-    pub fn raw_opcode(&self) -> i32 {
-        self.opcode()
-    }
-    pub fn raw_value(&self) -> i32 {
-        self.value()
-    }
-    pub fn raw_attr(&self) -> u64 {
-        self.attr()
-    }
-    pub fn raw_slot(&self) -> i32 {
-        self.slot()
-    }
-
     pub fn look_choose(
         &self,
     ) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {

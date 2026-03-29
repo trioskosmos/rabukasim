@@ -1,23 +1,11 @@
-"""Card Compiler - Simplified Semantic Version
+﻿"""Card Compiler - Simplified Semantic Version
 
 DATA FLOW:
 ---------
-1. INPUT: data/cards.json (raw card data from scraping)
-2. INPUT: data/ability_frame_index.yaml (semantic ability definitions)
+1. INPUT: data/cards.json (raw card data)
+2. INPUT: data/ability_frame_index.yaml (ability definitions)
 3. PROCESS: compile_cards() parses each card, resolves abilities from YAML
-4. PROCESS: _resolve_abilities() matches card_no -> sparse frame entry
-5. PROCESS: _build_ability_from_sparse_entry() creates Ability objects
-6. PROCESS: semantic_processor.populate_semantic_from_frames() fills effects/conditions/costs
-7. OUTPUT: data/cards_compiled.json (Pydantic models -> JSON)
-
-KEY CONCEPTS:
-------------
-- Ability: Plain dataclass with raw_text, trigger, effects[], conditions[], costs[]
-- Effect: Simple (effect_type, value, target, params) - no bytecode!
-- Condition: Simple (type, value, params, is_negated) - no bit packing!
-- Cost: Simple (type, value, params, is_optional) - no runtime metadata!
-
-No more: bytecode, frame_program, bit packing, complex IR, semantic_form dicts
+4. OUTPUT: data/cards_compiled.json (compiled card database)
 """
 
 from __future__ import annotations
@@ -29,7 +17,6 @@ import os
 import re
 import sys
 import unicodedata
-import hashlib
 from pathlib import Path
 
 # Add project root to path to allow imports if running as script
@@ -41,7 +28,6 @@ from typing import Any
 import numpy as np
 from pydantic import TypeAdapter
 
-# from compiler.parser import AbilityParser
 from ..models.ability import (
     Ability,
     AbilityCostType,
@@ -54,13 +40,8 @@ from ..models.ability import (
     TriggerType,
 )
 from ..models.card import EnergyCard, LiveCard, MemberCard
-from ..models.enums import CHAR_MAP, Unit
+from ..models.enums import CHAR_MAP
 from .semantic_processor import populate_semantic_from_frames as _populate_semantic_from_frames
-from tools import frame_codec
-
-# O(total_abilities) -> O(unique_abilities)
-_ABILITY_COMPILATION_CACHE: dict[str, dict[str, Any]] = {}
-_instruction_compile_errors: list[str] = []
 
 # Worker-local adapters (initialized once per process)
 _MEMBER_ADAPTER: TypeAdapter[MemberCard] | None = None
@@ -102,13 +83,12 @@ def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
     return card_dump
 
 
-def _init_worker(ability_cache: dict[str, dict[str, Any]], sparse_mapping: dict, manual_translations: dict):
-    """Initializer for multiprocessing pool to set up expensive adapters and shared ability cache."""
-    global _MEMBER_ADAPTER, _LIVE_ADAPTER, _ENERGY_ADAPTER, _ABILITY_COMPILATION_CACHE, _manual_translations_en, _sparse_manager
+def _init_worker(sparse_mapping: dict, manual_translations: dict):
+    """Initializer for multiprocessing pool to set up expensive adapters."""
+    global _MEMBER_ADAPTER, _LIVE_ADAPTER, _ENERGY_ADAPTER, _manual_translations_en, _sparse_manager
     _MEMBER_ADAPTER = TypeAdapter(MemberCard)
     _LIVE_ADAPTER = TypeAdapter(LiveCard)
     _ENERGY_ADAPTER = TypeAdapter(EnergyCard)
-    _ABILITY_COMPILATION_CACHE = ability_cache
     _manual_translations_en = manual_translations
     
     # We provide a pre-loaded "mapping" to avoid re-parsing YAML in each worker
@@ -253,12 +233,6 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
     success_count = 0
     errors = []
-    validation_issues = []  # Instruction validation
-
-    # Pre-create adapters
-    member_adapter = TypeAdapter(MemberCard)
-    live_adapter = TypeAdapter(LiveCard)
-    energy_adapter = TypeAdapter(EnergyCard)
 
     # Prepare worker arguments
     worker_args = []
@@ -312,64 +286,15 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             worker_args.append((v_key, v_data, export_profile, existing_id, logical_id, v_idx))
 
     # Execute in parallel
-    # --- Pre-compile Unique Abilities (Big O Optimization: O(total) -> O(unique)) ---
-    # We identify all unique ability signatures across the entire game and compile them ONCE
-    # in the main process, then share the result with all worker processes.
-    if not quiet:
-        print("Pre-compiling unique abilities...")
-    
-    _sparse_manager.load()
-    unique_ability_cache: dict[str, dict[str, Any]] = {}
-    
-    # Track unique signatures to avoid redundant compilation during pre-pass
-    unique_sigs = set()
-    for (card_no, ab_idx), entry in _sparse_manager.mapping.items():
-        trigger_id = int(entry.get("trigger_id", 0))
-        frames = entry.get("frames", [])
-        
-        # Build signature for memoization
-        sig = hashlib.sha1(json.dumps([frames, trigger_id], sort_keys=True).encode()).hexdigest()
-        if sig in unique_sigs:
-            continue
-            
-        unique_sigs.add(sig)
-        
-        # Compile a dummy ability to populate the cache entry
-        ab = Ability(
-            raw_text="",
-            trigger=TriggerType(trigger_id),
-            effects=[], conditions=[], costs=[]
-        )
-        
-        try:
-            # Calculate Flags (Updates ab.choice_flags etc.)
-            res = _compute_ability_flags(ab)
-            
-            # 4. Store in shared cache
-            unique_ability_cache[sig] = {
-                "ability_flags": res["ability_flags"],
-                "choice_flags": res["choice_flags"],
-                "choice_count": res["choice_count"],
-                "unflagged_logic": res.get("unflagged_logic", False),
-            }
-        except Exception as e:
-            if not quiet:
-                print(f"Warning: Failed to pre-compile ability for {card_no}#{ab_idx}: {e}")
-
-    if not quiet:
-        print(f"Pre-compiled {len(unique_ability_cache)} unique abilities.")
-
     try:
         worker_count = int(os.environ.get("LOVECA_COMPILER_WORKERS", multiprocessing.cpu_count()))
     except (TypeError, ValueError):
         worker_count = multiprocessing.cpu_count()
     worker_count = max(1, worker_count)
 
-    # Pass pre-loaded data to workers to minimize I/O contention.
-    init_args = (unique_ability_cache, _sparse_manager.mapping, _manual_translations_en)
+    init_args = (_sparse_manager.mapping, _manual_translations_en)
     
     # Default to single worker for speed (multiprocessing has overhead for small datasets)
-    # Set LOVECA_COMPILER_WORKERS=0 to force single-worker mode
     if worker_count == 1 or len(worker_args) < 100:
         if not quiet:
             print(f"Compiling {len(worker_args)} cards...")
@@ -404,111 +329,11 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
     with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(compiled_data, f, ensure_ascii=False, indent=2)
 
-    if export_profile != "runtime":
-        metadata = frame_codec.load_json(Path("data/metadata.json"))
-
-        # --- Consume the authored frame source without rewriting it ---
-        ability_frames_path = Path(ABILITY_FRAME_SOURCE_PATH)
-        if ability_frames_path.exists():
-            if str(ability_frames_path).endswith(".yaml"):
-                ability_frames = frame_codec.load_yaml(ability_frames_path)
-            else:
-                ability_frames = frame_codec.load_json(ability_frames_path)
-            if not quiet:
-                print(f"Using authored ability frames from {ability_frames_path}...")
-        else:
-            ability_frames = {
-                "source": str(ability_frames_path),
-                "metadata_source": "data/metadata.json",
-                "summary": {"card_count": 0, "ability_count": 0, "unique_ability_count": 0},
-                "abilities": [],
-            }
-            print(f"[FRAME WARNING] Authored frame source not found: {ability_frames_path}")
-
-        card_db = {"member_db": compiled_data["member_db"], "live_db": compiled_data["live_db"]}
-        normalized_ability_frames = frame_codec.normalize_authored_ability_index(ability_frames, metadata, card_db=card_db)
-
-        # --- Generate Semantic Ability Index (canonical JSON) ---
-        sparse_index_path = "data/ability_frame_index.json"
-        sparse_index = frame_codec.build_runtime_ability_index(
-            normalized_ability_frames,
-            metadata,
-            card_db=card_db,
-        )
-        sparse_index["schema"] = "ability_frame_index.semantic.v1"
-        frame_codec.dump_json(Path(sparse_index_path), sparse_index)
-        if not quiet:
-            print(f"Generating {sparse_index_path}...")
-        # Migration guard: warn if the legacy YAML artifact still exists
-        legacy_yaml_path = "data/ability_frame_index.yaml"
-        if os.path.exists(legacy_yaml_path):
-            print(f"[MIGRATION WARNING] Legacy artifact exists: {legacy_yaml_path}. "
-                  f"It is superseded by {sparse_index_path} and can be deleted.")
-
-        # --- Generate Frame Decode Export ---
-        if not quiet:
-            print("Generating frame decode export...")
-
-    # ============================================================
-    #  COMPILATION SUMMARY
-    # ============================================================
-    total_errors = len(errors) + len(_instruction_compile_errors) + len(validation_issues)
-    sep_thick = "=" * 60
-    sep_thin = "-" * 60
-    if not quiet or total_errors > 0:
-        print(f"\n{sep_thick}")
-        print("  COMPILATION SUMMARY")
-        print(sep_thick)
-        print(f"  Cards compiled: {success_count}")
-        print(f"  Total issues:   {total_errors}")
-
-    def _print_grouped_errors(title: str, error_list: list[str]):
-        """Group errors by root cause and print a compact summary."""
-        if not error_list:
-            return
-        # Extract first line (the summary) as key, collect card identifiers
-        from collections import defaultdict
-
-        groups: dict[str, list[str]] = defaultdict(list)
-        for entry in error_list:
-            first_line = entry.split("\n")[0].strip()
-            # Extract card identifier from "[TYPE] CARD_NO ab#N: error_msg"
-            # or "[CARD PARSE] CARD_NO: error_msg"
-            parts = first_line.split(": ", 1)
-            card_tag = parts[0] if len(parts) > 1 else first_line
-            error_msg = parts[1] if len(parts) > 1 else "Unknown"
-            groups[error_msg].append(card_tag)
-
-        print(f"\n{sep_thin}")
-        print(f"  {title} ({len(error_list)} total, {len(groups)} unique)")
-        print(sep_thin)
-        for error_msg, cards in groups.items():
-            print(f"  [{len(cards)}x] {error_msg}")
-            # Show card list compactly (strip [TYPE] prefix for readability)
-            card_names = [c.split("] ", 1)[-1] if "] " in c else c for c in cards]
-            line = "       Cards: " + ", ".join(card_names)
-            if len(line) > 200:
-                line = line[:197] + "..."
-            print(line)
-
-    if not quiet or (total_errors > 0 and (errors or _instruction_compile_errors)):
-        _print_grouped_errors("CARD PARSE ERRORS", errors)
-        _print_grouped_errors("INSTRUCTION COMPILE ERRORS", _instruction_compile_errors)
-
-        print(f"\n{sep_thin}")
-        print("  FRAME PIPELINE")
-        print(sep_thin)
-        print(f"  Frame source path:    {ABILITY_FRAME_SOURCE_PATH}")
-        print(f"  Frame entries loaded: {len(_sparse_manager.mapping)}")
-
-        if total_errors == 0:
-            print("\n  All cards compiled from instruction lists and validated successfully!")
-        print(sep_thick)
-
-    # Write detailed log for reference (with full tracebacks)
-        print("  Full log: compiler_errors.log")
-
     if not quiet:
+        if errors:
+            print(f"\nCompiled {success_count} cards with {len(errors)} errors")
+        else:
+            print(f"\nCompiled {success_count} cards successfully")
         print("Done.")
 
 
@@ -560,28 +385,6 @@ SYN_FLAG_CENTER = 1 << 3
 SYN_FLAG_LIFE_LEAD = 1 << 4
 
 COST_FLAG_DISCARD = 0x01
-
-
-_COMPILED_CARD_DB_CACHE: dict[str, Any] | None = None
-
-
-def _iter_ability_frames(ability):
-    frame_program = getattr(ability, "frame_program", None)
-    instructions = None
-    if isinstance(frame_program, dict):
-        instructions = frame_program.get("instructions", [])
-    if isinstance(instructions, list) and instructions:
-        for frame in instructions:
-            if frame == "Return":
-                yield "RETURN", {"op": "RETURN"}
-                continue
-            if isinstance(frame, dict):
-                op_name = str(frame.get("op") or frame.get("opcode") or frame.get("opcode_name") or frame.get("kind") or "").upper()
-                if op_name:
-                    yield op_name, frame
-        return
-
-    return
 
 
 def _compile_abilities_for_export(
@@ -695,9 +498,12 @@ class SparseSourceManager:
         try:
             self._log(f"Loading sparse ability index from {self.yaml_path}")
             if str(self.yaml_path).endswith(".yaml"):
-                data = frame_codec.load_yaml(self.yaml_path)
+                import yaml
+                with open(self.yaml_path, "r", encoding="utf-8") as f:
+                    data = yaml.safe_load(f)
             else:
-                data = frame_codec.load_json(self.yaml_path)
+                with open(self.yaml_path, "r", encoding="utf-8") as f:
+                    data = json.load(f)
             if not data:
                 self.mapping = {}
                 self._last_loaded_mtime = current_mtime
@@ -762,14 +568,13 @@ def _build_ability_from_sparse_entry(
     1. Extract trigger_id, frames, flags from sparse entry
     2. _select_ability_raw_text() - get appropriate raw text for this ability
     3. _ability_from_dict() - create base Ability object
-    4. _infer_activation_costs_from_raw_text() - parse energy/discards from text
-    5. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
+    4. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
     
     Args:
         entry: Sparse index entry with trigger_id, frames, flags
-        raw_text: Full ability text from cards.json
-        ability_index: Index of this ability on the card (0, 1, 2...)
-        legacy_payload: Optional legacy data from cards.json["abilities"]
+    raw_text: Full ability text from cards.json
+    ability_index: Index of this ability on the card (0, 1, 2...)
+    legacy_payload: Optional legacy data from cards.json["abilities"]
     
     Returns:
         Ability object ready for semantic population
@@ -793,14 +598,9 @@ def _build_ability_from_sparse_entry(
     payload["filters"] = entry.get("filters", payload.get("filters", []))
     ability = _ability_from_dict(payload)
     ability.raw_text = ability_raw_text
-    if not ability.costs:
-        inferred_costs = _infer_activation_costs_from_raw_text(ability_raw_text)
-        if inferred_costs:
-            ability.costs = inferred_costs
-    # Store frame data for later semantic processing (not on ability object)
-    # frame_data is used by semantic_processor to populate effects/conditions/costs
+    # Store frame data so the semantic processor can rebuild effects/costs.
     frame_data = {"instructions": instructions}
-    
+    ability.frame_program = frame_data
     return ability
 
 
@@ -844,37 +644,6 @@ def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str,
             return sections[0]
 
     return raw_text
-
-
-def _infer_activation_costs_from_raw_text(raw_text: str) -> list[Cost]:
-    """Backfill obvious activation costs from authored card text when sparse data omits them."""
-    if not raw_text:
-        return []
-
-    # Costs usually appear before the first explicit ability separator.
-    prefix = raw_text.split("：", 1)[0].split(":", 1)[0]
-    inferred: list[Cost] = []
-
-    energy_count = prefix.count("{{icon_energy.png|E}}")
-    if energy_count > 0:
-        inferred.append(
-            Cost(
-                type=AbilityCostType.ENERGY,
-                value=energy_count,
-                params={},
-            )
-        )
-
-    if "手札を1枚控え室に置く" in prefix:
-        inferred.append(
-            Cost(
-                type=AbilityCostType.DISCARD_HAND,
-                value=1,
-                params={},
-            )
-        )
-
-    return inferred
 
 
 def _card_has_ability_source(data: dict[str, Any]) -> bool:
@@ -966,19 +735,6 @@ def _effect_from_dict(payload: dict[str, Any]) -> Effect:
     )
 
 
-def _frame_program_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    """Extract frame data from payload for semantic processing."""
-    frame_program = payload.get("frame_program")
-    if isinstance(frame_program, dict):
-        return frame_program
-
-    instructions = payload.get("instructions", payload.get("frames", []))
-    if isinstance(instructions, list):
-        return {"instructions": list(instructions)}
-
-    return {"instructions": []}
-
-
 def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
     """
     Resolve abilities for a card from the sparse YAML index.
@@ -1017,7 +773,14 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
             continue
 
         legacy_payload = legacy_abilities[ab_idx] if ab_idx < len(legacy_abilities) and isinstance(legacy_abilities[ab_idx], dict) else None
-        abilities.append(_build_ability_from_sparse_entry(entry, raw_text, ab_idx, legacy_payload))
+        abilities.append(
+            _build_ability_from_sparse_entry(
+                entry,
+                raw_text,
+                ab_idx,
+                legacy_payload,
+            )
+        )
         used_sparse = True
 
     if used_sparse:
@@ -1079,11 +842,6 @@ def _compute_ability_flags(ab: Ability) -> dict[str, int]:
         "unflagged_logic": False,
     }
     
-    # Store back in cache if compilation result already exists
-    sig = hashlib.sha1(json.dumps([int(ab.trigger), len(ab.effects), len(ab.conditions)], sort_keys=True).encode()).hexdigest()
-    if sig in _ABILITY_COMPILATION_CACHE:
-        _ABILITY_COMPILATION_CACHE[sig].update(res)
-    
     return res
 
 
@@ -1142,60 +900,6 @@ def compute_flags(card):
         card.cost_flags = cost_flags
 
 
-def _extract_units_from_add_tag(abilities):
-    """Extract unit IDs from CONSTANT trigger + ADD_TAG (META_RULE) abilities.
-
-    Returns a set of Unit enum values to merge with card.units.
-    """
-    units_set = set()
-    # Mapping token names to Unit enum values
-    name_map = {
-        "UNIT_CERISE": Unit.CERISE_BOUQUET,
-        "UNIT_DOLL": Unit.DOLLCHESTRA,
-        "UNIT_MIRAKURA": Unit.MIRA_CRA_PARK,
-    }
-
-    for ab_idx, ab in enumerate(abilities):
-        if getattr(ab, "trigger", None) != TriggerType.CONSTANT:
-            continue
-        for _eff_idx, eff in enumerate(getattr(ab, "effects", [])):
-            if getattr(eff, "effect_type", None) != EffectType.META_RULE:
-                continue
-            tag_str = eff.params.get("tag", "") if hasattr(eff, "params") else ""
-            if not tag_str:
-                continue
-            # Normalize tag string: remove surrounding quotes and whitespace
-            raw = str(tag_str).strip()
-            if (raw.startswith('"') and raw.endswith('"')) or (raw.startswith("'") and raw.endswith("'")):
-                raw = raw[1:-1]
-            parts_found = []
-            for part in raw.split("/"):
-                key = part.strip().strip('"').strip("'")
-                if key in name_map:
-                    units_set.add(name_map[key])
-                    parts_found.append((key, name_map[key]))
-            # if parts_found:
-            #     print(f"[DEBUG _extract] Found META_RULE ADD_TAG in ability #{ab_idx}: raw='{raw}', matched parts: {parts_found}")
-    return units_set
-
-
-def _normalize_unit_values(values):
-    """Coerce any stored unit values back into Unit enums."""
-    normalized = []
-    seen = set()
-    for value in values:
-        if isinstance(value, Unit):
-            unit = value
-        elif isinstance(value, int) or (isinstance(value, str) and str(value).isdigit()):
-            unit = Unit(int(value))
-        else:
-            unit = Unit.from_japanese_name(str(value))
-        if unit not in seen:
-            normalized.append(unit)
-            seen.add(unit)
-    return normalized
-
-
 def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "full") -> MemberCard:
     """
     Parse a member card from raw JSON data.
@@ -1205,8 +909,7 @@ def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "
     2. _compile_abilities_for_export() - Calculate flags
     3. _populate_semantic_from_frames() - Fill effects/conditions/costs from frames
     4. Create MemberCard with all fields
-    5. _extract_units_from_add_tag() - Handle special unit tagging
-    6. compute_flags() - Calculate card-level flags
+    5. compute_flags() - Calculate card-level flags
     
     Args:
         card_id: Bit-packed card ID
@@ -1253,12 +956,6 @@ def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "
         faq=data.get("faq", []),
     )
 
-    # Extract units from CONSTANT ADD_TAG effects and merge with existing units.
-    add_tag_units = _extract_units_from_add_tag(card.abilities)
-    if add_tag_units:
-        existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = _normalize_unit_values(existing_units | add_tag_units)
-
     compute_flags(card)
     return card
 
@@ -1290,12 +987,6 @@ def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "fu
         blade_hearts=parse_blade_hearts(data.get("blade_heart", {})),
         faq=data.get("faq", []),
     )
-
-    # Extract units from CONSTANT ADD_TAG effects and merge with existing units.
-    add_tag_units = _extract_units_from_add_tag(card.abilities)
-    if add_tag_units:
-        existing_units = set(card.units) if isinstance(card.units, list) else set()
-        card.units = _normalize_unit_values(existing_units | add_tag_units)
 
     compute_flags(card)
     return card
@@ -1358,59 +1049,13 @@ def parse_live_reqs(req_dict: dict) -> np.ndarray:
     return parse_hearts(req_dict)
 
 
-def calculate_hash(path):
-    if not os.path.exists(path):
-        return None
-    with open(path, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()
-
-
-def load_json(path):
-    """Safely load a JSON file with UTF-8 encoding."""
-    if not os.path.exists(path):
-        return None
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return None
-
-
-def check_parity(input_path, output_path):
-    print(f"Checking parity between {input_path} and {output_path}...")
-    compiled_data = load_json(output_path)
-    if not compiled_data:
-        print("Error: Compiled data not found.")
-        return False
-
-    meta = compiled_data.get("meta", {})
-    stored_hash = meta.get("source_hash")
-    current_hash = calculate_hash(input_path)
-    stored_ability_hash = meta.get("ability_source_hash")
-    current_ability_hash = calculate_hash(SPARSE_INDEX_PATH)
-
-    if stored_hash == current_hash and stored_ability_hash == current_ability_hash:
-        print("SUCCESS: Parity check passed. Compiled data is up to date.")
-        return True
-
-    print("WARNING: Parity check FAILED. Source file has changed since last compilation.")
-    print(f"Stored cards:   {stored_hash}")
-    print(f"Current cards:   {current_hash}")
-    print(f"Stored instructions:   {stored_ability_hash}")
-    print(f"Current instructions:  {current_ability_hash}")
-    return False
-
-
 def main():
     """Main entry point for the compiler."""
     parser = argparse.ArgumentParser(
-        description="Compile raw card data into frame-first card JSON"
+        description="Compile raw card data into compiled card JSON"
     )
     parser.add_argument("--input", default="data/cards.json", help="Path to raw cards.json")
     parser.add_argument("--output", default="data/cards_compiled.json", help="Output path")
-    parser.add_argument(
-        "--check", action="store_true", help="Only check parity and exit"
-    )
     parser.add_argument(
         "--quiet", "-q", action="store_true", help="Minimize output"
     )
@@ -1421,12 +1066,6 @@ def main():
         help="Export schema profile: 'full' keeps inspection fields, 'runtime' prunes inspection-only fields",
     )
     args = parser.parse_args()
-
-    if args.check:
-        if check_parity(args.input, args.output):
-            sys.exit(0)
-        else:
-            sys.exit(1)
 
     _load_translations_if_present(quiet=args.quiet)
     compile_cards(args.input, args.output, quiet=args.quiet, export_profile=args.export_profile)

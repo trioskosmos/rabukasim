@@ -61,6 +61,8 @@ pub mod repro_softlock_tests;
 #[cfg(test)]
 pub mod repro_task;
 #[cfg(test)]
+pub mod cost_enforcement_tests;
+#[cfg(test)]
 pub mod special_mechanics_tests;
 #[cfg(test)]
 pub mod test_card_162_fix;

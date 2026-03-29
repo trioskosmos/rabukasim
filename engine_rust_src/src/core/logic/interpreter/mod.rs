@@ -367,8 +367,8 @@ pub fn resolve_semantic_frames(
 
     let execution_started = begin_execution(state, ctx_in);
 
-    // Use direct executor instead of HandlerRegistry
-    use crate::core::logic::interpreter::direct_executor::{execute_frame_direct, EffectResult};
+    // Use HandlerRegistry directly - simplified ability execution
+    use crate::core::logic::interpreter::handlers::{HandlerRegistry, HandlerResult};
     
     let mut ctx = ctx_in.clone();
     ctx.area_idx = infer_source_area_idx(state, &ctx);
@@ -525,17 +525,17 @@ pub fn resolve_semantic_frames(
 
         let mut advance_effect = true;
         
-        // Use direct executor instead of HandlerRegistry
-        match execute_frame_direct(state, db, &mut ctx, frame, effect_idx, frames) {
-            EffectResult::Continue => {}
-            EffectResult::SetCond(new_cond) => cond = new_cond,
-            EffectResult::Suspend => return Ok(()),
-            EffectResult::Return => break,
-            EffectResult::Branch(new_effect_idx) => {
+        // Execute frame directly using HandlerRegistry singleton
+        match HandlerRegistry::get().dispatch(state, db, &mut ctx, frame, &frame_data, effect_idx, frames) {
+            HandlerResult::Continue => {}
+            HandlerResult::SetCond(new_cond) => cond = new_cond,
+            HandlerResult::Suspend => return Ok(()),
+            HandlerResult::Return => break,
+            HandlerResult::Branch(new_effect_idx) => {
                 effect_idx = new_effect_idx;
                 advance_effect = false;
             }
-            EffectResult::BranchToFrames(new_frames) => {
+            HandlerResult::BranchToFrames(new_frames) => {
                 let mut branch_ctx = ctx.clone();
                 branch_ctx.program_counter = 0;
                 if let Err(err) =

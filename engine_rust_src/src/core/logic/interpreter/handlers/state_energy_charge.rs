@@ -75,7 +75,7 @@ pub fn handle_pay_energy(
     frame: &AbilityFrame,
     _v: i32, // Ignore param v, use frame.raw_value()
 ) -> HandlerResult {
-    let v = frame.raw_value();
+    let v = frame.value();
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;

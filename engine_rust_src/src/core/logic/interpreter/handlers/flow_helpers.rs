@@ -26,10 +26,10 @@ pub fn current_effect<'a>(
 ) -> Option<&'a Effect> {
     let ab_idx = usize::try_from(ctx.ability_index).ok()?;
     let matches_frame = |effect: &Effect| {
-        effect.runtime_opcode == frame.raw_opcode()
-            && effect.runtime_value == frame.raw_value()
-            && effect.runtime_attr == frame.raw_attr()
-            && effect.runtime_slot == frame.raw_slot()
+        effect.runtime_opcode == frame.opcode()
+            && effect.runtime_value == frame.value()
+            && effect.runtime_attr == frame.attr()
+            && effect.runtime_slot == frame.slot()
     };
 
     db.get_live(ctx.source_card_id)
@@ -50,7 +50,7 @@ pub fn current_effect_by_frame_index<'a>(
         candidate.opcode() == frame.opcode()
             && candidate.value() == frame.value()
             && candidate.attr() == frame.attr()
-            && candidate.raw_slot() == frame.raw_slot()
+            && candidate.slot() == frame.slot()
     };
 
     let find_from_card = |abilities: &'a [Ability]| {

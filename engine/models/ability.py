@@ -78,6 +78,7 @@ class Ability:
     raw_text: str
     trigger: TriggerType
     effects: List[Effect]
+    frame_program: Dict[str, Any] = field(default_factory=dict)
     costs: List[Cost] = field(default_factory=list)
     conditions: List[Condition] = field(default_factory=list)
     is_once_per_turn: bool = False

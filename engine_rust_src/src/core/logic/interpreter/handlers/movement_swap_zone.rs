@@ -11,7 +11,7 @@ pub fn handle_swap_zone(
     frame: &AbilityFrame,
     frame_idx: usize,
 ) -> HandlerResult {
-    let _s = frame.raw_slot();
+    let _s = frame.slot();
     let p_idx = ctx.player_id as usize;
     if ctx.choice_index == -1 && ctx.v_remaining == -1 {
         let cards = state.players[p_idx].success_lives.clone();

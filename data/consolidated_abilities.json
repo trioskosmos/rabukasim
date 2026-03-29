@@ -7322,7 +7322,8 @@
         "opcode_id": 312,
         "optional": false,
         "role": "effect",
-        "summary": "value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]"
+        "summary": "value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
+        "ability_frame_index": 0
       },
       {
         "decoded": "JUMP_IF_FALSE             | offset=2",
@@ -7333,7 +7334,40 @@
         "optional": false,
         "role": "control",
         "summary": "Skip ahead 2 frame(s) if the preceding condition fails.",
-        "value": 2
+        "value": 2,
+        "ability_frame_index": 1
+      },
+      {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 2,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
       },
       {
         "attr": {
@@ -7358,7 +7392,8 @@
           "target_slot": 4
         },
         "summary": "Choose 1 card(s).",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 3
       },
       {
         "attr": {
@@ -7375,7 +7410,8 @@
           "target_slot": 4
         },
         "summary": "Play a member from hand.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 4
       },
       {
         "decoded": "RETURN                    | done",
@@ -7385,7 +7421,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 5
       }
     ],
     "opcode_sequence": [
@@ -7400,7 +7437,16 @@
     "source_text_en": "[Activate] (E)(E), Put this member into the waiting room from the stage: Play 1 'Hasunosora' Member card with cost 15 or less from your waiting room to this member's area.",
     "summary": "Choose 1 card(s). Then value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "SUM_VALUE",
+      "JUMP_IF_FALSE",
+      "MOVE_TO_DISCARD",
+      "SELECT_CARDS",
+      "PLAY_MEMBER_FROM_HAND",
+      "RETURN"
+    ],
+    "frame_count": 6
   },
   "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。": {
     "ability_count": 2,
@@ -7525,6 +7571,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "is_cost_type": 1,
           "is_le": 1,
@@ -7546,7 +7624,8 @@
           "target_slot": 4
         },
         "summary": "Choose 1 card(s).",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "decoded": "RETURN                    | done",
@@ -7556,7 +7635,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 2
       }
     ],
     "opcode_sequence": [
@@ -7568,7 +7648,13 @@
     "source_text_en": "[Activate] (E)(E) Put this member into the waiting room from the stage: Play 1 \"Setsuna Yuki\" Member card with cost 13 or less from your hand to this member's previous area. Then, place 1 energy from your energy zone under that member. (Energy cards under a member cannot be used to pay costs. When the member leaves the stage, energy cards under it are put into the energy deck.)",
     "summary": "Choose 1 card(s).",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "SELECT_CARDS",
+      "RETURN"
+    ],
+    "frame_count": 3
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える。 {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る。": {
     "ability_count": 8,
@@ -9005,6 +9091,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "group_enabled": 1,
           "group_id": 2,
@@ -9022,7 +9140,8 @@
           "target_slot": 6
         },
         "summary": "Recover 1 live card(s) to success pile.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "decoded": "RETURN                    | done",
@@ -9032,7 +9151,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 2
       }
     ],
     "opcode_sequence": [
@@ -9044,7 +9164,13 @@
     "source_text_en": "[Activate] [Once per Turn] Put this member into a wait state and put 1 card from your hand into the waiting room: Add 1 'Nijigasaki' Live card from your waiting room to your hand.",
     "summary": "Recover 1 live card(s) to success pile.",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "RECOVER_LIVE",
+      "RETURN"
+    ],
+    "frame_count": 3
   },
   "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを1枚引き、手札を1枚控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。） {{live_start.png|ライブ開始時}}自分のステージにいるメンバーを1人までアクティブにする。": {
     "ability_count": 4,
@@ -11572,6 +11698,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "group_enabled": 1,
           "group_id": 3,
@@ -11589,7 +11747,8 @@
           "target_slot": 6
         },
         "summary": "Recover 1 member(s) from discard to hand.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "decoded": "RETURN                    | done",
@@ -11599,7 +11758,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 2
       }
     ],
     "opcode_sequence": [
@@ -11611,7 +11771,13 @@
     "source_text_en": "[Activate] Put this member from the stage into the waiting room: Add 1 'Liella!' card from your waiting room to your hand.",
     "summary": "Recover 1 member(s) from discard to hand.",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "RECOVER_MEMBER",
+      "RETURN"
+    ],
+    "frame_count": 3
   },
   "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。": {
     "ability_count": 18,
@@ -11783,6 +11949,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "zone_mask": "ALL"
         },
@@ -11798,7 +11996,8 @@
           "target_slot": 6
         },
         "summary": "Recover 1 member(s) from discard to hand.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "decoded": "RETURN                    | done",
@@ -11808,7 +12007,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 2
       }
     ],
     "opcode_sequence": [
@@ -11820,7 +12020,13 @@
     "source_text_en": "[Activate] Put this member from the stage into the waiting room: Add 1 Member card from your waiting room to your hand.",
     "summary": "Recover 1 member(s) from discard to hand.",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "RECOVER_MEMBER",
+      "RETURN"
+    ],
+    "frame_count": 3
   },
   "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。": {
     "ability_count": 27,
@@ -12073,6 +12279,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "zone_mask": "ALL"
         },
@@ -12088,7 +12326,8 @@
           "target_slot": 6
         },
         "summary": "Recover 1 live card(s) to success pile.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "decoded": "RETURN                    | done",
@@ -12098,7 +12337,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 2
       }
     ],
     "opcode_sequence": [
@@ -12110,7 +12350,13 @@
     "source_text_en": "[Activate] Put this member from the stage into the waiting room: Add 1 Live card from your waiting room to your hand.",
     "summary": "Recover 1 live card(s) to success pile.",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "RECOVER_LIVE",
+      "RETURN"
+    ],
+    "frame_count": 3
   },
   "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。それがスコア6以上の『Aqours』のライブカードの場合、エネルギーを4枚アクティブにする。": {
     "ability_count": 2,
@@ -12138,6 +12384,38 @@
     ],
     "frames": [
       {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "target_player": 1
+        },
+        "slot": {
+          "target_slot": 4,
+          "source_zone": "STAGE",
+          "dest_zone": "DISCARD"
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[target=self], slot=[target=Context Card, source=Stage, dest=Discard]",
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD"
+          ]
+        }
+      },
+      {
         "attr": {
           "zone_mask": "ALL"
         },
@@ -12153,7 +12431,8 @@
           "target_slot": 6
         },
         "summary": "Recover 1 live card(s) to success pile.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 1
       },
       {
         "attr": {
@@ -12170,7 +12449,8 @@
         "slot": {
           "target_slot": 48
         },
-        "summary": "value=0, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]"
+        "summary": "value=0, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)]",
+        "ability_frame_index": 2
       },
       {
         "decoded": "JUMP_IF_FALSE             | offset=1",
@@ -12181,7 +12461,8 @@
         "optional": false,
         "role": "control",
         "summary": "Skip ahead 1 frame(s) if the preceding condition fails.",
-        "value": 1
+        "value": 1,
+        "ability_frame_index": 3
       },
       {
         "decoded": "ACTIVATE_ENERGY           | count=4, filter=[none], slot=[target=Context Card]",
@@ -12195,7 +12476,8 @@
           "target_slot": 4
         },
         "summary": "Activate energy.",
-        "value": 4
+        "value": 4,
+        "ability_frame_index": 4
       },
       {
         "decoded": "RETURN                    | done",
@@ -12205,7 +12487,8 @@
         "opcode_id": 1,
         "optional": false,
         "role": "control",
-        "summary": "Done."
+        "summary": "Done.",
+        "ability_frame_index": 5
       }
     ],
     "opcode_sequence": [
@@ -12220,7 +12503,16 @@
     "source_text_en": "[Activate] Put this member into the waiting room from the stage: Add 1 Live card from your waiting room to your hand. If that card is an 'Aqours' Live card with score 6 or higher, ready 4 of your energy.",
     "summary": "Recover 1 live card(s) to success pile. value=0, filter=[group=Aqours], slot=[compare=GE (>=), slot=Left Stage (0)] Skip ahead 1 frame(s) if the preceding condition fails. Activate energy.",
     "trigger": "ACTIVATED",
-    "trigger_id": 7
+    "trigger_id": 7,
+    "opcode_names": [
+      "MOVE_TO_DISCARD",
+      "RECOVER_LIVE",
+      "NOP",
+      "JUMP_IF_FALSE",
+      "ACTIVATE_ENERGY",
+      "RETURN"
+    ],
+    "frame_count": 6
   },
   "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のすべてのメンバーをウェイトにする。": {
     "ability_count": 4,

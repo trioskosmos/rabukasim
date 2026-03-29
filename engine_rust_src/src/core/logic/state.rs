@@ -9,8 +9,19 @@ use super::player::*;
 use crate::core::enums::*;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::models::{AbilityContext, TurnEvent};
-// use crate::core::logic::constants::*;
-// use crate::core::enums::Zone; // Remainder zone is currently int
+
+/// Logging macro that defers string formatting until actually needed.
+/// Only formats and logs if state.ui.silent is false.
+#[macro_export]
+macro_rules! game_log {
+    ($state:expr, $($arg:tt)*) => {
+        if !$state.ui.silent {
+            $state.log(format!($($arg)*));
+        }
+    };
+}
+
+pub use crate::game_log;
 
 pub trait ActionReceiver {
     fn add_action(&mut self, action_id: usize);

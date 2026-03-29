@@ -127,7 +127,9 @@ impl CardFilter {
                 3 => 255, // Both (always pass later)
                 _ => ctx.player_id,
             };
-            println!("[DEBUG_FILTER] Target Player check. Filter: {}, Actual: {:?}, Card: {}", self.target_player, inferred_owner, cid);
+            if state.debug.debug_mode {
+                println!("[DEBUG_FILTER] Target Player check. Filter: {}, Actual: {:?}, Card: {}", self.target_player, inferred_owner, cid);
+            }
 
             if target_p != 255 {
                 let matches_owner = if let Some((p_idx, _)) = checked_slot {
@@ -137,7 +139,9 @@ impl CardFilter {
                 };
 
                 if matches_owner == Some(false) {
-                    println!("[DEBUG_FILTER] Target Player FAILED. Filter: {}, Actual: {:?}", target_p, matches_owner);
+                    if state.debug.debug_mode {
+                        println!("[DEBUG_FILTER] Target Player FAILED. Filter: {}, Actual: {:?}", target_p, matches_owner);
+                    }
                     return false;
                 }
             }

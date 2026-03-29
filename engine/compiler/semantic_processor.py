@@ -147,7 +147,7 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
                 if cond_type != ConditionType.NONE:
                     ab.conditions.append(Condition(
                         type=cond_type, value=data["value"], params=data["params"],
-                        is_negated=data["is_negated"], target_slot=data["slot"].get("target_slot", 0)
+                        is_negated=data["is_negated"]
                     ))
                 continue
             

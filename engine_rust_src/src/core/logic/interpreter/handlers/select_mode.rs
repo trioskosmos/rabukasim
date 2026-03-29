@@ -18,7 +18,7 @@ pub fn handle_select_mode(
     frame_idx: usize,
     frames: &[AbilityFrame],
 ) -> HandlerResult {
-    let v = frame.raw_value();
+    let v = frame.value();
 
     if ctx.choice_index == -1 {
         if ctx.auto_pick && v == 1 {
@@ -96,14 +96,14 @@ pub fn handle_select_mode(
     if v == 2 {
         let first_is_live_reveal = resolve_option(0)
             .map(|target| {
-                target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
-                    && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
+                target.opcode() == crate::core::enums::O_REVEAL_UNTIL
+                    && (target.slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
             })
             .unwrap_or(false);
         let second_is_live_reveal = resolve_option(1)
             .map(|target| {
-                target.raw_opcode() == crate::core::enums::O_REVEAL_UNTIL
-                    && (target.raw_slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
+                target.opcode() == crate::core::enums::O_REVEAL_UNTIL
+                    && (target.slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
             })
             .unwrap_or(false);
 
@@ -123,7 +123,7 @@ pub fn handle_select_mode(
     }
 
     let target_effect_idx =
-        frame_idx + 2 + choice + frames[frame_idx + 1 + choice].raw_value() as usize;
+        frame_idx + 2 + choice + frames[frame_idx + 1 + choice].value() as usize;
 
     ctx.choice_index = -1;
     HandlerResult::Branch(target_effect_idx)

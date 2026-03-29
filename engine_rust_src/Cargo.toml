@@ -38,6 +38,9 @@ bincode = "1.3"
 
 smallvec = { version = "1.13", features = ["serde", "union", "const_generics", "write"] }
 
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
 [features]
 default = ["parallel"]
 parallel = ["dep:rayon"]
@@ -46,25 +49,45 @@ nn = ["dep:ort"]
 extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 gpu = []
 
-[[bin]]
-name = "ai_battle"
-path = "src/bin/ai_battle.rs"
-test = false
+# [[bin]]
+# name = "ai_battle"
+# path = "src/bin/ai_battle.rs"
+# test = false
 
-[[bin]]
-name = "ai_game"
-path = "src/bin/ai_game.rs"
-test = false
+# [[bin]]
+# name = "ai_game"
+# path = "src/bin/ai_game.rs"
+# test = false
 
-[[bin]]
-name = "simple_game"
-path = "src/bin/simple_game.rs"
-test = false
+# [[bin]]
+# name = "simple_game"
+# path = "src/bin/simple_game.rs"
+# test = false
 
-[[bin]]
-name = "test_turn_runner"
-path = "src/bin/test_turn_runner.rs"
-test = false
+# [[bin]]
+# name = "test_turn_runner"
+# path = "src/bin/test_turn_runner.rs"
+# test = false
+
+[[bench]]
+name = "game_simulation"
+path = "benches/game_simulation.rs"
+harness = false
+
+[[bench]]
+name = "engine_components"
+path = "benches/engine_components.rs"
+harness = false
+
+[[bench]]
+name = "turn_sequencer"
+path = "benches/turn_sequencer.rs"
+harness = false
+
+[[bench]]
+name = "micro_benchmarks"
+path = "benches/micro_benchmarks.rs"
+harness = false
 
 [profile.dev]
 opt-level = 0
@@ -72,6 +95,7 @@ overflow-checks = false
 debug = true
 incremental = true
 codegen-units = 256
+panic = 'abort'
 
 [profile.dev.package."*"]
 opt-level = 0

@@ -732,7 +732,7 @@ impl ResponseGenerator {
         }
 
         let target_idx =
-            select_idx + 2 + mode_idx + frames[branch_offset_idx].raw_value().max(0) as usize;
+            select_idx + 2 + mode_idx + frames[branch_offset_idx].value().max(0) as usize;
         frames
             .iter()
             .skip(target_idx)
