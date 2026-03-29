@@ -1,17 +1,29 @@
 # Use the MSVC LLD linker for significantly faster linking on Windows
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
 
-# Nightly-only flags removed for stable compatibility
-# [build]
-# rustflags = ["-Zthreads=12"]
+[build]
+# Enable pipelining to start compiling dependent crates sooner
+pipelining = true
 
 [env]
 RUST_TEST_THREADS = "12"
+
+[registries.crates-io]
+# Enable sparse protocol for faster dependency resolution (Rust 1.70+)
+protocol = "sparse"
+
+[net]
+# Faster git operations
+git-fetch-with-cli = true
 
 [alias]
 # Build and install the extension into the current Python environment
 dev = "!cmd /c uv run maturin develop"
 # Optimized dev build with good balance of speed and performance
 dev-opt = "!cmd /c uv run maturin develop --profile dev-release"
-test-alias = "build"
+# Fast test run with optimized dependencies
+test-fast = "test --profile test-fast"
+# Fast benchmark profile
+bench-fast = "bench --profile bench-fast"

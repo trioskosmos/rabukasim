@@ -33,7 +33,7 @@ echo [build] Building Python extension (maturin)...
 uv run --isolated --managed-python --python 3.12 maturin develop
 if errorlevel 1 goto MATURIN_FAILED
 
-echo [build] Preparing compiled ability artifacts...
+echo [build] Compiling runtime cards and syncing live copies...
 uv run --isolated --managed-python --python 3.12 python tools/build_cards.py --force --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 goto RUN_SERVER
@@ -42,7 +42,7 @@ goto RUN_SERVER
 echo [warn] maturin develop failed; continuing without the Python extension.
 
 :FAST_FRAME_SYNC
-echo [build] Preparing compiled ability artifacts...
+echo [build] Compiling runtime cards and syncing live copies...
 uv run --isolated --managed-python --python 3.12 python tools/build_cards.py --sync-launcher-assets
 if errorlevel 1 goto CMD_FAIL
 

@@ -41,30 +41,6 @@ use crate::core::logic::handlers::{
 
 pub use super::state::*;
 
-macro_rules! delegate_game_state_ref {
-    (
-        $(
-            pub fn $name:ident(&$self:ident $(, $arg:ident : $ty:ty)*) $(-> $ret:ty)? => $body:block;
-        )+
-    ) => {
-        $(
-            pub fn $name(&$self, $($arg: $ty),*) $(-> $ret)? $body
-        )+
-    };
-}
-
-macro_rules! delegate_game_state_mut {
-    (
-        $(
-            pub fn $name:ident(&mut $self:ident $(, $arg:ident : $ty:ty)*) $(-> $ret:ty)? => $body:block;
-        )+
-    ) => {
-        $(
-            pub fn $name(&mut $self, $($arg: $ty),*) $(-> $ret)? $body
-        )+
-    };
-}
-
 impl GameState {
     pub(crate) const ACTION_TURN_CHOICE_FIRST: i32 = ACTION_BASE_TURN_ORDER_FIRST;
     pub(crate) const ACTION_TURN_CHOICE_SECOND: i32 = ACTION_BASE_TURN_ORDER_FIRST + 1;
@@ -92,11 +68,17 @@ impl GameState {
     }
 
     pub fn sync_cached_stats(&mut self, db: &CardDatabase, p_idx: usize) {
+        use crate::core::logic::rules::{calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura};
+
         if !self.ui.silent {
             self.log(format!("Rule 3.3.1 (9.6, 9.7): Syncing cached member attributes on Stage for Player {}.", p_idx));
         }
+
+        // Calculate board aura once and reuse for all slots
+        let aura = calculate_board_aura(self, p_idx, db);
+
+        let mut total_blades = 0u32;
         let mut total_hearts = HeartBoard::default();
-        let mut total_blades = 0;
         let mut slot_blades = [0u32; 3];
         let mut slot_hearts = [
             HeartBoard::default(),
@@ -105,8 +87,8 @@ impl GameState {
         ];
 
         for i in 0..3 {
-            let sb = self.get_effective_blades(p_idx, i, db, 1);
-            let sh = self.get_effective_hearts(p_idx, i, db, 1);
+            let sb = get_effective_blades_with_aura(self, p_idx, i, db, &aura);
+            let sh = get_effective_hearts_with_aura(self, p_idx, i, db, &aura);
 
             slot_blades[i] = sb;
             slot_hearts[i] = sh;
@@ -120,6 +102,7 @@ impl GameState {
         p.cached_slot_hearts = slot_hearts;
         p.cached_total_hearts = total_hearts;
         p.cached_total_blades = total_blades;
+        p.board_aura = aura; // Cache the aura for future use
 
         // Initial deck stats sync if needed
         if p.cached_deck_stats.count == 0.0 && !p.deck.is_empty() {
@@ -204,79 +187,86 @@ impl GameState {
         }
     }
 
-    delegate_game_state_ref! {
-        pub fn get_effective_blades(
-            &self,
-            player_idx: usize,
-            slot_idx: usize,
-            db: &CardDatabase,
-            depth: u32
-        ) -> u32 => {
-            super::rules::get_effective_blades(self, player_idx, slot_idx, db, depth)
-        };
-        pub fn get_effective_hearts(
-            &self,
-            player_idx: usize,
-            slot_idx: usize,
-            db: &CardDatabase,
-            depth: u32
-        ) -> HeartBoard => {
-            super::rules::get_effective_hearts(self, player_idx, slot_idx, db, depth)
-        };
-        pub fn get_total_blades(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> u32 => {
-            super::rules::get_total_blades(self, p_idx, db, depth)
-        };
-        pub fn get_total_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard => {
-            super::rules::get_total_hearts(self, p_idx, db, depth)
-        };
-        pub fn get_total_member_hearts(
-            &self,
-            p_idx: usize,
-            db: &CardDatabase,
-            depth: u32
-        ) -> HeartBoard => {
-            super::rules::get_total_member_hearts(self, p_idx, db, depth)
-        };
-        pub fn calculate_cost_delta(&self, db: &CardDatabase, card_id: i32, p_idx: usize) -> i32 => {
-            super::rules::calculate_cost_delta(self, db, card_id, p_idx)
-        };
-        pub fn get_member_cost(
-            &self,
-            p_idx: usize,
-            card_id: i32,
-            slot_idx: i16,
-            secondary_slot_idx: i16,
-            db: &CardDatabase,
-            depth: u32
-        ) -> i32 => {
-            super::rules::get_member_cost(
-                self,
-                p_idx,
-                card_id,
-                slot_idx,
-                secondary_slot_idx,
-                db,
-                depth,
-            )
-        };
-        pub fn has_restriction(
-            &self,
-            p_idx: usize,
-            slot_idx: usize,
-            opcode: i32,
-            db: &CardDatabase
-        ) -> bool => {
-            super::rules::has_restriction(self, p_idx, slot_idx, opcode, db)
-        };
-        pub fn check_cost(
-            &self,
-            db: &CardDatabase,
-            p_idx: usize,
-            cost: &Cost,
-            ctx: &AbilityContext
-        ) -> bool => {
-            super::interpreter::check_cost(self, db, p_idx, cost, ctx)
-        };
+    // --- Reference-based delegations to rules module ---
+    pub fn get_effective_blades(
+        &self,
+        player_idx: usize,
+        slot_idx: usize,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> u32 {
+        super::rules::get_effective_blades(self, player_idx, slot_idx, db, depth)
+    }
+
+    pub fn get_effective_hearts(
+        &self,
+        player_idx: usize,
+        slot_idx: usize,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> HeartBoard {
+        super::rules::get_effective_hearts(self, player_idx, slot_idx, db, depth)
+    }
+
+    pub fn get_total_blades(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> u32 {
+        super::rules::get_total_blades(self, p_idx, db, depth)
+    }
+
+    pub fn get_total_hearts(&self, p_idx: usize, db: &CardDatabase, depth: u32) -> HeartBoard {
+        super::rules::get_total_hearts(self, p_idx, db, depth)
+    }
+
+    pub fn get_total_member_hearts(
+        &self,
+        p_idx: usize,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> HeartBoard {
+        super::rules::get_total_member_hearts(self, p_idx, db, depth)
+    }
+
+    pub fn calculate_cost_delta(&self, db: &CardDatabase, card_id: i32, p_idx: usize) -> i32 {
+        super::rules::calculate_cost_delta(self, db, card_id, p_idx)
+    }
+
+    pub fn get_member_cost(
+        &self,
+        p_idx: usize,
+        card_id: i32,
+        slot_idx: i16,
+        secondary_slot_idx: i16,
+        db: &CardDatabase,
+        depth: u32,
+    ) -> i32 {
+        super::rules::get_member_cost(
+            self,
+            p_idx,
+            card_id,
+            slot_idx,
+            secondary_slot_idx,
+            db,
+            depth,
+        )
+    }
+
+    pub fn has_restriction(
+        &self,
+        p_idx: usize,
+        slot_idx: usize,
+        opcode: i32,
+        db: &CardDatabase,
+    ) -> bool {
+        super::rules::has_restriction(self, p_idx, slot_idx, opcode, db)
+    }
+
+    pub fn check_cost(
+        &self,
+        db: &CardDatabase,
+        p_idx: usize,
+        cost: &Cost,
+        ctx: &AbilityContext,
+    ) -> bool {
+        super::interpreter::check_cost(self, db, p_idx, cost, ctx)
     }
 
     pub fn set_member_tapped(
@@ -312,16 +302,16 @@ impl GameState {
     }
 
     // --- Performance Phase Wrappers ---
-    delegate_game_state_mut! {
-        pub fn do_yell(&mut self, db: &CardDatabase, count: u32) -> Vec<i32> => {
-            super::performance::do_yell(self, db, count)
-        };
-        pub fn do_performance_phase(&mut self, db: &CardDatabase) => {
-            super::performance::do_performance_phase(self, db)
-        };
-        pub fn advance_from_performance(&mut self) => {
-            super::performance::advance_from_performance(self);
-        };
+    pub fn do_yell(&mut self, db: &CardDatabase, count: u32) -> Vec<i32> {
+        super::performance::do_yell(self, db, count)
+    }
+
+    pub fn do_performance_phase(&mut self, db: &CardDatabase) {
+        super::performance::do_performance_phase(self, db)
+    }
+
+    pub fn advance_from_performance(&mut self) {
+        super::performance::advance_from_performance(self);
     }
 
     // --- Phase Methods ---
@@ -335,63 +325,71 @@ impl GameState {
         self.play_member_with_choice(db, hand_idx, slot_idx, -1, -1, 0)
     }
 
-    delegate_game_state_mut! {
-        pub fn end_main_phase(&mut self, db: &CardDatabase) => {
-            MainPhaseController::end_main_phase(self, db);
-        };
-        pub fn do_live_result(&mut self, db: &CardDatabase) => {
-            super::performance::do_live_result(self, db);
-        };
-        pub fn finalize_live_result(&mut self) => {
-            super::performance::finalize_live_result(self);
-        };
-        pub fn activate_ability(
-            &mut self,
-            db: &CardDatabase,
-            slot_idx: usize,
-            ab_idx: usize
-        ) -> Result<(), String> => {
-            ResponseController::activate_ability(self, db, slot_idx, ab_idx)
-        };
-        pub fn activate_ability_with_choice(
-            &mut self,
-            db: &CardDatabase,
-            slot_idx: usize,
-            ab_idx: usize,
-            choice_idx: i32,
-            target_slot: i32
-        ) -> Result<(), String> => {
-            ResponseController::activate_ability_with_choice(
-                self,
-                db,
-                slot_idx,
-                ab_idx,
-                choice_idx,
-                target_slot,
-            )
-        };
-        pub fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) => {
-            MulliganController::execute_mulligan(self, player_idx, discard_indices);
-        };
-        pub fn do_active_phase(&mut self, db: &CardDatabase) => {
-            TurnPhaseController::do_active_phase(self, db);
-        };
-        pub fn do_energy_phase(&mut self) => {
-            TurnPhaseController::do_energy_phase(self);
-        };
-        pub fn do_draw_phase(&mut self, db: &CardDatabase) => {
-            TurnPhaseController::do_draw_phase(self, db);
-        };
-        pub fn pay_cost(
-            &mut self,
-            db: &CardDatabase,
-            p_idx: usize,
-            cost: &Cost,
-            ctx: &AbilityContext
-        ) -> bool => {
-            let mut ctx = ctx.clone();
-            super::interpreter::pay_cost(self, db, p_idx, cost, &mut ctx)
-        };
+    // --- Mutable delegations to handlers and performance modules ---
+    pub fn end_main_phase(&mut self, db: &CardDatabase) {
+        MainPhaseController::end_main_phase(self, db);
+    }
+
+    pub fn do_live_result(&mut self, db: &CardDatabase) {
+        super::performance::do_live_result(self, db);
+    }
+
+    pub fn finalize_live_result(&mut self) {
+        super::performance::finalize_live_result(self);
+    }
+
+    pub fn activate_ability(
+        &mut self,
+        db: &CardDatabase,
+        slot_idx: usize,
+        ab_idx: usize,
+    ) -> Result<(), String> {
+        ResponseController::activate_ability(self, db, slot_idx, ab_idx)
+    }
+
+    pub fn activate_ability_with_choice(
+        &mut self,
+        db: &CardDatabase,
+        slot_idx: usize,
+        ab_idx: usize,
+        choice_idx: i32,
+        target_slot: i32,
+    ) -> Result<(), String> {
+        ResponseController::activate_ability_with_choice(
+            self,
+            db,
+            slot_idx,
+            ab_idx,
+            choice_idx,
+            target_slot,
+        )
+    }
+
+    pub fn execute_mulligan(&mut self, player_idx: usize, discard_indices: Vec<usize>) {
+        MulliganController::execute_mulligan(self, player_idx, discard_indices);
+    }
+
+    pub fn do_active_phase(&mut self, db: &CardDatabase) {
+        TurnPhaseController::do_active_phase(self, db);
+    }
+
+    pub fn do_energy_phase(&mut self) {
+        TurnPhaseController::do_energy_phase(self);
+    }
+
+    pub fn do_draw_phase(&mut self, db: &CardDatabase) {
+        TurnPhaseController::do_draw_phase(self, db);
+    }
+
+    pub fn pay_cost(
+        &mut self,
+        db: &CardDatabase,
+        p_idx: usize,
+        cost: &Cost,
+        ctx: &AbilityContext,
+    ) -> bool {
+        let mut ctx = ctx.clone();
+        super::interpreter::pay_cost(self, db, p_idx, cost, &mut ctx)
     }
 
     pub fn set_live_cards(&mut self, player_idx: usize, card_ids: Vec<u32>) -> Result<(), String> {

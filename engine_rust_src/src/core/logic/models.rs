@@ -448,7 +448,9 @@ impl AbilityFrame {
             .or_else(|| Self::first_i64(frame, &["opcode_id", "opcode"]))
             .unwrap_or(0) as i32;
         let value_json = Self::first_cloned_value(payload, &["value", "count", "rule_type", "params", "v"]);
-        let value = Self::first_i64(&value_json, &["value"])
+        // If value_json is already a number (e.g., from "value" field), use it directly
+        let value = value_json.as_i64()
+            .or_else(|| Self::first_i64(&value_json, &["value"]))
             .or_else(|| Self::first_i64(payload, &["count", "rule_type", "v"]))
             .or_else(|| Self::first_i64(frame, &["value", "rule_type", "v"]))
             .unwrap_or(0) as i32;
@@ -798,7 +800,7 @@ impl AbilityFrame {
         let runtime_attr = effect.runtime_attr;
         let mut runtime_slot = effect.runtime_slot;
         let mut slot = DecodedSlot::decode(runtime_slot);
-
+        
         if let Some(destination) = effect
             .params
             .as_object()
@@ -857,7 +859,99 @@ impl AbilityFrame {
             slot.is_wait = true;
         }
 
+        // Convert effect.target to slot value for effects like SwapArea
+        // where target determines rotation direction
+        if effect.target == TargetType::MemberSelf {
+            slot.target_slot = 4; // TARGET_SLOT_STAGE / TARGET_SLOT_AREA_IDX
+        } else if effect.target == TargetType::CardHand {
+            slot.target_slot = 6; // CardHand target
+        } else if effect.target == TargetType::CardDiscard {
+            slot.target_slot = 7; // CardDiscard target
+        }
+
         runtime_slot = slot.to_raw();
+
+        // Handle specific opcodes that need proper frame variants for correct value encoding
+        // even when params is present
+        let filter = CardFilter::from_attr(runtime_attr as i64);
+        match runtime_opcode {
+            O_LOOK_AND_CHOOSE => {
+                let decoded = decode_look_and_choose_value(&effect.params, runtime_value);
+                return AbilityFrame::LookAndChoose {
+                    count: decoded.count as i32,
+                    choose_count: decoded.choose_count as i32,
+                    reveal: decoded.reveal,
+                    dest_discard: decoded.dest_discard,
+                    char_id_1: decoded.char_id_1,
+                    char_id_2: decoded.char_id_2,
+                    char_id_3: decoded.char_id_3,
+                    filter,
+                    slot,
+                    is_cost: false,
+                };
+            }
+            O_RECOVER_LIVE => {
+                return AbilityFrame::RecoverLive {
+                    count: runtime_value,
+                    filter,
+                    slot,
+                    params: effect.params.clone(),
+                    is_cost: false,
+                };
+            }
+            O_RECOVER_MEMBER => {
+                return AbilityFrame::RecoverMember {
+                    count: runtime_value,
+                    filter,
+                    slot,
+                    params: effect.params.clone(),
+                    is_cost: false,
+                };
+            }
+            O_SELECT_MEMBER => {
+                return AbilityFrame::SelectMember {
+                    count: runtime_value,
+                    filter,
+                    slot,
+                    is_cost: false,
+                };
+            }
+            O_MOVE_MEMBER => {
+                return AbilityFrame::MoveMember {
+                    filter,
+                    slot,
+                    from_slot: 0,
+                    is_cost: false,
+                };
+            }
+            O_DRAW => {
+                return AbilityFrame::Draw {
+                    count: runtime_value,
+                    slot,
+                    is_cost: false,
+                };
+            }
+            O_META_RULE => {
+                return AbilityFrame::MetaRule {
+                    rule_type: runtime_value,
+                    filter,
+                    slot,
+                    is_cost: false,
+                };
+            }
+            O_MOVE_TO_DISCARD => {
+                return AbilityFrame::Semantic {
+                    opcode: runtime_opcode,
+                    value: runtime_value,
+                    filter,
+                    slot,
+                    is_negated: false,
+                    is_cost: false,
+                    params: effect.params.clone(),
+                };
+            }
+            _ => {}
+        }
 
         if !effect.params.is_null() {
             return AbilityFrame::Semantic {
@@ -1184,7 +1278,7 @@ impl AbilityFrame {
         let v = self.value();
         let a = self.attr();
         let s = self.slot();
-
+        
         let mut final_op = op;
         if self.is_negated() && op < crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
             final_op += crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
@@ -1314,6 +1408,24 @@ impl FrameProgram {
     }
 
     pub fn to_words(&self) -> Vec<i32> {
+        // Prefer converting frames to words if they exist (for runtime effect conversion)
+        // Only fall back to cached bytecode if no frames are available
+        if !self.frames.is_empty() {
+            let mut words = Vec::with_capacity(
+                self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
+            );
+            for frame in &self.frames {
+                let instr = frame.to_instruction();
+                words.push(instr.op);
+                words.push(instr.v);
+                words.push(instr.a as i32);
+                words.push((instr.a >> 32) as i32);
+                words.push(instr.raw_s);
+            }
+            return words;
+        }
+
+        // Fall back to cached bytecode only if no frames exist
         if let Some(raw_program) = &self.raw_program {
             if let Some(words) = raw_program.get("bytecode").and_then(|v| v.as_array()) {
                 let mut bytecode = Vec::with_capacity(words.len());
@@ -1328,18 +1440,7 @@ impl FrameProgram {
             }
         }
 
-        let mut words = Vec::with_capacity(
-            self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
-        );
-        for frame in &self.frames {
-            let instr = frame.to_instruction();
-            words.push(instr.op);
-            words.push(instr.v);
-            words.push(instr.a as i32);
-            words.push((instr.a >> 32) as i32);
-            words.push(instr.raw_s);
-        }
-        words
+        Vec::new()
     }
 
     pub fn to_bytecode(&self) -> Vec<i32> {
@@ -1379,7 +1480,7 @@ impl std::hash::Hash for Condition {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Effect {
     pub effect_type: EffectType,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_value_field")]
     pub value: i32,
     #[serde(default)]
     pub value_cond: ConditionType,
@@ -1399,6 +1500,28 @@ pub struct Effect {
     pub runtime_slot: i32,
     #[serde(default)]
     pub modal_options: serde_json::Value,
+}
+
+fn deserialize_value_field<'de, D>(deserializer: D) -> Result<i32, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::Number(n) => n.as_i64().map(|v| v as i32).ok_or_else(|| {
+            serde::de::Error::custom("expected integer value")
+        }),
+        serde_json::Value::Object(obj) => {
+            // Handle complex value objects like {"count": 4}
+            // Try to extract a meaningful integer value, or default to 0
+            if let Some(count) = obj.get("count").and_then(|v| v.as_i64()) {
+                Ok(count as i32)
+            } else {
+                Ok(0)
+            }
+        }
+        _ => Ok(0),
+    }
 }
 
 impl std::hash::Hash for Effect {
@@ -1646,6 +1769,8 @@ pub struct Ability {
     pub preparsed_modifiers: Vec<PreparsedModifier>,
     #[serde(default)]
     pub filters: Vec<crate::core::logic::filter::CardFilter>,
+    #[serde(default)]
+    pub requires_deck_top_window: bool,
 }
 
 impl std::hash::Hash for Ability {
@@ -1664,6 +1789,7 @@ impl std::hash::Hash for Ability {
         self.pseudocode.hash(state);
         self.preparsed_modifiers.hash(state);
         self.filters.hash(state);
+        self.requires_deck_top_window.hash(state);
         // modal_options skipped
     }
 }

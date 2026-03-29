@@ -458,15 +458,23 @@ impl MainPhaseController for GameState {
                 self.current_player
             ));
         }
-        self.trigger_event(
-            db,
-            TriggerType::TurnEnd,
-            self.current_player as usize,
-            -1,
-            -1,
-            0,
-            -1,
-        );
+        
+        // Fast path: skip TurnEnd trigger if no cards on board (nothing to trigger)
+        let p_idx = self.current_player as usize;
+        let has_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0)
+            || self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
+        
+        if has_cards || !db.is_vanilla {
+            self.trigger_event(
+                db,
+                TriggerType::TurnEnd,
+                self.current_player as usize,
+                -1,
+                -1,
+                0,
+                -1,
+            );
+        }
 
         if self.current_player == self.first_player {
             self.current_player = 1 - self.first_player;
@@ -1395,14 +1403,21 @@ impl TurnPhaseController for GameState {
         }
 
         self.core.players[p_idx].untap_all(skip);
-        let ctx = AbilityContext {
-            source_card_id: -1,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            area_idx: -1,
-            ..Default::default()
-        };
-        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+        
+        // Fast path: skip TurnStart trigger if no cards (nothing to trigger)
+        let has_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0)
+            || self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
+        if has_cards || !db.is_vanilla {
+            let ctx = AbilityContext {
+                source_card_id: -1,
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: -1,
+                ..Default::default()
+            };
+            self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+        }
+        
         if self.phase == Phase::Active {
             self.phase = Phase::Energy;
             if !self.ui.silent {
@@ -1443,14 +1458,20 @@ impl TurnPhaseController for GameState {
 
     fn do_draw_phase(&mut self, db: &CardDatabase) {
         let p_idx = self.current_player as usize;
-        let ctx = AbilityContext {
-            source_card_id: -1,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            area_idx: -1,
-            ..Default::default()
-        };
-        self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+        
+        // Fast path: skip TurnStart trigger if no cards (nothing to trigger)
+        let has_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0)
+            || self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
+        if has_cards || !db.is_vanilla {
+            let ctx = AbilityContext {
+                source_card_id: -1,
+                player_id: p_idx as u8,
+                activator_id: p_idx as u8,
+                area_idx: -1,
+                ..Default::default()
+            };
+            self.trigger_abilities(db, TriggerType::TurnStart, &ctx);
+        }
 
         if self.phase != Phase::Draw {
             return;

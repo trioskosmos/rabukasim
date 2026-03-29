@@ -10,7 +10,7 @@
 |-----------|--------------------|----------|-------|
 | **Frontend** | Web UI Assets | `frontend/web_ui/` | **ONLY** edit here. Served by Flask. |
 | **Backend** | Flask Server | `backend/server.py` | The only active server file. |
-| **Data** | Game Data | `data/` | `cards.json` lives here. Compiler syncs to `engine/data/`. |
+| **Data** | Game Data | `data/` | `cards.json` lives here. Compiler syncs to `engine/data/` and `launcher/static_content/data/`. |
 | **Engine** | Python Logic | `engine/` | Game state, logic, tests. |
 | **Engine (Rust)** | Rust Core | `engine_rust_src/` | Rust source code. |
 | **Compiler** | Data Compiler | `compiler/` | `main.py` compiles JSON. |
@@ -41,8 +41,8 @@
 
 2.  **Editing Data:**
     *   Edit `data/cards.json`.
-    *   Run `uv run python -m compiler.main` to compile.
-    *   This automatically updates `engine/data/cards_compiled.json`.
+    *   Run `uv run python tools/build_cards.py --force --sync-launcher-assets` to compile.
+    *   This updates `data/cards_compiled.json` plus the engine and launcher live mirrors.
 
 3.  **Running Scripts:**
     *   Scripts in `tools/` should reference `data/` for input/output where possible.

@@ -18,7 +18,7 @@ fn test_opcode_swap_cards_deck_refresh() {
     // Opcode 21: O_SWAP_CARDS, v=2 (move 2 cards), target_slot=6 (Hand)
     let bc = vec![O_SWAP_CARDS, 2, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     println!("DECK: {:?}", state.players[0].deck);
     println!("HAND: {:?}", state.players[0].hand);
@@ -50,7 +50,7 @@ fn test_opcode_increase_cost_ripple() {
 
     // Opcode 70: O_INCREASE_COST, v=2
     let bc = vec![O_INCREASE_COST, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     let new_cost = state.get_member_cost(0, 3000, -1, -1, &db, 0);
     assert_eq!(
@@ -75,7 +75,7 @@ fn test_opcode_select_live_rigor() {
 
     // Opcode 68: O_SELECT_LIVE, v=1 (Count 1)
     let bc = vec![O_SELECT_LIVE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(
         state.phase,
@@ -122,7 +122,7 @@ fn test_opcode_opponent_choose_rigor() {
         panic!("Card 3001 not found in test DB");
     };
 
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().unwrap();
@@ -166,7 +166,7 @@ fn test_opcode_reduce_yell_count_functional() {
 
     // Opcode 62: O_REDUCE_YELL_COUNT, v=1
     let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Call do_yell for 2 cards
     let revealed = crate::core::logic::performance::do_yell(&mut state, &db, 2);
@@ -191,7 +191,7 @@ fn test_opcode_prevent_activate_rigor() {
 
     // Opcode 82: O_PREVENT_ACTIVATE
     let bc = vec![O_PREVENT_ACTIVATE, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Verify prevent_activate flag is set
     assert_eq!(
@@ -223,7 +223,7 @@ fn test_opcode_add_stage_energy_functional() {
 
     // Add 2 stage energy. Opcode 50.
     let bc = vec![O_ADD_STAGE_ENERGY, 2, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Verify stage_energy was added
     assert_eq!(state.players[0].stage_energy[0].len(), 2);

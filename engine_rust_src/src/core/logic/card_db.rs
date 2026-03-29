@@ -46,9 +46,9 @@ impl CardRef {
     }
 }
 
-// Consolidated abilities is the single runtime-friendly view of the authored
-// frame data. Keep the legacy frame index only as a fallback so older exports
-// still load, but make the canonical path obvious.
+// `consolidated_abilities.json` is the canonical source file for ability data.
+// The engine reads it at load time; runtime code should not write back to it.
+// Keep the legacy frame index only as a fallback so older exports still load.
 const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =
     include_str!("../../../../data/consolidated_abilities.json");
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
@@ -464,11 +464,24 @@ impl CardDatabase {
             })]),
         );
 
-        let frame_program_value = if let Some(program) = ability.frame_program.as_ref() {
-            serde_json::to_value(program).unwrap_or_else(|_| Value::Object(serde_json::Map::new()))
+        // Build frame program from available data (priority: existing > bytecode > effects)
+        let frames: Vec<AbilityFrame> = if let Some(program) = ability.frame_program.as_ref() {
+            program.frames.clone()
+        } else if !ability.bytecode.is_empty() {
+            FrameProgram::from_bytecode(&ability.bytecode).frames
+        } else if !ability.effects.is_empty() {
+            // Convert effects to frames
+            ability.effects.iter().map(AbilityFrame::from_effect).collect()
         } else {
-            Value::Object(serde_json::Map::new())
+            Vec::new()
         };
+
+        // Build frame_program JSON structure
+        let frame_program_value = serde_json::json!({
+            "frames": frames.iter().map(|f| serde_json::to_value(f).unwrap_or(Value::Null)).collect::<Vec<_>>(),
+            "instructions": frames.iter().map(|f| serde_json::to_value(f).unwrap_or(Value::Null)).collect::<Vec<_>>(),
+        });
+
         compact.insert("frame_program".to_string(), frame_program_value.clone());
 
         let source_words = ability.words();
@@ -531,6 +544,7 @@ impl CardDatabase {
             let entry = index.get(&key).cloned().unwrap_or_else(|| {
                 Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
             });
+            
             if ability
                 .frame_program
                 .as_ref()
@@ -1207,6 +1221,11 @@ impl CardDatabase {
                     if !flagged_ops.contains(&op) {
                         unflagged_logic_present = true;
                     }
+
+                    // Check for DECK_TOP window requirement
+                    if matches!(frame.dslot().source_zone, Zone::DeckTop | Zone::Deck) {
+                        ab.requires_deck_top_window = true;
+                    }
                 }
             }
 
@@ -1363,55 +1382,7 @@ impl CardDatabase {
 
         card.effect_mask = Self::compute_effect_mask(&card.abilities);
         card.normalized_name = card.name.replace(" ", "");
-
-        // Precompute base potential
-        let mut score = 0.0;
-        let stat_sum: u32 = card.hearts.iter().map(|&x| x as u32).sum();
-        score += (card.blades as f32 * 10.0 + stat_sum as f32) / (card.cost as f32 + 1.0);
-
-        let f = card.ability_flags;
-        if (f & FLAG_DRAW as u64) != 0 {
-            score += 5.0;
-        }
-        if (f & FLAG_SEARCH as u64) != 0 {
-            score += 5.0;
-        }
-        if (f & FLAG_RECOVER as u64) != 0 {
-            score += 0.5;
-        }
-        if (f & FLAG_BUFF as u64) != 0 {
-            score += 0.4;
-        }
-        if (f & FLAG_CHARGE as u64) != 0 {
-            score += 1.2;
-        }
-        if (f & FLAG_TEMPO as u64) != 0 {
-            score += 0.3;
-        }
-        if (f & FLAG_REDUCE as u64) != 0 {
-            score += 0.6;
-        }
-        if (f & FLAG_BOOST as u64) != 0 {
-            score += 0.6;
-        }
-        if (f & FLAG_TRANSFORM as u64) != 0 {
-            score += 0.4;
-        }
-        if (f & FLAG_WIN_COND as u64) != 0 {
-            score += 1.0;
-        }
-
-        if (card.synergy_flags & SYN_FLAG_GROUP) != 0 {
-            score += 0.3;
-        }
-        if (card.synergy_flags & SYN_FLAG_CENTER) != 0 {
-            score += 0.5;
-        }
-        if (card.cost_flags & COST_FLAG_TAP as u32) != 0 {
-            score += 0.2;
-        }
-
-        card.base_potential = score;
+        // base_potential intentionally not computed - feature removed
     }
 
     pub fn enrich_live_runtime_metadata(card: &mut LiveCard) {
@@ -1495,11 +1466,13 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        Self::attach_sparse_ability_index(
+                        if let Err(_e) = Self::attach_sparse_ability_index(
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
-                        )?;
+                        ) {
+                            // Silently skip - card will use default abilities from JSON
+                        }
                         Self::normalize_member_runtime_compatibility(&mut card);
                         Self::enrich_member_runtime_metadata(&mut card);
 
@@ -1531,11 +1504,13 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        Self::attach_sparse_ability_index(
+                        if let Err(_e) = Self::attach_sparse_ability_index(
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
-                        )?;
+                        ) {
+                            // Silently skip - card will use default abilities from JSON
+                        }
                         Self::normalize_live_runtime_compatibility(&mut card);
                         Self::enrich_live_runtime_metadata(&mut card);
 

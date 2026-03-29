@@ -79,6 +79,7 @@ class Ability:
     trigger: TriggerType
     effects: List[Effect]
     frame_program: Dict[str, Any] = field(default_factory=dict)
+    bytecode: List[int] = field(default_factory=list)
     costs: List[Cost] = field(default_factory=list)
     conditions: List[Condition] = field(default_factory=list)
     is_once_per_turn: bool = False
@@ -93,6 +94,25 @@ class Ability:
             self.costs = []
         if self.conditions is None:
             self.conditions = []
+
+    def compile(self):
+        """Compatibility shim for legacy callers that expect an eager compile step."""
+        return self.to_frame_program()
+
+    def to_frame_program(self):
+        """Return authored frame instructions when present, otherwise synthesize a minimal program."""
+        instructions = self.frame_program.get("instructions") if isinstance(self.frame_program, dict) else None
+        if instructions:
+            return instructions
+
+        instructions = []
+        for cost in self.costs:
+            instructions.append(cost)
+        for condition in self.conditions:
+            instructions.append(condition)
+        for effect in self.effects:
+            instructions.append(effect)
+        return instructions
 
 
 @dataclass

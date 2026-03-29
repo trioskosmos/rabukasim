@@ -72,6 +72,11 @@ def _normalize_frame(frame: Any, idx: int) -> dict[str, Any]:
     if isinstance(frame.get("options"), dict):
         normalized["options"] = frame["options"]
 
+    # Preserve authored metadata that downstream tests and exporters still read.
+    for key in ("source_words", "value", "filter", "slot", "params", "choice_flags", "choice_count"):
+        if key in frame:
+            normalized[key] = frame[key]
+
     return normalized
 
 
@@ -90,6 +95,18 @@ def _signature_hash(trigger_id: int, instructions: list[dict]) -> dict[str, str]
         "signature_hash": sig_hash,
         "signature_source": sig_source,
     }
+
+
+def _trigger_name_from_id(trigger_id: int, metadata: dict[str, Any]) -> str:
+    triggers = metadata.get("triggers", {}) if isinstance(metadata, dict) else {}
+    if isinstance(triggers, dict):
+        for name, value in triggers.items():
+            try:
+                if int(value) == int(trigger_id):
+                    return str(name)
+            except (TypeError, ValueError):
+                continue
+    return "TRIGGER_" + str(trigger_id)
 
 
 def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -127,7 +144,7 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
             "signature_hash": sig["signature_hash"],
             "signature_source": sig["signature_source"],
             "trigger_id": trigger_id,
-            "trigger": "TRIGGER_" + str(trigger_id),
+            "trigger": _trigger_name_from_id(trigger_id, metadata),
             "frame_count": len(instructions),
             "opcode_sequence": [f["op"] for f in instructions],
             "instructions": instructions,
@@ -152,8 +169,14 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
         "source": str(payload.get("source", "data/ability_frame_index.yaml")),
         "metadata_source": str(payload.get("metadata_source", "data/metadata.json")),
         "schema": "ability_frames.flat.v2",
+        "_comment": "Derived frame/index output. The canonical semantic source is data/consolidated_abilities.json; this file is for frame-program compilation and lookup.",
         "summary": {
-            "card_count": len({ref.get("card_no") for e in entries for ref in e["card_refs"]}),
+            "card_count": len({
+                str(card)
+                for entry in payload.get("abilities", [])
+                if isinstance(entry, dict)
+                for card in (entry.get("cards") or [])
+            }),
             "ability_count": len(entries),
             "unique_ability_count": len({e["signature_hash"] for e in entries}),
         },
@@ -166,4 +189,25 @@ def build_runtime_ability_index(payload: dict[str, Any], metadata: dict[str, Any
     normalized = normalize_authored_ability_index(payload, metadata, card_db)
     normalized["schema"] = "ability_frame_index.flat.v2"
     return normalized
+
+
+def build_compact_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build the compact authored frame index used by compatibility tests."""
+    compact = normalize_authored_ability_index(payload, metadata, card_db)
+    entries = compact.get("abilities", [])
+    source_entries = payload.get("abilities", []) if isinstance(payload, dict) else []
+
+    for idx, entry in enumerate(entries):
+        source_entry = source_entries[idx] if idx < len(source_entries) and isinstance(source_entries[idx], dict) else {}
+        entry["source_mode"] = "frame_authored"
+        if "choice_flags" in source_entry:
+            entry["choice_flags"] = int(source_entry.get("choice_flags", 0) or 0)
+        if "choice_count" in source_entry:
+            entry["choice_count"] = int(source_entry.get("choice_count", 0) or 0)
+        if "is_once_per_turn" in source_entry:
+            entry["is_once_per_turn"] = bool(source_entry.get("is_once_per_turn"))
+        if "requires_selection" in source_entry:
+            entry["requires_selection"] = bool(source_entry.get("requires_selection"))
+
+    return compact
 

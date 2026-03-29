@@ -13,7 +13,7 @@ unused_crate_dependencies = "allow"
 
 [lib]
 name = "engine_rust"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 doctest = false
 
 [dependencies]
@@ -69,6 +69,36 @@ gpu = []
 # path = "src/bin/test_turn_runner.rs"
 # test = false
 
+[[bin]]
+name = "analyze_slow_events"
+path = "examples/analyze_slow_events.rs"
+test = false
+
+[[bin]]
+name = "detect_slow"
+path = "examples/detect_slow.rs"
+test = false
+
+[[bin]]
+name = "bench_deterministic"
+path = "examples/bench_deterministic.rs"
+test = false
+
+[[bin]]
+name = "bench_granular"
+path = "examples/bench_granular.rs"
+test = false
+
+[[bin]]
+name = "bench_granular_v2"
+path = "examples/bench_granular_v2.rs"
+test = false
+
+[[bin]]
+name = "bench_throughput"
+path = "examples/bench_throughput.rs"
+test = false
+
 [[bench]]
 name = "game_simulation"
 path = "benches/game_simulation.rs"
@@ -92,24 +122,41 @@ harness = false
 [profile.dev]
 opt-level = 0
 overflow-checks = false
-debug = true
+debug = "line-tables-only"
 incremental = true
 codegen-units = 256
 panic = 'abort'
+split-debuginfo = "packed"
 
 [profile.dev.package."*"]
-opt-level = 0
+opt-level = 1
 
 [profile.test]
 opt-level = 0
 overflow-checks = false
-debug = 0
+debug = "line-tables-only"
 incremental = true
 codegen-units = 256
 lto = false
+split-debuginfo = "packed"
 
 [profile.test.package."*"]
-opt-level = 0
+opt-level = 1
+
+[profile.bench-fast]
+inherits = "release"
+codegen-units = 256
+lto = false
+opt-level = 2
+panic = 'abort'
+
+[profile.test-fast]
+inherits = "test"
+codegen-units = 256
+opt-level = 1
+
+[profile.test-fast.package."*"]
+opt-level = 2
 
 [profile.release]
 lto = false

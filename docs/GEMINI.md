@@ -14,9 +14,9 @@
 
 | If you edited... | ...then you MUST run: |
 | :--- | :--- |
-| **`data/cards.json`** | `uv run python -m compiler.main` |
+| **`data/cards.json` or ability source** | `uv run python tools/build_cards.py --force --sync-launcher-assets` |
 | **`engine_rust_src/`** | `cd launcher && cargo run` (to verify) |
-| **`frontend/web_ui/`** | `python tools/sync_launcher_assets.py` (if using Rust Launcher) |
+| **`frontend/web_ui/`** | `python tools/sync_launcher_assets.py` |
 | **The AI Logic** | `uv run python tools/hf_upload_staged.py` (to redeploy HF) |
 
 **Full Guides**: [Deployment](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/docs/guides/DEPLOYMENT.md) \| [Build Systems](file:///c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/docs/guides/BUILD_SYSTEMS.md)
@@ -37,7 +37,7 @@ The project follows a modular architecture separating the game engine, backend s
 ## Translation System
 The project uses a localized translation system for card abilities.
 - **Master Translator**: `frontend/web_ui/js/ability_translator.js`.
-- **Process**: Compiles raw Japanese text into "pseudocode" strings in `cards_compiled.json`, which are then translated by the frontend for display (supporting JP and EN).
+- **Process**: Compiles the authored data into `cards_compiled.json`, then mirrors the compiled output into the live engine and launcher copies used at runtime.
 - **Parity**: Opcode constants in `ability_translator.js` MUST match `engine_rust_src/src/core/logic.rs`. Opcodes in `engine/models/opcodes.py` are legacy.
 - **Maintenance**: Use `uv run python tools/analyze_translation_coverage.py` to ensure 100% coverage after engine changes.
 
@@ -80,7 +80,7 @@ Tests are run using the Rust test suite.
 - **Tools**: Preference for `uv run python` for script execution.
 
 ## Logic Quirks & Learnings
-- **Pre-compiled Data:** The engine now relies on `cards_compiled.json`. Always run `uv run python -m compiler.main` after editing `cards.json`.
+- **Pre-compiled Data:** The engine now relies on the compiled card mirrors. Always run `uv run python tools/build_cards.py --force --sync-launcher-assets` after editing card or ability data.
 - **GameState Class Vars:** `member_db` and `live_db` are class-level for memory efficiency; tests must handle this.
 - **Conditionals:** `GROUP_FILTER` checks prioritize `context` (e.g., revealed card) over global state.
 - **Arrays:** `tapped_energy` is a fixed-size NumPy array.

@@ -183,12 +183,8 @@ pub struct CoreGameState {
     pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
-    #[serde(default = "true_fn")]
+    #[serde(default)]
     pub needs_stat_sync: bool,
-}
-
-fn true_fn() -> bool {
-    true
 }
 
 impl Default for CoreGameState {
@@ -305,78 +301,6 @@ impl GameState {
                 self.log(format!("[ERROR] Interpreter error: {}", err));
             }
         }
-    }
-
-    pub fn resolve_instructions<B: AsRef<[i32]>>(
-        &mut self,
-        db: &CardDatabase,
-        instructions: B,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_frames(db, instructions, ctx_in);
-    }
-
-    pub fn resolve_words<B: AsRef<[i32]>>(
-        &mut self,
-        db: &CardDatabase,
-        words: B,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions(db, words, ctx_in);
-    }
-
-    pub fn resolve_bytecode<B: AsRef<[i32]>>(
-        &mut self,
-        db: &CardDatabase,
-        bytecode: B,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions(db, bytecode, ctx_in);
-    }
-
-    pub fn resolve_words_cref(
-        &mut self,
-        db: &CardDatabase,
-        words: &Vec<i32>,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions(db, words, ctx_in);
-    }
-
-    pub fn resolve_instructions_cref(
-        &mut self,
-        db: &CardDatabase,
-        instructions: &Vec<i32>,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_frames(db, instructions, ctx_in);
-    }
-
-    pub fn resolve_bytecode_cref(
-        &mut self,
-        db: &CardDatabase,
-        bytecode: &Vec<i32>,
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions_cref(db, bytecode, ctx_in);
-    }
-
-    pub fn resolve_words_slice(
-        &mut self,
-        db: &CardDatabase,
-        words: &[i32],
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions(db, words, ctx_in);
-    }
-
-    pub fn resolve_bytecode_slice(
-        &mut self,
-        db: &CardDatabase,
-        bytecode: &[i32],
-        ctx_in: &AbilityContext,
-    ) {
-        self.resolve_instructions(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(

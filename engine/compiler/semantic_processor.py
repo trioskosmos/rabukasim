@@ -35,13 +35,54 @@ def _opcode_to_effect_type(opcode: str) -> EffectType:
         "BATON_TOUCH_MOD": EffectType.BATON_TOUCH_MOD, "BUFF_POWER": EffectType.BUFF_POWER,
         "PLAY_LIVE_FROM_DISCARD": EffectType.PLAY_LIVE_FROM_DISCARD,
         "ADD_TO_HAND": EffectType.ADD_TO_HAND, "DRAW_UNTIL": EffectType.DRAW_UNTIL,
+        "ACTIVATE_ENERGY": EffectType.ACTIVATE_ENERGY,
+        "CALC_SUM_COST": EffectType.CALC_SUM_COST,
+        "DIV_VALUE": EffectType.DIV_VALUE,
+        "LOOK_REORDER_DISCARD": EffectType.LOOK_REORDER_DISCARD,
+        "OPPONENT_CHOOSE": EffectType.OPPONENT_CHOOSE,
+        "PAY_ENERGY_DYNAMIC": EffectType.PAY_ENERGY_DYNAMIC,
+        "PLACE_ENERGY_UNDER_MEMBER": EffectType.PLACE_ENERGY_UNDER_MEMBER,
+        "PREVENT_PLAY_TO_SLOT": EffectType.PREVENT_PLAY_TO_SLOT,
+        "PREVENT_SET_TO_SUCCESS_PILE": EffectType.PREVENT_SET_TO_SUCCESS_PILE,
+        "REDUCE_LIVE_SET_LIMIT": EffectType.REDUCE_LIVE_SET_LIMIT,
+        "REDUCE_SCORE": EffectType.REDUCE_SCORE,
+        "REPEAT_ABILITY": EffectType.REPEAT_ABILITY,
+        "SET_TARGET_SELF": EffectType.SET_TARGET_SELF,
+        "SET_TARGET_OPPONENT": EffectType.SET_TARGET_OPPONENT,
+        "SKIP_ACTIVATE_PHASE": EffectType.SKIP_ACTIVATE_PHASE,
+        "TRANSFORM_BLADES": EffectType.TRANSFORM_BLADES,
+        "TRANSFORM_HEART": EffectType.TRANSFORM_HEART,
+        "LOOK_DECK_DYNAMIC": EffectType.LOOK_DECK_DYNAMIC,
     }
     return mapping.get(opcode.upper(), EffectType.NONE)
 
 
 def _opcode_to_condition_type(opcode: str) -> ConditionType:
-    """Map CHECK_* opcode to ConditionType."""
+    """Map condition-like opcode names to ConditionType."""
     mapping = {
+        "HAS_MEMBER": ConditionType.HAS_MEMBER,
+        "COUNT_STAGE": ConditionType.COUNT_STAGE,
+        "COUNT_HAND": ConditionType.COUNT_HAND,
+        "COUNT_DISCARD": ConditionType.COUNT_DISCARD,
+        "COUNT_ENERGY": ConditionType.COUNT_ENERGY,
+        "COUNT_HEARTS": ConditionType.COUNT_HEARTS,
+        "COUNT_GROUP": ConditionType.COUNT_GROUP,
+        "IS_CENTER": ConditionType.IS_CENTER,
+        "BATON": ConditionType.BATON,
+        "SCORE_COMPARE": ConditionType.SCORE_COMPARE,
+        "OPPONENT_ENERGY_DIFF": ConditionType.OPPONENT_ENERGY_DIFF,
+        "SUCCESS_PILE_COUNT": ConditionType.SUCCESS_PILE_COUNT,
+        "DISCARDED_CARDS": ConditionType.DISCARDED_CARDS,
+        "AREA_CHECK": ConditionType.AREA_CHECK,
+        "TARGET_MEMBER_HAS_NO_HEARTS": ConditionType.TARGET_MEMBER_HAS_NO_HEARTS,
+        "HAS_LIVE_CARD": ConditionType.HAS_LIVE_CARD,
+        "HAS_EXCESS_HEART": ConditionType.HAS_EXCESS_HEART,
+        "MAIN_PHASE": ConditionType.MAIN_PHASE,
+        "SYNC_COST": ConditionType.SYNC_COST,
+        "TOTAL_BLADES": ConditionType.TOTAL_BLADES,
+        "SCORE_TOTAL_CHECK": ConditionType.SCORE_TOTAL_CHECK,
+        "COUNT_BLADE_HEART_TYPES": ConditionType.COUNT_BLADE_HEART_TYPES,
+        "IS_SELF_MOVE": ConditionType.IS_SELF_MOVE,
         "CHECK_GROUP": ConditionType.COUNT_GROUP,
         "CHECK_HAS_COLOR": ConditionType.HAS_COLOR,
         "CHECK_BATON": ConditionType.BATON,
@@ -89,6 +130,10 @@ def _extract_frame_data(frame: dict) -> dict:
         result["params"] = semantic.get("params", {})
         result["is_negated"] = semantic.get("is_negated", False)
         result["is_cost"] = semantic.get("is_cost", False)
+        result["is_optional"] = semantic.get("is_optional", result["is_optional"])
+    result["is_negated"] = result["is_negated"] or bool(frame.get("is_negated", frame.get("negated", False)))
+    result["is_optional"] = result["is_optional"] or bool(frame.get("is_optional", frame.get("optional", False)))
+    result["is_cost"] = result["is_cost"] or bool(frame.get("is_cost", False))
     
     # Check options field
     options = frame.get("options", {})
@@ -142,13 +187,12 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
                 continue
             
             # Handle conditions
-            if opcode.startswith("CHECK_"):
-                cond_type = _opcode_to_condition_type(opcode)
-                if cond_type != ConditionType.NONE:
-                    ab.conditions.append(Condition(
-                        type=cond_type, value=data["value"], params=data["params"],
-                        is_negated=data["is_negated"]
-                    ))
+            cond_type = _opcode_to_condition_type(opcode)
+            if cond_type != ConditionType.NONE:
+                ab.conditions.append(Condition(
+                    type=cond_type, value=data["value"], params=data["params"],
+                    is_negated=data["is_negated"]
+                ))
                 continue
             
             # Handle costs

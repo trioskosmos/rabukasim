@@ -36,7 +36,7 @@ fn test_opcode_look_deck_dynamic() {
     // Should look at 5 (score) + 2 = 7 cards
     let bytecode = vec![O_LOOK_DECK_DYNAMIC, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_frames(&db, &bytecode, &ctx);
 
     // Verify: looked_cards should have 7 cards
     assert_eq!(
@@ -67,7 +67,7 @@ fn test_opcode_reduce_score() {
     // Execute O_REDUCE_SCORE with v=3
     let bytecode = vec![O_REDUCE_SCORE, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_frames(&db, &bytecode, &ctx);
 
     // Verify: live_score_bonus should be 7
     assert_eq!(
@@ -96,7 +96,7 @@ fn test_opcode_reduce_score_not_negative() {
     // Execute O_REDUCE_SCORE with v=5 (more than available)
     let bytecode = vec![O_REDUCE_SCORE, 5, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_frames(&db, &bytecode, &ctx);
 
     // Verify: live_score_bonus should be 0 (not negative)
     assert_eq!(
@@ -129,7 +129,7 @@ fn test_opcode_skip_activate_phase() {
     // Execute O_SKIP_ACTIVATE_PHASE
     let bytecode = vec![O_SKIP_ACTIVATE_PHASE, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
 
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_frames(&db, &bytecode, &ctx);
 
     // Verify: skip_next_activate should be true
     assert!(
@@ -180,7 +180,7 @@ fn test_condition_count_energy_exact() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
+    state.resolve_frames(&db, &bytecode_pass, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before + 1,
@@ -210,7 +210,7 @@ fn test_condition_count_energy_exact() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
+    state.resolve_frames(&db, &bytecode_fail, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before,
@@ -256,7 +256,7 @@ fn test_condition_opponent_has_excess_heart() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
+    state.resolve_frames(&db, &bytecode_pass, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before + 1,
@@ -287,7 +287,7 @@ fn test_condition_opponent_has_excess_heart() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
+    state.resolve_frames(&db, &bytecode_fail, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before,
@@ -358,7 +358,7 @@ fn test_condition_score_total_check() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_pass, &ctx);
+    state.resolve_frames(&db, &bytecode_pass, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before + 1,
@@ -388,7 +388,7 @@ fn test_condition_score_total_check() {
     ];
 
     let hand_before = state.players[0].hand.len();
-    state.resolve_bytecode_cref(&db, &bytecode_fail, &ctx);
+    state.resolve_frames(&db, &bytecode_fail, &ctx);
     assert_eq!(
         state.players[0].hand.len(),
         hand_before,

@@ -11,6 +11,19 @@ Card data lives in three main places. Always check them in this order:
 | `data/manual_pseudocode.json` | **Logic Overrides** | Manually written logic strings (Pseudocode) for complex abilities. |
 | `data/cards_compiled.json` | **Final Output** | Compiled bytecode, final instructions, and translated text. |
 
+### Ability Source Of Truth
+
+`data/consolidated_abilities.json` is the canonical authored ability source file.
+Treat it as the thing you edit when logic is wrong.
+
+The runtime and launcher read compiled mirrors of that data:
+
+- `data/cards_compiled.json`
+- `engine/data/cards_compiled.json`
+- `launcher/static_content/data/cards_compiled.json`
+
+Those mirrors should be regenerated, not hand-edited.
+
 ## 2. Encoding and Search Precautions
 
 > [!IMPORTANT]
@@ -70,7 +83,7 @@ In `data/cards_compiled.json`, abilities are stored as a flat array of integers 
 If a card isn't behaving correctly:
 1.  **Check `manual_pseudocode.json`**: Is the counts or filters wrong?
 2.  **Check `cards_compiled.json`**: Inspect the `bytecode` chunks.
-3.  **Run Sync**: After editing data, always re-compile:
+3.  **Run Sync**: After editing data, always re-compile and sync the live copies:
     ```bash
-    uv run python -m compiler.main
+    uv run python tools/build_cards.py --force --sync-launcher-assets
     ```

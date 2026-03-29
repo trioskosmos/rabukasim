@@ -17,7 +17,7 @@ fn test_recov_l_only_shows_lives() {
         ..Default::default()
     };
     let bc = AbilityBuilder::new().recover_live(1).return_op().build();
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // It used to check looked_cards before auto-pick shortcut was implemented.
     // Now with exactly 1 candidate, it auto-picks and puts it into hand.
@@ -38,7 +38,7 @@ fn test_recov_l_no_lives_returns_early() {
         ..Default::default()
     };
     let bc = AbilityBuilder::new().recover_live(1).return_op().build();
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert!(state.players[0].looked_cards.is_empty());
     assert_ne!(state.phase, Phase::Response);
@@ -58,7 +58,7 @@ fn test_pay_energy_auto_pays() {
         ..Default::default()
     };
     let bc = AbilityBuilder::new().pay_energy(2).return_op().build();
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_ne!(state.phase, Phase::Response);
     assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);

@@ -45,7 +45,7 @@ fn test_opcode_reduce_yell_count() {
         ..Default::default()
     };
     let bc = vec![O_REDUCE_YELL_COUNT, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(state.players[0].yell_count_reduction, 1);
 
@@ -85,7 +85,7 @@ fn test_opcode_swap_area() {
     // 10->Pos1, 20->Pos2, 30->Pos0
     // Result: [30, 10, 20]
     let bc = vec![O_SWAP_AREA, 0, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(state.players[0].stage, [30, 10, 20]);
     // Tapped follows: 30(false)->Pos0, 10(false)->Pos1, 20(true)->Pos2
@@ -111,7 +111,7 @@ fn test_opcode_negate() {
 
     // O_NEGATE_EFFECT (27), val=2 (OnLiveStart)
     let bc = vec![O_NEGATE_EFFECT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Check negated_triggers
     assert_eq!(state.players[0].negated_triggers.len(), 1);

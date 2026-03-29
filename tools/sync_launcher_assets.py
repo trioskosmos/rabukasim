@@ -12,6 +12,7 @@ def sync_assets(*, quiet: bool = False):
     # Paths relative to project root
     ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     FE_BASE = os.path.join(ROOT, "frontend", "web_ui")
+    ENGINE_DATA_DEST = os.path.join(ROOT, "engine", "data")
     
     # Prefer Vite build output if it exists
     VITE_DIST = os.path.join(FE_BASE, "dist")
@@ -61,6 +62,14 @@ def sync_assets(*, quiet: bool = False):
             shutil.copy2(COMPILED_SRC, compiled_dst)
             changed = True
         log(f"Synced cards_compiled.json to {DATA_DEST}")
+
+        if not os.path.exists(ENGINE_DATA_DEST):
+            os.makedirs(ENGINE_DATA_DEST)
+        engine_compiled_dst = os.path.join(ENGINE_DATA_DEST, "cards_compiled.json")
+        if not os.path.exists(engine_compiled_dst) or os.path.getmtime(COMPILED_SRC) > os.path.getmtime(engine_compiled_dst) or os.path.getsize(COMPILED_SRC) != os.path.getsize(engine_compiled_dst):
+            shutil.copy2(COMPILED_SRC, engine_compiled_dst)
+            changed = True
+        log(f"Synced cards_compiled.json to {ENGINE_DATA_DEST}")
     else:
         log(f"WARNING: {COMPILED_SRC} not found!")
 

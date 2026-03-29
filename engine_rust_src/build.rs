@@ -33,37 +33,46 @@ fn main() {
         return;
     }
 
-    if let Err(message) = run_pipeline(
-        &workspace_root,
-        &[
-            "uv",
-            "run",
-            "--isolated",
-            "--managed-python",
-            "--python",
-            "3.12",
-            "python",
-            "tools/build_cards.py",
-            "--quiet",
-        ],
-    )
-    .or_else(|_| {
-        run_pipeline(
-            &workspace_root,
-            &["python", "tools/build_cards.py", "--quiet"],
-        )
-    }) {
-        panic!("Ability pipeline failed: {}", message);
+    match find_python(&workspace_root) {
+        Some(python) => {
+            if let Err(message) = run_pipeline(
+                &workspace_root,
+                python.as_path(),
+                &["tools/build_cards.py", "--quiet"],
+            ) {
+                panic!("Ability pipeline failed: {}", message);
+            }
+        }
+        None => {
+            println!(
+                "cargo:warning=Skipping ability pipeline because no usable Python interpreter was found"
+            );
+        }
     }
 }
 
-fn run_pipeline(workspace_root: &Path, args: &[&str]) -> Result<(), String> {
-    let (program, rest) = args.split_first().expect("command args must not be empty");
+fn find_python(workspace_root: &Path) -> Option<PathBuf> {
+    let candidates = [
+        workspace_root.join(".venv/Scripts/python.exe"),
+        workspace_root.join(".uv-python/cpython-3.12.12-windows-x86_64-none/python.exe"),
+        workspace_root.join(".uv-python/cpython-3.12.12-windows-x86_64-none/python3.12.exe"),
+    ];
+
+    for candidate in candidates {
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+
+    None
+}
+
+fn run_pipeline(workspace_root: &Path, program: &Path, args: &[&str]) -> Result<(), String> {
     let output = Command::new(program)
-        .args(rest)
+        .args(args)
         .current_dir(workspace_root)
         .output()
-        .map_err(|error| format!("Failed to start {program}: {error}"))?;
+        .map_err(|error| format!("Failed to start {}: {error}", program.display()))?;
 
     if output.status.success() {
         return Ok(());
@@ -72,8 +81,9 @@ fn run_pipeline(workspace_root: &Path, args: &[&str]) -> Result<(), String> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     Err(format!(
-        "Ability pipeline command `{program} {}` failed with status {}\nstdout:\n{}\nstderr:\n{}",
-        rest.join(" "),
+        "Ability pipeline command `{} {}` failed with status {}\nstdout:\n{}\nstderr:\n{}",
+        program.display(),
+        args.join(" "),
         output.status,
         stdout,
         stderr,

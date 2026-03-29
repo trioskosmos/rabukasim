@@ -606,13 +606,19 @@ fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
     }
 
     let json = std::fs::read_to_string(path).ok()?;
-    let db = CardDatabase::from_json(&json).ok()?;
-
-    if db.members.is_empty() || db.lives.is_empty() {
-        return None;
+    
+    match CardDatabase::from_json(&json) {
+        Ok(db) => {
+            if db.members.is_empty() || db.lives.is_empty() {
+                return None;
+            }
+            Some(db)
+        }
+        Err(e) => {
+            eprintln!("[DB] Warning: Failed to parse {}: {}", path, e);
+            None
+        }
     }
-
-    Some(db)
 }
 
 static REAL_DB: OnceLock<CardDatabase> = OnceLock::new();
@@ -624,12 +630,29 @@ pub fn load_real_db() -> &'static CardDatabase {
         if let Ok(env_path) = std::env::var("CARDS_JSON_PATH") {
             candidate_paths.push(env_path);
         }
+        
+        // Add paths relative to CARGO_MANIFEST_DIR if set
+        if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
+            let manifest_path = std::path::Path::new(&manifest_dir);
+            candidate_paths.push(
+                manifest_path.join("../data/cards_compiled.json").to_string_lossy().to_string()
+            );
+            candidate_paths.push(
+                manifest_path.join("../engine/data/cards_compiled.json").to_string_lossy().to_string()
+            );
+            candidate_paths.push(
+                manifest_path.join("data/cards_compiled.json").to_string_lossy().to_string()
+            );
+        }
 
         candidate_paths.extend(
             [
                 "../../data/cards_compiled.json",
                 "../data/cards_compiled.json",
                 "data/cards_compiled.json",
+                "../../engine/data/cards_compiled.json",
+                "../engine/data/cards_compiled.json",
+                "engine/data/cards_compiled.json",
                 "../../web_dist/data/cards_compiled.json",
                 "../web_dist/data/cards_compiled.json",
                 "web_dist/data/cards_compiled.json",
@@ -653,7 +676,7 @@ pub fn load_real_db() -> &'static CardDatabase {
     })
 }
 
-pub fn create_test_db() -> CardDatabase {
+pub fn create_test_db_with_ruby_423() -> CardDatabase {
     static TEST_DB: OnceLock<CardDatabase> = OnceLock::new();
 
     TEST_DB
@@ -835,10 +858,34 @@ pub fn create_test_db() -> CardDatabase {
             vec![],
         )],
     );
+    // Ruby 423 - ACTIVATED ability with MOVE_TO_DISCARD cost + RECOVER_LIVE effect
+    // This tests that cost frames are properly enforced for activated abilities
+    add_card(
+        &mut db,
+        423,
+        "PL!S-bp2-009-P",
+        vec![1],
+        vec![(
+            TriggerType::Activated,
+            AbilityLogic::Bytecode(vec![
+                // MOVE_TO_DISCARD (cost - self-sacrifice) - opcode 58
+                58, 1, 0, 0, 4,
+                // RECOVER_LIVE (effect) - opcode 15 (NOT 17!)
+                15, 1, 0, 0, 0,
+                // RETURN - opcode 1
+                1, 0, 0, 0, 0,
+            ]),
+            vec![],
+        )],
+    );
 
             db
         })
         .clone()
+}
+
+pub fn create_test_db() -> CardDatabase {
+    create_test_db_with_ruby_423()
 }
 
 pub fn create_test_state() -> GameState {

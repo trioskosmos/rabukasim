@@ -251,13 +251,13 @@ fn test_opcodes_state_modifiers_simple() {
 
     // O_SET_SCORE: Set score to 5000
     let bc = vec![O_SET_SCORE, 5000, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     assert_eq!(state.players[0].score, 5000);
 
     // O_ACTIVATE_ENERGY: Untap energy
     state.players[0].tapped_energy_mask = 3; // Binary 11 (2 tapped)
     let bc = vec![O_ACTIVATE_ENERGY, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     // 10 base energy. 2 were tapped. 1 untaps -> 1 remains tapped.
     assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 1);
 
@@ -267,7 +267,7 @@ fn test_opcodes_state_modifiers_simple() {
     // target 4 (MemberSelf) via ctx.area_idx=0
     let mut ctx_activate = ctx.clone();
     ctx_activate.area_idx = 0;
-    state.resolve_bytecode_cref(
+    state.resolve_frames(
         &db,
         &vec![O_ACTIVATE_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
         &ctx_activate,
@@ -275,7 +275,7 @@ fn test_opcodes_state_modifiers_simple() {
     assert!(!state.players[0].is_tapped(0));
 
     // O_TAP_MEMBER: Tap Member
-    state.resolve_bytecode_cref(
+    state.resolve_frames(
         &db,
         &vec![O_TAP_MEMBER, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
         &ctx_activate,
@@ -287,7 +287,7 @@ fn test_opcodes_state_modifiers_simple() {
     state.players[0].deck = vec![12343].into();
     // O_ADD_STAGE_ENERGY usually takes top of deck.
     // Logic: move deck[0] to stage_energy[ctx.area_idx]
-    state.resolve_bytecode_cref(
+    state.resolve_frames(
         &db,
         &vec![O_ADD_STAGE_ENERGY, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0],
         &ctx_activate,
@@ -297,13 +297,13 @@ fn test_opcodes_state_modifiers_simple() {
     // O_SET_BLADES: Set base blades
     state.players[0].blade_buffs[0] = 0;
     let bc = vec![O_SET_BLADES, 5, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx_activate);
+    state.resolve_frames(&db, &bc, &ctx_activate);
     assert_eq!(state.players[0].blade_buffs[0], 5);
 
     // O_BATON_TOUCH_MOD: Modify baton count limit
     state.players[0].set_baton_touch_limit(1);
     let bc = vec![O_BATON_TOUCH_MOD, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     assert_eq!(state.players[0].baton_touch_limit(), 2);
 
     // O_GRANT_ABILITY: Grant ability 0 from member 3010 to slot 0
@@ -312,13 +312,13 @@ fn test_opcodes_state_modifiers_simple() {
     ctx_grant.source_card_id = 3010;
     ctx_grant.area_idx = 0; // Target Slot 0 (Self)
     let bc = vec![O_GRANT_ABILITY, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0]; // val=1 grants the first ability, target=4 (Self/Slot 0)
-    state.resolve_bytecode_cref(&db, &bc, &ctx_grant);
+    state.resolve_frames(&db, &bc, &ctx_grant);
     assert_eq!(state.players[0].granted_abilities.len(), 1);
 
     // O_SET_HEARTS: Set hearts (heart_buffs)
     state.players[0].heart_buffs[0] = HeartBoard(0);
     let bc = vec![O_SET_HEARTS, 1, 4, 0, 4, O_RETURN, 0, 0, 0, 0]; // color 4 (Blue), target 4 (Slot 0)
-    state.resolve_bytecode_cref(&db, &bc, &ctx_activate);
+    state.resolve_frames(&db, &bc, &ctx_activate);
     assert_eq!(state.players[0].heart_buffs[0].get_color_count(4), 1);
 }
 
@@ -343,7 +343,7 @@ fn test_opcodes_movement_control() {
     let mut ctx_swap = ctx.clone();
     ctx_swap.area_idx = 0;
     let bc = vec![O_SWAP_AREA, 2, 1, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx_swap);
+    state.resolve_frames(&db, &bc, &ctx_swap);
     assert_eq!(state.players[0].stage[0], 3020);
     assert_eq!(state.players[0].stage[1], 3010);
 
@@ -352,7 +352,7 @@ fn test_opcodes_movement_control() {
     state.players[0].deck = vec![12343, 101].into();
     state.players[0].hand = vec![].into();
     let bc = vec![O_SWAP_CARDS, 1, 0, 0, 6, O_RETURN, 0, 0, 0, 0]; // count=1, dest=6 (Hand)
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     assert_eq!(state.players[0].hand.len(), 1);
     assert_eq!(state.players[0].hand[0], 101); // Pop from back
 
@@ -362,7 +362,7 @@ fn test_opcodes_movement_control() {
     // logic.rs: O_ORDER_DECK => { pause for ordering }
     // This triggers a choice.
     let bc = vec![O_ORDER_DECK, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     assert!(
         state
             .interaction_stack
@@ -381,7 +381,7 @@ fn test_opcodes_movement_control() {
     state.players[0].stage[2] = -1; // Empty slot
     let bc = vec![O_PLAY_MEMBER_FROM_DISCARD, 1, 2, 0, 0, O_RETURN, 0, 0, 0, 0]; // val=cid, attr=slot?
                                                                                  // logic.rs: O_PLAY_MEMBER_FROM_DISCARD => { play card val to slot attr }
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     // Should be on stage
     // assert_eq!(state.players[0].stage[2], 10);
     // Note: Depends on if cost is paid? Usually this opcode forces play without cost or handles it.
@@ -409,7 +409,7 @@ fn test_opcodes_complex_mod() {
     let mut ctx_tgt = ctx.clone();
     ctx_tgt.area_idx = 0;
     let bc = vec![O_ADD_HEARTS, 1, 4, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx_tgt);
+    state.resolve_frames(&db, &bc, &ctx_tgt);
     assert_eq!(state.players[0].heart_buffs[0].get_color_count(4), 1);
 
     // O_ADD_TO_HAND: Add to Hand (Draw)
@@ -417,12 +417,12 @@ fn test_opcodes_complex_mod() {
     state.players[0].deck = vec![12343].into();
     // params: val=count. target=90 for look, else draw.
     let bc = vec![O_ADD_TO_HAND, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     assert_eq!(state.players[0].hand.len(), 1);
 
     // O_INCREASE_COST: Increase cost of member
     let bc = vec![O_INCREASE_COST, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx_tgt);
+    state.resolve_frames(&db, &bc, &ctx_tgt);
     assert_eq!(state.players[0].cost_modifiers.len(), 1);
     assert_eq!(state.players[0].cost_modifiers[0].1, 1);
 
@@ -435,7 +435,7 @@ fn test_opcodes_complex_mod() {
     // bc = [OP, val, attr, target_slot]
     // val=1, attr=0, target_slot=0 (Pink)
     let bc = vec![O_REDUCE_HEART_REQ, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx_live);
+    state.resolve_frames(&db, &bc, &ctx_live);
     // Check `heart_req_reductions` or log.
     // Assuming implementation uses `heart_req_reductions` on player.
     // It usually works globally or on specific live?
@@ -456,7 +456,7 @@ fn test_opcodes_selection() {
     // O_SELECT_MEMBER: Pause for member selection
     // params: v=count, a=filter?, s=target
     // let bc = vec![O_SELECT_MEMBER, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // assert!(state.pending_choice_type.len() > 0);
     // Unimplemented in logic.rs match block.
     // Could check type == crate::core::enums::ChoiceType::SelectMember etc if implemented.
@@ -464,19 +464,19 @@ fn test_opcodes_selection() {
 
     // O_SELECT_LIVE: Pause for live selection
     // let bc = vec![O_SELECT_LIVE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // assert!(state.pending_choice_type.len() > 0);
     // state.pending_choice_type = "".to_string(); state.pending_card_id = -1;
 
     // O_SELECT_PLAYER: Pause for player selection
     // let bc = vec![O_SELECT_PLAYER, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // assert!(state.pending_choice_type.len() > 0);
     // state.pending_choice_type = "".to_string(); state.pending_card_id = -1;
 
     // O_OPPONENT_CHOOSE: Pause for opponent choice
     // let bc = vec![O_OPPONENT_CHOOSE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // assert_eq!(state.phase, Phase::Response); // Should switch to response?
     // check if it paused.
     // implementation usually sets phase to Response and pending_ctx.
@@ -590,7 +590,7 @@ fn test_opcodes_meta_rules() {
     // params: v=count?, a=type?
     // logic.rs: O_PREVENT_ACTIVATE => players[p].prevent_activate_count += v
     // let bc = vec![O_PREVENT_ACTIVATE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // Unimplemented in logic.rs match block.
     // Check internal state if public. `prevent_activate_count` might be private or not exposed directly in test helper.
     // If not checkable, we assume if it didn't panic it's likely ok.
@@ -599,13 +599,13 @@ fn test_opcodes_meta_rules() {
     // O_REDUCE_LIVE_SET_LIMIT: Unimplemented in PlayerState.
     // state.players[0].live_set_limit = 3;
     // let bc = vec![O_REDUCE_LIVE_SET_LIMIT, 1, 0, 0, O_RETURN, 0, 0, 0];
-    // state.resolve_bytecode_cref(&db, &bc, &ctx);
+    // state.resolve_frames(&db, &bc, &ctx);
     // logic.rs: O_REDUCE_LIVE_SET_LIMIT => live_set_limit -= v
     // assert_eq!(state.players[0].live_set_limit, 2); // If exposed.
 
     // O_MODIFY_SCORE_RULE: 49
     // Set rule variant?
     let bc = vec![O_MODIFY_SCORE_RULE, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
     // logic.rs checks this.
 }

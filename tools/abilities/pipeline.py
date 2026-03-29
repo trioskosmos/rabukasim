@@ -1,4 +1,4 @@
-"""Minimal ability pipeline - just runs the compiler."""
+"""Minimal ability pipeline - compile runtime card data and mirror live copies."""
 from __future__ import annotations
 
 import sys
@@ -9,6 +9,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
 
 from engine.compiler import main as compiler_main
+from tools.sync_launcher_assets import sync_assets
 
 CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
 CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
@@ -61,8 +62,8 @@ def prepare_rust_codegen(*, quiet: bool = False) -> bool:
 
 
 def prepare_server_assets(*, quiet: bool = False) -> bool:
-    """Sync server assets - simplified, no-op for now."""
-    return False
+    """Sync launcher/runtime assets from the freshly compiled root data."""
+    return sync_assets(quiet=quiet)
 
 
 def prepare_runtime(

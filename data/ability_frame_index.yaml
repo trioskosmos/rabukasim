@@ -1,3 +1,7 @@
+#
+# Derived frame-program source used by the compiler and runtime loaders.
+# For semantic ability fixes, edit data/consolidated_abilities.json first, then regenerate this index.
+#
 generated_at: '2026-03-22T14:54:27.370321+00:00'
 source: C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\cards_compiled.json
 metadata_source: C:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\metadata.json

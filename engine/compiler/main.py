@@ -192,6 +192,7 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
+            "source_note": "Derived from cards.json plus the authored frame source. For ability-logic fixes, edit data/consolidated_abilities.json / data/ability_frame_index.yaml, then rebuild.",
             "execution_model": "frame_program_only",
         },
     }
@@ -967,6 +968,13 @@ def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "fu
     # --- Ability Source Resolution ---
     # Resolve directly from authored frame data.
     abilities = _resolve_abilities("LIVE", card_no, data)
+
+    # Compile abilities for export first
+    _compile_abilities_for_export(abilities, card_no, "LIVE", export_profile=export_profile)
+
+    # Populate semantic effects/conditions/costs from frames for direct Rust consumption
+    # This MUST run after _compile_abilities_for_export to ensure effects persist
+    _populate_semantic_from_frames(abilities, card_no)
 
     card = LiveCard(
         card_id=card_id,

@@ -110,6 +110,24 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             ],
         )
 
+    def test_real_compact_index_preserves_opcode_sequences(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        authored_data = codec.load_yaml(ROOT / "data" / "ability_frame_index.yaml")
+
+        payload = codec.build_compact_ability_index(authored_data, metadata)
+
+        for entry in payload["abilities"]:
+            instructions = entry["instructions"]
+            opcodes = [frame["op"] for frame in instructions]
+
+            self.assertTrue(all(opcodes), msg=f"missing opcode in {entry.get('signature')}")
+            self.assertEqual(
+                entry["opcode_sequence"],
+                opcodes,
+                msg=f"opcode sequence mismatch in {entry.get('signature')}",
+            )
+            self.assertEqual(entry["frame_count"], len(instructions))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1441,7 +1441,7 @@ mod tests {
         let abilities = db.get_live(catchu_live_id).unwrap().abilities.clone();
 
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_frames(&db, &ab.bytecode, &ctx);
         }
 
         assert!(state.players[p1].energy_zone.len() >= 10);
@@ -1456,13 +1456,13 @@ mod tests {
 
         // First instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_frames(&db, &ab.bytecode, &ctx);
         }
         assert!(state.players[p1].energy_zone.len() >= 10);
 
         // Second instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            state.resolve_frames(&db, &ab.bytecode, &ctx);
         }
         assert!(state.players[p1].energy_zone.len() >= 10);
     }
@@ -1580,13 +1580,13 @@ mod tests {
 
         state.players[p1].stage = [557, 557, 557];
 
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
+        state.resolve_frames(&db, bytecode, &ctx);
         assert!(state.players[p1].energy_zone.len() >= 7);
 
         // Case 2: Mixed Groups (Fail)
         state.players[p1].energy_zone = vec![3001; 7].into(); // Reset
         state.players[p1].stage = [557, 143, 557]; // Mixed group member in the middle
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
+        state.resolve_frames(&db, bytecode, &ctx);
         assert!(state.players[p1].energy_zone.len() >= 7);
     }
 

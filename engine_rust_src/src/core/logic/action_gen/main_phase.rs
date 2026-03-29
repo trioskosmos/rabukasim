@@ -22,27 +22,6 @@ fn has_activated_hand(card: &MemberCard) -> bool {
     card.has_activated_hand
 }
 
-fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
-    ab.frame_program
-        .as_ref()
-        .and_then(|program| program.raw_program.as_ref())
-        .and_then(|raw| raw.get("instructions"))
-        .and_then(|value| value.as_array())
-        .map(|instructions| {
-            instructions.iter().any(|frame| {
-                let source_zone = frame
-                    .get("semantic")
-                    .and_then(|semantic| semantic.get("slot"))
-                    .or_else(|| frame.get("slot"))
-                    .and_then(|slot| slot.get("source_zone"))
-                    .and_then(|value| value.as_str())
-                    .unwrap_or("");
-                source_zone.eq_ignore_ascii_case("DECK_TOP")
-            })
-        })
-        .unwrap_or(false)
-}
-
 fn ability_costs_payable(
     state: &GameState,
     db: &CardDatabase,
@@ -120,7 +99,7 @@ fn ability_costs_payable(
         }
     }
 
-    if ability_requires_deck_top_window(ab)
+    if ab.requires_deck_top_window
         && state.players[p_idx].deck.len() < DECK_TOP_LOOK_WINDOW
     {
         return false;

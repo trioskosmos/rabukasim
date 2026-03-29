@@ -87,7 +87,7 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
 
     // We only invoke resolve_bytecode to test the opcode directly.
     // Step 1: Select Card from Hand (choice_index=0)
-    state.resolve_bytecode_cref(&db, &bytecode, &ctx);
+    state.resolve_frames(&db, &bytecode, &ctx);
 
     // Handler should have suspended for the slot.
     assert!(state.interaction_stack.len() > 0);
@@ -96,7 +96,7 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
 
     // Step 2: Select Slot (choice_index=0)
     resumed_ctx.choice_index = 0;
-    state.resolve_bytecode_cref(&db, &bytecode, &resumed_ctx);
+    state.resolve_frames(&db, &bytecode, &resumed_ctx);
 
     // Assertions
 

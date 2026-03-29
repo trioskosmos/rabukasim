@@ -259,7 +259,7 @@ fn test_meta_rule_cheer_mod_increment() {
         player_id: 0,
         ..Default::default()
     };
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Assert: cheer_mod_count should be incremented
     assert_eq!(
@@ -283,7 +283,7 @@ fn test_meta_rule_cheer_mod_multiple() {
         player_id: 0,
         ..Default::default()
     };
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     // Assert: cheer_mod_count should be incremented by 3
     assert_eq!(

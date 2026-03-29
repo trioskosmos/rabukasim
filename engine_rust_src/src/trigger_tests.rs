@@ -17,7 +17,7 @@ fn test_enrichment_look_and_choose() {
 
     // O_LOOK_AND_CHOOSE 1
     let bc = vec![O_LOOK_AND_CHOOSE, 1, 0, 0, O_RETURN, 0, 0, 0];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().expect("Missing interaction");
@@ -56,7 +56,7 @@ fn test_look_and_choose_filter() {
         0,
         0,
     ];
-    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_frames(&db, &bc, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let legal = state.get_legal_actions(&db);
@@ -114,14 +114,14 @@ fn test_trigger_on_play_honoka() {
         ..Default::default()
     };
 
-    state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+    state.resolve_frames(&db, &ab.bytecode, &ctx);
 
     // Resume with choice
     if !state.interaction_stack.is_empty() {
         let mut next_ctx = ctx.clone();
         next_ctx.program_counter = state.interaction_stack.last().unwrap().ctx.program_counter;
         next_ctx.choice_index = 0;
-        state.resolve_bytecode_cref(&db, &ab.bytecode, &next_ctx);
+        state.resolve_frames(&db, &ab.bytecode, &next_ctx);
     } else {
         println!("DEBUG: Interaction stack empty after first call!");
     }

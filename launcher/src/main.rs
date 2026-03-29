@@ -52,6 +52,8 @@ fn main() {
     println!("Loading card database...");
     let bin_path = "../data/cards_compiled.bin";
     let json_path = "../data/cards_compiled.json";
+    println!("[DB] Canonical runtime JSON mirror: {}", json_path);
+    println!("[DB] Canonical binary snapshot cache: {}", bin_path);
     let stale_binary = binary_snapshot_is_stale(bin_path, json_path);
 
     let mut need_new_snapshot = false;
@@ -217,6 +219,7 @@ fn main() {
 
 fn load_db_from_json() -> CardDatabase {
     let db_file = Assets::get("data/cards_compiled.json").expect("Missing cards_compiled.json!");
+    println!("[DB] Loading embedded launcher asset: data/cards_compiled.json");
     let db_json = std::str::from_utf8(db_file.data.as_ref()).expect("Failed to read DB json");
     CardDatabase::from_json(db_json).expect("Failed to parse CardDatabase from JSON")
 }

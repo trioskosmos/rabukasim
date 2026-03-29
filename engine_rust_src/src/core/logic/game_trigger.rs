@@ -224,8 +224,17 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
-        // VANILLA OPTIMIZATION: No abilities in vanilla mode
+        // Fast path: vanilla mode or empty board - skip trigger processing
         if db.is_vanilla {
+            return;
+        }
+        
+        // Fast path: no cards on board for this player
+        let p_idx = ctx.player_id as usize;
+        let has_stage_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0);
+        let has_live_cards = self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
+        if !has_stage_cards && !has_live_cards && ctx.source_card_id < 0 {
+            // Nothing to trigger from
             return;
         }
 
@@ -429,10 +438,6 @@ impl GameState {
                     {
                         continue;
                     }
-                    println!(
-                        "[DEBUG] Trigger match: cid={}, ab_idx={}, trigger={:?}, ab_trigger={:?}",
-                        cid, ab_idx, trigger, ab.trigger
-                    );
                     if !resolution_trigger_matches_context(trigger, &ab.raw_text, ctx.trigger_type)
                     {
                         continue;

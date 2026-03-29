@@ -13,13 +13,15 @@ except ImportError as e:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Prepare compiled card and ability runtime artifacts")
+    parser = argparse.ArgumentParser(
+        description="Prepare compiled card data and optionally sync the launcher/engine live mirrors"
+    )
     parser.add_argument("--force", action="store_true", help="Force rebuild of compiled artifacts")
     parser.add_argument("--quiet", action="store_true", help="Reduce build output")
     parser.add_argument(
         "--sync-launcher-assets",
         action="store_true",
-        help="Also sync launcher/frontend assets after preparing ability artifacts",
+        help="Also sync launcher/frontend assets and mirror cards_compiled.json into live copies",
     )
     return parser.parse_args()
 

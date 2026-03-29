@@ -2,6 +2,7 @@ use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::{check_condition_frame, resolve_count};
+use crate::core::models::filter::CardFilter;
 use std::cell::Cell;
 
 use crate::core::enums::*;

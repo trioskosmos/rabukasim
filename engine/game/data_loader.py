@@ -68,7 +68,7 @@ class CardDataLoader:
             # But we don't know project root easily.
             pass
 
-        # print(f"Loading card data from {target_path}...")
+        print(f"[CardDataLoader] Loading compiled card data from: {target_path}")
         with open(target_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 

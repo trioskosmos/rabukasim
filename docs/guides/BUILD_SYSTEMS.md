@@ -43,10 +43,15 @@ Required for the GitHub Pages / PWA version of the game.
   - `engine_rust.d.ts` (optional)
 
 ## 4. Card Data Compilation
-The engine (both Rust and Python) reads from `cards_compiled.json`. Use the consolidated build entrypoint after editing `data/cards.json` or `data/ability_frames.json`.
+The canonical edit target for ability logic is `data/consolidated_abilities.json` and the canonical card source is `data/cards.json`.
+Run the consolidated build entrypoint after editing card or ability data. It now refreshes:
+
+- `data/cards_compiled.json`
+- `engine/data/cards_compiled.json`
+- `launcher/static_content/data/cards_compiled.json`
 
 - **Command**:
   ```bash
-  uv run python tools/build_cards.py --force
+  uv run python tools/build_cards.py --force --sync-launcher-assets
   ```
-- **Output**: `data/cards_compiled.json`, `data/ability_frame_index.json`, generated Rust fast paths, and `engine/data/cards_compiled.json`.
+- **Output**: `data/cards_compiled.json` plus the mirrored live copies used by the engine and launcher.

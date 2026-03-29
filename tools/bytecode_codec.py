@@ -48,26 +48,26 @@ def frame_to_sparse(frame: dict[str, Any]) -> dict[str, Any]:
 
     v_payload = payload.get("v")
     if isinstance(v_payload, dict):
-        value = {str(key): item for key, item in v_payload.items() if item not in (None, "", [], {})}
+        value = {str(key): item for key, item in v_payload.items() if item not in (None, "", [], {}, 0)}
         if value:
             sparse["value"] = value
-    elif "value" in payload and payload["value"] not in (None, "", [], {}):
+    elif "value" in payload and payload["value"] not in (None, "", [], {}, 0):
         sparse["value"] = payload["value"]
 
     a_payload = payload.get("a")
     if isinstance(a_payload, dict):
-        attr = {str(key): item for key, item in a_payload.items() if item not in (None, "", [], {})}
+        attr = {str(key): item for key, item in a_payload.items() if item not in (None, "", [], {}, 0)}
         if attr:
             sparse["attr"] = attr
-    elif "attr" in payload and payload["attr"] not in (None, "", [], {}):
+    elif "attr" in payload and payload["attr"] not in (None, "", [], {}, 0):
         sparse["attr"] = payload["attr"]
 
     s_payload = payload.get("s")
     if isinstance(s_payload, dict):
-        slot = {str(key): item for key, item in s_payload.items() if item not in (None, "", [], {})}
+        slot = {str(key): item for key, item in s_payload.items() if item not in (None, "", [], {}, 0)}
         if slot:
             sparse["slot"] = slot
-    elif "slot" in payload and payload["slot"] not in (None, "", [], {}):
+    elif "slot" in payload and payload["slot"] not in (None, "", [], {}, 0):
         sparse["slot"] = payload["slot"]
 
     return sparse

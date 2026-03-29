@@ -49,7 +49,7 @@ impl GameState {
         Ok(())
     }
 
-    fn step_internal(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
+    pub fn step_internal(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         match self.phase {
             Phase::Rps => self.handle_rps(action)?,
             Phase::TurnChoice => self.handle_turn_choice(action)?,
@@ -70,6 +70,12 @@ impl GameState {
     }
 
     pub fn auto_step(&mut self, db: &CardDatabase) {
+        // Fast path: no triggers to process and not in auto-advance phase
+        if self.core.trigger_queue.is_empty() 
+            && !matches!(self.phase, Phase::PerformanceP1 | Phase::PerformanceP2 | Phase::Energy | Phase::Draw | Phase::Active) {
+            return;
+        }
+        
         let mut loop_count = 0;
         while loop_count < 40 {
             self.check_win_condition();
@@ -108,11 +114,14 @@ impl GameState {
             }
 
             if self.phase == old_phase && self.core.trigger_queue.is_empty() {
+                // Only sync stats if we actually did work
+                if loop_count > 0 {
+                    self.sync_all_stats(db);
+                }
                 break;
             }
             loop_count += 1;
         }
-        self.sync_all_stats(db);
     }
 
     pub fn handle_member_leaves_stage(
