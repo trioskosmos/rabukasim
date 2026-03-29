@@ -2,10 +2,9 @@
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
 
-# Maximize parallel jobs automatically (default behavior)
-[build]
-# Uncomment the following line if using a nightly toolchain for faster parallel frontend
-# rustflags = ["-Zthreads=8"]
+# Nightly-only flags removed for stable compatibility
+# [build]
+# rustflags = ["-Zthreads=12"]
 
 [env]
 RUST_TEST_THREADS = "12"

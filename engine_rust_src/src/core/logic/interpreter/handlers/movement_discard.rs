@@ -1,19 +1,12 @@
-use super::movement_discard_helpers::{
-    pop_card_from_zone, resolve_source_zone, zone_available_count, zone_card_count,
-    remove_card_by_index,
-};
 use crate::core::enums::*;
-use crate::core::logic::constants::FILTER_IS_OPTIONAL;
-use crate::core::logic::constants::FILTER_MASK_LOWER;
+use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::handlers::state_helpers::source_ability;
-use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
-use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
+use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents, Ability};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, Zone};
-use crate::core::models::CHOICE_DONE;
+use crate::core::{O_MOVE_TO_DISCARD, O_NOP};
 use super::super::HandlerResult;
 
 pub fn handle_move_to_discard(
@@ -37,21 +30,52 @@ pub fn handle_move_to_discard(
     
     let base_p = ctx.activator_id as usize;
     let slot = frame_data.slot;
-    let mut source_zone = resolve_source_zone(&slot);
+    
+    // Resolve source zone from slot - inlined from helper
+    let mut source_zone = match slot.source_zone {
+        Zone::Default => {
+            // Infer from target slot - SLOT_CONTEXT=Stage, SLOT_HAND=Hand, live slots=LiveSet, else Deck
+            let ts = slot.target_slot;
+            if ts == 4 { Zone::Stage }
+            else if ts == 6 { Zone::Hand }
+            else if (9..=11).contains(&ts) { Zone::LiveSet }  // SLOT_LIVE_0..=SLOT_LIVE_2
+            else { Zone::Deck }
+        }
+        Zone::Hand => Zone::Hand,
+        Zone::Stage => Zone::Stage,
+        Zone::Discard => Zone::Discard,
+        Zone::Yell => Zone::Yell,
+        _ => Zone::Deck,
+    };
+    
+    // Determine target player from slot
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
 
-    // Handle UNTIL_SIZE operation (discard down to N cards)
+    // Handle UNTIL_SIZE operation (discard down to N cards) - inlined
     let count = if (v as u32 & (1 << 31)) != 0 {
         let target_size = v & 0x7FFFFFFF;
-        let current_size = zone_card_count(state, target_player_idx, source_zone);
-        (current_size - target_size).max(0)
+        let current_size = match source_zone {
+            Zone::Hand => state.players[target_player_idx].hand.len(),
+            Zone::Stage => state.players[target_player_idx].stage.iter().filter(|&&c| c >= 0).count(),
+            Zone::Discard => state.players[target_player_idx].discard.len(),
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[target_player_idx].deck.len(),
+            _ => 0,
+        };
+        (current_size as i32 - target_size).max(0)
     } else {
         v
     };
     
     // Special case: Stage UNTIL_SIZE means Hand
-    if source_zone == Zone::Stage && is_until_size_op(&frame_data) {
-        source_zone = Zone::Hand;
+    if source_zone == Zone::Stage {
+        let is_until_size = frame_data.params.as_ref()
+            .and_then(|p| p.get("operation"))
+            .and_then(|v| v.as_str())
+            .map(|s| s.eq_ignore_ascii_case("UNTIL_SIZE"))
+            .unwrap_or(false);
+        if is_until_size {
+            source_zone = Zone::Hand;
+        }
     }
 
     // Immunity check
@@ -68,15 +92,57 @@ pub fn handle_move_to_discard(
     }
 
     let mut next_ctx = ctx.clone();
-    let choice_type = if source_zone == Zone::Hand { ChoiceType::SelectHandDiscard } else { ChoiceType::SelectDiscard };
-    let available_count = zone_available_count(state, target_player_idx, source_zone);
+    let choice_type = if source_zone == Zone::Hand { 
+        ChoiceType::SelectHandDiscard 
+    } else { 
+        ChoiceType::SelectDiscard 
+    };
+    
+    // Calculate available cards - inlined from zone_available_count
+    let available_count = match source_zone {
+        Zone::Hand => state.players[target_player_idx].hand.len(),
+        Zone::Stage => state.players[target_player_idx].stage.iter().filter(|&&c| c >= 0).count(),
+        Zone::Discard => state.players[target_player_idx].discard.len(),
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[target_player_idx].deck.len(),
+        _ => 0,
+    } as i32;
 
-    // Prompt phase: check if we need player input
-    if prepare_discard_prompt(
-        state, db, ctx, frame, frame_idx, p_idx, source_zone, count, is_optional,
-        filter_attr, v, s, choice_type, available_count, target_player_idx, &mut next_ctx,
-    ) {
-        return HandlerResult::Suspend;
+    // === Prompt phase: determine if we need player input ===
+    if next_ctx.choice_index == -1 {
+        // Not enough cards available
+        if available_count < count || available_count == 0 {
+            return HandlerResult::Continue;
+        }
+
+        // Auto-pick when forced (only 1 valid choice and not optional)
+        if !is_optional && count == 1 && available_count == 1 {
+            next_ctx.choice_index = 0;
+        } else if is_optional && is_deck_zone(source_zone) {
+            // Optional deck discard - ask yes/no
+            if matches!(
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, ChoiceType::Optional, filter_attr, count as i16),
+                HandlerResult::Suspend
+            ) {
+                return HandlerResult::Suspend;
+            }
+        } else if count > 0 && !is_deck_zone(source_zone) {
+            // Need specific card selection from hand/stage/discard
+            let mut filter_obj = frame.filter();
+            match source_zone {
+                Zone::Stage => filter_obj.zone_mask = 4,  // Stage mask
+                Zone::Hand => filter_obj.zone_mask = 6,   // Hand mask
+                Zone::Discard => filter_obj.zone_mask = 7, // Discard mask
+                _ => {}
+            }
+            let filter_attr_with_mask = filter_obj.to_attr();
+
+            if matches!(
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),
+                HandlerResult::Suspend
+            ) {
+                return HandlerResult::Suspend;
+            }
+        }
     }
 
     // Handle optional deck discard "no" choice
@@ -84,20 +150,91 @@ pub fn handle_move_to_discard(
         next_ctx.choice_index = -1;
     }
 
-    // Execute the discard
+    // === Execute the discard ===
     let mut moved_cards = Vec::new();
 
     if next_ctx.choice_index != -1 {
-        let result = handle_selected_discard(
-            state, db, ctx, frame, frame_idx, target_player_idx, source_zone, count,
-            is_optional, filter_attr, s, choice_type, &mut next_ctx, &mut moved_cards,
-        );
-        if !matches!(result, HandlerResult::Continue) {
-            return result;
+        // === Multi-select discard path ===
+        // Handle optional skip
+        if is_optional && next_ctx.choice_index == CHOICE_DONE {
+            finish_pending_interaction(state);
+            return HandlerResult::Return;
+        }
+
+        // Handle CHOICE_DONE with remaining cards
+        if next_ctx.choice_index == CHOICE_DONE {
+            if next_ctx.v_remaining > 0 || (next_ctx.v_remaining == -1 && count > 0) {
+                let remaining = if next_ctx.v_remaining > 0 { next_ctx.v_remaining } else { count as i16 };
+                if matches!(
+                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, remaining),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+            return HandlerResult::Continue;
+        }
+
+        // Remove selected card by index - inlined from remove_card_by_index
+        let idx = next_ctx.choice_index as usize;
+        let allow_under_member = (s & (1 << 25)) != 0;
+        let removed_cid = remove_card_at_index(state, target_player_idx, source_zone, idx, allow_under_member).unwrap_or(-1);
+        
+        if removed_cid < 0 {
+            return HandlerResult::Continue;
+        }
+
+        state.players[target_player_idx].push_discard_card(removed_cid as i32);
+        moved_cards.push(removed_cid as i32);
+        
+        next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
+            next_ctx.v_remaining - 1
+        } else {
+            (count as i16) - 1
+        };
+        
+        if !next_ctx.selected_cards.contains(&removed_cid) {
+            next_ctx.selected_cards.push(removed_cid);
+        }
+
+        // Check if more cards needed
+        if next_ctx.v_remaining > 0 {
+            let still_available = has_available_filtered(state, db, target_player_idx, source_zone, filter_attr, &next_ctx);
+
+            if !still_available {
+                finish_pending_interaction(state);
+                return HandlerResult::Continue;
+            }
+
+            next_ctx.choice_index = -1;
+
+            // Auto-pick for forced discards
+            let is_forced = !is_optional && (count as usize) >= state.players[target_player_idx].hand.len();
+            if (ctx.auto_pick || is_forced) && !is_optional {
+                let has_cards = match source_zone {
+                    Zone::Hand => !state.players[target_player_idx].hand.is_empty(),
+                    Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| c >= 0),
+                    _ => true,
+                };
+
+                if has_cards {
+                    next_ctx.choice_index = 0;
+                    return handle_move_to_discard(state, db, &mut next_ctx, frame, frame_idx);
+                }
+            }
+
+            let v_remaining = next_ctx.v_remaining;
+            if matches!(
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, v_remaining),
+                HandlerResult::Suspend
+            ) {
+                return HandlerResult::Suspend;
+            }
         }
     } else {
+        // === Auto-discard path (no player choice needed) ===
         for _ in 0..count {
-            if let Some(cid) = pop_card_from_zone(state, target_player_idx, source_zone, next_ctx.area_idx as i32, db, &next_ctx) {
+            if let Some(cid) = pop_card_from_zone(state, target_player_idx, source_zone, next_ctx.area_idx as i32) {
                 state.players[target_player_idx].push_discard_card(cid);
                 moved_cards.push(cid);
                 next_ctx.selected_cards.push(cid);
@@ -113,7 +250,7 @@ pub fn handle_move_to_discard(
         ctx.selected_cards = next_ctx.selected_cards.clone();
     }
 
-    // TAP_SELF check - inline simple version
+    // TAP_SELF check: if ability has TAP_SELF effect and we discarded from a member slot, tap it
     let should_tap_self = moved_cards.iter().any(|&cid| db.get_live(cid).is_some())
         && ctx.area_idx >= 0 && ctx.area_idx < 3
         && source_ability(db, ctx).map(|ability| {
@@ -127,38 +264,23 @@ pub fn handle_move_to_discard(
         state.players[p_idx].set_tapped(ctx.area_idx as usize, true);
     }
 
-    // Fire triggers
+    // Fire triggers for discarded cards
     if !next_ctx.selected_cards.is_empty() {
         state.trigger_move_to_discard(db, target_player_idx, &next_ctx, &next_ctx.selected_cards);
     } else if !moved_cards.is_empty() {
         state.trigger_move_to_discard(db, target_player_idx, &next_ctx, &moved_cards);
     }
 
-    if !state.ui.silent {
-        if let Some(msg) = logging::get_opcode_log(O_MOVE_TO_DISCARD, v, a, s, 0) {
-            state.log(msg);
-        }
-    }
-
     state.players[target_player_idx].hand.retain(|c| *c != -1);
     HandlerResult::Continue
 }
 
-// === Inlined helper functions ===
-
-fn is_until_size_op(frame_data: &AbilityFrameComponents<'_>) -> bool {
-    frame_data.params.as_ref()
-        .and_then(|p| p.get("operation").or_else(|| p.get("OPERATION")))
-        .and_then(|v| v.as_str())
-        .map(|s| s.eq_ignore_ascii_case("UNTIL_SIZE"))
-        .unwrap_or(false)
-}
+// === Helper functions ===
 
 fn is_deck_zone(zone: Zone) -> bool {
     matches!(zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
 }
 
-/// Check if more cards are available for selection
 fn has_available_filtered(
     state: &GameState,
     db: &CardDatabase,
@@ -179,161 +301,72 @@ fn has_available_filtered(
     }
 }
 
-/// Prepare discard prompt - returns true if suspended for player input
-#[allow(clippy::too_many_arguments)]
-fn prepare_discard_prompt(
+fn pop_card_from_zone(
     state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-    frame: &AbilityFrame,
-    frame_idx: usize,
-    _p_idx: usize,
-    source_zone: Zone,
-    count: i32,
-    is_optional: bool,
-    filter_attr: u64,
-    v: i32,
-    s: i32,
-    choice_type: ChoiceType,
-    available_count: i32,
-    target_player_idx: usize,
-    next_ctx: &mut AbilityContext,
-) -> bool {
-    if next_ctx.choice_index == -1 && available_count < v {
-        return false;
-    }
-    if available_count == 0 {
-        return false;
-    }
-
-    // Auto-pick when forced (only 1 valid choice)
-    if !is_optional && next_ctx.choice_index == -1 && count == 1 && available_count == 1 {
-        next_ctx.choice_index = 0;
-        return false;
-    }
-
-    // Optional deck discard - ask yes/no
-    if is_optional && next_ctx.choice_index == -1 && is_deck_zone(source_zone) {
-        return matches!(
-            suspend_choice(state, db, ctx, next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, ChoiceType::Optional, filter_attr, count as i16),
-            HandlerResult::Suspend
-        );
-    }
-
-    // Need specific card selection from hand/stage/discard
-    if next_ctx.choice_index == -1 && count > 0 && !is_deck_zone(source_zone) {
-        let mut filter_obj = frame.filter();
-        match source_zone {
-            Zone::Stage => filter_obj.zone_mask = 4,
-            Zone::Hand => filter_obj.zone_mask = 6,
-            Zone::Discard => filter_obj.zone_mask = 7,
-            _ => {}
+    player_idx: usize,
+    zone: Zone,
+    area_idx: i32,
+) -> Option<i32> {
+    match zone {
+        Zone::Hand => state.players[player_idx].pop_hand_card(),
+        Zone::Stage => {
+            let slot = if area_idx >= 0 && area_idx < 3 { area_idx as usize } else { 0 };
+            let cid = state.players[player_idx].stage[slot];
+            if cid >= 0 {
+                state.players[player_idx].stage[slot] = -1;
+                Some(cid)
+            } else {
+                None
+            }
         }
-        let filter_attr_with_mask = filter_obj.to_attr();
-
-        return matches!(
-            suspend_choice(state, db, ctx, next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),
-            HandlerResult::Suspend
-        );
+        Zone::Discard => state.players[player_idx].pop_discard_card(),
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
+            state.players[player_idx].pop_deck_card()
+        }
+        _ => None,
     }
-
-    false
 }
 
-/// Handle selected discard with multi-select support
-#[allow(clippy::too_many_arguments)]
-fn handle_selected_discard(
+fn remove_card_at_index(
     state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
-    frame_idx: usize,
-    target_player_idx: usize,
-    source_zone: Zone,
-    count: i32,
-    is_optional: bool,
-    filter_attr: u64,
-    s: i32,
-    choice_type: ChoiceType,
-    next_ctx: &mut AbilityContext,
-    moved_cards: &mut Vec<i32>,
-) -> HandlerResult {
-    // Handle optional skip
-    if is_optional && next_ctx.choice_index == CHOICE_DONE {
-        finish_pending_interaction(state);
-        return HandlerResult::Return;
-    }
-
-    // Handle CHOICE_DONE with remaining cards
-    if next_ctx.choice_index == CHOICE_DONE {
-        if next_ctx.v_remaining > 0 || (next_ctx.v_remaining == -1 && count > 0) {
-            let remaining = if next_ctx.v_remaining > 0 { next_ctx.v_remaining } else { count as i16 };
-            if matches!(
-                suspend_choice(state, db, ctx, next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, remaining),
-                HandlerResult::Suspend
-            ) {
-                return HandlerResult::Suspend;
+    player_idx: usize,
+    zone: Zone,
+    idx: usize,
+    _allow_under: bool,
+) -> Option<i32> {
+    match zone {
+        Zone::Hand => {
+            if idx < state.players[player_idx].hand.len() {
+                Some(state.players[player_idx].hand.remove(idx))
+            } else {
+                None
             }
         }
-        return HandlerResult::Continue;
-    }
-
-    // Remove selected card
-    let idx = next_ctx.choice_index as usize;
-    let removed_cid = remove_card_by_index(
-        state, db, ctx, target_player_idx, source_zone, idx, next_ctx.area_idx as i32, (s & (1 << 25)) != 0,
-    ).unwrap_or(-1);
-    
-    if removed_cid < 0 {
-        return HandlerResult::Continue;
-    }
-
-    state.players[target_player_idx].push_discard_card(removed_cid as i32);
-    moved_cards.push(removed_cid as i32);
-    
-    next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
-        next_ctx.v_remaining - 1
-    } else {
-        (count as i16) - 1
-    };
-    
-    if !next_ctx.selected_cards.contains(&removed_cid) {
-        next_ctx.selected_cards.push(removed_cid);
-    }
-
-    // Check if more cards needed
-    if next_ctx.v_remaining > 0 {
-        let still_available = has_available_filtered(state, db, target_player_idx, source_zone, filter_attr, next_ctx);
-
-        if !still_available {
-            finish_pending_interaction(state);
-            return HandlerResult::Continue;
-        }
-
-        next_ctx.choice_index = -1;
-
-        // Auto-pick for forced discards
-        let is_forced = !is_optional && (count as usize) >= state.players[target_player_idx].hand.len();
-        if (ctx.auto_pick || is_forced) && !is_optional {
-            let has_cards = match source_zone {
-                Zone::Hand => !state.players[target_player_idx].hand.is_empty(),
-                Zone::Stage => state.players[target_player_idx].stage.iter().any(|&c| c >= 0),
-                _ => true,
-            };
-
-            if has_cards {
-                next_ctx.choice_index = 0;
-                return handle_move_to_discard(state, db, next_ctx, frame, frame_idx);
+        Zone::Discard => {
+            if idx < state.players[player_idx].discard.len() {
+                Some(state.players[player_idx].discard.remove(idx))
+            } else {
+                None
             }
         }
-
-        if matches!(
-            suspend_choice(state, db, ctx, next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, next_ctx.v_remaining),
-            HandlerResult::Suspend
-        ) {
-            return HandlerResult::Suspend;
+        Zone::Stage => {
+            let cards: Vec<i32> = state.players[player_idx].stage.iter().copied().filter(|&c| c >= 0).collect();
+            if idx < cards.len() {
+                let cid = cards[idx];
+                if let Some(pos) = state.players[player_idx].stage.iter().position(|&c| c == cid) {
+                    state.players[player_idx].stage[pos] = -1;
+                }
+                Some(cid)
+            } else {
+                None
+            }
         }
+        _ => None,
     }
+}
 
-    HandlerResult::Continue
+fn source_ability(db: &CardDatabase, ctx: &AbilityContext) -> Option<Ability> {
+    db.get_card(ctx.source_card_id).and_then(|card| {
+        card.abilities().get(ctx.ability_index as usize).cloned()
+    })
 }

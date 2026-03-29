@@ -1,4 +1,3 @@
-use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrame;
 
@@ -126,20 +125,6 @@ pub fn handle_select_ops(
     } else {
         resolved_filter_attr
     };
-
-    if state.debug.debug_mode && op == O_SELECT_MEMBER {
-        state.trace_internal(&format!(
-            "FRAME_SELECT_MEMBER: [phase={:?}] source_zone={} filter=[{}] {}",
-            state.phase,
-            effective_slot_info.source_zone as u8,
-            logging::describe_filter_attr(
-                crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(
-                    filter_attr as i64
-                )
-            ),
-            logging::describe_context(ctx)
-        ));
-    }
 
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
         let target_player = resolve_select_member_target_player(

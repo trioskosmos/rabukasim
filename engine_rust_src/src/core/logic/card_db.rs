@@ -27,6 +27,25 @@ use std::collections::HashMap;
 use std::fs;
 use super::models::*;
 
+/// Reference to a card in the database (either Member or Live)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CardRef {
+    Member(MemberCard),
+    Live(LiveCard),
+    Energy(EnergyCard),
+}
+
+impl CardRef {
+    /// Get abilities from the card
+    pub fn abilities(&self) -> &[Ability] {
+        match self {
+            CardRef::Member(m) => &m.abilities,
+            CardRef::Live(l) => &l.abilities,
+            CardRef::Energy(_) => &[],
+        }
+    }
+}
+
 // Consolidated abilities is the single runtime-friendly view of the authored
 // frame data. Keep the legacy frame index only as a fallback so older exports
 // still load, but make the canonical path obvious.
@@ -1869,6 +1888,17 @@ impl CardDatabase {
         None
     }
 
+    /// Get a card by ID (returns either MemberCard or LiveCard)
+    pub fn get_card(&self, id: i32) -> Option<CardRef> {
+        if let Some(member) = self.members.get(&id) {
+            return Some(CardRef::Member(member.clone()));
+        }
+        if let Some(live) = self.lives.get(&id) {
+            return Some(CardRef::Live(live.clone()));
+        }
+        None
+    }
+
     /// Detect vanilla mode by checking if **all** member cards have empty abilities.
     /// This is more reliable than the is_vanilla flag which might not propagate correctly through Arc cloning.
     pub fn detect_abilityless(&self) -> bool {
@@ -1991,7 +2021,77 @@ struct DerivedChoiceMetadata {
     choice_count: u8,
 }
 
+fn frame_choice_count(frame: &AbilityFrame) -> u8 {
+    let value = frame.value();
+    match frame.opcode() {
+        O_LOOK_AND_CHOOSE => frame.look_choose().choose_count.max(1),
+        O_SELECT_MODE => value.max(1) as u8,
+        O_COLOR_SELECT => frame
+            .components()
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("choices").or_else(|| params.get("CHOICES")))
+            .and_then(|value| value.as_array())
+            .map(|choices| choices.len().max(1) as u8)
+            .unwrap_or(6),
+        O_ORDER_DECK | O_LOOK_REORDER_DISCARD => value.max(3).max(1) as u8,
+        O_SELECT_CARDS => value.max(1) as u8,
+        O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_SELECT_MEMBER | O_SELECT_LIVE
+        | O_SELECT_PLAYER | O_MOVE_TO_DISCARD | O_TAP_MEMBER | O_TAP_OPPONENT
+        | O_ACTIVATE_MEMBER | O_SET_TAPPED | O_PAY_ENERGY | O_MOVE_TO_DECK => value.max(1) as u8,
+        _ => value.max(1) as u8,
+    }
+}
 
+fn derive_choice_metadata(program: &FrameProgram) -> DerivedChoiceMetadata {
+    let mut metadata = DerivedChoiceMetadata::default();
+
+    for frame in &program.frames {
+        let opcode = frame.opcode();
+        let is_optional = frame.filter().is_optional;
+
+        if is_optional {
+            metadata.requires_selection = true;
+        }
+
+        match opcode {
+            O_LOOK_AND_CHOOSE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_LOOK;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_SELECT_MODE => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_MODE;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_COLOR_SELECT => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_COLOR;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_ORDER_DECK | O_LOOK_REORDER_DISCARD => {
+                metadata.requires_selection = true;
+                metadata.choice_flags |= CHOICE_FLAG_ORDER;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            O_SELECT_CARDS | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER
+            | O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER | O_MOVE_TO_DISCARD
+            | O_MOVE_TO_DECK | O_TAP_MEMBER | O_TAP_OPPONENT | O_ACTIVATE_MEMBER | O_SET_TAPPED
+            | O_PAY_ENERGY => {
+                metadata.requires_selection = true;
+                metadata.choice_count = metadata.choice_count.max(frame_choice_count(frame));
+            }
+            _ => {}
+        }
+    }
+
+    if metadata.choice_flags != 0 {
+        metadata.requires_selection = true;
+    }
+
+    metadata
+}
 
 /// Derive choice metadata directly from semantic effects/conditions/costs.
 /// This is the semantic migration path - reading from structured data instead of frame_program.
@@ -2227,6 +2327,28 @@ fn compute_ability_flags_from_effects(ab: &Ability) -> u64 {
 }
 
 /// Check if ability has a specific opcode by examining semantic effects.
+fn has_opcode_from_effects(ab: &Ability, target_op: i32) -> bool {
+    for effect in &ab.effects {
+        let opcode = if effect.runtime_opcode != 0 {
+            effect.runtime_opcode
+        } else {
+            effect_type_to_opcode(effect.effect_type)
+        };
+        if opcode == target_op {
+            return true;
+        }
+    }
+
+    // Also check costs
+    for cost in &ab.costs {
+        let opcode = cost_type_to_opcode(cost.cost_type);
+        if opcode == target_op {
+            return true;
+        }
+    }
+
+    false
+}
 
 pub const CHARACTER_NAMES: [&str; 78] = [
     "", // 0

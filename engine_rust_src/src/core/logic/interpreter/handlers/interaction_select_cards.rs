@@ -3,7 +3,6 @@ use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, FILTER_I
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_SELECT_CARDS;
@@ -49,18 +48,6 @@ pub fn handle_select_cards(
     } else {
         7
     };
-
-    if state.debug.debug_mode {
-        state.trace_internal(&format!(
-            "FRAME_SELECT_CARDS: [phase={:?}] zone={} optional={} variable={} looked={} {}",
-            state.phase,
-            effective_zone,
-            is_optional,
-            is_variable_selection,
-            state.players[p_idx].looked_cards.len(),
-            logging::describe_context(ctx)
-        ));
-    }
 
     let is_victorious_road = ctx.source_card_id == 10;
 

@@ -32,31 +32,7 @@ pub fn handle_formation_change(
 
         if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {
             if state.players[p_idx].stage[dst_slot] == -1 {
-                let src_cid = state.players[p_idx].stage[src_slot];
-                let src_tapped = state.players[p_idx].is_tapped(src_slot);
-                let src_energy = state.players[p_idx].stage_energy[src_slot].clone();
-                let src_energy_count = state.players[p_idx].stage_energy_count[src_slot];
-                let src_blade_buffs = state.players[p_idx].blade_buffs[src_slot];
-                let src_blade_override = state.players[p_idx].blade_overrides[src_slot];
-                let src_heart_buffs = state.players[p_idx].heart_buffs[src_slot];
-
-                state.players[p_idx].stage[dst_slot] = src_cid;
-                state.players[p_idx].set_tapped(dst_slot, src_tapped);
-                state.players[p_idx].stage_energy[dst_slot] = src_energy;
-                state.players[p_idx].stage_energy_count[dst_slot] = src_energy_count;
-                state.players[p_idx].blade_buffs[dst_slot] = src_blade_buffs;
-                state.players[p_idx].blade_overrides[dst_slot] = src_blade_override;
-                state.players[p_idx].heart_buffs[dst_slot] = src_heart_buffs;
-
-                state.players[p_idx].stage[src_slot] = -1;
-                state.players[p_idx].set_tapped(src_slot, false);
-                state.players[p_idx].stage_energy[src_slot].clear();
-                state.players[p_idx].stage_energy_count[src_slot] = 0;
-                state.players[p_idx].blade_buffs[src_slot] = 0;
-                state.players[p_idx].blade_overrides[src_slot] = -1;
-                state.players[p_idx].heart_buffs[src_slot] = HeartBoard::default();
-                state.players[p_idx].set_moved(src_slot, true);
-                state.players[p_idx].set_moved(dst_slot, true);
+                state.players[p_idx].move_slot_data(src_slot, dst_slot);
             } else {
                 state.players[p_idx].swap_slot_data(src_slot, dst_slot);
             }

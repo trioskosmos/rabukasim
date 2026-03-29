@@ -508,6 +508,34 @@ impl PlayerState {
         }
     }
 
+    /// Moves all data from src slot to dst slot (dst must be empty). Clears src after move.
+    pub fn move_slot_data(&mut self, src: usize, dst: usize) {
+        if src < 3 && dst < 3 && src != dst && self.stage[dst] == -1 {
+            self.stage[dst] = self.stage[src];
+            self.stage[src] = -1;
+            
+            let was_tapped = self.is_tapped(src);
+            self.set_tapped(dst, was_tapped);
+            self.set_tapped(src, false);
+            
+            // Move energy data
+            self.stage_energy[dst] = std::mem::take(&mut self.stage_energy[src]);
+            self.stage_energy_count[dst] = self.stage_energy_count[src];
+            self.stage_energy_count[src] = 0;
+            
+            // Move buffs
+            self.blade_buffs[dst] = self.blade_buffs[src];
+            self.blade_buffs[src] = 0;
+            self.blade_overrides[dst] = self.blade_overrides[src];
+            self.blade_overrides[src] = -1;
+            self.heart_buffs[dst] = self.heart_buffs[src];
+            self.heart_buffs[src] = HeartBoard::default();
+            
+            self.set_moved(src, true);
+            self.set_moved(dst, true);
+        }
+    }
+
     pub fn get_slot_of(&self, card_id: i32) -> Option<usize> {
         self.stage
             .iter()
