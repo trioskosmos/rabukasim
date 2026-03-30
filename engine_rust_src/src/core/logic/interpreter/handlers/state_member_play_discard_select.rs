@@ -52,6 +52,11 @@ pub fn handle_discard_selection(
     remaining: i16,
     s: i32,
 ) -> HandlerResult {
+    // If no valid slots exist (board full), skip this effect
+    if state.players[target_p_idx].stage.iter().all(|&c| c >= 0) {
+        return HandlerResult::Continue;
+    }
+
     if empty_slot_only && state.players[target_p_idx].stage.iter().all(|&c| c >= 0) {
         return HandlerResult::Continue;
     }
@@ -134,6 +139,12 @@ pub fn handle_discard_selection(
 
     let idx = ctx.choice_index as usize;
     let cards_len = state.players[target_p_idx].looked_cards.len();
+
+    // Handle CHOICE_DONE (99) - user wants to stop selecting cards
+    if ctx.choice_index == crate::core::logic::constants::CHOICE_DONE {
+        ctx.v_remaining = 0;
+        return HandlerResult::Continue;
+    }
 
     if idx < cards_len {
         let cid = state.players[target_p_idx].looked_cards[idx];

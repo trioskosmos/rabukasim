@@ -307,7 +307,7 @@ impl GameState {
     }
 
     pub fn do_performance_phase(&mut self, db: &CardDatabase) {
-        super::performance::do_performance_phase(self, db)
+        super::performance::execute_performance_phase(self, db)
     }
 
     pub fn advance_from_performance(&mut self) {

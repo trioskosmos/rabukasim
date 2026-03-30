@@ -1,6 +1,7 @@
 use crate::core::logic::models::AbilityFrame;
 pub fn apply_to_target_slots(target_slot: i32, resolved_slot: i32, mut apply: impl FnMut(usize)) {
-    if target_slot == 1 {
+    // target_slot: 0 = default/all slots (SELF context), 1 = explicit all slots, 4 = area-based
+    if target_slot == 1 || target_slot == 0 || target_slot == 4 {
         for slot_idx in 0..3 {
             apply(slot_idx);
         }

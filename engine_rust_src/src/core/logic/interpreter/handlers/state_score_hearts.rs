@@ -28,6 +28,10 @@ pub fn handle_score_hearts(
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
 
+    if state.debug.debug_mode && op == O_ADD_HEARTS {
+        println!("[DEBUG handle_score_hearts] O_ADD_HEARTS entered");
+    }
+
     let slot_info = frame_data.slot;
     let target_p = if slot_info.is_opponent {
         1 - p_idx
@@ -67,11 +71,14 @@ pub fn handle_score_hearts(
             return state_score_stats::handle_set_blades(state, p_idx, v, resolved_slot);
         }
         O_ADD_HEARTS => {
+            if state.debug.debug_mode {
+                println!("[DEBUG] O_ADD_HEARTS: value={}, resolved_slot={}, target_slot={}", v, resolved_slot, target_slot);
+            }
             return state_score_stats::handle_add_hearts(
                 state,
                 db,
                 ctx,
-                p_idx,
+                target_p,  // Use target_p instead of p_idx - could be opponent
                 &frame_data,
                 resolved_slot,
                 target_slot,
@@ -82,7 +89,7 @@ pub fn handle_score_hearts(
                 state,
                 db,
                 ctx,
-                p_idx,
+                target_p,  // Use target_p instead of p_idx - could be opponent
                 &frame_data,
                 resolved_slot,
                 target_slot,

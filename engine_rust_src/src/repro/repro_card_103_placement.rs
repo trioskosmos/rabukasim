@@ -1,6 +1,7 @@
 use crate::core::generated_constants::{
     FLAG_EMPTY_SLOT_ONLY, O_PLAY_MEMBER_FROM_DISCARD, O_RETURN,
 };
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::*;
 use crate::test_helpers::load_real_db;
 
@@ -22,17 +23,9 @@ fn test_repro_card_103_placement() {
     // Card 103 Bytecode for Ability 0 (simplified)
     // Opcode 63 (PLAY_MEMBER_FROM_DISCARD), v=1, a=Filter(Cost<=2), s=FLAG_EMPTY_SLOT_ONLY | Stage
     let s_word = FLAG_EMPTY_SLOT_ONLY | 4; // 4 is Stage zone
-    let bytecode = vec![
-        O_PLAY_MEMBER_FROM_DISCARD as i32,
-        1,
-        0,
-        0,
-        s_word as i32,
-        O_RETURN as i32,
-        0,
-        0,
-        0,
-        0,
+    let bytecode_frames = vec![
+        AbilityFrame::new(O_PLAY_MEMBER_FROM_DISCARD as i32, 1, 0, s_word as i32, false),
+        AbilityFrame::new(O_RETURN as i32, 0, 0, 0, false),
     ];
 
     let ctx = AbilityContext {
@@ -43,8 +36,7 @@ fn test_repro_card_103_placement() {
     };
 
     // Execute
-    let frames = FrameProgram::from_words(&bytecode).frames;
-    state.resolve_semantic_frames(&db, &frames, &ctx);
+    state.resolve_semantic_frames(&db, &bytecode_frames, &ctx);
 
     // Generate actions
     let mut actions = Vec::new();

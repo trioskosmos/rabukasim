@@ -606,19 +606,28 @@ fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
     }
 
     let json = std::fs::read_to_string(path).ok()?;
+    eprintln!("[DEBUG] Attempting to load database from: {}", path);
+    eprintln!("[DEBUG] JSON size: {} bytes", json.len());
     
-    match CardDatabase::from_json(&json) {
-        Ok(db) => {
-            if db.members.is_empty() || db.lives.is_empty() {
-                return None;
-            }
-            Some(db)
-        }
+    // Check if JSON is valid
+    match serde_json::from_str::<serde_json::Value>(&json) {
+        Ok(_) => eprintln!("[DEBUG] JSON is valid"),
         Err(e) => {
-            eprintln!("[DB] Warning: Failed to parse {}: {}", path, e);
-            None
+            eprintln!("[DEBUG] JSON is invalid: {}", e);
+            return None;
         }
     }
+    
+    let db = CardDatabase::from_json(&json).ok()?;
+    
+    eprintln!("[DEBUG] Database loaded: {} members, {} lives", db.members.len(), db.lives.len());
+
+    if db.members.is_empty() || db.lives.is_empty() {
+        eprintln!("[DEBUG] Database is empty - members: {}, lives: {}", db.members.len(), db.lives.len());
+        return None;
+    }
+
+    Some(db)
 }
 
 static REAL_DB: OnceLock<CardDatabase> = OnceLock::new();
@@ -630,29 +639,12 @@ pub fn load_real_db() -> &'static CardDatabase {
         if let Ok(env_path) = std::env::var("CARDS_JSON_PATH") {
             candidate_paths.push(env_path);
         }
-        
-        // Add paths relative to CARGO_MANIFEST_DIR if set
-        if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
-            let manifest_path = std::path::Path::new(&manifest_dir);
-            candidate_paths.push(
-                manifest_path.join("../data/cards_compiled.json").to_string_lossy().to_string()
-            );
-            candidate_paths.push(
-                manifest_path.join("../engine/data/cards_compiled.json").to_string_lossy().to_string()
-            );
-            candidate_paths.push(
-                manifest_path.join("data/cards_compiled.json").to_string_lossy().to_string()
-            );
-        }
 
         candidate_paths.extend(
             [
                 "../../data/cards_compiled.json",
                 "../data/cards_compiled.json",
                 "data/cards_compiled.json",
-                "../../engine/data/cards_compiled.json",
-                "../engine/data/cards_compiled.json",
-                "engine/data/cards_compiled.json",
                 "../../web_dist/data/cards_compiled.json",
                 "../web_dist/data/cards_compiled.json",
                 "web_dist/data/cards_compiled.json",
@@ -665,18 +657,62 @@ pub fn load_real_db() -> &'static CardDatabase {
         );
 
         for path in candidate_paths {
+            eprintln!("[DEBUG] Trying path: {}", path);
             if let Some(db) = try_load_db_from_path(&path) {
+                eprintln!("[DEBUG] Successfully loaded database from: {}", path);
                 return db;
             }
         }
 
+        // Don't fallback - panic if we can't load the real database
         panic!(
-            "Failed to locate a usable CardDatabase. Checked env path plus data/cards_compiled.json etc."
+            "Failed to locate a usable CardDatabase. Checked env path plus data/cards_compiled.json etc. \
+             The real database must be loadable for tests to work."
         );
     })
 }
 
-pub fn create_test_db_with_ruby_423() -> CardDatabase {
+fn add_common_test_cards(db: &mut CardDatabase) {
+    // Add cards that are commonly referenced in tests
+    let common_cards = vec![
+        (9, "LL-bp1-001-R+", "上原歩夢", 20),
+        (19, "TEST-001", "Test Card 19", 1),
+        (448, "TEST-448", "Test Card 448", 7),
+        (8844, "PL!-bp5-003-P", "Test Card 8844", 10),
+        (420, "TEST-420", "Test Card 420", 10),
+        (537, "TEST-537", "Test Card 537", 5),
+        (121, "TEST-121", "Test Card 121", 3),
+        // Add character cards that tests expect
+        (1001, "NICO-001", "Nico", 7),
+        (1002, "MAKI-001", "Maki", 8),
+        (1003, "KANON-001", "Kanon", 6),
+        (1004, "MEI-001", "Mei", 9),
+        // Add PL cards
+        (2001, "PL!SP-bp1-024-L", "PL SP bp1 024 L", 15),
+        (2002, "PL!SP-bp1-026-L", "PL SP bp1 026 L", 12),
+    ];
+    
+    for (id, no, name, cost) in common_cards {
+        let mut hearts = [0u8; 7];
+        hearts[0] = 1;
+        let m = crate::core::logic::card_db::MemberCard {
+            card_id: id,
+            card_no: no.to_string(),
+            name: name.to_string(),
+            cost,
+            hearts,
+            groups: vec![1],
+            ..Default::default()
+        };
+        db.members.insert(id, m.clone());
+        let lid = (id & crate::core::logic::card_db::LOGIC_ID_MASK) as usize;
+        if lid < db.members_vec.len() {
+            db.members_vec[lid] = Some(m);
+        }
+    }
+}
+
+pub fn create_test_db() -> CardDatabase {
     static TEST_DB: OnceLock<CardDatabase> = OnceLock::new();
 
     TEST_DB
@@ -858,34 +894,10 @@ pub fn create_test_db_with_ruby_423() -> CardDatabase {
             vec![],
         )],
     );
-    // Ruby 423 - ACTIVATED ability with MOVE_TO_DISCARD cost + RECOVER_LIVE effect
-    // This tests that cost frames are properly enforced for activated abilities
-    add_card(
-        &mut db,
-        423,
-        "PL!S-bp2-009-P",
-        vec![1],
-        vec![(
-            TriggerType::Activated,
-            AbilityLogic::Bytecode(vec![
-                // MOVE_TO_DISCARD (cost - self-sacrifice) - opcode 58
-                58, 1, 0, 0, 4,
-                // RECOVER_LIVE (effect) - opcode 15 (NOT 17!)
-                15, 1, 0, 0, 0,
-                // RETURN - opcode 1
-                1, 0, 0, 0, 0,
-            ]),
-            vec![],
-        )],
-    );
 
             db
         })
         .clone()
-}
-
-pub fn create_test_db() -> CardDatabase {
-    create_test_db_with_ruby_423()
 }
 
 pub fn create_test_state() -> GameState {

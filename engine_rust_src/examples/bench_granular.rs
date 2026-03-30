@@ -1,6 +1,7 @@
 //! Granular Phase Benchmark - Instruments each sub-phase of LiveSet:step
 
-use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController, TurnPhaseController};
+use engine_rust::core::logic::{CardDatabase, GameState};
+use engine_rust::core::logic::game_action_processor::{get_step_timing_stats, reset_step_timing_stats};
 use engine_rust::core::models::Phase;
 use std::collections::HashMap;
 use std::fs;
@@ -99,6 +100,8 @@ fn setup_liveset_state(
     state.current_player = 0;
     state.first_player = 0;
     state.turn = 1;
+    state.ui.headless = true; // Enable headless mode for benchmarking
+    state.ui.silent = true;   // Also silence logging
     
     for p in 0..2 {
         for slot in 0..3 {
@@ -136,7 +139,7 @@ fn run_full_liveset_transition(
             (Phase::LiveSet, _, 0, 1) => {
                 timer.record(SubPhase::HandleLivesetP1, elapsed);
             }
-            (Phase::LiveSet, _, 1, 0) | (Phase::LiveSet, Phase::PerformanceP1, 1, 0) => {
+            (Phase::LiveSet, _, 1, 0) => {
                 timer.record(SubPhase::HandleLivesetP2, elapsed);
             }
             (Phase::PerformanceP1, _, _, _) => {
@@ -206,6 +209,26 @@ fn main() {
     }
     
     timer.print_stats();
+    
+    // Print step component timing breakdown
+    let (count, internal_us, auto_us, sync_us) = get_step_timing_stats();
+    if count > 0 {
+        println!("\n=== Step Component Breakdown ===");
+        println!("{:<18} {:>10} {:>10} {:>10}", "Component", "Total(μs)", "Avg(μs)", "% of Total");
+        println!("{}", "-".repeat(55));
+        let total = internal_us + auto_us + sync_us;
+        println!("{:<18} {:>10} {:>10.2} {:>10.1}%", 
+            "step_internal", internal_us, internal_us as f64 / count as f64, 
+            (internal_us as f64 / total as f64) * 100.0);
+        println!("{:<18} {:>10} {:>10.2} {:>10.1}%", 
+            "auto_step", auto_us, auto_us as f64 / count as f64,
+            (auto_us as f64 / total as f64) * 100.0);
+        println!("{:<18} {:>10} {:>10.2} {:>10.1}%", 
+            "sync_all_stats", sync_us, sync_us as f64 / count as f64,
+            (sync_us as f64 / total as f64) * 100.0));
+        println!("{}", "-".repeat(55));
+        println!("{:<18} {:>10} {:>10.2}", "TOTAL", total, total as f64 / count as f64);
+    }
     
     if !total_times.is_empty() {
         let total_sum: u64 = total_times.iter().sum();

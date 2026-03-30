@@ -92,38 +92,37 @@ pub fn handle_member_state(
 
         O_TAP_MEMBER => {
             let mut resolved_slot = resolve_target_slot(target_slot, ctx);
-            let is_select_member_choice = frame_data
-                .params
-                .map(|params| {
-                    params.get("FILTER").is_some()
-                        || params.get("filter").is_some()
-                        || params
-                            .get("destination")
-                            .and_then(|value| value.as_str())
-                            .map(|value| value.eq_ignore_ascii_case("target"))
-                            .unwrap_or(false)
-                        || params
-                            .get("cost_type_name")
-                            .and_then(|value| value.as_str())
-                            .map(|value| value.eq_ignore_ascii_case("SELECT_MEMBER"))
-                            .unwrap_or(false)
-                })
-                .unwrap_or(false);
-            let ability_filter_attr = db
-                .get_member(ctx.source_card_id)
-                .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-                .or_else(|| {
-                    db.get_live(ctx.source_card_id)
-                        .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
-                })
+            
+            // Helper to check if a param value equals a string (case-insensitive)
+            let param_eq = |params: &serde_json::Value, key: &str, val: &str| -> bool {
+                params.get(key)
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.eq_ignore_ascii_case(val))
+                    .unwrap_or(false)
+            };
+            
+            // Check if this is a select member choice
+            let is_select_member_choice = frame_data.params.map_or(false, |params| {
+                params.get("FILTER").is_some()
+                    || params.get("filter").is_some()
+                    || param_eq(params, "destination", "target")
+                    || param_eq(params, "cost_type_name", "SELECT_MEMBER")
+            });
+            
+            // Get ability filter attribute from card database
+            let card_ref = db.get_member(ctx.source_card_id)
+                .map(|c| &c.abilities)
+                .or_else(|| db.get_live(ctx.source_card_id).map(|c| &c.abilities));
+            
+            let ability_filter_attr = card_ref
+                .and_then(|abilities| abilities.get(ctx.ability_index.max(0) as usize))
                 .and_then(|ability| {
-                    ability
-                        .effects
-                        .iter()
-                        .find(|effect| effect.runtime_opcode == O_TAP_MEMBER)
-                        .and_then(|effect| filter_attr_from_params(Some(&effect.params)))
+                    ability.effects.iter()
+                        .find(|e| e.runtime_opcode == O_TAP_MEMBER)
+                        .and_then(|e| filter_attr_from_params(Some(&e.params)))
                 })
                 .unwrap_or(0);
+            
             let frame_filter_attr = frame_data.filter.to_attr();
 
             if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
@@ -180,22 +179,13 @@ pub fn handle_member_state(
                 );
             }
 
-            if ctx.source_card_id == 4196 {
-                eprintln!(
-                    "[STATE_TAP_SEL] cond={} {}",
-                    target_slot == 4
-                        && (is_select_member_choice || ability_filter_attr != 0)
-                        && a & 0x02 == 0
-                        && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice),
-                    logging::describe_frame_semantics(&frame_data, ctx, db)
-                );
-            }
-
-            if target_slot == 4
-                && (is_select_member_choice || ability_filter_attr != 0)
-                && a & 0x02 == 0
-                && (a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice)
-            {
+            // Determine if we need to suspend for user selection
+            let needs_select = is_select_member_choice || ability_filter_attr != 0;
+            let is_valid_target_slot = target_slot == 4;
+            let allow_tap_flag = a & 0x02 == 0; // Bit 2 set means no-tap mode
+            let has_selection_flag = a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice;
+            
+            if is_valid_target_slot && needs_select && allow_tap_flag && has_selection_flag {
                 if matches!(
                     suspend_choice(
                         state,

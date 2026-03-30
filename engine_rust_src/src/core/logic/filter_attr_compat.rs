@@ -41,7 +41,11 @@ fn unit_id_from_name(name: &str) -> Option<u8> {
 
 pub fn card_filter_from_attr(a: i64) -> CardFilter {
     if a == 0 {
-        return CardFilter::default();
+        // Return an enabled filter with no restrictions - matches all cards
+        return CardFilter {
+            is_enabled: true,
+            ..CardFilter::default()
+        };
     }
 
     let decoded = DecodedFilterAttr::decode(a);
@@ -213,6 +217,14 @@ fn apply_string_token(filter: &mut CardFilter, extras: &mut u64, part: &str) {
     if part_trimmed.contains("NAME_IN") {
         filter.is_enabled = true;
         filter.special_id = 1;
+        // Extract and store the name in color_mask for now
+        if let Some(eq_pos) = part_trimmed.find('=') {
+            let name_value = part_trimmed[eq_pos + 1..].trim();
+            // Store first character as a simple hash in color_mask
+            if let Some(first_char) = name_value.chars().next() {
+                filter.color_mask = ((first_char as u8) & 0x7F);
+            }
+        }
         return;
     }
     if part_trimmed.contains("NOT_NAME=MY") {

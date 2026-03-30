@@ -3,14 +3,16 @@ mod tests {
     use crate::core::enums::Zone;
     use crate::core::generated_constants::O_PLACE_ENERGY_UNDER_MEMBER;
     use crate::core::logic::*;
-    use crate::test_helpers::{create_test_db, create_test_state, BytecodeBuilder};
+    use crate::test_helpers::{create_test_db, create_test_state, FrameBuilder};
 
-    fn opcode_97_bytecode(target_slot: u8) -> Vec<i32> {
-        BytecodeBuilder::new(O_PLACE_ENERGY_UNDER_MEMBER)
+    fn opcode_97_frames(target_slot: u8) -> Vec<AbilityFrame> {
+        FrameBuilder::new()
+            .op(O_PLACE_ENERGY_UNDER_MEMBER)
             .v(1)
             .a(0)
             .source(Zone::Energy)
-            .slot(target_slot as i32)
+            .s(target_slot as i32)
+            .op(O_RETURN)
             .build()
     }
 
@@ -20,8 +22,7 @@ mod tests {
         ctx: &AbilityContext,
         target_slot: u8,
     ) {
-        let bytecode = opcode_97_bytecode(target_slot);
-        let frames = FrameProgram::from_words(&bytecode).frames;
+        let frames = opcode_97_frames(target_slot);
         state.resolve_semantic_frames(db, &frames, ctx);
     }
 

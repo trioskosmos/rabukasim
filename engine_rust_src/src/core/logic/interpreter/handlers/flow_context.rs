@@ -66,28 +66,5 @@ pub fn handle_color_select(
     HandlerResult::Continue
 }
 
-pub fn handle_repeat_ability(ctx: &mut AbilityContext, v: i32) -> HandlerResult {
-    let max_repeats = v;
-    if max_repeats == 0 || ctx.repeat_count < max_repeats as i16 {
-        ctx.repeat_count = ctx.repeat_count.saturating_add(1);
-        return HandlerResult::Branch(0);
-    }
-    HandlerResult::Continue
-}
-
-pub fn handle_set_target_self(ctx: &mut AbilityContext) {
-    ctx.player_id = ctx.activator_id;
-}
-
-pub fn handle_set_target_opponent(ctx: &mut AbilityContext) {
-    ctx.player_id = 1 - ctx.activator_id;
-}
-
-pub fn handle_flavor_action(state: &GameState, v: i32, a: i64, s: i32) {
-    if state.debug.debug_mode {
-        println!(
-            "[DEBUG] FLAVOR_ACTION: {}",
-            logging::describe_words(0, v, a, s)
-        );
-    }
-}
+// Note: handle_repeat_ability, handle_set_target_self, handle_set_target_opponent,
+// and handle_flavor_action have been moved to unified.rs

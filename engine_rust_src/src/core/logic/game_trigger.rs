@@ -346,16 +346,21 @@ impl GameState {
             // Inline frame conditions are branch/control-flow logic and must be
             // evaluated by the interpreter in sequence rather than flattened here.
             let mut all_met = true;
+            let mut failed_cond_idx = 0;
             if !skip_precheck_for_compensation {
-                for cond in conditions {
-                    if !super::interpreter::conditions::check_condition(
+                for (i, cond) in conditions.iter().enumerate() {
+                    let passed = super::interpreter::conditions::check_condition(
                         self, db, p_idx, cond, &ab_ctx, 1,
-                    ) {
+                    );
+                    eprintln!("[DEBUG_TRIGGER_COND] idx={}, type={:?}, passed={}", i, cond.condition_type, passed);
+                    if !passed {
                         all_met = false;
+                        failed_cond_idx = i;
                         break;
                     }
                 }
             }
+            eprintln!("[DEBUG_TRIGGER] After condition checks: all_met={}, failed_cond_idx={}", all_met, failed_cond_idx);
 
             if all_met {
                 // Check costs as well before enqueueing
@@ -372,8 +377,12 @@ impl GameState {
 
             if all_met {
                 // PHASE 3: Queue instead of immediate resolve to decouple mutations
+                eprintln!("[DEBUG_TRIGGER] Enqueuing ability: cid={}, ab_idx={}, trigger={:?}, conditions={}", 
+                    cid, ab_idx, trigger, conditions.len());
                 self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
             } else {
+                eprintln!("[DEBUG_TRIGGER] NOT enqueuing ability: cid={}, ab_idx={}, all_met={}, conditions={}", 
+                    cid, ab_idx, all_met, conditions.len());
                 if !self.ui.silent {
                     // Log which condition failed
                     for cond in conditions {

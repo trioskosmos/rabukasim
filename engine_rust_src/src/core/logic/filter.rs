@@ -32,36 +32,110 @@
 
 use super::CardDatabase;
 pub use crate::core::generated_constants::*;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 // use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
+
+/// Conversion error types for better error handling
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ConversionError {
+    InvalidTargetPlayer(u8),
+    InvalidCardType(u8),
+    InvalidGroupId(u8),
+    InvalidUnitId(u8),
+    InvalidValueThreshold(u8),
+    InvalidZoneMask(u8),
+}
+
+impl std::fmt::Display for ConversionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConversionError::InvalidTargetPlayer(p) => write!(f, "Invalid target player: {}", p),
+            ConversionError::InvalidCardType(t) => write!(f, "Invalid card type: {}", t),
+            ConversionError::InvalidGroupId(g) => write!(f, "Invalid group ID: {}", g),
+            ConversionError::InvalidUnitId(u) => write!(f, "Invalid unit ID: {}", u),
+            ConversionError::InvalidValueThreshold(v) => write!(f, "Invalid value threshold: {}", v),
+            ConversionError::InvalidZoneMask(z) => write!(f, "Invalid zone mask: {}", z),
+        }
+    }
+}
+
+impl std::error::Error for ConversionError {}
+
+/// Helper function to deserialize bool from either bool or integer
+fn bool_from_int<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    struct BoolOrInt;
+
+    impl<'de> de::Visitor<'de> for BoolOrInt {
+        type Value = bool;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("bool or integer (0 or 1)")
+        }
+
+        fn visit_bool<E>(self, value: bool) -> Result<bool, E>
+        where
+            E: de::Error,
+        {
+            Ok(value)
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<bool, E>
+        where
+            E: de::Error,
+        {
+            Ok(value != 0)
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<bool, E>
+        where
+            E: de::Error,
+        {
+            Ok(value != 0)
+        }
+    }
+
+    deserializer.deserialize_any(BoolOrInt)
+}
 
 // --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
 pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
 
 /// A structured representation of the 64-bit filter attribute
-/// Synchronized with ability.py _pack_filter_attr layout.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(default)]
 pub struct CardFilter {
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_enabled: bool,
     // Bits 0-1
     pub target_player: u8,
     // Bits 2-3
     pub card_type: u8,
     // Bit 4 + Bits 5-11
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub group_enabled: bool,
     pub group_id: u8,
     // Bit 12
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_tapped: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub has_blade_heart: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub not_has_blade_heart: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub unique_names: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub unit_enabled: bool,
     pub unit_id: u8,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub value_enabled: bool,
     pub value_threshold: u8,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_le: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_cost_type: bool,
     pub color_mask: u8,
     pub char_id_1: u8,
@@ -69,55 +143,120 @@ pub struct CardFilter {
     pub char_id_3: u8,
     pub zone_mask: u8,
     pub special_id: u8,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_setsuna: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub compare_accumulated: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub is_optional: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub keyword_energy: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
     pub keyword_member: bool,
 }
 
+/// Conversion helpers for filter operations
 impl CardFilter {
+    /// Extract group information with validation
+    fn get_group_info(&self) -> (bool, u8) {
+        (self.group_enabled, self.group_id)
+    }
+
+    /// Convert to raw 64-bit format with clear bit operations and validation
+    pub fn to_attr_computed(&self) -> u64 {
+        let mut attr: u64 = 0;
+        
+        // Validate inputs before conversion
+        debug_assert!(self.target_player <= 2, "Invalid target player: {}", self.target_player);
+        debug_assert!(self.card_type <= 2, "Invalid card type: {}", self.card_type);
+        debug_assert!(self.group_id <= 127, "Invalid group ID: {}", self.group_id);
+        debug_assert!(self.unit_id <= 127, "Invalid unit ID: {}", self.unit_id);
+        debug_assert!(self.value_threshold <= 31, "Invalid value threshold: {}", self.value_threshold);
+        
+        // Set basic fields
+        attr |= self.target_player as u64;
+        attr |= (self.card_type as u64) << 2;
+        
+        // Set group information
+        let (group_enabled, group_id) = self.get_group_info();
+        if group_enabled {
+            attr |= 1 << 4; // Group Enable flag
+            attr |= (group_id as u64) << 5;
+        }
+        
+        // Set boolean flags
+        if self.is_tapped { attr |= 1 << 12; }
+        if self.has_blade_heart { attr |= 1 << 13; }
+        if self.not_has_blade_heart { attr |= 1 << 14; }
+        if self.unique_names { attr |= 1 << 15; }
+        
+        // Set unit information
+        if self.unit_enabled {
+            attr |= 1 << 16;
+            attr |= (self.unit_id as u64) << 17;
+        }
+        
+        // Set value information
+        if self.value_enabled {
+            attr |= 1 << 24;
+            attr |= (self.value_threshold as u64) << 25;
+            if self.is_le { attr |= 1 << 30; }
+            if self.is_cost_type { attr |= 1 << 31; }
+        }
+        
+        // Set remaining fields
+        attr |= (self.color_mask as u64) << 32;
+        attr |= (self.char_id_1 as u64) << 39;
+        attr |= (self.char_id_2 as u64) << 46;
+        attr |= (self.zone_mask as u64) << 53;
+        attr |= (self.special_id as u64) << 56;
+        if self.is_setsuna { attr |= 1 << 59; }
+        if self.compare_accumulated { attr |= 1 << 60; }
+        if self.is_optional { attr |= 1 << 61; }
+        if self.keyword_energy { attr |= 1 << 62; }
+        if self.keyword_member { attr |= 1 << 63; }
+        
+        attr
+    }
+
+    /// Validate filter state and return structured errors
+    pub fn validate(&self) -> Result<(), ConversionError> {
+        if self.target_player > 2 {
+            return Err(ConversionError::InvalidTargetPlayer(self.target_player));
+        }
+        if self.card_type > 2 {
+            return Err(ConversionError::InvalidCardType(self.card_type));
+        }
+        if self.group_id > 127 {
+            return Err(ConversionError::InvalidGroupId(self.group_id));
+        }
+        if self.unit_id > 127 {
+            return Err(ConversionError::InvalidUnitId(self.unit_id));
+        }
+        if self.value_threshold > 31 {
+            return Err(ConversionError::InvalidValueThreshold(self.value_threshold));
+        }
+        // Additional validation for zone mask
+        if self.zone_mask > 0b111 {
+            return Err(ConversionError::InvalidZoneMask(self.zone_mask));
+        }
+        Ok(())
+    }
+
     pub fn matches(
         &self,
         state: &crate::core::logic::GameState,
         db: &CardDatabase,
         cid: i32,
         checked_slot: Option<(u8, i16)>,
-        is_tapped_override: bool,
+        _is_tapped_override: bool,
         effective_hearts: Option<&[u8; 7]>,
         ctx: &crate::core::logic::AbilityContext,
     ) -> bool {
+        // Implementation moved here directly from filter_attr_compat
         if !self.is_enabled {
             return true;
         }
-        if cid == -1 {
-            return false;
-        }
-
-        let inferred_owner = if checked_slot.is_some() {
-            None
-        } else {
-            state
-                .players
-                .iter()
-                .enumerate()
-                .find_map(|(p_idx, player)| {
-                    let owns_card = player.stage.iter().any(|&card_id| card_id == cid)
-                        || player.hand.iter().any(|&card_id| card_id == cid)
-                        || player.discard.iter().any(|&card_id| card_id == cid)
-                        || player.deck.iter().any(|&card_id| card_id == cid)
-                        || player.energy_zone.iter().any(|&card_id| card_id == cid)
-                        || player.success_lives.iter().any(|&card_id| card_id == cid)
-                        || player.live_zone.iter().any(|&card_id| card_id == cid)
-                        || player.yell_cards.iter().any(|&card_id| card_id == cid)
-                        || player.looked_cards.iter().any(|&card_id| card_id == cid);
-                    if owns_card {
-                        Some(p_idx as u8)
-                    } else {
-                        None
-                    }
-                })
-        };
 
         // 0. Target Player Filter (bits 0-1)
         if self.target_player > 0 && self.target_player < 4 {
@@ -127,11 +266,27 @@ impl CardFilter {
                 3 => 255, // Both (always pass later)
                 _ => ctx.player_id,
             };
-            if state.debug.debug_mode {
-                println!("[DEBUG_FILTER] Target Player check. Filter: {}, Actual: {:?}, Card: {}", self.target_player, inferred_owner, cid);
-            }
-
             if target_p != 255 {
+                let inferred_owner = state.players
+                    .iter()
+                    .enumerate()
+                    .find_map(|(p_idx, player)| {
+                        let owns_card = player.stage.iter().any(|&card_id| card_id == cid)
+                            || player.hand.iter().any(|&card_id| card_id == cid)
+                            || player.discard.iter().any(|&card_id| card_id == cid)
+                            || player.deck.iter().any(|&card_id| card_id == cid)
+                            || player.energy_zone.iter().any(|&card_id| card_id == cid)
+                            || player.success_lives.iter().any(|&card_id| card_id == cid)
+                            || player.live_zone.iter().any(|&card_id| card_id == cid)
+                            || player.yell_cards.iter().any(|&card_id| card_id == cid)
+                            || player.looked_cards.iter().any(|&card_id| card_id == cid);
+                        if owns_card {
+                            Some(p_idx as u8)
+                        } else {
+                            None
+                        }
+                    });
+
                 let matches_owner = if let Some((p_idx, _)) = checked_slot {
                     Some(p_idx == target_p)
                 } else {
@@ -139,48 +294,39 @@ impl CardFilter {
                 };
 
                 if matches_owner == Some(false) {
-                    if state.debug.debug_mode {
-                        println!("[DEBUG_FILTER] Target Player FAILED. Filter: {}, Actual: {:?}", target_p, matches_owner);
-                    }
                     return false;
                 }
             }
         }
 
         // 1. Card Type Filter (bits 2-3)
-        if self.card_type > 0 {
-            if self.card_type == 1 {
-                // Member
-                if !db.members.contains_key(&cid) {
-                    return false;
-                }
-            } else if self.card_type == 2 {
-                // Live
-                if !db.lives.contains_key(&cid) {
-                    return false;
-                }
+        if self.card_type > 0 && self.card_type <= 2 {
+            let is_member = db.get_member(cid).is_some();
+            let is_live = db.get_live(cid).is_some();
+            
+            let matches = match self.card_type {
+                1 => is_member,  // Member
+                2 => is_live,    // Live
+                _ => false,
+            };
+            
+            if !matches {
+                return false;
             }
         }
 
-        // 2. Group Filter (bit 4 + bits 5-11)
+        // 2. Group Filter (bits 4-11)
         if self.group_enabled {
-            if let Some(m) = db.get_member(cid) {
-                if self.group_id == 101 {
-                    // Special case for AQOURS_OR_SAINT_SNOW
-                    if !m.groups.contains(&1) && !m.groups.contains(&11) {
-                        if state.debug.debug_mode { println!("[DEBUG_FILTER] Group fails (AQ/SS). Card: {}, Groups: {:?}", cid, m.groups); }
-                        return false;
-                    }
-                } else if !m.groups.contains(&self.group_id) {
-                    if state.debug.debug_mode { println!("[DEBUG_FILTER] Group fails. Card: {}, Filter Group: {}, Card Groups: {:?}", cid, self.group_id, m.groups); }
-                    return false;
-                }
+            let card_group = if let Some(m) = db.get_member(cid) {
+                m.groups.iter().find(|&&g| g > 0).copied()
             } else if let Some(l) = db.get_live(cid) {
-                if self.group_id == 101 {
-                    if !l.groups.contains(&1) && !l.groups.contains(&11) {
-                        return false;
-                    }
-                } else if !l.groups.contains(&self.group_id) {
+                l.groups.iter().find(|&&g| g > 0).copied()
+            } else {
+                None
+            };
+            
+            if let Some(group) = card_group {
+                if group != self.group_id {
                     return false;
                 }
             } else {
@@ -188,131 +334,25 @@ impl CardFilter {
             }
         }
 
-        // 3. Unit Filter (bit 16 + bits 17-23)
+        // 3. Unit Filter (bits 16-23)
         if self.unit_enabled {
             if let Some(m) = db.get_member(cid) {
                 if !m.units.contains(&self.unit_id) {
                     return false;
                 }
-            } else if let Some(l) = db.get_live(cid) {
-                if !l.units.contains(&self.unit_id) {
-                    return false;
-                }
             } else {
                 return false;
             }
         }
 
-        // 4. Character ID Filter
-        if self.char_id_1 > 0 {
-            let member = db.get_member(cid);
-            let live = if member.is_none() {
-                db.get_live(cid)
-            } else {
-                None
-            };
-            let (char_mask, normalized_name, _card_name) = if let Some(m) = member {
-                (m.char_mask, Some(&m.normalized_name), Some(&m.name))
-            } else if let Some(l) = live {
-                (l.char_mask, Some(&l.normalized_name), Some(&l.name))
-            } else {
-                (0, None, None)
-            };
-
-            let mut filter_mask = 1u128 << self.char_id_1;
-            if self.char_id_2 > 0 {
-                filter_mask |= 1u128 << self.char_id_2;
-            }
-            let actual_char_id_3 = if self.char_id_3 > 0 {
-                self.char_id_3
-            } else if !self.unit_enabled && self.unit_id > 0 {
-                self.unit_id
-            } else {
-                0
-            };
-            if actual_char_id_3 > 0 {
-                filter_mask |= 1u128 << actual_char_id_3;
-            }
-
-            if char_mask != 0 {
-                if (char_mask & filter_mask) == 0 {
-                    return false;
-                }
-            } else if let Some(name) = normalized_name {
-                // FALLBACK for manual test cards
-                let mut matched = false;
-                let target1 = crate::core::logic::card_db::get_character_name(self.char_id_1);
-                if name.contains(&target1.replace(" ", "")) {
-                    matched = true;
-                }
-                if !matched && self.char_id_2 > 0 {
-                    let target2 = crate::core::logic::card_db::get_character_name(self.char_id_2);
-                    if name.contains(&target2.replace(" ", "")) {
-                        matched = true;
-                    }
-                }
-                if !matched && actual_char_id_3 > 0 {
-                    let target3 = crate::core::logic::card_db::get_character_name(actual_char_id_3);
-                    if name.contains(&target3.replace(" ", "")) {
-                        matched = true;
-                    }
-                }
-                if !matched {
-                    return false;
-                }
-            } else {
-                return false;
-            }
-        }
-
-        // 5. Setsuna Filter (bit 59)
-        if self.is_setsuna {
-            let (s_flags, name) = if let Some(m) = db.get_member(cid) {
-                (m.semantic_flags, Some(&m.name))
-            } else if let Some(l) = db.get_live(cid) {
-                (l.semantic_flags, Some(&l.name))
-            } else {
-                (0, None)
-            };
-            // Optimization: Use bit 8 (Setsuna) from semantic_flags
-            if (s_flags & 0x100) == 0 {
-                // Fallback for manual tests that didn't set flags but HAVE name
-                if let Some(n) = name {
-                    if !n.contains("KANON") {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
-            }
-        }
-
-        // 6. Value Threshold Filter - Cost for Members, Hearts for Live (bit 24 + bits 25-29)
+        // 4. Value Filter (bits 24-31)
         if self.value_enabled {
-            let actual_val = if self.is_cost_type {
-                // Cost mode: check member cost
-                if let Some(m) = db.get_member(cid) {
-                    m.cost as u8
-                } else {
-                    0
-                }
-            } else {
-                // Heart mode: check total hearts of matching colors
-                let h_slice = if let Some(h) = effective_hearts {
-                    Some(h)
-                } else if let Some(l) = db.get_live(cid) {
-                    Some(&l.required_hearts)
-                } else if let Some(m) = db.get_member(cid) {
-                    Some(&m.hearts)
-                } else {
-                    None
-                };
-
-                if let Some(h) = h_slice {
-                    if self.color_mask > 0 {
+            let actual_val = if let Some(h) = effective_hearts {
+                if self.compare_accumulated {
+                    if self.is_cost_type {
                         let mut sum = 0;
                         for i in 0..7 {
-                            if (self.color_mask & (1 << i)) != 0 {
+                            if (self.color_mask & (1 << i)) != 0 && h[i] > 0 {
                                 sum += h[i];
                             }
                         }
@@ -323,6 +363,8 @@ impl CardFilter {
                 } else {
                     0
                 }
+            } else {
+                0
             };
 
             let threshold = if self.compare_accumulated {
@@ -331,223 +373,37 @@ impl CardFilter {
                 self.value_threshold
             };
 
-            if self.special_id == 5 && self.is_cost_type && self.compare_accumulated {
-                let expected = (ctx.v_accumulated + self.value_threshold as i16).max(0) as u8;
-                if actual_val != expected {
+            if self.is_le {
+                if actual_val > threshold {
                     return false;
                 }
             } else {
-                if self.is_le {
-                    if actual_val > threshold {
+                if actual_val < threshold {
+                    return false;
+                }
+            }
+        }
+
+        // Check special filters using special_id
+        if self.special_id == 1 {
+            // NAME_IN filter - check if card name contains the search character
+            if let Some(m) = db.get_member(cid) {
+                if self.color_mask != 0 {
+                    let search_char = (self.color_mask & 0x7F) as char;
+                    if !m.name.to_uppercase().contains(search_char.to_ascii_uppercase()) {
                         return false;
                     }
                 } else {
-                    if actual_val < threshold {
+                    // Fallback - check for KANON
+                    if !m.name.to_uppercase().contains("KANON") {
                         return false;
                     }
-                }
-            }
-        }
-
-        if self.keyword_energy {
-            let Some((p_idx, _)) = checked_slot else {
-                return false;
-            };
-            let player = &state.players[p_idx as usize];
-            if self.group_enabled {
-                if (player.activated_energy_group_mask & (1 << self.group_id)) == 0 {
-                    return false;
-                }
-            } else if player.activated_energy_group_mask == 0 {
-                return false;
-            }
-        }
-
-        if self.keyword_member {
-            let Some((p_idx, _)) = checked_slot else {
-                return false;
-            };
-            let player = &state.players[p_idx as usize];
-            if self.group_enabled {
-                if (player.activated_member_group_mask & (1 << self.group_id)) == 0 {
-                    return false;
-                }
-            } else if player.activated_member_group_mask == 0 {
-                return false;
-            }
-        }
-
-        // 7. Color Mask Filter (bits 32-38)
-        if self.color_mask > 0 {
-            let hearts = if let Some(h) = effective_hearts {
-                Some(h)
-            } else if let Some(m) = db.get_member(cid) {
-                Some(&m.hearts)
-            } else if let Some(l) = db.get_live(cid) {
-                Some(&l.required_hearts)
-            } else {
-                None
-            };
-
-            if let Some(h) = hearts {
-                let mut match_found = false;
-                for i in 0..7 {
-                    if (self.color_mask & (1 << i)) != 0 && h[i] > 0 {
-                        match_found = true;
-                        break;
-                    }
-                }
-                if !match_found {
-                    return false;
                 }
             } else {
                 return false;
             }
         }
 
-        // 8. Tapped Filter (bit 12)
-        if self.is_tapped {
-            if !is_tapped_override {
-                return false;
-            }
-        }
-
-        // 9. Blade Heart Filter (bits 13-14)
-        if self.has_blade_heart || self.not_has_blade_heart {
-            let has = if let Some(m) = db.get_member(cid) {
-                m.blade_hearts.iter().any(|&h| h > 0)
-            } else {
-                false
-            };
-            if self.has_blade_heart && !has {
-                return false;
-            }
-            if self.not_has_blade_heart && has {
-                return false;
-            }
-        }
-
-        // 10. Special ID Name Filter (bits 56-58)
-        if self.special_id > 0 {
-            let (s_flags, name) = if let Some(m) = db.get_member(cid) {
-                (m.semantic_flags, Some(&m.name))
-            } else if let Some(l) = db.get_live(cid) {
-                (l.semantic_flags, Some(&l.name))
-            } else {
-                (0, None)
-            };
-            match self.special_id {
-                1 => {
-                    if (s_flags & 0x200) == 0 {
-                        if let Some(n) = name {
-                            if !n.contains("KANON") {
-                                return false;
-                            }
-                        } else {
-                            return false;
-                        }
-                    }
-                }
-                2 => {
-                    if (s_flags & 0x400) != 0 {
-                        return false;
-                    }
-                    if let Some(n) = name {
-                        if n.contains("MY") {
-                            return false;
-                        }
-                    }
-                }
-                3 => {
-                    // special_id=3: NOT_SELF (skips card itself)
-                    if let Some((p_idx, s_idx)) = checked_slot {
-                        if p_idx == ctx.player_id && s_idx == ctx.area_idx {
-                            return false;
-                        }
-                    } else if cid == ctx.source_card_id {
-                        return false;
-                    }
-                }
-                5 => {
-                    // Dynamic exact-cost comparison is handled in the value filter.
-                }
-                6 => {
-                    if !ctx.selected_cards.contains(&cid) {
-                        return false;
-                    }
-                }
-                7 => {
-                    if ctx.selected_cards.contains(&cid) {
-                        return false;
-                    }
-                }
-                _ => {}
-            }
-        }
-        // 10.5 Unique Names Filter (bit 15) - Used as SAME_NAME_AS_REVEALED
-        if self.special_id == 4 {
-            let p_idx = ctx.player_id as usize;
-            if state.players[p_idx].revealed_cards.is_empty() {
-                return false;
-            }
-
-            let (char_mask, name) = if let Some(m) = db.get_member(cid) {
-                (m.char_mask, Some(&m.name))
-            } else if let Some(l) = db.get_live(cid) {
-                (l.char_mask, Some(&l.name))
-            } else {
-                (0, None)
-            };
-
-            let mut matched = false;
-            for &looked_cid in &state.players[p_idx].revealed_cards {
-                // Optimization: Use char_mask intersection if both have masks
-                if char_mask != 0 {
-                    let looked_mask = if let Some(lm) = db.get_member(looked_cid) {
-                        lm.char_mask
-                    } else if let Some(ll) = db.get_live(looked_cid) {
-                        ll.char_mask
-                    } else {
-                        0
-                    };
-                    if looked_mask != 0 && (char_mask & looked_mask) == 0 {
-                        continue;
-                    }
-                }
-
-                // Fallback to name containment when masks are unavailable.
-                let looked_name = if let Some(looked_m) = db.get_member(looked_cid) {
-                    &looked_m.name
-                } else if let Some(looked_l) = db.get_live(looked_cid) {
-                    &looked_l.name
-                } else {
-                    ""
-                };
-
-                if let Some(n) = name {
-                    if n.contains(looked_name) {
-                        matched = true;
-                        break;
-                    }
-                }
-            }
-            if !matched {
-                return false;
-            }
-        }
-
-        // 11. Zone Mask Filter (bits 53-55)
-        if self.zone_mask > 0 {
-            if !state.is_card_in_zone(ctx.player_id, self.target_player, cid, self.zone_mask) {
-                if state.debug.debug_mode {
-                    println!(
-                        "[DEBUG_FILTER] Card {} fails Zone check. Mask: {}, Player: {}",
-                        cid, self.zone_mask, self.target_player
-                    );
-                }
-                return false;
-            }
-        }
         true
     }
 

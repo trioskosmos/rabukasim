@@ -81,6 +81,12 @@ fn test_card_579_ability_0_cost_comparison() {
         .unwrap();
 
     writeln!(log_file, "Ability frames: {:?}", ability.frames()).unwrap();
+    
+    // Debug: Show raw slot values
+    for (i, frame) in ability.frames().iter().enumerate() {
+        writeln!(log_file, "  Frame {}: raw_slot={:#x}, area_idx={}", 
+                 i, frame.components().raw_slot, frame.components().slot.area_idx).unwrap();
+    }
 
     // Test Case 1: P0 Cost > P1 Cost -> Should boost score
     state.resolve_ability(&db, ability, &ctx);

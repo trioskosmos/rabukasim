@@ -115,14 +115,14 @@ fn test_opcode_opponent_choose_rigor() {
         ..Default::default()
     };
 
-    // Get bytecode from card 3001
-    let bc = if let Some(m) = db.get_member(3001) {
-        m.abilities[0].bytecode.clone()
+    // Get frames from card 3001
+    let frames = if let Some(m) = db.get_member(3001) {
+        m.abilities[0].frame_program.as_ref().map(|fp| fp.frames.clone()).unwrap_or_default()
     } else {
         panic!("Card 3001 not found in test DB");
     };
 
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     assert_eq!(state.phase, Phase::Response);
     let interaction = state.interaction_stack.last().unwrap();

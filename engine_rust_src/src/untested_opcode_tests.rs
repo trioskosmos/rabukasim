@@ -37,7 +37,7 @@ fn test_opcode_formation_change_basic() {
     // O_FORMATION_CHANGE: swap slot 0 (area_idx) with slot 1 (target_slot)
     // Opcode format: [26, v, a, s] where v=1, a=dst_slot, s=4 (from context)
     let bc = vec![O_FORMATION_CHANGE, 1, 1, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Verify swap occurred
     assert_eq!(
@@ -84,7 +84,7 @@ fn test_opcode_formation_change_triggers_position_change() {
     };
 
     let bc = vec![O_FORMATION_CHANGE, 1, 1, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // OnPositionChange triggers for BOTH members that moved (4010 and 4011)
     // So we expect 2 cards drawn (1 for each member's OnPositionChange)
@@ -126,7 +126,7 @@ fn test_opcode_prevent_set_to_success_pile() {
         0,
         0,
     ];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
         state.players[0].prevent_success_pile_set(),
@@ -149,8 +149,8 @@ fn test_opcode_reduce_live_set_limit_stacking() {
 
     // O_REDUCE_LIVE_SET_LIMIT stacks with saturating_add
     let bc = vec![O_REDUCE_LIVE_SET_LIMIT, 2, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc, &ctx);
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Should stack (saturating_add)
     assert_eq!(
@@ -178,7 +178,7 @@ fn test_opcode_set_heart_cost() {
 
     // O_SET_HEART_COST: v=3 (amount), s=0 (color index 0 = Pink)
     let bc = vec![O_SET_HEART_COST, 3, 0, 0, 0, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Verify heart_req_additions was modified for color 0
     assert_eq!(
@@ -202,11 +202,11 @@ fn test_opcode_set_heart_cost_multiple_colors() {
 
     // Set cost for color 1 (Green)
     let bc1 = vec![O_SET_HEART_COST, 2, 0, 0, 1, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc1, &ctx);
+    state.resolve_bytecode_cref(&db, &bc1, &ctx);
 
     // Set cost for color 2 (Blue)
     let bc2 = vec![O_SET_HEART_COST, 4, 0, 0, 2, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc2, &ctx);
+    state.resolve_bytecode_cref(&db, &bc2, &ctx);
 
     assert_eq!(
         state.players[0].heart_req_additions.get_color_count(1),
@@ -276,7 +276,7 @@ fn test_condition_has_color_true() {
         0,
         0,
     ];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // If condition passed, should have drawn a card
     assert_eq!(
@@ -337,7 +337,7 @@ fn test_condition_has_color_false() {
         0,
         0,
     ];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // If condition failed, should NOT have drawn a card
     assert_eq!(
@@ -393,7 +393,7 @@ fn test_condition_has_moved_true() {
     ];
     state.players[0].hand = vec![].into();
     state.players[0].deck = vec![3001].into();
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should pass, draw should execute
     assert_eq!(
@@ -443,7 +443,7 @@ fn test_condition_has_moved_false() {
     ];
     state.players[0].hand = vec![].into();
     state.players[0].deck = vec![3001].into();
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // Condition should fail, draw should NOT execute
     assert_eq!(
@@ -479,7 +479,7 @@ fn test_formation_change_with_group_condition() {
 
     // Formation change: swap slot 0 with slot 2
     let bc = vec![O_FORMATION_CHANGE, 1, 2, 0, 4, O_RETURN, 0, 0, 0, 0];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     assert_eq!(
         state.players[0].stage[0], -1,
@@ -523,7 +523,7 @@ fn test_prevent_success_pile_integration() {
         0,
         0,
     ];
-    state.resolve_frames(&db, &bc, &ctx);
+    state.resolve_bytecode_cref(&db, &bc, &ctx);
 
     // The flag should prevent the live from being moved to success_lives
     // This would be tested in the actual live success flow

@@ -77,6 +77,8 @@ fn verify_manual_recovery_pattern() {
         }
         .id() as i32,
     );
+    println!("    Frame {}: opcode={}, value={}, slot={}, attr={}, params={:?}", 
+                             0, 32, 1, 0, 0, vec![1, 0, 0, 0, 0, 0, 0, 0]);
     result.unwrap();
 
     assert_eq!(
@@ -97,7 +99,7 @@ fn verify_manual_recovery_pattern() {
 fn verify_performance_transition_history() {
     let db = load_real_db();
     let mut state = GameState::default();
-    state.ui.silent = true;
+    state.ui.silent = false; // Need non-silent mode to verify performance_history
 
     // Use common live card ID 6
     state.players[0].live_zone[0] = 6;
@@ -148,8 +150,33 @@ fn verify_buff_logic() {
     state.players[0].stage[0] = 120;
     state.players[0].success_lives = smallvec![120, 120]; // 2 cards in success pile
 
+    // Enable debug mode to see blade calculation
+    state.debug.debug_mode = true;
+    state.ui.silent = false;
+    
     // Total is currently 3 (base) + 2 bonus from 2 success pile cards = 5
     let blades = state.get_effective_blades(0, 0, &db, 0);
+    println!("Card 120 blades: {} (expected: 5)", blades);
+    
+    // Check what card 120's ability actually is
+    if let Some(member) = db.get_member(120) {
+        println!("Card 120 - Name: {}, Base Blades: {}", member.name, member.blades);
+        for (i, ab) in member.abilities.iter().enumerate() {
+            println!("  Ability {}: {:?}", i, ab);
+            if let Some(frame_program) = &ab.frame_program {
+                for (j, frame) in frame_program.frames.iter().enumerate() {
+                    println!("    Frame {}: opcode={}, value={}, slot={}, params={:?}", 
+                             j, frame.opcode(), frame.value(), frame.slot(), frame.components().params);
+                }
+            }
+        }
+    }
+    
+    // Check board aura
+    let aura = crate::core::logic::rules::calculate_board_aura(&state, 0, &db);
+    println!("Board aura blades: {:?}", aura.blades);
+    println!("Success lives: {:?}", state.players[0].success_lives);
+    
     assert_eq!(
         blades, 5,
         "Card 120 should have 3 (base) + 2 bonus from 2 cards in success pile = 5 blades"

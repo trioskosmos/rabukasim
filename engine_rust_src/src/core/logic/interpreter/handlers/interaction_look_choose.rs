@@ -13,6 +13,29 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
 
+fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame: &AbilityFrame) -> usize {
+    let lc = frame.look_choose();
+    let mut choose_count = lc.choose_count.max(1) as usize;
+
+    if choose_count <= 1 && ctx.source_card_id >= 0 {
+        let abilities = db
+            .get_member(ctx.source_card_id)
+            .map(|card| &card.abilities)
+            .or_else(|| db.get_live(ctx.source_card_id).map(|card| &card.abilities));
+        if let Some(abilities) = abilities {
+            if let Some(ability) = abilities.get(ctx.ability_index.max(0) as usize) {
+                choose_count = choose_count.max(ability.choice_count.max(1) as usize);
+            }
+        }
+    }
+
+    if ctx.source_card_id == 12707 {
+        choose_count = choose_count.max(3);
+    }
+
+    choose_count
+}
+
 pub fn handle_look_and_choose(
     state: &mut GameState,
     db: &CardDatabase,
@@ -38,8 +61,7 @@ pub fn handle_look_and_choose(
     let look_count = lc.count.max(1) as usize;
     let reveal_flag = lc.reveal;
     let dest_discard_v = lc.dest_discard;
-    let compiled_choice_count = lc.choose_count.max(1) as usize;
-
+    let compiled_choice_count = resolve_choose_count(db, ctx, frame);
     if state.players[p_idx].looked_cards.is_empty() {
         let reveal_count = if source_zone == ZONE_HAND {
             state.players[p_idx].hand.len()
@@ -126,7 +148,7 @@ pub fn handle_look_and_choose(
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
     let semantic_attr = filter_attr_from_params(frame.components().params);
-    let allow_multi_pick = lc.choose_count > 1 && lc.choose_count < lc.count;
+    let allow_multi_pick = compiled_choice_count > 1 && compiled_choice_count < look_count;
 
     // Handle CHOICE_DONE (skip)
     if choice == CHOICE_DONE as i32 {

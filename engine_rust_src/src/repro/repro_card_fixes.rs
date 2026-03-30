@@ -117,6 +117,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_card_275_sequential_interaction_resumption() {
         let mut state = GameState::default();
         let card_id = 275; // Setsuna

@@ -6,7 +6,6 @@
 //!   cargo run --example analyze_slow_events -- target/slow_events.json
 
 use engine_rust::core::logic::{CardDatabase, GameState};
-use std::collections::HashMap;
 use std::fs;
 use serde::{Deserialize, Serialize};
 

@@ -85,6 +85,11 @@ pub fn handle_pay_energy(
     let frame_data = frame.components();
     let is_optional = frame_data.filter.is_optional;
 
+    if state.debug.debug_mode {
+        println!("[DEBUG] O_PAY_ENERGY: v={}, available={}, requires_explicit={}, is_optional={}, phase={:?}, choice_index={}, v_remaining={}",
+            v, available, requires_explicit_selection, is_optional, state.phase, ctx.choice_index, ctx.v_remaining);
+    }
+
     // --- CASE 1: Variable Energy Payment (e.g. Card 878) ---
     if v == -1 {
         if ctx.choice_index == -1 {
@@ -200,7 +205,9 @@ pub fn handle_pay_energy(
 
     if !requires_explicit_selection {
         let paid = tap_energy_cards_with_logging(state, p_idx, remaining as usize);
-
+        if state.debug.debug_mode {
+            println!("[DEBUG] O_PAY_ENERGY auto-tap: remaining={}, paid={}, tapping {} energy cards", remaining, paid, remaining);
+        }
         ctx.v_accumulated += paid as i16;
         ctx.v_remaining = -1;
         ctx.choice_index = -1;

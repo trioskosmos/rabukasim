@@ -1,5 +1,8 @@
 use super::*;
-use crate::core::logic::heart_semantics::decode_heart_type_from_params;
+use crate::core::logic::heart_semantics::{
+    decode_heart_type_from_icons, decode_heart_type_from_params,
+};
+use crate::core::logic::interpreter::suspension::resolve_target_slot;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::CardDatabase;
 
@@ -8,53 +11,49 @@ mod state_score_slots;
 #[path = "state_score_transforms.rs"]
 mod state_score_transforms;
 
-fn infer_source_heart_color(db: &CardDatabase, source_card_id: i32) -> Option<usize> {
-    let counts = if let Some(m) = db.get_member(source_card_id) {
-        Some(&m.hearts)
-    } else if let Some(l) = db.get_live(source_card_id) {
-        Some(&l.required_hearts)
-    } else {
-        None
-    }?;
-
-    let mut found = None;
-    for (idx, &count) in counts.iter().enumerate() {
-        if count > 0 {
-            if found.is_some() {
-                return None;
-            }
-            found = Some(idx);
-        }
-    }
-    found
-}
-
 fn decode_heart_color(
     db: &CardDatabase,
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
 ) -> usize {
+    // 1. Try explicit params first
     if let Some(color) = decode_heart_type_from_params(frame.params) {
         return color;
     }
 
+    // 2. Use color_mask if it specifies exactly one color
     let color_mask = frame.filter.color_mask as usize;
-    if color_mask != 0 {
-        if color_mask.count_ones() == 1 {
-            return color_mask.trailing_zeros() as usize;
-        }
-        if color_mask == 0x7F {
-            return ctx.selected_color as usize;
-        }
+    if color_mask != 0 && color_mask.count_ones() == 1 {
+        return color_mask.trailing_zeros() as usize;
     }
 
+    // 3. Use raw_attr if it's a valid color (1-6, with 7 mapping to 6)
     match frame.raw_attr {
-        0 => ctx.selected_color as usize,
-        7 => 6,
-        raw if raw <= 6 => raw as usize,
-        _ => infer_source_heart_color(db, ctx.source_card_id)
-            .unwrap_or(ctx.selected_color as usize),
+        0 => {} // Fall through to text parsing
+        7 => return 6,
+        raw if raw <= 6 => return raw as usize,
+        _ => {}
     }
+    
+    // 4. Try decoded hint text from frame params
+    if let Some(params) = frame.params {
+        if let Some(decoded) = params.get("decoded").and_then(|v| v.as_str()) {
+            if let Some(color) = decode_heart_type_from_icons(decoded) {
+                return color;
+            }
+        }
+    }
+    
+    // 5. Minimal fallback: try ability text for color
+    if let Some(member) = db.get_member(ctx.source_card_id) {
+        if let Some(ability) = member.abilities.get(ctx.ability_index.max(0) as usize) {
+            if let Some(color) = decode_heart_type_from_icons(&ability.raw_text) {
+                return color;
+            }
+        }
+    }
+    
+    ctx.selected_color as usize
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -133,9 +132,20 @@ pub fn handle_add_hearts(
     } else {
         resolved_slot
     };
+    if state.debug.debug_mode {
+        println!("[DEBUG handle_add_hearts] color={}, resolved_slot={}, target_slot={}, p_idx={}, value={}", color, resolved_slot, target_slot, p_idx, frame.value);
+    }
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
+            if state.debug.debug_mode {
+                let before = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
+                println!("[DEBUG handle_add_hearts] Applying heart buff to slot_idx={}, color={}, before={}", slot_idx, color, before);
+            }
             state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, frame.value as i32);
+            if state.debug.debug_mode {
+                let after = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
+                println!("[DEBUG handle_add_hearts] After adding: color={} count={}", color, after);
+            }
             state.players[p_idx].heart_buff_logs.push((
                 ctx.source_card_id,
                 frame.value,
@@ -143,6 +153,10 @@ pub fn handle_add_hearts(
                 slot_idx as u8,
             ));
         });
+    } else {
+        if state.debug.debug_mode {
+            println!("[DEBUG handle_add_hearts] Color {} >= 7, skipping", color);
+        }
     }
     state.needs_stat_sync = true;
     if !state.ui.silent {

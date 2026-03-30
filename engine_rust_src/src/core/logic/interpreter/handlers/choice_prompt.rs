@@ -44,6 +44,8 @@ pub fn handle_optional_nop(
             ChoiceType::SelectCards
         } else if frame_data.opcode == O_SELECT_MEMBER {
             ChoiceType::SelectMember
+        } else if frame_data.opcode == O_LOOK_AND_CHOOSE {
+            ChoiceType::LookAndChoose
         } else {
             ChoiceType::Optional
         }
@@ -62,7 +64,7 @@ pub fn handle_optional_nop(
         frame_data.opcode,
         frame_data.raw_slot,
         choice_type,
-        frame_data.raw_attr,
+        frame_data.filter.to_attr(),
         frame_data.value as i16,
         Vec::new(),
         Vec::new(),

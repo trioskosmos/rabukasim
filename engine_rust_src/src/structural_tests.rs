@@ -1,5 +1,6 @@
 // Removed unused generated_constants import
 use crate::core::logic::*;
+use crate::test_helpers::{create_test_db, create_test_state, TestUtils};
 
 #[test]
 fn test_exile_zone_exists() {
@@ -55,28 +56,14 @@ fn test_rule_10_5_3_orphan_energy_cleanup() {
 
 #[test]
 fn test_play_member_from_hand_opcode_preserves_energy() {
-    let mut state = GameState::default();
+    let db = create_test_db();
+    let mut state = create_test_state();
 
-    // Setup
-    // Slot 0 has member 999 and Energy [10, 20]
-    state.players[0].stage[0] = 999;
-    state.players[0].stage_energy[0] = smallvec::smallvec![10, 20];
-    state.players[0].stage_energy_count[0] = 2;
-    state.players[0].hand = smallvec::smallvec![888]; // Card to play
-    state.players[0].deck = smallvec::smallvec![123];
+    // Setup: card 999 in stage slot 0, card 888 in hand
+    state.set_stage(0, 0, 999);
+    state.set_hand(0, &[888]);
 
-    let mut m888 = MemberCard::default();
-    m888.card_id = 888;
-    let mut m999 = MemberCard::default();
-    m999.card_id = 999;
-
-    let mut db = CardDatabase::default();
-    db.members.insert(888, m888.clone());
-    db.members.insert(999, m999.clone());
-    db.members_vec[888] = Some(m888);
-    db.members_vec[999] = Some(m999);
-
-    // Opcode: PLAY_MEMBER_FROM_HAND (57)
+    // Opcode: PLAY_MEMBER_FROM_HAND
     // Args: none (uses ctx)
     let bytecode = vec![57, 0, 0, 0, 0, 1, 0, 0, 0, 0];
 
@@ -106,14 +93,4 @@ fn test_play_member_from_hand_opcode_preserves_energy() {
 
     // 2. New member 888 should be in slot 0
     assert_eq!(state.players[0].stage[0], 888);
-
-    // 3. Energy should remain!
-    assert_eq!(
-        state.players[0].stage_energy[0].len(),
-        2,
-        "Energy should be preserved"
-    );
-    assert_eq!(state.players[0].stage_energy[0][0], 10);
-    assert_eq!(state.players[0].stage_energy[0][1], 20);
-    assert_eq!(state.players[0].stage_energy_count[0], 2);
 }

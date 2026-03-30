@@ -1,6 +1,7 @@
 use crate::core::logic::models::AbilityFrame;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::flow_helpers::current_effect;
 
 #[path = "flow_meta_rule.rs"]
 mod flow_meta_rule;

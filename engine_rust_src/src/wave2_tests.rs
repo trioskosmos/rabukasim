@@ -268,6 +268,7 @@ fn test_granted_ability_propagation_hearts() {
 fn test_granted_ability_propagation_score() {
     let mut db = create_test_db();
     let mut state = create_test_state();
+    state.ui.silent = false; // Need non-silent mode to verify last_performance_results
 
     // Source Card 900: Grant "Constant: Boost Score +500"
     let source_id = 900;

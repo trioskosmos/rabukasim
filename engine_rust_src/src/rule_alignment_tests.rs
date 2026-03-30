@@ -82,18 +82,13 @@ fn test_priority_p1_triggers_first() {
     m1.name = "P0 Member".to_string();
     m1.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
-        frame_program: Some(FrameProgram::from_words(&[
-            O_BOOST_SCORE,
-            100,
-            0,
-            0,
-            0,
-            O_RETURN,
-            0,
-            0,
-            0,
-            0,
-        ])),
+        frame_program: Some(FrameProgram {
+            frames: vec![
+                AbilityFrame::new(O_BOOST_SCORE, 100, 0, 0, false),
+                AbilityFrame::new(O_RETURN, 0, 0, 0, false),
+            ],
+            raw_program: None,
+        }),
         ..Default::default()
     });
     db.members.insert(101, m1.clone());
@@ -105,18 +100,13 @@ fn test_priority_p1_triggers_first() {
     m2.name = "P1 Member".to_string();
     m2.abilities.push(Ability {
         trigger: TriggerType::OnLiveSuccess,
-        frame_program: Some(FrameProgram::from_words(&[
-            O_BOOST_SCORE,
-            200,
-            0,
-            0,
-            0,
-            O_RETURN,
-            0,
-            0,
-            0,
-            0,
-        ])),
+        frame_program: Some(FrameProgram {
+            frames: vec![
+                AbilityFrame::new(O_BOOST_SCORE, 200, 0, 0, false),
+                AbilityFrame::new(O_RETURN, 0, 0, 0, false),
+            ],
+            raw_program: None,
+        }),
         ..Default::default()
     });
     db.members.insert(102, m2.clone());

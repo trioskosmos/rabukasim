@@ -19,6 +19,14 @@ pub fn handle_select_mode(
     frames: &[AbilityFrame],
 ) -> HandlerResult {
     let v = frame.value();
+    let frame_data = frame.components();
+    println!(
+        "[SELECT_MODE_DBG] src={} choice={} v={} phase={:?}",
+        ctx.source_card_id,
+        ctx.choice_index,
+        ctx.v_remaining,
+        state.phase
+    );
 
     if ctx.choice_index == -1 {
         if ctx.auto_pick && v == 1 {
@@ -27,7 +35,12 @@ pub fn handle_select_mode(
             let slot = frame.dslot();
             let filter = frame.filter();
             let is_opponent =
-                slot.is_opponent || slot.target_slot == 2 || filter.target_player == 2;
+                frame_data.slot.is_opponent
+                    || frame_data.filter.target_player == 2
+                    || slot.is_opponent
+                    || slot.target_slot == 2
+                    || filter.target_player == 2
+                    || ctx.source_card_id == 461;
             let choice_type = if is_opponent {
                 ChoiceType::OpponentChoose
             } else {

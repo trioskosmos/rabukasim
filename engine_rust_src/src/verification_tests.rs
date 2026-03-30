@@ -1,6 +1,6 @@
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_db, create_test_state, AbilityBuilder};
+use crate::test_helpers::{create_test_db, create_test_state, FrameBuilder};
 // use std::collections::HashMap;
 
 /// O_RECOVER_LIVE must only show Live cards, never members.
@@ -16,8 +16,8 @@ fn test_recov_l_only_shows_lives() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = AbilityBuilder::new().recover_live(1).return_op().build();
-    state.resolve_frames(&db, &bc, &ctx);
+    let bc = FrameBuilder::new().op(O_RECOVER_LIVE).v(1).op(O_RETURN).build();
+    state.resolve_semantic_frames(&db, &bc, &ctx);
 
     // It used to check looked_cards before auto-pick shortcut was implemented.
     // Now with exactly 1 candidate, it auto-picks and puts it into hand.
@@ -37,8 +37,8 @@ fn test_recov_l_no_lives_returns_early() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = AbilityBuilder::new().recover_live(1).return_op().build();
-    state.resolve_frames(&db, &bc, &ctx);
+    let bc = FrameBuilder::new().op(O_RECOVER_LIVE).v(1).op(O_RETURN).build();
+    state.resolve_semantic_frames(&db, &bc, &ctx);
 
     assert!(state.players[0].looked_cards.is_empty());
     assert_ne!(state.phase, Phase::Response);
@@ -57,8 +57,8 @@ fn test_pay_energy_auto_pays() {
         player_id: 0,
         ..Default::default()
     };
-    let bc = AbilityBuilder::new().pay_energy(2).return_op().build();
-    state.resolve_frames(&db, &bc, &ctx);
+    let bc = FrameBuilder::new().op(O_PAY_ENERGY).v(2).op(O_RETURN).build();
+    state.resolve_semantic_frames(&db, &bc, &ctx);
 
     assert_ne!(state.phase, Phase::Response);
     assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 2);

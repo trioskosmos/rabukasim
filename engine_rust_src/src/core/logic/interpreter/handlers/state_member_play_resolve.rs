@@ -1,5 +1,41 @@
 use super::*;
 
+/// Create new context for OnPlay trigger with proper phase inheritance
+fn create_on_play_context(
+    state: &GameState,
+    ctx: &AbilityContext,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: usize,
+) -> AbilityContext {
+    // Q201/Q202 Fix: Preserve original_phase for nested play phase suspension
+    // When playing a member via effect, nested OnPlay trigger should inherit
+    // parent's original_phase to maintain Response phase if already in Response
+    let inherited_original_phase = ctx.original_phase.or_else(|| {
+        // If parent doesn't have original_phase but we're in Response, capture current state
+        if state.phase == Phase::Response {
+            Some(Phase::Response)
+        } else {
+            None
+        }
+    });
+    
+    let inherited_original_player = ctx.original_current_player.or(Some(state.current_player));
+    
+    AbilityContext {
+        source_card_id: card_id,
+        player_id: p_idx as u8,
+        activator_id: ctx.activator_id,
+        area_idx: slot_idx as i16,
+        target_slot: slot_idx as i16,
+        choice_index: -1,
+        trigger_type: TriggerType::OnPlay,
+        original_phase: inherited_original_phase,
+        original_current_player: inherited_original_player,
+        ..Default::default()
+    }
+}
+
 fn finish_member_play(
     state: &mut GameState,
     db: &CardDatabase,
@@ -9,23 +45,19 @@ fn finish_member_play(
     slot_idx: usize,
     tapped: bool,
 ) -> HandlerResult {
+    // Handle member leaving stage and moving to discard
     if let Some(old) = state.handle_member_leaves_stage(p_idx, slot_idx, db, ctx) {
         state.players[p_idx].push_discard_card(old);
     }
+    
+    // Update stage state
     state.players[p_idx].stage[slot_idx] = card_id;
     state.players[p_idx].set_tapped(slot_idx, tapped);
     state.players[p_idx].set_moved(slot_idx, true);
     state.register_played_member(p_idx, card_id, db);
-    let new_ctx = AbilityContext {
-        source_card_id: card_id,
-        player_id: p_idx as u8,
-        activator_id: ctx.activator_id,
-        area_idx: slot_idx as i16,
-        target_slot: slot_idx as i16,
-        choice_index: -1,
-        trigger_type: TriggerType::OnPlay,
-        ..Default::default()
-    };
+    
+    // Create context for OnPlay triggers
+    let new_ctx = create_on_play_context(state, ctx, p_idx, card_id, slot_idx);
 
     if !state.ui.silent {
         state.log(format!(

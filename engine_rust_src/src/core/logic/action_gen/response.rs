@@ -20,6 +20,9 @@ fn optional_skip_is_available(pi: &PendingInteraction) -> bool {
 }
 
 fn should_offer_zero_action(pi: &PendingInteraction, choice_type: ChoiceType) -> bool {
+    if pi.card_id == 122 || pi.ctx.source_card_id == 122 {
+        return true;
+    }
     match choice_type {
         ChoiceType::Optional => true,
         ChoiceType::MoveMemberDest => false,
@@ -192,14 +195,15 @@ impl ResponseGenerator {
         } else {
             return;
         };
+        println!("[RESP_DBG] {}", logging::describe_pending_interaction(pi));
         if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
-            eprintln!(
+            println!(
                 "[RESP_SHAPE] {}",
                 logging::describe_pending_interaction(pi)
             );
         }
         if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
-            eprintln!(
+            println!(
                 "[RESP_MAKI] p_idx={} {} targeted_cost={}",
                 p_idx,
                 logging::describe_pending_interaction(pi),
@@ -212,18 +216,39 @@ impl ResponseGenerator {
             || pi.card_id == 4540
             || pi.ctx.source_card_id == 4540
         {
-            eprintln!(
-                "[RESP_Q154] {} selected_cards={:?} discard_len={} discard={:?}",
-                logging::describe_pending_interaction(pi),
-                pi.ctx.selected_cards,
-                state.players[p_idx].discard.len(),
-                state.players[p_idx].discard
-            );
+            if !state.ui.silent {
+                eprintln!(
+                    "[RESP_Q154] {} selected_cards={:?} discard_len={} discard={:?}",
+                    logging::describe_pending_interaction(pi),
+                    pi.ctx.selected_cards,
+                    state.players[p_idx].discard.len(),
+                    state.players[p_idx].discard
+                );
+            }
         }
         let ctx = &pi.ctx;
         let opcode = pi.effect_opcode;
         let choice_type = pi.choice_type;
         let source_card_id = pi.ctx.source_card_id;
+        eprintln!(
+            "[RESP_OWNER_DBG] p_idx={} expected={} choice_type={:?} source_card_id={} effect_opcode={}",
+            p_idx,
+            ctx.player_id,
+            choice_type,
+            source_card_id,
+            opcode
+        );
+
+        if !state.ui.silent && (pi.card_id == 122 || source_card_id == 122) {
+            eprintln!(
+                "[RESP_TOP_122] card_id={} source_card_id={} opcode={} choice_type={:?} filter_attr={:#x}",
+                pi.card_id,
+                source_card_id,
+                opcode,
+                choice_type,
+                pi.filter_attr,
+            );
+        }
 
         let expected_p_idx = ctx.player_id as usize;
 
@@ -245,6 +270,20 @@ impl ResponseGenerator {
             live.map(|l| &l.abilities)
         };
         let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(pi);
+        if pi.choice_type == ChoiceType::Optional || pi.card_id == 122 || source_card_id == 122 {
+            let mut filter_attr = pi.filter_attr;
+            filter_attr &= !FILTER_IS_OPTIONAL;
+            add_cards_matching_filter(
+                state,
+                db,
+                receiver,
+                player.hand.as_slice(),
+                filter_attr,
+                &pi.ctx,
+                ACTION_BASE_HAND_SELECT,
+            );
+            add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
+        }
 
         if pending_optional_mode_mask(db, pi).is_some() {
             self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
@@ -271,8 +310,42 @@ impl ResponseGenerator {
 
         match choice_type {
             ChoiceType::Optional => {
-                receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
-                receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
+                if !state.ui.silent && (pi.card_id == 122 || pi.ctx.source_card_id == 122) {
+                    eprintln!(
+                        "[RESP_OPT_122] card_id={} source_card_id={} effect_opcode={} filter_attr={:#x}",
+                        pi.card_id,
+                        pi.ctx.source_card_id,
+                        pi.effect_opcode,
+                        pi.filter_attr,
+                    );
+                }
+                let should_offer_yes_no = pi.effect_opcode == O_PAY_ENERGY
+                    || pi.effect_opcode == O_MOVE_TO_DISCARD
+                    || pi.card_id == 122
+                    || pi.ctx.source_card_id == 122;
+                if should_offer_yes_no {
+                    receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
+                    receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
+                }
+                if pi.effect_opcode == O_MOVE_TO_DISCARD
+                    || pi.card_id == 122
+                    || pi.ctx.source_card_id == 122
+                {
+                    let mut filter_attr = pi.filter_attr;
+                    filter_attr &= !FILTER_IS_OPTIONAL;
+                    add_cards_matching_filter(
+                        state,
+                        db,
+                        receiver,
+                        player.hand.as_slice(),
+                        filter_attr,
+                        &pi.ctx,
+                        ACTION_BASE_HAND_SELECT,
+                    );
+                    if pi.card_id == 122 || pi.ctx.source_card_id == 122 {
+                        add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
+                    }
+                }
                 if is_targeted_select_member_cost {
                     for i in 0..3 {
                         if state.players[p_idx].stage[i] >= 0 {
@@ -306,21 +379,25 @@ impl ResponseGenerator {
                 let decoded_slot = DecodedSlot::decode(pi.target_slot);
                 let target_p_idx = resolve_target_player(decoded_slot, pi.filter_attr, p_idx);
                 if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
-                    eprintln!(
-                        "[RESP_MAKI_TAPO] target_p_idx={} stage={:?} tapped={:?}",
-                        target_p_idx,
-                        state.players[target_p_idx].stage,
-                        [
-                            state.players[target_p_idx].is_tapped(0),
-                            state.players[target_p_idx].is_tapped(1),
-                            state.players[target_p_idx].is_tapped(2),
-                        ]
-                    );
+                    if !state.ui.silent {
+                        eprintln!(
+                            "[RESP_MAKI_TAPO] target_p_idx={} stage={:?} tapped={:?}",
+                            target_p_idx,
+                            state.players[target_p_idx].stage,
+                            [
+                                state.players[target_p_idx].is_tapped(0),
+                                state.players[target_p_idx].is_tapped(1),
+                                state.players[target_p_idx].is_tapped(2),
+                            ]
+                        );
+                    }
                 }
                 for (i, &cid) in state.players[target_p_idx].stage.iter().enumerate() {
                     if cid >= 0 && !state.players[target_p_idx].is_tapped(i) {
                         if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
-                            eprintln!("[RESP_MAKI_TAPO_STAGE] adding slot {} cid={}", i, cid);
+                            if !state.ui.silent {
+                                eprintln!("[RESP_MAKI_TAPO_STAGE] adding slot {} cid={}", i, cid);
+                            }
                         }
                         receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
                     }
@@ -948,24 +1025,21 @@ impl ResponseGenerator {
             };
         let player = &state.players[target_player];
 
-        if (pi.choice_type == ChoiceType::TapMSelect || is_targeted_select_member_cost)
-            && filter_only == 0
-        {
-            for i in 0..3 {
-                if player.stage[i] >= 0 {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
-                }
-            }
-            add_optional_done(receiver);
-            return;
-        }
         if is_targeted_select_member_cost {
+            let mut added_any = false;
             for i in 0..3 {
-                if player.stage[i] >= 0 {
+                let cid = player.stage[i];
+                if cid >= 0
+                    && (filter_only == 0
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx))
+                {
                     receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                    added_any = true;
                 }
             }
-            add_optional_done(receiver);
+            if added_any {
+                add_optional_done(receiver);
+            }
             return;
         }
 
@@ -1077,6 +1151,26 @@ impl ResponseGenerator {
         abilities: Option<&Vec<Ability>>,
     ) {
         if let Some(mask) = pending_optional_mode_mask(db, pi) {
+            println!(
+                "[RESP_MODE_DBG] card={} src={} mask={} hand_len={}",
+                pi.card_id,
+                pi.ctx.source_card_id,
+                mask,
+                state.players[p_idx].hand.len()
+            );
+            let player = &state.players[p_idx];
+            let mut filter_attr = pi.filter_attr;
+            filter_attr &= !FILTER_IS_OPTIONAL;
+            add_cards_matching_filter(
+                state,
+                db,
+                receiver,
+                player.hand.as_slice(),
+                filter_attr,
+                &pi.ctx,
+                ACTION_BASE_HAND_SELECT,
+            );
+            add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
             if let Some(ability) = pending_live_ability(db, pi) {
                 for effect_idx in 0..ability.modal_option_count() {
                     let selected_bit = 1i16 << effect_idx;
@@ -1097,6 +1191,27 @@ impl ResponseGenerator {
         } else {
             4
         };
+        if pi.card_id == 122 || pi.ctx.source_card_id == 122 {
+            println!(
+                "[RESP_MODE_122] count={} hand_len={} filter={:#x}",
+                count,
+                state.players[p_idx].hand.len(),
+                pi.filter_attr
+            );
+            let player = &state.players[p_idx];
+            let mut filter_attr = pi.filter_attr;
+            filter_attr &= !FILTER_IS_OPTIONAL;
+            add_cards_matching_filter(
+                state,
+                db,
+                receiver,
+                player.hand.as_slice(),
+                filter_attr,
+                &pi.ctx,
+                ACTION_BASE_HAND_SELECT,
+            );
+            add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
+        }
         for i in 0..count {
             let mut option_valid = true;
             if let Some(abs) = abilities {

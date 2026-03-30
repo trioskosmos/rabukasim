@@ -19,7 +19,7 @@ use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
-pub use handlers::{HandlerRegistry, HandlerResult};
+pub use handlers::{dispatch, HandlerResult};
 pub use handlers::{handle_energy, handle_member_state, handle_draw, handle_deck_zones, handle_score_hearts, handle_select_mode, handle_meta_control, finalize_play_member_from_hand, handle_discard_placement};
 pub use suspension::{
     capture_response_origin, get_choice_text, resolve_target_slot, restore_response_state,
@@ -183,7 +183,8 @@ fn log_frame_step(
     frame_data: &AbilityFrameComponents<'_>,
     ip: usize,
 ) {
-    if !state.debug.debug_mode {
+    // HEADLESS OPTIMIZATION: Skip entirely in silent mode
+    if state.ui.silent || !state.debug.debug_mode {
         return;
     }
 
@@ -215,7 +216,8 @@ fn log_frame_result(
     ip: usize,
     passed: bool,
 ) {
-    if !state.debug.debug_mode {
+    // HEADLESS OPTIMIZATION: Skip entirely in silent mode
+    if state.ui.silent || !state.debug.debug_mode {
         return;
     }
 
@@ -228,9 +230,7 @@ fn log_frame_result(
             passed
         }
     );
-    if !state.ui.silent {
-        println!("[DEBUG] {}", result_line);
-    }
+    println!("[DEBUG] {}", result_line);
     let b_log = &mut state.ui.semantic_log;
     if b_log.len() < MAX_FRAME_LOG_SIZE {
         b_log.push(result_line.clone());
@@ -245,7 +245,8 @@ fn log_condition_result(
     passed: bool,
     final_cond: bool,
 ) {
-    if !state.debug.debug_mode {
+    // HEADLESS OPTIMIZATION: Skip entirely in silent mode
+    if state.ui.silent || !state.debug.debug_mode {
         return;
     }
 
@@ -256,9 +257,7 @@ fn log_condition_result(
         passed,
         final_cond
     );
-    if !state.ui.silent {
-        println!("      | [COND] {}", cond_desc);
-    }
+    println!("      | [COND] {}", cond_desc);
 
     let b_log = &mut state.ui.semantic_log;
     if b_log.len() < MAX_FRAME_LOG_SIZE {
@@ -273,6 +272,12 @@ pub fn resolve_ability(
     ability: &Ability,
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
+    // Debug output only in debug mode
+    if state.debug.debug_mode && !state.ui.silent {
+        eprintln!("[DEBUG_RESOLVE_ABILITY] Entering resolve_ability: source_card_id={}, ability.conditions.len={}",
+            ctx_in.source_card_id, ability.conditions.len());
+    }
+    
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
         return Ok(());
@@ -305,11 +310,47 @@ pub fn resolve_ability(
     }
 
     let frames = ability.frames();
-    if frames.is_empty() {
-        Ok(())
-    } else {
-        resolve_semantic_frames(state, db, &frames, ctx_in)
+    if ctx_in.source_card_id == 4331 {
+        if state.debug.debug_mode && !state.ui.silent {
+            eprintln!(
+                "[ABILITY_DBG] source_card_id={} frames_len={} first_opcode={:?}",
+                ctx_in.source_card_id,
+                frames.len(),
+                frames.first().map(|f| f.opcode())
+            );
+        }
     }
+    if frames.is_empty() {
+        return Ok(());
+    }
+    
+    // Check ability.conditions before executing frames
+    // If any condition fails, skip the entire ability
+    if !ability.conditions.is_empty() {
+        let mut all_conditions_pass = true;
+        for (i, cond) in ability.conditions.iter().enumerate() {
+            let passed = conditions::check_condition(
+                state, db, ctx_in.player_id as usize, cond, ctx_in, 0
+            );
+            let final_passed = if cond.is_negated { !passed } else { passed };
+            if state.debug.debug_mode && !state.ui.silent {
+                eprintln!("[DEBUG_ABILITY_COND] Condition {}: type={:?}, passed={}, final_passed={}", 
+                    i, cond.condition_type, passed, final_passed);
+            }
+            if !final_passed {
+                all_conditions_pass = false;
+                break;
+            }
+        }
+        if state.debug.debug_mode && !state.ui.silent {
+            eprintln!("[DEBUG_ABILITY_COND] All conditions pass: {}", all_conditions_pass);
+        }
+        if !all_conditions_pass {
+            return Ok(());
+        }
+    }
+    
+    resolve_semantic_frames(state, db, &frames, ctx_in)
 }
 
 /// Card-specific prerequisite: PL!SP-bp1-024-L (Nonfiction!!) requires both Kanon
@@ -367,8 +408,8 @@ pub fn resolve_semantic_frames(
 
     let execution_started = begin_execution(state, ctx_in);
 
-    // Use HandlerRegistry directly - simplified ability execution
-    use crate::core::logic::interpreter::handlers::{HandlerRegistry, HandlerResult};
+    // Use direct handler dispatch - simplified ability execution
+    use crate::core::logic::interpreter::handlers::{dispatch, HandlerResult};
     
     let mut ctx = ctx_in.clone();
     ctx.area_idx = infer_source_area_idx(state, &ctx);
@@ -393,6 +434,19 @@ pub fn resolve_semantic_frames(
         let frame = &frames[effect_idx];
         let frame_data = frame.components();
         let ip = effect_idx;
+        if ctx_in.source_card_id == 4331 {
+            if state.debug.debug_mode && !state.ui.silent {
+                eprintln!(
+                    "[FRAME_DBG] ip={} opcode={} value={} optional={} raw_attr={:#x} filter_attr={:#x}",
+                    ip,
+                    frame_data.opcode,
+                    frame_data.value,
+                    frame_data.filter.is_optional,
+                    frame_data.raw_attr,
+                    frame_data.filter.to_attr()
+                );
+            }
+        }
 
         ctx.program_counter = ip as u16;
         if effect_idx == start_idx && ctx_in.choice_index != -1 {
@@ -400,8 +454,11 @@ pub fn resolve_semantic_frames(
         }
 
         if is_pure_nop(&frame_data) {
-            if let Some(ref mut set) = state.debug.executed_opcodes {
-                set.insert(frame_data.opcode);
+            // HEADLESS OPTIMIZATION: Skip executed_opcodes tracking in silent mode
+            if !state.ui.silent {
+                if let Some(ref mut set) = state.debug.executed_opcodes {
+                    set.insert(frame_data.opcode);
+                }
             }
             effect_idx += 1;
             continue;
@@ -409,14 +466,15 @@ pub fn resolve_semantic_frames(
         if frame_data.opcode == crate::core::enums::O_RETURN as i32 {
             if !state.ui.silent {
                 state.log("Instruction sequence finished (Return).".to_string());
-            }
-            if let Some(ref mut set) = state.debug.executed_opcodes {
-                set.insert(frame_data.opcode);
+                if let Some(ref mut set) = state.debug.executed_opcodes {
+                    set.insert(frame_data.opcode);
+                }
             }
             break;
         }
 
-        if state.debug.debug_mode {
+        // HEADLESS OPTIMIZATION: Skip debug output in silent mode
+        if state.debug.debug_mode && !state.ui.silent {
             println!(
                 "[DEBUG RESOLVE] {}",
                 logging::describe_frame_semantics(&frame_data, &ctx, db)
@@ -424,8 +482,11 @@ pub fn resolve_semantic_frames(
         }
 
         log_frame_step(state, db, &ctx, &frame_data, ip);
-        if let Some(ref mut set) = state.debug.executed_opcodes {
-            set.insert(frame_data.opcode);
+        // HEADLESS OPTIMIZATION: Skip executed_opcodes tracking in silent mode
+        if !state.ui.silent {
+            if let Some(ref mut set) = state.debug.executed_opcodes {
+                set.insert(frame_data.opcode);
+            }
         }
 
         let mut condition_frame = frame_data;
@@ -525,8 +586,8 @@ pub fn resolve_semantic_frames(
 
         let mut advance_effect = true;
         
-        // Execute frame directly using HandlerRegistry singleton
-        match HandlerRegistry::get().dispatch(state, db, &mut ctx, frame, &frame_data, effect_idx, frames) {
+        // Execute frame directly using handler dispatch
+        match dispatch(state, db, &mut ctx, frame, &frame_data, effect_idx, frames) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(new_cond) => cond = new_cond,
             HandlerResult::Suspend => return Ok(()),
@@ -589,10 +650,12 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         // Generate a new ID for the activation
         state.generate_execution_id();
         let execution_id = state.ui.current_execution_id.unwrap_or(0);
-        println!(
-            "[DEBUG] processing trigger: cid={}, ab_idx={}, execution_id={}, trigger={:?}",
-            cid, ab_idx, execution_id, _trigger
-        );
+        if state.debug.debug_mode && !state.ui.silent {
+            println!(
+                "[DEBUG] processing trigger: cid={}, ab_idx={}, execution_id={}, trigger={:?}",
+                cid, ab_idx, execution_id, _trigger
+            );
+        }
 
         let (ability, costs) = if is_live {
             let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
@@ -610,11 +673,12 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             .frames()
             .iter()
             .any(|frame| frame.components().filter.is_optional);
-        let should_pay_legacy_costs = !has_optional_frame;
+        let has_optional_cost = ability.costs.iter().any(|cost| cost.is_optional);
+        let should_pay_legacy_costs = !has_optional_frame && !has_optional_cost;
 
-        if !state.ui.silent && has_optional_frame && !costs.is_empty() {
+        if !state.ui.silent && (has_optional_frame || has_optional_cost) && !costs.is_empty() {
             state.log(format!(
-                "Rule 9.4, Rule 9.4.1, Rule 9.4.2, Rule 9.4.2.1, Rule 9.4.2.2, Rule 9.4.3: Deferring cost payment to interactive frame prompt for card {}.",
+                "Rule 9.4, Rule 9.4.1, Rule 9.4.2, Rule 9.4.2.1, Rule 9.4.2.2, Rule 9.4.3: Deferring cost payment to interactive prompt for card {}.",
                 cid
             ));
         }

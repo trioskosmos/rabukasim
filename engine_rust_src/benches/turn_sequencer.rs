@@ -157,43 +157,10 @@ fn benchmark_sequencer_scaling(c: &mut Criterion) {
     group.finish();
 }
 
-fn benchmark_search_depth(c: &mut Criterion) {
-    let db = load_vanilla_db();
-    let (deck, lives, energy) = build_decks(&db);
-
-    let mut group = c.benchmark_group("search_depth");
-    group.measurement_time(Duration::from_secs(10));
-    group.sample_size(20);
-
-    let mut state = setup_game_with_phase(&db, &deck, &lives, &energy);
-
-    for _ in 0..50 {
-        state.auto_step(&db);
-        if state.phase == engine_rust::core::enums::Phase::Main {
-            break;
-        }
-    }
-
-    if state.phase == engine_rust::core::enums::Phase::Main {
-        group.bench_function("heuristic_evaluation", |b| {
-            b.iter(|| {
-                let actions = state.get_legal_action_ids(&db);
-                for action in actions.iter().take(10) {
-                    let eval = TurnSequencer::evaluate_action(&state, &db, *action);
-                    black_box(eval);
-                }
-            });
-        });
-    }
-
-    group.finish();
-}
-
 criterion_group!(
     benches,
     benchmark_main_sequence,
     benchmark_liveset_sequence,
-    benchmark_sequencer_scaling,
-    benchmark_search_depth
+    benchmark_sequencer_scaling
 );
 criterion_main!(benches);

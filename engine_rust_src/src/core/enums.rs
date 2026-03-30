@@ -453,7 +453,7 @@ impl Phase {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Default)]
 #[repr(u8)]
 pub enum Zone {
     #[default]
@@ -468,6 +468,72 @@ pub enum Zone {
     LiveSet = 13,
     SuccessPile = 16,
     Yell = 17,
+}
+
+impl<'de> serde::Deserialize<'de> for Zone {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct ZoneVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ZoneVisitor {
+            type Value = Zone;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("an integer or string representing a Zone")
+            }
+
+            fn visit_u64<E>(self, value: u64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                match value {
+                    0 => Ok(Zone::Default),
+                    1 => Ok(Zone::DeckTop),
+                    2 => Ok(Zone::DeckBottom),
+                    3 => Ok(Zone::Energy),
+                    4 => Ok(Zone::Stage),
+                    5 => Ok(Zone::Deck),
+                    6 => Ok(Zone::Hand),
+                    7 => Ok(Zone::Discard),
+                    13 => Ok(Zone::LiveSet),
+                    16 => Ok(Zone::SuccessPile),
+                    17 => Ok(Zone::Yell),
+                    _ => Ok(Zone::Default),
+                }
+            }
+
+            fn visit_i64<E>(self, value: i64) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                self.visit_u64(value as u64)
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                match value.to_ascii_uppercase().as_str() {
+                    "DEFAULT" => Ok(Zone::Default),
+                    "DECK_TOP" | "DECKTOP" | "DECK TOP" => Ok(Zone::DeckTop),
+                    "DECK_BOTTOM" | "DECKBOTTOM" | "DECK BOTTOM" => Ok(Zone::DeckBottom),
+                    "ENERGY" => Ok(Zone::Energy),
+                    "STAGE" => Ok(Zone::Stage),
+                    "DECK" => Ok(Zone::Deck),
+                    "HAND" => Ok(Zone::Hand),
+                    "DISCARD" => Ok(Zone::Discard),
+                    "LIVE_SET" | "LIVESET" | "LIVE SET" => Ok(Zone::LiveSet),
+                    "SUCCESS_PILE" | "SUCCESSPILE" | "SUCCESS PILE" => Ok(Zone::SuccessPile),
+                    "YELL" => Ok(Zone::Yell),
+                    _ => Ok(Zone::Default),
+                }
+            }
+        }
+
+        deserializer.deserialize_any(ZoneVisitor)
+    }
 }
 
 pub fn get_group_name(id: u8, lang: &str) -> &'static str {
@@ -549,5 +615,31 @@ pub fn get_unit_name(id: u8, lang: &str) -> &'static str {
             100 => "-",
             _ => "-",
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zone_deserializes_from_string() {
+        let zone: Zone = serde_json::from_str("\"DECK_TOP\"").unwrap();
+        assert_eq!(zone, Zone::DeckTop);
+
+        let zone: Zone = serde_json::from_str("\"DECK\"").unwrap();
+        assert_eq!(zone, Zone::Deck);
+
+        let zone: Zone = serde_json::from_str("\"HAND\"").unwrap();
+        assert_eq!(zone, Zone::Hand);
+    }
+
+    #[test]
+    fn zone_deserializes_from_number() {
+        let zone: Zone = serde_json::from_str("1").unwrap();
+        assert_eq!(zone, Zone::DeckTop);
+
+        let zone: Zone = serde_json::from_str("5").unwrap();
+        assert_eq!(zone, Zone::Deck);
     }
 }

@@ -57450,7 +57450,7 @@ abilities:
   - opcode_id: 209
     opcode: GROUP_FILTER
     ability_frame_index: 0
-    value: 4
+    value: 3
     attr:
       group_enabled: 1
       group_id: 3
@@ -57460,7 +57460,7 @@ abilities:
       opcode_id: 209
       opcode_name: GROUP_FILTER
       opcode_section: conditions
-      decoded: GROUP_FILTER              | value=4, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]
+      decoded: GROUP_FILTER              | value=3, filter=[group=Liella], slot=[compare=GE (>=), slot=Left Stage (0)]
       value: 4
       attr:
         group_enabled: 1

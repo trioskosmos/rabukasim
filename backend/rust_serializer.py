@@ -472,9 +472,12 @@ class RustGameStateSerializer:
             pending_choice_type, pending_choice_params = raw_choices[0]
 
         pending_source_card_id = pending_choice_params.get("source_card_id", -1)
-        if pending_source_card_id is None or int(pending_source_card_id) < 0:
+        if pending_source_card_id is None:
             pending_source_card_id = gs.pending_card_id
-        pending_source_card_id = int(pending_source_card_id) if pending_source_card_id is not None else -1
+        else:
+            pending_source_card_id = int(pending_source_card_id)
+            if pending_source_card_id < 0:
+                pending_source_card_id = gs.pending_card_id
 
         players = [
             self.serialize_player(gs.get_player(0), gs, 0, viewer_idx, legal_mask, lang=lang),

@@ -130,7 +130,13 @@ pub fn get_live_requirements(
     live: &LiveCard,
 ) -> (HeartBoard, Vec<serde_json::Value>) {
     let mut req_board = live.hearts_board;
-    let mut adjustments = Vec::new();
+    // HEADLESS OPTIMIZATION: Skip adjustments JSON allocations in silent mode
+    let mut adjustments: Vec<serde_json::Value> = if state.ui.silent {
+        Vec::new()
+    } else {
+        Vec::new()
+    };
+    let build_adjustments = !state.ui.silent;
     let mut aura = calculate_board_aura(state, p_idx, db);
 
     let opponent_idx = 1 - p_idx;
@@ -172,10 +178,12 @@ pub fn get_live_requirements(
                     } else if op == O_SET_HEART_COST {
                         touches_live_requirements = true;
                         let mut override_board = HeartBoard::default();
+                        // Pass empty vec for adjustments in silent mode
+                        let mut dummy_adjustments = Vec::new();
                         process_heart_modifiers_frames(
                             std::slice::from_ref(&frame),
                             &mut override_board,
-                            &mut Vec::new(),
+                            if build_adjustments { &mut adjustments } else { &mut dummy_adjustments },
                             &member.name,
                             source_cid,
                         );
@@ -205,10 +213,12 @@ pub fn get_live_requirements(
             {
                 let frames = ab.frames();
                 if !frames.is_empty() {
+                    // Pass empty vec for adjustments in silent mode
+                    let mut dummy_adjustments = Vec::new();
                     process_heart_modifiers_frames(
                         &frames,
                         &mut req_board,
-                        &mut adjustments,
+                        if build_adjustments { &mut adjustments } else { &mut dummy_adjustments },
                         &live.name,
                         live.card_id,
                     );
@@ -220,7 +230,7 @@ pub fn get_live_requirements(
     // Constant effects from stage members are now cached in BoardAura
     // and applied via heart_req_reductions/additions below.
 
-    if !use_cached_modifiers {
+    if build_adjustments && !use_cached_modifiers {
         for i in 0..7 {
             let red = aura.heart_req_reductions.get_color_count(i);
             if red > 0 {
@@ -245,26 +255,28 @@ pub fn get_live_requirements(
         }
     }
 
-    for &(src_id, col, val) in &state.players[p_idx].heart_req_reduction_logs {
-        let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
-        adjustments.push(json!({
-            "source": name,
-            "source_id": src_id,
-            "color": col as usize,
-            "value": val as i32,
-            "type": "reduction"
-        }));
-    }
+    if build_adjustments {
+        for &(src_id, col, val) in &state.players[p_idx].heart_req_reduction_logs {
+            let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
+            adjustments.push(json!({
+                "source": name,
+                "source_id": src_id,
+                "color": col as usize,
+                "value": val as i32,
+                "type": "reduction"
+            }));
+        }
 
-    for &(src_id, col, val) in &state.players[p_idx].heart_req_addition_logs {
-        let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
-        adjustments.push(json!({
-            "source": name,
-            "source_id": src_id,
-            "color": col as usize,
-            "value": -(val as i32),
-            "type": "addition"
-        }));
+        for &(src_id, col, val) in &state.players[p_idx].heart_req_addition_logs {
+            let name = db.get_name(src_id).unwrap_or_else(|| "Effect".to_string());
+            adjustments.push(json!({
+                "source": name,
+                "source_id": src_id,
+                "color": col as usize,
+                "value": -(val as i32),
+                "type": "addition"
+            }));
+        }
     }
 
     let mut heart_req_reductions = if use_cached_modifiers {

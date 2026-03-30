@@ -61,7 +61,24 @@ fn test_selective_retrieval_natsumi() {
 
     state.current_player = 0;
     state.play_member(&db, 0, 1).expect("Should play card 537");
+    
+    // Debug: Check what card 537's ability is
+    if let Some(member) = db.get_member(537) {
+        println!("Card 537 - Name: {}", member.name);
+        for (i, ab) in member.abilities.iter().enumerate() {
+            println!("  Ability {}: trigger={:?}, effects={:?}", i, ab.trigger, ab.effects);
+        }
+    }
+    
     state.process_trigger_queue(&db);
+    
+    // Debug: Check current state
+    println!("After trigger processing: phase={:?}, interaction_stack={:?}", 
+             state.phase, state.interaction_stack.len());
+    if let Some(interaction) = state.interaction_stack.last() {
+        println!("  Last interaction: choice_type={:?}", interaction.choice_type);
+    }
+    println!("looked_cards: {:?}", state.players[0].looked_cards);
 
     // Should be in Response phase for opponent to choose one of the 2 cards
     assert_eq!(state.phase, Phase::Response);

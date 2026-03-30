@@ -27,7 +27,7 @@ fn test_opcode_color_select_real_card_122() {
     let ab_idx = match card
         .abilities
         .iter()
-        .position(|a| a.bytecode.iter().step_by(5).any(|&op| op == 45))
+        .position(|a| a.words().iter().step_by(5).any(|&op| op == 45))
     {
         Some(idx) => idx,
         None => {
@@ -38,6 +38,7 @@ fn test_opcode_color_select_real_card_122() {
     };
 
     let ab = &card.abilities[ab_idx];
+    let frames = ab.frame_program.as_ref().map(|fp| fp.frames.clone()).unwrap_or_default();
 
     // Place Kotori on stage
     state.players[0].stage[0] = card_id;
@@ -51,7 +52,7 @@ fn test_opcode_color_select_real_card_122() {
         ..Default::default()
     };
 
-    state.resolve_frames(&db, &ab.bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     // Should suspend for COLOR_SELECT interaction
     assert_eq!(
@@ -72,7 +73,7 @@ fn test_opcode_color_select_real_card_122() {
     // Resume with a color choice (e.g., Pink = 0)
     let mut pending = state.interaction_stack.pop().unwrap();
     pending.ctx.choice_index = 0; // Pink
-    state.resolve_frames(&db, &ab.bytecode, &pending.ctx);
+    state.resolve_semantic_frames(&db, &frames, &pending.ctx);
 
     // Should have completed without panic - the color was applied
     println!("test_opcode_color_select_real_card_122: PASSED (no panic, interaction resolved)");
@@ -94,7 +95,7 @@ fn test_opcode_jump_real_card_19() {
     let ab_idx = match card
         .abilities
         .iter()
-        .position(|a| a.bytecode.iter().step_by(5).any(|&op| op == 2))
+        .position(|a| a.words().iter().step_by(5).any(|&op| op == 2))
     {
         Some(idx) => idx,
         None => {
@@ -105,6 +106,7 @@ fn test_opcode_jump_real_card_19() {
     };
 
     let ab = &card.abilities[ab_idx];
+    let frames = ab.frame_program.as_ref().map(|fp| fp.frames.clone()).unwrap_or_default();
 
     // Place card on stage
     state.players[0].stage[0] = card_id;
@@ -118,7 +120,7 @@ fn test_opcode_jump_real_card_19() {
     };
 
     // Execute - should not panic, jump should skip instructions correctly
-    state.resolve_frames(&db, &ab.bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     println!("test_opcode_jump_real_card_19: PASSED (jump executed, no panic)");
 }
@@ -155,6 +157,7 @@ fn test_opcode_tap_opponent_dynamic() {
     let ab_idx = found_ab_idx.unwrap();
     let card = db.get_member(card_id).unwrap();
     let ab = &card.abilities[ab_idx];
+    let frames = ab.frame_program.as_ref().map(|fp| fp.frames.clone()).unwrap_or_default();
 
     println!(
         "Testing O_TAP_OPPONENT with Card ID={}, NO={}",
@@ -174,7 +177,7 @@ fn test_opcode_tap_opponent_dynamic() {
         ..Default::default()
     };
 
-    state.resolve_frames(&db, &ab.bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     // TAP_OPPONENT is interactive - should suspend
     // The interaction might be OPTIONAL first (for cost), then TAP_O
@@ -186,7 +189,7 @@ fn test_opcode_tap_opponent_dynamic() {
             // Resolve OPTIONAL with Yes (0)
             let mut pending = state.interaction_stack.pop().unwrap();
             pending.ctx.choice_index = 0;
-            state.resolve_frames(&db, &ab.bytecode, &pending.ctx);
+            state.resolve_semantic_frames(&db, &frames, &pending.ctx);
         }
 
         // Now check for TAP_O interaction
@@ -196,7 +199,7 @@ fn test_opcode_tap_opponent_dynamic() {
                 // Resume with choice: tap slot 0
                 let mut pending = state.interaction_stack.pop().unwrap();
                 pending.ctx.choice_index = 0;
-                state.resolve_frames(&db, &ab.bytecode, &pending.ctx);
+                state.resolve_semantic_frames(&db, &frames, &pending.ctx);
 
                 assert!(
                     state.players[1].is_tapped(0),
@@ -223,7 +226,7 @@ fn test_opcode_buff_power_dynamic() {
 
     for (&cid, m) in db.members.iter() {
         for (ai, a) in m.abilities.iter().enumerate() {
-            if a.bytecode.iter().step_by(5).any(|&op| op == 18) {
+            if a.words().iter().step_by(5).any(|&op| op == 18) {
                 found_card_id = Some(cid);
                 found_ab_idx = Some(ai);
                 break;
@@ -245,6 +248,7 @@ fn test_opcode_buff_power_dynamic() {
     let ab_idx = found_ab_idx.unwrap();
     let card = db.get_member(card_id).unwrap();
     let ab = &card.abilities[ab_idx];
+    let frames = ab.frame_program.as_ref().map(|fp| fp.frames.clone()).unwrap_or_default();
 
     println!(
         "Testing O_BUFF_POWER with Card ID={}, NO={}",
@@ -263,7 +267,7 @@ fn test_opcode_buff_power_dynamic() {
         ..Default::default()
     };
 
-    state.resolve_frames(&db, &ab.bytecode, &ctx);
+    state.resolve_semantic_frames(&db, &frames, &ctx);
 
     // Check if the ability suspended for user input or completed
     if state.phase == Phase::Response {

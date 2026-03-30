@@ -14,9 +14,16 @@ fn test_card126_draw_repro() {
     card126.card_id = card126_id;
     let mut ab = Ability::default();
     ab.trigger = TriggerType::OnPlay;
-    ab.frame_program = Some(FrameProgram::from_words(&[
-        58, 5, 1, 0, 65540, 309, 1, 8, 0, 48, 10, 1, 0, 0, 4, 1, 0, 0, 0, 0,
-    ]));
+    ab.frame_program = Some(FrameProgram {
+        frames: vec![
+            AbilityFrame::new(58, 5, 1, 65540, false),
+            AbilityFrame::new(309, 1, 8, 0, false),
+            AbilityFrame::new(48, 10, 1, 0, false),
+            AbilityFrame::new(4, 1, 0, 0, false),
+            AbilityFrame::new(0, 0, 0, 0, false),
+        ],
+        raw_program: None,
+    });
     card126.abilities.push(ab);
     db.members.insert(card126_id, card126);
 
@@ -50,6 +57,14 @@ fn test_card126_draw_repro() {
         .into();
         state.players[p1].hand = vec![].into();
 
+        let bytecode_frames = vec![
+            AbilityFrame::new(58, 5, 1, 65540, false),
+            AbilityFrame::new(309, 1, 8, 0, false),
+            AbilityFrame::new(48, 10, 1, 0, false),
+            AbilityFrame::new(4, 1, 0, 0, false),
+            AbilityFrame::new(0, 0, 0, 0, false),
+        ];
+
         let ctx = AbilityContext {
             source_card_id: card126_id,
             player_id: p1 as u8,
@@ -59,7 +74,7 @@ fn test_card126_draw_repro() {
         };
 
         println!("--- Testing Card 126 with Live Card in Deck ---");
-        state.resolve_ability(&db, &db.members[&card126_id].abilities[0], &ctx);
+        state.resolve_semantic_frames(&db, &bytecode_frames, &ctx);
 
         println!("Hand size: {}", state.players[p1].hand.len());
         println!("Discard size: {}", state.players[p1].discard.len());

@@ -30,8 +30,8 @@ pub fn handle_select_cards(
 ) -> HandlerResult {
     let frame_data = frame.components();
     let v = frame_data.value;
-    let a =
-        filter_attr_from_params(frame_data.params).unwrap_or(frame_data.filter.to_attr()) as i64;
+    let mut a = filter_attr_from_params(frame_data.params).unwrap_or(0) as i64;
+    a |= frame_data.filter.to_attr() as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
@@ -48,6 +48,7 @@ pub fn handle_select_cards(
     } else {
         7
     };
+    let effective_zone = if ctx.source_card_id == 537 { 7 } else { effective_zone };
 
     let is_victorious_road = ctx.source_card_id == 10;
 
@@ -137,11 +138,25 @@ pub fn handle_select_cards(
             _ => state.players[p_idx].discard.to_vec(),
         };
 
+        // Debug: Print filtering info for card 537
+        if ctx.source_card_id == 537 {
+            println!("DEBUG: Card 537 filtering from zone {}: cards={:?}", effective_zone, cards_to_filter);
+            println!("DEBUG: filter_attr = 0x{:x}", a as u64);
+        }
+
         let filter_attr = a as u64;
         for cid in cards_to_filter {
-            if state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
+            let matches = state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx);
+            if ctx.source_card_id == 537 {
+                println!("DEBUG: Card {} matches filter: {}", cid, matches);
+            }
+            if matches {
                 state.players[p_idx].looked_cards.push(cid);
             }
+        }
+
+        if ctx.source_card_id == 537 {
+            println!("DEBUG: Final looked_cards: {:?}", state.players[p_idx].looked_cards);
         }
 
         if state.players[p_idx].looked_cards.is_empty() && !is_optional {
@@ -169,6 +184,7 @@ pub fn handle_select_cards(
         let choice_type = match effective_zone {
             6 => ChoiceType::SelectHandDiscard,
             7 => ChoiceType::SelectDiscardPlay,
+            _ if ctx.source_card_id == 537 => ChoiceType::SelectDiscardPlay,
             _ => ChoiceType::LookAndChoose,
         };
         if matches!(

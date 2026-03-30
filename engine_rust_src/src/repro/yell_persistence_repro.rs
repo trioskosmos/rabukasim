@@ -104,7 +104,10 @@ fn test_yell_persistence_and_selection() {
         println!("DEBUG: LOOK_AND_CHOOSE phase was skipped or completed differently");
     }
 
-    // Step 5: Pick card 101 (index 0 in looked_cards)
+    // Step 5: Complete the live result phase to ensure live cards are moved to discard
+    state.do_live_result(&db);
+
+    // Step 6: Pick card 101 (index 0 in looked_cards)
     state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
 
     // Verification:

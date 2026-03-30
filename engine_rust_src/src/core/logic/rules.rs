@@ -2,7 +2,6 @@ use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::{check_condition_frame, resolve_count};
-use crate::core::models::filter::CardFilter;
 use std::cell::Cell;
 
 use crate::core::enums::*;
@@ -235,11 +234,17 @@ fn apply_reduce_cost_modifiers(
             .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
+        // Only apply hand count multiplier if the source card is actually in hand
+        let hand_idx = state.players[p_idx].hand.iter().position(|&id| id == ctx.source_card_id);
+        let default_hand_count = op == O_REDUCE_COST 
+            && frame_data.slot.source_zone == Zone::Default
+            && hand_idx.is_some(); // Only if source card is actually in hand
 
         if frame_data.slot.is_dynamic
             || frame_data.filter.compare_accumulated
             || per_card.is_some()
             || frame_data.slot.source_zone != Zone::Default
+            || default_hand_count
         {
             let mut count_op = if let Some(ref per_card) = per_card {
                 match per_card.as_str() {
@@ -249,6 +254,8 @@ fn apply_reduce_cost_modifiers(
                     "STAGE" => C_COUNT_STAGE,
                     _ => 0,
                 }
+            } else if default_hand_count {
+                C_COUNT_HAND
             } else {
                 match frame_data.slot.source_zone {
                     Zone::Hand => C_COUNT_HAND,
@@ -291,6 +298,10 @@ fn apply_reduce_cost_modifiers(
                     let source_card_id = ctx.source_card_id;
                     let source_is_counted = match frame_data.slot.source_zone {
                         Zone::Hand => state.players[owner_idx]
+                            .hand
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        Zone::Default if op == O_REDUCE_COST => state.players[owner_idx]
                             .hand
                             .iter()
                             .any(|&id| id == source_card_id),
@@ -357,7 +368,7 @@ fn apply_external_reduce_cost_modifiers(
     db: &CardDatabase,
     p_idx: usize,
     ctx: &AbilityContext,
-    target_card_id: i32,
+    _target_card_id: i32,
     _depth: u32,
 ) {
     if ab.frame_program.is_none() || !ability_conditions_met(state, db, p_idx, ab, ctx) {
@@ -640,20 +651,35 @@ pub fn get_member_cost(
     // We no longer need to iterate over source slots or granted abilities here.
 
     for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: checking granted ability target={} source={} ab_idx={} for card_id={}", target_cid, source_cid, ab_idx, card_id);
+        }
         if target_cid != card_id {
             continue;
         }
 
         let Some(src_m) = db.get_member(source_cid) else {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: source card {} not found", source_cid);
+            }
             continue;
         };
         let Some(ab) = src_m.abilities.get(ab_idx as usize) else {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: ability {} not found on source {}", ab_idx, source_cid);
+            }
             continue;
         };
         if ab.trigger != TriggerType::Constant {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: ability trigger is {:?}, not Constant", ab.trigger);
+            }
             continue;
         }
 
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: applying granted ability from {} ab#{}", source_cid, ab_idx);
+        }
         let ctx = AbilityContext {
             source_card_id: card_id,
             player_id: p_idx as u8,
@@ -663,6 +689,9 @@ pub fn get_member_cost(
             ..Default::default()
         };
         apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: after granted ability, cost={}", cost);
+        }
     }
 
     // 5. Temporary cost modifiers (From Action Phase triggers)
@@ -825,7 +854,63 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-            if !ab.effects.is_empty() {
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                for (frame_idx, frame) in frame_program.frames.iter().enumerate() {
+                    let frame_data = frame.components();
+                    let op = frame_data.opcode;
+                    let v = frame_data.value;
+                    let a = frame_data.raw_attr;
+                    let s = frame_data.raw_slot;
+                    let params = frame_data
+                        .params
+                        .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
+
+                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                        let target_area = s & 0xFF;
+                        // Check frame_program for filters instead of ab.filters
+                        let has_filters = ab.frame_program.as_ref()
+                            .map(|fp| !fp.frames.is_empty())
+                            .unwrap_or(false);
+                        let target_mask =
+                            aura_target_mask(source_slot, target_area, a, has_filters);
+                        aura.cost_modifiers.push(CachedCostModifier {
+                            source_cid: cid,
+                            amount: if op == O_REDUCE_COST {
+                                v as i16
+                            } else {
+                                -(v as i16)
+                            },
+                            target_mask,
+                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                            ability_idx: ab_idx as u16,
+                        });
+                    } else {
+                        let target_area = s & 0xFF;
+                        let has_filters = ab.frame_program.as_ref()
+                            .map(|fp| !fp.frames.is_empty())
+                            .unwrap_or(false);
+                        let target_mask =
+                            aura_target_mask(source_slot, target_area, a, has_filters);
+                        for target_slot in 0..3 {
+                            if (target_mask & (1 << target_slot)) != 0 {
+                                apply_aura_modifier(
+                                    &mut aura,
+                                    op,
+                                    v,
+                                    s,
+                                    a,
+                                    params,
+                                    &ctx,
+                                    state,
+                                    db,
+                                    player_idx,
+                                    target_slot,
+                                );
+                            }
+                        }
+                    }
+                }
+            } else if !ab.effects.is_empty() {
                 let effect_params = ab.effects.first().map(|effect| &effect.params);
                 for effect in &ab.effects {
                     let op = effect.runtime_opcode;
@@ -834,12 +919,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                     let a = effect.runtime_attr;
                     let target_area = s & 0xFF;
 
-                    // Check frame_program for filters instead of ab.filters
-                    let has_filters = ab.frame_program.as_ref()
-                        .map(|fp| !fp.frames.is_empty())
-                        .unwrap_or(false);
-                    let target_mask =
-                        aura_target_mask(source_slot, target_area, a, has_filters);
+                    let target_mask = aura_target_mask(source_slot, target_area, a, false);
 
                     if op == O_REDUCE_COST || op == O_INCREASE_COST {
                         aura.cost_modifiers.push(CachedCostModifier {
@@ -871,52 +951,6 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                                 );
                             }
                         }
-                    }
-                }
-            } else if let Some(frame_program) = ab.frame_program.as_ref() {
-                for (frame_idx, frame) in frame_program.frames.iter().enumerate() {
-                    let frame_data = frame.components();
-                    let op = frame_data.opcode;
-                    let v = frame_data.value;
-                    let a = frame_data.raw_attr;
-                    let s = frame_data.raw_slot;
-                    let params = frame_data
-                        .params
-                        .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
-
-                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                        let target_area = s & 0xFF;
-                        // Check frame_program for filters instead of ab.filters
-                        let has_filters = ab.frame_program.as_ref()
-                            .map(|fp| !fp.frames.is_empty())
-                            .unwrap_or(false);
-                        let target_mask =
-                            aura_target_mask(source_slot, target_area, a, has_filters);
-                        aura.cost_modifiers.push(CachedCostModifier {
-                            source_cid: cid,
-                            amount: if op == O_REDUCE_COST {
-                                v as i16
-                            } else {
-                                -(v as i16)
-                            },
-                            target_mask,
-                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
-                            ability_idx: ab_idx as u16,
-                        });
-                    } else {
-                        apply_aura_modifier(
-                            &mut aura,
-                            op,
-                            v,
-                            s,
-                            a,
-                            params,
-                            &ctx,
-                            state,
-                            db,
-                            player_idx,
-                            source_slot,
-                        );
                     }
                 }
             }
@@ -1098,6 +1132,11 @@ fn apply_aura_modifier(
         multiplier = resolve_count(state, db, count_op, a, s, ctx, 2);
     }
 
+    // Check if value has high bit set indicating per_card=SUCCESS_PILE
+    if v > 0xFFFF && (v & 0x10000) != 0 {
+        multiplier = state.players[p_idx].success_lives.len() as i32;
+    }
+
     if multiplier == 1 {
         if let Some(per_card) = params
             .and_then(|value| value.get("per_card"))
@@ -1120,24 +1159,24 @@ fn apply_aura_modifier(
         }
     }
 
-    let decode_heart_color = |raw_attr: u64| -> usize {
+    let decode_heart_color = |raw_slot: i32, raw_attr: u64, params: Option<&serde_json::Value>| -> usize {
+        if let Some(color) = decode_heart_type_from_params(params) {
+            return color;
+        }
+
         let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
         if color_mask != 0 {
-            if color_mask.count_ones() == 1 {
-                return color_mask.trailing_zeros() as usize;
-            }
             if color_mask == 0x7F {
                 return ctx.selected_color as usize;
             }
+            return color_mask.trailing_zeros() as usize;
         }
 
-        let mut color = raw_attr as usize & FILTER_MASK_LOWER as usize;
-        if color == 7 {
-            color = ctx.selected_color as usize;
-        } else if (1..=6).contains(&color) {
-            color -= 1;
+        match raw_slot as usize {
+            4 | 7 => 6,
+            0..=6 => raw_slot as usize,
+            _ => 6,
         }
-        color
     };
 
     match op {
@@ -1146,9 +1185,13 @@ fn apply_aura_modifier(
             {
                 return;
             }
+            // Check for success pile multiplier through multiple encoding methods
             if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             } else if (a & 0xFFFFFFFF) == 1 && (a >> 32) > 0x00FFFFFF {
+                multiplier = state.players[p_idx].success_lives.len() as i32;
+            } else if s > 0xFFFF && (s & 0x10000) != 0 {
+                // High bit set in value indicates per_card=SUCCESS_PILE
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             }
             aura.blades[target_slot] += value * multiplier;
@@ -1158,7 +1201,7 @@ fn apply_aura_modifier(
                 let count_op = (s >> 8) & 0xFF;
                 multiplier = resolve_count(state, db, count_op, a, count_op, ctx, 2);
             }
-            let color = decode_heart_color(a);
+            let color = decode_heart_color(s, a, params);
             if color < 7 {
                 aura.hearts[target_slot].add_to_color(color, value * multiplier);
             }

@@ -35,15 +35,6 @@ fn build_real_decks(db: &CardDatabase) -> (Vec<i32>, Vec<i32>, Vec<i32>) {
     (deck, lives, energy)
 }
 
-fn select_action(actions: &[i32], rng: &mut StdRng) -> i32 {
-    if actions.len() == 1 { return actions[0]; }
-    let play_actions: Vec<&i32> = actions.iter().filter(|&&a| a != 0).collect();
-    if !play_actions.is_empty() && rng.random_bool(0.8) {
-        return *play_actions[rng.random_range(0..play_actions.len())];
-    }
-    actions[rng.random_range(0..actions.len())]
-}
-
 #[derive(Debug, Default)]
 struct TimingStats { count: u64, total_ns: u64, min_ns: u64, max_ns: u64, slow_count: u64 }
 

@@ -4,7 +4,11 @@ use crate::core::logic::constants::{
     C_COUNT_DISCARD, C_COUNT_HAND, C_COUNT_STAGE, C_COUNT_SUCCESS_LIVE,
 };
 use crate::core::logic::interpreter::conditions::resolve_count;
+use crate::core::logic::interpreter::handlers::state_helpers::{
+    inline_value_ge_threshold, update_live_score_snapshot,
+};
 use crate::core::logic::models::AbilityFrame;
+use std::io::Write;
 
 fn resolve_dynamic_multiplier(
     state: &GameState,
@@ -12,88 +16,82 @@ fn resolve_dynamic_multiplier(
     ctx: &AbilityContext,
     frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> Option<i32> {
-    let count_opcode = frame_data
-        .params
-        .and_then(|value| value.as_object())
-        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
-        .and_then(|value| value.as_str())
-        .map(|per_card| match per_card.to_ascii_uppercase().as_str() {
-            "HAND" => C_COUNT_HAND,
-            "DISCARD" | "DISCARD_COUNT" => C_COUNT_DISCARD,
-            "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => C_COUNT_SUCCESS_LIVE,
-            "STAGE" => C_COUNT_STAGE,
-            _ => 0,
-        })
-        .filter(|opcode| *opcode != 0)
-        .or_else(|| match frame_data.slot.source_zone {
-            Zone::Hand => Some(C_COUNT_HAND),
-            Zone::Discard => Some(C_COUNT_DISCARD),
-            Zone::Stage => Some(C_COUNT_STAGE),
-            Zone::SuccessPile => Some(C_COUNT_SUCCESS_LIVE),
-            _ => None,
-        });
-
-    let count_opcode = count_opcode.or_else(|| {
-        if frame_data.slot.is_dynamic && frame_data.slot.remainder_zone >= 200 {
-            Some(frame_data.slot.remainder_zone as i32)
-        } else {
-            None
-        }
-    });
-
-    count_opcode.map(|opcode| {
-        let filter_attr = frame_data.filter.to_attr();
-        let mut count = resolve_count(
-            state,
-            db,
-            opcode,
-            filter_attr,
-            frame_data.raw_slot,
-            ctx,
-            0,
-        );
-
-        // Some legacy bytecode paths dropped NOT_SELF metadata for dynamic
-        // REDUCE_COST effects in hand. Keep the authored-frame semantics by
-        // excluding the source card when it is part of the counted zone.
-        if frame_data.opcode == O_REDUCE_COST
-            && frame_data.filter.special_id == 0
-            && filter_attr == 0
-            && count > 0
-        {
-            let p_idx = ctx.player_id as usize;
-            let owner_idx = if frame_data.slot.is_opponent {
-                1 - p_idx
+    // Determine which counting opcode to use based on source_zone or per_card config
+    let count_opcode = match frame_data.slot.source_zone {
+        Zone::Hand => C_COUNT_HAND,
+        Zone::Discard => C_COUNT_DISCARD,
+        Zone::Stage => C_COUNT_STAGE,
+        Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
+        Zone::Default => {
+            // For Zone::Default, use dynamic multiplier if this is O_REDUCE_COST
+            // and we have any params configuration (indicating database frame with per_card)
+            let has_dynamic_config = frame_data.opcode == O_REDUCE_COST
+                && frame_data.params.as_ref().map_or(false, |p| !p.is_null());
+            if has_dynamic_config {
+                C_COUNT_HAND
             } else {
-                p_idx
-            };
-            let source_card_id = ctx.source_card_id;
-            let source_is_counted = match frame_data.slot.source_zone {
-                Zone::Hand => state.players[owner_idx]
-                    .hand
-                    .iter()
-                    .any(|&id| id == source_card_id),
-                Zone::Stage => state.players[owner_idx]
-                    .stage
-                    .iter()
-                    .any(|&id| id == source_card_id),
-                Zone::Discard => state.players[owner_idx]
-                    .discard
-                    .iter()
-                    .any(|&id| id == source_card_id),
-                Zone::SuccessPile => state.players[owner_idx]
-                    .success_lives
-                    .iter()
-                    .any(|&id| id == source_card_id),
-                _ => false,
-            };
-            if source_is_counted {
-                count -= 1;
+                return None; // No dynamic config, use static value
             }
         }
+        _ => return None, // Other zones don't support dynamic counting
+    };
 
-        count
-    })
+    let filter_attr = frame_data.filter.to_attr();
+    let mut count = resolve_count(
+        state,
+        db,
+        count_opcode,
+        filter_attr,
+        frame_data.raw_slot,
+        ctx,
+        0,
+    );
+
+    // Exclude source card from count when it's part of the counted zone
+    if frame_data.opcode == O_REDUCE_COST
+        && frame_data.filter.special_id == 0
+        && count > 0
+    {
+        let p_idx = ctx.player_id as usize;
+        let source_card_id = ctx.source_card_id;
+        let source_in_hand = state.players[p_idx]
+            .hand
+            .iter()
+            .any(|&id| id == source_card_id);
+        if source_in_hand {
+            count -= 1;
+        }
+    }
+
+    Some(count)
+}
+
+/// Checks if activation requirements are met for keyword-based boosts
+fn check_activation_keyword(params: &serde_json::Value, state: &GameState, p_idx: usize) -> bool {
+    let keyword = match params.get("keyword").and_then(|v| v.as_str()) {
+        Some(k) => k,
+        None => return true, // No keyword condition, allow through
+    };
+    
+    let group_id = params.get("group_id").and_then(|v| v.as_u64()).map(|v| v as u32);
+    
+    match keyword {
+        "activated_energy" | "DID_ACTIVATE_ENERGY" => {
+            let mask = state.players[p_idx].activated_energy_group_mask;
+            match group_id {
+                Some(gid) => (mask & (1 << gid)) != 0,
+                None => mask != 0,
+            }
+        }
+        "activated_member" | "DID_ACTIVATE_MEMBER" => {
+            let mask = state.players[p_idx].activated_member_group_mask;
+            match group_id {
+                Some(gid) => (mask & (1 << gid)) != 0,
+                None => mask != 0,
+            }
+        }
+        _ => true, // Unknown keyword, allow through
+    }
 }
 
 pub fn handle_boost_score(
@@ -104,6 +102,7 @@ pub fn handle_boost_score(
     p_idx: usize,
     target_p: usize,
 ) -> HandlerResult {
+    // Check minimum required accumulated value
     if ctx.v_accumulated >= 0 {
         if let Some(min_required) = inline_value_ge_threshold(db, ctx) {
             if (ctx.v_accumulated as i32) < min_required {
@@ -116,6 +115,13 @@ pub fn handle_boost_score(
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
     let s = frame_data.raw_slot;
+
+    // Q203 Fix: Check activated keyword conditions
+    if let Some(params) = frame_data.params {
+        if !check_activation_keyword(params, state, p_idx) {
+            return HandlerResult::Continue;
+        }
+    }
 
     let mut final_v = v;
     if frame.is_dynamic() {
@@ -155,14 +161,14 @@ pub fn handle_reduce_cost(
     p_idx: usize,
     v: i32,
 ) -> HandlerResult {
-    let mut final_v = v;
-
     let frame_data = frame.components();
-
-    if frame_data.filter.compare_accumulated || frame_data.slot.is_dynamic {
-        let count = resolve_dynamic_multiplier(state, db, ctx, &frame_data).unwrap_or(0);
-        final_v = v * count;
-    }
+    
+    // Try dynamic multiplier first - if resolve_dynamic_multiplier returns Some(count),
+    // use v * count. Otherwise fall back to static value v.
+    let final_v = resolve_dynamic_multiplier(state, db, ctx, &frame_data)
+        .map(|count| v * count)
+        .unwrap_or(v);
+    
     state.players[p_idx].cost_reduction += final_v as i16;
     HandlerResult::Continue
 }

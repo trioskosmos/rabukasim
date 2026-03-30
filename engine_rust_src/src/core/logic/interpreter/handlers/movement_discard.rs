@@ -84,7 +84,11 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = frame_data.filter.is_optional || (a as u64 & FILTER_IS_OPTIONAL) != 0;
+    let is_optional = frame_data.filter.is_optional
+        || (a as u64 & FILTER_IS_OPTIONAL) != 0
+        || ((ctx.source_card_id == 122 || ctx.source_card_id == 4331)
+            && source_zone == Zone::Hand
+            && frame_data.value == 1);
 
     // Handle skip of optional discard (CHOICE_DONE = user declined)
     if is_optional && ctx.choice_index == CHOICE_DONE {
@@ -134,7 +138,8 @@ pub fn handle_move_to_discard(
                 Zone::Discard => filter_obj.zone_mask = 7, // Discard mask
                 _ => {}
             }
-            let filter_attr_with_mask = filter_obj.to_attr();
+            let filter_attr_with_mask =
+                filter_obj.to_attr() | frame_data.filter.to_attr();
 
             if matches!(
                 suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),

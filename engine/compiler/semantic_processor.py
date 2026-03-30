@@ -41,6 +41,7 @@ def _opcode_to_effect_type(opcode: str) -> EffectType:
         "LOOK_REORDER_DISCARD": EffectType.LOOK_REORDER_DISCARD,
         "OPPONENT_CHOOSE": EffectType.OPPONENT_CHOOSE,
         "PAY_ENERGY_DYNAMIC": EffectType.PAY_ENERGY_DYNAMIC,
+        "PAY_ENERGY": EffectType.PAY_ENERGY,
         "PLACE_ENERGY_UNDER_MEMBER": EffectType.PLACE_ENERGY_UNDER_MEMBER,
         "PREVENT_PLAY_TO_SLOT": EffectType.PREVENT_PLAY_TO_SLOT,
         "PREVENT_SET_TO_SUCCESS_PILE": EffectType.PREVENT_SET_TO_SUCCESS_PILE,
@@ -53,6 +54,15 @@ def _opcode_to_effect_type(opcode: str) -> EffectType:
         "TRANSFORM_BLADES": EffectType.TRANSFORM_BLADES,
         "TRANSFORM_HEART": EffectType.TRANSFORM_HEART,
         "LOOK_DECK_DYNAMIC": EffectType.LOOK_DECK_DYNAMIC,
+        "INCREASE_HEART_COST": EffectType.INCREASE_HEART_COST,
+        "NEGATE_EFFECT": EffectType.NEGATE_EFFECT,
+        "RESTRICTION": EffectType.RESTRICTION,
+        "SELECT_LIVE": EffectType.SELECT_LIVE,
+        "SELECT_PLAYER": EffectType.SELECT_PLAYER,
+        "SET_SCORE": EffectType.SET_SCORE,
+        "TRIGGER_REMOTE": EffectType.TRIGGER_REMOTE,
+        "FORMATION_CHANGE": EffectType.FORMATION_CHANGE,
+        "REDUCE_YELL_COUNT": EffectType.REDUCE_YELL_COUNT,
     }
     return mapping.get(opcode.upper(), EffectType.NONE)
 
@@ -66,7 +76,11 @@ def _opcode_to_condition_type(opcode: str) -> ConditionType:
         "COUNT_DISCARD": ConditionType.COUNT_DISCARD,
         "COUNT_ENERGY": ConditionType.COUNT_ENERGY,
         "COUNT_HEARTS": ConditionType.COUNT_HEARTS,
+        "COUNT_BLADES": ConditionType.COUNT_BLADES,
+        "COUNT_LIVE_ZONE": ConditionType.COUNT_LIVE_ZONE,
+        "COUNT_SUCCESS_LIVE": ConditionType.COUNT_SUCCESS_LIVE,
         "COUNT_GROUP": ConditionType.COUNT_GROUP,
+        "GROUP_FILTER": ConditionType.GROUP_FILTER,
         "IS_CENTER": ConditionType.IS_CENTER,
         "BATON": ConditionType.BATON,
         "SCORE_COMPARE": ConditionType.SCORE_COMPARE,
@@ -77,12 +91,17 @@ def _opcode_to_condition_type(opcode: str) -> ConditionType:
         "TARGET_MEMBER_HAS_NO_HEARTS": ConditionType.TARGET_MEMBER_HAS_NO_HEARTS,
         "HAS_LIVE_CARD": ConditionType.HAS_LIVE_CARD,
         "HAS_EXCESS_HEART": ConditionType.HAS_EXCESS_HEART,
+        "HAS_KEYWORD": ConditionType.HAS_KEYWORD,
         "MAIN_PHASE": ConditionType.MAIN_PHASE,
         "SYNC_COST": ConditionType.SYNC_COST,
         "TOTAL_BLADES": ConditionType.TOTAL_BLADES,
         "SCORE_TOTAL_CHECK": ConditionType.SCORE_TOTAL_CHECK,
         "COUNT_BLADE_HEART_TYPES": ConditionType.COUNT_BLADE_HEART_TYPES,
         "IS_SELF_MOVE": ConditionType.IS_SELF_MOVE,
+        "DECK_REFRESHED": ConditionType.DECK_REFRESHED,
+        "HEART_LEAD": ConditionType.HEART_LEAD,
+        "TYPE_CHECK": ConditionType.TYPE_CHECK,
+        "SUM_VALUE": ConditionType.SUM_VALUE,
         "CHECK_GROUP": ConditionType.COUNT_GROUP,
         "CHECK_HAS_COLOR": ConditionType.HAS_COLOR,
         "CHECK_BATON": ConditionType.BATON,
@@ -96,6 +115,38 @@ def _opcode_to_condition_type(opcode: str) -> ConditionType:
         "CHECK_UNIQUE_NAMES": ConditionType.UNIQUE_NAMES_COUNT,
     }
     return mapping.get(opcode.upper(), ConditionType.NONE)
+
+
+def _encode_keyword_filter(params: dict, filter_data: dict, attr_data: dict = None) -> dict:
+    """Encode keyword conditions into filter flags for Rust compatibility.
+    
+    Rust expects either:
+    - filter.keyword_energy = True (for activated energy)
+    - filter.keyword_member = True (for activated member)
+    - OR raw_attr with bits 62/63 set
+    """
+    result = {}
+    # Check params first, then filter, then attr
+    keyword = params.get("keyword", "")
+    if not keyword and filter_data:
+        keyword = filter_data.get("keyword", "")
+    if not keyword and attr_data:
+        # Check for keyword flags in attr
+        if attr_data.get("keyword_energy"):
+            result["keyword_energy"] = True
+        if attr_data.get("keyword_member"):
+            result["keyword_member"] = True
+        # Also extract group info if present
+        if attr_data.get("group_enabled"):
+            result["group_enabled"] = True
+            result["group_id"] = attr_data.get("group_id", 0)
+        return result
+    
+    if keyword in ("activated_energy", "DID_ACTIVATE_ENERGY", "DID_ACTIVATE_ENERGY_BY_GROUP"):
+        result["keyword_energy"] = True
+    elif keyword in ("activated_member", "DID_ACTIVATE_MEMBER", "DID_ACTIVATE_MEMBER_BY_GROUP"):
+        result["keyword_member"] = True
+    return result
 
 
 def _opcode_to_cost_type(opcode: str, is_cost: bool) -> AbilityCostType:
@@ -112,7 +163,7 @@ def _opcode_to_cost_type(opcode: str, is_cost: bool) -> AbilityCostType:
 
 def _extract_frame_data(frame: dict) -> dict:
     """Extract all relevant data from a frame."""
-    result = {"opcode": "", "value": 0, "filter": {}, "slot": {}, "params": {},
+    result = {"opcode": "", "value": 0, "filter": {}, "attr": {}, "slot": {}, "params": {},
               "is_cost": False, "is_negated": False, "is_optional": False}
     
     if not isinstance(frame, dict):
@@ -120,6 +171,7 @@ def _extract_frame_data(frame: dict) -> dict:
     
     result["opcode"] = str(frame.get("opcode", frame.get("op", ""))).upper()
     result["value"] = frame.get("value", 0)
+    result["attr"] = frame.get("attr", {})  # Extract attr field for keyword flags
     
     # Check semantic data first
     semantic = frame.get("semantic", {})
@@ -189,8 +241,28 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
             # Handle conditions
             cond_type = _opcode_to_condition_type(opcode)
             if cond_type != ConditionType.NONE:
+                # For HAS_KEYWORD conditions, encode keyword into filter for Rust compatibility
+                filter_data = data.get("filter", {})
+                params = dict(data.get("params", {}))  # Copy params
+                if cond_type == ConditionType.HAS_KEYWORD:
+                    # Get attr data which contains keyword_energy/keyword_member flags
+                    attr_data = data.get("attr", {})
+                    keyword_filter = _encode_keyword_filter(params, filter_data, attr_data)
+                    filter_data.update(keyword_filter)
+                    # Also ensure keyword is in params for Rust check_condition
+                    if keyword_filter.get("keyword_energy") and "keyword" not in params:
+                        params["keyword"] = "DID_ACTIVATE_ENERGY"
+                        # Add group_id if present
+                        if keyword_filter.get("group_enabled"):
+                            params["group_id"] = keyword_filter.get("group_id", 0)
+                    elif keyword_filter.get("keyword_member") and "keyword" not in params:
+                        params["keyword"] = "DID_ACTIVATE_MEMBER"
+                        # Add group_id if present
+                        if keyword_filter.get("group_enabled"):
+                            params["group_id"] = keyword_filter.get("group_id", 0)
+                
                 ab.conditions.append(Condition(
-                    type=cond_type, value=data["value"], params=data["params"],
+                    type=cond_type, value=data["value"], params=params,
                     is_negated=data["is_negated"]
                 ))
                 continue

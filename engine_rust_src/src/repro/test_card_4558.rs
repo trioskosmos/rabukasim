@@ -72,7 +72,7 @@ fn test_card_4558_ability_1_on_live_success_recover_live() {
         "Second ability should be ON_LIVE_SUCCESS (trigger=3)"
     );
 
-    println!("Ability 1 bytecode: {:?}", ability_1.bytecode);
+    println!("Ability 1 frame_program: {:?}", ability_1.frame_program);
 
     // The ability should be executable
     let mut ctx = AbilityContext::default();

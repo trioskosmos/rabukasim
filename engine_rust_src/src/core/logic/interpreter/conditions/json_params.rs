@@ -751,12 +751,30 @@ pub fn check_condition(
     ctx: &AbilityContext,
     depth: u32,
 ) -> bool {
+    // FAST PATH 1: Debug bypass - skip all checks
     if state.debug.debug_ignore_conditions {
         return true;
     }
+    
+    // FAST PATH 2: Depth limit
     if depth > CONDITION_CHECK_MAX_DEPTH {
         return false;
     }
+    
+    // FAST PATH 3: Simple condition with no params and default type
+    // This avoids expensive JSON processing for the majority of simple conditions
+    if cond.params.is_null() 
+        && cond.condition_type != ConditionType::None
+        && cond.value == 0
+        && cond.attr == 0
+        && cond.target_slot == 0
+        && !cond.is_negated
+    {
+        return check_condition_opcode(
+            state, db, cond.condition_type as i32, 0, 0, 0, ctx, depth + 1
+        );
+    }
+    
     let mut val = cond.value;
     let mut attr = cond.attr;
     let mut slot = cond.target_slot as i32;
@@ -812,12 +830,22 @@ pub fn check_condition(
                 "DID_ACTIVATE_ENERGY"
                 | "DID_ACTIVATE_ENERGY_BY_GROUP"
                 | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => {
-                    mapped_attr |= KEYWORD_ACTIVATED_ENERGY_BY_GROUP
+                    mapped_attr |= KEYWORD_ACTIVATED_ENERGY_BY_GROUP;
+                    // Also set group info if present in params
+                    if let Some(group_id) = params.get("group_id").and_then(|v| v.as_u64()) {
+                        mapped_attr |= FILTER_GROUP_ENABLE;
+                        mapped_attr |= (group_id & 0x7F) << FILTER_GROUP_SHIFT;
+                    }
                 }
                 "DID_ACTIVATE_MEMBER"
                 | "DID_ACTIVATE_MEMBER_BY_GROUP"
                 | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => {
-                    mapped_attr |= KEYWORD_ACTIVATED_MEMBER_BY_GROUP
+                    mapped_attr |= KEYWORD_ACTIVATED_MEMBER_BY_GROUP;
+                    // Also set group info if present in params
+                    if let Some(group_id) = params.get("group_id").and_then(|v| v.as_u64()) {
+                        mapped_attr |= FILTER_GROUP_ENABLE;
+                        mapped_attr |= (group_id & 0x7F) << FILTER_GROUP_SHIFT;
+                    }
                 }
                 "REVEALED_CONTAINS" => {
                     mapped_attr |= FILTER_REVEALED_CONTEXT;

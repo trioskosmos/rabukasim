@@ -102,8 +102,8 @@ def _trigger_name_from_id(trigger_id: int, metadata: dict[str, Any]) -> str:
     if isinstance(triggers, dict):
         for name, value in triggers.items():
             try:
-                if int(value) == int(trigger_id):
-                    return str(name)
+                if int(value) == trigger_id:
+                    return name
             except (TypeError, ValueError):
                 continue
     return "TRIGGER_" + str(trigger_id)

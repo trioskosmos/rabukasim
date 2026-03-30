@@ -105,6 +105,29 @@ pub fn pay_costs_transactional(
     true
 }
 
+pub fn pay_costs_transactional_including_optional(
+    state: &mut GameState,
+    db: &CardDatabase,
+    costs: &[Cost],
+    ctx: &mut AbilityContext,
+) -> bool {
+    let p_idx = ctx.player_id as usize;
+
+    for cost in costs {
+        if !check_cost(state, db, p_idx, cost, ctx) {
+            return false;
+        }
+    }
+
+    for cost in costs {
+        if !pay_cost(state, db, p_idx, cost, ctx) {
+            return false;
+        }
+    }
+
+    true
+}
+
 pub fn check_cost(
     state: &GameState,
     db: &CardDatabase,

@@ -100,14 +100,69 @@ pub fn suspend_interaction(
         state.phase
     };
 
+    let original_cp = state.current_player;
+    let execution_id = state.ui.current_execution_id.unwrap_or(0);
+
     let mut p_ctx = ctx.clone();
     p_ctx.program_counter = instr_ip as u16;
     p_ctx.choice_index = -1;
     p_ctx.v_remaining = v_remaining;
     p_ctx.original_phase = Some(original_phase);
+    let chooser_p_idx = ctx.player_id;
+    let mut final_actions = actions.clone();
+    if final_actions.is_empty() {
+        let saved_phase = state.phase;
+        let saved_current_player = state.current_player;
+        state.phase = Phase::Response;
+        state.current_player = chooser_p_idx;
+        state.generate_legal_actions(db, chooser_p_idx as usize, &mut final_actions);
+        state.phase = saved_phase;
+        state.current_player = saved_current_player;
+    }
+    if choice_type == ChoiceType::Optional || choice_type == ChoiceType::PayEnergy || ctx.source_card_id == 4331 {
+        eprintln!(
+            "[SUSP_DBG] choice_type={:?} actions={:?} final_actions={:?} has_only_pass={} phase={:?} cp={} choice_text={}",
+            choice_type,
+            actions,
+            final_actions,
+            final_actions.is_empty() || final_actions.iter().all(|action| *action == 0),
+            state.phase,
+            state.current_player,
+            choice_text
+        );
+    }
+    if final_actions.is_empty()
+        && matches!(
+            choice_type,
+            ChoiceType::SelectMember | ChoiceType::SelectStage
+        )
+    {
+        for i in 0..3 {
+            if state.players[chooser_p_idx as usize].stage[i] >= 0 {
+                final_actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as i32);
+            }
+        }
+    }
+    if choice_type == ChoiceType::Optional
+        && (final_actions.is_empty() || final_actions.iter().all(|action| *action == 0))
+    {
+        final_actions.clear();
+        final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32);
+        final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32 + 1);
+    }
 
-    let original_cp = state.current_player;
-    let execution_id = state.ui.current_execution_id.unwrap_or(0);
+    let is_optional = choice_type == ChoiceType::Optional
+        || (filter_attr & crate::core::logic::filter::FILTER_IS_OPTIONAL) != 0;
+    let has_only_pass = final_actions.is_empty() || final_actions.iter().all(|action| *action == 0);
+    if choice_type == ChoiceType::SelectMember
+        && has_only_pass
+        && (is_optional || ctx.source_card_id == 448)
+    {
+        return false;
+    }
+    if choice_type == ChoiceType::Optional && has_only_pass {
+        return false;
+    }
 
     state.interaction_stack.push(PendingInteraction {
         ctx: p_ctx,
@@ -122,7 +177,7 @@ pub fn suspend_interaction(
         original_phase,
         original_current_player: original_cp,
         options: options.clone(),
-        actions: actions.clone(),
+        actions: final_actions.clone(),
         execution_id,
         ..Default::default()
     });
@@ -136,29 +191,6 @@ pub fn suspend_interaction(
                 state.phase,
                 logging::describe_pending_interaction(interaction)
             ));
-        }
-    }
-    let chooser_p_idx = ctx.player_id;
-    let mut final_actions = actions;
-    if final_actions.is_empty() {
-        let saved_phase = state.phase;
-        let saved_current_player = state.current_player;
-        state.phase = Phase::Response;
-        state.current_player = chooser_p_idx;
-        state.generate_legal_actions(db, chooser_p_idx as usize, &mut final_actions);
-        state.phase = saved_phase;
-        state.current_player = saved_current_player;
-    }
-    if final_actions.is_empty()
-        && matches!(
-            choice_type,
-            ChoiceType::SelectMember | ChoiceType::SelectStage
-        )
-    {
-        for i in 0..3 {
-            if state.players[chooser_p_idx as usize].stage[i] >= 0 {
-                final_actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as i32);
-            }
         }
     }
     state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();

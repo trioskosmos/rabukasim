@@ -10,27 +10,144 @@ use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::interpreter::check_condition;
 use serde_json::{json, Value};
 
+/// Type-safe constants for performance calculations
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PerformanceSlot {
+    Left = 0,
+    Center = 1,
+    Right = 2,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ColorIndex {
+    Red = 0,
+    Blue = 1,
+    Yellow = 2,
+    Green = 3,
+    Pink = 4,
+    Purple = 5,
+    Rainbow = 6,
+}
+
+impl ColorIndex {
+    /// Convert from mask value with validation
+    pub fn from_mask(mask: usize) -> Option<Self> {
+        match mask {
+            0x7F => Some(ColorIndex::Rainbow),
+            m if m.count_ones() == 1 && m < 1 << 7 => {
+                match m.trailing_zeros() {
+                    0 => Some(ColorIndex::Red),
+                    1 => Some(ColorIndex::Blue),
+                    2 => Some(ColorIndex::Yellow),
+                    3 => Some(ColorIndex::Green),
+                    4 => Some(ColorIndex::Pink),
+                    5 => Some(ColorIndex::Purple),
+                    _ => None,
+                }
+            }
+            _ => None,
+        }
+    }
+    
+    pub fn as_usize(self) -> usize {
+        self as usize
+    }
+}
+
+impl PerformanceSlot {
+    /// Convert to usize with bounds checking
+    pub fn as_usize(self) -> usize {
+        self as usize
+    }
+    
+    /// Create from index with validation
+    pub fn from_index(idx: usize) -> Option<Self> {
+        match idx {
+            0 => Some(PerformanceSlot::Left),
+            1 => Some(PerformanceSlot::Center),
+            2 => Some(PerformanceSlot::Right),
+            _ => None,
+        }
+    }
+}
+
+// Add profiling counters at module level
+#[cfg(feature = "perf_profile")]
+static mut ABILITY_CHECK_COUNT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+#[cfg(feature = "perf_profile")]
+static mut CHECK_CONDITION_TIME_US: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
 pub type PerformanceResults = serde_json::Value;
 
+// Flat struct for silent mode performance data - eliminates JSON allocations
+#[derive(Default, Clone, Debug)]
+pub struct PerfResultFlat {
+    pub success: bool,
+    pub lives: [(i32, bool); 3], // (score, passed) for each live slot
+    pub total_hearts: [u8; 7],
+    pub note_icons: u32,
+    pub yell_count: u32,
+    pub total_score_bonus: i32,
+    pub total_score: u32,
+}
+
+/// Common validation helpers for performance logic
+mod validation {
+    use super::*;
+    
+    /// Validate color mask and return appropriate color index
+    pub fn validate_color_mask(mask: usize) -> Option<usize> {
+        if mask == 0x7F {
+            return Some(6); // Special case for full mask
+        }
+        if mask.count_ones() == 1 && mask < 1 << 7 {
+            return Some(mask.trailing_zeros() as usize);
+        }
+        None
+    }
+    
+    /// Validate raw attribute mask for color extraction
+    pub fn validate_raw_attr_mask(mask: usize) -> Option<usize> {
+        if mask == 0x7F {
+            return Some(6); // Special case for full mask
+        }
+        if mask.count_ones() == 1 && mask < 1 << 7 {
+            return Some(mask.trailing_zeros() as usize);
+        }
+        None
+    }
+    
+    /// Check if deck refresh is needed for player
+    pub fn needs_deck_refresh(state: &GameState, p_idx: usize) -> bool {
+        state.players[p_idx].deck.is_empty()
+    }
+    
+    /// Validate yell count with reductions
+    pub fn calculate_actual_yell_count(state: &GameState, count: u32) -> u32 {
+        let p_idx = state.current_player as usize;
+        let reduction = state.players[p_idx].yell_count_reduction.max(0) as u32;
+        count.saturating_sub(reduction)
+    }
+}
+
 fn semantic_heart_color_from_frame(frame: &AbilityFrameComponents<'_>, fallback: usize) -> usize {
+    // Try to decode from parameters first
     if let Some(color) = decode_heart_type_from_params(frame.params) {
         return color;
     }
 
+    // Validate color mask
     if frame.filter.color_mask != 0 {
-        if frame.filter.color_mask == 0x7F {
-            return 6;
+        if let Some(color) = validation::validate_color_mask(frame.filter.color_mask as usize) {
+            return color;
         }
         return frame.filter.color_mask.trailing_zeros() as usize;
     }
 
+    // Validate raw attribute mask
     if frame.raw_attr != 0 {
-        let mask = frame.raw_attr as usize;
-        if mask == 0x7F {
-            return 6;
-        }
-        if mask.count_ones() == 1 && mask < 1 << 7 {
-            return mask.trailing_zeros() as usize;
+        if let Some(color) = validation::validate_raw_attr_mask(frame.raw_attr as usize) {
+            return color;
         }
     }
 
@@ -44,10 +161,10 @@ fn semantic_heart_color_from_frame(frame: &AbilityFrameComponents<'_>, fallback:
 pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32> {
     let p_idx = state.current_player as usize;
     let mut revealed = Vec::new();
-    let reduction = state.players[p_idx].yell_count_reduction.max(0) as u32;
-    let actual_count = count.saturating_sub(reduction);
+    let actual_count = validation::calculate_actual_yell_count(state, count);
+    
     for _ in 0..actual_count {
-        if state.players[p_idx].deck.is_empty() {
+        if validation::needs_deck_refresh(state, p_idx) {
             state.resolve_deck_refresh(p_idx);
         }
         if let Some(card_id) = state.players[p_idx].pop_deck_card() {
@@ -56,15 +173,10 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
             let slot = (revealed.len() - 1) % 3;
             state.players[p_idx].stage_energy[slot].push(card_id);
 
-            // Optimization: Update yell bonus cache
-            if let Some(m) = db.get_member(card_id) {
-                state.players[p_idx].yell_blade_bonus[slot] += m.blades as u32;
-                state.players[p_idx].yell_heart_bonus[slot].add(m.blade_hearts_board);
-            } else if let Some(l) = db.get_live(card_id) {
-                state.players[p_idx].yell_heart_bonus[slot].add(l.blade_hearts_board);
-            }
-
+            // Update yell bonus cache
+            update_yell_bonus_cache(state, db, p_idx, slot, card_id);
             state.players[p_idx].sync_stage_energy_count(slot);
+            
             // Dispatch OnReveal trigger
             state.trigger_event(db, TriggerType::OnReveal, p_idx, card_id, -1, 0, -1);
         }
@@ -72,11 +184,23 @@ pub fn do_yell(state: &mut GameState, db: &CardDatabase, count: u32) -> Vec<i32>
     revealed
 }
 
+/// Update yell bonus cache for a card
+fn update_yell_bonus_cache(state: &mut GameState, db: &CardDatabase, p_idx: usize, slot: usize, card_id: i32) {
+    if let Some(m) = db.get_member(card_id) {
+        state.players[p_idx].yell_blade_bonus[slot] += m.blades as u32;
+        state.players[p_idx].yell_heart_bonus[slot].add(m.blade_hearts_board);
+    } else if let Some(l) = db.get_live(card_id) {
+        state.players[p_idx].yell_heart_bonus[slot].add(l.blade_hearts_board);
+    }
+}
+
 // ============================================================================
 // MODULE: PERFORMANCE PHASE MAIN
 // ============================================================================
 
-pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
+/// Execute the main performance phase for the current player
+/// Handles scoring, heart collection, and victory condition checking
+pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let p_idx = state.current_player as usize;
     if !state.ui.silent {
         state.log(format!("Rule 8.3.1, Rule 8.3.2, Rule 8.3.2.1: performance Phase: Player {} is turn player.", p_idx));
@@ -165,24 +289,27 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
     // 8.3.10-11 Yell
     // Initialize breakdown logs Early to capture sources before they are moved by triggers
+    // HEADLESS PATH: Skip all UI data structures in headless mode
+    let is_headless = state.ui.headless;
+    
     let mut heart_breakdown = Vec::new();
     let mut blade_breakdown = Vec::new();
-
     let mut heart_sources: Vec<SourceInfo> = Vec::new();
     let mut allocations = Vec::new();
-
-    let requirement_logs: Vec<serde_json::Value> = Vec::new();
     let mut transform_logs = Vec::new();
-    // Temporary map for member_contributions summary
-    let mut member_summary = std::collections::HashMap::new();
-    if !state.ui.silent {
+    let mut member_summary: std::collections::HashMap<(usize, i32), Value> = std::collections::HashMap::new();
+    
+    // HEADLESS OPTIMIZATION: requirement_logs is never populated - skip entirely
+    // Old code: let requirement_logs: Vec<serde_json::Value> = Vec::new();
+    
+    // Only build UI data structures when not in headless mode
+    if !is_headless {
         for i in 0..3 {
             let cid = state.players[p_idx].stage[i];
             if cid >= 0 {
                 if let Some(m) = db.get_member(cid) {
-                    let key = format!("{}_{}", i, cid);
                     member_summary.insert(
-                        key,
+                        (i, cid),
                         json!({
                             "source": m.name,
                             "source_id": cid,
@@ -208,7 +335,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
 
     let mut total_blades = 0;
-    if !state.ui.silent {
+    if !state.ui.silent && !is_headless {
         state.log("Rule 8.3.10: Summing blades of active members.".to_string());
     }
     // Apply Cheer Mod (Meta Rule)
@@ -219,7 +346,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
-                if !state.ui.silent && eff_b > 0 {
+                if !is_headless && eff_b > 0 {
                     blade_breakdown.push(json!({
                         "source": m.name,
                         "source_id": cid,
@@ -228,9 +355,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     }));
                 }
 
-                let key = format!("{}_{}", i, cid);
-                if !state.ui.silent {
-                    if let Some(entry) = member_summary.get_mut(&key) {
+                if !is_headless {
+                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
                         let bonus_b = eff_b as i32 - m.blades as i32;
                         entry["blades"] = json!(eff_b);
                         entry["bonus_blades"] = json!(bonus_b);
@@ -244,17 +370,19 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             let source_name =
                                 db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
                             let (ability_text, img) = if let Some(m) = db.get_member(src_cid) {
-                                (m.original_text.clone(), m.img_path.clone())
+                                (m.original_text.as_str(), m.img_path.as_str())
                             } else if let Some(l) = db.get_live(src_cid) {
-                                (l.original_text.clone(), l.img_path.clone())
+                                (l.original_text.as_str(), l.img_path.as_str())
                             } else {
-                                ("".to_string(), "".to_string())
+                                ("", "")
                             };
                             json!({ "source": source_name, "amount": amt, "ability_text": ability_text, "img": img })
                         })
                         .collect();
 
-                    // Scan constant abilities for blade sources (Wave 1: area buffs)
+                    // Scan constant abilities for blade sources - UI only
+                    // HEADLESS: Skip ability scanning for UI data
+                    if !is_headless && !db.is_vanilla {
                     for other_slot in 0..3 {
                         let other_cid = state.players[p_idx].stage[other_slot];
                         if other_cid < 0 {
@@ -294,10 +422,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                     && bv > 0
                                                 {
                                                     slot_blade_buffs.push(json!({
-                                                        "source": other_m.name,
+                                                        "source": &other_m.name,
                                                         "amount": bv,
-                                                        "ability_text": ab.raw_text,
-                                                        "img": other_m.img_path
+                                                        "ability_text": ab.raw_text.as_str(),
+                                                        "img": other_m.img_path.as_str()
                                                     }));
                                                 }
                                             }
@@ -307,7 +435,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             }
                         }
                     }
-                    // Wave 2: Granted abilities for blade sources
+                    }
+                    // Wave 2: Granted abilities for blade sources - UI only
+                    if !is_headless && !db.is_vanilla {
                     for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities
                     {
                         if target_cid != cid {
@@ -336,8 +466,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                                     slot_blade_buffs.push(json!({
                                                         "source": format!("Granted: {}", src_m.name),
                                                         "amount": frame.value(),
-                                                        "ability_text": ab.raw_text,
-                                                        "img": src_m.img_path
+                                                        "ability_text": ab.raw_text.as_str(),
+                                                        "img": src_m.img_path.as_str()
                                                     }));
                                                 }
                                             }
@@ -347,7 +477,8 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             }
                         }
                     }
-                    if let Some(entry) = member_summary.get_mut(&key) {
+                    }
+                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
                         entry["ability_blade_bonuses"] = json!(slot_blade_buffs);
                     }
                 }
@@ -366,18 +497,18 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         // Rule 8.3.10, Rule 8.3.11: Pops from main deck based on blades.
         let yell_count = total_blades;
         let yelled_cards = do_yell(state, db, yell_count);
-        let mut yelled_names = Vec::new();
-        for cid in yelled_cards {
-            let cid_i32 = cid as i32;
-            if let Some(m) = db.get_member(cid_i32) {
-                yelled_names.push(format!("{} ({})", m.name, m.card_no));
-            } else if let Some(l) = db.get_live(cid_i32) {
-                yelled_names.push(format!("{} ({})", l.name, l.card_no));
-            } else {
-                yelled_names.push(format!("ID:{}", cid_i32));
+        if !state.ui.silent && !yelled_cards.is_empty() {
+            let mut yelled_names = Vec::new();
+            for cid in yelled_cards {
+                let cid_i32 = cid as i32;
+                if let Some(m) = db.get_member(cid_i32) {
+                    yelled_names.push(format!("{} ({})", m.name, m.card_no));
+                } else if let Some(l) = db.get_live(cid_i32) {
+                    yelled_names.push(format!("{} ({})", l.name, l.card_no));
+                } else {
+                    yelled_names.push(format!("ID:{}", cid_i32));
+                }
             }
-        }
-        if !yelled_names.is_empty() {
             let msg = format!(
                 "Yelled {} card(s): {}",
                 yelled_names.len(),
@@ -427,7 +558,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 printed_h = [0u32; 7];
                 printed_h[dst_col as usize] = printed_sum;
 
-                if transform_logs.is_empty() {
+                if !state.ui.silent && transform_logs.is_empty() {
                     // Log once per transform type
                     let source_name = db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
                     transform_logs.push(json!({
@@ -460,7 +591,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 }
 
                 if eff_h.iter().any(|&v| v > 0) {
-                    if !state.ui.silent {
+                    if !is_headless {
                         let mut h8 = [0u8; 7];
                         for k in 0..7 {
                             h8[k] = eff_h[k] as u8;
@@ -481,8 +612,10 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             "value": eff_h,
                             "type": "member"
                         }));
+                    }
 
-                        let mut slot_heart_buffs = state.players[p_idx]
+                    let mut slot_heart_buffs = if !is_headless {
+                        state.players[p_idx]
                         .heart_buff_logs
                         .iter()
                         .filter(|&&(_, _, _, slot)| slot == i as u8)
@@ -490,69 +623,73 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                             let source_name =
                                 db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
                             let (ability_text, img) = if let Some(m) = db.get_member(src_cid) {
-                                (m.original_text.clone(), m.img_path.clone())
+                                (m.original_text.as_str(), m.img_path.as_str())
                             } else if let Some(l) = db.get_live(src_cid) {
-                                (l.original_text.clone(), l.img_path.clone())
+                                (l.original_text.as_str(), l.img_path.as_str())
                             } else {
-                                ("".to_string(), "".to_string())
+                                ("", "")
                             };
                             json!({ "source": source_name, "amount": amt, "color": color, "ability_text": ability_text, "img": img })
                         })
-                        .collect::<Vec<_>>();
+                        .collect::<Vec<_>>()
+                    } else {
+                        Vec::new()
+                    };
 
-                        // Scan constant abilities for heart sources (Wave 1: area buffs)
-                        for other_slot in 0..3 {
-                            let other_cid = state.players[p_idx].stage[other_slot];
-                            if other_cid < 0 {
-                                continue;
-                            }
-                            if let Some(other_m) = db.get_member(other_cid) {
-                                for ab in &other_m.abilities {
-                                    if ab.trigger == TriggerType::Constant {
-                                        let ctx = AbilityContext {
-                                            source_card_id: other_cid,
-                                            player_id: p_idx as u8,
-                                            activator_id: p_idx as u8,
-                                            area_idx: other_slot as i16,
-                                            target_slot: i as i16,
-                                            ..Default::default()
-                                        };
-                                        if ab
-                                            .conditions
-                                            .iter()
-                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                        {
-                                            if let Some(frame_program) = ab.frame_program.as_ref() {
-                                                for frame in &frame_program.frames {
-                                                    let bop = frame.opcode();
-                                                    let bv = frame.value();
-                                                    let bs = frame.slot();
-                                                    let mut targets_us = false;
-                                                    if bs == 1 {
-                                                        targets_us = true;
-                                                    } else if (bs == 4 || bs == 0)
-                                                        && other_slot == i
-                                                    {
-                                                        targets_us = true;
-                                                    } else if bs == 10
-                                                        && i as i16 == ctx.target_slot
-                                                    {
-                                                        targets_us = true;
-                                                    }
-                                                    if bop == O_ADD_HEARTS && targets_us && bv > 0 {
-                                                        let color = semantic_heart_color_from_frame(
-                                                            &frame.components(),
-                                                            ctx.selected_color as usize,
-                                                        );
-                                                        if color < 7 {
-                                                            slot_heart_buffs.push(json!({
-                                                            "source": other_m.name,
-                                                            "amount": bv,
-                                                                "color": color,
-                                                                "ability_text": ab.raw_text,
-                                                                "img": other_m.img_path
-                                                            }));
-                                                        }
+                    // Scan constant abilities for heart sources - UI only
+                    // HEADLESS: Skip ability scanning
+                    if !is_headless {
+                    for other_slot in 0..3 {
+                        let other_cid = state.players[p_idx].stage[other_slot];
+                        if other_cid < 0 {
+                            continue;
+                        }
+                        if let Some(other_m) = db.get_member(other_cid) {
+                            for ab in &other_m.abilities {
+                                if ab.trigger == TriggerType::Constant {
+                                    let ctx = AbilityContext {
+                                        source_card_id: other_cid,
+                                        player_id: p_idx as u8,
+                                        activator_id: p_idx as u8,
+                                        area_idx: other_slot as i16,
+                                        target_slot: i as i16,
+                                        ..Default::default()
+                                    };
+                                    if ab
+                                        .conditions
+                                        .iter()
+                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                    {
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                let bop = frame.opcode();
+                                                let bv = frame.value();
+                                                let bs = frame.slot();
+                                                let mut targets_us = false;
+                                                if bs == 1 {
+                                                    targets_us = true;
+                                                } else if (bs == 4 || bs == 0)
+                                                    && other_slot == i
+                                                {
+                                                    targets_us = true;
+                                                } else if bs == 10
+                                                    && i as i16 == ctx.target_slot
+                                                {
+                                                    targets_us = true;
+                                                }
+                                                if bop == O_ADD_HEARTS && targets_us && bv > 0 {
+                                                    let color = semantic_heart_color_from_frame(
+                                                        &frame.components(),
+                                                        ctx.selected_color as usize,
+                                                    );
+                                                    if color < 7 {
+                                                    slot_heart_buffs.push(json!({
+                                                        "source": &other_m.name,
+                                                        "amount": bv,
+                                                        "color": color,
+                                                        "ability_text": ab.raw_text.as_str(),
+                                                        "img": other_m.img_path.as_str()
+                                                    }));
                                                     }
                                                 }
                                             }
@@ -561,46 +698,48 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                 }
                             }
                         }
-                        // Wave 2: Granted abilities for heart sources
-                        for &(target_cid, source_cid, ab_idx) in
-                            &state.players[p_idx].granted_abilities
-                        {
-                            if target_cid != cid {
-                                continue;
-                            }
-                            if let Some(src_m) = db.get_member(source_cid) {
-                                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
-                                    if ab.trigger == TriggerType::Constant {
-                                        let ctx = AbilityContext {
-                                            source_card_id: cid,
-                                            player_id: p_idx as u8,
-                                            activator_id: p_idx as u8,
-                                            area_idx: i as i16,
-                                            ..Default::default()
-                                        };
-                                        if ab
-                                            .conditions
-                                            .iter()
-                                            .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
-                                        {
-                                            if let Some(frame_program) = ab.frame_program.as_ref() {
-                                                for frame in &frame_program.frames {
-                                                    if frame.opcode() == O_ADD_HEARTS
-                                                        && frame.value() > 0
-                                                    {
-                                                        let color = semantic_heart_color_from_frame(
-                                                            &frame.components(),
-                                                            ctx.selected_color as usize,
-                                                        );
-                                                        if color < 7 {
-                                                            slot_heart_buffs.push(json!({
-                                                            "source": format!("Granted: {}", src_m.name),
-                                                            "amount": frame.value(),
-                                                            "color": color,
-                                                            "ability_text": ab.raw_text,
-                                                            "img": src_m.img_path
-                                                        }));
-                                                        }
+                    } // End of UI-only ability scanning block
+                    }
+                    // Wave 2: Granted abilities for heart sources - UI only
+                    if !is_headless {
+                    for &(target_cid, source_cid, ab_idx) in
+                        &state.players[p_idx].granted_abilities
+                    {
+                        if target_cid != cid {
+                            continue;
+                        }
+                        if let Some(src_m) = db.get_member(source_cid) {
+                            if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                                if ab.trigger == TriggerType::Constant {
+                                    let ctx = AbilityContext {
+                                        source_card_id: cid,
+                                        player_id: p_idx as u8,
+                                        activator_id: p_idx as u8,
+                                        area_idx: i as i16,
+                                        ..Default::default()
+                                    };
+                                    if ab
+                                        .conditions
+                                        .iter()
+                                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
+                                    {
+                                        if let Some(frame_program) = ab.frame_program.as_ref() {
+                                            for frame in &frame_program.frames {
+                                                if frame.opcode() == O_ADD_HEARTS
+                                                    && frame.value() > 0
+                                                {
+                                                    let color = semantic_heart_color_from_frame(
+                                                        &frame.components(),
+                                                        ctx.selected_color as usize,
+                                                    );
+                                                    if color < 7 {
+                                                        slot_heart_buffs.push(json!({
+                                                        "source": format!("Granted: {}", src_m.name),
+                                                        "amount": frame.value(),
+                                                        "color": color,
+                                                        "ability_text": ab.raw_text.as_str(),
+                                                        "img": src_m.img_path.as_str()
+                                                    }));
                                                     }
                                                 }
                                             }
@@ -609,16 +748,16 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                                 }
                             }
                         }
+                    }
 
-                        let key = format!("{}_{}", i, cid);
-                        if let Some(entry) = member_summary.get_mut(&key) {
-                            entry["hearts"] = json!(eff_h);
-                            entry["base_hearts"] = json!(source_base_h);
-                            entry["bonus_hearts"] = json!(true_bonus_h);
-                            entry["note_icons"] = json!(m.note_icons);
-                            entry["base_notes"] = json!(m.note_icons);
-                            entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
-                        }
+                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
+                        entry["hearts"] = json!(eff_h);
+                        entry["base_hearts"] = json!(source_base_h);
+                        entry["bonus_hearts"] = json!(true_bonus_h);
+                        entry["note_icons"] = json!(m.note_icons);
+                        entry["base_notes"] = json!(m.note_icons);
+                        entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
+                    }
                     }
                 }
                 note_icons += m.note_icons;
@@ -629,16 +768,36 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
     }
     for &cid in state.players[p_idx].yell_cards.iter() {
-        let (name, bh, ni) = if let Some(m) = db.get_member(cid) {
-            (m.name.clone(), m.blade_hearts, m.note_icons)
-        } else if let Some(l) = db.get_live(cid) {
-            (l.name.clone(), l.blade_hearts, l.note_icons)
+        // Only fetch card data if we need it for UI
+        let (bh, ni) = if !is_headless {
+            if let Some(m) = db.get_member(cid) {
+                (m.blade_hearts, m.note_icons)
+            } else if let Some(l) = db.get_live(cid) {
+                (l.blade_hearts, l.note_icons)
+            } else {
+                ([0u8; 7], 0)
+            }
         } else {
-            ("Unknown".to_string(), [0u8; 7], 0)
+            // In silent mode, we don't need names for logging - just compute hearts
+            if let Some(m) = db.get_member(cid) {
+                (m.blade_hearts, m.note_icons)
+            } else if let Some(l) = db.get_live(cid) {
+                (l.blade_hearts, l.note_icons)
+            } else {
+                ([0u8; 7], 0)
+            }
         };
 
         // Log yell card contributions
-        if !state.ui.silent {
+        if !is_headless {
+            // Only compute names when needed for UI logging
+            let name = if let Some(m) = db.get_member(cid) {
+                m.name.as_str()
+            } else if let Some(l) = db.get_live(cid) {
+                l.name.as_str()
+            } else {
+                "Unknown"
+            };
             let bh_sum: u32 = bh.iter().map(|&h| h as u32).sum();
             if bh_sum > 0 {
                 heart_sources.push(SourceInfo {
@@ -660,7 +819,15 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             }
         }
         if ni > 0 {
-            if !state.ui.silent {
+            if !is_headless {
+                // Re-fetch name only when needed for UI
+                let name = if let Some(m) = db.get_member(cid) {
+                    m.name.as_str()
+                } else if let Some(l) = db.get_live(cid) {
+                    l.name.as_str()
+                } else {
+                    "Unknown"
+                };
                 blade_breakdown.push(json!({
                     "source": format!("Yell: {}", name),
                     "source_id": cid,
@@ -712,7 +879,7 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     }
     state.players[p_idx].current_turn_notes = note_icons;
 
-    if !state.ui.silent {
+    if !is_headless {
         state.log("Rule 8.3.12, Rule 8.3.13: Checking timing after Yell.".to_string());
         state.log(format!("Rule 8.3.14: Total Hearts (Live Heart + BladeHeart): {:?}", total_hearts));
         state.log(format!("  Rule 8.3.14: Note Icons: {}", note_icons));
@@ -736,10 +903,12 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
             .filter(|&c| c >= 0)
         {
             if let Some(live) = db.get_live(cid) {
-                state.log(format!(
-                    "    Live {}: {} - Checking requirements...",
-                    i, live.name
-                ));
+                if !state.ui.silent {
+                    state.log(format!(
+                        "    Live {}: {} - Checking requirements...",
+                        i, live.name
+                    ));
+                }
 
                 let (req_board, _) = get_live_requirements(state, db, p_idx, live);
                 if !state.ui.silent {
@@ -768,12 +937,16 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     }
                     passed_flags[i] = true;
                     sequential_passed[i] = true;
-                    state.log(format!("    -> SUCCESS for {}", live.name));
+                    if !state.ui.silent {
+                        state.log(format!("    -> SUCCESS for {}", live.name));
+                    }
                 } else {
-                    state.log(format!(
-                        "    -> FAILED for {} (Hearts or Restrictions)",
-                        live.name
-                    ));
+                    if !state.ui.silent {
+                        state.log(format!(
+                            "    -> FAILED for {} (Hearts or Restrictions)",
+                            live.name
+                        ));
+                    }
                     any_failed = true;
                 }
             }
@@ -786,7 +959,9 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
 
     // Rule 8.3.16: If ANY live card's requirements were not met, discard all live cards.
     if any_failed {
-        state.log("  Rule 8.3.16: Performance FAILED. All live cards discarded.".to_string());
+        if !state.ui.silent {
+            state.log("  Rule 8.3.16: Performance FAILED. All live cards discarded.".to_string());
+        }
         for i in 0..3 {
             if state.players[p_idx].live_zone[i] >= 0 {
                 let cid = state.players[p_idx].live_zone[i];
@@ -840,98 +1015,30 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
+    // Build UI data only when not silent
     let mut yell_cards_meta = Vec::new();
-    for &cid in state.players[p_idx].yell_cards.iter() {
-        if let Some(m) = db.get_member(cid) {
-            yell_cards_meta.push(json!({
-                "id": cid,
-                "img": m.img_path,
-                "blade_hearts": m.blade_hearts,
-                "note_icons": m.note_icons,
-                "draw_icons": m.draw_icons,
-            }));
-        } else if let Some(l) = db.get_live(cid) {
-            yell_cards_meta.push(json!({
-                "id": cid,
-                "img": l.img_path,
-                "blade_hearts": l.blade_hearts,
-                "note_icons": l.note_icons,
-            }));
-        }
-    }
-
-    let mut lives_list: Vec<Value> = Vec::new();
-    let mut temp_hearts_debug = total_hearts; // For simulating filling logic
-    for i in 0..3 {
-        let cid = live_ids_before_discard[i];
-        if cid >= 0 {
-            if let Some(l) = db.get_live(cid) {
-                let (req_board, adjustments) = get_live_requirements(state, db, p_idx, l);
-
-                // Calculate "filled" state for UI
-                let mut filled = [0u8; 7];
-                let mut sim_have = temp_hearts_debug;
-                let mut wildcards = sim_have[6] as i32;
-
-                // 1. Specific requirements
-                for ci in 0..6 {
-                    let need = req_board.get_color_count(ci);
-                    // Match with same color first
-                    let matching = sim_have[ci].min(need);
-                    filled[ci] = matching;
-                    sim_have[ci] -= matching;
-
-                    // Then fill deficit with wildcards
-                    let deficit = need.saturating_sub(matching);
-                    if deficit > 0 {
-                        let take_wild = wildcards.min(deficit as i32);
-                        filled[ci] += take_wild as u8;
-                        wildcards -= take_wild;
-                    }
-                }
-                // 2. Any requirement
-                let any_need = req_board.get_color_count(6);
-                // Use remaining wildcards first
-                let used_wild = wildcards.min(any_need as i32);
-                filled[6] = used_wild as u8;
-                let mut remaining_any = any_need.saturating_sub(used_wild as u8);
-
-                // Then use remaining colored hearts
-                if remaining_any > 0 {
-                    for ci in 0..6 {
-                        let take = (sim_have[ci] as i32).min(remaining_any as i32);
-                        filled[6] += take as u8;
-                        sim_have[ci] -= take as u8;
-                        remaining_any -= take as u8;
-                        if remaining_any == 0 {
-                            break;
-                        }
-                    }
-                }
-                sim_have[6] = wildcards.max(0) as u8; // Update sim_have wildcard count for spare calculation
-
-                lives_list.push(json!({
+    if !state.ui.silent {
+        for &cid in state.players[p_idx].yell_cards.iter() {
+            if let Some(m) = db.get_member(cid) {
+                yell_cards_meta.push(json!({
                     "id": cid,
-                    "name": l.name,
-                    "img": l.img_path,
-                    "passed": passed_flags[i],
-                    "score": l.score,
-                    "required": req_board.to_array(),
-                    "filled": filled,
-                    "spare": sim_have,
-                    "adjustments": adjustments,
+                    "img": m.img_path,
+                    "blade_hearts": m.blade_hearts,
+                    "note_icons": m.note_icons,
+                    "draw_icons": m.draw_icons,
                 }));
-
-                // If successfully passed in sequence, permanently consume for next live card UI check
-                // We use sequential_passed because passed_flags might have been cleared by Rule 8.3.16
-                if sequential_passed[i] {
-                    consume_hearts_from_pool(&mut temp_hearts_debug, &req_board.to_array());
-                }
+            } else if let Some(l) = db.get_live(cid) {
+                yell_cards_meta.push(json!({
+                    "id": cid,
+                    "img": l.img_path,
+                    "blade_hearts": l.blade_hearts,
+                    "note_icons": l.note_icons,
+                }));
             }
         }
     }
 
-    // Calculate total_score directly
+    // Calculate total_score directly (needed for game logic)
     let mut live_score: u32 = 0;
     for i in 0..3 {
         if passed_flags[i] {
@@ -947,77 +1054,151 @@ pub fn do_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let total_score =
         live_score + note_icons as u32 + state.players[p_idx].live_score_bonus.max(0) as u32;
 
-    let mut score_breakdown: Vec<Value> = Vec::new();
-    if live_score > 0 {
-        score_breakdown.push(json!({
-            "source": "Base Live Score",
-            "value": live_score,
-            "type": "base"
-        }));
-    }
-    for i in 0..3 {
-        if passed_flags[i] {
-            if let Some(cid) = live_ids_before_discard.get(i).copied() {
-                if cid >= 0 {
-                    if let Some(l) = db.get_live(cid) {
-                        score_breakdown.push(json!({
-                            "source": format!("Live: {}", l.name),
-                            "value": l.score,
-                            "type": "base_live"
-                        }));
+    // Build performance result data for UI.
+    {
+        let mut lives_list: Vec<Value> = Vec::new();
+        let mut temp_hearts_debug = total_hearts; // For simulating filling logic
+        for i in 0..3 {
+            let cid = live_ids_before_discard[i];
+            if cid >= 0 {
+                if let Some(l) = db.get_live(cid) {
+                    let (req_board, adjustments) = get_live_requirements(state, db, p_idx, l);
+
+                    // Calculate "filled" state for UI
+                    let mut filled = [0u8; 7];
+                    let mut sim_have = temp_hearts_debug;
+                    let mut wildcards = sim_have[6] as i32;
+
+                    // 1. Specific requirements
+                    for ci in 0..6 {
+                        let need = req_board.get_color_count(ci);
+                        // Match with same color first
+                        let matching = sim_have[ci].min(need);
+                        filled[ci] = matching;
+                        sim_have[ci] -= matching;
+
+                        // Then fill deficit with wildcards
+                        let deficit = need.saturating_sub(matching);
+                        if deficit > 0 {
+                            let take_wild = wildcards.min(deficit as i32);
+                            filled[ci] += take_wild as u8;
+                            wildcards -= take_wild;
+                        }
+                    }
+                    // 2. Any requirement
+                    let any_need = req_board.get_color_count(6);
+                    // Use remaining wildcards first
+                    let used_wild = wildcards.min(any_need as i32);
+                    filled[6] = used_wild as u8;
+                    let mut remaining_any = any_need.saturating_sub(used_wild as u8);
+
+                    // Then use remaining colored hearts
+                    if remaining_any > 0 {
+                        for ci in 0..6 {
+                            let take = (sim_have[ci] as i32).min(remaining_any as i32);
+                            filled[6] += take as u8;
+                            sim_have[ci] -= take as u8;
+                            remaining_any -= take as u8;
+                            if remaining_any == 0 {
+                                break;
+                            }
+                        }
+                    }
+                    sim_have[6] = wildcards.max(0) as u8; // Update sim_have wildcard count for spare calculation
+
+                    lives_list.push(json!({
+                        "id": cid,
+                        "name": l.name,
+                        "img": l.img_path,
+                        "passed": passed_flags[i],
+                        "score": l.score,
+                        "required": req_board.to_array(),
+                        "filled": filled,
+                        "spare": sim_have,
+                        "adjustments": adjustments,
+                    }));
+
+                    // If successfully passed in sequence, permanently consume for next live card UI check
+                    // We use sequential_passed because passed_flags might have been cleared by Rule 8.3.16
+                    if sequential_passed[i] {
+                        consume_hearts_from_pool(&mut temp_hearts_debug, &req_board.to_array());
                     }
                 }
             }
         }
-    }
-    if note_icons > 0 {
-        score_breakdown.push(json!({
-            "source": "Note Bonus",
-            "value": note_icons,
-            "type": "note"
-        }));
-    }
-    for &(cid, bonus) in &state.players[p_idx].live_score_bonus_logs {
-        let name = if cid >= 0 {
-            db.get_member(cid)
-                .map(|m| m.name.clone())
-                .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
-                .unwrap_or_else(|| format!("Card {}", cid))
-        } else {
-            "Ability Effect".to_string()
-        };
-        score_breakdown.push(json!({
-            "source": name,
-            "source_id": cid,
-            "value": bonus,
-            "type": "triggered_ability"
-        }));
-    }
 
-    let member_contributions: Vec<_> = member_summary.values().collect();
-    state.ui.performance_results.insert(
-        p_idx as u8,
-        json!({
-            "success": all_met,
-            "total_hearts": total_hearts,
-            "note_icons": note_icons,
-            "yell_count": total_blades,
-            "lives": lives_list,
-            "yell_cards": yell_cards_meta,
-            "member_contributions": member_contributions,
-            "breakdown": {
-                "blades": blade_breakdown,
-                "hearts": heart_breakdown,
-                "allocations": allocations,
-                "requirements": requirement_logs,
-                "transforms": transform_logs,
-                "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
-                "scores": score_breakdown,
-            },
-            "total_score_bonus": state.players[p_idx].live_score_bonus,
-            "total_score": total_score
-        }),
-    );
+        let mut score_breakdown: Vec<Value> = Vec::new();
+        if live_score > 0 {
+            score_breakdown.push(json!({
+                "source": "Base Live Score",
+                "value": live_score,
+                "type": "base"
+            }));
+        }
+        for i in 0..3 {
+            if passed_flags[i] {
+                if let Some(cid) = live_ids_before_discard.get(i).copied() {
+                    if cid >= 0 {
+                        if let Some(l) = db.get_live(cid) {
+                            score_breakdown.push(json!({
+                                "source": format!("Live: {}", l.name),
+                                "value": l.score,
+                                "type": "base_live"
+                            }));
+                        }
+                    }
+                }
+            }
+        }
+        if note_icons > 0 {
+            score_breakdown.push(json!({
+                "source": "Note Bonus",
+                "value": note_icons,
+                "type": "note"
+            }));
+        }
+        for &(cid, bonus) in &state.players[p_idx].live_score_bonus_logs {
+            let name = if cid >= 0 {
+                db.get_member(cid)
+                    .map(|m| m.name.clone())
+                    .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                    .unwrap_or_else(|| format!("Card {}", cid))
+            } else {
+                "Ability Effect".to_string()
+            };
+            score_breakdown.push(json!({
+                "source": name,
+                "source_id": cid,
+                "value": bonus,
+                "type": "triggered_ability"
+            }));
+        }
+
+        let member_contributions: Vec<_> = member_summary.values().collect();
+        state.ui.performance_results.insert(
+            p_idx as u8,
+            json!({
+                "success": all_met,
+                "total_hearts": total_hearts,
+                "note_icons": note_icons,
+                "yell_count": total_blades,
+                "lives": lives_list,
+                "yell_cards": yell_cards_meta,
+                "member_contributions": member_contributions,
+                "breakdown": {
+                    "blades": blade_breakdown,
+                    "hearts": heart_breakdown,
+                    "allocations": allocations,
+                    "requirements": Vec::<serde_json::Value>::new(),
+                    "transforms": transform_logs,
+                    "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
+                    "scores": score_breakdown,
+                },
+                "total_score_bonus": state.players[p_idx].live_score_bonus,
+                "total_score": total_score
+            }),
+        );
+    }
 
     // state.yell_cards.clear(); // REMOVED: Now cleared in untap_all() for persistence
     advance_from_performance(state);
@@ -1067,6 +1248,9 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     // IMPORTANT: We move this BEFORE triggers so that ON_LIVE_SUCCESS abilities can refer to current turn scores.
     // We only perform this calculation if triggers haven't finished (to allow re-entry)
     if !state.live_result_triggers_done {
+        // FAST PATH: In silent+vanilla mode, performance_results is empty - compute directly from state
+        let is_silent_vanilla = state.ui.silent && db.is_vanilla;
+        
         for p in 0..2 {
             let mut live_score = 0;
             let mut player_has_success = false;
@@ -1077,22 +1261,45 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 state.log(format!("Rule 8.4.2: Calculating total score for Player {}.", p));
             }
 
-            // Check snapshot from check_performance_requirements first
-            let snapshot_success = state
-                .ui
-                .performance_results
-                .get(&(p as u8))
-                .and_then(|res| res.get("success"))
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
-
+            // OPTIMIZATION: Cache live cards to avoid repeated HashMap lookups
+            let live_cards: [Option<(i32, &crate::core::logic::card_db::LiveCard)>; 3] = [
+                if state.players[p].live_zone[0] >= 0 { 
+                    db.get_live(state.players[p].live_zone[0]).map(|l| (state.players[p].live_zone[0], l)) 
+                } else { None },
+                if state.players[p].live_zone[1] >= 0 { 
+                    db.get_live(state.players[p].live_zone[1]).map(|l| (state.players[p].live_zone[1], l)) 
+                } else { None },
+                if state.players[p].live_zone[2] >= 0 { 
+                    db.get_live(state.players[p].live_zone[2]).map(|l| (state.players[p].live_zone[2], l)) 
+                } else { None },
+            ];
+            
+            // FAST PATH: For silent+vanilla, skip JSON snapshot lookup and compute directly
+            let snapshot_success = if is_silent_vanilla {
+                // In vanilla mode, any card still in live_zone passed (failed ones were discarded)
+                live_cards.iter().any(|c| c.is_some())
+            } else {
+                // Check snapshot from check_performance_requirements first
+                state
+                    .ui
+                    .performance_results
+                    .get(&(p as u8))
+                    .and_then(|res| res.get("success"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false)
+            };
+            
             for i in 0..3 {
-                let cid = state.players[p].live_zone[i];
-                if cid >= 0 {
+                if let Some((_cid, card)) = live_cards[i] {
                     has_live = true;
-                    if let Some(card) = db.get_live(cid) {
+                    
+                    // FAST PATH: In silent+vanilla mode, compute score directly
+                    let (snapshot_passed, snapshot_score) = if is_silent_vanilla {
+                        // Card is in zone = it passed, use its score directly
+                        (true, Some(card.score as u64))
+                    } else {
                         // Use snapshot score if available (from check_performance_requirements)
-                        let snapshot_score = state
+                        let score = state
                             .ui
                             .performance_results
                             .get(&(p as u8))
@@ -1103,7 +1310,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                             .and_then(|s| s.as_u64());
 
                         // Check if this specific live passed in the snapshot
-                        let snapshot_passed = state
+                        let passed = state
                             .ui
                             .performance_results
                             .get(&(p as u8))
@@ -1113,10 +1320,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                             .and_then(|l_res| l_res.get("passed"))
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false);
+                        (passed, score)
+                    };
 
-                        if snapshot_passed || snapshot_score.is_some() {
-                            p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
-                        }
+                    if snapshot_passed || snapshot_score.is_some() {
+                        p_score += snapshot_score.unwrap_or(card.score as u64) as u32;
                     }
                 }
             }
@@ -1126,7 +1334,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 player_has_success = true;
             } else if has_live {
                 // Rule 8.3.16: Clear zone if snapshot indicates failure
-                if !state.ui.silent {
+                if !state.ui.silent && state.debug.debug_mode {
                     println!(
                         "[DEBUG] Rule 8.3.16: P{} performance FAILED. Clearing live zone.",
                         p
@@ -1142,7 +1350,10 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }
 
             if player_has_success {
-                if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
+                // FAST PATH: In silent+vanilla mode, compute notes directly from player state
+                if is_silent_vanilla {
+                    live_score += state.players[p].current_turn_notes as u32;
+                } else if let Some(res) = state.ui.performance_results.get(&(p as u8)) {
                     if let Some(vol) = res
                         .get("yell_score_bonus")
                         .and_then(|v| v.as_u64())
@@ -1158,46 +1369,67 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }
 
             // Pool O_BOOST_SCORE from constant abilities
+            // OPTIMIZATION: Cache stage cards to avoid repeated HashMap lookups
+            let stage_cards: [Option<(i32, &crate::core::logic::card_db::MemberCard)>; 3] = [
+                if state.players[p].stage[0] >= 0 { 
+                    db.get_member(state.players[p].stage[0]).map(|m| (state.players[p].stage[0], m)) 
+                } else { None },
+                if state.players[p].stage[1] >= 0 { 
+                    db.get_member(state.players[p].stage[1]).map(|m| (state.players[p].stage[1], m)) 
+                } else { None },
+                if state.players[p].stage[2] >= 0 { 
+                    db.get_member(state.players[p].stage[2]).map(|m| (state.players[p].stage[2], m)) 
+                } else { None },
+            ];
+            
             let mut constant_bonuses = std::collections::HashMap::new();
+            
+            // FAST PATH: Use pre-computed unconditional score boosts
             for slot in 0..STAGE_SLOT_COUNT {
-                let cid = state.players[p].stage[slot];
-                if cid >= 0 {
-                    if let Some(m) = db.get_member(cid) {
-                        for ab in &m.abilities {
-                            if ab.trigger == TriggerType::Constant {
-                                let ctx = AbilityContext {
-                                    source_card_id: cid,
-                                    player_id: p as u8,
-                                    activator_id: p as u8,
-                                    area_idx: slot as i16,
-                                    ..Default::default()
-                                };
-                                if ab
-                                    .conditions
-                                    .iter()
-                                    .all(|c| state.check_condition(db, p, c, &ctx, 1))
-                                {
-                                    for frame in ab.frames() {
-                                        let frame_data = frame.components();
-                                        if frame_data.opcode == O_BOOST_SCORE {
-                                            *constant_bonuses.entry(cid).or_insert(0) +=
-                                                frame_data.value;
-                                        }
-                                    }
+                if let Some((cid, m)) = stage_cards[slot] {
+                    // Only check conditional abilities
+                    for ab in &m.abilities {
+                        if ab.trigger != TriggerType::Constant {
+                            continue;
+                        }
+                        
+                        // Skip abilities with no conditions (already counted in unconditional_score_boost)
+                        if ab.conditions.is_empty() {
+                            continue;
+                        }
+                        
+                        let ctx = AbilityContext {
+                            source_card_id: cid,
+                            player_id: p as u8,
+                            activator_id: p as u8,
+                            area_idx: slot as i16,
+                            ..Default::default()
+                        };
+                        
+                        if ab.conditions
+                            .iter()
+                            .all(|c| state.check_condition(db, p, c, &ctx, 1))
+                        {
+                            for frame in ab.frames() {
+                                let frame_data = frame.components();
+                                if frame_data.opcode == O_BOOST_SCORE {
+                                    *constant_bonuses.entry(cid).or_insert(0) +=
+                                        frame_data.value;
                                 }
                             }
                         }
                     }
                 }
             }
+            
             // Pool O_BOOST_SCORE from granted constant abilities
-            for &(target_cid, s_cid, ab_idx) in &state.players[p].granted_abilities {
+            for &(target_cid, source_cid, ab_idx) in &state.players[p].granted_abilities {
                 if let Some(slot) = state.players[p]
                     .stage
                     .iter()
                     .position(|&stage_cid| stage_cid == target_cid)
                 {
-                    if let Some(src_m) = db.get_member(s_cid) {
+                    if let Some(src_m) = db.get_member(source_cid) {
                         if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                             if ab.trigger == TriggerType::Constant {
                                 let ctx = AbilityContext {
@@ -1215,7 +1447,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     for frame in ab.frames() {
                                         let frame_data = frame.components();
                                         if frame_data.opcode == O_BOOST_SCORE {
-                                            *constant_bonuses.entry(s_cid).or_insert(0) +=
+                                            *constant_bonuses.entry(source_cid).or_insert(0) +=
                                                 frame_data.value;
                                         }
                                     }
@@ -1226,57 +1458,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 }
             }
 
-            let mut total_constant_bonus = 0;
-            let mut score_breakdown = Vec::new();
-
-            // 1. Base Score (Lives)
-            score_breakdown.push(json!({
-                "source": "Base (Lives)",
-                "value": live_score.saturating_sub(state.players[p].current_turn_notes),
-                "type": "base"
-            }));
-
-            // 2. Note Bonus
-            if state.players[p].current_turn_notes > 0 {
-                score_breakdown.push(json!({
-                    "source": "Note Bonus",
-                    "value": state.players[p].current_turn_notes,
-                    "type": "note"
-                }));
-            }
-
-            // 3. Constant Bonuses
-            for (cid, bonus) in constant_bonuses {
-                total_constant_bonus += bonus;
-                let name = db
-                    .get_member(cid)
-                    .map(|m| m.name.clone())
-                    .unwrap_or_else(|| format!("Card {}", cid));
-                score_breakdown.push(json!({
-                    "source": name,
-                    "source_id": cid,
-                    "value": bonus,
-                    "type": "constant_ability"
-                }));
-            }
-
-            // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
-            for &(cid, bonus) in &state.players[p].live_score_bonus_logs {
-                let name = if cid >= 0 {
-                    db.get_member(cid)
-                        .map(|m| m.name.clone())
-                        .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
-                        .unwrap_or_else(|| format!("Card {}", cid))
-                } else {
-                    "Ability Effect".to_string()
-                };
-                score_breakdown.push(json!({
-                    "source": name,
-                    "source_id": cid,
-                    "value": bonus,
-                    "type": "triggered_ability"
-                }));
-            }
+            // Calculate total constant bonus BEFORE applying to score
+            let total_constant_bonus: i32 = constant_bonuses.values().sum();
 
             scores[p] = live_score
                 + total_constant_bonus.max(0) as u32
@@ -1287,13 +1470,63 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
             if !state.ui.silent {
                 state.log(format!("Rule 8.4.3, Rule 8.4.3.1, Rule 8.4.3.2, Rule 8.4.3.3, Rule 8.4.4, Rule 8.4.5: Score determination logic finished for Player {}.", p));
-            }
 
-            if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
-                if let serde_json::Value::Object(ref mut map) = res {
-                    if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown")
-                    {
-                        b_map.insert("scores".to_string(), json!(score_breakdown));
+                let mut score_breakdown = Vec::new();
+
+                // 1. Base Score (Lives)
+                score_breakdown.push(json!({
+                    "source": "Base (Lives)",
+                    "value": live_score.saturating_sub(state.players[p].current_turn_notes),
+                    "type": "base"
+                }));
+
+                // 2. Note Bonus
+                if state.players[p].current_turn_notes > 0 {
+                    score_breakdown.push(json!({
+                        "source": "Note Bonus",
+                        "value": state.players[p].current_turn_notes,
+                        "type": "note"
+                    }));
+                }
+
+                // 3. Constant Bonuses
+                for (cid, bonus) in &constant_bonuses {
+                    let name = db
+                        .get_member(*cid)
+                        .map(|m| m.name.as_str())
+                        .unwrap_or("Unknown");
+                    score_breakdown.push(json!({
+                        "source": name,
+                        "source_id": cid,
+                        "value": bonus,
+                        "type": "constant_ability"
+                    }));
+                }
+
+                // 4. Triggered/Activated Bonuses (live_score_bonus_logs)
+                for &(cid, bonus) in &state.players[p].live_score_bonus_logs {
+                    let name = if cid >= 0 {
+                        db.get_member(cid)
+                            .map(|m| m.name.as_str())
+                            .or_else(|| db.get_live(cid).map(|l| l.name.as_str()))
+                            .unwrap_or("Unknown")
+                    } else {
+                        "Ability Effect"
+                    };
+                    score_breakdown.push(json!({
+                        "source": name,
+                        "source_id": cid,
+                        "value": bonus,
+                        "type": "triggered_ability"
+                    }));
+                }
+
+                if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
+                    if let serde_json::Value::Object(ref mut map) = res {
+                        if let Some(serde_json::Value::Object(ref mut b_map)) = map.get_mut("breakdown")
+                        {
+                            b_map.insert("scores".to_string(), json!(score_breakdown));
+                        }
                     }
                 }
             }
@@ -1302,28 +1535,38 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         // Triggers already in progress, just pull scores from state
         for p in 0..2 {
             scores[p] = state.players[p].score;
-            has_success[p] = state
-                .ui
-                .performance_results
-                .get(&(p as u8))
-                .and_then(|res| res.get("success"))
-                .and_then(|v| v.as_bool())
-                .unwrap_or(false);
+            // FAST PATH: In silent+vanilla mode, use has_success already computed
+            if !(state.ui.silent && db.is_vanilla) {
+                has_success[p] = state
+                    .ui
+                    .performance_results
+                    .get(&(p as u8))
+                    .and_then(|res| res.get("success"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+            }
         }
     }
 
     // 0. Trigger ON_LIVE_SUCCESS for successful performances (Rule 8.3.15 sequence completion)
     // We iterate through players and slots, using a mask to track which cards have already triggered
     // This allows us to resume correctly if an ability (like Kimi no Kokoro) pauses for input.
+    // FAST PATH: In silent+vanilla mode, use has_success directly without JSON lookup
+    let is_silent_vanilla = state.ui.silent && db.is_vanilla;
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
-        let p_success = state
-            .ui
-            .performance_results
-            .get(&(p as u8))
-            .and_then(|res| res.get("success"))
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
+        let p_success = if is_silent_vanilla {
+            // In silent+vanilla, has_success is already correctly set from direct computation
+            has_success[p]
+        } else {
+            state
+                .ui
+                .performance_results
+                .get(&(p as u8))
+                .and_then(|res| res.get("success"))
+                .and_then(|v| v.as_bool())
+                .unwrap_or(false)
+        };
 
         if p_success {
             // Use bit 7 for "broad trigger done"
@@ -1353,7 +1596,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     let p0_wins = has_success[0] && (!has_success[1] || scores[0] >= scores[1]);
     let p1_wins = has_success[1] && (!has_success[0] || scores[1] >= scores[0]);
 
-    if !state.ui.silent || state.debug.debug_mode {
+    if !state.ui.silent && state.debug.debug_mode {
         println!(
             "[DEBUG] Rule 8.4.6: p0_wins={}, p1_wins={}, has_success={:?}, scores={:?}",
             p0_wins, p1_wins, has_success, scores
@@ -1361,38 +1604,53 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
     }
 
     // Update performance results with final p0_wins/p1_wins and triggered abilities
-    for p in 0..2 {
-        let abilities: Vec<_> = state.players[p]
-            .perf_triggered_abilities
-            .iter()
-            .map(|&(cid, ab_idx, trig)| {
-                let card_name: String = db
-                    .get_member(cid)
-                    .map(|m| m.name.clone())
-                    .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
-                    .unwrap_or_else(|| format!("Card#{}", cid));
-                let trigger_label = crate::core::logic::interpreter::logging::trigger_as_str(trig);
-                json!({
-                    "source_card_id": cid,
-                    "card_name": card_name,
-                    "name": format!("【{}】", trigger_label),
-                    "id": ab_idx
+    // Only build abilities JSON when not in silent mode
+    if !state.ui.silent {
+        for p in 0..2 {
+            let abilities: Vec<_> = state.players[p]
+                .perf_triggered_abilities
+                .iter()
+                .map(|&(cid, ab_idx, trig)| {
+                    let card_name: String = db
+                        .get_member(cid)
+                        .map(|m| m.name.clone())
+                        .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                        .unwrap_or_else(|| format!("Card#{}", cid));
+                    let trigger_label = crate::core::logic::interpreter::logging::trigger_as_str(trig);
+                    json!({
+                        "source_card_id": cid,
+                        "card_name": card_name,
+                        "name": format!("【{}】", trigger_label),
+                        "id": ab_idx
+                    })
                 })
-            })
-            .collect();
+                .collect();
 
-        if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
-            if let serde_json::Value::Object(ref mut map) = res {
-                map.insert("total_score".to_string(), json!(scores[p]));
-                map.insert("triggered_abilities".to_string(), json!(abilities));
-                map.insert("p0_wins".to_string(), json!(p0_wins));
-                map.insert("p1_wins".to_string(), json!(p1_wins));
+            if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
+                if let serde_json::Value::Object(ref mut map) = res {
+                    map.insert("total_score".to_string(), json!(scores[p]));
+                    map.insert("triggered_abilities".to_string(), json!(abilities));
+                    map.insert("p0_wins".to_string(), json!(p0_wins));
+                    map.insert("p1_wins".to_string(), json!(p1_wins));
+                }
+            }
+        }
+    } else {
+        // Silent mode: just insert minimal data.
+        for p in 0..2 {
+            if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
+                if let serde_json::Value::Object(ref mut map) = res {
+                    map.insert("total_score".to_string(), json!(scores[p]));
+                    map.insert("p0_wins".to_string(), json!(p0_wins));
+                    map.insert("p1_wins".to_string(), json!(p1_wins));
+                }
             }
         }
     }
 
-    // Save current results to history only if a performance actually occurred
-    if !state.ui.performance_results.is_empty() {
+    // Save current results to history only if a performance actually occurred AND not in silent mode
+    // In silent mode, we don't need to track history - it just wastes memory and CPU
+    if !state.ui.performance_results.is_empty() && !state.ui.silent {
         for p in 0..2u8 {
             let mut map = if let Some(serde_json::Value::Object(m)) =
                 state.ui.performance_results.get(&p).cloned()
@@ -1412,7 +1670,14 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         }
     }
 
-    state.ui.last_performance_results = state.ui.performance_results.clone();
+    // HEADLESS OPTIMIZATION: Skip cloning performance_results in silent mode
+    // In silent mode, we don't need to preserve UI data between phases
+    if !state.ui.silent {
+        state.ui.last_performance_results = state.ui.performance_results.clone();
+    } else {
+        // In silent mode, just clear it to save memory
+        state.ui.last_performance_results.clear();
+    }
 
     if !state.ui.silent {
         state.log(format!(
@@ -1446,7 +1711,8 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 
             // Use performance_results snapshot instead of re-checking hearts
             // Rule 8.3.15-16: Cards that passed are still in live_zone, failed cards were already discarded
-            let perf_res = state.ui.performance_results.get(&(p as u8));
+            // FAST PATH: In silent+vanilla mode, all cards in live_zone passed (no JSON lookup needed)
+            let perf_res = if is_silent_vanilla { None } else { state.ui.performance_results.get(&(p as u8)) };
             let valid_candidates: Vec<usize> = cards_in_zone
                 .iter()
                 .cloned()
@@ -1463,6 +1729,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                 .any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)
                         }) {
                             return false;
+                        }
+
+                        // FAST PATH: In silent+vanilla mode, card in zone = passed
+                        if is_silent_vanilla {
+                            return true;
                         }
 
                         // Use the "passed" flag from performance_results snapshot
@@ -1630,9 +1901,18 @@ pub fn finalize_live_result(state: &mut GameState) {
     }
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
+        
+        // Debug output only in debug mode and not silent
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("DEBUG: Player {} live_zone before cleanup: {:?}", p, state.players[p].live_zone);
+        }
+        
         for i in 0..3 {
             if state.players[p].live_zone[i] >= 0 {
                 let cid = state.players[p].live_zone[i];
+                if state.debug.debug_mode && !state.ui.silent {
+                    println!("DEBUG: Moving card {} from live_zone[{}] to discard", cid, i);
+                }
                 state.players[p].push_discard_card(cid);
                 state.players[p].live_zone[i] = -1;
             }

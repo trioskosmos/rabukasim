@@ -111,7 +111,10 @@ fn test_alphazero_volatile_flags() {
             m.abilities.push(crate::core::logic::Ability {
                 trigger: crate::core::enums::TriggerType::OnPlay,
                 is_once_per_turn: true,
-                bytecode: vec![1, 2, 3],
+                frame_program: Some(crate::core::logic::models::FrameProgram {
+                    frames: vec![],
+                    raw_program: None,
+                }),
                 ..Default::default()
             });
             m

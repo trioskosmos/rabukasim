@@ -359,6 +359,14 @@ mod tests {
             .frames
             .clone();
 
+        // Debug: Print all frames
+        println!("Card 10 ability frames (total: {}):", ability_0_frames.len());
+        for (i, frame) in ability_0_frames.iter().enumerate() {
+            let frame_data = frame.components();
+            println!("  Frame {}: opcode={}, value={}, raw_attr={:#x}, raw_slot={:#x}, source_zone={:?}", 
+                     i, frame_data.opcode, frame_data.value, frame_data.raw_attr, frame_data.raw_slot, frame_data.slot.source_zone);
+        }
+
         for (hand_cards, expected_other_count) in hand_sizes {
             let mut state = GameState::default();
             state.players[0].hand = hand_cards.clone().into();
@@ -414,7 +422,10 @@ mod tests {
             ..AbilityContext::default()
         };
 
-        let prevent_baton_bytecode = vec![O_PREVENT_BATON_TOUCH, 1, 0, 0, 4, O_RETURN, 0, 0, 0, 0];
+        let prevent_baton_bytecode = vec![
+            AbilityFrame::new(O_PREVENT_BATON_TOUCH, 1, 0, 4, false),
+            AbilityFrame::new(O_RETURN, 0, 0, 0, false),
+        ];
 
         // Before running other abilities, cost_reduction should be 0
         assert_eq!(state.players[0].cost_reduction, 0);
@@ -422,7 +433,7 @@ mod tests {
         // Run PREVENT_BATON_TOUCH ability
         state.resolve_semantic_frames(
             &db,
-            &FrameProgram::from_words(&prevent_baton_bytecode).frames,
+            &prevent_baton_bytecode,
             &ctx,
         );
 
@@ -504,14 +515,15 @@ mod tests {
         for (idx, ability) in card_10.abilities.iter().enumerate() {
             println!("\n--- Ability {} ---", idx);
             println!("Trigger: {:?}", ability.trigger);
-            println!("Bytecode length: {}", ability.bytecode.len());
+            let ability_words = ability.words();
+            println!("Bytecode length: {}", ability_words.len());
 
-            if ability.bytecode.len() >= 5 {
-                let opcode = ability.bytecode[0];
-                let value = ability.bytecode[1];
-                let attr_lo = ability.bytecode[2];
-                let attr_hi = ability.bytecode[3];
-                let slot = ability.bytecode[4];
+            if ability_words.len() >= 5 {
+                let opcode = ability_words[0];
+                let value = ability_words[1];
+                let attr_lo = ability_words[2];
+                let attr_hi = ability_words[3];
+                let slot = ability_words[4];
 
                 println!("Opcode: {} (13 = REDUCE_COST)", opcode);
                 println!("Value: {}", value);
@@ -571,16 +583,16 @@ mod tests {
 
             // Get card 10's actual bytecode from the database
             let card_10 = db.get_member(10).expect("Card 10");
-            let ability_0_bytecode = card_10.abilities[0].bytecode();
+            let ability_0_words = card_10.abilities[0].words();
 
             println!(
                 "Bytecode: {:?}",
-                &ability_0_bytecode[0..5.min(ability_0_bytecode.len())]
+                &ability_0_words[0..5.min(ability_0_words.len())]
             );
 
             state.resolve_semantic_frames(
                 &db,
-                &FrameProgram::from_words(&ability_0_bytecode).frames,
+                &card_10.abilities[0].frame_program.as_ref().unwrap().frames,
                 &ctx,
             );
 

@@ -10,6 +10,52 @@ use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
+/// Import frequently used handler modules with shorter names
+use crate::core::logic::interpreter::handlers::interaction::handle_look_and_choose;
+use crate::core::logic::interpreter::handlers::interaction::handle_play_live_from_discard;
+use crate::core::logic::interpreter::handlers::interaction::handle_recovery;
+use crate::core::logic::interpreter::handlers::interaction::handle_select_cards;
+use crate::core::logic::interpreter::handlers::movement::handle_move_to_discard;
+use crate::core::logic::interpreter::handlers::movement::handle_swap_zone;
+
+/// Create OnPlay trigger context for a member placement
+fn create_on_play_context(p_idx: usize, cid: i32, slot: usize) -> AbilityContext {
+    AbilityContext {
+        source_card_id: cid,
+        player_id: p_idx as u8,
+        activator_id: p_idx as u8,
+        area_idx: slot as i16,
+        trigger_type: TriggerType::OnPlay,
+        ..Default::default()
+    }
+}
+
+/// Place member on stage with proper state updates
+fn place_member_on_stage(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    p_idx: usize,
+    slot: usize,
+    cid: i32,
+    tapped: bool,
+) {
+    // Handle member leaving stage and moving to discard
+    if let Some(old) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
+        state.players[p_idx].push_discard_card(old);
+    }
+    
+    // Place new member
+    state.players[p_idx].stage[slot] = cid;
+    state.players[p_idx].set_tapped(slot, tapped);
+    state.players[p_idx].set_moved(slot, true);
+    state.register_played_member(p_idx, cid, db);
+    
+    // Trigger OnPlay abilities
+    let new_ctx = create_on_play_context(p_idx, cid, slot);
+    state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+}
+
 // Main router for deck-related opcodes
 #[allow(clippy::too_many_arguments)]
 pub fn handle_deck_zones(
@@ -53,12 +99,12 @@ pub fn handle_deck_zones(
             handle_look_cards(state, db, ctx, frame, p_idx, op, v, a, frame_idx, look_resolved_slot)
         }
         O_LOOK_DECK_DYNAMIC => handle_look_deck_dynamic(state, ctx, p_idx, v),
-        O_MOVE_TO_DISCARD => crate::core::logic::interpreter::handlers::movement::handle_move_to_discard(state, db, ctx, frame, frame_idx),
-        O_LOOK_AND_CHOOSE => crate::core::logic::interpreter::handlers::interaction::handle_look_and_choose(state, db, ctx, frame, frame_idx),
-        O_RECOVER_LIVE | O_RECOVER_MEMBER => crate::core::logic::interpreter::handlers::interaction::handle_recovery(state, db, ctx, frame, frame_idx, op),
-        O_PLAY_LIVE_FROM_DISCARD => crate::core::logic::interpreter::handlers::interaction::handle_play_live_from_discard(state, db, ctx, frame, frame_idx),
-        O_SELECT_CARDS => crate::core::logic::interpreter::handlers::interaction::handle_select_cards(state, db, ctx, frame, frame_idx),
-        O_SWAP_ZONE => crate::core::logic::interpreter::handlers::movement::handle_swap_zone(state, db, ctx, frame, frame_idx),
+        O_MOVE_TO_DISCARD => handle_move_to_discard(state, db, ctx, frame, frame_idx),
+        O_LOOK_AND_CHOOSE => handle_look_and_choose(state, db, ctx, frame, frame_idx),
+        O_RECOVER_LIVE | O_RECOVER_MEMBER => handle_recovery(state, db, ctx, frame, frame_idx, op),
+        O_PLAY_LIVE_FROM_DISCARD => handle_play_live_from_discard(state, db, ctx, frame, frame_idx),
+        O_SELECT_CARDS => handle_select_cards(state, db, ctx, frame, frame_idx),
+        O_SWAP_ZONE => handle_swap_zone(state, db, ctx, frame, frame_idx),
         _ => HandlerResult::Continue,
     }
 }
@@ -82,21 +128,7 @@ fn handle_search_deck(
         4 => {
             let slot = (a as u64 & FILTER_MASK_LOWER) as usize;
             if slot < 3 {
-                if let Some(old) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
-                    state.players[p_idx].push_discard_card(old);
-                }
-                state.players[p_idx].stage[slot] = cid;
-                state.players[p_idx].set_tapped(slot, false);
-                state.players[p_idx].set_moved(slot, true);
-                state.register_played_member(p_idx, cid, db);
-                let new_ctx = AbilityContext {
-                    source_card_id: cid,
-                    player_id: p_idx as u8,
-                    activator_id: p_idx as u8,
-                    area_idx: slot as i16,
-                    ..Default::default()
-                };
-                state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+                place_member_on_stage(state, db, ctx, p_idx, slot, cid, false);
             } else {
                 state.players[p_idx].gain_hand_card(cid);
             }

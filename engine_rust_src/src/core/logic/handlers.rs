@@ -497,7 +497,63 @@ impl MainPhaseController for GameState {
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded_action = ActionFactory::parse_action(action);
-        let response_origin = pending_response_origin(self);
+        let response_origin = crate::core::logic::interpreter::suspension::capture_response_origin(self);
+        if let Some(pi) = self.interaction_stack.last().cloned() {
+            let is_optional_prompt = matches!(
+                pi.choice_type,
+                ChoiceType::Optional | ChoiceType::SelectHandDiscard | ChoiceType::SelectDiscardPlay
+            );
+            let is_optional_skip = is_optional_prompt
+                && if (pi.filter_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0 {
+                match decoded_action {
+                    DecodedAction::Pass => true,
+                    DecodedAction::SelectChoice { choice_idx } => {
+                        // Only treat choice_idx == 1 as CHOICE_NO for actual Optional prompts
+                        // For other types like SelectDiscardPlay, choice_idx is a valid selection
+                        choice_idx == crate::core::logic::constants::CHOICE_NO as i32
+                            && pi.choice_type == ChoiceType::Optional
+                    }
+                    _ => false,
+                }
+            } else {
+                matches!(decoded_action, DecodedAction::Pass)
+            };
+            if is_optional_skip {
+                let current_execution_id = self.ui.current_execution_id;
+                println!(
+                    "[OPT_SKIP_DBG] before finish card={} choice_type={:?} exec={:?} stack={}",
+                    pi.card_id,
+                    pi.choice_type,
+                    current_execution_id,
+                    self.interaction_stack.len()
+                );
+                crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+                if let Some(exec_id) = current_execution_id {
+                    while self
+                        .interaction_stack
+                        .last()
+                        .map(|interaction| interaction.execution_id == exec_id)
+                        .unwrap_or(false)
+                    {
+                        self.interaction_stack.pop();
+                    }
+                }
+                println!(
+                    "[OPT_SKIP_DBG] after pop stack={} phase={:?}",
+                    self.interaction_stack.len(),
+                    self.phase
+                );
+                self.process_rule_checks(db);
+                if self.interaction_stack.is_empty() {
+                    crate::core::logic::interpreter::restore_response_state(
+                        self,
+                        response_origin.0,
+                        response_origin.1,
+                    );
+                }
+                return Ok(());
+            }
+        }
         if let Some(pi) = self.interaction_stack.last().cloned() {
             let choice_idx = match decoded_action {
                 DecodedAction::Pass => 99,
@@ -879,7 +935,7 @@ impl ResponseController for GameState {
             } else {
                 return Err("No pending interaction".to_string());
             };
-            let (cid, ctx) = {
+            let (cid, mut ctx) = {
                 let restored_phase = pending.ctx.original_phase.unwrap_or_else(|| {
                     if pending.original_phase == Phase::Setup {
                         self.phase
@@ -1042,6 +1098,12 @@ impl ResponseController for GameState {
             if pending.choice_type == ChoiceType::SelectDiscardPlay
                 && pending.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD
             {
+                // Handle CHOICE_DONE (99) - user wants to skip selecting more cards
+                if choice_idx == crate::core::logic::constants::CHOICE_DONE as i32 {
+                    crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+                    return Ok(());
+                }
+
                 let pick_idx = choice_idx.max(0) as usize;
                 let selected_card_id = self
                     .core
@@ -1118,6 +1180,16 @@ impl ResponseController for GameState {
             } else {
                 if let Some(member) = db.get_member(cid) {
                     if let Some(ab) = member.abilities.get(ab_idx) {
+                        if ab.costs.iter().any(|cost| cost.is_optional)
+                            && !crate::core::logic::interpreter::costs::pay_costs_transactional_including_optional(
+                                self,
+                                db,
+                                &ab.costs,
+                                &mut ctx,
+                            )
+                        {
+                            return Err("Cannot afford costs".to_string());
+                        }
                         self.resolve_ability(db, ab, &ctx);
                     } else {
                         return Err(format!(
@@ -1127,6 +1199,16 @@ impl ResponseController for GameState {
                     }
                 } else if let Some(live) = db.get_live(cid) {
                     if let Some(ab) = live.abilities.get(ab_idx) {
+                        if ab.costs.iter().any(|cost| cost.is_optional)
+                            && !crate::core::logic::interpreter::costs::pay_costs_transactional_including_optional(
+                                self,
+                                db,
+                                &ab.costs,
+                                &mut ctx,
+                            )
+                        {
+                            return Err("Cannot afford costs".to_string());
+                        }
                         self.resolve_ability(db, ab, &ctx);
                     } else {
                         return Err(format!(

@@ -10,6 +10,37 @@ use super::handlers::{
 };
 use crate::core::heuristics::OriginalHeuristic;
 use crate::core::mcts::{SearchHorizon, MCTS};
+use std::time::Instant;
+
+// Granular timing stats for step components
+pub static mut STEP_INTERNAL_TIME_US: u64 = 0;
+pub static mut AUTO_STEP_TIME_US: u64 = 0;
+pub static mut SYNC_STATS_TIME_US: u64 = 0;
+pub static mut STEP_CALL_COUNT: u64 = 0;
+
+fn record_step_timing(internal_us: u64, auto_us: u64, sync_us: u64) {
+    unsafe {
+        STEP_INTERNAL_TIME_US += internal_us;
+        AUTO_STEP_TIME_US += auto_us;
+        SYNC_STATS_TIME_US += sync_us;
+        STEP_CALL_COUNT += 1;
+    }
+}
+
+pub fn get_step_timing_stats() -> (u64, u64, u64, u64) {
+    unsafe {
+        (STEP_CALL_COUNT, STEP_INTERNAL_TIME_US, AUTO_STEP_TIME_US, SYNC_STATS_TIME_US)
+    }
+}
+
+pub fn reset_step_timing_stats() {
+    unsafe {
+        STEP_CALL_COUNT = 0;
+        STEP_INTERNAL_TIME_US = 0;
+        AUTO_STEP_TIME_US = 0;
+        SYNC_STATS_TIME_US = 0;
+    }
+}
 
 impl GameState {
     pub fn get_combo_other_slot(primary_slot: usize, is_next: bool) -> usize {
@@ -43,9 +74,21 @@ impl GameState {
             ));
         }
         self.prev_phase = self.phase;
+        
+        let t1 = Instant::now();
         self.step_internal(db, action)?;
+        let internal_us = t1.elapsed().as_micros() as u64;
+        
+        let t2 = Instant::now();
         self.auto_step(db);
+        let auto_us = t2.elapsed().as_micros() as u64;
+        
+        let t3 = Instant::now();
         self.sync_all_stats(db);
+        let sync_us = t3.elapsed().as_micros() as u64;
+        
+        record_step_timing(internal_us, auto_us, sync_us);
+        
         Ok(())
     }
 

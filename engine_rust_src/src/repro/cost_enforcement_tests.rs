@@ -6,14 +6,14 @@
 //! 3. Ruby card 423 (and similar cards) now requires self-sacrifice before recovering live
 
 use crate::core::logic::CardDatabase;
-use crate::test_helpers::{create_test_db, create_test_state};
+use crate::test_helpers::{create_test_db, create_test_state, load_real_db};
 
 /// Test that Ruby card 423 requires self-sacrifice cost to activate
 /// Before fix: Ability could be activated for free (just RECOVER_LIVE)
 /// After fix: Ability requires MOVE_TO_DISCARD (self-sacrifice) before effect
 #[test]
 fn test_ruby_423_requires_self_sacrifice() {
-    let db = create_test_db();
+    let db = load_real_db();
     let mut state = create_test_state();
     
     // Setup: Player 0 has Ruby on stage slot 0, with a live card in discard

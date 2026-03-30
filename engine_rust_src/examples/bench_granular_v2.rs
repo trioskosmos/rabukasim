@@ -1,6 +1,6 @@
 //! Ultra-Granular Phase Benchmark - Instruments inside auto_step
 
-use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController, TurnPhaseController};
+use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController};
 use engine_rust::core::models::Phase;
 use std::collections::HashMap;
 use std::fs;

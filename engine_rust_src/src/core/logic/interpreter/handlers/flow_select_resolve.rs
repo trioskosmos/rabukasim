@@ -156,7 +156,7 @@ pub fn resolve_select_choice(
         ctx.selected_cards.push(selected_cid);
     }
     if is_targeted_select_member_cost && choice >= 0 && choice < 3 {
-        if state.debug.debug_mode || ctx.source_card_id == 4196 {
+        if state.debug.debug_mode && ctx.source_card_id == 4196 {
             eprintln!(
                 "[SELECT_RESOLVE_TAP] target_player={} choice={} selected_cid={} before_tapped={}",
                 target_player,

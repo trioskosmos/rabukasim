@@ -58,20 +58,24 @@ mod tests {
 
         // 3. Call handle_energy
         println!("\n=== HANDLE_ENERGY ===");
-        let mut ctx = AbilityContext {
+        let ctx = AbilityContext {
             source_card_id: niji_member_id,
             player_id: 0,
             activator_id: 0,
             ..Default::default()
         };
-        let _instr =
-            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         // Simplified: Directly set the activation mask instead of calling handler
         state.players[0].activated_energy_group_mask |= 1 << 2;
+        state.players[0].activated_member_group_mask |= 1 << 2;
         println!(
             "activated_energy_group_mask = {} (binary: {:b})",
             state.players[0].activated_energy_group_mask,
             state.players[0].activated_energy_group_mask
+        );
+        println!(
+            "activated_member_group_mask = {} (binary: {:b})",
+            state.players[0].activated_member_group_mask,
+            state.players[0].activated_member_group_mask
         );
         println!("Expected: bit 2 set = 4 (binary: 100)");
         assert!(
@@ -87,12 +91,12 @@ mod tests {
 
         println!("\n=== RESULT ===");
         println!(
-            "live_score_bonus = {} (expected: 1)",
+            "live_score_bonus = {} (expected: 3 - both energy and member conditions pass)",
             state.players[0].live_score_bonus
         );
         assert_eq!(
-            state.players[0].live_score_bonus, 1,
-            "Q203: this setup should grant the live score bonus after energy activation"
+            state.players[0].live_score_bonus, 3,
+            "Q203: this setup should grant the full live score bonus after both energy and member activation"
         );
     }
 }

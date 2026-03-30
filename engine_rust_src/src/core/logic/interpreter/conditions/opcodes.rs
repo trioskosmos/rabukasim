@@ -12,6 +12,70 @@ use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+/// Unified parameters for condition checking to reduce parameter passing complexity
+struct ConditionParams<'a> {
+    state: &'a GameState,
+    db: &'a CardDatabase,
+    ctx: &'a AbilityContext,
+    opcode: i32,
+    value: i32,
+    raw_attr: u64,
+    raw_slot: i32,
+    params: Option<&'a serde_json::Value>,
+    filter: DecodedFilterAttr,
+    slot: DecodedSlot,
+    depth: u32,
+}
+
+impl<'a> ConditionParams<'a> {
+    fn from_frame(
+        state: &'a GameState,
+        db: &'a CardDatabase,
+        frame: &'a AbilityFrameComponents<'_>,
+        ctx: &'a AbilityContext,
+        depth: u32,
+    ) -> Self {
+        Self {
+            state,
+            db,
+            ctx,
+            opcode: frame.opcode,
+            value: frame.value,
+            raw_attr: frame.raw_attr,
+            raw_slot: frame.raw_slot,
+            params: frame.params,
+            filter: DecodedFilterAttr::decode(frame.filter.to_attr() as i64),
+            slot: frame.slot,
+            depth,
+        }
+    }
+    
+    fn from_opcode(
+        state: &'a GameState,
+        db: &'a CardDatabase,
+        op: i32,
+        val: i32,
+        attr: u64,
+        slot: i32,
+        ctx: &'a AbilityContext,
+        depth: u32,
+    ) -> Self {
+        Self {
+            state,
+            db,
+            ctx,
+            opcode: op,
+            value: val,
+            raw_attr: attr,
+            raw_slot: slot,
+            params: None,
+            filter: DecodedFilterAttr::decode(attr as i64),
+            slot: DecodedSlot::decode(slot),
+            depth,
+        }
+    }
+}
+
 pub fn check_condition_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -19,8 +83,11 @@ pub fn check_condition_frame(
     ctx: &AbilityContext,
     depth: u32,
 ) -> bool {
-    if let Some(params) = frame.params.and_then(|value| value.as_object()) {
-        if params.get("raw_cond").is_some() || params.get("RAW_COND").is_some() {
+    let params = ConditionParams::from_frame(state, db, frame, ctx, depth);
+    
+    // Handle raw condition parameters
+    if let Some(raw_params) = frame.params.and_then(|value| value.as_object()) {
+        if raw_params.get("raw_cond").is_some() || raw_params.get("RAW_COND").is_some() {
             let cond = Condition {
                 condition_type: ConditionType::None,
                 value: frame.value,
@@ -29,7 +96,7 @@ pub fn check_condition_frame(
                 is_negated: frame.is_negated,
                 params: frame.params.cloned().unwrap_or_default(),
             };
-            let raw_result = evaluate_raw_condition(state, db, 0, &cond, ctx, depth, params);
+            let raw_result = evaluate_raw_condition(state, db, 0, &cond, ctx, depth, raw_params);
             return if frame.is_negated {
                 !raw_result
             } else {
@@ -38,19 +105,7 @@ pub fn check_condition_frame(
         }
     }
 
-    check_condition_with_parts(
-        state,
-        db,
-        frame.opcode,
-        frame.value,
-        frame.raw_attr,
-        frame.raw_slot,
-        frame.params,
-        DecodedFilterAttr::decode(frame.filter.to_attr() as i64),
-        frame.slot,
-        ctx,
-        depth,
-    )
+    check_condition_with_parts_internal(params)
 }
 
 pub fn check_condition_opcode(
@@ -63,18 +118,24 @@ pub fn check_condition_opcode(
     ctx: &AbilityContext,
     depth: u32,
 ) -> bool {
+    let params = ConditionParams::from_opcode(state, db, op, val, attr, slot, ctx, depth);
+    check_condition_with_parts_internal(params)
+}
+
+/// Internal condition checking with unified parameter structure
+fn check_condition_with_parts_internal(params: ConditionParams) -> bool {
     check_condition_with_parts(
-        state,
-        db,
-        op,
-        val,
-        attr,
-        slot,
-        None,
-        DecodedFilterAttr::decode(attr as i64),
-        DecodedSlot::decode(slot),
-        ctx,
-        depth,
+        params.state,
+        params.db,
+        params.opcode,
+        params.value,
+        params.raw_attr,
+        params.raw_slot,
+        params.params,
+        params.filter,
+        params.slot,
+        params.ctx,
+        params.depth,
     )
 }
 
@@ -126,11 +187,12 @@ fn check_condition_with_parts(
     }
 
     let result = match op {
-        0 => compare_i32(
-            resolve_count(state, db, C_COUNT_SUCCESS_LIVE, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
+        // Q230 Fix: SUCCESS_LIVE_COUNT_EQUAL_OPPONENT needs to compare both players' success lives
+        0 => {
+            let my_lives = player.success_lives.len() as i32;
+            let opp_lives = opponent.success_lives.len() as i32;
+            compare_i32(my_lives, opp_lives, slot)
+        }
         C_TURN_1 => state.turn == 1,
         C_HAS_MEMBER => {
             let p_target = if filter.target_player == 2 {
@@ -183,32 +245,32 @@ fn check_condition_with_parts(
                 }
             }
         }
-        C_COUNT_STAGE => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
+        C_COUNT_STAGE => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 {
+                count > 0
+            } else {
+                compare_i32(count, val, slot)
+            }
+        }
         C_IS_CENTER => {
             if !state.ui.silent {
                 eprintln!("Rule 11.6, Rule 11.6.1, Rule 11.6.2, Rule 11.6.3, Rule 11.6.4: Checking [センター] (Center) slot restriction.");
             }
             ctx.area_idx == 1
         }
-        C_COUNT_HAND => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
-        C_COUNT_DISCARD => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
-        C_COUNT_ENERGY => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
+        C_COUNT_HAND => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
+        C_COUNT_DISCARD => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
+        C_COUNT_ENERGY => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
         C_HAS_LIVE_CARD => player.live_zone.iter().any(|&cid| cid >= 0),
         COST_ENERGY => {
             let cost_delta = state.calculate_cost_delta(db, ctx.source_card_id, p_idx);
@@ -246,7 +308,7 @@ fn check_condition_with_parts(
         }
         C_COUNT_SUCCESS_LIVE => {
             let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            compare_i32(count, val, slot)
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_OPPONENT_HAS => {
             let p_opp = 1 - p_idx;
@@ -271,11 +333,10 @@ fn check_condition_with_parts(
                 diff >= val
             }
         }
-        C_COUNT_GROUP => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth),
-            val,
-            slot,
-        ),
+        C_COUNT_GROUP => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
         C_GROUP_FILTER => {
             let lower_attr = attr & 0x00000000FFFFFFFF;
             let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
@@ -354,41 +415,55 @@ fn check_condition_with_parts(
             .interaction_stack
             .iter()
             .any(|p| p.ctx.player_id != p_idx as u8),
-        C_COUNT_HEARTS => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth + 1),
-            val,
-            slot,
-        ),
-        C_COUNT_BLADES => compare_i32(
-            resolve_count(state, db, op, attr, slot, ctx, depth + 1),
-            val,
-            slot,
-        ),
+        C_COUNT_HEARTS => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth + 1);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
+        C_COUNT_BLADES => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth + 1);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
         C_OPPONENT_ENERGY_DIFF => {
             let my_energy = player.energy_zone.len() as i32;
             let opp_energy = opponent.energy_zone.len() as i32;
             (opp_energy - my_energy) >= val
         }
         C_HAS_KEYWORD => {
+            eprintln!("[DEBUG_C_HAS_KEYWORD] filter.keyword_energy={}, filter.keyword_member={}, attr={:#x}",
+                filter.keyword_energy, filter.keyword_member, attr);
+            eprintln!("[DEBUG_C_HAS_KEYWORD] KEYWORD_ACTIVATED_ENERGY_BY_GROUP={:#x}, KEYWORD_ACTIVATED_MEMBER_BY_GROUP={:#x}",
+                KEYWORD_ACTIVATED_ENERGY_BY_GROUP, KEYWORD_ACTIVATED_MEMBER_BY_GROUP);
             if filter.keyword_energy || (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
+                eprintln!("[DEBUG_C_HAS_KEYWORD] Energy check: filter.group_enabled={}, attr & FILTER_GROUP_ENABLE={}",
+                    filter.group_enabled, (attr & FILTER_GROUP_ENABLE));
                 if filter.group_enabled || (attr & FILTER_GROUP_ENABLE) != 0 {
                     let group_id = if filter.group_enabled {
                         filter.group_id as u64
                     } else {
-                        (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F
+                        (attr >> FILTER_GROUP_SHIFT) & 0x7F
                     };
-                    return (player.activated_energy_group_mask & (1 << group_id)) != 0;
+                    let mask = player.activated_energy_group_mask;
+                    let check = (mask & (1 << group_id)) != 0;
+                    eprintln!("[DEBUG_C_HAS_KEYWORD] Group check: group_id={}, mask={:#b}, check={}", group_id, mask, check);
+                    return check;
                 }
                 return player.activated_energy_group_mask != 0;
             }
             if filter.keyword_member || (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
-                if filter.group_enabled || (attr & FILTER_GROUP_ENABLE) != 0 {
+                // Use attr bits directly since filter may not have been decoded correctly
+                let group_enabled_via_attr = (attr & FILTER_GROUP_ENABLE) != 0;
+                let group_id_via_attr = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
+                eprintln!("[DEBUG_C_HAS_KEYWORD] Member check: filter.group_enabled={}, attr_group_enable={}, group_id={}",
+                    filter.group_enabled, group_enabled_via_attr, group_id_via_attr);
+                if filter.group_enabled || group_enabled_via_attr {
                     let group_id = if filter.group_enabled {
                         filter.group_id as u64
                     } else {
-                        (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F
+                        group_id_via_attr
                     };
-                    return (player.activated_member_group_mask & (1 << group_id)) != 0;
+                    let check = (player.activated_member_group_mask & (1 << group_id)) != 0;
+                    eprintln!("[DEBUG_C_HAS_KEYWORD] Member group check: group_id={}, mask={:#b}, check={}", group_id, player.activated_member_group_mask, check);
+                    return check;
                 }
                 return player.activated_member_group_mask != 0;
             }
@@ -478,7 +553,7 @@ fn check_condition_with_parts(
                     .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
                     .count() as i32
             };
-            compare_i32(count, val, slot)
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_TYPE_CHECK => {
             let check_val = if val == 0 && (attr & 0x00000000FFFFFFFF) != 0 {
@@ -507,7 +582,7 @@ fn check_condition_with_parts(
             cid >= 0 && player.discard.contains(&(cid as i32))
         }
         C_AREA_CHECK => {
-            if !state.ui.silent {
+            if !state.ui.silent && state.debug.debug_mode {
                 if val == 1 {
                     eprintln!("Rule 11.7, Rule 11.7.1, Rule 11.7.2, Rule 11.7.3, Rule 11.7.4: Checking [左サイド] (Left Side) slot restriction.");
                 } else if val == 3 {
@@ -850,6 +925,21 @@ fn check_condition_with_parts(
                     0
                 };
                 (s_cost, o_cost)
+            } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
+                let idx = ctx.area_idx as usize;
+                let s_cid = player.stage[idx];
+                let o_cid = opponent.stage[idx];
+                let s_cost = if s_cid >= 0 {
+                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
+                let o_cost = if o_cid >= 0 {
+                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
+                } else {
+                    0
+                };
+                (s_cost, o_cost)
             } else {
                 let mut s_cost = 0;
                 for (idx, &id) in player.stage.iter().enumerate() {
@@ -881,10 +971,18 @@ fn check_condition_with_parts(
                 }
                 (s_cost, o_cost)
             };
+            
+            // Debug output for SyncCost
+            eprintln!("[DEBUG_SYNC_COST] area_val={}, area_override={:?}, ctx.area_idx={}, self_cost={}, opp_cost={}, val={}", 
+                     area_val, area_override, ctx.area_idx, self_cost, opp_cost, val);
+            
+            // SyncCost should use greater-than comparison by default
+            let comparison_mode = if slot_info.comparison == 0 { 1 } else { slot_info.comparison };
+            
             compare_i32(
                 self_cost,
                 opp_cost + val,
-                (slot_info.comparison as i32) << 4,
+                (comparison_mode as i32) << 4,
             )
         }
         312 => compare_i32(ctx.v_accumulated as i32, val, slot),

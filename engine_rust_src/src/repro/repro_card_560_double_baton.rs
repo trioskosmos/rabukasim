@@ -171,7 +171,7 @@ fn test_repro_card_560_double_baton() {
     for (i, ab) in card.abilities.iter().enumerate() {
         eprintln!(
             "Ability {}: trigger={:?}, bytecode={:?}",
-            i, ab.trigger, ab.bytecode
+            i, ab.trigger, ab.words()
         );
     }
 

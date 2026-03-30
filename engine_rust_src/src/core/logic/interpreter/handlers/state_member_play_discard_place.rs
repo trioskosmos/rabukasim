@@ -50,6 +50,9 @@ pub fn handle_discard_placement(
         ctx.choice_index - 600
     } else if ctx.choice_index >= 10 && ctx.choice_index < 13 {
         ctx.choice_index - 10
+    } else if ctx.choice_index >= 11000 && ctx.choice_index < 11003 {
+        // ACTION_BASE_CHOICE + slot_idx
+        ctx.choice_index - 11000
     } else {
         ctx.choice_index
     };
@@ -59,6 +62,12 @@ pub fn handle_discard_placement(
     } else {
         resolved_slot as usize
     };
+    
+    if state.debug.debug_mode && !state.ui.silent {
+        println!("[DEBUG] handle_discard_placement: choice_index={}, resolved_slot={}, slot_idx={}, card_id={}", 
+            ctx.choice_index, resolved_slot, slot_idx, card_id);
+    }
+    
     if slot_idx < 3 {
         let _ = state_member_play_resolve::finalize_play_member_from_discard(
             state,

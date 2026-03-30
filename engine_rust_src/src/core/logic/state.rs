@@ -183,8 +183,12 @@ pub struct CoreGameState {
     pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
-    #[serde(default)]
+    #[serde(default = "true_fn")]
     pub needs_stat_sync: bool,
+}
+
+fn true_fn() -> bool {
+    true
 }
 
 impl Default for CoreGameState {
@@ -226,6 +230,8 @@ pub struct UIState {
     #[serde(default)]
     pub silent: bool,
     #[serde(default)]
+    pub headless: bool, // True = skip all UI data structures and logging
+    #[serde(default)]
     pub rule_log: Option<Vec<String>>,
     #[serde(default)]
     pub performance_results: HashMap<u8, serde_json::Value>,
@@ -250,6 +256,7 @@ impl Default for UIState {
     fn default() -> Self {
         Self {
             silent: false,
+            headless: false,
             rule_log: None,
             performance_results: HashMap::new(),
             last_performance_results: HashMap::new(),
@@ -301,6 +308,78 @@ impl GameState {
                 self.log(format!("[ERROR] Interpreter error: {}", err));
             }
         }
+    }
+
+    pub fn resolve_instructions<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        instructions: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, instructions, ctx_in);
+    }
+
+    pub fn resolve_words<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        words: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions(db, words, ctx_in);
+    }
+
+    pub fn resolve_bytecode<B: AsRef<[i32]>>(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: B,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions(db, bytecode, ctx_in);
+    }
+
+    pub fn resolve_words_cref(
+        &mut self,
+        db: &CardDatabase,
+        words: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions(db, words, ctx_in);
+    }
+
+    pub fn resolve_instructions_cref(
+        &mut self,
+        db: &CardDatabase,
+        instructions: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_frames(db, instructions, ctx_in);
+    }
+
+    pub fn resolve_bytecode_cref(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: &Vec<i32>,
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions_cref(db, bytecode, ctx_in);
+    }
+
+    pub fn resolve_words_slice(
+        &mut self,
+        db: &CardDatabase,
+        words: &[i32],
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions(db, words, ctx_in);
+    }
+
+    pub fn resolve_bytecode_slice(
+        &mut self,
+        db: &CardDatabase,
+        bytecode: &[i32],
+        ctx_in: &AbilityContext,
+    ) {
+        self.resolve_instructions(db, bytecode, ctx_in);
     }
 
     pub fn resolve_ability(
