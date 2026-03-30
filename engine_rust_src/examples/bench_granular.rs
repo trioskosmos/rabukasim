@@ -225,7 +225,7 @@ fn main() {
             (auto_us as f64 / total as f64) * 100.0);
         println!("{:<18} {:>10} {:>10.2} {:>10.1}%", 
             "sync_all_stats", sync_us, sync_us as f64 / count as f64,
-            (sync_us as f64 / total as f64) * 100.0));
+            (sync_us as f64 / total as f64) * 100.0);
         println!("{}", "-".repeat(55));
         println!("{:<18} {:>10} {:>10.2}", "TOTAL", total, total as f64 / count as f64);
     }

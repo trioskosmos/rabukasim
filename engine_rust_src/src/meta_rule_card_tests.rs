@@ -7,7 +7,7 @@
 //! The ALL_BLADE_AS_ANY_HEART meta rule is not yet implemented in the engine.
 
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_state, load_real_db};
+use crate::test_helpers::{create_test_state, load_real_db, clear_real_db_cache};
 
 // =============================================================================
 // PL!SP-bp1-024-L: 澁谷かのん&唐可可
@@ -197,6 +197,7 @@ fn test_meta_rule_pl_sp_bp1_024_l_no_draw_without_both() {
 
 #[test]
 fn test_meta_rule_pl_sp_bp1_026_l_condition_check() {
+    clear_real_db_cache();
     let db = load_real_db();
     let mut state = create_test_state();
     state.ui.silent = true;

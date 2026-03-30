@@ -632,6 +632,12 @@ fn try_load_db_from_path(path: &str) -> Option<CardDatabase> {
 
 static REAL_DB: OnceLock<CardDatabase> = OnceLock::new();
 
+/// Clear the REAL_DB cache - useful for testing
+pub fn clear_real_db_cache() {
+    // Note: OnceLock doesn't have a clear method, so we use take()
+    let _ = REAL_DB.take();
+}
+
 pub fn load_real_db() -> &'static CardDatabase {
     REAL_DB.get_or_init(|| {
         let mut candidate_paths = Vec::new();
