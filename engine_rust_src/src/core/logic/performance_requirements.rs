@@ -188,7 +188,7 @@ pub fn get_live_requirements(
                             &member.name,
                             source_cid,
                         );
-                        aura.heart_req_additions = override_board;
+                        aura.heart_req_additions.add(override_board);
                     }
                 }
 

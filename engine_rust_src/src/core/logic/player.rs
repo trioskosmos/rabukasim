@@ -728,18 +728,33 @@ impl PlayerState {
         }
     }
 
-    pub fn get_untapped_energy_indices(&self, count: usize) -> Vec<usize> {
+    pub fn get_untapped_energy_indices(&self, count: usize) -> SmallVec<[usize; 8]> {
         if count == 0 {
-            return Vec::new();
+            return SmallVec::new();
         }
-        let mut indices = Vec::with_capacity(count);
-        for i in 0..self.energy_zone.len() {
-            if !self.is_energy_tapped(i) {
-                indices.push(i);
-                if indices.len() == count {
-                    break;
-                }
-            }
+        let mut indices: SmallVec<[usize; 8]> = SmallVec::new();
+        let len = self.energy_zone.len().min(64);
+        let available_mask = (!self.tapped_energy_mask) & ((1u64 << len) - 1);
+        let mut mask = available_mask;
+        while mask != 0 && indices.len() < count {
+            let idx = mask.trailing_zeros() as usize;
+            indices.push(idx);
+            mask &= mask - 1;
+        }
+        indices
+    }
+
+    pub fn get_tapped_energy_indices(&self, count: usize) -> SmallVec<[usize; 8]> {
+        if count == 0 {
+            return SmallVec::new();
+        }
+        let mut indices: SmallVec<[usize; 8]> = SmallVec::new();
+        let len = self.energy_zone.len().min(64);
+        let mut mask = self.tapped_energy_mask & ((1u64 << len) - 1);
+        while mask != 0 && indices.len() < count {
+            let idx = mask.trailing_zeros() as usize;
+            indices.push(idx);
+            mask &= mask - 1;
         }
         indices
     }

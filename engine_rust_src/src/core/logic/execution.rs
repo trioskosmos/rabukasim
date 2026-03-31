@@ -6,6 +6,7 @@ use crate::core::mcts::{SearchHorizon, MCTS};
 use rand::prelude::*;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
+use std::collections::HashSet;
 
 impl GameState {
     pub fn step_opponent(&mut self, db: &CardDatabase) {
@@ -100,7 +101,7 @@ impl GameState {
                 let initial_player = self.current_player;
                 let (action_seq, _, _, _) = TurnSequencer::plan_full_turn(self, db);
 
-                let legal_actions = self.get_legal_action_ids(db);
+                let legal_actions: HashSet<i32> = self.get_legal_action_ids(db).into_iter().collect();
                 for &action in &action_seq {
                     if self.is_terminal()
                         || self.phase != Phase::Main
@@ -141,7 +142,7 @@ impl GameState {
                 let initial_player = self.current_player;
                 let (action_seq, _, _) = TurnSequencer::find_best_liveset_selection(self, db);
 
-                let legal_actions = self.get_legal_action_ids(db);
+                let legal_actions: HashSet<i32> = self.get_legal_action_ids(db).into_iter().collect();
                 for &action in &action_seq {
                     if self.is_terminal()
                         || self.phase != Phase::LiveSet

@@ -1,8 +1,7 @@
 use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use rand::prelude::{StdRng, Rng};
-use rand::thread_rng;
+use rand::prelude::{StdRng, Rng, SeedableRng};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum SubPhase {
@@ -198,7 +197,7 @@ fn main() {
     let mut games_completed = 0;
     
     // Use a single RNG for better performance
-    let mut rng = thread_rng();
+    let mut rng = StdRng::seed_from_u64(42);
     
     // Run for 10 seconds
     while benchmark_start.elapsed().as_secs() < 10 {

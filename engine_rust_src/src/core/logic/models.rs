@@ -280,7 +280,7 @@ impl<'a> AbilityFrameComponents<'a> {
 
     /// Extract look and choose parameters from this frame
     pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
-        crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.raw_slot)
+        crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.value)
     }
 
     /// Get the divisor for dynamic value calculation
@@ -1176,9 +1176,53 @@ impl AbilityFrame {
                 is_cost: *is_cost,
                 params: None,
             },
-            AbilityFrame::LookAndChoose { filter, slot, is_cost, .. }
-            | AbilityFrame::MoveMember { filter, slot, is_cost, .. }
-            | AbilityFrame::MetaRule { filter, slot, is_cost, .. } => AbilityFrameComponents {
+            AbilityFrame::LookAndChoose { 
+                count, 
+                choose_count, 
+                reveal, 
+                dest_discard, 
+                char_id_1, 
+                char_id_2, 
+                char_id_3,
+                filter, 
+                slot, 
+                is_cost, 
+            } => {
+                let encoded_value = crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+                    count: *count as u8,
+                    choose_count: *choose_count as u8,
+                    reveal: *reveal,
+                    dest_discard: *dest_discard,
+                    char_id_1: *char_id_1,
+                    char_id_2: *char_id_2,
+                    char_id_3: *char_id_3,
+                }.to_raw();
+                AbilityFrameComponents {
+                    raw_opcode,
+                    opcode,
+                    value: encoded_value,
+                    filter: *filter,
+                    slot: *slot,
+                    raw_attr: filter.to_attr() as u64,
+                    raw_slot: slot.to_raw(),
+                    is_negated,
+                    is_cost: *is_cost,
+                    params: None,
+                }
+            },
+            AbilityFrame::MoveMember { filter, slot, is_cost, .. } => AbilityFrameComponents {
+                raw_opcode,
+                opcode,
+                value: self.value(),
+                filter: *filter,
+                slot: *slot,
+                raw_attr: filter.to_attr() as u64,
+                raw_slot: slot.to_raw(),
+                is_negated,
+                is_cost: *is_cost,
+                params: None,
+            },
+            AbilityFrame::MetaRule { filter, slot, is_cost, .. } => AbilityFrameComponents {
                 raw_opcode,
                 opcode,
                 value: self.value(),

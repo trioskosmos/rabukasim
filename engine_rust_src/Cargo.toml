@@ -127,11 +127,6 @@ path = "src/bin/simple_game.rs"
 test = false
 
 [[bin]]
-name = "real_deck_benchmark"
-path = "examples/real_deck_benchmark.rs"
-test = false
-
-[[bin]]
 name = "proper_game_log"
 path = "examples/proper_game_log.rs"
 test = false

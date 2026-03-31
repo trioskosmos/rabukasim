@@ -358,8 +358,19 @@ impl CardFilter {
                     }
                     sum
                 } else if self.compare_accumulated {
-                    // For accumulated value comparisons, sum all hearts
-                    h.iter().sum::<u8>()
+                    // For accumulated value comparisons with specific colors, sum only those colors
+                    if self.color_mask != 0 {
+                        let mut sum = 0;
+                        for i in 0..7 {
+                            if (self.color_mask & (1 << i)) != 0 {
+                                sum += h[i];
+                            }
+                        }
+                        sum
+                    } else {
+                        // No color mask specified, sum all hearts
+                        h.iter().sum::<u8>()
+                    }
                 } else {
                     // For simple value threshold, sum hearts of the specified color(s)
                     let mut sum = 0;

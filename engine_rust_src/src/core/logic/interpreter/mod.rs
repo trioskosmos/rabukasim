@@ -33,7 +33,7 @@ use std::sync::{Mutex, OnceLock};
 /// Apply an effect directly without going through the frame system
 fn apply_effect_directly(
     state: &mut GameState,
-    db: &CardDatabase,
+    _db: &CardDatabase,
     ctx: &AbilityContext,
     effect: &crate::core::logic::models::Effect,
 ) -> Result<(), InterpreterError> {

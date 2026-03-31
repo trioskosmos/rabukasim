@@ -1232,12 +1232,20 @@ fn apply_aura_modifier(
             }
         }
         O_SET_HEART_COST => {
-            // Unpack up to 8 values from A (each 4 bits)
+            // Unpack up to 6 values from A (each 4 bits) - these are requirements, not additions
+            // The 'v' parameter contains the heart additions (positive = add, negative = remove)
             for i in 0..6 {
                 let req_val = (a >> (i * 4)) & 0xF;
                 if req_val > 0 {
                     aura.heart_req_reductions.add_to_color(i, -(req_val as i32));
-                    // Negative reduction = addition
+                    // Negative reduction = requirement setting
+                }
+            }
+            // Also apply any value-based heart additions from the V parameter
+            if value > 0 {
+                let color = decode_heart_color(s, a, params);
+                if color < 7 {
+                    aura.hearts[target_slot].add_to_color(color, value);
                 }
             }
         }

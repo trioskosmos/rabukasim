@@ -1,6 +1,6 @@
-use crate::core::enums::{ChoiceType, TriggerType};
+use crate::core::enums::{ChoiceType, TriggerType, Zone};
 use crate::core::logic::constants::{
-    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
+    CHOICE_ALL, CHOICE_DONE, ZONE_DECK, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
 };
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -63,11 +63,11 @@ pub fn handle_look_and_choose(
     let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
     let rem_dest = slot_info.dest_zone as u8;
-    let source_zone_bits = slot_info.source_zone as u8;
-    let source_zone = if source_zone_bits == 0 {
-        5 // Zone::Deck
+    // Source zone: Default (0) means use deck. Otherwise use the specified zone.
+    let source_zone = if slot_info.source_zone == Zone::Default {
+        ZONE_DECK
     } else {
-        source_zone_bits as i32
+        slot_info.source_zone as i32
     };
     let lc = frame_data.look_choose();
     let look_count = resolve_look_count(db, ctx, &frame_data, &lc);
@@ -292,7 +292,7 @@ fn finalize_look_choice(
     rem_dest: u8,
     source_zone: i32,
     dest_discard_v: bool,
-    revealed: &mut SmallVec<[i32; 16]>,
+    revealed: &mut smallvec::SmallVec<[i32; 16]>,
 ) -> HandlerResult {
     revealed.retain(|c| *c != -1);
 
@@ -303,7 +303,6 @@ fn finalize_look_choice(
             .map(|member| member.card_no == "PL!-bp5-003-P")
             .unwrap_or(false);
 
-        // Destination: 6=hand, 7=discard, 15=yell, 0/8=deck(shuffle), else=discard
         let dest = if is_8844_draw_branch && source_zone == 8 {
             6
         } else if dest_discard_v {
@@ -322,12 +321,12 @@ fn finalize_look_choice(
             }
             7 => state.players[p_idx].discard.extend(revealed.drain(..)),
             15 => state.players[p_idx].yell_cards.extend(revealed.drain(..)),
-            0 | 8 => {
+            0 | 5 | 8 => {
                 state.players[p_idx].deck.extend(revealed.drain(..));
                 let mut rng = Pcg64::from_os_rng();
                 state.players[p_idx].deck.shuffle(&mut rng);
             }
-            _ => state.players[p_idx].discard.extend(revealed.drain(..)),
+            _ => state.players[p_idx].discard.extend(revealed.drain(..))
         }
     }
 

@@ -54,19 +54,8 @@ pub(crate) fn tap_first_untapped_energy(
     state: &mut GameState,
     p_idx: usize,
     count: usize,
-) -> Vec<usize> {
-    let mut tapped_indices = Vec::new();
-    let energy_len = state.players[p_idx].energy_zone.len();
-
-    for idx in 0..energy_len {
-        if tapped_indices.len() >= count {
-            break;
-        }
-        if !state.players[p_idx].is_energy_tapped(idx) {
-            tapped_indices.push(idx);
-        }
-    }
-
+) -> smallvec::SmallVec<[usize; 8]> {
+    let tapped_indices = state.players[p_idx].get_untapped_energy_indices(count);
     tapped_indices
 }
 

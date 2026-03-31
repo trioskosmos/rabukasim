@@ -16,7 +16,7 @@ pub fn handle_calc_sum_cost(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
+    _frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let sum: i32 = ctx.selected_cards
         .iter()
@@ -192,7 +192,7 @@ pub fn handle_energy_charge(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let op = frame_data.opcode;
+    let _op = frame_data.opcode;
     let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
     let target_p = if frame_data.slot.is_opponent { 1 - p_idx } else { p_idx };

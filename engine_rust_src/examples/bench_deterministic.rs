@@ -1,7 +1,6 @@
 //! Deterministic benchmark - records and replays exact game sequences
 
-use engine_rust::core::logic::{CardDatabase, GameState};
-use engine_rust::core::models::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState, Phase};
 use rand::prelude::*;
 use std::collections::HashMap;
 use std::fs;

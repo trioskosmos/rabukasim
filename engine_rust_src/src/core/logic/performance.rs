@@ -9,6 +9,7 @@ pub use super::performance_requirements::*;
 use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::interpreter::check_condition;
 use serde_json::{json, Value};
+use smallvec::SmallVec;
 
 /// Type-safe constants for performance calculations
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1275,15 +1276,18 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             ];
             
             // FAST PATH: For silent+vanilla, skip JSON snapshot lookup and compute directly
+            let perf_res = if is_silent_vanilla {
+                None
+            } else {
+                state.ui.performance_results.get(&(p as u8))
+            };
+            let live_lives = perf_res.and_then(|res| res.get("lives").and_then(|l| l.as_array()));
             let snapshot_success = if is_silent_vanilla {
                 // In vanilla mode, any card still in live_zone passed (failed ones were discarded)
                 live_cards.iter().any(|c| c.is_some())
             } else {
                 // Check snapshot from check_performance_requirements first
-                state
-                    .ui
-                    .performance_results
-                    .get(&(p as u8))
+                perf_res
                     .and_then(|res| res.get("success"))
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false)
@@ -1299,24 +1303,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                         (true, Some(card.score as u64))
                     } else {
                         // Use snapshot score if available (from check_performance_requirements)
-                        let score = state
-                            .ui
-                            .performance_results
-                            .get(&(p as u8))
-                            .and_then(|res| res.get("lives"))
-                            .and_then(|l| l.as_array())
-                            .and_then(|lives| lives.get(i))
+                        let live_res = live_lives.and_then(|lives| lives.get(i));
+                        let score = live_res
                             .and_then(|l_res| l_res.get("score"))
                             .and_then(|s| s.as_u64());
-
-                        // Check if this specific live passed in the snapshot
-                        let passed = state
-                            .ui
-                            .performance_results
-                            .get(&(p as u8))
-                            .and_then(|res| res.get("lives"))
-                            .and_then(|l| l.as_array())
-                            .and_then(|lives| lives.get(i))
+                        let passed = live_res
                             .and_then(|l_res| l_res.get("passed"))
                             .and_then(|v| v.as_bool())
                             .unwrap_or(false);
@@ -1701,62 +1692,53 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
         let wins = if p == 0 { p0_wins } else { p1_wins };
         if wins && !state.obtained_success_live[p] {
             state.obtained_success_live[p] = true;
-            let cards_in_zone: Vec<usize> = state.players[p]
-                .live_zone
-                .iter()
-                .enumerate()
-                .filter(|(_, &c)| c >= 0)
-                .map(|(i, _)| i)
-                .collect();
-
             // Use performance_results snapshot instead of re-checking hearts
             // Rule 8.3.15-16: Cards that passed are still in live_zone, failed cards were already discarded
             // FAST PATH: In silent+vanilla mode, all cards in live_zone passed (no JSON lookup needed)
             let perf_res = if is_silent_vanilla { None } else { state.ui.performance_results.get(&(p as u8)) };
-            let valid_candidates: Vec<usize> = cards_in_zone
-                .iter()
-                .cloned()
-                .filter(|&i| {
-                    let cid = state.players[p].live_zone[i];
-                    if let Some(card) = db.get_live(cid) {
-                        // Check for prevention effects
-                        if state.players[p].prevent_success_pile_set() != 0 {
-                            return false;
-                        }
-                        if card.abilities.iter().any(|a| {
-                            a.effects
-                                .iter()
-                                .any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)
-                        }) {
-                            return false;
-                        }
-
-                        // FAST PATH: In silent+vanilla mode, card in zone = passed
-                        if is_silent_vanilla {
-                            return true;
-                        }
-
-                        // Use the "passed" flag from performance_results snapshot
-                        // This is the authoritative record from the performance phase (Rule 8.3.15)
-                        if let Some(res) = perf_res {
-                            if let Some(lives) = res.get("lives").and_then(|l| l.as_array()) {
-                                if let Some(live_res) = lives.get(i) {
-                                    return live_res
-                                        .get("passed")
-                                        .and_then(|v| v.as_bool())
-                                        .unwrap_or(false);
-                                }
-                            }
-                        }
-
-                        // Fallback: if card is still in live_zone after performance phase,
-                        // it passed the requirements (Rule 8.3.16 already discarded failed cards)
-                        true
-                    } else {
-                        false
+            let lives_snapshot = perf_res.and_then(|res| res.get("lives").and_then(|l| l.as_array()));
+            let mut valid_candidates: SmallVec<[usize; 3]> = SmallVec::new();
+            for i in 0..3 {
+                let cid = state.players[p].live_zone[i];
+                if cid < 0 {
+                    continue;
+                }
+                if let Some(card) = db.get_live(cid) {
+                    // Check for prevention effects
+                    if state.players[p].prevent_success_pile_set() != 0 {
+                        continue;
                     }
-                })
-                .collect();
+                    if card.abilities.iter().any(|a| {
+                        a.effects
+                            .iter()
+                            .any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)
+                    }) {
+                        continue;
+                    }
+
+                    // FAST PATH: In silent+vanilla mode, card in zone = passed
+                    if is_silent_vanilla {
+                        valid_candidates.push(i);
+                        continue;
+                    }
+
+                    // Use the "passed" flag from performance_results snapshot
+                    // This is the authoritative record from the performance phase (Rule 8.3.15)
+                    if lives_snapshot
+                        .and_then(|lives| lives.get(i))
+                        .and_then(|live_res| live_res.get("passed"))
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false)
+                    {
+                        valid_candidates.push(i);
+                        continue;
+                    }
+
+                    // Fallback: if card is still in live_zone after performance phase,
+                    // it passed the requirements (Rule 8.3.16 already discarded failed cards)
+                    valid_candidates.push(i);
+                }
+            }
 
             // Rule 8.4.7.1:
             // If scores are tied (Both Win), a player who ALREADY has 2+ success lives
@@ -1854,12 +1836,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
 pub fn finalize_live_result(state: &mut GameState) {
     for p in 0..2 {
         let success_count = state.players[p].success_lives.len() as i32;
-        let resolved_live_score = state
-            .ui
-            .performance_results
-            .get(&(p as u8))
+        let perf_res = state.ui.performance_results.get(&(p as u8));
+        let lives_snapshot = perf_res
             .and_then(|res| res.get("lives"))
-            .and_then(|lives| lives.as_array())
+            .and_then(|lives| lives.as_array());
+        let resolved_live_score = lives_snapshot
             .map(|lives| {
                 lives
                     .iter()
@@ -1876,10 +1857,7 @@ pub fn finalize_live_result(state: &mut GameState) {
                     .sum::<i32>()
             })
             .unwrap_or(0);
-        let live_score_bonus = state
-            .ui
-            .performance_results
-            .get(&(p as u8))
+        let live_score_bonus = perf_res
             .and_then(|res| res.get("total_score_bonus"))
             .and_then(|value| value.as_i64())
             .unwrap_or(0) as i32;
@@ -1901,12 +1879,12 @@ pub fn finalize_live_result(state: &mut GameState) {
     }
     for i in 0..2 {
         let p = (state.first_player as usize + i) % 2;
-        
+
         // Debug output only in debug mode and not silent
         if state.debug.debug_mode && !state.ui.silent {
             println!("DEBUG: Player {} live_zone before cleanup: {:?}", p, state.players[p].live_zone);
         }
-        
+
         for i in 0..3 {
             if state.players[p].live_zone[i] >= 0 {
                 let cid = state.players[p].live_zone[i];

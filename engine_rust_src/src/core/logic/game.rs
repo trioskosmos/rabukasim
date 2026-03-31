@@ -74,27 +74,17 @@ impl GameState {
             self.log(format!("Rule 3.3.1 (9.6, 9.7): Syncing cached member attributes on Stage for Player {}.", p_idx));
         }
 
-        // Calculate board aura once and reuse for all slots
         let aura = calculate_board_aura(self, p_idx, db);
-
         let mut total_blades = 0u32;
         let mut total_hearts = HeartBoard::default();
         let mut slot_blades = [0u32; 3];
-        let mut slot_hearts = [
-            HeartBoard::default(),
-            HeartBoard::default(),
-            HeartBoard::default(),
-        ];
+        let mut slot_hearts = [HeartBoard::default(); 3];
 
         for i in 0..3 {
-            let sb = get_effective_blades_with_aura(self, p_idx, i, db, &aura);
-            let sh = get_effective_hearts_with_aura(self, p_idx, i, db, &aura);
-
-            slot_blades[i] = sb;
-            slot_hearts[i] = sh;
-
-            total_blades += sb;
-            total_hearts.add(sh);
+            slot_blades[i] = get_effective_blades_with_aura(self, p_idx, i, db, &aura);
+            slot_hearts[i] = get_effective_hearts_with_aura(self, p_idx, i, db, &aura);
+            total_blades += slot_blades[i];
+            total_hearts.add(slot_hearts[i]);
         }
 
         let p = &mut self.core.players[p_idx];
@@ -102,9 +92,8 @@ impl GameState {
         p.cached_slot_hearts = slot_hearts;
         p.cached_total_hearts = total_hearts;
         p.cached_total_blades = total_blades;
-        p.board_aura = aura; // Cache the aura for future use
+        p.board_aura = aura;
 
-        // Initial deck stats sync if needed
         if p.cached_deck_stats.count == 0.0 && !p.deck.is_empty() {
             p.cached_deck_stats = crate::core::heuristics::calculate_deck_expectations(&p.deck, db);
         }
@@ -146,43 +135,30 @@ impl GameState {
         if !self.ui.silent && count > 0 {
             self.log(format!("Rule 5.7.1 (4.1.4, 4.3.1, 4.10): Player {} draws {} energy cards from Energy Deck to Energy Area.", player_idx, count));
         }
+        let player = &mut self.core.players[player_idx];
         for _ in 0..count {
-            if let Some(cid) = self.core.players[player_idx].energy_deck.pop() {
-                self.core.players[player_idx].push_energy_card(cid, false);
+            if let Some(cid) = player.energy_deck.pop() {
+                player.push_energy_card(cid, false);
             }
         }
     }
 
     pub fn pay_energy(&mut self, player_idx: usize, count: i32) {
-        let mut paid = 0;
-        let energy_len = self.core.players[player_idx].energy_zone.len();
-        for i in 0..energy_len {
-            if paid >= count {
-                break;
-            }
-            if !self.core.players[player_idx].is_energy_tapped(i) {
-                self.core.players[player_idx].set_energy_tapped(i, true);
-                if !self.ui.silent {
-                    self.log(format!("Rule 2.11.1 (4.1.4, 5.5.1.1): Energy Card at index {} for player {} is now tapped [レスト].", i, player_idx));
-                }
-                paid += 1;
+        let indices = self.core.players[player_idx].get_untapped_energy_indices(count as usize);
+        for i in indices {
+            self.core.players[player_idx].set_energy_tapped(i, true);
+            if !self.ui.silent {
+                self.log(format!("Rule 2.11.1 (4.1.4, 5.5.1.1): Energy Card at index {} for player {} is now tapped [レスト].", i, player_idx));
             }
         }
     }
 
     pub fn activate_energy(&mut self, player_idx: usize, count: i32) {
-        let mut activated = 0;
-        let energy_len = self.core.players[player_idx].energy_zone.len();
-        for i in 0..energy_len {
-            if activated >= count {
-                break;
-            }
-            if self.core.players[player_idx].is_energy_tapped(i) {
-                self.core.players[player_idx].set_energy_tapped(i, false);
-                if !self.ui.silent {
-                    self.log(format!("Rule 2.11.2 (4.1.4, 5.8.1): Energy Card at index {} for player {} is now active [アクティブ].", i, player_idx));
-                }
-                activated += 1;
+        let indices = self.core.players[player_idx].get_tapped_energy_indices(count as usize);
+        for i in indices {
+            self.core.players[player_idx].set_energy_tapped(i, false);
+            if !self.ui.silent {
+                self.log(format!("Rule 2.11.2 (4.1.4, 5.8.1): Energy Card at index {} for player {} is now active [アクティブ].", i, player_idx));
             }
         }
     }
@@ -283,11 +259,9 @@ impl GameState {
             self.log(format!("Rule 2.11 (2.10.1, 2.14.1): Member in Slot {} changed orientation to {}.", slot_idx + 1, state_str));
         }
 
-        // When member becomes tapped (not untapped), trigger ON_MEMBER_TAP abilities on opponent
         if tapped && !was_tapped {
             let other_player = 1 - player_idx;
             let card_id = self.core.players[player_idx].stage[slot_idx];
-
             let ctx = AbilityContext {
                 player_id: other_player as u8,
                 activator_id: other_player as u8,
@@ -396,7 +370,6 @@ impl GameState {
         if card_ids.len() > 3 {
             return Err("Too many lives".to_string());
         }
-        // For logging purposes, we'd ideally show card names, but for now just count
         if !self.ui.silent {
             self.log(format!(
                 "Rule 8.2.2: Player {} sets {} cards to Live Zone.",
@@ -411,7 +384,6 @@ impl GameState {
                 if self.core.players[player_idx].live_zone[i] == -1 {
                     self.core.players[player_idx].live_zone[i] = cid as i32;
                     self.core.players[player_idx].set_revealed(i, false);
-                    // Rule 8.2.2: Draw same number of cards as placed
                     self.draw_cards(player_idx, 1);
                     placed = true;
                     break;

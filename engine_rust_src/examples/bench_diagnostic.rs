@@ -1,7 +1,6 @@
 //! Ultra-Granular Diagnostic Benchmark - Tracks cards/opcodes causing slowdowns
 
-use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController};
-use engine_rust::core::models::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController, Phase};
 use std::collections::HashMap;
 use std::fs;
 use std::time::Instant;

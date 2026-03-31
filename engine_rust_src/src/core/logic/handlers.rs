@@ -746,12 +746,12 @@ impl ResponseController for GameState {
 
         let choice_idx = match decoded_action {
             DecodedAction::Pass => 99,
-            DecodedAction::SelectMode { mode_idx } => mode_idx,
-            DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
-            DecodedAction::SelectChoice { choice_idx } => choice_idx,
-            DecodedAction::SelectColor { color_idx } => color_idx,
-            DecodedAction::SelectEnergy { energy_idx } => energy_idx as i32,
-            DecodedAction::SelectStageSlot { slot_idx } => slot_idx as i32,
+            DecodedAction::SelectMode { mode_idx }
+            | DecodedAction::SelectChoice { choice_idx: mode_idx }
+            | DecodedAction::SelectColor { color_idx: mode_idx } => mode_idx,
+            DecodedAction::PlayMember { hand_idx, .. }
+            | DecodedAction::SelectEnergy { energy_idx: hand_idx }
+            | DecodedAction::SelectStageSlot { slot_idx: hand_idx } => hand_idx as i32,
             _ => -1,
         };
 
@@ -1194,16 +1194,6 @@ impl ResponseController for GameState {
             } else {
                 None
             };
-
-            // SYSTEMIC FIX: If this is an optional effect and the user chose PASS (99),
-            // and we are NOT using a persisted ability frame sequence (cid == -1, virtual),
-            // ensure we pop it properly. Actually, even for cid != -1, if it's an optional
-            // discard cost inside a legacy sequence, the PASS action (99) should jump past it.
-            // If the interpreter returns without suspending, we need to restore phase.
-
-            // Keep the current response window open while nested prompts are still pending.
-            // If the ability resolves without introducing a deeper suspension, we'll drop
-            // the current interaction after the resolver finishes.
 
             if let Some(frames) = semantic_frames {
                 let _ = crate::core::logic::interpreter::resolve_semantic_frames(

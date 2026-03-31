@@ -1,7 +1,6 @@
 //! Raw throughput benchmark - headless, silent, maximum speed
 
-use engine_rust::core::logic::{CardDatabase, GameState};
-use engine_rust::core::models::Phase;
+use engine_rust::core::logic::{CardDatabase, GameState, Phase};
 use rand::prelude::*;
 use std::fs;
 use std::time::Instant;

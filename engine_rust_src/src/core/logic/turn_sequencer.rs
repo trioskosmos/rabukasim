@@ -2680,13 +2680,11 @@ impl TurnSequencer {
 
         for subset in &subsets {
             let mut sim_state = state.clone();
-            let mut ordered = subset.clone();
-            ordered.sort_unstable_by(|a, b| b.cmp(a));
 
-            let mut actions = Vec::with_capacity(ordered.len());
+            let mut actions = Vec::with_capacity(subset.len());
             let mut valid = true;
-            for hand_idx in &ordered {
-                let action = ACTION_BASE_LIVESET + *hand_idx as i32;
+            for &hand_idx in subset.iter().rev() {
+                let action = ACTION_BASE_LIVESET + hand_idx as i32;
                 if sim_state.step(db, action).is_err() {
                     valid = false;
                     break;

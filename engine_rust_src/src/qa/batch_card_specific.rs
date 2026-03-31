@@ -1220,8 +1220,8 @@ mod tests {
         // play payment to 13.
         assert_eq!(
             state.players[0].tapped_energy_mask.count_ones(),
-            11,
-            "Baton Touch play should tap 11 energy after Emma resolves"
+            13,
+            "Baton Touch play should tap 13 energy after Emma resolves"
         );
 
         assert!(
