@@ -20,7 +20,7 @@ use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
 pub use handlers::{dispatch, HandlerResult};
-pub use handlers::{handle_energy, handle_member_state, handle_draw, handle_deck_zones, handle_score_hearts, handle_select_mode, handle_meta_control, finalize_play_member_from_hand, handle_discard_placement};
+pub use handlers::{handle_energy, handle_member_state, handle_draw, handle_deck_zones, handle_score_hearts, handle_select_mode, handle_meta_rule, finalize_play_member_from_hand, handle_discard_placement};
 pub use suspension::{
     capture_response_origin, get_choice_text, resolve_target_slot, restore_response_state,
     suspend_interaction,

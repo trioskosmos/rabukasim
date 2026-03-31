@@ -3,13 +3,10 @@
 //! Direct handlers - no context wrapper, parameters passed explicitly
 
 use crate::core::enums::*;
-use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
-use crate::core::logic::interpreter::logging;
-use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
-use crate::core::models::interpreter::resolve_target_slot;
 use crate::core::logic::interpreter::handlers::HandlerResult;
+use crate::core::logic::interpreter::logging;
 
 // ============================================================================
 // META / CONTROL HANDLERS
@@ -109,6 +106,7 @@ pub fn handle_repeat_ability(_state: &mut GameState, _db: &CardDatabase, ctx: &m
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn handle_flavor_action(state: &mut GameState, _db: &CardDatabase, _ctx: &mut AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> HandlerResult {
     if state.debug.debug_mode {
         println!(
@@ -417,7 +415,7 @@ pub fn handle_place_energy_under_member(
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
-    frame_idx: usize,
+    _frame_idx: usize,
 ) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;

@@ -3,7 +3,7 @@ use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
-use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents, Ability};
+use crate::core::logic::models::{AbilityFrameComponents, Ability};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, Zone};
 use crate::core::enums::ChoiceType;
 use crate::core::{O_MOVE_TO_DISCARD, O_NOP};

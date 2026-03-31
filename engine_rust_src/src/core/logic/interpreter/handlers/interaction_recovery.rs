@@ -1,5 +1,5 @@
 use crate::core::enums::ChoiceType;
-use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL};
+use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -24,7 +24,7 @@ pub fn handle_recovery(
     let source_zone = normalized_source_zone(slot_info.source_zone);
     let zone_cards = collect_zone_cards(state, p_idx, source_zone);
     let candidate_cards = zone_cards.clone();
-    let real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
+    let _real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
 
     // Handle special "same name" recovery (special_id == 4)
     let mut handled_same_name = false;

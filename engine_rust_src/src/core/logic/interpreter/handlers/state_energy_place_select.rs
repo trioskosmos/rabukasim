@@ -1,7 +1,6 @@
 use super::*;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_place_energy_from_zone(

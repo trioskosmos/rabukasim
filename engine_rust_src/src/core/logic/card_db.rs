@@ -221,7 +221,7 @@ impl CardDatabase {
             // Try consolidated abilities format first (object with ability text as keys)
             if let Some(abilities_obj) = root.as_object() {
                 eprintln!("[DEBUG_DB] Loading from consolidated abilities format with {} entries", abilities_obj.len());
-                for (ability_key, ability_data) in abilities_obj {
+                for (_ability_key, ability_data) in abilities_obj {
                     // Extract frames from the ability data
                     if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
                         // Create a compact entry with the frames
@@ -509,7 +509,7 @@ impl CardDatabase {
 
     fn synthesize_sparse_ability_entry(
         card_no: &str,
-        ability_index: usize,
+        _ability_index: usize,
         ability: &Ability,
     ) -> Value {
         let mut compact = serde_json::Map::new();
@@ -530,7 +530,7 @@ impl CardDatabase {
             "card_refs".to_string(),
             Value::Array(vec![serde_json::json!({
                 "card_no": card_no,
-                "ability_index": ability_index,
+                "ability_index": 0,
             })]),
         );
 

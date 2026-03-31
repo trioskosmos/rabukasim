@@ -7,8 +7,6 @@ use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::state_helpers::{
     inline_value_ge_threshold, update_live_score_snapshot,
 };
-use crate::core::logic::models::AbilityFrame;
-use std::io::Write;
 
 fn resolve_dynamic_multiplier(
     state: &GameState,

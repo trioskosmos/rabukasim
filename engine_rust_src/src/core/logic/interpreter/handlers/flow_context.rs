@@ -1,8 +1,6 @@
 use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::logging;
-use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn handle_opponent_choose(

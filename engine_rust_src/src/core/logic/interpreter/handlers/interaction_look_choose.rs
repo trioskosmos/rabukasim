@@ -1,11 +1,11 @@
 use crate::core::enums::{ChoiceType, TriggerType};
 use crate::core::logic::constants::{
-    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_STAGE, ZONE_YELL,
+    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
 };
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::interpreter::instruction::DecodedLookAndChoose;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_LOOK_AND_CHOOSE;
@@ -37,7 +37,7 @@ fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &Ab
     choose_count
 }
 
-fn resolve_look_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &AbilityFrameComponents<'_>, lc: &DecodedLookAndChoose) -> usize {
+fn resolve_look_count(_db: &CardDatabase, ctx: &AbilityContext, _frame_data: &AbilityFrameComponents<'_>, lc: &DecodedLookAndChoose) -> usize {
     let base_count = lc.count.max(1) as usize;
 
     // Card 12707 (PL!S-bp2-005-SEC) has look_count=7 and choose_count=3

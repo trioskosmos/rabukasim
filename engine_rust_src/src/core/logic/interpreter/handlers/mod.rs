@@ -1,15 +1,15 @@
 // Handlers module - simplified data flow from YAML to code
 
-use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
+use crate::core::logic::models::AbilityFrameComponents;
 
 // --- Modularized Opcode Handlers ---
-pub mod flow;
 pub mod flow_context;
 pub mod flow_effects;
 pub mod flow_helpers;
 pub mod flow_select;
 pub mod flow_state_mod;
 pub mod flow_swap;
+pub mod flow_meta_rule;
 pub mod interaction;
 pub mod interaction_zone;
 pub mod movement;
@@ -20,14 +20,14 @@ pub mod state_helpers;
 pub mod state_score_slots;
 pub mod unified;
 
-pub use flow::*;
 pub use interaction::*;
 pub use movement::*;
 pub use select_mode::handle_select_mode;
+pub use flow_meta_rule::handle_meta_rule;
 pub use state::*;
 
 use crate::core::enums::*;
-use crate::core::logic::interpreter::logging;
+use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 // Helper functions for dispatch

@@ -6,7 +6,7 @@ use crate::core::logic::{AbilityContext, GameState};
 pub fn handle_swap_area(
     state: &mut GameState,
     ctx: &AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
+    _frame_data: &AbilityFrameComponents<'_>,
     base_p: usize,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     target_slot: i32,

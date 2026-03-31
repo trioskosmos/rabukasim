@@ -11,7 +11,7 @@ pub fn handle_state_modifiers(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
+    _frame_data: &AbilityFrameComponents<'_>,
     op: i32,
     v: i32,
     a: i64,
