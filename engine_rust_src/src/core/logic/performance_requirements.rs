@@ -40,9 +40,10 @@ pub fn process_heart_modifiers_frames(
 ) {
     for frame in frames {
         let op = frame.opcode();
+        let frame_data = frame.components();
         if op == O_SET_HEART_COST {
-            let val = frame.value();
-            let attr = frame.attr() as i32;
+            let val = frame_data.value;
+            let attr = frame_data.raw_attr as i32;
 
             adjustments.push(json!({
                 "source": source_name,
@@ -72,8 +73,8 @@ pub fn process_heart_modifiers_frames(
                 }
             }
         } else if op == O_INCREASE_HEART_COST {
-            let val = frame.value();
-            let idx = decode_heart_requirement_color(&frame.components());
+            let val = frame_data.value;
+            let idx = decode_heart_requirement_color(&frame_data);
             if idx < 7 {
                 let old = req_board.get_color_count(idx);
                 req_board.set_color_count(idx, old.saturating_add(val as u8));
@@ -86,8 +87,8 @@ pub fn process_heart_modifiers_frames(
                 }));
             }
         } else if op == O_TRANSFORM_HEART {
-            let from_attr = frame.value() as usize;
-            let to_attr = frame.attr() as usize;
+            let from_attr = frame_data.value as usize;
+            let to_attr = frame_data.raw_attr as usize;
             let from_idx = if from_attr == 7 {
                 6
             } else if from_attr >= 1 && from_attr <= 6 {

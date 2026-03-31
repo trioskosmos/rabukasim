@@ -11,12 +11,6 @@ use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::models::interpreter::resolve_target_slot;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 
-// Helper to get player index
-fn p_idx(ctx: &AbilityContext) -> usize {
-    ctx.player_id as usize
-}
-
-
 // ============================================================================
 // META / CONTROL HANDLERS
 // ============================================================================
@@ -58,7 +52,7 @@ pub fn handle_negate_effect(
 ) -> HandlerResult {
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let target_slot = frame_data.slot.target_slot as i32;
 
     let trigger_type = match v {
@@ -136,7 +130,7 @@ pub fn handle_draw(
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let count = if frame_data.filter.compare_accumulated {
         use crate::core::logic::interpreter::conditions::resolve_count_frame;
         resolve_count_frame(state, db, &frame_data, ctx, 0) as u32
@@ -202,7 +196,7 @@ pub fn handle_energy_charge(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let target_p = if frame_data.slot.is_opponent { 1 - p_idx } else { p_idx };
     let is_wait = frame_data.slot.is_wait;
     
@@ -247,7 +241,7 @@ pub fn handle_pay_energy(
     
     let v = frame_data.value;
     let is_optional = frame_data.filter.is_optional;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
@@ -361,7 +355,7 @@ pub fn handle_activate_energy(
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let mut count = 0;
     let mut group_bits = 0u32;
     
@@ -393,7 +387,7 @@ pub fn handle_pay_energy_dynamic(
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let base_score = state.players[p_idx].score as i32;
     let total_cost = (base_score + v) as usize;
     
@@ -425,7 +419,7 @@ pub fn handle_place_energy_under_member(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let p_idx = p_idx(ctx);
+    let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let src_zone = slot_info.source_zone as u8;
     

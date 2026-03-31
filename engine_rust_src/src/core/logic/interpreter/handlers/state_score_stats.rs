@@ -44,7 +44,7 @@ fn decode_heart_color(
         }
     }
     
-    // 5. Minimal fallback: try ability text for color
+    // 5. Try ability text for color
     if let Some(member) = db.get_member(ctx.source_card_id) {
         if let Some(ability) = member.abilities.get(ctx.ability_index.max(0) as usize) {
             if let Some(color) = decode_heart_type_from_icons(&ability.raw_text) {
@@ -53,6 +53,7 @@ fn decode_heart_color(
         }
     }
     
+    // 6. Fallback to selected color
     ctx.selected_color as usize
 }
 
@@ -132,19 +133,23 @@ pub fn handle_add_hearts(
     } else {
         resolved_slot
     };
-    if state.debug.debug_mode {
+    if state.debug.debug_mode || ctx.source_card_id == 4853 {
         println!("[DEBUG handle_add_hearts] color={}, resolved_slot={}, target_slot={}, p_idx={}, value={}", color, resolved_slot, target_slot, p_idx, frame.value);
     }
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
-            if state.debug.debug_mode {
+            if state.debug.debug_mode || ctx.source_card_id == 4853 {
                 let before = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
                 println!("[DEBUG handle_add_hearts] Applying heart buff to slot_idx={}, color={}, before={}", slot_idx, color, before);
             }
             state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, frame.value as i32);
-            if state.debug.debug_mode {
+            if state.debug.debug_mode || ctx.source_card_id == 4853 {
                 let after = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
                 println!("[DEBUG handle_add_hearts] After adding: color={} count={}", color, after);
+                println!("[DEBUG handle_add_hearts] Now checking get_effective_hearts...");
+                let effective_hearts = crate::core::logic::rules::get_effective_hearts(state, p_idx, slot_idx, db, 0);
+                let effective_color_count = effective_hearts.get_color_count(color);
+                println!("[DEBUG handle_add_hearts] get_effective_hearts slot {} color {}: {}", slot_idx, color, effective_color_count);
             }
             state.players[p_idx].heart_buff_logs.push((
                 ctx.source_card_id,

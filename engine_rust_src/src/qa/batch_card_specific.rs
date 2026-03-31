@@ -763,6 +763,10 @@ mod tests {
             "[DEBUG] Bytecode for card 358: {:?}",
             db.get_live(live_id).unwrap().abilities[0].bytecode
         );
+        println!(
+            "[DEBUG] Effects for card 358: {:?}",
+            db.get_live(live_id).unwrap().abilities[0].effects
+        );
 
         // Enforce enough energy for activations/performance
         for _ in 0..5 {

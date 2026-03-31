@@ -71,8 +71,8 @@ pub fn handle_score_hearts(
             return state_score_stats::handle_set_blades(state, p_idx, v, resolved_slot);
         }
         O_ADD_HEARTS => {
-            if state.debug.debug_mode {
-                println!("[DEBUG] O_ADD_HEARTS: value={}, resolved_slot={}, target_slot={}", v, resolved_slot, target_slot);
+            if state.debug.debug_mode || ctx.source_card_id == 4853 {
+                println!("[DEBUG] O_ADD_HEARTS: value={}, resolved_slot={}, target_slot={}, source_card_id={}", v, resolved_slot, target_slot, ctx.source_card_id);
             }
             return state_score_stats::handle_add_hearts(
                 state,

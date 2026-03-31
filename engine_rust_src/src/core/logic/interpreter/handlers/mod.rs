@@ -1,4 +1,4 @@
-#![allow(unused_imports, unused_variables)]
+// Handlers module - simplified data flow from YAML to code
 
 use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
 

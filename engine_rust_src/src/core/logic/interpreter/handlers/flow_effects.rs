@@ -1,7 +1,6 @@
 use crate::core::logic::models::AbilityFrameComponents;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::handlers::flow_helpers::current_effect_from_data;
 
 #[path = "flow_meta_rule.rs"]
 mod flow_meta_rule;
@@ -16,13 +15,13 @@ pub fn handle_trigger_remote(
     p_idx: usize,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
-    let effect = current_effect_from_data(db, ctx, frame_data);
-    let from_discard = effect
-        .and_then(|e| e.params.get("from"))
+    let from_discard = frame_data
+        .params
+        .and_then(|p| p.get("from"))
         .and_then(|v: &serde_json::Value| v.as_str())
         .map(|s| s.eq_ignore_ascii_case("DISCARD"))
         .unwrap_or(false);
-    let filter_attr = effect.map(|e| e.runtime_attr).unwrap_or(0);
+    let filter_attr = frame_data.raw_attr;
 
     let mut target_cid = -1;
     let mut target_area = -1;

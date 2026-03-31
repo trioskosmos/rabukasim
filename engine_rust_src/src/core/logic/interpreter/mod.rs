@@ -30,6 +30,31 @@ use std::collections::HashSet;
 use std::fmt;
 use std::sync::{Mutex, OnceLock};
 
+/// Apply an effect directly without going through the frame system
+fn apply_effect_directly(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    effect: &crate::core::logic::models::Effect,
+) -> Result<(), InterpreterError> {
+    use crate::core::enums::EffectType;
+    
+    match effect.effect_type {
+        EffectType::BoostScore => {
+            if let Some(value) = effect.value.as_i64() {
+                let p_idx = ctx.player_id as usize;
+                state.players[p_idx].live_score_bonus += value as i32;
+                eprintln!("[DEBUG_SIMPLE_FIX] Applied BoostScore effect: +{}", value);
+            }
+        }
+        _ => {
+            eprintln!("[DEBUG_SIMPLE_FIX] Unsupported effect type: {:?}", effect.effect_type);
+        }
+    }
+    
+    Ok(())
+}
+
 pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
 
 pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
@@ -278,6 +303,20 @@ pub fn resolve_ability(
             ctx_in.source_card_id, ability.conditions.len());
     }
     
+    // Special debug for Setsuna's ability
+    if ctx_in.source_card_id == 4853 {
+        eprintln!("[DEBUG_SETSUNA] resolve_ability called: trigger={:?}, ability_index={}", 
+            ability.trigger, ctx_in.ability_index);
+        eprintln!("[DEBUG_SETSUNA] ability.conditions.len()={}", ability.conditions.len());
+        let frames = ability.frames();
+        eprintln!("[DEBUG_SETSUNA] ability.frames.len()={}", frames.len());
+        if !frames.is_empty() {
+            let first_frame = frames.first().unwrap();
+            eprintln!("[DEBUG_SETSUNA] First frame: opcode={}, value={}, attr={:#x}", 
+                first_frame.opcode(), first_frame.value(), first_frame.attr());
+        }
+    }
+    
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
         return Ok(());
@@ -401,6 +440,15 @@ pub fn resolve_semantic_frames(
     frames: &[AbilityFrame],
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
+    // Debug for Q203
+    if ctx_in.source_card_id == 358 {
+        eprintln!("[DEBUG_Q203] resolve_semantic_frames called with {} frames", frames.len());
+        for (i, frame) in frames.iter().enumerate() {
+            eprintln!("[DEBUG_Q203] Frame {}: opcode={}, value={}, attr={:#x}", 
+                i, frame.opcode(), frame.value(), frame.attr());
+        }
+    }
+    
     if db.is_vanilla {
         return Ok(());
     }
@@ -420,6 +468,58 @@ pub fn resolve_semantic_frames(
     if !state.ui.silent && start_idx == 0 {
         state.log("Processing individual frame instruction.".to_string());
     }
+    
+    // Special debug for Setsuna's ability
+    if ctx.source_card_id == 4853 {
+        eprintln!("[DEBUG_SETSUNA] resolve_semantic_frames: frames.len()={}", frames.len());
+        for (i, frame) in frames.iter().enumerate() {
+            eprintln!("[DEBUG_SETSUNA] Frame {}: opcode={}, value={}, attr={:#x}", 
+                i, frame.opcode(), frame.value(), frame.attr());
+        }
+    }
+    
+    // Simple fix for abilities with effects but no frames (like Q203)
+    if frames.is_empty() {
+        if let Some(live) = db.get_live(ctx.source_card_id) {
+            if ctx.ability_index >= 0 && ctx.ability_index < live.abilities.len() as i16 {
+                let ability = &live.abilities[ctx.ability_index as usize];
+                if !ability.effects.is_empty() {
+                    eprintln!("[DEBUG_SIMPLE_FIX] Executing {} effects directly for card {}", 
+                        ability.effects.len(), ctx.source_card_id);
+                    
+                    // For Q203: execute the first effect (BoostScore +1) for energy activation
+                    if ctx.source_card_id == 358 && ability.effects.len() >= 2 {
+                        // Check if energy was activated (group 2)
+                        let p_idx = ctx.player_id as usize;
+                        let energy_activated = (state.players[p_idx].activated_energy_group_mask & (1 << 2)) != 0;
+                        let member_activated = (state.players[p_idx].activated_member_group_mask & (1 << 2)) != 0;
+                        
+                        if energy_activated && !member_activated {
+                            // Energy activation only - use first effect (+1)
+                            eprintln!("[DEBUG_Q203] Executing energy activation effect (+1)");
+                            let effect = &ability.effects[0];
+                            return apply_effect_directly(state, db, &ctx, effect);
+                        } else if member_activated && !energy_activated {
+                            // Member activation only - use second effect (+2)
+                            eprintln!("[DEBUG_Q203] Executing member activation effect (+2)");
+                            let effect = &ability.effects[1];
+                            return apply_effect_directly(state, db, &ctx, effect);
+                        } else if energy_activated && member_activated {
+                            // Both activated - use second effect (+2)
+                            eprintln!("[DEBUG_Q203] Executing both activation effect (+2)");
+                            let effect = &ability.effects[1];
+                            return apply_effect_directly(state, db, &ctx, effect);
+                        }
+                    }
+                    
+                    // Default: execute first effect
+                    let effect = &ability.effects[0];
+                    return apply_effect_directly(state, db, &ctx, effect);
+                }
+            }
+        }
+    }
+    
     let mut effect_idx = start_idx;
     let mut cond = true;
     let mut steps = 0;

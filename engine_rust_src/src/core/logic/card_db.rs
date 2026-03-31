@@ -217,52 +217,95 @@ impl CardDatabase {
         let parsed_root = serde_json::from_str::<Value>(json).ok();
         if let Some(root) = parsed_root {
             let mut index = HashMap::new();
-            if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
-                for entry in abilities {
-                    let refs = entry
-                        .get("card_refs")
-                        .and_then(|v| v.as_array())
-                        .or_else(|| entry.get("cards").and_then(|v| v.as_array()));
-                    let Some(cards) = refs else {
-                        continue;
-                    };
-                    let compact_entry = Self::compact_sparse_ability_entry(entry);
-                    for card in cards {
-                        if let Some(card_obj) = card.as_object() {
-                            let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str())
-                            else {
-                                continue;
-                            };
-                            let Some(ability_index) =
-                                card_obj.get("ability_index").and_then(|v| v.as_i64())
-                            else {
-                                continue;
-                            };
-                            let key = format!("{}#{}", card_no, ability_index);
-                            index.insert(key, compact_entry.clone());
-                            continue;
+            
+            // Try consolidated abilities format first (object with ability text as keys)
+            if let Some(abilities_obj) = root.as_object() {
+                eprintln!("[DEBUG_DB] Loading from consolidated abilities format with {} entries", abilities_obj.len());
+                for (ability_key, ability_data) in abilities_obj {
+                    // Extract frames from the ability data
+                    if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
+                        // Create a compact entry with the frames
+                        let mut compact_entry = serde_json::Map::new();
+                        
+                        // Copy basic fields
+                        for key in ["pseudocode", "source_text", "source_text_en", "trigger", "trigger_id"] {
+                            if let Some(value) = ability_data.get(key) {
+                                compact_entry.insert(key.to_string(), value.clone());
+                            }
                         }
-
-                        if let Some(card_str) = card.as_str() {
-                            let Some((card_no_part, tail)) = card_str.split_once(" |") else {
-                                continue;
-                            };
-                            let Some(ab_marker) = tail.rfind("(ab#") else {
-                                continue;
-                            };
-                            let ab_fragment = &tail[ab_marker + 4..];
-                            let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
-                                continue;
-                            };
-                            let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
-                                continue;
-                            };
-                            let key = format!("{}#{}", card_no_part.trim(), ability_index);
-                            index.insert(key, compact_entry.clone());
+                        
+                        // Add frames
+                        compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
+                        
+                        // Process card references
+                        if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+                            for card_ref in card_refs {
+                                if let Some(card_obj) = card_ref.as_object() {
+                                    if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
+                                        if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                            let key = format!("{}#{}", card_no, ability_index);
+                                            index.insert(key, Value::Object(compact_entry.clone()));
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
+            
+            // If no entries found, try ability frame index format (array under "abilities")
+            if index.is_empty() {
+                if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
+                    eprintln!("[DEBUG_DB] Loading from ability frame index format with {} entries", abilities.len());
+                    for entry in abilities {
+                        let refs = entry
+                            .get("card_refs")
+                            .and_then(|v| v.as_array())
+                            .or_else(|| entry.get("cards").and_then(|v| v.as_array()));
+                        let Some(cards) = refs else {
+                            continue;
+                        };
+                        let compact_entry = Self::compact_sparse_ability_entry(entry);
+                        for card in cards {
+                            if let Some(card_obj) = card.as_object() {
+                                let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str())
+                                else {
+                                    continue;
+                                };
+                                let Some(ability_index) =
+                                    card_obj.get("ability_index").and_then(|v| v.as_i64())
+                                else {
+                                    continue;
+                                };
+                                let key = format!("{}#{}", card_no, ability_index);
+                                index.insert(key, compact_entry.clone());
+                                continue;
+                            }
+
+                            if let Some(card_str) = card.as_str() {
+                                let Some((card_no_part, tail)) = card_str.split_once(" |") else {
+                                    continue;
+                                };
+                                let Some(ab_marker) = tail.rfind("(ab#") else {
+                                    continue;
+                                };
+                                let ab_fragment = &tail[ab_marker + 4..];
+                                let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
+                                    continue;
+                                };
+                                let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
+                                    continue;
+                                };
+                                let key = format!("{}#{}", card_no_part.trim(), ability_index);
+                                index.insert(key, compact_entry.clone());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            eprintln!("[DEBUG_DB] Loaded {} ability entries from sparse index", index.len());
             return index;
         }
         HashMap::new()
@@ -416,6 +459,8 @@ impl CardDatabase {
 
         for key in [
             "pseudocode",
+            "source_text",
+            "source_text_en",
             "signature",
             "signature_hash",
             "signature_source",
@@ -550,12 +595,80 @@ impl CardDatabase {
         card_no: &str,
         abilities: &mut [Ability],
         index: &HashMap<String, Value>,
+        text_index: &HashMap<String, String>,
     ) -> serde_json::Result<()> {
+        static mut EMPTY_BYTECODE_COUNT: usize = 0;
+        static mut TOTAL_ABILITIES_CHECKED: usize = 0;
+        
+        // Debug for Q203
+        if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+            eprintln!("[DEBUG_Q203_DB] attach_sparse_ability_index called for card: {}", card_no);
+            eprintln!("[DEBUG_Q203_DB] Available keys in index: {}", index.len());
+            for (key, _) in index.iter().take(5) {
+                if key.contains("358") {
+                    eprintln!("[DEBUG_Q203_DB] Found key: {}", key);
+                }
+            }
+        }
+        
         for (ability_index, ability) in abilities.iter_mut().enumerate() {
             let key = format!("{}#{}", card_no, ability_index);
             let entry = index.get(&key).cloned().unwrap_or_else(|| {
                 Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
             });
+            
+            // Count abilities with empty bytecode
+            unsafe {
+                TOTAL_ABILITIES_CHECKED += 1;
+                if ability.frames().is_empty() {
+                    EMPTY_BYTECODE_COUNT += 1;
+                    eprintln!("[DEBUG_BYTECODE] Card {} ability {}: EMPTY bytecode (effects: {})", 
+                        card_no, ability_index, ability.effects.len());
+                    
+                    // Special case: abilities with effects but no bytecode (like Q203)
+                    if !ability.effects.is_empty() {
+                        eprintln!("[DEBUG_BYTECODE] *** HAS EFFECTS BUT NO BYTECODE ***");
+                        for (i, effect) in ability.effects.iter().enumerate() {
+                            eprintln!("[DEBUG_BYTECODE]   Effect {}: {:?} = {:?}", i, effect.effect_type, effect.value);
+                        }
+                    }
+                }
+            }
+            
+            // Debug for Q203
+            if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+                eprintln!("[DEBUG_Q203_DB] Processing ability {}: key={}, entry found={}", 
+                    ability_index, key, index.contains_key(&key));
+            }
+            
+            // Populate raw_text from source_text if it's empty
+            if ability.raw_text.is_empty() {
+                if let Some(source_text) = entry.get("source_text").and_then(|v| v.as_str()) {
+                    ability.raw_text = source_text.to_string();
+                } else if let Some(source_text_en) = entry.get("source_text_en").and_then(|v| v.as_str()) {
+                    ability.raw_text = source_text_en.to_string();
+                } else if let Some(text) = text_index.get(&key) {
+                    ability.raw_text = text.clone();
+                }
+            }
+            
+            // Print final report
+            unsafe {
+                if TOTAL_ABILITIES_CHECKED % 100 == 0 || TOTAL_ABILITIES_CHECKED <= 5 {
+                    eprintln!("[DEBUG_BYTECODE] Progress: {} abilities checked, {} with empty bytecode", 
+                        TOTAL_ABILITIES_CHECKED, EMPTY_BYTECODE_COUNT);
+                }
+            }
+            
+            // Debug for Q203
+            if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+                eprintln!("[DEBUG_Q203_DB] Processing ability {}: frame_program.is_none={}, frame_program.frames.is_empty={}", 
+                    ability_index,
+                    ability.frame_program.is_none(),
+                    ability.frame_program.as_ref().map(|p| p.frames.is_empty()).unwrap_or(true));
+                eprintln!("[DEBUG_Q203_DB] Card number: {}, looking for key: {}#{}", card_no, card_no, ability_index);
+            }
+            
             if ability
                 .frame_program
                 .as_ref()
@@ -563,6 +676,11 @@ impl CardDatabase {
                 .unwrap_or(true)
             {
                 let program = Self::sparse_entry_to_frame_program(&entry);
+                // Debug for Q203
+                if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+                    eprintln!("[DEBUG_Q203_DB] Frame program frames empty: {}, entry keys: {:?}", 
+                        program.frames.is_empty(), entry.as_object().map(|o| o.keys().collect::<Vec<_>>()));
+                }
                 // FIX: If sparse entry produces empty frames, synthesize from ability data
                 if program.frames.is_empty() {
                     // Try to create frames from ability effects
@@ -572,6 +690,11 @@ impl CardDatabase {
                     }
                     // Add RETURN frame at the end
                     synthesized_frames.push(AbilityFrame::Return);
+                    
+                    if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+                        eprintln!("[DEBUG_Q203_DB] Synthesized {} frames from {} effects", 
+                            synthesized_frames.len(), ability.effects.len());
+                    }
                     
                     if synthesized_frames.len() > 1 {
                         // We have real frames from effects
@@ -587,6 +710,9 @@ impl CardDatabase {
                         });
                     }
                 } else {
+                    if card_no.contains("358") || card_no.contains("Cara Tesoro") {
+                        eprintln!("[DEBUG_Q203_DB] Using existing frames from sparse entry");
+                    }
                     ability.frame_program = Some(program);
                 }
             }
@@ -657,6 +783,16 @@ impl CardDatabase {
                 }
             }
         }
+        
+        // Print final summary
+        unsafe {
+            if TOTAL_ABILITIES_CHECKED > 0 && TOTAL_ABILITIES_CHECKED % 50 == 0 {
+                eprintln!("[DEBUG_BYTECODE] SUMMARY: {}/{} abilities have empty bytecode ({:.1}%)", 
+                    EMPTY_BYTECODE_COUNT, TOTAL_ABILITIES_CHECKED, 
+                    (EMPTY_BYTECODE_COUNT as f64 / TOTAL_ABILITIES_CHECKED as f64) * 100.0);
+            }
+        }
+        
         Ok(())
     }
 
@@ -1258,6 +1394,39 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
+        // Load consolidated abilities text for raw_text population
+        let mut text_index = HashMap::new();
+        for path in [
+            "data/consolidated_abilities.json",
+            "../data/consolidated_abilities.json",
+        ] {
+            if let Ok(json) = fs::read_to_string(path) {
+                if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
+                    if let Some(abilities) = parsed_root.as_object() {
+                        for (_ability_key, ability_data) in abilities {
+                            if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
+                                if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+                                    for card_ref in card_refs {
+                                        if let Some(card_obj) = card_ref.as_object() {
+                                            if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
+                                                if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                                    let key = format!("{}#{}", card_no, ability_index);
+                                                    text_index.insert(key, source_text.to_string());
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if !text_index.is_empty() {
+                        break;
+                    }
+                }
+            }
+        }
+        
         let mut db = Self {
             members: HashMap::new(),
             lives: HashMap::new(),
@@ -1279,6 +1448,7 @@ impl CardDatabase {
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
+                            &text_index,
                         )?;
                         Self::normalize_member_runtime_compatibility(&mut card);
                         Self::enrich_member_runtime_metadata(&mut card);
@@ -1317,6 +1487,7 @@ impl CardDatabase {
                             &card.card_no,
                             &mut card.abilities,
                             &db.sparse_ability_index,
+                            &text_index,
                         )?;
                         Self::normalize_live_runtime_compatibility(&mut card);
                         Self::enrich_live_runtime_metadata(&mut card);

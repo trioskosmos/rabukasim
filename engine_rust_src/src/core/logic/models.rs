@@ -239,21 +239,23 @@ impl<'a> AbilityFrameComponents<'a> {
 
     /// Get heart counts from frame data - returns tuple for compatibility
     pub fn heart_counts(&self) -> (i32, i32) {
-        // Use V_HEART_COUNTS constants to extract proper heart values
         use crate::core::generated_layout::{
             V_HEART_COUNTS_PINK_SHIFT, V_HEART_COUNTS_RED_SHIFT, V_HEART_COUNTS_YELLOW_SHIFT,
             V_HEART_COUNTS_GREEN_SHIFT, V_HEART_COUNTS_BLUE_SHIFT, V_HEART_COUNTS_PURPLE_SHIFT,
-            V_HEART_COUNTS_ANY_SHIFT, V_HEART_COUNTS_PINK_MASK
+            V_HEART_COUNTS_ANY_SHIFT,
+            V_HEART_COUNTS_PINK_MASK, V_HEART_COUNTS_RED_MASK, V_HEART_COUNTS_YELLOW_MASK,
+            V_HEART_COUNTS_GREEN_MASK, V_HEART_COUNTS_BLUE_MASK, V_HEART_COUNTS_PURPLE_MASK,
+            V_HEART_COUNTS_ANY_MASK
         };
         
-        // Extract individual color counts and sum them for total hearts
-        let pink = ((self.value >> V_HEART_COUNTS_PINK_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let red = ((self.value >> V_HEART_COUNTS_RED_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let yellow = ((self.value >> V_HEART_COUNTS_YELLOW_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let green = ((self.value >> V_HEART_COUNTS_GREEN_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let blue = ((self.value >> V_HEART_COUNTS_BLUE_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let purple = ((self.value >> V_HEART_COUNTS_PURPLE_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
-        let any = ((self.value >> V_HEART_COUNTS_ANY_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let value_u32 = self.value as u32;
+        let pink = ((value_u32 >> V_HEART_COUNTS_PINK_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let red = ((value_u32 >> V_HEART_COUNTS_RED_SHIFT) & V_HEART_COUNTS_RED_MASK) as i32;
+        let yellow = ((value_u32 >> V_HEART_COUNTS_YELLOW_SHIFT) & V_HEART_COUNTS_YELLOW_MASK) as i32;
+        let green = ((value_u32 >> V_HEART_COUNTS_GREEN_SHIFT) & V_HEART_COUNTS_GREEN_MASK) as i32;
+        let blue = ((value_u32 >> V_HEART_COUNTS_BLUE_SHIFT) & V_HEART_COUNTS_BLUE_MASK) as i32;
+        let purple = ((value_u32 >> V_HEART_COUNTS_PURPLE_SHIFT) & V_HEART_COUNTS_PURPLE_MASK) as i32;
+        let any = ((value_u32 >> V_HEART_COUNTS_ANY_SHIFT) & V_HEART_COUNTS_ANY_MASK) as i32;
         
         let total_hearts = pink + red + yellow + green + blue + purple;
         (total_hearts, any)
@@ -266,10 +268,9 @@ impl<'a> AbilityFrameComponents<'a> {
 
     /// Get heart requirements from frame data - returns tuple for compatibility
     pub fn heart_requirements(&self) -> (i32, i32) {
-        // Match the exact bit shifts used in apply_aura_modifier around line 1236-1242
-        let hearts_req = ((self.raw_attr >> 16) & 0xF) as i32;  // From O_SET_HEART_COST logic
-        let hearts_cost = ((self.raw_attr >> 20) & 0xF) as i32; // From O_SET_HEART_COST logic  
-        (hearts_req, hearts_cost)
+        let decoded = self.heart_requirements_struct();
+        let total_reqs: i32 = decoded.reqs.iter().map(|&r| r as i32).sum();
+        (total_reqs, 0)
     }
 
     /// Get heart requirements as DecodedHeartRequirements struct
@@ -920,7 +921,7 @@ impl AbilityFrame {
         } else {
             Self::opcode_from_effect_type(effect.effect_type)
         };
-        let runtime_value = effect.value.clone();
+        let runtime_value_json = effect.value.clone();
         let runtime_attr = effect.runtime_attr;
         let mut runtime_slot = effect.runtime_slot;
         let mut slot = DecodedSlot::decode(runtime_slot);
@@ -985,15 +986,20 @@ impl AbilityFrame {
 
         runtime_slot = slot.to_raw();
 
-        let value_i32 = match runtime_value {
-            Value::Number(n) => n.as_i64().unwrap_or(0) as i32,
-            Value::Object(obj) => {
-                obj.get("count")
-                    .and_then(|v| v.as_i64())
-                    .or_else(|| obj.get("value").and_then(|v| v.as_i64()))
-                    .unwrap_or(0) as i32
+        // Use runtime_value if set, otherwise extract from JSON value
+        let value_i32 = if effect.runtime_value != 0 {
+            effect.runtime_value
+        } else {
+            match runtime_value_json {
+                Value::Number(n) => n.as_i64().unwrap_or(0) as i32,
+                Value::Object(obj) => {
+                    obj.get("count")
+                        .and_then(|v| v.as_i64())
+                        .or_else(|| obj.get("value").and_then(|v| v.as_i64()))
+                        .unwrap_or(0) as i32
+                }
+                _ => 0,
             }
-            _ => 0,
         };
 
         // Special handling for SWAP_AREA effect (Mei's formation change)

@@ -65,7 +65,7 @@ pub fn handle_look_and_choose(
     let rem_dest = slot_info.dest_zone as u8;
     let source_zone_bits = slot_info.source_zone as u8;
     let source_zone = if source_zone_bits == 0 {
-        8
+        5 // Zone::Deck
     } else {
         source_zone_bits as i32
     };
