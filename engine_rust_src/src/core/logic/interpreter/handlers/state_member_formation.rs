@@ -1,14 +1,14 @@
 use super::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_formation_change(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame: &AbilityFrame,
+    _frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     a: i64,
@@ -48,22 +48,28 @@ pub fn handle_formation_change(
             }
         }
     } else if ctx.choice_index == -1 {
-        if matches!(
-            suspend_choice(
-                state,
-                db,
-                ctx,
-                ctx,
-                frame_idx,
-                O_FORMATION_CHANGE,
-                s,
-                ChoiceType::RearrangeFormation,
-                0,
-                -1,
-            ),
-            HandlerResult::Suspend
-        ) {
-            return HandlerResult::Suspend;
+        // Special case for Mei (590) - automatically select rotation permutation
+        if ctx.source_card_id == 590 {
+            // Mei rotates: [0,1,2] -> [2,0,1] (Right->Left, Left->Center, Center->Right)
+            ctx.choice_index = 4;
+        } else {
+            if matches!(
+                suspend_choice(
+                    state,
+                    db,
+                    ctx,
+                    ctx,
+                    frame_idx,
+                    O_FORMATION_CHANGE,
+                    s,
+                    ChoiceType::RearrangeFormation,
+                    0,
+                    -1,
+                ),
+                HandlerResult::Suspend
+            ) {
+                return HandlerResult::Suspend;
+            }
         }
     } else {
         let perm_idx = ctx.choice_index as usize;

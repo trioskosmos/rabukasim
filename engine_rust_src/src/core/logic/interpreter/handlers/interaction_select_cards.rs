@@ -2,6 +2,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, FILTER_IS_OPTIONAL};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -25,10 +26,9 @@ pub fn handle_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &crate::core::logic::models::AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     instr_ip: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let mut a = filter_attr_from_params(frame_data.params).unwrap_or(0) as i64;
     a |= frame_data.filter.to_attr() as i64;
@@ -169,7 +169,7 @@ pub fn handle_select_cards(
                 state,
                 db,
                 ctx,
-                frame,
+                frame_data,
                 instr_ip,
                 p_idx,
                 s,
@@ -214,7 +214,7 @@ pub fn handle_select_cards(
         state,
         db,
         ctx,
-        frame,
+        frame_data,
         instr_ip,
         p_idx,
         s,

@@ -139,28 +139,23 @@ pub fn handle_increase_heart_cost(
 
 pub fn handle_set_heart_cost(
     state: &mut GameState,
-
     ctx: &AbilityContext,
-
-    frame: &AbilityFrame,
-
+    frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
     p_idx: usize,
-
     target_p: usize,
-
     s: i32,
-
     v: i32,
 ) -> HandlerResult {
     let mut reqs = Vec::new();
 
-    let hr: crate::core::logic::interpreter::instruction::DecodedHeartRequirements =
-        frame.heart_requirements();
-
-    for &r in &hr.reqs {
-        if r > 0 {
-            reqs.push(r);
-        }
+    let (hearts_req, hearts_cost) = frame.heart_requirements();
+    
+    // Convert tuple to array format for compatibility
+    if hearts_req > 0 {
+        reqs.push(hearts_req as u8);
+    }
+    if hearts_cost > 0 {
+        reqs.push(hearts_cost as u8);
     }
 
     if !reqs.is_empty() {
@@ -184,8 +179,8 @@ pub fn handle_set_heart_cost(
             .heart_req_addition_logs
             .push((ctx.source_card_id, color_idx as u8, v as u8));
     } else {
-        let hc: crate::core::logic::interpreter::instruction::DecodedHeartCounts =
-            frame.heart_counts();
+        // Use the struct version to get proper individual color counts
+        let hc = frame.heart_counts_struct();
 
         let counts = [
             hc.pink as u32,

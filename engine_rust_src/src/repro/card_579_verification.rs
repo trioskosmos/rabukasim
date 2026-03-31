@@ -187,10 +187,15 @@ fn test_card_579_ability_1_heart_filter() {
     filter.value_enabled = true;
     filter.value_threshold = 3; // 3+ Hearts
     filter.color_mask = 1 << 2; // Yellow (Color 2)
+    filter.compare_accumulated = true; // Need to compare hearts
     filter.is_enabled = true;
 
     let member_id = liella_member_id;
     let hearts = state.get_effective_hearts(0, 0, &db, 0).to_array();
+    println!("Hearts array: {:?}", hearts);
+    println!("Filter: target_player={}, group_enabled={}, group_id={}, value_enabled={}, value_threshold={}, color_mask={:#x}", 
+        filter.target_player, filter.group_enabled, filter.group_id, filter.value_enabled, filter.value_threshold, filter.color_mask);
+    println!("compare_accumulated: {}", filter.compare_accumulated);
     assert!(
         filter.matches(
             &state,

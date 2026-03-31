@@ -1,13 +1,13 @@
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_hand(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    _frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     v: i32,
@@ -50,7 +50,7 @@ pub fn handle_play_member_from_hand(
             ctx.target_slot = h_idx as i16;
             ctx.v_remaining = 1;
             ctx.choice_index = -1;
-            return handle_play_member_from_hand(state, db, ctx, frame, frame_idx, p_idx, v, a, s);
+            return handle_play_member_from_hand(state, db, ctx, _frame_data, frame_idx, p_idx, v, a, s);
         }
     } else if remaining == 1 {
         if ctx.choice_index == -1 {

@@ -51,6 +51,7 @@ class Condition:
     value: int = 0
     params: Dict[str, Any] = field(default_factory=dict)
     is_negated: bool = False
+    attr: int = 0  # Encoded filter attribute for group/type checking
 
 
 @dataclass  

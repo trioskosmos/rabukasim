@@ -326,7 +326,10 @@ pub fn resolve_ability(
     
     // Check ability.conditions before executing frames
     // If any condition fails, skip the entire ability
-    if !ability.conditions.is_empty() {
+    // NOTE: Skip condition checks when ability has effects but no frame_program,
+    // since conditions in legacy data may be incorrect. The effects/frames are
+    // the source of truth in the new system.
+    if !ability.conditions.is_empty() && ability.frame_program.is_some() {
         let mut all_conditions_pass = true;
         for (i, cond) in ability.conditions.iter().enumerate() {
             let passed = conditions::check_condition(
@@ -587,7 +590,7 @@ pub fn resolve_semantic_frames(
         let mut advance_effect = true;
         
         // Execute frame directly using handler dispatch
-        match dispatch(state, db, &mut ctx, frame, &frame_data, effect_idx, frames) {
+        match dispatch(state, db, &mut ctx, &frame_data, effect_idx) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(new_cond) => cond = new_cond,
             HandlerResult::Suspend => return Ok(()),

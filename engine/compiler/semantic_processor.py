@@ -149,6 +149,26 @@ def _encode_keyword_filter(params: dict, filter_data: dict, attr_data: dict = No
     return result
 
 
+def _encode_attr_from_frame(attr_data: dict) -> int:
+    """Encode attr field from frame's attr data.
+    
+    Bit layout (matching Rust filter.rs):
+    - Bit 4: Group Enable flag
+    - Bits 5-11: Group ID (7 bits)
+    """
+    attr = 0
+    if not attr_data:
+        return attr
+    
+    # Group filter encoding
+    if attr_data.get("group_enabled"):
+        attr |= 0x10  # Bit 4: Group Enable
+        group_id = attr_data.get("group_id", 0)
+        attr |= (group_id & 0x7F) << 5  # Bits 5-11: Group ID
+    
+    return attr
+
+
 def _opcode_to_cost_type(opcode: str, is_cost: bool) -> AbilityCostType:
     """Map opcode to AbilityCostType if marked as cost."""
     if not is_cost:
@@ -261,9 +281,14 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
                         if keyword_filter.get("group_enabled"):
                             params["group_id"] = keyword_filter.get("group_id", 0)
                 
+                # Encode attr from frame data
+                attr_data = data.get("attr", {})
+                attr = _encode_attr_from_frame(attr_data)
+                
                 ab.conditions.append(Condition(
                     type=cond_type, value=data["value"], params=params,
-                    is_negated=data["is_negated"]
+                    is_negated=data["is_negated"],
+                    attr=attr
                 ))
                 continue
             

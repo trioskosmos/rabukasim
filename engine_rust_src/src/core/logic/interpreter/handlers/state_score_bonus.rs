@@ -98,7 +98,7 @@ pub fn handle_boost_score(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     p_idx: usize,
     target_p: usize,
 ) -> HandlerResult {
@@ -111,7 +111,6 @@ pub fn handle_boost_score(
         }
     }
 
-    let frame_data = frame.components();
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
     let s = frame_data.raw_slot;
@@ -124,9 +123,9 @@ pub fn handle_boost_score(
     }
 
     let mut final_v = v;
-    if frame.is_dynamic() {
-        let divisor = frame.scalar_dynamic_divisor().max(1);
-        let base = frame.scalar_dynamic_base();
+    if frame_data.is_dynamic() {
+        let divisor = frame_data.scalar_dynamic_divisor().max(1);
+        let base = frame_data.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
     } else if frame_data.filter.compare_accumulated || frame_data.slot.is_dynamic {
@@ -157,15 +156,13 @@ pub fn handle_reduce_cost(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     p_idx: usize,
     v: i32,
 ) -> HandlerResult {
-    let frame_data = frame.components();
-    
     // Try dynamic multiplier first - if resolve_dynamic_multiplier returns Some(count),
     // use v * count. Otherwise fall back to static value v.
-    let final_v = resolve_dynamic_multiplier(state, db, ctx, &frame_data)
+    let final_v = resolve_dynamic_multiplier(state, db, ctx, frame_data)
         .map(|count| v * count)
         .unwrap_or(v);
     

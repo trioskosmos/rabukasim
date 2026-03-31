@@ -1,7 +1,7 @@
 use super::{
     flow_context, flow_effects, flow_select, flow_state_mod, flow_swap, HandlerResult,
 };
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 use crate::core::enums::*;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -10,10 +10,9 @@ pub fn handle_meta_control(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let op = frame_data.opcode;
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
@@ -37,14 +36,14 @@ pub fn handle_meta_control(
         | O_BATON_TOUCH_MOD
         | O_IMMUNITY => {
             return flow_state_mod::handle_state_modifiers(
-                state, db, ctx, frame, op, v, a, s, p_idx, base_p, slot_info, target_slot,
+                state, db, ctx, frame_data, op, v, a, s, p_idx, base_p, slot_info, target_slot,
             );
         }
 
         // Selection operations - delegate to specialized handler
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
             return flow_select::handle_select_ops(
-                state, db, ctx, frame, frame_idx, op, v, a, s, p_idx, slot_info,
+                state, db, ctx, frame_data, frame_idx, op, v, a, s, p_idx, slot_info,
             );
         }
         O_OPPONENT_CHOOSE => {
@@ -52,7 +51,7 @@ pub fn handle_meta_control(
         }
         O_TRIGGER_REMOTE => {
             return flow_effects::handle_trigger_remote(
-                state, db, ctx, frame, frame_idx, v, p_idx, slot_info,
+                state, db, ctx, frame_data, frame_idx, v, p_idx, slot_info,
             );
         }
         O_META_RULE => {
@@ -60,7 +59,7 @@ pub fn handle_meta_control(
                 state,
                 db,
                 ctx,
-                frame,
+                frame_data,
                 frame_idx,
                 a,
                 v,
@@ -77,6 +76,7 @@ pub fn handle_meta_control(
             return flow_swap::handle_swap_area(
                 state,
                 ctx,
+                frame_data,
                 base_p,
                 slot_info,
                 target_slot,

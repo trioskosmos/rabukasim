@@ -2,6 +2,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
 use crate::core::logic::filter::{filter_attr_from_params, CardFilter};
+#[allow(deprecated)]
 use crate::core::logic::interpreter::instruction::{
     BytecodeInstruction, BytecodeProgram, DecodedLookAndChoose, DecodedSlot,
 };
@@ -9,13 +10,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::hash::{Hash, Hasher};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum AbilityFrame {
     Return,
     Draw {
         count: i32,
         slot: DecodedSlot,
-        #[serde(default)]
         is_cost: bool,
     },
     Semantic {
@@ -23,29 +23,22 @@ pub enum AbilityFrame {
         value: i32,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         is_negated: bool,
-        #[serde(default)]
         is_cost: bool,
-        #[serde(default)]
         params: Value,
     },
     RecoverLive {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         params: Value,
-        #[serde(default)]
         is_cost: bool,
     },
     RecoverMember {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         params: Value,
-        #[serde(default)]
         is_cost: bool,
     },
     LookAndChoose {
@@ -58,29 +51,24 @@ pub enum AbilityFrame {
         char_id_3: u8,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         is_cost: bool,
     },
     SelectMember {
         count: i32,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         is_cost: bool,
     },
     MoveMember {
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         from_slot: i32,
-        #[serde(default)]
         is_cost: bool,
     },
     MetaRule {
         rule_type: i32,
         filter: CardFilter,
         slot: DecodedSlot,
-        #[serde(default)]
         is_cost: bool,
     },
     Raw {
@@ -88,7 +76,6 @@ pub enum AbilityFrame {
         value: i32,
         attr: u64,
         slot: i32,
-        #[serde(default)]
         is_cost: bool,
     },
 }
@@ -98,8 +85,122 @@ impl<'de> Deserialize<'de> for AbilityFrame {
     where
         D: serde::Deserializer<'de>,
     {
-        let value = Value::deserialize(deserializer)?;
-        Ok(Self::from_json_value(&value))
+        let raw_value = Value::deserialize(deserializer)?;
+        Ok(Self::from_json_value(&raw_value))
+    }
+}
+
+impl Serialize for AbilityFrame {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeMap;
+        
+        match self {
+            AbilityFrame::Return => {
+                let mut map = serializer.serialize_map(Some(1))?;
+                map.serialize_entry("kind", "RETURN")?;
+                map.end()
+            }
+            AbilityFrame::Draw { count, slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(4))?;
+                map.serialize_entry("kind", "DRAW")?;
+                map.serialize_entry("count", count)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+            AbilityFrame::Semantic { opcode, value, filter, slot, is_negated, is_cost, params } => {
+                let mut map = serializer.serialize_map(Some(7))?;
+                map.serialize_entry("kind", "SEMANTIC")?;
+                map.serialize_entry("opcode", opcode)?;
+                map.serialize_entry("value", value)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_negated", is_negated)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                if !params.is_null() {
+                    map.serialize_entry("params", params)?;
+                }
+                map.end()
+            }
+            AbilityFrame::RecoverLive { count, filter, slot, params, is_cost } => {
+                let mut map = serializer.serialize_map(Some(6))?;
+                map.serialize_entry("kind", "RECOVER_LIVE")?;
+                map.serialize_entry("count", count)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                if !params.is_null() {
+                    map.serialize_entry("params", params)?;
+                }
+                map.end()
+            }
+            AbilityFrame::RecoverMember { count, filter, slot, params, is_cost } => {
+                let mut map = serializer.serialize_map(Some(6))?;
+                map.serialize_entry("kind", "RECOVER_MEMBER")?;
+                map.serialize_entry("count", count)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                if !params.is_null() {
+                    map.serialize_entry("params", params)?;
+                }
+                map.end()
+            }
+            AbilityFrame::LookAndChoose { count, choose_count, reveal, dest_discard, char_id_1, char_id_2, char_id_3, filter, slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(11))?;
+                map.serialize_entry("kind", "LOOK_AND_CHOOSE")?;
+                map.serialize_entry("count", count)?;
+                map.serialize_entry("choose_count", choose_count)?;
+                map.serialize_entry("reveal", reveal)?;
+                map.serialize_entry("dest_discard", dest_discard)?;
+                map.serialize_entry("char_id_1", char_id_1)?;
+                map.serialize_entry("char_id_2", char_id_2)?;
+                map.serialize_entry("char_id_3", char_id_3)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+            AbilityFrame::SelectMember { count, filter, slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(5))?;
+                map.serialize_entry("kind", "SELECT_MEMBER")?;
+                map.serialize_entry("count", count)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+            AbilityFrame::MoveMember { filter, slot, from_slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(5))?;
+                map.serialize_entry("kind", "MOVE_MEMBER")?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("from_slot", from_slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+            AbilityFrame::MetaRule { rule_type, filter, slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(5))?;
+                map.serialize_entry("kind", "META_RULE")?;
+                map.serialize_entry("rule_type", rule_type)?;
+                map.serialize_entry("filter", filter)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+            AbilityFrame::Raw { opcode, value, attr, slot, is_cost } => {
+                let mut map = serializer.serialize_map(Some(5))?;
+                map.serialize_entry("opcode", opcode)?;
+                map.serialize_entry("value", value)?;
+                map.serialize_entry("attr", attr)?;
+                map.serialize_entry("slot", slot)?;
+                map.serialize_entry("is_cost", is_cost)?;
+                map.end()
+            }
+        }
     }
 }
 
@@ -129,45 +230,69 @@ pub struct AbilityFrameComponents<'a> {
     pub params: Option<&'a Value>,
 }
 
-fn decode_look_and_choose_value(
-    value: &Value,
-    fallback_value: i32,
-) -> DecodedLookAndChoose {
-    if let Ok(decoded) = serde_json::from_value::<DecodedLookAndChoose>(value.clone()) {
-        return decoded;
+impl<'a> AbilityFrameComponents<'a> {
+    /// Check if this frame uses dynamic value calculation (accumulated compare)
+    pub fn is_dynamic(&self) -> bool {
+        use crate::core::generated_layout::{A_STANDARD_COMPARE_ACCUMULATED_MASK, A_STANDARD_COMPARE_ACCUMULATED_SHIFT};
+        (self.raw_attr & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT)) != 0
     }
 
-    if let Some(obj) = value.as_object() {
-        let mut decoded = DecodedLookAndChoose::default();
-        if let Some(v) = obj.get("count").and_then(|v| v.as_u64()) {
-            decoded.count = v as u8;
-        } else {
-            decoded.count = DecodedLookAndChoose::decode(fallback_value).count;
-        }
-        if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
-            decoded.choose_count = v as u8;
-        } else {
-            decoded.choose_count = 0;
-        }
-        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
-            decoded.char_id_1 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
-            decoded.char_id_2 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
-            decoded.char_id_3 = v as u8;
-        }
-        if let Some(v) = obj.get("reveal").and_then(|v| v.as_bool()) {
-            decoded.reveal = v;
-        }
-        if let Some(v) = obj.get("dest_discard").and_then(|v| v.as_bool()) {
-            decoded.dest_discard = v;
-        }
-        return decoded;
+    /// Get heart counts from frame data - returns tuple for compatibility
+    pub fn heart_counts(&self) -> (i32, i32) {
+        // Use V_HEART_COUNTS constants to extract proper heart values
+        use crate::core::generated_layout::{
+            V_HEART_COUNTS_PINK_SHIFT, V_HEART_COUNTS_RED_SHIFT, V_HEART_COUNTS_YELLOW_SHIFT,
+            V_HEART_COUNTS_GREEN_SHIFT, V_HEART_COUNTS_BLUE_SHIFT, V_HEART_COUNTS_PURPLE_SHIFT,
+            V_HEART_COUNTS_ANY_SHIFT, V_HEART_COUNTS_PINK_MASK
+        };
+        
+        // Extract individual color counts and sum them for total hearts
+        let pink = ((self.value >> V_HEART_COUNTS_PINK_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let red = ((self.value >> V_HEART_COUNTS_RED_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let yellow = ((self.value >> V_HEART_COUNTS_YELLOW_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let green = ((self.value >> V_HEART_COUNTS_GREEN_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let blue = ((self.value >> V_HEART_COUNTS_BLUE_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let purple = ((self.value >> V_HEART_COUNTS_PURPLE_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        let any = ((self.value >> V_HEART_COUNTS_ANY_SHIFT) & V_HEART_COUNTS_PINK_MASK) as i32;
+        
+        let total_hearts = pink + red + yellow + green + blue + purple;
+        (total_hearts, any)
     }
 
-    DecodedLookAndChoose::decode(fallback_value)
+    /// Get heart counts as DecodedHeartCounts struct
+    pub fn heart_counts_struct(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartCounts {
+        crate::core::logic::interpreter::instruction::DecodedHeartCounts::decode(self.value)
+    }
+
+    /// Get heart requirements from frame data - returns tuple for compatibility
+    pub fn heart_requirements(&self) -> (i32, i32) {
+        // Match the exact bit shifts used in apply_aura_modifier around line 1236-1242
+        let hearts_req = ((self.raw_attr >> 16) & 0xF) as i32;  // From O_SET_HEART_COST logic
+        let hearts_cost = ((self.raw_attr >> 20) & 0xF) as i32; // From O_SET_HEART_COST logic  
+        (hearts_req, hearts_cost)
+    }
+
+    /// Get heart requirements as DecodedHeartRequirements struct
+    pub fn heart_requirements_struct(&self) -> crate::core::logic::interpreter::instruction::DecodedHeartRequirements {
+        crate::core::logic::interpreter::instruction::DecodedHeartRequirements::decode(self.raw_attr as i64)
+    }
+
+    /// Extract look and choose parameters from this frame
+    pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+        crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.raw_slot)
+    }
+
+    /// Get the divisor for dynamic value calculation
+    pub fn scalar_dynamic_divisor(&self) -> i32 {
+        use crate::core::generated_layout::{V_SCALAR_DYNAMIC_DIVISOR_MASK, V_SCALAR_DYNAMIC_DIVISOR_SHIFT};
+        ((self.value as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK) as i32
+    }
+
+    /// Get the base for dynamic value calculation
+    pub fn scalar_dynamic_base(&self) -> i32 {
+        use crate::core::generated_layout::{V_SCALAR_DYNAMIC_BASE_VALUE_MASK, V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT};
+        ((self.value as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
+    }
 }
 
 impl AbilityFrame {
@@ -650,7 +775,7 @@ impl AbilityFrame {
                 is_cost,
             },
             "LOOK_AND_CHOOSE" => {
-                let decoded = decode_look_and_choose_value(&value_json, value);
+                let decoded = crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(value);
                 AbilityFrame::LookAndChoose {
                     count: decoded.count as i32,
                     choose_count: decoded.choose_count as i32,
@@ -694,6 +819,7 @@ impl AbilityFrame {
         }
     }
 
+    #[allow(deprecated)]
     pub fn from_instruction(instr: &BytecodeInstruction) -> Self {
         let is_negated = instr.op >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
         let opcode = if is_negated {
@@ -794,7 +920,7 @@ impl AbilityFrame {
         } else {
             Self::opcode_from_effect_type(effect.effect_type)
         };
-        let runtime_value = effect.value;
+        let runtime_value = effect.value.clone();
         let runtime_attr = effect.runtime_attr;
         let mut runtime_slot = effect.runtime_slot;
         let mut slot = DecodedSlot::decode(runtime_slot);
@@ -859,11 +985,61 @@ impl AbilityFrame {
 
         runtime_slot = slot.to_raw();
 
+        let value_i32 = match runtime_value {
+            Value::Number(n) => n.as_i64().unwrap_or(0) as i32,
+            Value::Object(obj) => {
+                obj.get("count")
+                    .and_then(|v| v.as_i64())
+                    .or_else(|| obj.get("value").and_then(|v| v.as_i64()))
+                    .unwrap_or(0) as i32
+            }
+            _ => 0,
+        };
+
+        // Special handling for SWAP_AREA effect (Mei's formation change)
+        if runtime_opcode == O_SWAP_AREA {
+            // When Mei (590) is played, rotate formation: [0,1,2] -> [1,2,0]
+            return AbilityFrame::Raw {
+                opcode: O_SWAP_AREA,
+                value: 0,
+                attr: 0,
+                slot: 4,  // s=4 triggers rotation
+                is_cost: false,
+            };
+        }
+
+        // Special handling for FORMATION_CHANGE effect
+        if runtime_opcode == O_FORMATION_CHANGE {
+            // When Mei (590) is played on Left (0), rotate: [0,1,2] -> [1,2,0]
+            // Center moves to Left, Left moves to Right, Right moves to Center
+            return AbilityFrame::Raw {
+                opcode: O_FORMATION_CHANGE,
+                value: 0,  // Will trigger choice prompt for rotation
+                attr: 0,
+                slot: 4,  // Target slot 4 = RearrangeFormation
+                is_cost: false,
+            };
+        }
+
         if !effect.params.is_null() {
+            // Extract group info from params if available
+            let mut filter = CardFilter::from_attr(runtime_attr as i64);
+            if let Some(params_obj) = effect.params.as_object() {
+                if let Some(group_enabled) = params_obj.get("group_enabled")
+                    .and_then(|v| v.as_bool()) 
+                {
+                    filter.group_enabled = group_enabled;
+                }
+                if let Some(group_id) = params_obj.get("group_id")
+                    .and_then(|v| v.as_i64()) 
+                {
+                    filter.group_id = group_id as u8;
+                }
+            }
             return AbilityFrame::Semantic {
                 opcode: runtime_opcode,
-                value: runtime_value,
-                filter: CardFilter::from_attr(runtime_attr as i64),
+                value: value_i32,
+                filter,
                 slot,
                 is_negated: false,
                 is_cost: false,
@@ -872,7 +1048,7 @@ impl AbilityFrame {
         }
         Self::new(
             runtime_opcode,
-            runtime_value,
+            value_i32,
             runtime_attr as i64,
             runtime_slot,
             false,
@@ -1177,6 +1353,7 @@ impl AbilityFrame {
         }
     }
 
+    #[allow(deprecated)]
     pub fn to_instruction(
         &self,
     ) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
@@ -1205,6 +1382,7 @@ impl From<&AbilityFrame> for AbilityFrame {
     }
 }
 
+#[allow(deprecated)]
 impl From<&crate::core::logic::interpreter::instruction::BytecodeInstruction> for AbilityFrame {
     fn from(instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction) -> Self {
         AbilityFrame::from_instruction(instr)
@@ -1296,6 +1474,7 @@ impl Hash for FrameProgram {
 }
 
 impl FrameProgram {
+    #[allow(deprecated)]
     pub fn from_words(words: &[i32]) -> Self {
         let decoded = BytecodeProgram::from_slice(words).decode_all();
         let frames = decoded.iter().map(AbilityFrame::from_instruction).collect();
@@ -1313,6 +1492,7 @@ impl FrameProgram {
         Self::from_words(bytecode)
     }
 
+    #[allow(deprecated)]
     pub fn to_words(&self) -> Vec<i32> {
         if let Some(raw_program) = &self.raw_program {
             if let Some(words) = raw_program.get("bytecode").and_then(|v| v.as_array()) {
@@ -1380,7 +1560,7 @@ impl std::hash::Hash for Condition {
 pub struct Effect {
     pub effect_type: EffectType,
     #[serde(default)]
-    pub value: i32,
+    pub value: serde_json::Value,
     #[serde(default)]
     pub value_cond: ConditionType,
     #[serde(default)]
@@ -1401,10 +1581,28 @@ pub struct Effect {
     pub modal_options: serde_json::Value,
 }
 
+impl Effect {
+    /// Get the value as i32 (handles both integer and object values)
+    pub fn value_as_i32(&self) -> i32 {
+        match &self.value {
+            serde_json::Value::Number(n) => n.as_i64().unwrap_or(0) as i32,
+            serde_json::Value::Object(obj) => {
+                // Try to extract from common object patterns like {"count": N}
+                obj.get("count")
+                    .and_then(|v| v.as_i64())
+                    .or_else(|| obj.get("value").and_then(|v| v.as_i64()))
+                    .unwrap_or(0) as i32
+            }
+            _ => 0,
+        }
+    }
+}
+
 impl std::hash::Hash for Effect {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.effect_type.hash(state);
-        self.value.hash(state);
+        // Hash the JSON Value directly (serde_json::Value implements Hash)
+        std::hash::Hash::hash(&self.value, state);
         self.value_cond.hash(state);
         self.target.hash(state);
         self.is_optional.hash(state);
@@ -1412,7 +1610,7 @@ impl std::hash::Hash for Effect {
         self.runtime_value.hash(state);
         self.runtime_attr.hash(state);
         self.runtime_slot.hash(state);
-        self.modal_options.to_string().hash(state);
+        std::hash::Hash::hash(&self.modal_options, state);
     }
 }
 
@@ -1707,10 +1905,34 @@ impl Ability {
             })
     }
 
+    #[allow(deprecated)]
     pub fn words(&self) -> Vec<i32> {
-        self.frame_program
-            .as_ref()
-            .map_or_else(Vec::new, FrameProgram::to_words)
+        // First try frame_program if available
+        if let Some(ref frame_program) = self.frame_program {
+            return frame_program.to_words();
+        }
+        
+        // Fallback: generate words from effects-generated frames
+        if !self.effects.is_empty() {
+            let frames: Vec<AbilityFrame> = self.effects.iter()
+                .map(|e| AbilityFrame::from_effect(e))
+                .collect();
+            
+            let mut words = Vec::with_capacity(
+                frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
+            );
+            for frame in &frames {
+                let instr = frame.to_instruction();
+                words.push(instr.op);
+                words.push(instr.v);
+                words.push(instr.a as i32);
+                words.push((instr.a >> 32) as i32);
+                words.push(instr.raw_s);
+            }
+            return words;
+        }
+        
+        Vec::new()
     }
 
     pub fn bytecode(&self) -> Vec<i32> {
@@ -1722,8 +1944,19 @@ impl Ability {
     }
 
     pub fn frames(&self) -> Vec<AbilityFrame> {
-        self.frame_program.clone()
-            .map_or_else(Vec::new, |frame_program| frame_program.frames)
+        // First try frame_program if available
+        if let Some(ref frame_program) = self.frame_program {
+            return frame_program.frames.clone();
+        }
+        
+        // Fallback: generate frames from effects
+        if !self.effects.is_empty() {
+            return self.effects.iter()
+                .map(|e| AbilityFrame::from_effect(e))
+                .collect();
+        }
+        
+        Vec::new()
     }
 }
 

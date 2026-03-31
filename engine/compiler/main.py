@@ -693,6 +693,7 @@ def _ability_from_dict(payload: dict[str, Any]) -> Ability:
                 params=_dict_or_empty(cond.get("params", {})),
                 is_negated=_coerce_bool(cond.get("is_negated", cond.get("negated", False))),
                 value=_coerce_int(cond.get("value", 0)),
+                attr=_coerce_int(cond.get("attr", 0)),  # Include attr field
             )
         )
 

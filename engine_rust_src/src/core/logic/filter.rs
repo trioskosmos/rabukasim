@@ -348,18 +348,40 @@ impl CardFilter {
         // 4. Value Filter (bits 24-31)
         if self.value_enabled {
             let actual_val = if let Some(h) = effective_hearts {
-                if self.compare_accumulated {
-                    if self.is_cost_type {
-                        let mut sum = 0;
-                        for i in 0..7 {
-                            if (self.color_mask & (1 << i)) != 0 && h[i] > 0 {
-                                sum += h[i];
-                            }
+                if self.is_cost_type {
+                    // For cost comparisons, sum only the colors specified in color_mask
+                    let mut sum = 0;
+                    for i in 0..7 {
+                        if (self.color_mask & (1 << i)) != 0 && h[i] > 0 {
+                            sum += h[i];
                         }
-                        sum
-                    } else {
-                        h.iter().sum::<u8>()
                     }
+                    sum
+                } else if self.compare_accumulated {
+                    // For accumulated value comparisons, sum all hearts
+                    h.iter().sum::<u8>()
+                } else {
+                    // For simple value threshold, sum hearts of the specified color(s)
+                    let mut sum = 0;
+                    for i in 0..7 {
+                        if (self.color_mask & (1 << i)) != 0 {
+                            sum += h[i];
+                        }
+                    }
+                    sum
+                }
+            } else if self.card_type == 2 {
+                // For Live cards not on stage, check required_hearts
+                if let Some(live) = db.get_live(cid) {
+                    let sum: u8 = live.required_hearts.iter().sum();
+                    sum
+                } else {
+                    0
+                }
+            } else if self.is_cost_type {
+                // For Member cards with cost comparison
+                if let Some(member) = db.get_member(cid) {
+                    member.cost as u8
                 } else {
                     0
                 }
@@ -381,6 +403,22 @@ impl CardFilter {
                 if actual_val < threshold {
                     return false;
                 }
+            }
+        }
+
+        // 5. Check is_tapped flag (bit 12)
+        if self.is_tapped {
+            if let Some((p_idx, s_idx)) = checked_slot {
+                if s_idx >= 0 && s_idx < 3 {
+                    if !state.players[p_idx as usize].is_tapped(s_idx as usize) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            } else {
+                // If no slot provided, can't verify tapped status
+                return false;
             }
         }
 

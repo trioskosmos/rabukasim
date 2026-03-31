@@ -27,6 +27,10 @@ mod tests {
         let ab = &card.abilities[0]; // Assuming ability 0 is the one
 
         println!("Bytecode: {:?}", ab.bytecode);
+        println!("Effects: {:?}", ab.effects);
+        println!("Frame program: {:?}", ab.frame_program);
+        println!("Conditions: {:?}", ab.conditions);
+        println!("Frames from ability: {:?}", ab.frames());
 
         state.resolve_ability(&db, ab, &ctx);
 

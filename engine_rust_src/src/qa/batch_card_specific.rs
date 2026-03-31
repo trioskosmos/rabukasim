@@ -772,7 +772,7 @@ mod tests {
 
         // 2. Perform "Activate Energy" by Niji Member
         println!("Step 1: Activating energy using Nijigasaki member.");
-        let mut ctx = AbilityContext {
+        let ctx = AbilityContext {
             source_card_id: niji_member_id,
             player_id: 0,
             activator_id: 0,
@@ -780,7 +780,8 @@ mod tests {
         };
 
         // Use the handler to simulate activation
-        let instr =
+        #[allow(deprecated)]
+        let _instr =
             crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         // Simplified: Directly set the activation mask instead of calling handler
         state.players[0].activated_energy_group_mask |= 1 << 2;

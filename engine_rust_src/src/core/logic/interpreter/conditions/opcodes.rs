@@ -340,10 +340,22 @@ fn check_condition_with_parts(
         C_GROUP_FILTER => {
             let lower_attr = attr & 0x00000000FFFFFFFF;
             let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
+            
+            // FIX: Use filter.group_id if available (from attr), otherwise fall back to val
+            // The attr bits contain the correct group_id from the YAML frame data
+            let group_id_from_filter = if filter.group_enabled {
+                filter.group_id as u64
+            } else {
+                0
+            };
+            
             let filter =
                 if !is_packed_r5 && (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300
                 {
                     0x10 | (lower_attr << 5)
+                } else if group_id_from_filter != 0 {
+                    // Use the correct group_id from filter.attr
+                    0x10 | (group_id_from_filter << 5)
                 } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
                     0x10 | (((val & 0x7F) as u64) << 5)
                 } else {

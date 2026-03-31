@@ -1,7 +1,7 @@
 use super::*;
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
 
 fn suspend_pay_energy(
     state: &mut GameState,
@@ -72,17 +72,16 @@ pub fn handle_pay_energy(
     ctx: &mut AbilityContext,
     frame_idx: usize,
     p_idx: usize,
-    frame: &AbilityFrame,
-    _v: i32, // Ignore param v, use frame.raw_value()
+    frame_data: &AbilityFrameComponents<'_>,
+    _v: i32, // Ignore param v, use frame_data.value
 ) -> HandlerResult {
-    let v = frame.value();
+    let v = frame_data.value;
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
         .count() as i32;
     let requires_explicit_selection =
         state.phase == Phase::Response || ctx.v_remaining > 0 || ctx.choice_index >= 0;
 
-    let frame_data = frame.components();
     let is_optional = frame_data.filter.is_optional;
 
     if state.debug.debug_mode {

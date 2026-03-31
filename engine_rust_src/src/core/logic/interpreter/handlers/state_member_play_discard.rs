@@ -1,5 +1,5 @@
 use super::*;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 #[path = "state_member_play_discard_place.rs"]
 mod state_member_play_discard_place;
 #[path = "state_member_play_discard_select.rs"]
@@ -13,7 +13,7 @@ pub fn handle_play_member_from_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     v: i32,
     a: i64,
@@ -33,7 +33,7 @@ pub fn handle_play_member_from_discard(
         )
     } else {
         let filter_target = (a as u64) & 0x03;
-        let is_opp = filter_target == 2 || frame.dslot().is_opponent;
+        let is_opp = filter_target == 2 || frame_data.slot.is_opponent;
         let t_idx = if is_opp {
             1 - (ctx.activator_id as usize)
         } else {

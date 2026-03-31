@@ -17,16 +17,36 @@
 
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::{
-    DecodedFilterAttr, DecodedLookAndChoose, DecodedSlot,
-};
 use crate::core::logic::interpreter::conditions::common::parse_condition_type;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fs;
 use super::models::*;
+
+// Custom deserializer to handle both arrays and objects for groups/units fields
+fn deserialize_u8_array<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    match value {
+        Value::Array(arr) => {
+            let mut result = Vec::new();
+            for item in arr {
+                if let Some(num) = item.as_u64() {
+                    result.push(num as u8);
+                }
+            }
+            Ok(result)
+        }
+        Value::Object(_) => {
+            // If it's an object, ignore it and return empty vec
+            Ok(Vec::new())
+        }
+        _ => Ok(Vec::new()),
+    }
+}
 
 /// Reference to a card in the database (either Member or Live)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,7 +85,9 @@ pub struct MemberCard {
     pub hearts: [u8; 7],
     pub blade_hearts: [u8; 7],
     pub blades: u32,
+    #[serde(default, deserialize_with = "deserialize_u8_array")]
     pub groups: Vec<u8>,
+    #[serde(default, deserialize_with = "deserialize_u8_array")]
     pub units: Vec<u8>,
     pub abilities: Vec<Ability>,
     #[serde(alias = "volume_icons")]
@@ -125,7 +147,9 @@ pub struct LiveCard {
     pub score: u32,
     pub required_hearts: [u8; 7],
     pub abilities: Vec<Ability>,
+    #[serde(default, deserialize_with = "deserialize_u8_array")]
     pub groups: Vec<u8>,
+    #[serde(default, deserialize_with = "deserialize_u8_array")]
     pub units: Vec<u8>,
     #[serde(alias = "volume_icons")]
     pub note_icons: u32,
@@ -660,285 +684,6 @@ impl CardDatabase {
             .map(|v| v as u8)
     }
 
-    #[allow(dead_code)]
-    fn parse_sparse_filter_attr(
-        value: Option<&Value>,
-        raw_attr: Option<&Value>,
-    ) -> DecodedFilterAttr {
-        let mut filter = raw_attr
-            .and_then(|value| value.as_i64())
-            .map(DecodedFilterAttr::decode)
-            .unwrap_or_default();
-
-        let Some(value) = value else {
-            return filter;
-        };
-        if let Some(raw) = value.as_i64() {
-            return DecodedFilterAttr::decode(raw);
-        }
-
-        let Some(obj) = value.as_object() else {
-            return filter;
-        };
-
-        if let Some(v) = obj.get("target_player").and_then(|v| v.as_u64()) {
-            filter.target_player = v as u8;
-        }
-        if let Some(v) = obj.get("card_type").and_then(|v| v.as_u64()) {
-            filter.card_type = v as u8;
-        }
-        if let Some(v) = obj.get("group_enabled").and_then(|v| v.as_bool()) {
-            filter.group_enabled = v;
-        }
-        if let Some(v) = obj.get("group_id").and_then(|v| v.as_u64()) {
-            filter.group_id = v as u8;
-        }
-        if let Some(v) = obj.get("is_tapped").and_then(|v| v.as_bool()) {
-            filter.is_tapped = v;
-        }
-        if let Some(v) = obj.get("has_blade_heart").and_then(|v| v.as_bool()) {
-            filter.has_blade_heart = v;
-        }
-        if let Some(v) = obj.get("not_has_blade_heart").and_then(|v| v.as_bool()) {
-            filter.not_has_blade_heart = v;
-        }
-        if let Some(v) = obj.get("unique_names").and_then(|v| v.as_bool()) {
-            filter.unique_names = v;
-        }
-        if let Some(v) = obj.get("unit_enabled").and_then(|v| v.as_bool()) {
-            filter.unit_enabled = v;
-        }
-        if let Some(v) = obj.get("unit_id").and_then(|v| v.as_u64()) {
-            filter.unit_id = v as u8;
-        }
-        if let Some(v) = obj.get("value_enabled").and_then(|v| v.as_bool()) {
-            filter.value_enabled = v;
-        }
-        if let Some(v) = obj.get("value_threshold").and_then(|v| v.as_u64()) {
-            filter.value_threshold = v as u8;
-        }
-        if let Some(v) = obj.get("is_le").and_then(|v| v.as_bool()) {
-            filter.is_le = v;
-        }
-        if let Some(v) = obj.get("is_cost_type").and_then(|v| v.as_bool()) {
-            filter.is_cost_type = v;
-        }
-        if let Some(v) = obj.get("color_mask").and_then(|v| v.as_u64()) {
-            filter.color_mask = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
-            filter.char_id_1 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
-            filter.char_id_2 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
-            filter.char_id_3 = v as u8;
-        }
-        if let Some(v) = obj.get("zone_mask").and_then(|v| v.as_u64()) {
-            filter.zone_mask = v as u8;
-        }
-        if let Some(v) = obj.get("special_id").and_then(|v| v.as_u64()) {
-            filter.special_id = v as u8;
-        }
-        if let Some(v) = obj.get("is_setsuna").and_then(|v| v.as_bool()) {
-            filter.is_setsuna = v;
-        }
-        if let Some(v) = obj.get("compare_accumulated").and_then(|v| v.as_bool()) {
-            filter.compare_accumulated = v;
-        }
-        if let Some(v) = obj.get("is_optional").and_then(|v| v.as_bool()) {
-            filter.is_optional = v;
-        }
-        if let Some(v) = obj.get("keyword_energy").and_then(|v| v.as_bool()) {
-            filter.keyword_energy = v;
-        }
-        if let Some(v) = obj.get("keyword_member").and_then(|v| v.as_bool()) {
-            filter.keyword_member = v;
-        }
-        filter
-    }
-
-    #[allow(dead_code)]
-    fn parse_sparse_slot(
-        value: Option<&Value>,
-        raw_slot: Option<&Value>,
-        params: Option<&Value>,
-    ) -> DecodedSlot {
-        let mut slot = raw_slot
-            .and_then(|value| value.as_i64())
-            .map(|raw| DecodedSlot::decode(raw as i32))
-            .unwrap_or_default();
-
-        let Some(value) = value else {
-            return slot;
-        };
-        if let Some(raw) = value.as_i64() {
-            return DecodedSlot::decode(raw as i32);
-        }
-
-        let Some(obj) = value.as_object() else {
-            return slot;
-        };
-
-        if let Some(v) = obj.get("target_slot").and_then(|v| v.as_u64()) {
-            slot.target_slot = v as u8;
-        }
-        if let Some(v) = obj.get("comparison").and_then(|v| v.as_u64()) {
-            slot.comparison = v as u8;
-        }
-        if let Some(v) = obj.get("source_zone").and_then(Self::parse_sparse_zone) {
-            slot.source_zone = v;
-        }
-        if let Some(v) = obj.get("dest_zone").and_then(Self::parse_sparse_zone) {
-            slot.dest_zone = v;
-        }
-        if let Some(v) = obj.get("remainder_zone").and_then(|v| v.as_u64()) {
-            slot.remainder_zone = v as u8;
-        }
-        if let Some(v) = obj.get("is_opponent").and_then(|v| v.as_bool()) {
-            slot.is_opponent = v;
-        }
-        if let Some(v) = obj.get("is_reveal_until_live").and_then(|v| v.as_bool()) {
-            slot.is_reveal_until_live = v;
-        }
-        if let Some(v) = obj.get("is_baton_slot").and_then(|v| v.as_bool()) {
-            slot.is_baton_slot = v;
-        }
-        if let Some(v) = obj.get("is_empty_slot").and_then(|v| v.as_bool()) {
-            slot.is_empty_slot = v;
-        }
-        if let Some(v) = obj.get("is_wait").and_then(|v| v.as_bool()) {
-            slot.is_wait = v;
-        }
-        if let Some(v) = obj.get("is_dynamic").and_then(|v| v.as_bool()) {
-            slot.is_dynamic = v;
-        }
-        if let Some(v) = obj.get("area_idx").and_then(|v| v.as_u64()) {
-            slot.area_idx = v as u8;
-        }
-
-        if slot.comparison == 0 {
-            if let Some(params_obj) = params.and_then(|v| v.as_object()) {
-                let comp = params_obj
-                    .get("comparison")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_ascii_uppercase())
-                    .or_else(|| {
-                        if params_obj.contains_key("GE") {
-                            Some("GE".to_string())
-                        } else if params_obj.contains_key("GT") {
-                            Some("GT".to_string())
-                        } else if params_obj.contains_key("LE") {
-                            Some("LE".to_string())
-                        } else if params_obj.contains_key("LT") {
-                            Some("LT".to_string())
-                        } else if params_obj.contains_key("EQ") {
-                            Some("EQ".to_string())
-                        } else {
-                            None
-                        }
-                    });
-
-                slot.comparison = match comp.as_deref() {
-                    Some("GT") => 1,
-                    Some("LT") => 2,
-                    Some("GE") => 3,
-                    Some("LE") => 4,
-                    Some("EQ") => 0,
-                    _ => slot.comparison,
-                };
-            }
-        }
-        slot
-    }
-
-    #[allow(dead_code)]
-    fn parse_sparse_zone(value: &Value) -> Option<crate::core::enums::Zone> {
-        if let Some(raw) = value.as_u64() {
-            return Some(match raw as i32 {
-                crate::core::enums::ZONE_DECK_TOP => crate::core::enums::Zone::DeckTop,
-                crate::core::enums::ZONE_DECK_BOTTOM => crate::core::enums::Zone::DeckBottom,
-                crate::core::enums::ZONE_ENERGY => crate::core::enums::Zone::Energy,
-                crate::core::enums::ZONE_STAGE => crate::core::enums::Zone::Stage,
-                crate::core::enums::ZONE_HAND => crate::core::enums::Zone::Hand,
-                crate::core::enums::ZONE_DISCARD => crate::core::enums::Zone::Discard,
-                crate::core::enums::ZONE_DECK => crate::core::enums::Zone::Deck,
-                crate::core::enums::ZONE_LIVE_SET => crate::core::enums::Zone::LiveSet,
-                crate::core::enums::ZONE_SUCCESS_PILE => crate::core::enums::Zone::SuccessPile,
-                crate::core::enums::ZONE_YELL => crate::core::enums::Zone::Yell,
-                _ => crate::core::enums::Zone::Default,
-            });
-        }
-
-        let text = value.as_str()?.trim().to_ascii_uppercase();
-        Some(match text.as_str() {
-            "DECK_TOP" | "DECKTOP" => crate::core::enums::Zone::DeckTop,
-            "DECK_BOTTOM" | "DECKBOTTOM" => crate::core::enums::Zone::DeckBottom,
-            "ENERGY" => crate::core::enums::Zone::Energy,
-            "STAGE" => crate::core::enums::Zone::Stage,
-            "HAND" => crate::core::enums::Zone::Hand,
-            "DISCARD" => crate::core::enums::Zone::Discard,
-            "DECK" => crate::core::enums::Zone::Deck,
-            "LIVE_SET" | "LIVESET" => crate::core::enums::Zone::LiveSet,
-            "SUCCESS_PILE" | "SUCCESSPILE" => crate::core::enums::Zone::SuccessPile,
-            "YELL" => crate::core::enums::Zone::Yell,
-            _ => crate::core::enums::Zone::Default,
-        })
-    }
-
-    #[allow(dead_code)]
-    fn parse_sparse_look_choose(value: Option<&Value>) -> Option<DecodedLookAndChoose> {
-        let value = value?;
-        if let Some(raw) = value.as_i64() {
-            return Some(DecodedLookAndChoose::decode(raw as i32));
-        }
-        let obj = value.as_object()?;
-        let mut decoded = DecodedLookAndChoose::default();
-        if let Some(v) = obj.get("count").and_then(|v| v.as_u64()) {
-            decoded.count = v as u8;
-        }
-        if let Some(v) = obj.get("choose_count").and_then(|v| v.as_u64()) {
-            decoded.choose_count = v as u8;
-        } else if let Some(v) = obj
-            .get("choose_count")
-            .and_then(|v| v.as_str().and_then(|s| s.parse::<u64>().ok()))
-        {
-            decoded.choose_count = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_1").and_then(|v| v.as_u64()) {
-            decoded.char_id_1 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_2").and_then(|v| v.as_u64()) {
-            decoded.char_id_2 = v as u8;
-        }
-        if let Some(v) = obj.get("char_id_3").and_then(|v| v.as_u64()) {
-            decoded.char_id_3 = v as u8;
-        }
-        if let Some(v) = obj.get("reveal").and_then(|v| v.as_bool()) {
-            decoded.reveal = v;
-        }
-        if let Some(v) = obj.get("dest_discard").and_then(|v| v.as_bool()) {
-            decoded.dest_discard = v;
-        }
-        Some(decoded)
-    }
-
-    #[allow(dead_code)]
-    fn opcode_id_from_name(opcode_name: &str) -> i32 {
-        match opcode_name {
-            "RETURN" => O_RETURN,
-            "DRAW" => O_DRAW,
-            "RECOVER_LIVE" => O_RECOVER_LIVE,
-            "RECOVER_MEMBER" => O_RECOVER_MEMBER,
-            "LOOK_AND_CHOOSE" => O_LOOK_AND_CHOOSE,
-            "SELECT_MEMBER" => O_SELECT_MEMBER,
-            "MOVE_MEMBER" => O_MOVE_MEMBER,
-            "META_RULE" => O_META_RULE,
-            _ => 0,
-        }
-    }
-
     /// Extract the logical ID (0-4095) from a packed card ID.
     pub fn to_logic_id(packed_id: i32) -> usize {
         (packed_id & LOGIC_ID_MASK) as usize
@@ -1009,6 +754,21 @@ impl CardDatabase {
             }
         }
         mask
+    }
+
+    /// Get all member card IDs
+    pub fn all_member_ids(&self) -> Vec<i32> {
+        self.members.keys().copied().collect()
+    }
+
+    /// Get all live card IDs  
+    pub fn all_live_ids(&self) -> Vec<i32> {
+        self.lives.keys().copied().collect()
+    }
+
+    /// Get all energy card IDs
+    pub fn all_energy_ids(&self) -> Vec<i32> {
+        self.energy_db.keys().copied().collect()
     }
 }
 
@@ -1954,13 +1714,6 @@ pub fn program_needs_early_pause_opcode(program: &FrameProgram) -> i32 {
         }
     }
     -1
-}
-
-#[derive(Debug, Clone, Copy, Default)]
-struct DerivedChoiceMetadata {
-    requires_selection: bool,
-    choice_flags: u8,
-    choice_count: u8,
 }
 
 pub const CHARACTER_NAMES: [&str; 78] = [

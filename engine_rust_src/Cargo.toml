@@ -106,6 +106,51 @@ name = "bench_throughput"
 path = "examples/bench_throughput.rs"
 test = false
 
+[[bin]]
+name = "debug_game_log"
+path = "examples/debug_game_log.rs"
+test = false
+
+[[bin]]
+name = "bench_granular_real"
+path = "examples/bench_granular_real.rs"
+test = false
+
+[[bin]]
+name = "bench_fast"
+path = "examples/bench_fast.rs"
+test = false
+
+[[bin]]
+name = "simple_game"
+path = "src/bin/simple_game.rs"
+test = false
+
+[[bin]]
+name = "real_deck_benchmark"
+path = "examples/real_deck_benchmark.rs"
+test = false
+
+[[bin]]
+name = "proper_game_log"
+path = "examples/proper_game_log.rs"
+test = false
+
+[[bin]]
+name = "simple_game_log"
+path = "examples/simple_game_log.rs"
+test = false
+
+[[bin]]
+name = "micro_liveset"
+path = "examples/micro_liveset.rs"
+test = false
+
+[[bin]]
+name = "deep_liveset"
+path = "examples/deep_liveset.rs"
+test = false
+
 [[bench]]
 name = "game_simulation"
 path = "benches/game_simulation.rs"

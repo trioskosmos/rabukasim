@@ -278,6 +278,7 @@ pub struct DebugState {
     pub executed_opcodes: Option<HashSet<i32>>,
     #[serde(default)]
     pub trace_log: Vec<String>,
+    pub response_pass_count: u32, // Anti-softlock counter
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

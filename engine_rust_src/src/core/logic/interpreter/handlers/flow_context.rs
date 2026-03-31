@@ -68,3 +68,23 @@ pub fn handle_color_select(
 
 // Note: handle_repeat_ability, handle_set_target_self, handle_set_target_opponent,
 // and handle_flavor_action have been moved to unified.rs
+
+/// Simplified version - same as original since it doesn't need frame
+pub fn handle_opponent_choose_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_idx: usize,
+) -> HandlerResult {
+    handle_opponent_choose(state, db, ctx, frame_idx)
+}
+
+/// Simplified version - same as original since it doesn't need frame
+pub fn handle_color_select_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_idx: usize,
+) -> HandlerResult {
+    handle_color_select(state, db, ctx, frame_idx)
+}

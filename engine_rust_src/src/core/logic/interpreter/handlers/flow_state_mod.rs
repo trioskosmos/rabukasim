@@ -2,7 +2,7 @@ use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::constants::{DYNAMIC_VALUE, FILTER_MASK_LOWER};
 use crate::core::logic::interpreter::conditions::resolve_count;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::resolve_target_slot;
 
@@ -11,7 +11,7 @@ pub fn handle_state_modifiers(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     op: i32,
     v: i32,
     a: i64,
@@ -77,4 +77,27 @@ pub fn handle_state_modifiers(
         _ => {}
     }
     HandlerResult::Continue
+}
+
+/// Simplified version that works directly with frame_data
+pub fn handle_state_modifiers_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+) -> HandlerResult {
+    handle_state_modifiers(
+        state,
+        db,
+        ctx,
+        frame_data,
+        frame_data.opcode,
+        frame_data.value,
+        frame_data.raw_attr as i64,
+        frame_data.raw_slot,
+        ctx.player_id as usize,
+        ctx.player_id as usize,
+        frame_data.slot,
+        frame_data.slot.target_slot as i32,
+    )
 }

@@ -2,7 +2,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
 use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot, HandlerResult};
 use crate::core::{O_LOOK_DECK, O_ORDER_DECK, O_LOOK_REORDER_DISCARD, O_REVEAL_CARDS, O_REVEAL_UNTIL, O_SEARCH_DECK, O_MOVE_TO_DECK, O_SWAP_CARDS, O_MOVE_TO_DISCARD, O_LOOK_AND_CHOOSE, O_RECOVER_LIVE, O_RECOVER_MEMBER, O_PLAY_LIVE_FROM_DISCARD, O_SELECT_CARDS, O_SWAP_ZONE, O_LOOK_DECK_DYNAMIC, O_CHEER_REVEAL};
@@ -62,10 +62,9 @@ pub fn handle_deck_zones(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let op = frame_data.opcode;
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
@@ -96,15 +95,15 @@ pub fn handle_deck_zones(
         O_SWAP_CARDS => handle_swap_cards(state, p_idx, v, resolved_slot),
         O_REVEAL_UNTIL => handle_reveal_until(state, db, ctx, p_idx, v, a, s, resolved_slot),
         O_LOOK_DECK | O_REVEAL_CARDS | O_CHEER_REVEAL => {
-            handle_look_cards(state, db, ctx, frame, p_idx, op, v, a, frame_idx, look_resolved_slot)
+            handle_look_cards(state, db, ctx, &frame_data, p_idx, op, v, a, frame_idx, look_resolved_slot)
         }
         O_LOOK_DECK_DYNAMIC => handle_look_deck_dynamic(state, ctx, p_idx, v),
-        O_MOVE_TO_DISCARD => handle_move_to_discard(state, db, ctx, frame, frame_idx),
-        O_LOOK_AND_CHOOSE => handle_look_and_choose(state, db, ctx, frame, frame_idx),
-        O_RECOVER_LIVE | O_RECOVER_MEMBER => handle_recovery(state, db, ctx, frame, frame_idx, op),
-        O_PLAY_LIVE_FROM_DISCARD => handle_play_live_from_discard(state, db, ctx, frame, frame_idx),
-        O_SELECT_CARDS => handle_select_cards(state, db, ctx, frame, frame_idx),
-        O_SWAP_ZONE => handle_swap_zone(state, db, ctx, frame, frame_idx),
+        O_MOVE_TO_DISCARD => handle_move_to_discard(state, db, ctx, &frame_data, frame_idx),
+        O_LOOK_AND_CHOOSE => handle_look_and_choose(state, db, ctx, &frame_data, frame_idx),
+        O_RECOVER_LIVE | O_RECOVER_MEMBER => handle_recovery(state, db, ctx, &frame_data, frame_idx, op),
+        O_PLAY_LIVE_FROM_DISCARD => handle_play_live_from_discard(state, db, ctx, &frame_data, frame_idx),
+        O_SELECT_CARDS => handle_select_cards(state, db, ctx, &frame_data, frame_idx),
+        O_SWAP_ZONE => handle_swap_zone(state, db, ctx, &frame_data, frame_idx),
         _ => HandlerResult::Continue,
     }
 }
@@ -475,7 +474,7 @@ fn handle_look_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     p_idx: usize,
     op: i32,
     v: i32,
@@ -484,7 +483,7 @@ fn handle_look_cards(
     resolved_slot: i32,
 ) -> HandlerResult {
     let count = v as usize;
-    let filter_attr = filter_attr_from_params(frame.components().params).unwrap_or(a as u64);
+    let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or(a as u64);
 
     if resolved_slot == 6 {
         // Reveal from hand

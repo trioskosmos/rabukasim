@@ -3,14 +3,14 @@ use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_move_member(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     a: i64,
@@ -19,7 +19,6 @@ pub fn handle_move_member(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
     let is_optional = (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
-    let frame_data = _frame.components();
     let is_position_change_choice = frame_data
         .params
         .map(|params| {

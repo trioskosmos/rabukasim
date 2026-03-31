@@ -1,13 +1,13 @@
 use super::HandlerResult;
 use crate::core::enums::*;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
 
-fn is_interactive_frame(frame: &AbilityFrame) -> bool {
+fn is_interactive_frame(frame_data: &AbilityFrameComponents<'_>) -> bool {
     matches!(
-        frame.opcode(),
+        frame_data.opcode,
         O_SELECT_MEMBER
             | O_SELECT_LIVE
             | O_SELECT_PLAYER
@@ -27,17 +27,16 @@ pub fn handle_optional_nop(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let prompt_like = frame_data.filter.is_optional;
 
     if !prompt_like || ctx.choice_index != -1 || ctx.v_remaining != -1 {
         return HandlerResult::Continue;
     }
 
-    let choice_type = if is_interactive_frame(frame) {
+    let choice_type = if is_interactive_frame(frame_data) {
         if frame_data.slot.target_slot == 4 {
             ChoiceType::SelectStage
         } else if frame_data.opcode == O_SELECT_CARDS {
@@ -141,4 +140,14 @@ pub fn suspend_choice_with_options(
     } else {
         HandlerResult::Continue
     }
+}
+
+/// Simplified version that works directly with frame_data
+pub fn handle_optional_nop_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+) -> HandlerResult {
+    handle_optional_nop(state, db, ctx, frame_data, 0)
 }

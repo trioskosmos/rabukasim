@@ -1,4 +1,3 @@
-use crate::core::enums::*;
 use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
@@ -6,6 +5,7 @@ use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
 use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents, Ability};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, Zone};
+use crate::core::enums::ChoiceType;
 use crate::core::{O_MOVE_TO_DISCARD, O_NOP};
 use super::super::HandlerResult;
 
@@ -13,10 +13,9 @@ pub fn handle_move_to_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let a = frame_data.raw_attr as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
@@ -131,7 +130,7 @@ pub fn handle_move_to_discard(
             }
         } else if count > 0 && !is_deck_zone(source_zone) {
             // Need specific card selection from hand/stage/discard
-            let mut filter_obj = frame.filter();
+            let mut filter_obj = CardFilter::default();
             match source_zone {
                 Zone::Stage => filter_obj.zone_mask = 4,  // Stage mask
                 Zone::Hand => filter_obj.zone_mask = 6,   // Hand mask
@@ -224,7 +223,7 @@ pub fn handle_move_to_discard(
 
                 if has_cards {
                     next_ctx.choice_index = 0;
-                    return handle_move_to_discard(state, db, &mut next_ctx, frame, frame_idx);
+                    return handle_move_to_discard(state, db, &mut next_ctx, frame_data, frame_idx);
                 }
             }
 

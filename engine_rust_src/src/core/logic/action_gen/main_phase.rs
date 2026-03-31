@@ -149,6 +149,8 @@ impl ActionGenerator for MainPhaseGenerator {
         let mut slot_costs = [0; 3];
         let mut stage_data = [None; 3];
         let mut slot_prevents_baton_touch = [false; 3];
+        let mut has_empty_slots = [false; 3];
+        
         for s in 0..3 {
             if player.stage[s] >= 0 {
                 if let Some(prev) = db.get_member(player.stage[s]) {
@@ -157,6 +159,8 @@ impl ActionGenerator for MainPhaseGenerator {
                     slot_prevents_baton_touch[s] =
                         GameState::has_restriction(state, p_idx, s, O_PREVENT_BATON_TOUCH, db);
                 }
+            } else {
+                has_empty_slots[s] = true;
             }
         }
 
@@ -180,6 +184,7 @@ impl ActionGenerator for MainPhaseGenerator {
                         continue;
                     }
 
+                    // Fast path: skip empty slots that don't need baton touch logic
                     let mut cost = base_cost;
                     if player.stage[slot_idx] >= 0 {
                         cost = (cost - slot_costs[slot_idx]).max(0);

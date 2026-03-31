@@ -1,6 +1,7 @@
 /// Position and formation handlers routed through focused submodules.
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::models::AbilityFrame;
 
 #[path = "state_energy_place.rs"]
 mod state_energy_place;

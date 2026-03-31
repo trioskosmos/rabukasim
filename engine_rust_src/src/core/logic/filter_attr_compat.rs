@@ -222,7 +222,7 @@ fn apply_string_token(filter: &mut CardFilter, extras: &mut u64, part: &str) {
             let name_value = part_trimmed[eq_pos + 1..].trim();
             // Store first character as a simple hash in color_mask
             if let Some(first_char) = name_value.chars().next() {
-                filter.color_mask = ((first_char as u8) & 0x7F);
+                filter.color_mask = (first_char as u8) & 0x7F;
             }
         }
         return;

@@ -2,11 +2,11 @@ use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::handlers::flow_helpers::current_effect_by_frame_index;
+use crate::core::logic::interpreter::handlers::flow_helpers::current_effect_by_frame_data;
 use crate::core::logic::interpreter::handlers::flow_helpers::{
-    current_effect, discard_current_yell_pile,
+    current_effect_from_data, discard_current_yell_pile,
 };
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::performance::do_yell;
 use crate::core::logic::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -22,10 +22,10 @@ fn target_player_for_meta_rule(base_p: usize, slot_info: crate::core::logic::int
 fn current_meta_rule_effect<'a>(
     db: &'a CardDatabase,
     ctx: &AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> Option<&'a crate::core::logic::Effect> {
-    current_effect_by_frame_index(db, ctx, frame, frame_idx).or_else(|| current_effect(db, ctx, frame))
+    current_effect_by_frame_data(db, ctx, frame_data, frame_idx).or_else(|| current_effect_from_data(db, ctx, frame_data))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -33,7 +33,7 @@ pub fn handle_meta_rule(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     a: i64,
     v: i32,
@@ -43,7 +43,7 @@ pub fn handle_meta_rule(
     target_slot: i32,
 ) -> HandlerResult {
     let target_p_idx = target_player_for_meta_rule(base_p, slot_info, target_slot);
-    let effect_lookup = current_meta_rule_effect(db, ctx, frame, frame_idx).or_else(|| {
+    let effect_lookup = current_meta_rule_effect(db, ctx, frame_data, frame_idx).or_else(|| {
         let ab_idx = usize::try_from(ctx.ability_index).ok()?;
         db.get_live(ctx.source_card_id)
             .and_then(|card| card.abilities.get(ab_idx))
@@ -137,12 +137,12 @@ pub fn handle_meta_rule(
             let all_active = state.players[p_idx].tapped_energy_count() == 0;
             return HandlerResult::SetCond(all_active);
         }
-    } else if frame.opcode() == O_META_RULE && v == 1 && frame.components().filter.card_type == 2 {
+    } else if frame_data.opcode == O_META_RULE && v == 1 && frame_data.filter.card_type == 2 {
         let all_active = state.players[p_idx].tapped_energy_count() == 0;
         return HandlerResult::SetCond(all_active);
     }
 
-    let is_cheer_mod = frame.opcode() == O_META_RULE
+    let is_cheer_mod = frame_data.opcode == O_META_RULE
         && (matches!(rule_type.as_deref(), Some("CHEER_MOD"))
             || matches!(rule_name.as_deref(), Some("CHEER_MOD"))
             || matches!(raw_effect, Some("CHEER_MOD"))
@@ -156,7 +156,7 @@ pub fn handle_meta_rule(
         return HandlerResult::Continue;
     }
 
-    if frame.opcode() == O_META_RULE
+    if frame_data.opcode == O_META_RULE
         && rule_type.is_none()
         && rule_name.is_none()
         && raw_effect.is_none()

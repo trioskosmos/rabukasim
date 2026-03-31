@@ -1,4 +1,4 @@
-use crate::core::logic::models::{Ability, AbilityFrame};
+use crate::core::logic::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use crate::core::logic::{AbilityContext, CardDatabase, Effect, GameState};
 
 fn find_effect_in_abilities<'a, F>(
@@ -43,14 +43,14 @@ pub fn current_effect<'a>(
 pub fn current_effect_by_frame_index<'a>(
     db: &'a CardDatabase,
     ctx: &AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> Option<&'a Effect> {
     let matches_frame = |candidate: &AbilityFrame| {
-        candidate.opcode() == frame.opcode()
-            && candidate.value() == frame.value()
-            && candidate.attr() == frame.attr()
-            && candidate.slot() == frame.slot()
+        candidate.opcode() == frame_data.opcode
+            && candidate.value() == frame_data.value
+            && candidate.attr() == frame_data.raw_attr
+            && candidate.slot() == frame_data.raw_slot
     };
 
     let find_from_card = |abilities: &'a [Ability]| {
@@ -70,6 +70,62 @@ pub fn current_effect_by_frame_index<'a>(
         .or_else(|| {
             db.get_member(ctx.source_card_id)
                 .and_then(|card| find_from_card(&card.abilities))
+        })
+}
+
+/// Version that works with AbilityFrameComponents directly
+pub fn current_effect_by_frame_data<'a>(
+    db: &'a CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> Option<&'a Effect> {
+    let matches_frame = |candidate: &AbilityFrame| {
+        candidate.opcode() == frame_data.opcode
+            && candidate.value() == frame_data.value
+            && candidate.attr() == frame_data.raw_attr
+            && candidate.slot() == frame_data.raw_slot
+    };
+
+    let find_from_card = |abilities: &'a [Ability]| {
+        abilities.iter().find_map(|ability| {
+            let program = ability.frame_program.as_ref()?;
+            let candidate = program.frames.get(frame_idx)?;
+            if matches_frame(candidate) {
+                ability.effects.get(frame_idx)
+            } else {
+                None
+            }
+        })
+    };
+
+    db.get_live(ctx.source_card_id)
+        .and_then(|card| find_from_card(&card.abilities))
+        .or_else(|| {
+            db.get_member(ctx.source_card_id)
+                .and_then(|card| find_from_card(&card.abilities))
+        })
+}
+
+/// Version that works with AbilityFrameComponents directly
+pub fn current_effect_from_data<'a>(
+    db: &'a CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
+) -> Option<&'a Effect> {
+    let ab_idx = usize::try_from(ctx.ability_index).ok()?;
+    let matches_frame = |effect: &Effect| {
+        effect.runtime_opcode == frame_data.opcode
+            && effect.runtime_value == frame_data.value
+            && effect.runtime_attr == frame_data.raw_attr
+            && effect.runtime_slot == frame_data.raw_slot
+    };
+
+    db.get_live(ctx.source_card_id)
+        .and_then(|card| find_effect_in_abilities(&card.abilities, ab_idx, &matches_frame))
+        .or_else(|| {
+            db.get_member(ctx.source_card_id)
+                .and_then(|card| find_effect_in_abilities(&card.abilities, ab_idx, &matches_frame))
         })
 }
 

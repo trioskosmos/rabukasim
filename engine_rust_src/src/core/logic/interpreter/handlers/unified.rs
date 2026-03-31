@@ -25,9 +25,8 @@ pub fn handle_calc_sum_cost(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let sum: i32 = ctx.selected_cards
         .iter()
         .filter(|&&cid| cid >= 0)
@@ -55,9 +54,8 @@ pub fn handle_negate_effect(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
     let p_idx = p_idx(ctx);
@@ -97,18 +95,18 @@ pub fn handle_negate_effect(
     HandlerResult::Continue
 }
 
-pub fn handle_set_target_self(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, _frame: &AbilityFrame) -> HandlerResult {
+pub fn handle_set_target_self(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, _frame_data: &AbilityFrameComponents<'_>) -> HandlerResult {
     ctx.player_id = ctx.activator_id;
     HandlerResult::Continue
 }
 
-pub fn handle_set_target_opponent(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, _frame: &AbilityFrame) -> HandlerResult {
+pub fn handle_set_target_opponent(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, _frame_data: &AbilityFrameComponents<'_>) -> HandlerResult {
     ctx.player_id = 1 - ctx.activator_id;
     HandlerResult::Continue
 }
 
-pub fn handle_repeat_ability(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, frame: &AbilityFrame) -> HandlerResult {
-    let max_repeats = frame.components().value;
+pub fn handle_repeat_ability(_state: &mut GameState, _db: &CardDatabase, ctx: &mut AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> HandlerResult {
+    let max_repeats = frame_data.value;
     if max_repeats == 0 || ctx.repeat_count < max_repeats as i16 {
         ctx.repeat_count = ctx.repeat_count.saturating_add(1);
         HandlerResult::Branch(0)
@@ -117,8 +115,7 @@ pub fn handle_repeat_ability(_state: &mut GameState, _db: &CardDatabase, ctx: &m
     }
 }
 
-pub fn handle_flavor_action(state: &mut GameState, _db: &CardDatabase, _ctx: &mut AbilityContext, frame: &AbilityFrame) -> HandlerResult {
-    let frame_data = frame.components();
+pub fn handle_flavor_action(state: &mut GameState, _db: &CardDatabase, _ctx: &mut AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> HandlerResult {
     if state.debug.debug_mode {
         println!(
             "[DEBUG] FLAVOR_ACTION: {}",
@@ -136,9 +133,8 @@ pub fn handle_draw(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let p_idx = p_idx(ctx);
     let count = if frame_data.filter.compare_accumulated {
@@ -202,14 +198,13 @@ pub fn handle_energy_charge(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
+    let op = frame_data.opcode;
     let v = frame_data.value;
-    let slot = frame_data.slot;
     let p_idx = p_idx(ctx);
-    let target_p = if slot.is_opponent { 1 - p_idx } else { p_idx };
-    let is_wait = slot.is_wait;
+    let target_p = if frame_data.slot.is_opponent { 1 - p_idx } else { p_idx };
+    let is_wait = frame_data.slot.is_wait;
     
     for _ in 0..v {
         if let Some(cid) = state.players[target_p].energy_deck.pop() {
@@ -244,13 +239,12 @@ pub fn handle_pay_energy(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
     use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO};
     use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice_with_options;
     
-    let frame_data = frame.components();
     let v = frame_data.value;
     let is_optional = frame_data.filter.is_optional;
     let p_idx = p_idx(ctx);
@@ -364,9 +358,8 @@ pub fn handle_activate_energy(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let p_idx = p_idx(ctx);
     let mut count = 0;
@@ -397,9 +390,8 @@ pub fn handle_pay_energy_dynamic(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let p_idx = p_idx(ctx);
     let base_score = state.players[p_idx].score as i32;
@@ -430,10 +422,9 @@ pub fn handle_place_energy_under_member(
     state: &mut GameState,
     _db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let p_idx = p_idx(ctx);
     let slot_info = frame_data.slot;
     let src_zone = slot_info.source_zone as u8;

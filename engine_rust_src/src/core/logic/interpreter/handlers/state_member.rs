@@ -1,4 +1,4 @@
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 use crate::core::logic::interpreter::handlers::HandlerResult;
 
@@ -29,18 +29,11 @@ pub use state_member_play::handle_discard_placement;
 
 pub fn handle_member_state(
     state: &mut GameState,
-
     db: &CardDatabase,
-
     ctx: &mut AbilityContext,
-
-    frame: impl Into<AbilityFrame>,
-
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame: AbilityFrame = frame.into();
-    let frame_data = frame.components();
-
     let op = frame_data.opcode;
     let v = frame_data.value;
     let a = frame_data.raw_attr as i64;
@@ -83,7 +76,7 @@ pub fn handle_member_state(
                 state,
                 db,
                 ctx,
-                &frame,
+                &frame_data,
                 frame_idx,
                 p_idx,
                 resolved_slot,
@@ -209,7 +202,7 @@ pub fn handle_member_state(
                 state,
                 db,
                 ctx,
-                &frame,
+                &frame_data,
                 frame_idx,
                 target_p_idx,
                 a,
@@ -218,7 +211,7 @@ pub fn handle_member_state(
         }
 
         O_TAP_OPPONENT => {
-            return state_member_tap::handle_tap_opponent(state, db, ctx, &frame, frame_idx, a, v);
+            return state_member_tap::handle_tap_opponent(state, db, ctx, &frame_data, frame_idx, a, v);
         }
 
         O_MOVE_MEMBER => {
@@ -226,7 +219,7 @@ pub fn handle_member_state(
                 state,
                 db,
                 ctx,
-                &frame,
+                &frame_data,
                 frame_idx,
                 p_idx,
                 a,
@@ -241,7 +234,7 @@ pub fn handle_member_state(
                 state,
                 db,
                 ctx,
-                &frame,
+                &frame_data,
                 frame_idx,
                 p_idx,
                 a,
@@ -278,13 +271,13 @@ pub fn handle_member_state(
 
         O_PLAY_MEMBER_FROM_HAND => {
             return state_member_play::handle_play_member_from_hand(
-                state, db, ctx, &frame, frame_idx, p_idx, v, a, s,
+                state, db, ctx, &frame_data, frame_idx, p_idx, v, a, s,
             );
         }
 
         O_PLAY_MEMBER_FROM_DISCARD => {
             return state_member_play::handle_play_member_from_discard(
-                state, db, ctx, &frame, frame_idx, v, a, s,
+                state, db, ctx, &frame_data, frame_idx, v, a, s,
             );
         }
 

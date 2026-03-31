@@ -17,7 +17,6 @@ mod tests {
 
     #[test]
     fn test_look_and_choose_uses_real_card_choose_count() {
-        clear_real_db_cache();
         let db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;

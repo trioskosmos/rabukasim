@@ -498,6 +498,38 @@ impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded_action = ActionFactory::parse_action(action);
         let response_origin = crate::core::logic::interpreter::suspension::capture_response_origin(self);
+        
+        // ANTI-SOFTLOCK: Detect Response phase loops and break them
+        if self.phase == Phase::Response && matches!(decoded_action, DecodedAction::Pass) {
+            // Use a simple field in debug state to track consecutive PASS actions
+            let pass_count = self.debug.response_pass_count;
+            self.debug.response_pass_count = pass_count + 1;
+            
+            // If we've seen too many PASS actions in a row, force cleanup
+            if pass_count > 10 {
+                if !self.ui.silent {
+                    println!("[ANTI_SOFTLOCK] Detected Response phase loop after {} PASS actions - forcing cleanup", pass_count + 1);
+                }
+                
+                // Clear the entire interaction stack
+                self.interaction_stack.clear();
+                self.ui.current_execution_id = None;
+                self.debug.response_pass_count = 0;
+                
+                // Restore response state to get out of Response phase
+                crate::core::logic::interpreter::restore_response_state(
+                    self,
+                    response_origin.0,
+                    response_origin.1,
+                );
+                self.process_rule_checks(db);
+                return Ok(());
+            }
+        } else {
+            // Reset counter when not a PASS action
+            self.debug.response_pass_count = 0;
+        }
+        
         if let Some(pi) = self.interaction_stack.last().cloned() {
             let is_optional_prompt = matches!(
                 pi.choice_type,

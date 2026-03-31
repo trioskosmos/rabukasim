@@ -6,14 +6,13 @@
 //! 3. Ruby card 423 (and similar cards) now requires self-sacrifice before recovering live
 
 use crate::core::logic::CardDatabase;
-use crate::test_helpers::{create_test_db, create_test_state, load_real_db, clear_real_db_cache};
+use crate::test_helpers::{create_test_state, load_real_db};
 
 /// Test that Ruby card 423 requires self-sacrifice cost to activate
 /// Before fix: Ability could be activated for free (just RECOVER_LIVE)
 /// After fix: Ability requires MOVE_TO_DISCARD (self-sacrifice) before effect
 #[test]
 fn test_ruby_423_requires_self_sacrifice() {
-    clear_real_db_cache();
     let db = load_real_db();
     let mut state = create_test_state();
     
@@ -143,7 +142,7 @@ fn test_cost_frames_come_before_effects() {
 /// Regression test for Ruby 423 specifically - verify the exact frame sequence
 #[test]
 fn test_ruby_423_frame_sequence() {
-    let db = create_test_db();
+    let db = load_real_db();
     
     let ruby = db.get_member(423).expect("Ruby card should exist");
     let ability = ruby.abilities.get(0).expect("Ruby should have an ability");

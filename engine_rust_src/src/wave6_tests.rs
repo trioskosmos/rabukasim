@@ -122,8 +122,8 @@ mod tests {
         ab.effects.push(Effect {
             effect_type: EffectType::PreventSetToSuccessPile,
             target: TargetType::Self_,
-            value: 0,
-            params: Default::default(),
+            value: serde_json::json!(0),
+            params: serde_json::Value::Null,
             ..Default::default()
         });
         // Bytecode needed? logic.rs checks effect_type directly from effects list for this specific case?

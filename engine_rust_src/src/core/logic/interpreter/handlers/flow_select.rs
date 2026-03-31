@@ -1,5 +1,5 @@
 use crate::core::logic::interpreter::suspension::resolve_target_player;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 use super::*;
 
@@ -35,36 +35,25 @@ fn resolve_select_member_target_player(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
-
     db: &CardDatabase,
-
     ctx: &mut AbilityContext,
-
-    _frame: &AbilityFrame,
-
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-
     op: i32,
-
     v: i32,
-
     a: i64,
-
     s: i32,
-
     p_idx: usize,
-
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
     let partial_selection_prompt = -1000 - (v as i16);
-    let frame_components = _frame.components();
-    let frame_filter_attr = frame_components.filter.to_attr();
+    let frame_filter_attr = frame_data.filter.to_attr();
     let structured_filter = {
-        let mut filter = frame_components.filter;
+        let mut filter = frame_data.filter;
         filter.is_enabled = true;
         filter
     };
-    let resolved_filter_attr = filter_attr_from_params(frame_components.params)
+    let resolved_filter_attr = filter_attr_from_params(frame_data.params)
         .map(|attr| attr | frame_filter_attr)
         .unwrap_or_else(|| if frame_filter_attr != 0 { frame_filter_attr } else { a as u64 });
     let next_frame = if op == O_SELECT_MEMBER {
@@ -271,4 +260,27 @@ pub fn handle_select_ops(
     }
 
     HandlerResult::Continue
+}
+
+/// Simplified version that works directly with frame_data
+pub fn handle_select_ops_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> HandlerResult {
+    handle_select_ops(
+        state,
+        db,
+        ctx,
+        frame_data,
+        frame_idx,
+        frame_data.opcode,
+        frame_data.value,
+        frame_data.raw_attr as i64,
+        frame_data.raw_slot,
+        ctx.player_id as usize,
+        frame_data.slot,
+    )
 }

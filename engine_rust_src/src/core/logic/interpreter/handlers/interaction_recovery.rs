@@ -2,7 +2,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
@@ -12,11 +12,10 @@ pub fn handle_recovery(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-    real_op: i32,
+    op: i32,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let a = crate::core::logic::filter::filter_attr_from_params(frame_data.params)
         .unwrap_or(frame_data.raw_attr) as i64;
@@ -25,6 +24,7 @@ pub fn handle_recovery(
     let source_zone = normalized_source_zone(slot_info.source_zone);
     let zone_cards = collect_zone_cards(state, p_idx, source_zone);
     let candidate_cards = zone_cards.clone();
+    let real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
 
     // Handle special "same name" recovery (special_id == 4)
     let mut handled_same_name = false;
@@ -42,7 +42,7 @@ pub fn handle_recovery(
 
         state.players[p_idx].looked_cards.clear();
         for cid in &candidate_cards {
-            if !type_matches(db, *cid, real_op) {
+            if !type_matches(db, *cid, op) {
                 continue;
             }
             let candidate_name = db.get_live(*cid)
@@ -64,7 +64,7 @@ pub fn handle_recovery(
     if !handled_same_name {
         state.players[p_idx].looked_cards.clear();
         for cid in &candidate_cards {
-            if type_matches(db, *cid, real_op)
+            if type_matches(db, *cid, op)
                 && (a == 0 || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
             {
                 state.players[p_idx].looked_cards.push(*cid);
@@ -72,7 +72,7 @@ pub fn handle_recovery(
         }
         if state.players[p_idx].looked_cards.is_empty() {
             // Special case: remove sacrificed member if recovery failed
-            if real_op == O_RECOVER_MEMBER {
+            if op == O_RECOVER_MEMBER {
                 if let Some(&sacrificed_cid) = ctx.selected_cards.first() {
                     remove_card_from_zone(state, db, ctx, p_idx, Zone::Stage, sacrificed_cid);
                 }
@@ -91,12 +91,12 @@ pub fn handle_recovery(
     // Suspend for player choice if needed
     if ctx.choice_index == -1 && !in_recovery_prompt {
         // Auto-pick if only 1 card for O_RECOVER_LIVE
-        if real_op == O_RECOVER_LIVE && state.players[p_idx].looked_cards.len() == 1 {
+        if op == O_RECOVER_LIVE && state.players[p_idx].looked_cards.len() == 1 {
             ctx.choice_index = 0;
         } else {
-            let choice_type = if real_op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
+            let choice_type = if op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
             if matches!(
-                suspend_choice(state, db, ctx, ctx, frame_idx, real_op, 0, choice_type, 0, -1),
+                suspend_choice(state, db, ctx, ctx, frame_idx, op, 0, choice_type, 0, -1),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -125,9 +125,9 @@ pub fn handle_recovery(
                 && choice != CHOICE_ALL as i32
                 && state.players[p_idx].looked_cards.iter().any(|&c| c != -1)
             {
-                let choice_type = if real_op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
+                let choice_type = if op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
                 if matches!(
-                    suspend_choice(state, db, ctx, ctx, frame_idx, real_op, 0, choice_type, 0, remaining),
+                    suspend_choice(state, db, ctx, ctx, frame_idx, op, 0, choice_type, 0, remaining),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;

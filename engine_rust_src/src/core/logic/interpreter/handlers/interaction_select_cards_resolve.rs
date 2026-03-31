@@ -39,7 +39,7 @@ pub fn resolve_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame: &crate::core::logic::models::AbilityFrame,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     s: i32,

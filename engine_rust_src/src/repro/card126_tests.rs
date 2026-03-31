@@ -1,4 +1,5 @@
 use crate::core::models::*;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::test_helpers::*;
 
 #[test]
@@ -19,8 +20,8 @@ fn test_card126_draw_repro() {
             AbilityFrame::new(58, 5, 1, 65540, false),
             AbilityFrame::new(309, 1, 8, 0, false),
             AbilityFrame::new(48, 10, 1, 0, false),
-            AbilityFrame::new(4, 1, 0, 0, false),
-            AbilityFrame::new(0, 0, 0, 0, false),
+            AbilityFrame::Draw { count: 1, slot: DecodedSlot::default(), is_cost: false },
+            AbilityFrame::Return,
         ],
         raw_program: None,
     });
@@ -61,8 +62,8 @@ fn test_card126_draw_repro() {
             AbilityFrame::new(58, 5, 1, 65540, false),
             AbilityFrame::new(309, 1, 8, 0, false),
             AbilityFrame::new(48, 10, 1, 0, false),
-            AbilityFrame::new(4, 1, 0, 0, false),
-            AbilityFrame::new(0, 0, 0, 0, false),
+            AbilityFrame::Draw { count: 1, slot: DecodedSlot::default(), is_cost: false },
+            AbilityFrame::Return,
         ];
 
         let ctx = AbilityContext {
@@ -74,6 +75,10 @@ fn test_card126_draw_repro() {
         };
 
         println!("--- Testing Card 126 with Live Card in Deck ---");
+        println!("Frames to execute:");
+        for (i, frame) in bytecode_frames.iter().enumerate() {
+            println!("  Frame {}: {:?}", i, frame);
+        }
         state.resolve_semantic_frames(&db, &bytecode_frames, &ctx);
 
         println!("Hand size: {}", state.players[p1].hand.len());

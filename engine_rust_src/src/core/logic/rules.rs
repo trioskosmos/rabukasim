@@ -1224,6 +1224,13 @@ fn apply_aura_modifier(
                     .add_to_color(color, value * multiplier);
             }
         }
+        O_INCREASE_HEART_COST => {
+            let color = decode_heart_requirement_color(s, a, params);
+            if color < 7 {
+                aura.heart_req_additions
+                    .add_to_color(color, value * multiplier);
+            }
+        }
         O_SET_HEART_COST => {
             // Unpack up to 8 values from A (each 4 bits)
             for i in 0..6 {

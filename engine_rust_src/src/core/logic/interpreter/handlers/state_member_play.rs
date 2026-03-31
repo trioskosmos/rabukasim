@@ -1,5 +1,5 @@
 use super::*;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 
 #[path = "state_member_play_discard.rs"]
 mod state_member_play_discard;
@@ -17,7 +17,7 @@ pub fn handle_play_member_from_hand(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     v: i32,
@@ -25,7 +25,7 @@ pub fn handle_play_member_from_hand(
     s: i32,
 ) -> HandlerResult {
     state_member_play_hand::handle_play_member_from_hand(
-        state, db, ctx, frame, frame_idx, p_idx, v, a, s,
+        state, db, ctx, frame_data, frame_idx, p_idx, v, a, s,
     )
 }
 

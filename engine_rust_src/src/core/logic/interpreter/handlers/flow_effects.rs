@@ -1,7 +1,7 @@
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::handlers::flow_helpers::current_effect;
+use crate::core::logic::interpreter::handlers::flow_helpers::current_effect_from_data;
 
 #[path = "flow_meta_rule.rs"]
 mod flow_meta_rule;
@@ -10,13 +10,13 @@ pub fn handle_trigger_remote(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     v: i32,
     p_idx: usize,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
-    let effect = current_effect(db, ctx, frame);
+    let effect = current_effect_from_data(db, ctx, frame_data);
     let from_discard = effect
         .and_then(|e| e.params.get("from"))
         .and_then(|v: &serde_json::Value| v.as_str())
@@ -84,7 +84,7 @@ pub fn handle_meta_rule(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     a: i64,
     v: i32,
@@ -93,5 +93,48 @@ pub fn handle_meta_rule(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     target_slot: i32,
 ) -> HandlerResult {
-    flow_meta_rule::handle_meta_rule(state, db, ctx, frame, frame_idx, a, v, p_idx, base_p, slot_info, target_slot)
+    flow_meta_rule::handle_meta_rule(state, db, ctx, frame_data, frame_idx, a, v, p_idx, base_p, slot_info, target_slot)
+}
+
+/// Simplified version that extracts values from frame_data
+pub fn handle_trigger_remote_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> HandlerResult {
+    handle_trigger_remote(
+        state,
+        db,
+        ctx,
+        frame_data,
+        frame_idx,
+        frame_data.value,
+        ctx.player_id as usize,
+        frame_data.slot,
+    )
+}
+
+/// Simplified version that extracts values from frame_data
+pub fn handle_meta_rule_simple(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> HandlerResult {
+    handle_meta_rule(
+        state,
+        db,
+        ctx,
+        frame_data,
+        frame_idx,
+        frame_data.raw_attr as i64,
+        frame_data.value,
+        ctx.player_id as usize,
+        ctx.activator_id as usize,
+        frame_data.slot,
+        frame_data.slot.target_slot as i32,
+    )
 }

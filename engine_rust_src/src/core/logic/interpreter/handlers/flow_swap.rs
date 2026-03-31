@@ -1,11 +1,12 @@
 use super::HandlerResult;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, GameState};
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_swap_area(
     state: &mut GameState,
     ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
     base_p: usize,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
     target_slot: i32,
@@ -66,4 +67,23 @@ pub fn handle_swap_area(
     }
 
     HandlerResult::Continue
+}
+
+/// Simplified version that works directly with frame_data
+pub fn handle_swap_area_simple(
+    state: &mut GameState,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+) -> HandlerResult {
+    handle_swap_area(
+        state,
+        ctx,
+        frame_data,
+        ctx.player_id as usize,
+        frame_data.slot,
+        frame_data.slot.target_slot as i32,
+        frame_data.raw_attr as i64,
+        frame_data.raw_slot,
+        frame_data.value,
+    )
 }

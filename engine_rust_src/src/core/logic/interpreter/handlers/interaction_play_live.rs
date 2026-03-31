@@ -4,17 +4,16 @@ use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn handle_play_live_from_discard(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let v = frame_data.value;
     let a = filter_attr_from_params(frame_data.params).unwrap_or(frame_data.raw_attr) as i64;
     let s = frame_data.raw_slot;
@@ -146,7 +145,7 @@ pub fn handle_play_live_from_discard(
         if remaining > 0 && !state.players[target_p_idx].discard.is_empty() {
             ctx.choice_index = -1;
             ctx.v_remaining = remaining;
-            return handle_play_live_from_discard(state, db, ctx, frame, frame_idx);
+            return handle_play_live_from_discard(state, db, ctx, frame_data, frame_idx);
         }
     }
     HandlerResult::Continue

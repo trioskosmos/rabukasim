@@ -2,7 +2,7 @@ use crate::core::enums::*;
 use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::models::AbilityFrame;
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 use crate::core::logic::interpreter::handlers::state_helpers::tap_opponent_chooser_player;
@@ -16,12 +16,11 @@ pub fn handle_set_tapped(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let is_optional = frame_data.filter.is_optional;
 
     if is_optional && ctx.v_remaining == -1 && ctx.choice_index == 1 {
@@ -93,7 +92,7 @@ pub fn handle_tap_opponent(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _instr: &AbilityFrame,
+    _frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     a: i64,
     v: i32,
@@ -177,13 +176,12 @@ pub fn handle_tap_member(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    frame: &AbilityFrame,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     a: i64,
     resolved_slot: i32,
 ) -> HandlerResult {
-    let frame_data = frame.components();
     let is_optional = frame_data.filter.is_optional;
     let is_select_member_choice = frame_data.params.map(|params| {
         params.get("FILTER").is_some()

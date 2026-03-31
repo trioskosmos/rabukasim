@@ -171,7 +171,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "LL-bp2-001-R+"
@@ -247,6 +254,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 6,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 3,
@@ -1411,7 +1425,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-002-P"
@@ -1503,7 +1524,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-002-R"
@@ -1755,7 +1783,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-004-P"
@@ -1854,7 +1895,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-004-R+"
@@ -1953,7 +2007,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-004-P+"
@@ -2052,7 +2119,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-004-SEC"
@@ -2263,7 +2343,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-006-P"
@@ -2338,7 +2431,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-006-R"
@@ -2399,7 +2505,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-007-P"
@@ -2460,7 +2573,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-007-R"
@@ -2545,7 +2665,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-008-P"
@@ -2630,7 +2757,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-008-R+"
@@ -2715,7 +2849,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-008-P+"
@@ -2800,7 +2941,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-008-SEC"
@@ -5757,6 +5905,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 2,
               "target": 4,
@@ -7219,7 +7374,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-004-AR"
@@ -7304,7 +7466,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-004-R+"
@@ -7389,7 +7558,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-004-P"
@@ -7474,7 +7650,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-004-SEC"
@@ -7739,7 +7922,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-006-AR"
@@ -7800,7 +7990,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-006-R"
@@ -7861,7 +8058,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp5-006-P"
@@ -9809,7 +10013,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-002-P+"
@@ -9840,7 +10051,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-002-P+"
@@ -9932,7 +10150,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-002-R"
@@ -9963,7 +10188,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-002-R"
@@ -10421,7 +10653,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-005-P+"
@@ -10482,7 +10721,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-005-R"
@@ -11544,7 +11790,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 232,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-013-P+"
@@ -11629,7 +11882,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 232,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-013-R"
@@ -12991,7 +13251,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-001-SD"
@@ -13168,7 +13435,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-003-SD"
@@ -13429,7 +13703,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-006-SD"
@@ -13626,7 +13907,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 25,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-009-SD"
@@ -13740,7 +14028,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-011-SD"
@@ -13811,7 +14106,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-012-SD"
@@ -13967,7 +14269,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-015-SD"
@@ -14038,7 +14347,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-016-SD"
@@ -14195,7 +14511,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-001-PR"
@@ -14203,6 +14526,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 1,
@@ -14212,7 +14542,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-001-PR"
@@ -14283,7 +14620,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-002-PR"
@@ -14291,6 +14635,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 1,
@@ -14300,7 +14651,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-002-PR"
@@ -14457,7 +14815,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-005-PR"
@@ -14465,6 +14830,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 1,
@@ -14474,7 +14846,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-005-PR"
@@ -14971,6 +15350,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 2,
               "target": 4,
@@ -15031,6 +15417,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -15108,7 +15501,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-019-PR"
@@ -15176,7 +15576,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-019-RM"
@@ -15229,6 +15636,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 74,
               "value": 2,
               "target": 4,
@@ -15244,7 +15658,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-020-PR"
@@ -15447,6 +15868,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 2,
               "target": 4,
@@ -15508,6 +15936,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 74,
               "value": 2,
               "target": 4,
@@ -15523,7 +15958,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-023-PR"
@@ -15704,6 +16146,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 12,
               "value": 1,
@@ -15910,7 +16359,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-002-P"
@@ -15985,7 +16441,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-002-R"
@@ -16060,7 +16523,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-002-RM"
@@ -16442,6 +16912,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 65537,
               "target": 0,
@@ -16450,7 +16927,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-004-P"
@@ -16520,6 +17010,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 65537,
               "target": 0,
@@ -16528,7 +17025,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-004-R+"
@@ -16598,6 +17108,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 65537,
               "target": 0,
@@ -16606,7 +17123,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-004-P+"
@@ -16676,6 +17206,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 65537,
               "target": 0,
@@ -16684,7 +17221,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-004-SEC"
@@ -16904,6 +17454,12 @@
               "value": 1,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -17001,6 +17557,12 @@
             {
               "type": 203,
               "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -17102,6 +17664,12 @@
               "value": 1,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -17199,6 +17767,12 @@
             {
               "type": 203,
               "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -17385,7 +17959,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-008-P"
@@ -17446,7 +18027,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-008-R"
@@ -18154,7 +18742,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-001-P"
@@ -18215,7 +18810,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-001-R"
@@ -18595,7 +19197,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-003-P"
@@ -18663,7 +19272,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-003-R"
@@ -18869,7 +19485,19 @@
           "costs": [],
           "conditions": [
             {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -18881,11 +19509,19 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
-              "type": 203,
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -18898,6 +19534,30 @@
             },
             {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -18972,7 +19632,19 @@
           "costs": [],
           "conditions": [
             {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -18984,11 +19656,19 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
-              "type": 203,
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19001,6 +19681,30 @@
             },
             {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19075,7 +19779,19 @@
           "costs": [],
           "conditions": [
             {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19087,11 +19803,19 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
-              "type": 203,
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19104,6 +19828,30 @@
             },
             {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19178,7 +19926,19 @@
           "costs": [],
           "conditions": [
             {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19190,11 +19950,19 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
-              "type": 203,
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19207,6 +19975,30 @@
             },
             {
               "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 203,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -19966,6 +20758,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 2,
               "target": 4,
@@ -19977,6 +20776,12 @@
           "conditions": [
             {
               "type": 231,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -20034,6 +20839,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 2,
               "target": 4,
@@ -20045,6 +20857,12 @@
           "conditions": [
             {
               "type": 231,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -20119,7 +20937,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-010-N"
@@ -20427,6 +21252,13 @@
               "target": 4,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 35,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
             }
           ],
           "costs": [],
@@ -20679,6 +21511,13 @@
         {
           "trigger": 7,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 76,
               "value": 1,
@@ -23491,6 +24330,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 4,
@@ -23766,6 +24612,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -24189,7 +25042,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-sd1-013-SD"
@@ -24438,6 +25298,12 @@
               "value": 1,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -24510,7 +25376,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-004-PR"
@@ -24649,7 +25522,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-006-PR"
@@ -24785,6 +25665,12 @@
             {
               "type": 203,
               "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -24992,6 +25878,12 @@
             {
               "type": 203,
               "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -25270,7 +26162,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-013-PR"
@@ -25656,6 +26555,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 1,
               "target": 4,
@@ -25716,6 +26622,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 1,
@@ -25817,7 +26730,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-002-P"
@@ -25909,7 +26829,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-002-R+"
@@ -26001,7 +26928,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-002-P+"
@@ -26093,7 +27027,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-002-SEC"
@@ -26169,6 +27110,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 45,
               "value": 1,
@@ -26262,6 +27210,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 45,
               "value": 1,
               "target": 4,
@@ -26354,6 +27309,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 45,
               "value": 1,
               "target": 4,
@@ -26445,6 +27407,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 45,
               "value": 1,
@@ -26665,7 +27634,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-005-P"
@@ -26733,7 +27709,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-005-R"
@@ -26794,7 +27777,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 226,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-006-P"
@@ -26872,7 +27868,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 226,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-006-R+"
@@ -26950,7 +27959,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 226,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-006-P+"
@@ -27028,7 +28050,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 226,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-006-SEC"
@@ -27116,7 +28151,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-007-P"
@@ -27187,7 +28229,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-007-R"
@@ -27384,7 +28433,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-009-P"
@@ -27459,7 +28515,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-009-R"
@@ -27530,7 +28593,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-010-P"
@@ -27601,7 +28671,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-010-R"
@@ -27683,7 +28760,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-011-P"
@@ -27765,7 +28849,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-011-R"
@@ -29207,7 +30298,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-001-P"
@@ -29289,7 +30387,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-001-R+"
@@ -29371,7 +30476,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-001-P+"
@@ -29453,7 +30565,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-001-SEC"
@@ -29668,7 +30787,15 @@
       "abilities": [
         {
           "trigger": 1,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -29721,7 +30848,15 @@
       "abilities": [
         {
           "trigger": 1,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -29920,7 +31055,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-P"
@@ -29937,7 +31079,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-P"
@@ -29998,7 +31147,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-R+"
@@ -30015,7 +31171,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-R+"
@@ -30076,7 +31239,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-P+"
@@ -30093,7 +31263,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-P+"
@@ -30154,7 +31331,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-SEC"
@@ -30171,7 +31355,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-005-SEC"
@@ -30533,7 +31724,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-008-P"
@@ -30653,7 +31851,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-008-R+"
@@ -30773,7 +31978,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-008-P+"
@@ -30893,7 +32105,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-008-SEC"
@@ -30989,7 +32208,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 6,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 8,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 25,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-009-P"
@@ -31102,7 +32340,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 6,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 8,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 25,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-009-R+"
@@ -31215,7 +32472,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 6,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 8,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 25,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-009-P+"
@@ -31328,7 +32604,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 6,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 8,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 25,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp3-009-SEC"
@@ -33491,6 +34786,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 57,
               "value": 1,
               "target": 4,
@@ -33558,6 +34860,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 57,
               "value": 1,
@@ -34394,6 +35703,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 68,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 4,
@@ -34471,6 +35787,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 68,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 12,
               "value": 1,
@@ -34550,6 +35873,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 68,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 4,
@@ -34627,6 +35957,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 68,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 12,
               "value": 1,
@@ -34728,7 +36065,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 230,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-011-P"
@@ -34820,7 +36164,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 230,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-011-R+"
@@ -34912,7 +36263,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 230,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-011-P+"
@@ -35004,7 +36362,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 230,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-011-SEC"
@@ -35178,6 +36543,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -40244,7 +41616,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-004-P+"
@@ -40343,7 +41722,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-004-R"
@@ -40404,7 +41790,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-005-P+"
@@ -40465,7 +41858,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-005-R"
@@ -41586,6 +42986,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 4,
@@ -41653,6 +43060,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 65,
               "value": 1,
@@ -41872,6 +43286,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 4,
@@ -41939,6 +43360,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 65,
               "value": 1,
@@ -42138,6 +43566,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 4,
@@ -42205,6 +43640,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 65,
               "value": 1,
@@ -42984,6 +44426,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 4,
@@ -43051,6 +44500,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 65,
               "value": 1,
@@ -43881,6 +45337,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 99,
               "target": 4,
@@ -43896,7 +45359,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-001-SD"
@@ -43967,7 +45437,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-002-SD"
@@ -44038,7 +45515,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-003-SD"
@@ -44106,7 +45590,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-004-SD"
@@ -44638,6 +46129,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 4,
@@ -44646,7 +46144,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-010-SD"
@@ -45709,7 +47214,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-013-PR"
@@ -45717,6 +47229,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -45726,7 +47245,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-013-PR"
@@ -46030,7 +47556,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-019-PR"
@@ -46038,6 +47571,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -46047,7 +47587,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-019-PR"
@@ -47236,7 +48783,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-002-P"
@@ -47304,7 +48858,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-002-R"
@@ -47365,7 +48926,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-003-P"
@@ -47426,7 +48994,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-003-R"
@@ -47885,6 +49460,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 4,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 63,
               "value": 2,
               "target": 4,
@@ -47945,6 +49527,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 4,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 63,
               "value": 2,
@@ -48015,7 +49604,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-P"
@@ -48039,7 +49635,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-P"
@@ -48100,7 +49703,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-R+"
@@ -48124,7 +49734,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-R+"
@@ -48185,7 +49802,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-P+"
@@ -48209,7 +49833,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-P+"
@@ -48270,7 +49901,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-SEC"
@@ -48294,7 +49932,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-007-SEC"
@@ -48375,6 +50020,30 @@
             {
               "type": 203,
               "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -48461,6 +50130,30 @@
               "value": 3,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -48545,6 +50238,30 @@
               "value": 3,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -48627,6 +50344,30 @@
             {
               "type": 203,
               "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -50418,6 +52159,12 @@
               "value": 0,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -50511,6 +52258,12 @@
           "conditions": [
             {
               "type": 206,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
               "value": 0,
               "params": {},
               "is_negated": false
@@ -50610,6 +52363,12 @@
               "value": 0,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -50706,6 +52465,12 @@
               "value": 0,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -50760,6 +52525,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 67,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 15,
               "value": 1,
               "target": 4,
@@ -50775,7 +52547,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp3-007-P"
@@ -50828,6 +52607,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 67,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 15,
               "value": 1,
               "target": 4,
@@ -50843,7 +52629,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp3-007-R"
@@ -53726,6 +55519,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 17,
               "value": 1,
               "target": 6,
@@ -53794,6 +55594,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 17,
               "value": 1,
               "target": 6,
@@ -53861,6 +55668,13 @@
         {
           "trigger": 1,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 17,
               "value": 1,
@@ -54809,7 +56623,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-001-P+"
@@ -54870,7 +56691,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-001-R"
@@ -55073,6 +56901,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 73,
               "value": 0,
               "target": 4,
@@ -55081,7 +56916,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-003-P+"
@@ -55151,6 +56993,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 73,
               "value": 0,
               "target": 4,
@@ -55159,7 +57008,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-003-R"
@@ -55659,7 +57515,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-007-P+"
@@ -55720,7 +57583,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-007-R"
@@ -56163,7 +58033,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-013-N"
@@ -56233,7 +58110,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-014-N"
@@ -56303,7 +58187,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-015-N"
@@ -56355,6 +58246,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -56417,6 +58315,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 2,
               "target": 4,
@@ -56477,6 +58382,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -57711,7 +59623,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-004-PR"
@@ -57822,7 +59741,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-006-PR"
@@ -57994,7 +59920,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-009-PR"
@@ -58123,7 +60056,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-011-PR"
@@ -58184,7 +60124,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-012-PR"
@@ -58252,7 +60199,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-PR-013-PR"
@@ -58594,6 +60548,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 10,
               "value": 2,
               "target": 4,
@@ -58602,7 +60563,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-P"
@@ -58655,6 +60629,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 10,
               "value": 2,
               "target": 4,
@@ -58663,7 +60644,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-R+"
@@ -58716,6 +60710,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 10,
               "value": 2,
               "target": 4,
@@ -58724,7 +60725,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-P+"
@@ -58777,6 +60791,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 10,
               "value": 2,
               "target": 4,
@@ -58785,7 +60806,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-SEC"
@@ -59190,7 +61224,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-005-P"
@@ -59261,7 +61302,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-005-R"
@@ -59313,6 +61361,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -59374,6 +61429,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -59991,7 +62053,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-010-P"
@@ -60055,7 +62124,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-010-R"
@@ -60244,6 +62320,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 3,
@@ -60255,7 +62338,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-012-N"
@@ -60710,7 +62800,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-021-N"
@@ -60811,10 +62908,24 @@
               "target": 4,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 27,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-P"
@@ -60872,10 +62983,24 @@
               "target": 4,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 27,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-R+"
@@ -60933,10 +63058,24 @@
               "target": 4,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 27,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-P+"
@@ -60994,10 +63133,24 @@
               "target": 4,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 27,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-SEC"
@@ -61424,6 +63577,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 7
@@ -61434,7 +63594,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-005-P"
@@ -61487,6 +63654,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 7
@@ -61497,7 +63671,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-005-R"
@@ -61572,7 +63753,15 @@
         },
         {
           "trigger": 7,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -61649,7 +63838,15 @@
         },
         {
           "trigger": 7,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -61726,7 +63923,15 @@
         },
         {
           "trigger": 7,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -61803,7 +64008,15 @@
         },
         {
           "trigger": 7,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 47,
+              "value": 0,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -61875,7 +64088,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-007-P"
@@ -61945,7 +64165,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-007-R"
@@ -62006,7 +64233,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-008-P"
@@ -62067,7 +64301,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-008-R"
@@ -62514,7 +64755,15 @@
       "abilities": [
         {
           "trigger": 6,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 61,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -62523,7 +64772,15 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 62,
+              "value": 8,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
@@ -62583,7 +64840,15 @@
       "abilities": [
         {
           "trigger": 6,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 61,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -62592,7 +64857,15 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 62,
+              "value": 8,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
@@ -62652,7 +64925,15 @@
       "abilities": [
         {
           "trigger": 6,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 61,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -62661,7 +64942,15 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 62,
+              "value": 8,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
@@ -62721,7 +65010,15 @@
       "abilities": [
         {
           "trigger": 6,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 61,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -62730,7 +65027,15 @@
         },
         {
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 62,
+              "value": 8,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [
             {
@@ -63129,7 +65434,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-015-N"
@@ -63336,6 +65648,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 2,
               "target": 4,
@@ -63405,7 +65724,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-020-N"
@@ -63466,7 +65792,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-021-N"
@@ -63518,6 +65851,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 11,
               "value": 2,
@@ -63590,6 +65930,12 @@
           "costs": [],
           "conditions": [
             {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 213,
               "value": 7,
               "params": {},
@@ -63657,6 +66003,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 213,
               "value": 7,
@@ -64078,6 +66430,12 @@
           "costs": [],
           "conditions": [
             {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 231,
               "value": 2,
               "params": {},
@@ -64169,6 +66527,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 231,
               "value": 2,
@@ -64262,6 +66626,12 @@
           "costs": [],
           "conditions": [
             {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 231,
               "value": 2,
               "params": {},
@@ -64353,6 +66723,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 231,
               "value": 2,
@@ -64752,7 +67128,14 @@
           "trigger": 3,
           "effects": [],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-006-P"
@@ -64805,7 +67188,14 @@
           "trigger": 3,
           "effects": [],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-006-R"
@@ -65009,7 +67399,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-P"
@@ -65026,7 +67423,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-P"
@@ -65111,7 +67515,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-R+"
@@ -65128,7 +67539,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-R+"
@@ -65213,7 +67631,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-P+"
@@ -65230,7 +67655,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-P+"
@@ -65315,7 +67747,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-SEC"
@@ -65332,7 +67771,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-008-SEC"
@@ -66014,6 +68460,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 4,
@@ -66316,7 +68769,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-017-N"
@@ -66513,7 +68973,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-020-N"
@@ -66627,6 +69094,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 0,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 65537,
               "target": 0,
@@ -66688,6 +69162,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 30,
               "value": 2,
               "target": 0,
@@ -66718,6 +69199,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 30,
               "value": 2,
@@ -66811,6 +69299,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 30,
               "value": 2,
               "target": 0,
@@ -66841,6 +69336,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 30,
               "value": 2,
@@ -66934,6 +69436,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 30,
               "value": 2,
               "target": 0,
@@ -66964,6 +69473,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 30,
               "value": 2,
@@ -67057,6 +69573,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 30,
               "value": 2,
               "target": 0,
@@ -67087,6 +69610,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 30,
               "value": 2,
@@ -67211,6 +69741,12 @@
           "costs": [],
           "conditions": [
             {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 309,
               "value": 1,
               "params": {},
@@ -67305,6 +69841,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 309,
               "value": 1,
@@ -67401,6 +69943,12 @@
           "costs": [],
           "conditions": [
             {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
               "type": 309,
               "value": 1,
               "params": {},
@@ -67495,6 +70043,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 309,
               "value": 1,
@@ -68196,6 +70750,13 @@
           "trigger": 13,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 17,
               "value": 1,
               "target": 4,
@@ -68287,6 +70848,13 @@
         {
           "trigger": 13,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 17,
               "value": 1,
@@ -68380,6 +70948,13 @@
           "trigger": 13,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 17,
               "value": 1,
               "target": 4,
@@ -68471,6 +71046,13 @@
         {
           "trigger": 13,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 17,
               "value": 1,
@@ -70637,6 +73219,13 @@
           "trigger": 3,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 10,
               "value": 1,
               "target": 4,
@@ -70984,6 +73573,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 23,
               "value": 1,
               "target": 4,
@@ -71058,6 +73654,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 23,
               "value": 1,
               "target": 4,
@@ -71126,6 +73729,13 @@
               "is_optional": false
             },
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 2,
               "target": 0,
@@ -71143,6 +73753,13 @@
           "trigger": 3,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 6,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 16,
               "value": 1,
               "target": 4,
@@ -71151,7 +73768,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-001-P+"
@@ -71211,6 +73835,13 @@
               "is_optional": false
             },
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 2,
               "target": 0,
@@ -71228,6 +73859,13 @@
           "trigger": 3,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 6,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 16,
               "value": 1,
               "target": 4,
@@ -71236,7 +73874,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-001-R"
@@ -71547,6 +74192,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 23,
               "value": 1,
               "target": 4,
@@ -71555,7 +74207,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-004-P+"
@@ -71563,6 +74222,13 @@
         {
           "trigger": 3,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 3,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 10,
               "value": 1,
@@ -71572,7 +74238,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-004-P+"
@@ -71625,6 +74298,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 23,
               "value": 1,
               "target": 4,
@@ -71633,7 +74313,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-004-R"
@@ -71641,6 +74328,13 @@
         {
           "trigger": 3,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 3,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 10,
               "value": 1,
@@ -71650,7 +74344,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-004-R"
@@ -72519,7 +75220,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-011-P+"
@@ -72594,7 +75302,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-pb1-011-R"
@@ -73420,7 +76135,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-003-SD"
@@ -73670,6 +76392,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 17,
               "value": 1,
               "target": 6,
@@ -73678,7 +76407,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-007-SD"
@@ -73731,6 +76467,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 3,
@@ -73742,7 +76485,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-008-SD"
@@ -73795,6 +76545,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 5,
@@ -73810,6 +76567,12 @@
             {
               "type": 213,
               "value": 9,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
               "params": {},
               "is_negated": false
             }
@@ -74071,7 +76834,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-014-SD"
@@ -74182,7 +76952,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-016-SD"
@@ -74235,6 +77012,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 3,
@@ -74246,7 +77030,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-017-SD"
@@ -74817,7 +77608,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-019-L"
@@ -75200,7 +77998,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-024-L"
@@ -75217,7 +78022,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-024-L"
@@ -75360,7 +78172,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 237,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-026-L"
@@ -75479,7 +78298,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp4-020-L"
@@ -76375,6 +79201,12 @@
               "value": 0,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 3,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -76435,6 +79267,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 203,
               "value": 4,
@@ -76646,7 +79484,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-032-L"
@@ -76878,7 +79723,14 @@
           "trigger": 2,
           "effects": [],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-022-SD"
@@ -77381,7 +80233,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 10,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp1-022-L"
@@ -77878,6 +80737,12 @@
               "value": 0,
               "params": {},
               "is_negated": false
+            },
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
             }
           ],
           "is_once_per_turn": false,
@@ -78002,7 +80867,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-026-L"
@@ -78051,6 +80935,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 16,
               "value": 1,
@@ -78390,6 +81281,13 @@
         {
           "trigger": 2,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 30,
               "value": 1,
@@ -78889,6 +81787,13 @@
           "trigger": 2,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 16,
               "value": 1,
               "target": 4,
@@ -78898,6 +81803,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 203,
               "value": 1,
@@ -78960,7 +81871,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 3,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-029-L"
@@ -79511,7 +82429,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-025-L"
@@ -79656,6 +82581,13 @@
               "effect_type": 16,
               "value": 65538,
               "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 61,
+              "value": 3,
+              "target": 4,
               "params": {},
               "is_optional": false
             }
@@ -79863,7 +82795,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-030-L"
@@ -79894,7 +82833,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp4-030-L"
@@ -79951,6 +82897,12 @@
           ],
           "costs": [],
           "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            },
             {
               "type": 220,
               "value": 20,
@@ -80204,7 +83156,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp5-027-L"
@@ -80487,7 +83446,26 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {
+                "keyword": "DID_ACTIVATE_ENERGY",
+                "group_id": 2
+              },
+              "is_negated": false
+            },
+            {
+              "type": 226,
+              "value": 0,
+              "params": {
+                "keyword": "DID_ACTIVATE_MEMBER",
+                "group_id": 2
+              },
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-037-L"
@@ -80543,7 +83521,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 226,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-pb1-038-L"
@@ -81312,7 +84297,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 227,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-022-L"
@@ -81375,7 +84367,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 230,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-023-L"
@@ -81518,7 +84517,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-025-L"
@@ -81602,7 +84608,15 @@
       "abilities": [
         {
           "trigger": 3,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 37,
+              "value": 4,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
           "conditions": [],
           "is_once_per_turn": false,
@@ -81729,7 +84743,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 312,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp3-021-L"
@@ -81952,7 +84973,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 224,
+              "value": 6,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp3-025-L"
@@ -82015,7 +85043,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp5-019-L"
@@ -82817,7 +85852,14 @@
           "trigger": 3,
           "effects": [],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-sd1-019-SD"
@@ -83456,7 +86498,14 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 0,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-023-L"
@@ -84121,9 +87170,24 @@
       "abilities": [
         {
           "trigger": 3,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 26,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 209,
+              "value": 4,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-027-L"
@@ -84318,7 +87382,20 @@
             }
           ],
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 218,
+              "value": 2,
+              "params": {},
+              "is_negated": false
+            },
+            {
+              "type": 209,
+              "value": 1,
+              "params": {},
+              "is_negated": false
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp5-023-L"
@@ -84428,6 +87505,13 @@
         {
           "trigger": 3,
           "effects": [
+            {
+              "effect_type": 64,
+              "value": -1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
             {
               "effect_type": 16,
               "value": 262145,
