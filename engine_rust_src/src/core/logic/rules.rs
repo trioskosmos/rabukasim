@@ -70,12 +70,12 @@ fn ability_conditions_met(
         return false;
     }
 
-    let frames = ab.frames();
+    let frames = ab.resolved_frames();
     if frames.is_empty() {
         return true;
     }
 
-    for frame in &frames {
+    for frame in frames.iter() {
         let frame_data = frame.components();
         let has_raw_condition = frame_data
             .params
@@ -371,11 +371,12 @@ fn apply_external_reduce_cost_modifiers(
     _target_card_id: i32,
     _depth: u32,
 ) {
-    if ab.frame_program.is_none() || !ability_conditions_met(state, db, p_idx, ab, ctx) {
+    if !ab.has_resolved_frames() || !ability_conditions_met(state, db, p_idx, ab, ctx) {
         return;
     }
 
-    for frame in ab.frames() {
+    let frames = ab.resolved_frames();
+    for frame in frames.iter() {
         let op = frame.opcode();
         if op == O_REDUCE_COST {
             *cost -= frame.value();
@@ -757,12 +758,8 @@ pub fn has_restriction(
                         .iter()
                         .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                     {
-                        if let Some(frame_program) = ab.frame_program.as_ref() {
-                            for frame in &frame_program.frames {
-                                if frame.opcode() == opcode {
-                                    return true;
-                                }
-                            }
+                        if ab.resolved_frames().iter().any(|frame| frame.opcode() == opcode) {
+                            return true;
                         }
                     }
                 }
@@ -792,12 +789,8 @@ pub fn has_restriction(
                             .iter()
                             .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                         {
-                            if let Some(frame_program) = ab.frame_program.as_ref() {
-                                for frame in &frame_program.frames {
-                                    if frame.opcode() == opcode {
-                                        return true;
-                                    }
-                                }
+                            if ab.resolved_frames().iter().any(|frame| frame.opcode() == opcode) {
+                                return true;
                             }
                         }
                     }
@@ -854,102 +847,47 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-            if let Some(frame_program) = ab.frame_program.as_ref() {
-                for (frame_idx, frame) in frame_program.frames.iter().enumerate() {
-                    let frame_data = frame.components();
-                    let op = frame_data.opcode;
-                    let v = frame_data.value;
-                    let a = frame_data.raw_attr;
-                    let s = frame_data.raw_slot;
-                    let params = frame_data
-                        .params
-                        .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
+            let frames = ab.resolved_frames();
+            let has_filters = !frames.is_empty();
 
-                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                        let target_area = s & 0xFF;
-                        // Check frame_program for filters instead of ab.filters
-                        let has_filters = ab.frame_program.as_ref()
-                            .map(|fp| !fp.frames.is_empty())
-                            .unwrap_or(false);
-                        let target_mask =
-                            aura_target_mask(source_slot, target_area, a, has_filters);
-                        aura.cost_modifiers.push(CachedCostModifier {
-                            source_cid: cid,
-                            amount: if op == O_REDUCE_COST {
-                                v as i16
-                            } else {
-                                -(v as i16)
-                            },
-                            target_mask,
-                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
-                            ability_idx: ab_idx as u16,
-                        });
-                    } else {
-                        let target_area = s & 0xFF;
-                        let has_filters = ab.frame_program.as_ref()
-                            .map(|fp| !fp.frames.is_empty())
-                            .unwrap_or(false);
-                        let target_mask =
-                            aura_target_mask(source_slot, target_area, a, has_filters);
-                        for target_slot in 0..3 {
-                            if (target_mask & (1 << target_slot)) != 0 {
-                                apply_aura_modifier(
-                                    &mut aura,
-                                    op,
-                                    v,
-                                    s,
-                                    a,
-                                    params,
-                                    &ctx,
-                                    state,
-                                    db,
-                                    player_idx,
-                                    target_slot,
-                                );
-                            }
-                        }
-                    }
-                }
-            } else if !ab.effects.is_empty() {
-                let effect_params = ab.effects.first().map(|effect| &effect.params);
-                for effect in &ab.effects {
-                    let op = effect.runtime_opcode;
-                    let v = effect.runtime_value;
-                    let s = effect.runtime_slot;
-                    let a = effect.runtime_attr;
-                    let target_area = s & 0xFF;
+            for frame in frames.iter() {
+                let frame_data = frame.components();
+                let op = frame_data.opcode;
+                let v = frame_data.value;
+                let a = frame_data.raw_attr;
+                let s = frame_data.raw_slot;
+                let params = frame_data.params;
+                let target_area = s & 0xFF;
+                let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
-                    let target_mask = aura_target_mask(source_slot, target_area, a, false);
-
-                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                        aura.cost_modifiers.push(CachedCostModifier {
-                            source_cid: cid,
-                            amount: if op == O_REDUCE_COST {
-                                v as i16
-                            } else {
-                                -(v as i16)
-                            },
-                            target_mask,
-                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
-                            ability_idx: ab_idx as u16,
-                        });
-                    } else {
-                        for target_slot in 0..3 {
-                            if (target_mask & (1 << target_slot)) != 0 {
-                                apply_aura_modifier(
-                                    &mut aura,
-                                    op,
-                                    v,
-                                    s,
-                                    a,
-                                    effect_params,
-                                    &ctx,
-                                    state,
-                                    db,
-                                    player_idx,
-                                    target_slot,
-                                );
-                            }
+                if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                    aura.cost_modifiers.push(CachedCostModifier {
+                        source_cid: cid,
+                        amount: if op == O_REDUCE_COST {
+                            v as i16
+                        } else {
+                            -(v as i16)
+                        },
+                        target_mask,
+                        filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                        ability_idx: ab_idx as u16,
+                    });
+                } else {
+                    for target_slot in 0..3 {
+                        if (target_mask & (1 << target_slot)) != 0 {
+                            apply_aura_modifier(
+                                &mut aura,
+                                op,
+                                v,
+                                s,
+                                a,
+                                params,
+                                &ctx,
+                                state,
+                                db,
+                                player_idx,
+                                target_slot,
+                            );
                         }
                     }
                 }
@@ -998,90 +936,52 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-            let target_mask = if let Some(program) = ab.frame_program.as_ref() {
-                if slot_idx < 3 && !program.frames.is_empty() {
-                    let first_frame = &program.frames[0];
+            let frames = ab.resolved_frames();
+            let target_mask = if slot_idx < 3 {
+                if let Some(first_frame) = frames.first() {
                     let target_area = first_frame.slot() & 0xFF;
                     let runtime_attr = first_frame.attr();
-                    // Check frame_program for filters instead of ab.filters
-                    let has_filters = !program.frames.is_empty();
-                    aura_target_mask(slot_idx, target_area, runtime_attr, has_filters)
-                } else if slot_idx < 3 {
-                    0b111
+                    aura_target_mask(slot_idx, target_area, runtime_attr, !frames.is_empty())
                 } else {
-                    0
+                    0b111
                 }
-            } else if slot_idx < 3 {
-                0b111
             } else {
                 0
             };
 
-            if !ab.effects.is_empty() {
-                for effect in &ab.effects {
-                    let op = effect.runtime_opcode;
-                    let v = effect.runtime_value;
-                    let a = effect.runtime_attr;
-                    let s = effect.runtime_slot;
+            for frame in frames.iter() {
+                let frame_data = frame.components();
+                let op = frame_data.opcode;
+                let v = frame_data.value;
+                let a = frame_data.raw_attr;
+                let s = frame_data.raw_slot;
 
-                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                        aura.cost_modifiers.push(CachedCostModifier {
-                            source_cid,
-                            amount: if op == O_REDUCE_COST {
-                                v as i16
-                            } else {
-                                -(v as i16)
-                            },
-                            target_mask,
-                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
-                            ability_idx: ab_idx as u16,
-                        });
-                    } else if slot_idx < 3 {
-                        apply_aura_modifier(
-                            &mut aura,
-                            op,
-                            v,
-                            s,
-                            a,
-                            Some(&effect.params),
-                            &ctx,
-                            state,
-                            db,
-                            player_idx,
-                            slot_idx,
-                        );
-                    }
-                }
-            } else {
-                let mut frame_idx = 0;
-                loop {
-                    let Some(frame) = ab.get_frame(frame_idx) else {
-                        break;
-                    };
-                    frame_idx += 1;
-
-                    let op = frame.opcode();
-                    let v = frame.value();
-                    let a = frame.attr();
-                    let s = frame.slot();
-
-                    if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                        aura.cost_modifiers.push(CachedCostModifier {
-                            source_cid,
-                            amount: if op == O_REDUCE_COST {
-                                v as i16
-                            } else {
-                                -(v as i16)
-                            },
-                            target_mask,
-                            filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
-                            ability_idx: ab_idx as u16,
-                        });
-                    } else if slot_idx < 3 {
-                        apply_aura_modifier(
-                            &mut aura, op, v, s, a, None, &ctx, state, db, player_idx, slot_idx,
-                        );
-                    }
+                if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                    aura.cost_modifiers.push(CachedCostModifier {
+                        source_cid,
+                        amount: if op == O_REDUCE_COST {
+                            v as i16
+                        } else {
+                            -(v as i16)
+                        },
+                        target_mask,
+                        filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                        ability_idx: ab_idx as u16,
+                    });
+                } else if slot_idx < 3 {
+                    apply_aura_modifier(
+                        &mut aura,
+                        op,
+                        v,
+                        s,
+                        a,
+                        frame_data.params,
+                        &ctx,
+                        state,
+                        db,
+                        player_idx,
+                        slot_idx,
+                    );
                 }
             }
         }

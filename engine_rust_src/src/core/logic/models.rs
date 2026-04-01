@@ -2,11 +2,12 @@ use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
 use crate::core::logic::filter::{filter_attr_from_params, CardFilter};
-use crate::core::logic::interpreter::instruction::{DecodedLookAndChoose, DecodedSlot};
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 #[allow(deprecated)]
 use crate::core::logic::interpreter::instruction::{BytecodeInstruction, BytecodeProgram};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
 
 /// Flat, uniform runtime ability frame.
@@ -1497,23 +1498,43 @@ impl Ability {
             })
     }
 
+    pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
+        if let Some(ref frame_program) = self.frame_program {
+            return Cow::Borrowed(&frame_program.frames);
+        }
+
+        if !self.effects.is_empty() {
+            return Cow::Owned(
+                self.effects
+                    .iter()
+                    .map(AbilityFrame::from_effect)
+                    .collect(),
+            );
+        }
+
+        Cow::Borrowed(&[])
+    }
+
+    pub fn has_resolved_frames(&self) -> bool {
+        if let Some(ref frame_program) = self.frame_program {
+            return !frame_program.frames.is_empty();
+        }
+
+        !self.effects.is_empty()
+    }
+
     #[allow(deprecated)]
     pub fn words(&self) -> Vec<i32> {
-        // First try frame_program if available
         if let Some(ref frame_program) = self.frame_program {
             return frame_program.to_words();
         }
-        
-        // Fallback: generate words from effects-generated frames
-        if !self.effects.is_empty() {
-            let frames: Vec<AbilityFrame> = self.effects.iter()
-                .map(|e| AbilityFrame::from_effect(e))
-                .collect();
-            
+
+        let frames = self.resolved_frames();
+        if !frames.is_empty() {
             let mut words = Vec::with_capacity(
                 frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
             );
-            for frame in &frames {
+            for frame in frames.iter() {
                 let instr = frame.to_instruction();
                 words.push(instr.op);
                 words.push(instr.v);
@@ -1523,7 +1544,7 @@ impl Ability {
             }
             return words;
         }
-        
+
         Vec::new()
     }
 
@@ -1532,23 +1553,11 @@ impl Ability {
     }
 
     pub fn get_frame(&self, frame_idx: usize) -> Option<AbilityFrame> {
-        self.frames().get(frame_idx).cloned()
+        self.resolved_frames().get(frame_idx).cloned()
     }
 
     pub fn frames(&self) -> Vec<AbilityFrame> {
-        // First try frame_program if available
-        if let Some(ref frame_program) = self.frame_program {
-            return frame_program.frames.clone();
-        }
-        
-        // Fallback: generate frames from effects
-        if !self.effects.is_empty() {
-            return self.effects.iter()
-                .map(|e| AbilityFrame::from_effect(e))
-                .collect();
-        }
-        
-        Vec::new()
+        self.resolved_frames().into_owned()
     }
 }
 
@@ -1570,6 +1579,24 @@ mod tests {
     fn ability_modal_count_from_effects() {
         let ability = Ability::default();
         assert_eq!(ability.modal_option_count(), 0);
+    }
+
+    #[test]
+    fn ability_resolved_frames_fall_back_to_effects() {
+        let ability = Ability {
+            trigger: TriggerType::OnPlay,
+            effects: vec![Effect {
+                effect_type: EffectType::Draw,
+                value: Value::from(1),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let frames = ability.resolved_frames();
+        assert_eq!(frames.len(), 1);
+        assert_eq!(frames[0].opcode(), O_DRAW);
+        assert!(ability.has_resolved_frames());
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

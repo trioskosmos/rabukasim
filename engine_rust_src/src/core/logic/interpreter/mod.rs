@@ -411,12 +411,10 @@ pub fn resolve_ability(
         return resolve_semantic_frames(state, db, &frames, ctx_in);
     }
     
-    // Check ability.conditions before executing frames
-    // If any condition fails, skip the entire ability
-    // NOTE: Skip condition checks when ability has effects but no frame_program,
-    // since conditions in legacy data may be incorrect. The effects/frames are
-    // the source of truth in the new system.
-    if !ability.conditions.is_empty() && ability.frame_program.is_some() {
+    // Check ability.conditions before executing frames.
+    // Gate this on whether the ability resolves to executable frames rather than
+    // whether the legacy frame_program wrapper happens to be populated.
+    if !ability.conditions.is_empty() && ability.has_resolved_frames() {
         let mut all_conditions_pass = true;
         for (i, cond) in ability.conditions.iter().enumerate() {
             let passed = conditions::check_condition(

@@ -23,24 +23,9 @@ fn has_activated_hand(card: &MemberCard) -> bool {
 }
 
 fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
-    ab.frame_program
-        .as_ref()
-        .and_then(|program| program.raw_program.as_ref())
-        .and_then(|raw| raw.get("instructions"))
-        .and_then(|value| value.as_array())
-        .map(|instructions| {
-            instructions.iter().any(|frame| {
-                let source_zone = frame
-                    .get("semantic")
-                    .and_then(|semantic| semantic.get("slot"))
-                    .or_else(|| frame.get("slot"))
-                    .and_then(|slot| slot.get("source_zone"))
-                    .and_then(|value| value.as_str())
-                    .unwrap_or("");
-                source_zone.eq_ignore_ascii_case("DECK_TOP")
-            })
-        })
-        .unwrap_or(false)
+    ab.resolved_frames()
+        .iter()
+        .any(|frame| frame.dslot().source_zone == Zone::DeckTop)
 }
 
 fn ability_costs_payable(
@@ -62,7 +47,9 @@ fn ability_costs_payable(
     }
 
     // 2. Check frame-based costs
-    for frame in ab.frames() {
+    let frames = ab.resolved_frames();
+
+    for frame in frames.iter() {
         let frame_data = frame.components();
         let implicit_deck_cost = matches!(
             frame_data.opcode,
@@ -72,14 +59,14 @@ fn ability_costs_payable(
             Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
         );
         if frame.is_cost() || implicit_deck_cost {
-            if !check_frame_cost(state, db, p_idx, &frame, ctx) {
+            if !check_frame_cost(state, db, p_idx, frame, ctx) {
                 return false;
             }
         }
     }
 
     // 3. Check frame-based choice preconditions that must be available before activation.
-    for frame in ab.frames() {
+    for frame in frames.iter() {
         if frame.opcode == crate::core::generated_constants::O_LOOK_AND_CHOOSE {
             let is_cost = frame.is_cost;
             if is_cost {

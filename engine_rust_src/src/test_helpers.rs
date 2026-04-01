@@ -2,8 +2,6 @@ use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
-use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::models::{AbilityFrame, FrameProgram};
 use crate::core::logic::player::PlayerState;
 use crate::core::logic::*;

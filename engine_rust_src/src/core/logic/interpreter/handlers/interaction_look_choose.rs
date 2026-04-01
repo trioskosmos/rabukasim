@@ -12,7 +12,6 @@ use crate::core::O_LOOK_AND_CHOOSE;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
-use smallvec::SmallVec;
 
 fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> usize {
     let lc = frame_data.look_choose();
@@ -286,8 +285,8 @@ fn apply_look_choice(
 
 fn finalize_look_choice(
     state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
+    _db: &CardDatabase,
+    _ctx: &AbilityContext,
     p_idx: usize,
     rem_dest: u8,
     source_zone: i32,
@@ -297,15 +296,7 @@ fn finalize_look_choice(
     revealed.retain(|c| *c != -1);
 
     if !revealed.is_empty() {
-        // Special case for card 8844 (PL!-bp5-003-P) draw branch - cards go to hand
-        let is_8844_draw_branch = db
-            .get_member(ctx.source_card_id)
-            .map(|member| member.card_no == "PL!-bp5-003-P")
-            .unwrap_or(false);
-
-        let dest = if is_8844_draw_branch && source_zone == 8 {
-            6
-        } else if dest_discard_v {
+        let dest = if dest_discard_v {
             7
         } else if rem_dest > 0 {
             rem_dest as i32

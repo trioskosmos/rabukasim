@@ -138,25 +138,12 @@ pub fn handle_select_cards(
             _ => state.players[p_idx].discard.to_vec(),
         };
 
-        // Debug: Print filtering info for card 537
-        if ctx.source_card_id == 537 {
-            println!("DEBUG: Card 537 filtering from zone {}: cards={:?}", effective_zone, cards_to_filter);
-            println!("DEBUG: filter_attr = 0x{:x}", a as u64);
-        }
-
         let filter_attr = a as u64;
         for cid in cards_to_filter {
             let matches = state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx);
-            if ctx.source_card_id == 537 {
-                println!("DEBUG: Card {} matches filter: {}", cid, matches);
-            }
             if matches {
                 state.players[p_idx].looked_cards.push(cid);
             }
-        }
-
-        if ctx.source_card_id == 537 {
-            println!("DEBUG: Final looked_cards: {:?}", state.players[p_idx].looked_cards);
         }
 
         if state.players[p_idx].looked_cards.is_empty() && !is_optional {
@@ -184,7 +171,6 @@ pub fn handle_select_cards(
         let choice_type = match effective_zone {
             6 => ChoiceType::SelectHandDiscard,
             7 => ChoiceType::SelectDiscardPlay,
-            _ if ctx.source_card_id == 537 => ChoiceType::SelectDiscardPlay,
             _ => ChoiceType::LookAndChoose,
         };
         if matches!(
