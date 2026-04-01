@@ -34,6 +34,7 @@ use super::CardDatabase;
 pub use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
 use serde::{de, Deserialize, Deserializer, Serialize};
+use serde_json::Value;
 // use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
 
@@ -729,6 +730,69 @@ impl CardFilter {
         }
 
         self
+    }
+
+    pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
+        let filter = filter_attr_from_params(Some(payload))
+            .map(|attr| Self::from_attr(attr as i64))
+            .unwrap_or_else(|| {
+                payload
+                    .get("filter")
+                    .or_else(|| payload.get("attr"))
+                    .cloned()
+                    .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
+                    .unwrap_or_default()
+            });
+
+        let params_for_filter = if params.is_null() {
+            options.clone()
+        } else {
+            params.clone()
+        };
+
+        let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params_for_filter)) {
+            filter.with_overlay(&Self::from_attr(filter_attr as i64))
+        } else {
+            filter
+        };
+
+        let filter = if let Some(structured_filter) = payload
+            .get("filter")
+            .or_else(|| options.get("filter"))
+            .cloned()
+            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
+        {
+            let mut structured_filter = structured_filter;
+            structured_filter.is_enabled = true;
+            structured_filter
+        } else {
+            filter
+        };
+
+        let filter = if options
+            .get("is_cost")
+            .or_else(|| options.get("is_cost_type"))
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false)
+        {
+            let mut filter = filter;
+            filter.is_cost_type = true;
+            filter
+        } else {
+            filter
+        };
+
+        if options
+            .get("optional")
+            .and_then(|value| value.as_bool())
+            .unwrap_or(false)
+        {
+            let mut filter = filter;
+            filter.is_optional = true;
+            filter
+        } else {
+            filter
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::filter::{filter_attr_from_params, CardFilter};
+use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 #[allow(deprecated)]
 use crate::core::logic::interpreter::instruction::{BytecodeInstruction, BytecodeProgram};
@@ -437,28 +437,6 @@ impl AbilityFrame {
             .or_else(|| Self::first_i64(payload, &["count", "rule_type", "v"]))
             .or_else(|| Self::first_i64(frame, &["value", "rule_type", "v"]))
             .unwrap_or(0) as i32;
-        let filter = filter_attr_from_params(Some(payload))
-            .map(|attr| CardFilter::from_attr(attr as i64))
-            .unwrap_or_else(|| {
-                payload
-                    .get("filter")
-                    .or_else(|| payload.get("attr"))
-                    .cloned()
-                    .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
-                    .unwrap_or_default()
-            });
-        let slot = payload
-            .get("slot")
-            .or_else(|| frame.get("slot"))
-            .cloned()
-            .and_then(|value| serde_json::from_value::<DecodedSlot>(value).ok())
-            .unwrap_or_default();
-        let is_negated = payload
-            .get("is_negated")
-            .or_else(|| payload.get("negated"))
-            .or_else(|| frame.get("negated"))
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false);
         let options = Self::first_cloned_value(frame, &["options"]);
         let options = if options.is_null() {
             Self::first_cloned_value(payload, &["options"])
@@ -485,52 +463,20 @@ impl AbilityFrame {
         } else {
             params
         };
-        let params_for_filter = if params.is_null() {
-            options.clone()
-        } else {
-            params.clone()
-        };
-        let recover_params = params_for_filter.clone();
-        let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params_for_filter)) {
-            filter.with_overlay(&CardFilter::from_attr(filter_attr as i64))
-        } else {
-            filter
-        };
-        let filter = if let Some(structured_filter) = payload
-            .get("filter")
-            .or_else(|| options.get("filter"))
+        let filter = CardFilter::from_frame_json(payload, &options, &params);
+        let slot = payload
+            .get("slot")
+            .or_else(|| frame.get("slot"))
             .cloned()
-            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
-        {
-            let mut structured_filter = structured_filter;
-            structured_filter.is_enabled = true;
-            structured_filter
-        } else {
-            filter
-        };
-        let filter = if options
-            .get("is_cost")
-            .or_else(|| options.get("is_cost_type"))
-            .and_then(|value| value.as_bool())
-            .unwrap_or(false)
-        {
-            let mut filter = filter;
-            filter.is_cost_type = true;
-            filter
-        } else {
-            filter
-        };
-        let filter = if options
-            .get("optional")
-            .and_then(|value| value.as_bool())
-            .unwrap_or(false)
-        {
-            let mut filter = filter;
-            filter.is_optional = true;
-            filter
-        } else {
-            filter
-        };
+            .and_then(|value| serde_json::from_value::<DecodedSlot>(value).ok())
+            .unwrap_or_default();
+        let is_negated = payload
+            .get("is_negated")
+            .or_else(|| payload.get("negated"))
+            .or_else(|| frame.get("negated"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+        let recover_params = params.clone();
         let mut slot = slot;
         if let Some(options_slot) = options.get("slot") {
             if let Ok(decoded_slot) = serde_json::from_value::<DecodedSlot>(options_slot.clone()) {

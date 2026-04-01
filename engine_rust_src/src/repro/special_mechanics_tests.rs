@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use crate::core::logic::*;
-use crate::test_helpers::{load_real_db, TestUtils};
+use crate::test_helpers::load_real_db;
 
 #[test]
 fn test_meta_rule_yell_mulligan() {
