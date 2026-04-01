@@ -2297,7 +2297,7 @@ mod tests {
             ..Default::default()
         };
         let frames = vec![
-            crate::core::logic::models::AbilityFrame::Raw {
+            crate::core::logic::models::AbilityFrame {
                 opcode: O_MOVE_TO_DISCARD,
                 value: 2,
                 attr: (6u64 << 53),
@@ -2307,8 +2307,9 @@ mod tests {
                 }
                 .to_raw(),
                 is_cost: false,
+                ..Default::default()
             },
-            crate::core::logic::models::AbilityFrame::Return,
+            crate::core::logic::models::AbilityFrame::new_return(),
         ];
         state.resolve_semantic_frames(&db, &frames, &ctx);
 

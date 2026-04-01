@@ -1,0 +1,1915 @@
+﻿cargo :    Compiling engine_rust v0.1.2 (C:\Users\trios\.gemini\antigravity\vsc
+ode\loveca-copy\engine_rust_src)
+発生場所 行:1 文字:31
++ ... warnings" ; cargo build --release --bin bench_granular_v2 --manifest- ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (   Compiling en...ngine_rust_src) 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+error[E0223]: ambiguous associated type
+  --> src\core\logic\action_gen\main_phase.rs:83:16
+   |
+83 |         if let crate::core::logic::models::AbilityFrame::LookAndChoose {
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+   |
+83 -         if let crate::core::logic::models::AbilityFrame::LookAndChoose {
+83 +         if let <logic::models::AbilityFrame as Example>::LookAndChoose {
+   |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\card_db.rs:345:25
+    |
+345 |                         AbilityFrame::MoveMember { filter, slot, .. } => 
+{
+    |                         ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+    |
+345 -                         AbilityFrame::MoveMember { filter, slot, .. } => 
+{
+345 +                         <logic::models::AbilityFrame as Example>::MoveMem
+ber { filter, slot, .. } => {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\card_db.rs:356:25
+    |
+356 |                         AbilityFrame::Semantic { ref mut opcode, .. } => 
+*opcode = O_TAP_MEMBER,
+    |                         ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+356 -                         AbilityFrame::Semantic { ref mut opcode, .. } => 
+*opcode = O_TAP_MEMBER,
+356 +                         <logic::models::AbilityFrame as Example>::Semanti
+c { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\card_db.rs:357:25
+    |
+357 |                         AbilityFrame::Raw { ref mut opcode, .. } => *opco
+de = O_TAP_MEMBER,
+    |                         ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+357 -                         AbilityFrame::Raw { ref mut opcode, .. } => *opco
+de = O_TAP_MEMBER,
+357 +                         <logic::models::AbilityFrame as Example>::Raw { r
+ef mut opcode, .. } => *opcode = O_TAP_MEMBER,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\card_db.rs:346:38
+    |
+346 | ...                   *frame = AbilityFrame::Semantic {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+346 -                             *frame = AbilityFrame::Semantic {
+346 +                             *frame = <logic::models::AbilityFrame as Exam
+ple>::Semantic {
+    |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\card_db.rs:692:59
+    |
+692 |                     synthesized_frames.push(AbilityFrame::Return);
+    |                                                           ^^^^^^ associat
+ed item not found in `logic::models::AbilityFrame`
+    |
+   ::: src\core\logic\models.rs:25:1
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\card_db.rs:708:56
+    |
+708 | ...                   frames: vec![AbilityFrame::Return],
+    |                                                  ^^^^^^ associated item n
+ot found in `logic::models::AbilityFrame`
+    |
+   ::: src\core\logic\models.rs:25:1
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\card_db.rs:730:33
+    |
+730 |                     if let Some(AbilityFrame::LookAndChoose { choose_coun
+t: frame_choose_count, .. }) = program
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+730 -                     if let Some(AbilityFrame::LookAndChoose { choose_coun
+t: frame_choose_count, .. }) = program
+730 +                     if let Some(<logic::models::AbilityFrame as Example>:
+:LookAndChoose { choose_count: frame_choose_count, .. }) = program
+    |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\card_db.rs:1163:32
+     |
+1163 |                         if let AbilityFrame::LookAndChoose { choose_coun
+t, .. } = frame {
+     |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1163 -                         if let AbilityFrame::LookAndChoose { choose_coun
+t, .. } = frame {
+1163 +                         if let <logic::models::AbilityFrame as Example>:
+:LookAndChoose { choose_count, .. } = frame {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\handlers.rs:1177:21
+     |
+1177 |                     crate::core::logic::models::AbilityFrame::Semantic {
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1177 -                     crate::core::logic::models::AbilityFrame::Semantic {
+1177 +                     <logic::models::AbilityFrame as Example>::Semantic {
+     |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+    --> src\core\logic\handlers.rs:1188:63
+     |
+1188 |                     crate::core::logic::models::AbilityFrame::Return,
+     |                                                               ^^^^^^ ass
+ociated item not found in `logic::models::AbilityFrame`
+     |
+    ::: src\core\logic\models.rs:25:1
+     |
+  25 | pub struct AbilityFrame {
+     | ----------------------- associated item `Return` not found for this stru
+ct
+
+error[E0277]: the size for values of type `[logic::models::AbilityFrame]` canno
+t be known at compilation time
+    --> src\core\logic\handlers.rs:1194:20
+     |
+1194 |             if let Some(frames) = semantic_frames {
+     |                    ^^^^^^^^^^^^ doesn't have a size known at compile-tim
+e
+     |
+     = help: the trait `Sized` is not implemented for `[logic::models::AbilityF
+rame]`
+note: required by a bound in `Some`
+    --> /rustc/fda6d37bb88ee12fd50fa54d15859f1f91b74f55/library\core\src\option
+.rs:608:4
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\models.rs:395:34
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+...
+395 |             return AbilityFrame::Return;
+    |                                  ^^^^^^ associated item not found in `log
+ic::models::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:586:24
+    |
+586 |                 return AbilityFrame::Semantic {
+    |                        ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+586 -                 return AbilityFrame::Semantic {
+586 +                 return <logic::models::AbilityFrame as Example>::Semantic
+ {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:606:28
+    |
+606 |                     return AbilityFrame::Semantic {
+    |                            ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+606 -                     return AbilityFrame::Semantic {
+606 +                     return <logic::models::AbilityFrame as Example>::Sema
+ntic {
+    |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\models.rs:620:39
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+...
+620 |             "RETURN" => AbilityFrame::Return,
+    |                                       ^^^^^^ associated item not found in
+ `logic::models::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:621:23
+    |
+621 |             "DRAW" => AbilityFrame::Draw { count: value, slot, is_cost },
+    |                       ^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+621 -             "DRAW" => AbilityFrame::Draw { count: value, slot, is_cost },
+621 +             "DRAW" => <logic::models::AbilityFrame as Example>::Draw { co
+unt: value, slot, is_cost },
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:622:31
+    |
+622 |             "RECOVER_LIVE" => AbilityFrame::RecoverLive {
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+    |
+622 -             "RECOVER_LIVE" => AbilityFrame::RecoverLive {
+622 +             "RECOVER_LIVE" => <logic::models::AbilityFrame as Example>::R
+ecoverLive {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:629:33
+    |
+629 |             "RECOVER_MEMBER" => AbilityFrame::RecoverMember {
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+629 -             "RECOVER_MEMBER" => AbilityFrame::RecoverMember {
+629 +             "RECOVER_MEMBER" => <logic::models::AbilityFrame as Example>:
+:RecoverMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:638:17
+    |
+638 |                 AbilityFrame::LookAndChoose {
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+638 -                 AbilityFrame::LookAndChoose {
+638 +                 <logic::models::AbilityFrame as Example>::LookAndChoose {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:651:32
+    |
+651 |             "SELECT_MEMBER" => AbilityFrame::SelectMember {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+    |
+651 -             "SELECT_MEMBER" => AbilityFrame::SelectMember {
+651 +             "SELECT_MEMBER" => <logic::models::AbilityFrame as Example>::
+SelectMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:657:30
+    |
+657 |             "MOVE_MEMBER" => AbilityFrame::MoveMember {
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+    |
+657 -             "MOVE_MEMBER" => AbilityFrame::MoveMember {
+657 +             "MOVE_MEMBER" => <logic::models::AbilityFrame as Example>::Mo
+veMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:663:28
+    |
+663 |             "META_RULE" => AbilityFrame::MetaRule {
+    |                            ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+663 -             "META_RULE" => AbilityFrame::MetaRule {
+663 +             "META_RULE" => <logic::models::AbilityFrame as Example>::Meta
+Rule {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:669:18
+    |
+669 |             _ => AbilityFrame::Semantic {
+    |                  ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+669 -             _ => AbilityFrame::Semantic {
+669 +             _ => <logic::models::AbilityFrame as Example>::Semantic {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:693:13
+    |
+693 |             AbilityFrame::Semantic {
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+693 -             AbilityFrame::Semantic {
+693 +             <logic::models::AbilityFrame as Example>::Semantic {
+    |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\models.rs:709:39
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+...
+709 |             O_RETURN => AbilityFrame::Return,
+    |                                       ^^^^^^ associated item not found in
+ `logic::models::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:710:23
+    |
+710 |             O_DRAW => AbilityFrame::Draw {
+    |                       ^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+710 -             O_DRAW => AbilityFrame::Draw {
+710 +             O_DRAW => <logic::models::AbilityFrame as Example>::Draw {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:715:31
+    |
+715 |             O_RECOVER_LIVE => AbilityFrame::RecoverLive {
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+    |
+715 -             O_RECOVER_LIVE => AbilityFrame::RecoverLive {
+715 +             O_RECOVER_LIVE => <logic::models::AbilityFrame as Example>::R
+ecoverLive {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:722:33
+    |
+722 |             O_RECOVER_MEMBER => AbilityFrame::RecoverMember {
+    |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+722 -             O_RECOVER_MEMBER => AbilityFrame::RecoverMember {
+722 +             O_RECOVER_MEMBER => <logic::models::AbilityFrame as Example>:
+:RecoverMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:731:17
+    |
+731 |                 AbilityFrame::LookAndChoose {
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+731 -                 AbilityFrame::LookAndChoose {
+731 +                 <logic::models::AbilityFrame as Example>::LookAndChoose {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:744:32
+    |
+744 |             O_SELECT_MEMBER => AbilityFrame::SelectMember {
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+    |
+744 -             O_SELECT_MEMBER => AbilityFrame::SelectMember {
+744 +             O_SELECT_MEMBER => <logic::models::AbilityFrame as Example>::
+SelectMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:750:30
+    |
+750 |             O_MOVE_MEMBER => AbilityFrame::MoveMember {
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+    |
+750 -             O_MOVE_MEMBER => AbilityFrame::MoveMember {
+750 +             O_MOVE_MEMBER => <logic::models::AbilityFrame as Example>::Mo
+veMember {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:756:28
+    |
+756 |             O_META_RULE => AbilityFrame::MetaRule {
+    |                            ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+756 -             O_META_RULE => AbilityFrame::MetaRule {
+756 +             O_META_RULE => <logic::models::AbilityFrame as Example>::Meta
+Rule {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:767:9
+    |
+767 |         AbilityFrame::Raw {
+    |         ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+767 -         AbilityFrame::Raw {
+767 +         <logic::models::AbilityFrame as Example>::Raw {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:866:20
+    |
+866 |             return AbilityFrame::Raw {
+    |                    ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+866 -             return AbilityFrame::Raw {
+866 +             return <logic::models::AbilityFrame as Example>::Raw {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:879:20
+    |
+879 |             return AbilityFrame::Raw {
+    |                    ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+879 -             return AbilityFrame::Raw {
+879 +             return <logic::models::AbilityFrame as Example>::Raw {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:903:20
+    |
+903 |             return AbilityFrame::Semantic {
+    |                    ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+903 -             return AbilityFrame::Semantic {
+903 +             return <logic::models::AbilityFrame as Example>::Semantic {
+    |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\models.rs:924:27
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+...
+924 |             AbilityFrame::Return => O_RETURN,
+    |                           ^^^^^^ associated item not found in `logic::mod
+els::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:925:13
+    |
+925 |             AbilityFrame::Draw { .. } => O_DRAW,
+    |             ^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+925 -             AbilityFrame::Draw { .. } => O_DRAW,
+925 +             <logic::models::AbilityFrame as Example>::Draw { .. } => O_DR
+AW,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:926:13
+    |
+926 |             AbilityFrame::Semantic { opcode, .. } => *opcode,
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+926 -             AbilityFrame::Semantic { opcode, .. } => *opcode,
+926 +             <logic::models::AbilityFrame as Example>::Semantic { opcode, 
+.. } => *opcode,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:927:13
+    |
+927 |             AbilityFrame::RecoverLive { .. } => O_RECOVER_LIVE,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+    |
+927 -             AbilityFrame::RecoverLive { .. } => O_RECOVER_LIVE,
+927 +             <logic::models::AbilityFrame as Example>::RecoverLive { .. } 
+=> O_RECOVER_LIVE,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:928:13
+    |
+928 |             AbilityFrame::RecoverMember { .. } => O_RECOVER_MEMBER,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+928 -             AbilityFrame::RecoverMember { .. } => O_RECOVER_MEMBER,
+928 +             <logic::models::AbilityFrame as Example>::RecoverMember { .. 
+} => O_RECOVER_MEMBER,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:929:13
+    |
+929 |             AbilityFrame::LookAndChoose { .. } => O_LOOK_AND_CHOOSE,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+929 -             AbilityFrame::LookAndChoose { .. } => O_LOOK_AND_CHOOSE,
+929 +             <logic::models::AbilityFrame as Example>::LookAndChoose { .. 
+} => O_LOOK_AND_CHOOSE,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:930:13
+    |
+930 |             AbilityFrame::SelectMember { .. } => O_SELECT_MEMBER,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+    |
+930 -             AbilityFrame::SelectMember { .. } => O_SELECT_MEMBER,
+930 +             <logic::models::AbilityFrame as Example>::SelectMember { .. }
+ => O_SELECT_MEMBER,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:931:13
+    |
+931 |             AbilityFrame::MoveMember { .. } => O_MOVE_MEMBER,
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+    |
+931 -             AbilityFrame::MoveMember { .. } => O_MOVE_MEMBER,
+931 +             <logic::models::AbilityFrame as Example>::MoveMember { .. } =
+> O_MOVE_MEMBER,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:932:13
+    |
+932 |             AbilityFrame::MetaRule { .. } => O_META_RULE,
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+932 -             AbilityFrame::MetaRule { .. } => O_META_RULE,
+932 +             <logic::models::AbilityFrame as Example>::MetaRule { .. } => 
+O_META_RULE,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:933:13
+    |
+933 |             AbilityFrame::Raw { opcode, .. } => *opcode,
+    |             ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+933 -             AbilityFrame::Raw { opcode, .. } => *opcode,
+933 +             <logic::models::AbilityFrame as Example>::Raw { opcode, .. } 
+=> *opcode,
+    |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+   --> src\core\logic\models.rs:952:27
+    |
+ 25 | pub struct AbilityFrame {
+    | ----------------------- associated item `Return` not found for this struc
+t
+...
+952 |             AbilityFrame::Return => AbilityFrameComponents {
+    |                           ^^^^^^ associated item not found in `logic::mod
+els::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:964:13
+    |
+964 |             AbilityFrame::Draw { count, slot, is_cost } => AbilityFrameCo
+mponents {
+    |             ^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+964 -             AbilityFrame::Draw { count, slot, is_cost } => AbilityFrameCo
+mponents {
+964 +             <logic::models::AbilityFrame as Example>::Draw { count, slot,
+ is_cost } => AbilityFrameComponents {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:976:13
+    |
+976 |             AbilityFrame::Semantic {
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+976 -             AbilityFrame::Semantic {
+976 +             <logic::models::AbilityFrame as Example>::Semantic {
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\core\logic\models.rs:995:13
+    |
+995 |             AbilityFrame::RecoverLive {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+    |
+995 -             AbilityFrame::RecoverLive {
+995 +             <logic::models::AbilityFrame as Example>::RecoverLive {
+    |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1002:15
+     |
+1002 |             | AbilityFrame::RecoverMember {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1002 -             | AbilityFrame::RecoverMember {
+1002 +             | <logic::models::AbilityFrame as Example>::RecoverMember {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1020:13
+     |
+1020 |             AbilityFrame::SelectMember {
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1020 -             AbilityFrame::SelectMember {
+1020 +             <logic::models::AbilityFrame as Example>::SelectMember {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1037:13
+     |
+1037 |             AbilityFrame::LookAndChoose { 
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1037 -             AbilityFrame::LookAndChoose { 
+1037 +             <logic::models::AbilityFrame as Example>::LookAndChoose { 
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1071:13
+     |
+1071 |             AbilityFrame::MoveMember { filter, slot, is_cost, .. } => Ab
+ilityFrameComponents {
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1071 -             AbilityFrame::MoveMember { filter, slot, is_cost, .. } => Ab
+ilityFrameComponents {
+1071 +             <logic::models::AbilityFrame as Example>::MoveMember { filte
+r, slot, is_cost, .. } => AbilityFrameComponents {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1083:13
+     |
+1083 |             AbilityFrame::MetaRule { filter, slot, is_cost, .. } => Abil
+ityFrameComponents {
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1083 -             AbilityFrame::MetaRule { filter, slot, is_cost, .. } => Abil
+ityFrameComponents {
+1083 +             <logic::models::AbilityFrame as Example>::MetaRule { filter,
+ slot, is_cost, .. } => AbilityFrameComponents {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1095:13
+     |
+1095 |             AbilityFrame::Raw {
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1095 -             AbilityFrame::Raw {
+1095 +             <logic::models::AbilityFrame as Example>::Raw {
+     |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+    --> src\core\logic\models.rs:1114:27
+     |
+  25 | pub struct AbilityFrame {
+     | ----------------------- associated item `Return` not found for this stru
+ct
+...
+1114 |             AbilityFrame::Return => 0,
+     |                           ^^^^^^ associated item not found in `logic::mo
+dels::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1115:13
+     |
+1115 |             AbilityFrame::Draw { count, .. } => *count,
+     |             ^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1115 -             AbilityFrame::Draw { count, .. } => *count,
+1115 +             <logic::models::AbilityFrame as Example>::Draw { count, .. }
+ => *count,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1116:13
+     |
+1116 |             AbilityFrame::Semantic { value, .. } => *value,
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1116 -             AbilityFrame::Semantic { value, .. } => *value,
+1116 +             <logic::models::AbilityFrame as Example>::Semantic { value, 
+.. } => *value,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1117:13
+     |
+1117 |             AbilityFrame::RecoverLive { count, .. }
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+     |
+1117 -             AbilityFrame::RecoverLive { count, .. }
+1117 +             <logic::models::AbilityFrame as Example>::RecoverLive { coun
+t, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1118:15
+     |
+1118 |             | AbilityFrame::RecoverMember { count, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1118 -             | AbilityFrame::RecoverMember { count, .. }
+1118 +             | <logic::models::AbilityFrame as Example>::RecoverMember { 
+count, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1119:15
+     |
+1119 |             | AbilityFrame::SelectMember { count, .. } => *count,
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1119 -             | AbilityFrame::SelectMember { count, .. } => *count,
+1119 +             | <logic::models::AbilityFrame as Example>::SelectMember { c
+ount, .. } => *count,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1120:13
+     |
+1120 |             AbilityFrame::LookAndChoose {
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1120 -             AbilityFrame::LookAndChoose {
+1120 +             <logic::models::AbilityFrame as Example>::LookAndChoose {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1139:13
+     |
+1139 |             AbilityFrame::MoveMember { .. } => 0,
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1139 -             AbilityFrame::MoveMember { .. } => 0,
+1139 +             <logic::models::AbilityFrame as Example>::MoveMember { .. } 
+=> 0,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1140:13
+     |
+1140 |             AbilityFrame::MetaRule { rule_type, .. } => *rule_type,
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1140 -             AbilityFrame::MetaRule { rule_type, .. } => *rule_type,
+1140 +             <logic::models::AbilityFrame as Example>::MetaRule { rule_ty
+pe, .. } => *rule_type,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1141:13
+     |
+1141 |             AbilityFrame::Raw { value, .. } => *value,
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1141 -             AbilityFrame::Raw { value, .. } => *value,
+1141 +             <logic::models::AbilityFrame as Example>::Raw { value, .. } 
+=> *value,
+     |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+    --> src\core\logic\models.rs:1147:27
+     |
+  25 | pub struct AbilityFrame {
+     | ----------------------- associated item `Return` not found for this stru
+ct
+...
+1147 |             AbilityFrame::Return => 0,
+     |                           ^^^^^^ associated item not found in `logic::mo
+dels::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1148:13
+     |
+1148 |             AbilityFrame::Draw { .. } => 0,
+     |             ^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1148 -             AbilityFrame::Draw { .. } => 0,
+1148 +             <logic::models::AbilityFrame as Example>::Draw { .. } => 0,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1149:13
+     |
+1149 |             AbilityFrame::Semantic { filter, .. }
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1149 -             AbilityFrame::Semantic { filter, .. }
+1149 +             <logic::models::AbilityFrame as Example>::Semantic { filter,
+ .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1150:15
+     |
+1150 |             | AbilityFrame::RecoverLive { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+     |
+1150 -             | AbilityFrame::RecoverLive { filter, .. }
+1150 +             | <logic::models::AbilityFrame as Example>::RecoverLive { fi
+lter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1151:15
+     |
+1151 |             | AbilityFrame::RecoverMember { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1151 -             | AbilityFrame::RecoverMember { filter, .. }
+1151 +             | <logic::models::AbilityFrame as Example>::RecoverMember { 
+filter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1152:15
+     |
+1152 |             | AbilityFrame::LookAndChoose { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1152 -             | AbilityFrame::LookAndChoose { filter, .. }
+1152 +             | <logic::models::AbilityFrame as Example>::LookAndChoose { 
+filter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1153:15
+     |
+1153 |             | AbilityFrame::SelectMember { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1153 -             | AbilityFrame::SelectMember { filter, .. }
+1153 +             | <logic::models::AbilityFrame as Example>::SelectMember { f
+ilter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1154:15
+     |
+1154 |             | AbilityFrame::MoveMember { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1154 -             | AbilityFrame::MoveMember { filter, .. }
+1154 +             | <logic::models::AbilityFrame as Example>::MoveMember { fil
+ter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1155:15
+     |
+1155 |             | AbilityFrame::MetaRule { filter, .. } => filter.to_attr() 
+as u64,
+     |               ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1155 -             | AbilityFrame::MetaRule { filter, .. } => filter.to_attr() 
+as u64,
+1155 +             | <logic::models::AbilityFrame as Example>::MetaRule { filte
+r, .. } => filter.to_attr() as u64,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1156:13
+     |
+1156 |             AbilityFrame::Raw { attr, .. } => *attr,
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1156 -             AbilityFrame::Raw { attr, .. } => *attr,
+1156 +             <logic::models::AbilityFrame as Example>::Raw { attr, .. } =
+> *attr,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1162:13
+     |
+1162 |             AbilityFrame::Semantic { is_negated, .. } => *is_negated,
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1162 -             AbilityFrame::Semantic { is_negated, .. } => *is_negated,
+1162 +             <logic::models::AbilityFrame as Example>::Semantic { is_nega
+ted, .. } => *is_negated,
+     |
+
+error[E0599]: no associated item named `Return` found for struct `logic::models
+::AbilityFrame` in the current scope
+    --> src\core\logic\models.rs:1172:27
+     |
+  25 | pub struct AbilityFrame {
+     | ----------------------- associated item `Return` not found for this stru
+ct
+...
+1172 |             AbilityFrame::Return => 0,
+     |                           ^^^^^^ associated item not found in `logic::mo
+dels::AbilityFrame`
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1173:13
+     |
+1173 |             AbilityFrame::Draw { .. } => 0,
+     |             ^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1173 -             AbilityFrame::Draw { .. } => 0,
+1173 +             <logic::models::AbilityFrame as Example>::Draw { .. } => 0,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1174:13
+     |
+1174 |             AbilityFrame::Semantic { slot, .. }
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1174 -             AbilityFrame::Semantic { slot, .. }
+1174 +             <logic::models::AbilityFrame as Example>::Semantic { slot, .
+. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1175:15
+     |
+1175 |             | AbilityFrame::RecoverLive { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+     |
+1175 -             | AbilityFrame::RecoverLive { slot, .. }
+1175 +             | <logic::models::AbilityFrame as Example>::RecoverLive { sl
+ot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1176:15
+     |
+1176 |             | AbilityFrame::RecoverMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1176 -             | AbilityFrame::RecoverMember { slot, .. }
+1176 +             | <logic::models::AbilityFrame as Example>::RecoverMember { 
+slot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1177:15
+     |
+1177 |             | AbilityFrame::LookAndChoose { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1177 -             | AbilityFrame::LookAndChoose { slot, .. }
+1177 +             | <logic::models::AbilityFrame as Example>::LookAndChoose { 
+slot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1178:15
+     |
+1178 |             | AbilityFrame::SelectMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1178 -             | AbilityFrame::SelectMember { slot, .. }
+1178 +             | <logic::models::AbilityFrame as Example>::SelectMember { s
+lot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1179:15
+     |
+1179 |             | AbilityFrame::MoveMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1179 -             | AbilityFrame::MoveMember { slot, .. }
+1179 +             | <logic::models::AbilityFrame as Example>::MoveMember { slo
+t, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1180:15
+     |
+1180 |             | AbilityFrame::MetaRule { slot, .. } => slot.to_raw(),
+     |               ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1180 -             | AbilityFrame::MetaRule { slot, .. } => slot.to_raw(),
+1180 +             | <logic::models::AbilityFrame as Example>::MetaRule { slot,
+ .. } => slot.to_raw(),
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1181:13
+     |
+1181 |             AbilityFrame::Raw { slot, .. } => *slot,
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1181 -             AbilityFrame::Raw { slot, .. } => *slot,
+1181 +             <logic::models::AbilityFrame as Example>::Raw { slot, .. } =
+> *slot,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1189:13
+     |
+1189 |             AbilityFrame::LookAndChoose {
+     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1189 -             AbilityFrame::LookAndChoose {
+1189 +             <logic::models::AbilityFrame as Example>::LookAndChoose {
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1238:13
+     |
+1238 |             AbilityFrame::Semantic { filter, .. }
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1238 -             AbilityFrame::Semantic { filter, .. }
+1238 +             <logic::models::AbilityFrame as Example>::Semantic { filter,
+ .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1239:15
+     |
+1239 |             | AbilityFrame::RecoverLive { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+     |
+1239 -             | AbilityFrame::RecoverLive { filter, .. }
+1239 +             | <logic::models::AbilityFrame as Example>::RecoverLive { fi
+lter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1240:15
+     |
+1240 |             | AbilityFrame::RecoverMember { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1240 -             | AbilityFrame::RecoverMember { filter, .. }
+1240 +             | <logic::models::AbilityFrame as Example>::RecoverMember { 
+filter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1241:15
+     |
+1241 |             | AbilityFrame::LookAndChoose { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1241 -             | AbilityFrame::LookAndChoose { filter, .. }
+1241 +             | <logic::models::AbilityFrame as Example>::LookAndChoose { 
+filter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1242:15
+     |
+1242 |             | AbilityFrame::SelectMember { filter, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1242 -             | AbilityFrame::SelectMember { filter, .. }
+1242 +             | <logic::models::AbilityFrame as Example>::SelectMember { f
+ilter, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1243:15
+     |
+1243 |             | AbilityFrame::MoveMember { filter, .. } => *filter,
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1243 -             | AbilityFrame::MoveMember { filter, .. } => *filter,
+1243 +             | <logic::models::AbilityFrame as Example>::MoveMember { fil
+ter, .. } => *filter,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1244:13
+     |
+1244 |             AbilityFrame::MetaRule { filter, .. } => CardFilter::from_at
+tr(filter.to_attr() as i64),
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1244 -             AbilityFrame::MetaRule { filter, .. } => CardFilter::from_at
+tr(filter.to_attr() as i64),
+1244 +             <logic::models::AbilityFrame as Example>::MetaRule { filter,
+ .. } => CardFilter::from_attr(filter.to_attr() as i64),
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1245:13
+     |
+1245 |             AbilityFrame::Raw { attr, .. } => CardFilter::from_attr((*at
+tr) as i64),
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1245 -             AbilityFrame::Raw { attr, .. } => CardFilter::from_attr((*at
+tr) as i64),
+1245 +             <logic::models::AbilityFrame as Example>::Raw { attr, .. } =
+> CardFilter::from_attr((*attr) as i64),
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1252:13
+     |
+1252 |             AbilityFrame::Semantic { slot, .. }
+     |             ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1252 -             AbilityFrame::Semantic { slot, .. }
+1252 +             <logic::models::AbilityFrame as Example>::Semantic { slot, .
+. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1253:15
+     |
+1253 |             | AbilityFrame::RecoverLive { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+     |
+1253 -             | AbilityFrame::RecoverLive { slot, .. }
+1253 +             | <logic::models::AbilityFrame as Example>::RecoverLive { sl
+ot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1254:15
+     |
+1254 |             | AbilityFrame::RecoverMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1254 -             | AbilityFrame::RecoverMember { slot, .. }
+1254 +             | <logic::models::AbilityFrame as Example>::RecoverMember { 
+slot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1255:15
+     |
+1255 |             | AbilityFrame::LookAndChoose { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+     |
+1255 -             | AbilityFrame::LookAndChoose { slot, .. }
+1255 +             | <logic::models::AbilityFrame as Example>::LookAndChoose { 
+slot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1256:15
+     |
+1256 |             | AbilityFrame::SelectMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+     |
+1256 -             | AbilityFrame::SelectMember { slot, .. }
+1256 +             | <logic::models::AbilityFrame as Example>::SelectMember { s
+lot, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1257:15
+     |
+1257 |             | AbilityFrame::MoveMember { slot, .. }
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+     |
+1257 -             | AbilityFrame::MoveMember { slot, .. }
+1257 +             | <logic::models::AbilityFrame as Example>::MoveMember { slo
+t, .. }
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1258:15
+     |
+1258 |             | AbilityFrame::MetaRule { slot, .. } => *slot,
+     |               ^^^^^^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+     |
+1258 -             | AbilityFrame::MetaRule { slot, .. } => *slot,
+1258 +             | <logic::models::AbilityFrame as Example>::MetaRule { slot,
+ .. } => *slot,
+     |
+
+error[E0223]: ambiguous associated type
+    --> src\core\logic\models.rs:1259:13
+     |
+1259 |             AbilityFrame::Raw { slot, .. } => DecodedSlot::decode(*slot)
+,
+     |             ^^^^^^^^^^^^^^^^^
+     |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+     |
+1259 -             AbilityFrame::Raw { slot, .. } => DecodedSlot::decode(*slot)
+,
+1259 +             <logic::models::AbilityFrame as Example>::Raw { slot, .. } =
+> DecodedSlot::decode(*slot),
+     |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:63:17
+   |
+63 |                 AbilityFrame::Raw { value, .. } => *value = v_val,
+   |                 ^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+   |
+63 -                 AbilityFrame::Raw { value, .. } => *value = v_val,
+63 +                 <logic::models::AbilityFrame as Example>::Raw { value, .. 
+} => *value = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:64:17
+   |
+64 |                 AbilityFrame::Semantic { value, .. } => *value = v_val,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+   |
+64 -                 AbilityFrame::Semantic { value, .. } => *value = v_val,
+64 +                 <logic::models::AbilityFrame as Example>::Semantic { value
+, .. } => *value = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:65:17
+   |
+65 |                 AbilityFrame::Draw { count, .. } => *count = v_val,
+   |                 ^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Draw` impleme
+nted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+   |
+65 -                 AbilityFrame::Draw { count, .. } => *count = v_val,
+65 +                 <logic::models::AbilityFrame as Example>::Draw { count, ..
+ } => *count = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:66:17
+   |
+66 |                 AbilityFrame::RecoverLive { count, .. } => *count = v_val,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+   |
+66 -                 AbilityFrame::RecoverLive { count, .. } => *count = v_val,
+66 +                 <logic::models::AbilityFrame as Example>::RecoverLive { co
+unt, .. } => *count = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:67:17
+   |
+67 |                 AbilityFrame::RecoverMember { count, .. } => *count = v_va
+l,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+   |
+67 -                 AbilityFrame::RecoverMember { count, .. } => *count = v_va
+l,
+67 +                 <logic::models::AbilityFrame as Example>::RecoverMember { 
+count, .. } => *count = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:68:17
+   |
+68 |                 AbilityFrame::SelectMember { count, .. } => *count = v_val
+,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+   |
+68 -                 AbilityFrame::SelectMember { count, .. } => *count = v_val
+,
+68 +                 <logic::models::AbilityFrame as Example>::SelectMember { c
+ount, .. } => *count = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:69:17
+   |
+69 |                 AbilityFrame::MetaRule { rule_type, .. } => *rule_type = v
+_val,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+   |
+69 -                 AbilityFrame::MetaRule { rule_type, .. } => *rule_type = v
+_val,
+69 +                 <logic::models::AbilityFrame as Example>::MetaRule { rule_
+type, .. } => *rule_type = v_val,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:79:17
+   |
+79 |                 AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
+   |                 ^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+   |
+79 -                 AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
+79 +                 <logic::models::AbilityFrame as Example>::Raw { attr, .. }
+ => *attr = a_val as u64,
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:80:17
+   |
+80 |                 AbilityFrame::Semantic { filter, .. } => *filter = CardFil
+ter::from_attr(a_val),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+   |
+80 -                 AbilityFrame::Semantic { filter, .. } => *filter = CardFil
+ter::from_attr(a_val),
+80 +                 <logic::models::AbilityFrame as Example>::Semantic { filte
+r, .. } => *filter = CardFilter::from_attr(a_val),
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:81:17
+   |
+81 |                 AbilityFrame::RecoverLive { filter, .. } => *filter = Card
+Filter::from_attr(a_val),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+   |
+81 -                 AbilityFrame::RecoverLive { filter, .. } => *filter = Card
+Filter::from_attr(a_val),
+81 +                 <logic::models::AbilityFrame as Example>::RecoverLive { fi
+lter, .. } => *filter = CardFilter::from_attr(a_val),
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:82:17
+   |
+82 |                 AbilityFrame::RecoverMember { filter, .. } => {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+   |
+82 -                 AbilityFrame::RecoverMember { filter, .. } => {
+82 +                 <logic::models::AbilityFrame as Example>::RecoverMember { 
+filter, .. } => {
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:85:17
+   |
+85 |                 AbilityFrame::SelectMember { filter, .. } => *filter = Car
+dFilter::from_attr(a_val),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+   |
+85 -                 AbilityFrame::SelectMember { filter, .. } => *filter = Car
+dFilter::from_attr(a_val),
+85 +                 <logic::models::AbilityFrame as Example>::SelectMember { f
+ilter, .. } => *filter = CardFilter::from_attr(a_val),
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:86:17
+   |
+86 |                 AbilityFrame::LookAndChoose { filter, .. } => {
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+   |
+86 -                 AbilityFrame::LookAndChoose { filter, .. } => {
+86 +                 <logic::models::AbilityFrame as Example>::LookAndChoose { 
+filter, .. } => {
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:89:17
+   |
+89 |                 AbilityFrame::MoveMember { filter, .. } => *filter = CardF
+ilter::from_attr(a_val),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+   |
+89 -                 AbilityFrame::MoveMember { filter, .. } => *filter = CardF
+ilter::from_attr(a_val),
+89 +                 <logic::models::AbilityFrame as Example>::MoveMember { fil
+ter, .. } => *filter = CardFilter::from_attr(a_val),
+   |
+
+error[E0223]: ambiguous associated type
+  --> src\test_helpers.rs:90:17
+   |
+90 |                 AbilityFrame::MetaRule { filter, .. } => *filter = CardFil
+ter::from_attr(a_val),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+   |
+90 -                 AbilityFrame::MetaRule { filter, .. } => *filter = CardFil
+ter::from_attr(a_val),
+90 +                 <logic::models::AbilityFrame as Example>::MetaRule { filte
+r, .. } => *filter = CardFilter::from_attr(a_val),
+   |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:110:17
+    |
+110 |                 AbilityFrame::Raw { slot, .. } => *slot = s_val,
+    |                 ^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Raw` implemen
+ted for `logic::models::AbilityFrame`, you could use the fully-qualified path
+    |
+110 -                 AbilityFrame::Raw { slot, .. } => *slot = s_val,
+110 +                 <logic::models::AbilityFrame as Example>::Raw { slot, .. 
+} => *slot = s_val,
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:111:17
+    |
+111 |                 AbilityFrame::Semantic { slot, .. } => *slot = DecodedSlo
+t::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `Semantic` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+111 -                 AbilityFrame::Semantic { slot, .. } => *slot = DecodedSlo
+t::decode(s_val),
+111 +                 <logic::models::AbilityFrame as Example>::Semantic { slot
+, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:112:17
+    |
+112 |                 AbilityFrame::RecoverLive { slot, .. } => *slot = Decoded
+Slot::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverLive` 
+implemented for `logic::models::AbilityFrame`, you could use the fully-qualifie
+d path
+    |
+112 -                 AbilityFrame::RecoverLive { slot, .. } => *slot = Decoded
+Slot::decode(s_val),
+112 +                 <logic::models::AbilityFrame as Example>::RecoverLive { s
+lot, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:113:17
+    |
+113 |                 AbilityFrame::RecoverMember { slot, .. } => *slot = Decod
+edSlot::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `RecoverMember
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+113 -                 AbilityFrame::RecoverMember { slot, .. } => *slot = Decod
+edSlot::decode(s_val),
+113 +                 <logic::models::AbilityFrame as Example>::RecoverMember {
+ slot, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:114:17
+    |
+114 |                 AbilityFrame::SelectMember { slot, .. } => *slot = Decode
+dSlot::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `SelectMember`
+ implemented for `logic::models::AbilityFrame`, you could use the fully-qualifi
+ed path
+    |
+114 -                 AbilityFrame::SelectMember { slot, .. } => *slot = Decode
+dSlot::decode(s_val),
+114 +                 <logic::models::AbilityFrame as Example>::SelectMember { 
+slot, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:115:17
+    |
+115 |                 AbilityFrame::LookAndChoose { slot, .. } => *slot = Decod
+edSlot::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `LookAndChoose
+` implemented for `logic::models::AbilityFrame`, you could use the fully-qualif
+ied path
+    |
+115 -                 AbilityFrame::LookAndChoose { slot, .. } => *slot = Decod
+edSlot::decode(s_val),
+115 +                 <logic::models::AbilityFrame as Example>::LookAndChoose {
+ slot, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:116:17
+    |
+116 |                 AbilityFrame::MoveMember { slot, .. } => *slot = DecodedS
+lot::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MoveMember` i
+mplemented for `logic::models::AbilityFrame`, you could use the fully-qualified
+ path
+    |
+116 -                 AbilityFrame::MoveMember { slot, .. } => *slot = DecodedS
+lot::decode(s_val),
+116 +                 <logic::models::AbilityFrame as Example>::MoveMember { sl
+ot, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+error[E0223]: ambiguous associated type
+   --> src\test_helpers.rs:117:17
+    |
+117 |                 AbilityFrame::MetaRule { slot, .. } => *slot = DecodedSlo
+t::decode(s_val),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: if there were a trait named `Example` with associated type `MetaRule` imp
+lemented for `logic::models::AbilityFrame`, you could use the fully-qualified p
+ath
+    |
+117 -                 AbilityFrame::MetaRule { slot, .. } => *slot = DecodedSlo
+t::decode(s_val),
+117 +                 <logic::models::AbilityFrame as Example>::MetaRule { slot
+, .. } => *slot = DecodedSlot::decode(s_val),
+    |
+
+Some errors have detailed explanations: E0223, E0277, E0599.
+For more information about an error, try `rustc --explain E0223`.
+error: could not compile `engine_rust` (lib) due to 128 previous errors

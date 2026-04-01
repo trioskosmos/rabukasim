@@ -340,23 +340,9 @@ impl CardDatabase {
 
         if let Some(program) = &mut ability.frame_program {
             for frame in &mut program.frames {
-                if frame.opcode() == O_MOVE_MEMBER {
-                    match frame.clone() {
-                        AbilityFrame::MoveMember { filter, slot, .. } => {
-                            *frame = AbilityFrame::Semantic {
-                                opcode: O_TAP_MEMBER,
-                                value: 0,
-                                filter,
-                                slot,
-                                is_negated: false,
-                                is_cost: false,
-                                params: serde_json::Value::Null,
-                            };
-                        }
-                        AbilityFrame::Semantic { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
-                        AbilityFrame::Raw { ref mut opcode, .. } => *opcode = O_TAP_MEMBER,
-                        _ => {}
-                    }
+                if frame.opcode == O_MOVE_MEMBER {
+                    frame.opcode = O_TAP_MEMBER;
+                    frame.value = 0;
                 }
             }
         }
@@ -689,7 +675,7 @@ impl CardDatabase {
                         synthesized_frames.push(AbilityFrame::from_effect(effect));
                     }
                     // Add RETURN frame at the end
-                    synthesized_frames.push(AbilityFrame::Return);
+                    synthesized_frames.push(AbilityFrame::new_return());
                     
                     if card_no.contains("358") || card_no.contains("Cara Tesoro") {
                         eprintln!("[DEBUG_Q203_DB] Synthesized {} frames from {} effects", 
@@ -705,7 +691,7 @@ impl CardDatabase {
                     } else {
                         // Last resort: create minimal RETURN frame for abilities without effects
                         ability.frame_program = Some(FrameProgram {
-                            frames: vec![AbilityFrame::Return],
+                            frames: vec![AbilityFrame::new_return()],
                             raw_program: Some(entry.clone()),
                         });
                     }
@@ -727,13 +713,15 @@ impl CardDatabase {
                 .and_then(Self::parse_u8_value)
             {
                 if let Some(program) = ability.frame_program.as_mut() {
-                    if let Some(AbilityFrame::LookAndChoose { choose_count: frame_choose_count, .. }) = program
+                    if let Some(frame) = program
                         .frames
                         .iter_mut()
-                        .find(|frame| frame.opcode() == O_LOOK_AND_CHOOSE)
+                        .find(|f| f.opcode == O_LOOK_AND_CHOOSE)
                     {
-                        if *frame_choose_count == 0 {
-                            *frame_choose_count = choose_count as i32;
+                        let mut lac = frame.look_choose();
+                        if lac.choose_count == 0 {
+                            lac.choose_count = choose_count;
+                            frame.value = lac.to_raw();
                         }
                     }
                 }
@@ -1160,9 +1148,11 @@ impl CardDatabase {
             if ab.choice_count > 0 {
                 if let Some(frame_program) = ab.frame_program.as_mut() {
                     for frame in &mut frame_program.frames {
-                        if let AbilityFrame::LookAndChoose { choose_count, .. } = frame {
-                            if *choose_count == 0 {
-                                *choose_count = ab.choice_count as i32;
+                        if frame.opcode == O_LOOK_AND_CHOOSE {
+                            let mut lac = frame.look_choose();
+                            if lac.choose_count == 0 {
+                                lac.choose_count = ab.choice_count;
+                                frame.value = lac.to_raw();
                             }
                         }
                     }

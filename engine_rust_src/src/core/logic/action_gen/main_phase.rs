@@ -80,18 +80,15 @@ fn ability_costs_payable(
 
     // 3. Check frame-based choice preconditions that must be available before activation.
     for frame in ab.frames() {
-        if let crate::core::logic::models::AbilityFrame::LookAndChoose {
-            choose_count,
-            slot,
-            is_cost,
-            ..
-        } = frame
-        {
+        if frame.opcode == crate::core::generated_constants::O_LOOK_AND_CHOOSE {
+            let is_cost = frame.is_cost;
             if is_cost {
                 continue;
             }
 
+            let choose_count: i32 = frame.look_choose().choose_count as i32;
             let required = choose_count.max(1) as usize;
+            let slot = frame.dslot();
             let available = match slot.source_zone {
                 Zone::Hand => state.players[p_idx].hand.iter().filter(|&&cid| cid >= 0).count(),
                 Zone::Discard => {

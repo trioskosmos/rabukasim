@@ -1,5 +1,4 @@
 use crate::core::models::*;
-use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::test_helpers::*;
 
 #[test]
@@ -20,8 +19,8 @@ fn test_card126_draw_repro() {
             AbilityFrame::new(58, 5, 1, 65540, false),
             AbilityFrame::new(309, 1, 8, 0, false),
             AbilityFrame::new(48, 10, 1, 0, false),
-            AbilityFrame::Draw { count: 1, slot: DecodedSlot::default(), is_cost: false },
-            AbilityFrame::Return,
+            AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },
+            AbilityFrame::new_return(),
         ],
         raw_program: None,
     });
@@ -62,8 +61,8 @@ fn test_card126_draw_repro() {
             AbilityFrame::new(58, 5, 1, 65540, false),
             AbilityFrame::new(309, 1, 8, 0, false),
             AbilityFrame::new(48, 10, 1, 0, false),
-            AbilityFrame::Draw { count: 1, slot: DecodedSlot::default(), is_cost: false },
-            AbilityFrame::Return,
+            AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },
+            AbilityFrame::new_return(),
         ];
 
         let ctx = AbilityContext {

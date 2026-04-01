@@ -59,37 +59,14 @@ impl FrameBuilder {
 
     pub fn v(mut self, v_val: i32) -> Self {
         if let Some(frame) = self.frames.last_mut() {
-            match frame {
-                AbilityFrame::Raw { value, .. } => *value = v_val,
-                AbilityFrame::Semantic { value, .. } => *value = v_val,
-                AbilityFrame::Draw { count, .. } => *count = v_val,
-                AbilityFrame::RecoverLive { count, .. } => *count = v_val,
-                AbilityFrame::RecoverMember { count, .. } => *count = v_val,
-                AbilityFrame::SelectMember { count, .. } => *count = v_val,
-                AbilityFrame::MetaRule { rule_type, .. } => *rule_type = v_val,
-                _ => {}
-            }
+            frame.value = v_val;
         }
         self
     }
 
     pub fn a(mut self, a_val: i64) -> Self {
         if let Some(frame) = self.frames.last_mut() {
-            match frame {
-                AbilityFrame::Raw { attr, .. } => *attr = a_val as u64,
-                AbilityFrame::Semantic { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                AbilityFrame::RecoverLive { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                AbilityFrame::RecoverMember { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
-                AbilityFrame::SelectMember { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                AbilityFrame::LookAndChoose { filter, .. } => {
-                    *filter = CardFilter::from_attr(a_val)
-                }
-                AbilityFrame::MoveMember { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                AbilityFrame::MetaRule { filter, .. } => *filter = CardFilter::from_attr(a_val),
-                _ => {}
-            }
+            frame.attr = a_val as u64;
         }
         self
     }
@@ -106,17 +83,7 @@ impl FrameBuilder {
 
     pub fn s(mut self, s_val: i32) -> Self {
         if let Some(frame) = self.frames.last_mut() {
-            match frame {
-                AbilityFrame::Raw { slot, .. } => *slot = s_val,
-                AbilityFrame::Semantic { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::RecoverLive { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::RecoverMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::SelectMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::LookAndChoose { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::MoveMember { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                AbilityFrame::MetaRule { slot, .. } => *slot = DecodedSlot::decode(s_val),
-                _ => {}
-            }
+            frame.slot = s_val;
         }
         self
     }

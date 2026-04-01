@@ -1174,18 +1174,13 @@ impl ResponseController for GameState {
 
             let semantic_frames = if cid == -1 {
                 Some(vec![
-                    crate::core::logic::models::AbilityFrame::Semantic {
+                    crate::core::logic::models::AbilityFrame {
                         opcode: pending.effect_opcode,
                         value: pending.ctx.v_remaining as i32,
-                        filter: crate::core::logic::filter::CardFilter::from_attr(
-                            pending.filter_attr as i64,
-                        ),
-                        slot: crate::core::logic::interpreter::instruction::DecodedSlot::default(),
-                        is_negated: false,
-                        is_cost: false,
-                        params: serde_json::Value::Null,
+                        attr: pending.filter_attr,
+                        ..Default::default()
                     },
-                    crate::core::logic::models::AbilityFrame::Return,
+                    crate::core::logic::models::AbilityFrame::new_return(),
                 ])
             } else {
                 None

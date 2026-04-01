@@ -2,6 +2,7 @@
 //! This ensures 100% coverage of logic.rs opcodes.
 
 use crate::core::enums::TriggerType;
+use crate::core::generated_constants::O_DRAW;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::interpreter::resolve_ability;
 use crate::core::logic::models::{Ability, AbilityFrame, FrameProgram};
@@ -494,12 +495,8 @@ fn test_frame_program_only_ability_executes() {
         bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![
-                AbilityFrame::Draw {
-                    count: 1,
-                    slot: Default::default(),
-                    is_cost: false,
-                },
-                AbilityFrame::Return,
+                AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },
+                AbilityFrame::new_return(),
             ],
             raw_program: None,
         }),
@@ -543,12 +540,8 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
         bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![
-                AbilityFrame::Draw {
-                    count: 1,
-                    slot: Default::default(),
-                    is_cost: false,
-                },
-                AbilityFrame::Return,
+                AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },
+                AbilityFrame::new_return(),
             ],
             raw_program: None,
         }),

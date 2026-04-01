@@ -77,23 +77,8 @@ path = "examples/bench_diagnostic.rs"
 test = false
 
 [[bin]]
-name = "analyze_slow_events"
-path = "examples/analyze_slow_events.rs"
-test = false
-
-[[bin]]
-name = "detect_slow"
-path = "examples/detect_slow.rs"
-test = false
-
-[[bin]]
 name = "bench_deterministic"
 path = "examples/bench_deterministic.rs"
-test = false
-
-[[bin]]
-name = "bench_granular"
-path = "examples/bench_granular.rs"
 test = false
 
 [[bin]]
@@ -109,11 +94,6 @@ test = false
 [[bin]]
 name = "debug_game_log"
 path = "examples/debug_game_log.rs"
-test = false
-
-[[bin]]
-name = "bench_granular_real"
-path = "examples/bench_granular_real.rs"
 test = false
 
 [[bin]]
