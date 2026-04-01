@@ -24,7 +24,6 @@ fn test_repro_pb1_001_r_softlock_fix() {
     state.players[0].hand.clear();
     state.players[0].energy_zone = smallvec![100, 101]; // 2 Energy available
 
-    crate::test_helpers::generate_card_report(card_id);
     let ctx = AbilityContext {
         player_id: 0,
         source_card_id: card_id,
@@ -35,7 +34,6 @@ fn test_repro_pb1_001_r_softlock_fix() {
     // Start the ability to hit the mode selection interaction suspension
     println!("--- Starting Ability for Card {} ---", card_id);
     state.resolve_ability(&db, &db.get_member(card_id).unwrap().abilities[0], &ctx);
-    state.dump_verbose();
 
     // Engine should be suspended waiting for interaction
     assert_eq!(state.phase, Phase::Response);
@@ -84,7 +82,6 @@ fn test_repro_pb1_001_r_all_combinations() {
 
         let target_id = 4684;
         state.resolve_ability(&db, &db.get_member(target_id).unwrap().abilities[0], &ctx);
-        state.dump_verbose();
 
         let mut actions = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);

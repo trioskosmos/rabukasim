@@ -115,7 +115,6 @@ fn test_area_rotation_mei() {
     state.phase = Phase::Main;
 
     let mei_id = 590;
-    crate::test_helpers::generate_card_report(mei_id);
     state.players[0].stage[0] = 10;
     state.players[0].stage[1] = 20;
     state.players[0].stage[2] = 30;
@@ -125,7 +124,6 @@ fn test_area_rotation_mei() {
     println!("--- Playing Mei ({}) ---", mei_id);
     state.play_member(&db, 0, 0).expect("Play Mei");
     state.process_trigger_queue(&db);
-    state.dump_verbose();
 
     // After playing Mei (590) on Left(0), board is [590, 20, 30]
     // Rotation logic: Center(20) -> Left(0), Left(590) -> Right(2), Right(30) -> Center(1)
@@ -163,7 +161,6 @@ fn test_selective_reveal_kanon() {
     state.current_player = 0;
 
     let kanon_id = 588;
-    crate::test_helpers::generate_card_report(kanon_id);
     state.players[0].hand.push(kanon_id);
 
     let ab = &db.get_member(kanon_id).unwrap().abilities[0];
@@ -175,7 +172,6 @@ fn test_selective_reveal_kanon() {
     };
     println!("--- Testing Kanon ({}) ---", kanon_id);
     state.resolve_ability(&db, ab, &ctx);
-    state.dump_verbose();
 
     assert_eq!(state.phase, Phase::Response);
     assert_eq!(

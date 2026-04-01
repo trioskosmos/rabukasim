@@ -1,5 +1,6 @@
 use crate::core::enums::ChoiceType;
-use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, FILTER_IS_OPTIONAL};
+use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES};
+use crate::core::logic::filter::CardFilter;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -30,11 +31,15 @@ pub fn handle_select_cards(
     instr_ip: usize,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let mut a = filter_attr_from_params(frame_data.params).unwrap_or(0) as i64;
-    a |= frame_data.filter.to_attr() as i64;
+    let filter = if let Some(extra_attr) = filter_attr_from_params(frame_data.params) {
+        frame_data.filter.with_overlay(&CardFilter::from_attr(extra_attr as i64))
+    } else {
+        frame_data.filter
+    };
+    let a = filter.to_attr() as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let is_optional = (a as u64 & FILTER_IS_OPTIONAL) != 0;
+    let is_optional = filter.is_optional;
     let optional_prompt_marker = -((v as i16) + 2);
     let is_variable_selection = v < 0;
 
@@ -138,9 +143,8 @@ pub fn handle_select_cards(
             _ => state.players[p_idx].discard.to_vec(),
         };
 
-        let filter_attr = a as u64;
         for cid in cards_to_filter {
-            let matches = state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx);
+            let matches = state.card_matches_filter_with_ctx(db, cid, a as u64, ctx);
             if matches {
                 state.players[p_idx].looked_cards.push(cid);
             }

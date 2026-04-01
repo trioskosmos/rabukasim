@@ -32,6 +32,7 @@
 
 use super::CardDatabase;
 pub use crate::core::generated_constants::*;
+use crate::core::generated_layout::*;
 use serde::{de, Deserialize, Deserializer, Serialize};
 // use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
@@ -167,7 +168,7 @@ impl CardFilter {
         let mut attr: u64 = 0;
         
         // Validate inputs before conversion
-        debug_assert!(self.target_player <= 2, "Invalid target player: {}", self.target_player);
+        debug_assert!(self.target_player <= 3, "Invalid target player: {}", self.target_player);
         debug_assert!(self.card_type <= 2, "Invalid card type: {}", self.card_type);
         debug_assert!(self.group_id <= 127, "Invalid group ID: {}", self.group_id);
         debug_assert!(self.unit_id <= 127, "Invalid unit ID: {}", self.unit_id);
@@ -194,6 +195,9 @@ impl CardFilter {
         if self.unit_enabled {
             attr |= 1 << 16;
             attr |= (self.unit_id as u64) << 17;
+        } else if self.char_id_3 != 0 {
+            // Legacy packed attrs reuse the unit-id bits for a third character id.
+            attr |= (self.char_id_3 as u64) << 17;
         }
         
         // Set value information
@@ -221,7 +225,7 @@ impl CardFilter {
 
     /// Validate filter state and return structured errors
     pub fn validate(&self) -> Result<(), ConversionError> {
-        if self.target_player > 2 {
+        if self.target_player > 3 {
             return Err(ConversionError::InvalidTargetPlayer(self.target_player));
         }
         if self.card_type > 2 {
@@ -473,11 +477,81 @@ impl CardFilter {
     }
 
     pub fn from_attr(a: i64) -> Self {
-        crate::core::logic::filter_attr_compat::card_filter_from_attr(a)
+        if a == 0 {
+            return Self {
+                is_enabled: true,
+                ..Self::default()
+            };
+        }
+
+        let attr = a as u64;
+        let unit_enabled =
+            ((attr >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK) != 0;
+
+        Self {
+            is_enabled: true,
+            target_player: ((attr >> A_STANDARD_TARGET_PLAYER_SHIFT)
+                & A_STANDARD_TARGET_PLAYER_MASK) as u8,
+            card_type: ((attr >> A_STANDARD_CARD_TYPE_SHIFT) & A_STANDARD_CARD_TYPE_MASK) as u8,
+            group_enabled: ((attr >> A_STANDARD_GROUP_ENABLED_SHIFT)
+                & A_STANDARD_GROUP_ENABLED_MASK)
+                != 0,
+            group_id: ((attr >> A_STANDARD_GROUP_ID_SHIFT) & A_STANDARD_GROUP_ID_MASK) as u8,
+            is_tapped: ((attr >> A_STANDARD_IS_TAPPED_SHIFT) & A_STANDARD_IS_TAPPED_MASK) != 0,
+            has_blade_heart: ((attr >> A_STANDARD_HAS_BLADE_HEART_SHIFT)
+                & A_STANDARD_HAS_BLADE_HEART_MASK)
+                != 0,
+            not_has_blade_heart: ((attr >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT)
+                & A_STANDARD_NOT_HAS_BLADE_HEART_MASK)
+                != 0,
+            unique_names: ((attr >> A_STANDARD_UNIQUE_NAMES_SHIFT)
+                & A_STANDARD_UNIQUE_NAMES_MASK)
+                != 0,
+            unit_enabled,
+            unit_id: ((attr >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8,
+            value_enabled: ((attr >> A_STANDARD_VALUE_ENABLED_SHIFT)
+                & A_STANDARD_VALUE_ENABLED_MASK)
+                != 0,
+            value_threshold: ((attr >> A_STANDARD_VALUE_THRESHOLD_SHIFT)
+                & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
+            is_le: ((attr >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
+            is_cost_type: ((attr >> A_STANDARD_IS_COST_TYPE_SHIFT)
+                & A_STANDARD_IS_COST_TYPE_MASK)
+                != 0,
+            color_mask: ((attr >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK)
+                as u8,
+            char_id_1: ((attr >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
+            char_id_2: ((attr >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
+            char_id_3: if unit_enabled {
+                0
+            } else {
+                ((attr >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8
+            },
+            zone_mask: ((attr >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
+            special_id: ((attr >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK)
+                as u8,
+            is_setsuna: ((attr >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK)
+                != 0,
+            compare_accumulated: ((attr >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT)
+                & A_STANDARD_COMPARE_ACCUMULATED_MASK)
+                != 0,
+            is_optional: ((attr >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK)
+                != 0,
+            keyword_energy: ((attr >> A_STANDARD_KEYWORD_ENERGY_SHIFT)
+                & A_STANDARD_KEYWORD_ENERGY_MASK)
+                != 0,
+            keyword_member: ((attr >> A_STANDARD_KEYWORD_MEMBER_SHIFT)
+                & A_STANDARD_KEYWORD_MEMBER_MASK)
+                != 0,
+        }
     }
 
     pub fn to_attr(&self) -> u64 {
-        crate::core::logic::filter_attr_compat::card_filter_to_attr(self) as u64
+        if !self.is_enabled {
+            0
+        } else {
+            self.to_attr_computed()
+        }
     }
 
     pub fn new() -> Self {
@@ -580,6 +654,80 @@ impl CardFilter {
 
     pub fn with_zone_mask(mut self, mask: u8) -> Self {
         self.zone_mask = mask;
+        self
+    }
+
+    pub fn with_overlay(mut self, overlay: &CardFilter) -> Self {
+        if !overlay.is_enabled {
+            return self;
+        }
+
+        self.is_enabled = true;
+
+        if overlay.target_player != 0 {
+            self.target_player = overlay.target_player;
+        }
+        if overlay.card_type != 0 {
+            self.card_type = overlay.card_type;
+        }
+        if overlay.group_enabled {
+            self.group_enabled = true;
+            self.group_id = overlay.group_id;
+        }
+        if overlay.is_tapped {
+            self.is_tapped = true;
+        }
+        if overlay.has_blade_heart {
+            self.has_blade_heart = true;
+        }
+        if overlay.not_has_blade_heart {
+            self.not_has_blade_heart = true;
+        }
+        if overlay.unique_names {
+            self.unique_names = true;
+        }
+        if overlay.unit_enabled {
+            self.unit_enabled = true;
+            self.unit_id = overlay.unit_id;
+            self.char_id_3 = 0;
+        } else if overlay.char_id_3 != 0 {
+            self.char_id_3 = overlay.char_id_3;
+        }
+        if overlay.value_enabled {
+            self.value_enabled = true;
+            self.value_threshold = overlay.value_threshold;
+            self.is_le = overlay.is_le;
+            self.is_cost_type = overlay.is_cost_type;
+            self.color_mask = overlay.color_mask;
+        }
+        if overlay.char_id_1 != 0 {
+            self.char_id_1 = overlay.char_id_1;
+        }
+        if overlay.char_id_2 != 0 {
+            self.char_id_2 = overlay.char_id_2;
+        }
+        if overlay.zone_mask != 0 {
+            self.zone_mask = overlay.zone_mask;
+        }
+        if overlay.special_id != 0 {
+            self.special_id = overlay.special_id;
+        }
+        if overlay.is_setsuna {
+            self.is_setsuna = true;
+        }
+        if overlay.compare_accumulated {
+            self.compare_accumulated = true;
+        }
+        if overlay.is_optional {
+            self.is_optional = true;
+        }
+        if overlay.keyword_energy {
+            self.keyword_energy = true;
+        }
+        if overlay.keyword_member {
+            self.keyword_member = true;
+        }
+
         self
     }
 }

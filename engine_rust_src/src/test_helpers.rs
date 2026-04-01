@@ -536,6 +536,7 @@ pub fn generate_card_report(card_id: i32) {
             "python",
             "tools/cf.py",
             &card_id.to_string(),
+            "--no-tests",
             "--output",
             &format!("reports/card_{}.md", card_id),
         ])

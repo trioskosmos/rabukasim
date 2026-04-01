@@ -15,7 +15,6 @@ use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use super::CardDatabase;
 use crate::core::enums::{Phase, TriggerType};
 use crate::core::logic::constants::*;
-use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
 pub use costs::{check_cost, pay_cost};
@@ -655,9 +654,7 @@ pub fn resolve_semantic_frames(
                             condition_frame.value,
                             condition_frame.raw_attr
                         ),
-                        logging::describe_filter_attr(DecodedFilterAttr::decode(
-                            condition_frame.raw_attr as i64
-                        ))
+                        logging::describe_filter_bits(condition_frame.raw_attr)
                     );
                 }
             }

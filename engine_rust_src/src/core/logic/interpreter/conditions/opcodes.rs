@@ -5,7 +5,7 @@ use crate::core::hearts::HeartBoard;
 use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condition;
-use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -22,7 +22,7 @@ struct ConditionParams<'a> {
     raw_attr: u64,
     raw_slot: i32,
     params: Option<&'a serde_json::Value>,
-    filter: DecodedFilterAttr,
+    filter: CardFilter,
     slot: DecodedSlot,
     depth: u32,
 }
@@ -44,7 +44,7 @@ impl<'a> ConditionParams<'a> {
             raw_attr: frame.raw_attr,
             raw_slot: frame.raw_slot,
             params: frame.params,
-            filter: DecodedFilterAttr::decode(frame.filter.to_attr() as i64),
+            filter: frame.filter,
             slot: frame.slot,
             depth,
         }
@@ -69,7 +69,7 @@ impl<'a> ConditionParams<'a> {
             raw_attr: attr,
             raw_slot: slot,
             params: None,
-            filter: DecodedFilterAttr::decode(attr as i64),
+            filter: CardFilter::from_attr(attr as i64),
             slot: DecodedSlot::decode(slot),
             depth,
         }
@@ -147,7 +147,7 @@ fn check_condition_with_parts(
     attr: u64,
     slot: i32,
     params: Option<&serde_json::Value>,
-    filter: DecodedFilterAttr,
+    filter: CardFilter,
     slot_info: DecodedSlot,
     ctx: &AbilityContext,
     depth: u32,
@@ -173,7 +173,7 @@ fn check_condition_with_parts(
     let real_slot = slot & 0xFF;
     if state.debug.debug_mode {
         if !state.ui.silent {
-            let attr_desc = logging::describe_filter_attr(DecodedFilterAttr::decode(attr as i64));
+            let attr_desc = logging::describe_filter_bits(attr);
             println!(
                 "[DEBUG] Condition Opcode: {} | {} | attr=[{}] | slot={} (area={}), source={:?}",
                 op,

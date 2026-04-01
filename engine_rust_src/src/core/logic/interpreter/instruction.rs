@@ -539,7 +539,8 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
     fn from(raw: DecodedFilterAttrRaw) -> Self {
         match raw {
             DecodedFilterAttrRaw::Legacy(v) => Self::decode(v),
-            DecodedFilterAttrRaw::Structured(raw) => Self {
+            DecodedFilterAttrRaw::Structured(raw) => CardFilter {
+                is_enabled: true,
                 target_player: raw.target_player.unwrap_or_default(),
                 card_type: raw.card_type.unwrap_or_default(),
                 group_enabled: raw
@@ -617,156 +618,90 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
                     .keyword_member
                     .map(|v| as_bool_robust(&v))
                     .unwrap_or_default(),
-            },
+            }
+            .into(),
+        }
+    }
+}
+
+impl From<CardFilter> for DecodedFilterAttr {
+    fn from(filter: CardFilter) -> Self {
+        Self {
+            target_player: filter.target_player,
+            card_type: filter.card_type,
+            group_enabled: filter.group_enabled,
+            group_id: filter.group_id,
+            is_tapped: filter.is_tapped,
+            has_blade_heart: filter.has_blade_heart,
+            not_has_blade_heart: filter.not_has_blade_heart,
+            unique_names: filter.unique_names,
+            unit_enabled: filter.unit_enabled,
+            unit_id: filter.unit_id,
+            value_enabled: filter.value_enabled,
+            value_threshold: filter.value_threshold,
+            is_le: filter.is_le,
+            is_cost_type: filter.is_cost_type,
+            color_mask: filter.color_mask,
+            char_id_1: filter.char_id_1,
+            char_id_2: filter.char_id_2,
+            char_id_3: filter.char_id_3,
+            zone_mask: filter.zone_mask,
+            special_id: filter.special_id,
+            is_setsuna: filter.is_setsuna,
+            compare_accumulated: filter.compare_accumulated,
+            is_optional: filter.is_optional,
+            keyword_energy: filter.keyword_energy,
+            keyword_member: filter.keyword_member,
+        }
+    }
+}
+
+impl From<DecodedFilterAttr> for CardFilter {
+    fn from(filter: DecodedFilterAttr) -> Self {
+        Self {
+            is_enabled: true,
+            target_player: filter.target_player,
+            card_type: filter.card_type,
+            group_enabled: filter.group_enabled,
+            group_id: filter.group_id,
+            is_tapped: filter.is_tapped,
+            has_blade_heart: filter.has_blade_heart,
+            not_has_blade_heart: filter.not_has_blade_heart,
+            unique_names: filter.unique_names,
+            unit_enabled: filter.unit_enabled,
+            unit_id: filter.unit_id,
+            value_enabled: filter.value_enabled,
+            value_threshold: filter.value_threshold,
+            is_le: filter.is_le,
+            is_cost_type: filter.is_cost_type,
+            color_mask: filter.color_mask,
+            char_id_1: filter.char_id_1,
+            char_id_2: filter.char_id_2,
+            char_id_3: filter.char_id_3,
+            zone_mask: filter.zone_mask,
+            special_id: filter.special_id,
+            is_setsuna: filter.is_setsuna,
+            compare_accumulated: filter.compare_accumulated,
+            is_optional: filter.is_optional,
+            keyword_energy: filter.keyword_energy,
+            keyword_member: filter.keyword_member,
         }
     }
 }
 
 impl DecodedFilterAttr {
     pub fn decode(a: i64) -> Self {
-        let ua = a as u64;
-        Self {
-            target_player: ((ua >> A_STANDARD_TARGET_PLAYER_SHIFT) & A_STANDARD_TARGET_PLAYER_MASK)
-                as u8,
-            card_type: ((ua >> A_STANDARD_CARD_TYPE_SHIFT) & A_STANDARD_CARD_TYPE_MASK) as u8,
-            group_enabled: ((ua >> A_STANDARD_GROUP_ENABLED_SHIFT) & A_STANDARD_GROUP_ENABLED_MASK)
-                != 0,
-            group_id: ((ua >> A_STANDARD_GROUP_ID_SHIFT) & A_STANDARD_GROUP_ID_MASK) as u8,
-            is_tapped: ((ua >> A_STANDARD_IS_TAPPED_SHIFT) & A_STANDARD_IS_TAPPED_MASK) != 0,
-            has_blade_heart: ((ua >> A_STANDARD_HAS_BLADE_HEART_SHIFT)
-                & A_STANDARD_HAS_BLADE_HEART_MASK)
-                != 0,
-            not_has_blade_heart: ((ua >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT)
-                & A_STANDARD_NOT_HAS_BLADE_HEART_MASK)
-                != 0,
-            unique_names: ((ua >> A_STANDARD_UNIQUE_NAMES_SHIFT) & A_STANDARD_UNIQUE_NAMES_MASK)
-                != 0,
-            unit_enabled: ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK)
-                != 0,
-            unit_id: ((ua >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8,
-            value_enabled: ((ua >> A_STANDARD_VALUE_ENABLED_SHIFT) & A_STANDARD_VALUE_ENABLED_MASK)
-                != 0,
-            value_threshold: ((ua >> A_STANDARD_VALUE_THRESHOLD_SHIFT)
-                & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
-            is_le: ((ua >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
-            is_cost_type: ((ua >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK)
-                != 0,
-            color_mask: ((ua >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK) as u8,
-            char_id_1: ((ua >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
-            char_id_2: ((ua >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
-            char_id_3: if ((ua >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK)
-                == 0
-            {
-                ((ua >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8
-            } else {
-                0
-            },
-            zone_mask: ((ua >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
-            special_id: ((ua >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK) as u8,
-            is_setsuna: ((ua >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK) != 0,
-            compare_accumulated: ((ua >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT)
-                & A_STANDARD_COMPARE_ACCUMULATED_MASK)
-                != 0,
-            is_optional: ((ua >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0,
-            keyword_energy: ((ua >> A_STANDARD_KEYWORD_ENERGY_SHIFT)
-                & A_STANDARD_KEYWORD_ENERGY_MASK)
-                != 0,
-            keyword_member: ((ua >> A_STANDARD_KEYWORD_MEMBER_SHIFT)
-                & A_STANDARD_KEYWORD_MEMBER_MASK)
-                != 0,
-        }
+        CardFilter::from_attr(a).into()
     }
 
     pub fn to_attr(&self) -> u64 {
-        let mut a: u64 = 0;
-        a |= (self.target_player as u64 & A_STANDARD_TARGET_PLAYER_MASK)
-            << A_STANDARD_TARGET_PLAYER_SHIFT;
-        a |= (self.card_type as u64 & A_STANDARD_CARD_TYPE_MASK) << A_STANDARD_CARD_TYPE_SHIFT;
-        if self.group_enabled {
-            a |= 1 << A_STANDARD_GROUP_ENABLED_SHIFT;
-            a |= (self.group_id as u64 & A_STANDARD_GROUP_ID_MASK) << A_STANDARD_GROUP_ID_SHIFT;
-        }
-        if self.is_tapped {
-            a |= 1 << A_STANDARD_IS_TAPPED_SHIFT;
-        }
-        if self.has_blade_heart {
-            a |= 1 << A_STANDARD_HAS_BLADE_HEART_SHIFT;
-        }
-        if self.not_has_blade_heart {
-            a |= 1 << A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT;
-        }
-        if self.unique_names {
-            a |= 1 << A_STANDARD_UNIQUE_NAMES_SHIFT;
-        }
-        if self.unit_enabled {
-            a |= 1 << A_STANDARD_UNIT_ENABLED_SHIFT;
-            a |= (self.unit_id as u64 & A_STANDARD_UNIT_ID_MASK) << A_STANDARD_UNIT_ID_SHIFT;
-        }
-        if self.value_enabled {
-            a |= 1 << A_STANDARD_VALUE_ENABLED_SHIFT;
-            a |= (self.value_threshold as u64 & A_STANDARD_VALUE_THRESHOLD_MASK)
-                << A_STANDARD_VALUE_THRESHOLD_SHIFT;
-        }
-        if self.is_le {
-            a |= 1 << A_STANDARD_IS_LE_SHIFT;
-        }
-        if self.is_cost_type {
-            a |= 1 << A_STANDARD_IS_COST_TYPE_SHIFT;
-        }
-        a |= (self.color_mask as u64 & A_STANDARD_COLOR_MASK_MASK) << A_STANDARD_COLOR_MASK_SHIFT;
-        a |= (self.char_id_1 as u64 & A_STANDARD_CHAR_ID_1_MASK) << A_STANDARD_CHAR_ID_1_SHIFT;
-        a |= (self.char_id_2 as u64 & A_STANDARD_CHAR_ID_2_MASK) << A_STANDARD_CHAR_ID_2_SHIFT;
-        a |= (self.zone_mask as u64 & A_STANDARD_ZONE_MASK_MASK) << A_STANDARD_ZONE_MASK_SHIFT;
-        a |= (self.special_id as u64 & A_STANDARD_SPECIAL_ID_MASK) << A_STANDARD_SPECIAL_ID_SHIFT;
-        if self.is_setsuna {
-            a |= 1 << A_STANDARD_IS_SETSUNA_SHIFT;
-        }
-        if self.compare_accumulated {
-            a |= 1 << A_STANDARD_COMPARE_ACCUMULATED_SHIFT;
-        }
-        if self.is_optional {
-            a |= 1 << A_STANDARD_IS_OPTIONAL_SHIFT;
-        }
-        if self.keyword_energy {
-            a |= 1 << A_STANDARD_KEYWORD_ENERGY_SHIFT;
-        }
-        if self.keyword_member {
-            a |= 1 << A_STANDARD_KEYWORD_MEMBER_SHIFT;
-        }
-        a
+        CardFilter::from(*self).to_attr()
     }
 }
 
 impl DecodedFilterAttr {
     pub fn to_card_filter(&self) -> CardFilter {
-        CardFilter {
-            is_enabled: true,
-            target_player: self.target_player,
-            card_type: self.card_type,
-            group_enabled: self.group_enabled,
-            group_id: self.group_id,
-            is_tapped: self.is_tapped,
-            has_blade_heart: self.has_blade_heart,
-            not_has_blade_heart: self.not_has_blade_heart,
-            unique_names: self.unique_names,
-            unit_enabled: self.unit_enabled,
-            unit_id: self.unit_id,
-            value_enabled: self.value_enabled,
-            value_threshold: self.value_threshold,
-            is_le: self.is_le,
-            is_cost_type: self.is_cost_type,
-            color_mask: self.color_mask,
-            char_id_1: self.char_id_1,
-            char_id_2: self.char_id_2,
-            char_id_3: self.char_id_3,
-            zone_mask: self.zone_mask,
-            special_id: self.special_id,
-            is_setsuna: self.is_setsuna,
-            compare_accumulated: self.compare_accumulated,
-            is_optional: self.is_optional,
-            keyword_energy: self.keyword_energy,
-            keyword_member: self.keyword_member,
-        }
+        (*self).into()
     }
 }
 

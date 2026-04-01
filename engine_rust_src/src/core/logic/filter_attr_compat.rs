@@ -1,5 +1,4 @@
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::DecodedFilterAttr;
 use serde_json::Value;
 
 fn group_id_from_name(name: &str) -> Option<u8> {
@@ -40,82 +39,11 @@ fn unit_id_from_name(name: &str) -> Option<u8> {
 }
 
 pub fn card_filter_from_attr(a: i64) -> CardFilter {
-    if a == 0 {
-        // Return an enabled filter with no restrictions - matches all cards
-        return CardFilter {
-            is_enabled: true,
-            ..CardFilter::default()
-        };
-    }
-
-    let decoded = DecodedFilterAttr::decode(a);
-    CardFilter {
-        is_enabled: true,
-        target_player: decoded.target_player,
-        card_type: decoded.card_type,
-        group_enabled: decoded.group_enabled,
-        group_id: decoded.group_id,
-        is_tapped: decoded.is_tapped,
-        has_blade_heart: decoded.has_blade_heart,
-        not_has_blade_heart: decoded.not_has_blade_heart,
-        unique_names: decoded.unique_names,
-        unit_enabled: decoded.unit_enabled,
-        unit_id: decoded.unit_id,
-        value_enabled: decoded.value_enabled,
-        value_threshold: decoded.value_threshold,
-        is_le: decoded.is_le,
-        is_cost_type: decoded.is_cost_type,
-        color_mask: decoded.color_mask,
-        char_id_1: decoded.char_id_1,
-        char_id_2: decoded.char_id_2,
-        char_id_3: decoded.char_id_3,
-        zone_mask: decoded.zone_mask,
-        special_id: decoded.special_id,
-        is_setsuna: decoded.is_setsuna,
-        compare_accumulated: decoded.compare_accumulated,
-        is_optional: decoded.is_optional,
-        keyword_energy: decoded.keyword_energy,
-        keyword_member: decoded.keyword_member,
-    }
+    CardFilter::from_attr(a)
 }
 
 pub fn card_filter_to_attr(filter: &CardFilter) -> i64 {
-    if !filter.is_enabled {
-        return 0;
-    }
-
-    DecodedFilterAttr {
-        target_player: filter.target_player,
-        card_type: filter.card_type,
-        group_enabled: filter.group_enabled,
-        group_id: filter.group_id,
-        is_tapped: filter.is_tapped,
-        has_blade_heart: filter.has_blade_heart,
-        not_has_blade_heart: filter.not_has_blade_heart,
-        unique_names: filter.unique_names,
-        unit_enabled: filter.unit_enabled,
-        unit_id: if filter.unit_enabled {
-            filter.unit_id
-        } else {
-            filter.char_id_3
-        },
-        value_enabled: filter.value_enabled,
-        value_threshold: filter.value_threshold,
-        is_le: filter.is_le,
-        is_cost_type: filter.is_cost_type,
-        color_mask: filter.color_mask,
-        char_id_1: filter.char_id_1,
-        char_id_2: filter.char_id_2,
-        char_id_3: 0,
-        zone_mask: filter.zone_mask,
-        special_id: filter.special_id,
-        is_setsuna: filter.is_setsuna,
-        compare_accumulated: filter.compare_accumulated,
-        is_optional: filter.is_optional,
-        keyword_energy: filter.keyword_energy,
-        keyword_member: filter.keyword_member,
-    }
-    .to_attr() as i64
+    filter.to_attr() as i64
 }
 
 fn parse_semantic_heart_filter(part: &str) -> Option<(u8, u8)> {

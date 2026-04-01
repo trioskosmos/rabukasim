@@ -924,7 +924,7 @@ impl ResponseGenerator {
             println!(
                 "[DEBUG] generate_select_member_actions: p_idx={}, filter=[{}]",
                 p_idx,
-                logging::describe_filter_attr(crate::core::logic::interpreter::instruction::DecodedFilterAttr::decode(filter_attr as i64))
+                logging::describe_filter_bits(filter_attr)
             );
         }
         let mut filter_attr = filter_attr;

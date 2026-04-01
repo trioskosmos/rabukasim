@@ -1,6 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
-use crate::core::logic::interpreter::instruction::{DecodedFilterAttr, DecodedSlot};
+use crate::core::logic::filter::CardFilter;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, PendingInteraction};
 use serde_json::Value;
@@ -215,7 +216,7 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
     }
 
     let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
-        let attr_desc = describe_filter_attr(DecodedFilterAttr::decode(a));
+        let attr_desc = describe_filter_attr(CardFilter::from_attr(a));
         if attr_desc == "-" {
             "-".to_string()
         } else {
@@ -338,7 +339,7 @@ fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
     join_parts(parts)
 }
 
-pub fn describe_filter_attr(filter: DecodedFilterAttr) -> String {
+pub fn describe_filter_attr(filter: CardFilter) -> String {
     let mut parts = Vec::new();
 
     if filter.target_player != 0 {
@@ -415,6 +416,10 @@ pub fn describe_filter_attr(filter: DecodedFilterAttr) -> String {
     }
 
     join_parts(parts)
+}
+
+pub fn describe_filter_bits(attr: u64) -> String {
+    describe_filter_attr(CardFilter::from_attr(attr as i64))
 }
 
 pub fn describe_slot(slot: DecodedSlot) -> String {
@@ -497,7 +502,7 @@ pub fn describe_frame_semantics(
             frame.raw_slot,
             frame.is_negated
         ),
-        describe_filter_attr(DecodedFilterAttr::decode(frame.filter.to_attr() as i64)),
+        describe_filter_attr(frame.filter),
         describe_slot(frame.slot),
         describe_params(frame.params),
         describe_card_texts(db, ctx.source_card_id),
@@ -513,7 +518,7 @@ pub fn describe_pending_interaction(pi: &PendingInteraction) -> String {
         pi.card_id,
         pi.ability_index,
         pi.v_remaining,
-        describe_filter_attr(DecodedFilterAttr::decode(pi.filter_attr as i64)),
+        describe_filter_bits(pi.filter_attr),
         pi.target_slot,
         pi.original_phase,
         pi.original_current_player,

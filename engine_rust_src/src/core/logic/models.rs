@@ -492,7 +492,7 @@ impl AbilityFrame {
         };
         let recover_params = params_for_filter.clone();
         let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params_for_filter)) {
-            CardFilter::from_attr((filter.to_attr() as u64 | filter_attr) as i64)
+            filter.with_overlay(&CardFilter::from_attr(filter_attr as i64))
         } else {
             filter
         };
