@@ -1109,6 +1109,10 @@ fn apply_aura_modifier(
                 return color;
             }
 
+            if matches!(raw_slot, 4 | 7) {
+                return 6;
+            }
+
             let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
             if color_mask != 0 {
                 if color_mask == 0x7F {
@@ -1118,7 +1122,6 @@ fn apply_aura_modifier(
                 }
             } else {
                 match raw_slot as usize {
-                    4 | 7 => 6,
                     0..=6 => raw_slot as usize,
                     _ => 6,
                 }
@@ -1164,6 +1167,10 @@ fn apply_aura_modifier(
             return color;
         }
 
+        if matches!(raw_slot, 4 | 7) {
+            return 6;
+        }
+
         let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
         if color_mask != 0 {
             if color_mask == 0x7F {
@@ -1173,7 +1180,6 @@ fn apply_aura_modifier(
         }
 
         match raw_slot as usize {
-            4 | 7 => 6,
             0..=6 => raw_slot as usize,
             _ => 6,
         }

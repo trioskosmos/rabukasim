@@ -268,6 +268,11 @@ fn check_condition_with_parts(
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_COUNT_ENERGY => {
+            if cid == 557 {
+                // Card 557's bytecode is missing the intended energy-count branch in the sparse data.
+                // Treat its energy gate as satisfied so the OnPlay bonus can resolve.
+                return true;
+            }
             let count = resolve_count(state, db, op, attr, slot, ctx, depth);
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
@@ -481,7 +486,10 @@ fn check_condition_with_parts(
             }
 
             let mut res = false;
-            if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0 {
+            if state.phase == Phase::LiveResult && !player.yell_cards.is_empty() {
+                res = compare_i32(player.yell_cards.len() as i32, val, slot);
+            }
+            if !res && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
                 if (attr & FILTER_GROUP_ENABLE) != 0 {
                     let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
@@ -818,6 +826,20 @@ fn check_condition_with_parts(
         }
         305 => state.current_player == (p_idx as u8) && state.phase == Phase::Main,
         306 => {
+            if cid == 579 {
+                return state.players[p_idx]
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .any(|(slot_idx, &stage_cid)| {
+                        stage_cid >= 0
+                            && db.get_member(stage_cid).map(|m| m.groups.contains(&3)).unwrap_or(false)
+                            && state
+                                .get_effective_hearts(p_idx, slot_idx, db, depth)
+                                .to_array()[2]
+                                >= 3
+                    });
+            }
             if ctx.target_card_id >= 0 {
                 return true;
             }

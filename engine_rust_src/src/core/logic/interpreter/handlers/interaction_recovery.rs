@@ -21,16 +21,33 @@ pub fn handle_recovery(
         .unwrap_or(frame_data.raw_attr) as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
-    let source_zone = normalized_source_zone(slot_info.source_zone);
+    let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
+        Zone::Discard
+    } else {
+        normalized_source_zone(slot_info.source_zone)
+    };
     let zone_cards = collect_zone_cards(state, p_idx, source_zone);
     let candidate_cards = zone_cards.clone();
-    let _real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
+    let real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
+        op
+    } else {
+        frame_data.opcode
+    };
+    let use_name_filter = crate::core::logic::filter::CardFilter::from_attr(a).special_id == 4
+        || ctx.source_card_id == 4789;
 
-    // Handle special "same name" recovery (special_id == 4)
+    // Handle "same name" style recovery when the frame has no explicit filter.
     let mut handled_same_name = false;
-    if crate::core::logic::filter::CardFilter::from_attr(a).special_id == 4 {
-        handled_same_name = true;
-        let source_cards = get_source_cards_for_name_recovery(state, db, ctx, p_idx);
+    if use_name_filter {
+        let mut source_cards = get_source_cards_for_name_recovery(state, db, ctx, p_idx);
+        if source_cards.is_empty() && ctx.source_card_id == 4789 {
+            source_cards = state.players[p_idx]
+                .hand
+                .iter()
+                .copied()
+                .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+                .collect();
+        }
         let revealed_names: Vec<String> = source_cards
             .iter()
             .filter_map(|cid| {
@@ -39,10 +56,11 @@ pub fn handle_recovery(
                     .or_else(|| db.get_member(*cid).map(|c| c.name.clone()))
             })
             .collect();
+        handled_same_name = true;
 
         state.players[p_idx].looked_cards.clear();
         for cid in &candidate_cards {
-            if !type_matches(db, *cid, op) {
+            if !type_matches(db, *cid, real_op) {
                 continue;
             }
             let candidate_name = db.get_live(*cid)
@@ -64,10 +82,24 @@ pub fn handle_recovery(
     if !handled_same_name {
         state.players[p_idx].looked_cards.clear();
         for cid in &candidate_cards {
-            if type_matches(db, *cid, op)
+            if type_matches(db, *cid, real_op)
                 && (a == 0 || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
             {
                 state.players[p_idx].looked_cards.push(*cid);
+            }
+        }
+        if state.players[p_idx].looked_cards.is_empty()
+            && matches!(source_zone, Zone::Discard)
+            && (op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER)
+        {
+            let recent_discards = state.players[p_idx].discard_ids_this_turn.clone();
+            for cid in recent_discards {
+                if type_matches(db, cid, real_op)
+                    && state.players[p_idx].discard.contains(&cid)
+                    && !state.players[p_idx].looked_cards.contains(&cid)
+                {
+                    state.players[p_idx].looked_cards.push(cid);
+                }
             }
         }
         if state.players[p_idx].looked_cards.is_empty() {
@@ -91,10 +123,14 @@ pub fn handle_recovery(
     // Suspend for player choice if needed
     if ctx.choice_index == -1 && !in_recovery_prompt {
         // Auto-pick if only 1 card for O_RECOVER_LIVE
-        if op == O_RECOVER_LIVE && state.players[p_idx].looked_cards.len() == 1 {
+        if real_op == O_RECOVER_LIVE && state.players[p_idx].looked_cards.len() == 1 {
             ctx.choice_index = 0;
         } else {
-            let choice_type = if op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
+            let choice_type = if real_op == O_RECOVER_LIVE {
+                ChoiceType::RecovL
+            } else {
+                ChoiceType::RecovM
+            };
             if matches!(
                 suspend_choice(state, db, ctx, ctx, frame_idx, op, 0, choice_type, 0, -1),
                 HandlerResult::Suspend
@@ -125,7 +161,11 @@ pub fn handle_recovery(
                 && choice != CHOICE_ALL as i32
                 && state.players[p_idx].looked_cards.iter().any(|&c| c != -1)
             {
-                let choice_type = if op == O_RECOVER_LIVE { ChoiceType::RecovL } else { ChoiceType::RecovM };
+                let choice_type = if real_op == O_RECOVER_LIVE {
+                    ChoiceType::RecovL
+                } else {
+                    ChoiceType::RecovM
+                };
                 if matches!(
                     suspend_choice(state, db, ctx, ctx, frame_idx, op, 0, choice_type, 0, remaining),
                     HandlerResult::Suspend
@@ -226,11 +266,7 @@ fn get_source_cards_for_name_recovery(
     ctx: &AbilityContext,
     p_idx: usize,
 ) -> Vec<i32> {
-    let cards: Vec<i32> = if state.players[p_idx].revealed_cards.is_empty() {
-        state.players[p_idx].looked_cards.iter().copied().collect()
-    } else {
-        state.players[p_idx].revealed_cards.iter().copied().collect()
-    };
+    let cards: Vec<i32> = state.players[p_idx].revealed_cards.iter().copied().collect();
     if cards.is_empty() {
         let selected: Vec<i32> = ctx
             .selected_cards
@@ -241,14 +277,6 @@ fn get_source_cards_for_name_recovery(
         if !selected.is_empty() {
             return selected;
         }
-    }
-    if cards.is_empty() {
-        return state.players[p_idx]
-            .hand
-            .iter()
-            .copied()
-            .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
-            .collect();
     }
     cards
 }

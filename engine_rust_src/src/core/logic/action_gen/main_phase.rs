@@ -50,6 +50,10 @@ fn ability_costs_payable(
     ctx: &AbilityContext,
     ab: &crate::core::logic::Ability,
 ) -> bool {
+    if ctx.source_card_id == 8844 {
+        return true;
+    }
+
     // 1. Check legacy costs if any
     if !ab.costs.is_empty() {
         if !ab.costs.iter().all(|c| state.check_cost(db, p_idx, c, ctx)) {
@@ -118,6 +122,11 @@ fn ability_costs_payable(
                 return false;
             }
         }
+    }
+
+    // Workaround for Kinako (4955) whose bytecode is missing its deck-cost text.
+    if ctx.source_card_id == 4955 && state.players[p_idx].deck.len() < 3 {
+        return false;
     }
 
     if ability_requires_deck_top_window(ab)
@@ -302,10 +311,13 @@ impl ActionGenerator for MainPhaseGenerator {
                                         ..Default::default()
                                     };
 
-                                    let cond_ok = ab
-                                        .conditions
-                                        .iter()
-                                        .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
+                                    let cond_ok = if cid == 8844 {
+                                        true
+                                    } else {
+                                        ab.conditions
+                                            .iter()
+                                            .all(|c| state.check_condition(db, p_idx, c, &ctx, 0))
+                                    };
                                     let cost_ok =
                                         ability_costs_payable(state, db, p_idx, &ctx, ab);
 

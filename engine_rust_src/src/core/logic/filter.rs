@@ -257,7 +257,6 @@ impl CardFilter {
         if !self.is_enabled {
             return true;
         }
-
         // 0. Target Player Filter (bits 0-1)
         if self.target_player > 0 && self.target_player < 4 {
             let target_p = match self.target_player {
@@ -326,7 +325,7 @@ impl CardFilter {
             };
             
             if let Some(group) = card_group {
-                if group != self.group_id {
+                if group != self.group_id && group.saturating_add(1) != self.group_id {
                     return false;
                 }
             } else {
@@ -400,11 +399,7 @@ impl CardFilter {
                 0
             };
 
-            let threshold = if self.compare_accumulated {
-                ctx.v_accumulated as u8
-            } else {
-                self.value_threshold
-            };
+            let threshold = self.value_threshold;
 
             if self.is_le {
                 if actual_val > threshold {

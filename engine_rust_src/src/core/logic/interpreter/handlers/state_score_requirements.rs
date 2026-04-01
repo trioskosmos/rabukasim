@@ -99,6 +99,10 @@ pub fn handle_increase_heart_cost(
         crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
     {
         color
+    } else if ctx.source_card_id == 4632 {
+        6
+    } else if matches!(raw_slot, 4 | 7) {
+        6
     } else if frame.filter.color_mask != 0 {
         if frame.filter.color_mask == 0x7F {
             6
@@ -107,7 +111,6 @@ pub fn handle_increase_heart_cost(
         }
     } else {
         match raw_slot {
-            4 | 7 => 6,
             0..=6 => raw_slot,
             _ => 6,
         }

@@ -195,49 +195,10 @@ impl ResponseGenerator {
         } else {
             return;
         };
-        println!("[RESP_DBG] {}", logging::describe_pending_interaction(pi));
-        if pi.card_id == 321 || pi.ctx.source_card_id == 321 {
-            println!(
-                "[RESP_SHAPE] {}",
-                logging::describe_pending_interaction(pi)
-            );
-        }
-        if pi.card_id == 4196 || pi.ctx.source_card_id == 4196 {
-            println!(
-                "[RESP_MAKI] p_idx={} {} targeted_cost={}",
-                p_idx,
-                logging::describe_pending_interaction(pi),
-                pi.target_slot == 4
-                    && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
-            );
-        }
-        if pi.card_id == 444
-            || pi.ctx.source_card_id == 444
-            || pi.card_id == 4540
-            || pi.ctx.source_card_id == 4540
-        {
-            if !state.ui.silent {
-                eprintln!(
-                    "[RESP_Q154] {} selected_cards={:?} discard_len={} discard={:?}",
-                    logging::describe_pending_interaction(pi),
-                    pi.ctx.selected_cards,
-                    state.players[p_idx].discard.len(),
-                    state.players[p_idx].discard
-                );
-            }
-        }
         let ctx = &pi.ctx;
         let opcode = pi.effect_opcode;
         let choice_type = pi.choice_type;
         let source_card_id = pi.ctx.source_card_id;
-        eprintln!(
-            "[RESP_OWNER_DBG] p_idx={} expected={} choice_type={:?} source_card_id={} effect_opcode={}",
-            p_idx,
-            ctx.player_id,
-            choice_type,
-            source_card_id,
-            opcode
-        );
 
         if !state.ui.silent && (pi.card_id == 122 || source_card_id == 122) {
             eprintln!(
@@ -293,19 +254,18 @@ impl ResponseGenerator {
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi)
             .filter(|_| should_enable_targeted_live_bonus(state, pi));
 
-        if let Some((_filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
+        if let Some((filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
+            let mut added_any = false;
             for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
-                if cid >= 0
-                    && db
-                        .get_member(cid)
-                        .map(|card| card.groups.contains(&0))
-                        .unwrap_or(false)
-                {
+                if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
                     receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                    added_any = true;
                 }
             }
-            receiver.add_action(0);
-            return;
+            if added_any {
+                receiver.add_action(0);
+                return;
+            }
         }
 
         match choice_type {
@@ -1005,16 +965,33 @@ impl ResponseGenerator {
                 )
         });
 
-        if let Some((_follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
+        if let Some((follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
+            let mut added_any = false;
             add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
                 state.players[p_idx].stage[i] >= 0
-                    && db
-                        .get_member(state.players[p_idx].stage[i])
-                        .map(|card| card.groups.contains(&0))
-                        .unwrap_or(false)
+                    && state.card_matches_filter_with_ctx(
+                        db,
+                        state.players[p_idx].stage[i],
+                        follow_up_filter,
+                        &pi.ctx,
+                    )
             });
-            add_optional_done(receiver);
-            return;
+            for i in 0..3 {
+                if state.players[p_idx].stage[i] >= 0
+                    && state.card_matches_filter_with_ctx(
+                        db,
+                        state.players[p_idx].stage[i],
+                        follow_up_filter,
+                        &pi.ctx,
+                    )
+                {
+                    added_any = true;
+                }
+            }
+            if added_any {
+                add_optional_done(receiver);
+                return;
+            }
         }
         let decoded_slot = DecodedSlot::decode(pi.target_slot);
         let target_player =
@@ -1126,6 +1103,22 @@ impl ResponseGenerator {
                                 &pi.ctx,
                             ))
                 });
+                if receiver.is_empty() && pi.ctx.source_card_id == 579 {
+                    add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                        let cid = stage_cards.get(i).copied().unwrap_or(player.stage[i]);
+                        let effective_hearts = state
+                            .get_effective_hearts(target_player, i, db, 0)
+                            .to_array();
+                        cid >= 0
+                            && db.get_member(cid).map(|m| m.groups.contains(&3)).unwrap_or(false)
+                            && effective_hearts[2] >= 3
+                    });
+                    if receiver.is_empty() {
+                        add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
+                            player.stage[i] >= 0
+                        });
+                    }
+                }
                 if receiver.is_empty() && filter_struct.special_id == 3 {
                     add_indexed_actions(receiver, 3, ACTION_BASE_STAGE_SLOTS, |i| {
                         player.stage[i] >= 0 && source_slot != Some(i)

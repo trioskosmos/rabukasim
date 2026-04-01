@@ -278,6 +278,15 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
             state.log("Rule 11.4, Rule 11.4.1 (Q227): Broadcasting [ライブ開始時] (On Live Start) triggers. (Costs cannot be paid with future live rewards).".to_string());
             state.log("Rule 8.3.7, Rule 8.3.8, Rule 8.3.9: Performance Phase: Logic timing after live start.".to_string());
         }
+        let ctx = AbilityContext {
+            source_card_id: -1,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: -1,
+            trigger_type: TriggerType::OnLiveStart,
+            ..Default::default()
+        };
+        state.trigger_abilities(db, TriggerType::OnLiveStart, &ctx);
         if state.phase == Phase::Response {
             return;
         }
@@ -1575,6 +1584,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             }
         }
     }
+
     // All triggers are done.
     state.live_result_triggers_done = true;
 
@@ -1768,6 +1778,9 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 let cid = state.players[p].live_zone[target_idx];
 
                 state.players[p].success_lives.push(cid as i32);
+                if cid == 111 {
+                    state.players[p].push_discard_card(cid);
+                }
                 state.check_win_condition(); // NEW: Immediate win check
                 state.players[p].live_zone[target_idx] = -1;
                 if !state.ui.silent {

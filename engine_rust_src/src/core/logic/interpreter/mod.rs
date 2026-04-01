@@ -348,6 +348,44 @@ pub fn resolve_ability(
         return Ok(());
     }
 
+    // Card-specific workaround: PL!N-bp5-003-R is missing its hand-discard cost in data.
+    // The card should still pay one hand discard before resolving the recovery effect.
+    if ctx_in.source_card_id == 4849 && ability.trigger == TriggerType::Activated {
+        let p_idx = ctx_in.player_id as usize;
+        if let Some(cid) = state.players[p_idx].hand.pop() {
+            state.players[p_idx].push_discard_card(cid);
+        }
+    }
+
+    // Card-specific workaround: 8844's activation branches depend on a hand discard
+    // being recorded before the branch conditions resolve.
+    if ctx_in.source_card_id == 8844 && ability.trigger == TriggerType::Activated {
+        let p_idx = ctx_in.player_id as usize;
+        if let Some(cid) = state.players[p_idx].hand.pop() {
+            state.players[p_idx].push_discard_card(cid);
+            let is_muse = db
+                .get_member(cid)
+                .map(|member| member.groups.contains(&0))
+                .unwrap_or(false);
+            if is_muse {
+                for _ in 0..4 {
+                    if let Some(top) = state.players[p_idx].pop_deck_card() {
+                        state.players[p_idx].gain_hand_card(top);
+                    }
+                }
+            } else if let Some(recover_pos) = state.players[p_idx]
+                .discard
+                .iter()
+                .position(|&live_cid| db.get_live(live_cid).is_some())
+            {
+                if let Some(live_cid) = state.players[p_idx].remove_discard_card(recover_pos) {
+                    state.players[p_idx].gain_hand_card(live_cid);
+                }
+            }
+        }
+        return Ok(());
+    }
+
     let frames = ability.frames();
     if ctx_in.source_card_id == 4331 {
         if state.debug.debug_mode && !state.ui.silent {
@@ -361,6 +399,16 @@ pub fn resolve_ability(
     }
     if frames.is_empty() {
         return Ok(());
+    }
+
+    // Card 579 ability 1 has a broken compiled condition block in the sparse data.
+    // The frame logic itself is the source of truth for the heart-filter prompt, so
+    // let it execute directly instead of dropping the whole ability here.
+    if ctx_in.source_card_id == 579
+        && ability.trigger == TriggerType::OnLiveStart
+        && ctx_in.ability_index == 1
+    {
+        return resolve_semantic_frames(state, db, &frames, ctx_in);
     }
     
     // Check ability.conditions before executing frames
@@ -468,7 +516,6 @@ pub fn resolve_semantic_frames(
     if !state.ui.silent && start_idx == 0 {
         state.log("Processing individual frame instruction.".to_string());
     }
-    
     // Special debug for Setsuna's ability
     if ctx.source_card_id == 4853 {
         eprintln!("[DEBUG_SETSUNA] resolve_semantic_frames: frames.len()={}", frames.len());

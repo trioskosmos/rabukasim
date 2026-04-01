@@ -124,6 +124,19 @@ pub fn resolve_select_choice(
                     != 0
         })
         .unwrap_or(false);
+    let is_tap_member_selection = state
+        .interaction_stack
+        .last()
+        .map(|interaction| interaction.choice_type == ChoiceType::TapMSelect)
+        .unwrap_or(false);
+    let is_optional_set_tapped = state
+        .interaction_stack
+        .last()
+        .map(|interaction| {
+            interaction.choice_type == ChoiceType::Optional
+                && interaction.effect_opcode == crate::core::O_SET_TAPPED
+        })
+        .unwrap_or(false);
 
     if supports_partial_completion && choice == CHOICE_DONE as i32 {
         ctx.choice_index = -1;
@@ -155,7 +168,10 @@ pub fn resolve_select_choice(
     if selected_cid >= 0 && !ctx.selected_cards.contains(&selected_cid) {
         ctx.selected_cards.push(selected_cid);
     }
-    if is_targeted_select_member_cost && choice >= 0 && choice < 3 {
+    if choice >= 0
+        && choice < 3
+        && (is_targeted_select_member_cost || is_tap_member_selection || is_optional_set_tapped)
+    {
         if state.debug.debug_mode && ctx.source_card_id == 4196 {
             eprintln!(
                 "[SELECT_RESOLVE_TAP] target_player={} choice={} selected_cid={} before_tapped={}",
@@ -166,6 +182,8 @@ pub fn resolve_select_choice(
             );
         }
         state.players[target_player].set_tapped(choice as usize, true);
+        ctx.choice_index = -1;
+        ctx.v_remaining = -1;
     }
     let selected_key = selected_target_key(source_zone, choice);
     if !ctx.selected_target_keys.contains(&selected_key) {

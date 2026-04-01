@@ -734,7 +734,12 @@ impl PlayerState {
         }
         let mut indices: SmallVec<[usize; 8]> = SmallVec::new();
         let len = self.energy_zone.len().min(64);
-        let available_mask = (!self.tapped_energy_mask) & ((1u64 << len) - 1);
+        let mask = if len >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << len) - 1
+        };
+        let available_mask = (!self.tapped_energy_mask) & mask;
         let mut mask = available_mask;
         while mask != 0 && indices.len() < count {
             let idx = mask.trailing_zeros() as usize;
@@ -750,7 +755,12 @@ impl PlayerState {
         }
         let mut indices: SmallVec<[usize; 8]> = SmallVec::new();
         let len = self.energy_zone.len().min(64);
-        let mut mask = self.tapped_energy_mask & ((1u64 << len) - 1);
+        let mask = if len >= 64 {
+            u64::MAX
+        } else {
+            (1u64 << len) - 1
+        };
+        let mut mask = self.tapped_energy_mask & mask;
         while mask != 0 && indices.len() < count {
             let idx = mask.trailing_zeros() as usize;
             indices.push(idx);

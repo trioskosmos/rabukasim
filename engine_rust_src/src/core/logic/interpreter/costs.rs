@@ -51,7 +51,7 @@ where
 }
 
 pub(crate) fn tap_first_untapped_energy(
-    state: &mut GameState,
+    state: &GameState,
     p_idx: usize,
     count: usize,
 ) -> smallvec::SmallVec<[usize; 8]> {

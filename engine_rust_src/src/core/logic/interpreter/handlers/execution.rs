@@ -43,9 +43,22 @@ pub fn execute_frame(
         // Meta / Control Operations
         O_NOP => super::choice_prompt::handle_optional_nop(state, db, ctx, frame_data, frame_idx),
         O_SELECT_MODE => super::select_mode::handle_select_mode(state, db, ctx, frame_data, frame_idx, frames),
-        O_NEGATE_EFFECT | O_REDUCE_YELL_COUNT | O_RESTRICTION | O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER | O_OPPONENT_CHOOSE | O_PREVENT_ACTIVATE | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE | O_PREVENT_PLAY_TO_SLOT | O_TRIGGER_REMOTE | O_REDUCE_LIVE_SET_LIMIT | O_META_RULE | O_BATON_TOUCH_MOD | O_IMMUNITY | O_COLOR_SELECT | O_SWAP_AREA | O_REPEAT_ABILITY | O_SET_TARGET_SELF | O_SET_TARGET_OPPONENT | O_CALC_SUM_COST | O_DIV_VALUE => {
+        O_NEGATE_EFFECT | O_REDUCE_YELL_COUNT | O_RESTRICTION | O_SELECT_LIVE | O_SELECT_PLAYER | O_OPPONENT_CHOOSE | O_PREVENT_ACTIVATE | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE | O_PREVENT_PLAY_TO_SLOT | O_TRIGGER_REMOTE | O_REDUCE_LIVE_SET_LIMIT | O_META_RULE | O_BATON_TOUCH_MOD | O_IMMUNITY | O_COLOR_SELECT | O_SWAP_AREA | O_REPEAT_ABILITY | O_SET_TARGET_SELF | O_SET_TARGET_OPPONENT | O_CALC_SUM_COST | O_DIV_VALUE => {
             super::flow::handle_meta_control(state, db, ctx, frame_data, frame_idx)
         }
+        O_SELECT_MEMBER => super::flow_select::handle_select_ops(
+            state,
+            db,
+            ctx,
+            frame_data,
+            frame_idx,
+            frame_data.opcode,
+            frame_data.value,
+            frame_data.raw_attr as i64,
+            frame_data.raw_slot,
+            ctx.player_id as usize,
+            frame_data.slot,
+        ),
 
         // Draw / Hand Operations
         O_DRAW | O_DRAW_UNTIL | O_ADD_TO_HAND => super::movement::handle_draw(state, db, ctx, frame_data),

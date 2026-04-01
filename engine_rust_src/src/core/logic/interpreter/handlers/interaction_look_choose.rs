@@ -319,14 +319,24 @@ fn finalize_look_choice(
                     state.players[p_idx].push_hand_card(cid);
                 }
             }
-            7 => state.players[p_idx].discard.extend(revealed.drain(..)),
-            15 => state.players[p_idx].yell_cards.extend(revealed.drain(..)),
+            7 => {
+                for cid in revealed.drain(..) {
+                    state.players[p_idx].push_discard_card(cid);
+                }
+            }
+            15 | 17 => {
+                state.players[p_idx].yell_cards.extend(revealed.drain(..));
+            }
             0 | 5 | 8 => {
                 state.players[p_idx].deck.extend(revealed.drain(..));
                 let mut rng = Pcg64::from_os_rng();
                 state.players[p_idx].deck.shuffle(&mut rng);
             }
-            _ => state.players[p_idx].discard.extend(revealed.drain(..))
+            _ => {
+                for cid in revealed.drain(..) {
+                    state.players[p_idx].push_discard_card(cid);
+                }
+            }
         }
     }
 

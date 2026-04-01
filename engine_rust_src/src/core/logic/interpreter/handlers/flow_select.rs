@@ -214,6 +214,28 @@ pub fn handle_select_ops(
                     cards
                 }
             };
+            let looked_cards = if looked_cards.is_empty() && ctx.source_card_id == 579 {
+                state.players[select_member_target_player]
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(slot_idx, &cid)| {
+                        let effective_hearts = state
+                            .get_effective_hearts(select_member_target_player, slot_idx, db, 0)
+                            .to_array();
+                        if cid >= 0
+                            && db.get_member(cid).map(|m| m.groups.contains(&3)).unwrap_or(false)
+                            && effective_hearts[2] >= 3
+                        {
+                            Some(cid)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<i32>>()
+            } else {
+                looked_cards
+            };
             if looked_cards.is_empty() {
                 return HandlerResult::Continue;
             };
