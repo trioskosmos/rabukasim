@@ -136,12 +136,7 @@ pub fn handle_draw(
         v as u32
     };
     let slot = frame_data.slot;
-    let raw_is_opponent = ((frame_data.raw_slot as u32 >> 24) & 1) != 0;
-    let target_p = if slot.is_opponent || raw_is_opponent {
-        1 - p_idx
-    } else {
-        p_idx
-    };
+    let target_p = frame_data.target_player_index(p_idx);
 
     match frame_data.opcode {
         O_DRAW => {
@@ -160,21 +155,21 @@ pub fn handle_draw(
         }
         O_DRAW_UNTIL => {
             let target_hand_size = v as usize;
-            let current_hand_size = state.players[p_idx].hand.len();
+            let current_hand_size = state.players[target_p].hand.len();
             if current_hand_size < target_hand_size {
                 let to_draw = (target_hand_size - current_hand_size) as u32;
-                state.draw_cards(p_idx, to_draw);
+                state.draw_cards(target_p, to_draw);
             }
         }
         O_ADD_TO_HAND => {
-            if frame_data.raw_slot == 90 || frame_data.raw_slot == 6 {
+            if frame_data.add_to_hand_uses_looked_cards() {
                 for _ in 0..v as usize {
-                    if let Some(cid) = state.players[p_idx].looked_cards.pop() {
-                        state.players[p_idx].gain_hand_card(cid);
+                    if let Some(cid) = state.players[target_p].looked_cards.pop() {
+                        state.players[target_p].gain_hand_card(cid);
                     }
                 }
             } else {
-                state.draw_cards(p_idx, v as u32);
+                state.draw_cards(target_p, v as u32);
             }
         }
         _ => {}

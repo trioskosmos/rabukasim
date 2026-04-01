@@ -90,6 +90,22 @@ pub struct AbilityFrameComponents<'a> {
 }
 
 impl<'a> AbilityFrameComponents<'a> {
+    /// Resolve which player this frame targets based on the structured slot data.
+    pub fn target_player_index(&self, controller_idx: usize) -> usize {
+        if self.slot.is_opponent {
+            1 - controller_idx
+        } else {
+            controller_idx
+        }
+    }
+
+    /// `ADD_TO_HAND` is effectively two effects: draw from deck, or consume the
+    /// shared `looked_cards` buffer produced by search/reveal effects.
+    pub fn add_to_hand_uses_looked_cards(&self) -> bool {
+        self.raw_slot == crate::core::generated_constants::ZONE_LOOKED_CARDS
+            || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
+    }
+
     /// Check if this frame uses dynamic value calculation (accumulated compare)
     pub fn is_dynamic(&self) -> bool {
         use crate::core::generated_layout::{A_STANDARD_COMPARE_ACCUMULATED_MASK, A_STANDARD_COMPARE_ACCUMULATED_SHIFT};
@@ -156,6 +172,42 @@ impl<'a> AbilityFrameComponents<'a> {
 }
 
 impl AbilityFrame {
+    fn with_components(
+        opcode: i32,
+        value: i32,
+        filter: CardFilter,
+        slot: DecodedSlot,
+        is_cost: bool,
+        params: Value,
+    ) -> Self {
+        AbilityFrame {
+            opcode,
+            value,
+            attr: filter.to_attr(),
+            slot: slot.to_raw(),
+            is_cost,
+            params,
+        }
+    }
+
+    fn with_raw_parts(
+        opcode: i32,
+        value: i32,
+        attr: u64,
+        slot: i32,
+        is_cost: bool,
+        params: Value,
+    ) -> Self {
+        Self::with_components(
+            opcode,
+            value,
+            CardFilter::from_attr(attr as i64),
+            DecodedSlot::decode(slot),
+            is_cost,
+            params,
+        )
+    }
+
     fn opcode_from_effect_type(effect_type: EffectType) -> i32 {
         match effect_type {
             EffectType::Draw => O_DRAW,
@@ -530,14 +582,14 @@ impl AbilityFrame {
                     .map(|value| value.eq_ignore_ascii_case("DISCARD"))
                     .unwrap_or(false)
             {
-                return AbilityFrame {
-                    opcode: O_SELECT_CARDS,
-                    value: value.max(1),
-                    attr: filter.to_attr(),
-                    slot: slot.to_raw(),
-                    is_cost: false,
+                return Self::with_components(
+                    O_SELECT_CARDS,
+                    value.max(1),
+                    filter,
+                    slot,
+                    false,
                     params,
-                };
+                );
             }
         }
 
@@ -549,37 +601,37 @@ impl AbilityFrame {
                     if decoded_name == "UNIQUE_NAMES_COUNT" {
                         params_obj.insert("MIN".to_string(), Value::from(value.max(0)));
                     }
-                    return AbilityFrame {
-                        opcode: 0,
+                    return Self::with_components(
+                        0,
                         value,
-                        attr: filter.to_attr(),
-                        slot: slot.to_raw(),
-                        is_cost: false,
-                        params: Value::Object(params_obj),
-                    };
+                        filter,
+                        slot,
+                        false,
+                        Value::Object(params_obj),
+                    );
                 }
             }
         }
 
         match opcode_key.as_str() {
             "RETURN" => AbilityFrame { opcode: O_RETURN, ..Default::default() },
-            "DRAW" => AbilityFrame { opcode: O_DRAW, value, slot: slot.to_raw(), is_cost, ..Default::default() },
-            "RECOVER_LIVE" => AbilityFrame {
-                opcode: O_RECOVER_LIVE,
+            "DRAW" => Self::with_components(O_DRAW, value, CardFilter::default(), slot, is_cost, Value::Null),
+            "RECOVER_LIVE" => Self::with_components(
+                O_RECOVER_LIVE,
                 value,
-                attr: filter.to_attr(),
-                slot: slot.to_raw(),
+                filter,
+                slot,
                 is_cost,
-                params: recover_params.clone(),
-            },
-            "RECOVER_MEMBER" => AbilityFrame {
-                opcode: O_RECOVER_MEMBER,
+                recover_params.clone(),
+            ),
+            "RECOVER_MEMBER" => Self::with_components(
+                O_RECOVER_MEMBER,
                 value,
-                attr: filter.to_attr(),
-                slot: slot.to_raw(),
+                filter,
+                slot,
                 is_cost,
-                params: recover_params.clone(),
-            },
+                recover_params.clone(),
+            ),
             "LOOK_AND_CHOOSE" => {
                 // Read individual LAC fields if present; fall back to packed `value`.
                 let lac_count = payload.get("count").and_then(|v| v.as_i64())
@@ -596,70 +648,29 @@ impl AbilityFrame {
                     count: lac_count, choose_count: lac_choose, reveal: lac_reveal,
                     dest_discard: lac_dest, char_id_1: lac_c1, char_id_2: lac_c2, char_id_3: lac_c3,
                 }.to_raw();
-                AbilityFrame { opcode: O_LOOK_AND_CHOOSE, value: packed, attr: filter.to_attr(), slot: slot.to_raw(), is_cost, params: Value::Null }
+                Self::with_components(O_LOOK_AND_CHOOSE, packed, filter, slot, is_cost, Value::Null)
             }
-            "SELECT_MEMBER" => AbilityFrame {
-                opcode: O_SELECT_MEMBER,
-                value,
-                attr: filter.to_attr(),
-                slot: slot.to_raw(),
-                is_cost,
-                ..Default::default()
-            },
-            "MOVE_MEMBER" => AbilityFrame {
-                opcode: O_MOVE_MEMBER,
-                attr: filter.to_attr(),
-                slot: slot.to_raw(),
-                is_cost,
-                ..Default::default()
-            },
-            "META_RULE" => AbilityFrame {
-                opcode: O_META_RULE,
-                value,
-                attr: filter.to_attr(),
-                slot: slot.to_raw(),
-                is_cost,
-                ..Default::default()
-            },
+            "SELECT_MEMBER" => Self::with_components(O_SELECT_MEMBER, value, filter, slot, is_cost, Value::Null),
+            "MOVE_MEMBER" => Self::with_components(O_MOVE_MEMBER, 0, filter, slot, is_cost, Value::Null),
+            "META_RULE" => Self::with_components(O_META_RULE, value, filter, slot, is_cost, Value::Null),
             _ => {
                 let raw_op = if is_negated && resolved_opcode_id < crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
                     resolved_opcode_id + crate::core::logic::constants::OPCODE_NEGATION_OFFSET
                 } else {
                     resolved_opcode_id
                 };
-                AbilityFrame {
-                    opcode: raw_op,
-                    value,
-                    attr: filter.to_attr(),
-                    slot: slot.to_raw(),
-                    is_cost,
-                    params,
-                }
+                Self::with_components(raw_op, value, filter, slot, is_cost, params)
             },
         }
     }
 
     #[allow(deprecated)]
     pub fn from_instruction(instr: &BytecodeInstruction) -> Self {
-        AbilityFrame {
-            opcode: instr.op,
-            value: instr.v,
-            attr: instr.a as u64,
-            slot: instr.raw_s,
-            is_cost: false,
-            params: Value::Null,
-        }
+        Self::with_raw_parts(instr.op, instr.v, instr.a as u64, instr.raw_s, false, Value::Null)
     }
 
     pub fn new(opcode: i32, value: i32, attr: i64, raw_s: i32, is_cost: bool) -> Self {
-        AbilityFrame {
-            opcode,
-            value,
-            attr: attr as u64,
-            slot: raw_s,
-            is_cost,
-            params: Value::Null,
-        }
+        Self::with_raw_parts(opcode, value, attr as u64, raw_s, is_cost, Value::Null)
     }
 
     /// Create a RETURN frame.
@@ -766,28 +777,14 @@ impl AbilityFrame {
         // Special handling for SWAP_AREA effect (Mei's formation change)
         if runtime_opcode == O_SWAP_AREA {
             // When Mei (590) is played, rotate formation: [0,1,2] -> [1,2,0]
-            return AbilityFrame {
-                opcode: O_SWAP_AREA,
-                value: 0,
-                attr: 0,
-                slot: 4,  // s=4 triggers rotation
-                is_cost: false,
-                params: Value::Null,
-            };
+            return Self::with_raw_parts(O_SWAP_AREA, 0, 0, 4, false, Value::Null);
         }
 
         // Special handling for FORMATION_CHANGE effect
         if runtime_opcode == O_FORMATION_CHANGE {
             // When Mei (590) is played on Left (0), rotate: [0,1,2] -> [1,2,0]
             // Center moves to Left, Left moves to Right, Right moves to Center
-            return AbilityFrame {
-                opcode: O_FORMATION_CHANGE,
-                value: 0,  // Will trigger choice prompt for rotation
-                attr: 0,
-                slot: 4,  // Target slot 4 = RearrangeFormation
-                is_cost: false,
-                params: Value::Null,
-            };
+            return Self::with_raw_parts(O_FORMATION_CHANGE, 0, 0, 4, false, Value::Null);
         }
 
         if !effect.params.is_null() {
@@ -814,13 +811,7 @@ impl AbilityFrame {
                 params: effect.params.clone(),
             };
         }
-        Self::new(
-            runtime_opcode,
-            value_i32,
-            runtime_attr as i64,
-            runtime_slot,
-            false,
-        )
+        Self::new(runtime_opcode, value_i32, runtime_attr as i64, runtime_slot, false)
     }
 
     pub fn opcode(&self) -> i32 {
@@ -1510,6 +1501,7 @@ impl Ability {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn ability_has_effects_works() {
@@ -1543,6 +1535,45 @@ mod tests {
         assert_eq!(frames.len(), 1);
         assert_eq!(frames[0].opcode(), O_DRAW);
         assert!(ability.has_resolved_frames());
+    }
+
+    #[test]
+    fn structured_draw_frame_preserves_minimal_hand_semantics() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "DRAW",
+            "value": 1,
+            "slot": {
+                "is_opponent": 1,
+                "dest_zone": "DISCARD"
+            }
+        }));
+
+        let frame_data = frame.components();
+        assert_eq!(frame_data.opcode, O_DRAW);
+        assert_eq!(frame_data.value, 1);
+        assert_eq!(frame_data.target_player_index(0), 1);
+        assert_eq!(frame_data.slot.dest_zone, Zone::Discard);
+    }
+
+    #[test]
+    fn add_to_hand_helper_accepts_legacy_looked_cards_encodings() {
+        let zone_encoded = AbilityFrame::new(
+            O_ADD_TO_HAND,
+            1,
+            0,
+            crate::core::generated_constants::ZONE_LOOKED_CARDS,
+            false,
+        );
+        let slot_encoded = AbilityFrame::new(
+            O_ADD_TO_HAND,
+            1,
+            0,
+            crate::core::generated_constants::SLOT_HAND,
+            false,
+        );
+
+        assert!(zone_encoded.components().add_to_hand_uses_looked_cards());
+        assert!(slot_encoded.components().add_to_hand_uses_looked_cards());
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
