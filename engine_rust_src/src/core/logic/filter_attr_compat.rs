@@ -39,7 +39,7 @@ fn unit_id_from_name(name: &str) -> Option<u8> {
 }
 
 pub fn card_filter_from_attr(a: i64) -> CardFilter {
-    CardFilter::from_attr(a)
+    CardFilter::from_attr_legacy(a)
 }
 
 pub fn card_filter_to_attr(filter: &CardFilter) -> i64 {

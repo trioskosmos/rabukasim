@@ -38,7 +38,7 @@ fn normalize_select_member_filter_attr(filter_attr: u64, selection_count: i32) -
         return filter_attr;
     }
 
-    let mut filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+    let mut filter = crate::core::logic::filter::CardFilter::from_attr_legacy(filter_attr as i64);
     let looks_like_packed_count = filter.value_enabled
         && !filter.is_le
         && !filter.is_cost_type

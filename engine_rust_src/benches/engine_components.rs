@@ -33,7 +33,7 @@ fn benchmark_card_filter(c: &mut Criterion) {
     group.bench_function("character_filter_100_cards", |b| {
         let mut attr: u64 = 0;
         attr |= (27u64 & 0x7F) << 39;
-        let filter = CardFilter::from_attr(attr as i64);
+        let filter = CardFilter::from_attr_legacy(attr as i64);
 
         b.iter(|| {
             let mut match_count = 0;
@@ -49,7 +49,7 @@ fn benchmark_card_filter(c: &mut Criterion) {
     group.bench_function("filter_1000_iterations", |b| {
         let mut attr: u64 = 0;
         attr |= (27u64 & 0x7F) << 39;
-        let filter = CardFilter::from_attr(attr as i64);
+        let filter = CardFilter::from_attr_legacy(attr as i64);
 
         b.iter(|| {
             for _ in 0..1000 {

@@ -32,7 +32,7 @@ pub fn handle_select_cards(
 ) -> HandlerResult {
     let v = frame_data.value;
     let filter = if let Some(extra_attr) = filter_attr_from_params(frame_data.params) {
-        frame_data.filter.with_overlay(&CardFilter::from_attr(extra_attr as i64))
+        frame_data.filter.with_overlay(&CardFilter::from_attr_legacy(extra_attr as i64))
     } else {
         frame_data.filter
     };

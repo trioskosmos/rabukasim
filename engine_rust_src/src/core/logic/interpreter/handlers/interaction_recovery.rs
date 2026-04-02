@@ -33,7 +33,7 @@ pub fn handle_recovery(
     } else {
         frame_data.opcode
     };
-    let use_name_filter = crate::core::logic::filter::CardFilter::from_attr(a).special_id == 4
+    let use_name_filter = crate::core::logic::filter::CardFilter::from_attr_legacy(a).special_id == 4
         || ctx.source_card_id == 4789;
 
     // Handle "same name" style recovery when the frame has no explicit filter.

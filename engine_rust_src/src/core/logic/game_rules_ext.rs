@@ -224,7 +224,7 @@ impl GameState {
         let filter = if let Some(f) = filter_struct {
             f
         } else {
-            filter_storage = CardFilter::from_attr(filter_attr as i64);
+            filter_storage = CardFilter::from_attr_legacy(filter_attr as i64);
             &filter_storage
         };
 

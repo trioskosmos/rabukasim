@@ -27,7 +27,6 @@ pub struct DecodedSlot {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum DecodedSlotRaw {
-    Legacy(i32),
     Structured(DecodedSlotStructuredRaw),
 }
 
@@ -100,7 +99,6 @@ where
 impl From<DecodedSlotRaw> for DecodedSlot {
     fn from(raw: DecodedSlotRaw) -> Self {
         match raw {
-            DecodedSlotRaw::Legacy(v) => Self::decode(v),
             DecodedSlotRaw::Structured(raw) => Self {
                 target_slot: raw.target_slot.unwrap_or_default(),
                 comparison: raw.comparison.unwrap_or_default(),
@@ -244,7 +242,6 @@ pub struct DecodedHeartCounts {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum DecodedHeartCountsRaw {
-    Legacy(i32),
     Structured {
         pink: u8,
         red: u8,
@@ -259,7 +256,6 @@ enum DecodedHeartCountsRaw {
 impl From<DecodedHeartCountsRaw> for DecodedHeartCounts {
     fn from(raw: DecodedHeartCountsRaw) -> Self {
         match raw {
-            DecodedHeartCountsRaw::Legacy(v) => Self::decode(v),
             DecodedHeartCountsRaw::Structured {
                 pink,
                 red,
@@ -312,7 +308,6 @@ pub struct DecodedLookAndChoose {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum DecodedLookAndChooseRaw {
-    Legacy(i32),
     Structured {
         count: u8,
         #[serde(default)]
@@ -328,7 +323,6 @@ enum DecodedLookAndChooseRaw {
 impl From<DecodedLookAndChooseRaw> for DecodedLookAndChoose {
     fn from(raw: DecodedLookAndChooseRaw) -> Self {
         match raw {
-            DecodedLookAndChooseRaw::Legacy(v) => Self::decode(v),
             DecodedLookAndChooseRaw::Structured {
                 count,
                 choose_count,
@@ -510,7 +504,6 @@ impl<'de> Deserialize<'de> for DecodedFilterAttr {
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum DecodedFilterAttrRaw {
-    Legacy(i64),
     Structured(DecodedFilterAttrStructuredRaw),
 }
 
@@ -571,7 +564,6 @@ struct DecodedFilterAttrStructuredRaw {
 impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
     fn from(raw: DecodedFilterAttrRaw) -> Self {
         match raw {
-            DecodedFilterAttrRaw::Legacy(v) => Self::decode(v),
             DecodedFilterAttrRaw::Structured(raw) => CardFilter {
                 is_enabled: true,
                 target_player: raw.target_player.unwrap_or_default(),
@@ -724,7 +716,7 @@ impl From<DecodedFilterAttr> for CardFilter {
 
 impl DecodedFilterAttr {
     pub fn decode(a: i64) -> Self {
-        CardFilter::from_attr(a).into()
+        CardFilter::from_attr_legacy(a).into()
     }
 
     pub fn to_attr(&self) -> u64 {

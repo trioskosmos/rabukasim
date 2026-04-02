@@ -217,7 +217,7 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
     }
 
     let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
-        let attr_desc = describe_filter_attr(CardFilter::from_attr(a));
+        let attr_desc = describe_filter_attr(CardFilter::from_attr_legacy(a));
         if attr_desc == "-" {
             "-".to_string()
         } else {
@@ -420,7 +420,7 @@ pub fn describe_filter_attr(filter: CardFilter) -> String {
 }
 
 pub fn describe_filter_bits(attr: u64) -> String {
-    describe_filter_attr(CardFilter::from_attr(attr as i64))
+    describe_filter_attr(CardFilter::from_attr_legacy(attr as i64))
 }
 
 pub fn describe_slot(slot: DecodedSlot) -> String {

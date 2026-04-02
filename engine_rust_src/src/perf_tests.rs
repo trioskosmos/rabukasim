@@ -32,7 +32,7 @@ mod tests {
         let ctx = AbilityContext::default();
 
         // Create a filter for "せつ菜" (Character ID 27)
-        let filter = CardFilter::from_attr(map_char_id_to_filter_attr(27));
+        let filter = CardFilter::from_attr_legacy(map_char_id_to_filter_attr(27));
 
         println!("Starting benchmark with character filter...");
         let start = Instant::now();

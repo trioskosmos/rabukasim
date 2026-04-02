@@ -297,11 +297,11 @@ fn has_available_filtered(
 ) -> bool {
     match zone {
         Zone::Hand => state.players[player_idx].hand.iter().any(|&c| {
-            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+            CardFilter::from_attr_legacy(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
         }),
         Zone::Stage => state.players[player_idx].stage.iter().any(|&c| {
             if c < 0 { return false; }
-            CardFilter::from_attr(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+            CardFilter::from_attr_legacy(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
         }),
         _ => true,
     }

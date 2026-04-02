@@ -543,7 +543,8 @@ impl CardFilter {
         )
     }
 
-    pub fn from_attr(a: i64) -> Self {
+    /// Decode from packed 64-bit format (legacy codec only)
+    pub fn from_attr_legacy(a: i64) -> Self {
         if a == 0 {
             return Self {
                 is_enabled: true,
@@ -798,67 +799,44 @@ impl CardFilter {
         self
     }
 
+    /// Create CardFilter from authored frame JSON without accepting raw packed attrs.
     pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
-        let filter = filter_attr_from_params(Some(payload))
-            .map(|attr| Self::from_attr(attr as i64))
-            .unwrap_or_else(|| {
-                payload
-                    .get("filter")
-                    .or_else(|| payload.get("attr"))
-                    .cloned()
-                    .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
-                    .unwrap_or_default()
-            });
+        let mut filter = filter_attr_from_params(Some(payload))
+            .map(|attr| Self::from_attr_legacy(attr as i64))
+            .unwrap_or_default();
 
-        let params_for_filter = if params.is_null() {
-            options.clone()
-        } else {
-            params.clone()
-        };
+        if let Some(options_attr) = filter_attr_from_params(Some(options)) {
+            filter = filter.with_overlay(&Self::from_attr_legacy(options_attr as i64));
+        }
 
-        let filter = if let Some(filter_attr) = filter_attr_from_params(Some(&params_for_filter)) {
-            filter.with_overlay(&Self::from_attr(filter_attr as i64))
-        } else {
-            filter
-        };
+        if let Some(params_attr) = filter_attr_from_params(Some(params)) {
+            filter = filter.with_overlay(&Self::from_attr_legacy(params_attr as i64));
+        }
 
-        let filter = if let Some(structured_filter) = payload
-            .get("filter")
-            .or_else(|| options.get("filter"))
-            .cloned()
-            .and_then(|value| serde_json::from_value::<CardFilter>(value).ok())
-        {
-            let mut structured_filter = structured_filter;
-            structured_filter.is_enabled = true;
-            structured_filter
-        } else {
-            filter
-        };
-
-        let filter = if options
+        if options
             .get("is_cost")
             .or_else(|| options.get("is_cost_type"))
+            .or_else(|| params.get("is_cost_type"))
             .and_then(|value| value.as_bool())
             .unwrap_or(false)
         {
-            let mut filter = filter;
+            filter.is_enabled = true;
             filter.is_cost_type = true;
-            filter
-        } else {
-            filter
-        };
+        }
 
         if options
             .get("optional")
+            .or_else(|| options.get("is_optional"))
+            .or_else(|| params.get("optional"))
+            .or_else(|| params.get("is_optional"))
             .and_then(|value| value.as_bool())
             .unwrap_or(false)
         {
-            let mut filter = filter;
+            filter.is_enabled = true;
             filter.is_optional = true;
-            filter
-        } else {
-            filter
         }
+
+        filter
     }
 }
 

@@ -151,6 +151,10 @@ name = "micro_benchmarks"
 path = "benches/micro_benchmarks.rs"
 harness = false
 
+[[test]]
+name = "export_hydrated_abilities"
+path = "tests/export_hydrated_abilities.rs"
+
 [profile.dev]
 opt-level = 0
 overflow-checks = false

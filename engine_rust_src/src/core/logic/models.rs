@@ -398,14 +398,14 @@ impl AbilityFrame {
         is_cost: bool,
         params: Value,
     ) -> Self {
-        Self::with_components(
+        AbilityFrame {
             opcode,
             value,
-            CardFilter::from_attr(attr as i64),
-            DecodedSlot::decode(slot),
+            attr,
+            slot,
             is_cost,
             params,
-        )
+        }
     }
 
     pub(crate) fn opcode_from_effect_type(effect_type: EffectType) -> i32 {
@@ -1041,7 +1041,13 @@ impl AbilityFrame {
         if let Some(source) = effect
             .params
             .as_object()
-            .and_then(|params| params.get("source").or_else(|| params.get("SOURCE")))
+            .and_then(|params| {
+                params
+                    .get("source")
+                    .or_else(|| params.get("SOURCE"))
+                    .or_else(|| params.get("from"))
+                    .or_else(|| params.get("FROM"))
+            })
             .and_then(|value| value.as_str())
             .and_then(Self::zone_from_text)
         {
@@ -1055,6 +1061,10 @@ impl AbilityFrame {
                 params
                     .get("destination")
                     .or_else(|| params.get("DESTINATION"))
+                    .or_else(|| params.get("dest"))
+                    .or_else(|| params.get("DEST"))
+                    .or_else(|| params.get("to"))
+                    .or_else(|| params.get("TO"))
             })
             .and_then(|value| value.as_str())
             .and_then(Self::zone_from_text)
@@ -1114,25 +1124,31 @@ impl AbilityFrame {
             return Self::with_raw_parts(O_FORMATION_CHANGE, 0, 0, 4, false, Value::Null);
         }
 
-        if !effect.params.is_null() {
-            // Extract group info from params if available
-            let mut filter = CardFilter::from_attr(runtime_attr as i64);
-            if let Some(params_obj) = effect.params.as_object() {
-                if let Some(group_enabled) = params_obj.get("group_enabled")
-                    .and_then(|v| v.as_bool()) 
-                {
-                    filter.group_enabled = group_enabled;
-                }
-                if let Some(group_id) = params_obj.get("group_id")
-                    .and_then(|v| v.as_i64()) 
-                {
-                    filter.group_id = group_id as u8;
-                }
+        if !effect.params.is_null() || effect.is_optional {
+            let mut filter = CardFilter::from_attr_legacy(runtime_attr as i64);
+            let runtime_passthrough = runtime_attr & !filter.to_attr();
+            let mut params_passthrough = 0u64;
+
+            if let Some(params_attr) = crate::core::logic::filter::filter_attr_from_params(Some(&effect.params)) {
+                let params_filter = CardFilter::from_attr_legacy(params_attr as i64);
+                params_passthrough = params_attr & !params_filter.to_attr();
+                filter = filter.with_overlay(&params_filter);
+            }
+            if effect.is_optional {
+                filter.is_enabled = true;
+                filter.is_optional = true;
+            }
+            if filter.target_player == 0 {
+                filter.target_player = if slot.is_opponent {
+                    TARGET_PLAYER_OPPONENT as u8
+                } else {
+                    TARGET_PLAYER_SELF as u8
+                };
             }
             return AbilityFrame {
                 opcode: runtime_opcode,
                 value: value_i32,
-                attr: filter.to_attr(),
+                attr: filter.to_attr() | runtime_passthrough | params_passthrough,
                 slot: slot.to_raw(),
                 is_cost: false,
                 params: effect.params.clone(),
@@ -1161,7 +1177,7 @@ impl AbilityFrame {
             raw_opcode,
             opcode,
             value: self.value,
-            filter: CardFilter::from_attr(self.attr as i64),
+            filter: CardFilter::from_attr_legacy(self.attr as i64),
             slot: DecodedSlot::decode(self.slot),
             raw_attr: self.attr,
             raw_slot: self.slot,
@@ -1220,7 +1236,7 @@ impl AbilityFrame {
     }
 
     pub fn filter(&self) -> CardFilter {
-        CardFilter::from_attr(self.attr as i64)
+        CardFilter::from_attr_legacy(self.attr as i64)
     }
 
     pub fn dslot(&self) -> DecodedSlot {

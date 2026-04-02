@@ -53,7 +53,7 @@ pub fn resolve_count(
         || (op >= 400 && op < 500)
         || crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot).is_dynamic
     {
-        let filter = CardFilter::from_attr(attr as i64);
+        let filter = CardFilter::from_attr_legacy(attr as i64);
         let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
             || filter.target_player == TARGET_PLAYER_BOTH as u8;
         let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
@@ -185,7 +185,7 @@ pub fn resolve_count(
             filter_attr &= !0x0C;
         }
 
-        let filter = CardFilter::from_attr(filter_attr as i64);
+        let filter = CardFilter::from_attr_legacy(filter_attr as i64);
 
         if (attr & FILTER_UNIQUE_NAMES) != 0 {
             let mut names = std::collections::HashSet::new();
@@ -213,7 +213,7 @@ pub fn resolve_count(
     } else {
         match op {
             C_COUNT_ENERGY => {
-                let filter = CardFilter::from_attr(attr as i64);
+                let filter = CardFilter::from_attr_legacy(attr as i64);
                 let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
                 let mut total = state.players[primary_player].energy_zone.len() as i32;
                 if let Some(other_player) = secondary_player {
@@ -313,7 +313,7 @@ pub fn get_condition_count(
     let opponent = &state.players[1 - p_idx];
 
     let filter_attr = (attr as u64) & 0x00000000FFFFFFFF;
-    let filter = CardFilter::from_attr(filter_attr as i64);
+    let filter = CardFilter::from_attr_legacy(filter_attr as i64);
     let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
 
     let count_zone = |cards: &[i32]| -> i32 {

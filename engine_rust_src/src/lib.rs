@@ -2,6 +2,7 @@
 
 #![allow(unused_crate_dependencies)]
 pub mod core;
+pub mod export_hydrated_abilities;
 #[cfg(feature = "extension-module")]
 pub mod py_bindings;
 pub mod repro;

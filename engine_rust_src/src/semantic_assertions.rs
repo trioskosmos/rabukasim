@@ -755,8 +755,9 @@ impl SemanticAssertionEngine {
                 if !state.players[p_idx].hand.is_empty() {
                     // Prefer choosing a card that matches the filter
                     if pi.filter_attr != 0 {
-                        let filter =
-                            crate::core::logic::filter::CardFilter::from_attr(pi.filter_attr);
+                        let filter = crate::core::logic::filter::CardFilter::from_attr_legacy(
+                            pi.filter_attr,
+                        );
                         for (i, &cid) in state.players[p_idx].hand.iter().enumerate() {
                             if state.card_matches_filter(&self.db, cid, pi.filter_attr) {
                                 selected_idx = i as i32;
@@ -797,7 +798,7 @@ impl SemanticAssertionEngine {
                                 ChoiceType::RecovL => self.db.get_live(cid).is_some(),
                                 ChoiceType::RecovM => self.db.get_member(cid).is_some(),
                                 ChoiceType::LookAndChoose if pi.filter_attr != 0 => {
-                                    let filter = crate::core::logic::filter::CardFilter::from_attr(
+                                    let filter = crate::core::logic::filter::CardFilter::from_attr_legacy(
                                         pi.filter_attr,
                                     );
                                     filter.matches(

@@ -69,7 +69,7 @@ impl<'a> ConditionParams<'a> {
             raw_attr: attr,
             raw_slot: slot,
             params: None,
-            filter: CardFilter::from_attr(attr as i64),
+            filter: CardFilter::from_attr_legacy(attr as i64),
             slot: DecodedSlot::decode(slot),
             depth,
         }
@@ -917,7 +917,7 @@ fn check_condition_with_parts(
             compare_i32(count, val, slot)
         }
         311 => {
-            let filter = CardFilter::from_attr(attr as i64);
+            let filter = CardFilter::from_attr_legacy(attr as i64);
             let area_override = params
                 .and_then(|value| value.as_object())
                 .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
