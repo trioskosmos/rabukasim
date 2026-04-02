@@ -1,6 +1,5 @@
 use super::*;
 use crate::core::hearts::HeartBoard;
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -28,14 +27,16 @@ pub fn handle_move_member(
                 || params.get("SOURCE").is_some()
         })
         .unwrap_or(false);
-    let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or_else(|| {
+    let filter_attr = if frame_data.raw_attr != 0 {
+        frame_data.raw_attr
+    } else {
         let frame_filter_attr = frame_data.filter.to_attr();
         if frame_filter_attr != 0 {
             frame_filter_attr
         } else {
             a as u64
         }
-    });
+    };
 
     let mut target_p_idx = if is_position_change_choice {
         ctx.player_id as usize

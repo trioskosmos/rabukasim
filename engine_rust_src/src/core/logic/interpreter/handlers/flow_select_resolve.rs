@@ -1,6 +1,5 @@
 use super::*;
 use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_STAGE, ZONE_DISCARD, ZONE_HAND};
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
@@ -80,7 +79,7 @@ fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: 
         .resolved_frames()
         .iter()
         .find(|frame| frame.opcode() == O_SELECT_MEMBER)
-        .and_then(|frame| filter_attr_from_params(frame.components().params))
+        .map(|frame| frame.attr())
         .map(|attr| current | attr)
         .unwrap_or(current)
 }

@@ -371,7 +371,7 @@ fn params_object<'a>(
     Some(obj)
 }
 
-pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
+pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(CardFilter, u64)> {
     let obj = params_object(params)?;
 
     let mut filter = CardFilter::default();
@@ -585,7 +585,7 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
                     .or_else(|| obj.get("IS_OPTIONAL"))
                     .map(|value| as_bool_robust(value))
                     .unwrap_or(true);
-                return Some(card_filter_to_attr(&special) as u64);
+                return Some((special, 0));
             }
             let (parsed, parsed_extras) = filter_from_semantic_string(filter_str);
             filter = parsed;
@@ -597,6 +597,11 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
     if attr == 0 {
         None
     } else {
-        Some(attr)
+        Some((filter, extras))
     }
+}
+
+pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
+    filter_parts_from_params(params)
+        .map(|(filter, extras)| card_filter_to_attr(&filter) as u64 | extras)
 }

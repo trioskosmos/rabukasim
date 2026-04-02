@@ -64,7 +64,11 @@ pub fn handle_optional_nop(
         frame_data.opcode,
         frame_data.raw_slot,
         choice_type,
-        frame_data.filter.to_attr(),
+        if frame_data.raw_attr != 0 {
+            frame_data.raw_attr
+        } else {
+            frame_data.filter.to_attr()
+        },
         frame_data.value as i16,
         Vec::new(),
         Vec::new(),

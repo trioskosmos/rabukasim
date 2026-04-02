@@ -2,7 +2,6 @@ use crate::core::enums::{ChoiceType, TriggerType, Zone};
 use crate::core::logic::constants::{
     CHOICE_ALL, CHOICE_DONE, ZONE_DECK, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
 };
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -131,7 +130,11 @@ pub fn handle_look_and_choose(
                 O_LOOK_AND_CHOOSE,
                 s,
                 choice_type,
-                filter_obj.to_attr(),
+                if frame_data.raw_attr != 0 {
+                    frame_data.raw_attr
+                } else {
+                    filter_obj.to_attr()
+                },
                 pick_count,
             ),
             HandlerResult::Suspend
@@ -148,7 +151,11 @@ pub fn handle_look_and_choose(
     // === Phase 3: Resolve (apply chosen cards) ===
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
-    let semantic_attr = filter_attr_from_params(frame_data.params);
+    let semantic_attr = if frame_data.raw_attr != 0 {
+        Some(frame_data.raw_attr)
+    } else {
+        None
+    };
     let allow_multi_pick = compiled_choice_count > 1 && compiled_choice_count < look_count;
 
     // Handle CHOICE_DONE (skip)

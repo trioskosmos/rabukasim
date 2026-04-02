@@ -4,7 +4,6 @@ use crate::core::models::AbilityContext;
 
 use super::*;
 
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, TARGET_SLOT_STAGE};
@@ -93,9 +92,13 @@ pub fn handle_select_ops(
         filter.is_enabled = true;
         filter
     };
-    let raw_filter_attr = filter_attr_from_params(frame_data.params)
-        .map(|attr| attr | frame_filter_attr)
-        .unwrap_or_else(|| if frame_filter_attr != 0 { frame_filter_attr } else { a as u64 });
+    let raw_filter_attr = if frame_data.raw_attr != 0 {
+        frame_data.raw_attr
+    } else if frame_filter_attr != 0 {
+        frame_filter_attr
+    } else {
+        a as u64
+    };
     let resolved_filter_attr = if op == O_SELECT_MEMBER {
         normalize_select_member_filter_attr(raw_filter_attr, v)
     } else {

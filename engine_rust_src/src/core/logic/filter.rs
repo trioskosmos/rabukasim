@@ -828,17 +828,17 @@ impl CardFilter {
     /// Create CardFilter from authored frame JSON without accepting raw packed attrs.
     pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
         let mut filter = Self::from_json_value(payload)
-            .or_else(|| filter_attr_from_params(Some(payload)).map(|attr| Self::from_attr_legacy(attr as i64)))
+            .or_else(|| filter_from_params(Some(payload)))
             .unwrap_or_default();
 
         if let Some(options_filter) = Self::from_json_value(options)
-            .or_else(|| filter_attr_from_params(Some(options)).map(|attr| Self::from_attr_legacy(attr as i64)))
+            .or_else(|| filter_from_params(Some(options)))
         {
             filter = filter.with_overlay(&options_filter);
         }
 
         if let Some(params_filter) = Self::from_json_value(params)
-            .or_else(|| filter_attr_from_params(Some(params)).map(|attr| Self::from_attr_legacy(attr as i64)))
+            .or_else(|| filter_from_params(Some(params)))
         {
             filter = filter.with_overlay(&params_filter);
         }
@@ -872,6 +872,20 @@ impl CardFilter {
 
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     crate::core::logic::filter_attr_compat::map_filter_string_to_attr(filter)
+}
+
+pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(CardFilter, u64)> {
+    crate::core::logic::filter_attr_compat::filter_parts_from_params(params)
+}
+
+pub fn filter_from_params(params: Option<&serde_json::Value>) -> Option<CardFilter> {
+    filter_parts_from_params(params).and_then(|(filter, _)| {
+        if filter == CardFilter::default() {
+            None
+        } else {
+            Some(filter)
+        }
+    })
 }
 
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {

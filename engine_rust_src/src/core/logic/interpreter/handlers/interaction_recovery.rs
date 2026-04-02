@@ -17,8 +17,7 @@ pub fn handle_recovery(
     op: i32,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = crate::core::logic::filter::filter_attr_from_params(frame_data.params)
-        .unwrap_or(frame_data.raw_attr) as i64;
+    let a = frame_data.raw_attr as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
@@ -33,11 +32,7 @@ pub fn handle_recovery(
     } else {
         frame_data.opcode
     };
-    let use_name_filter = frame_data
-        .params
-        .and_then(crate::core::logic::filter::CardFilter::from_json_value)
-        .map(|filter| filter.special_id == 4)
-        .unwrap_or_else(|| crate::core::logic::filter::CardFilter::from_attr_legacy(a).special_id == 4)
+    let use_name_filter = frame_data.filter.special_id == 4
         || ctx.source_card_id == 4789;
 
     // Handle "same name" style recovery when the frame has no explicit filter.

@@ -1,7 +1,6 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::*;
 use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
@@ -15,7 +14,7 @@ pub fn handle_play_live_from_discard(
     frame_idx: usize,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = filter_attr_from_params(frame_data.params).unwrap_or(frame_data.raw_attr) as i64;
+    let a = frame_data.raw_attr as i64;
     let s = frame_data.raw_slot;
     let slot_info = frame_data.slot;
     let target_p_idx = if slot_info.is_opponent {

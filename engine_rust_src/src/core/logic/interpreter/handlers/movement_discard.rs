@@ -138,7 +138,7 @@ pub fn handle_move_to_discard(
                 _ => {}
             }
             let filter_attr_with_mask =
-                filter_obj.to_attr() | frame_data.filter.to_attr();
+                filter_obj.to_attr() | frame_data.raw_attr.max(frame_data.filter.to_attr());
 
             if matches!(
                 suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),
