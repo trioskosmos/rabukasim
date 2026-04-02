@@ -4,6 +4,8 @@
 
 This document explains how abilities are actually implemented in the current repository, which files participate in that pipeline, which files are authoritative versus derived, and which layers look redundant enough to delete or collapse.
 
+For the migration sequence and target architecture, see [Ability System Unification Plan](ability_system_unification_plan.md).
+
 This is a general guide, not a single-card trace. It is meant to answer four practical questions:
 
 1. Where ability logic is authored.

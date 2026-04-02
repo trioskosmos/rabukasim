@@ -493,16 +493,16 @@ pub fn describe_frame_semantics(
         .or_else(|| db.get_live(ctx.source_card_id).map(|c| c.name.as_str()))
         .unwrap_or("System");
 
+    let trace_step = frame.to_trace_step();
+    let trace_json = truncate_text(
+        serde_json::to_string(&trace_step).unwrap_or_else(|_| "<trace-step-error>".to_string()),
+        320,
+    );
+
     format!(
-        "card={} {} filter=[{}] slot=[{}] params=[{}] {} {}",
+        "card={} trace={} filter=[{}] slot=[{}] params=[{}] {} {}",
         card_name,
-        describe_trace_step(
-            frame.opcode,
-            frame.value,
-            frame.raw_attr as i64,
-            frame.raw_slot,
-            frame.is_negated
-        ),
+        trace_json,
         describe_filter_attr(frame.filter),
         describe_slot(frame.slot),
         describe_params(frame.params),

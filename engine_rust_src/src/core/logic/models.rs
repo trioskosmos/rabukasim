@@ -89,6 +89,76 @@ pub struct AbilityFrameComponents<'a> {
     pub params: Option<&'a Value>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AbilityTraceStep {
+    pub opcode: String,
+    pub summary: String,
+    #[serde(default)]
+    pub is_cost: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_zone: Option<Zone>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dest_zone: Option<Zone>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_slot: Option<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub choose_count: Option<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reveal: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remainder_to_discard: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filter: Option<CardFilter>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slot: Option<DecodedSlot>,
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub params: Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AbilityTraceView {
+    pub trigger: TriggerType,
+    pub frame_source: String,
+    #[serde(default)]
+    pub raw_text: String,
+    #[serde(default)]
+    pub choice_count: u8,
+    #[serde(default)]
+    pub steps: Vec<AbilityTraceStep>,
+}
+
+fn trace_opcode_name(opcode: i32) -> String {
+    match opcode {
+        O_DRAW => "DRAW".to_string(),
+        O_MOVE_TO_DISCARD => "MOVE_TO_DISCARD".to_string(),
+        O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE".to_string(),
+        O_RECOVER_LIVE => "RECOVER_LIVE".to_string(),
+        O_RECOVER_MEMBER => "RECOVER_MEMBER".to_string(),
+        O_RETURN => "RETURN".to_string(),
+        O_JUMP => "JUMP".to_string(),
+        O_JUMP_IF_FALSE => "JUMP_IF_FALSE".to_string(),
+        O_PAY_ENERGY => "PAY_ENERGY".to_string(),
+        O_SELECT_MEMBER => "SELECT_MEMBER".to_string(),
+        O_ADD_BLADES => "ADD_BLADES".to_string(),
+        O_ADD_HEARTS => "ADD_HEARTS".to_string(),
+        O_BOOST_SCORE => "BOOST_SCORE".to_string(),
+        O_TAP_MEMBER => "TAP_MEMBER".to_string(),
+        O_SET_TAPPED => "SET_TAPPED".to_string(),
+        O_NOP => "NOP".to_string(),
+        _ => format!("OP_{}", opcode),
+    }
+}
+
+fn trace_zone(zone: Zone) -> Option<Zone> {
+    if zone == Zone::Default {
+        None
+    } else {
+        Some(zone)
+    }
+}
+
 impl<'a> AbilityFrameComponents<'a> {
     /// Resolve which player this frame targets based on the structured slot data.
     pub fn target_player_index(&self, controller_idx: usize) -> usize {
@@ -168,6 +238,80 @@ impl<'a> AbilityFrameComponents<'a> {
     pub fn scalar_dynamic_base(&self) -> i32 {
         use crate::core::generated_layout::{V_SCALAR_DYNAMIC_BASE_VALUE_MASK, V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT};
         ((self.value as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
+    }
+
+    pub fn to_trace_step(&self) -> AbilityTraceStep {
+        let opcode = trace_opcode_name(self.opcode);
+        let mut step = AbilityTraceStep {
+            summary: opcode.clone(),
+            opcode,
+            is_cost: self.is_cost,
+            value: Some(self.value),
+            source_zone: trace_zone(self.slot.source_zone),
+            dest_zone: trace_zone(self.slot.dest_zone),
+            target_slot: (self.slot.target_slot != 0).then_some(self.slot.target_slot),
+            choose_count: None,
+            reveal: None,
+            remainder_to_discard: None,
+            filter: (self.filter != CardFilter::default()).then_some(self.filter),
+            slot: (self.slot != DecodedSlot::default()).then_some(self.slot),
+            params: self.params.cloned().unwrap_or(Value::Null),
+        };
+
+        step.summary = match self.opcode {
+            O_RETURN => {
+                step.value = None;
+                step.filter = None;
+                step.slot = None;
+                "return".to_string()
+            }
+            O_DRAW => format!("draw {} card(s)", self.value.max(0)),
+            O_MOVE_TO_DISCARD => {
+                let from_zone = step
+                    .source_zone
+                    .map(|zone| format!("{:?}", zone))
+                    .unwrap_or_else(|| "Default".to_string());
+                format!("move {} card(s) from {} to discard", self.value.max(0), from_zone)
+            }
+            O_RECOVER_LIVE => format!("recover {} live card(s) from discard", self.value.max(0)),
+            O_RECOVER_MEMBER => format!("recover {} member card(s) from discard", self.value.max(0)),
+            O_LOOK_AND_CHOOSE => {
+                let look = self.look_choose();
+                step.choose_count = Some(look.choose_count.max(1));
+                step.reveal = Some(look.reveal);
+                step.remainder_to_discard = Some(look.dest_discard);
+                let from_zone = step
+                    .source_zone
+                    .map(|zone| format!("{:?}", zone))
+                    .unwrap_or_else(|| "Deck".to_string());
+                format!(
+                    "look {} choose {} from {}{}",
+                    look.count.max(1),
+                    look.choose_count.max(1),
+                    from_zone,
+                    if look.dest_discard { ", remainder to discard" } else { "" }
+                )
+            }
+            O_JUMP => format!("jump by {} frame(s)", self.value),
+            O_JUMP_IF_FALSE => format!("if false jump by {} frame(s)", self.value),
+            O_PAY_ENERGY => format!("pay {} energy", self.value.max(0)),
+            O_SELECT_MEMBER => format!("select {} member(s)", self.value.max(1)),
+            O_ADD_BLADES => format!("add {} blade(s)", self.value),
+            O_ADD_HEARTS => format!("add {} heart(s)", self.value),
+            O_BOOST_SCORE => format!("boost score by {}", self.value),
+            O_TAP_MEMBER => format!("tap {} member(s)", self.value.max(1)),
+            O_SET_TAPPED => {
+                if self.value != 0 {
+                    "set tapped".to_string()
+                } else {
+                    "clear tapped".to_string()
+                }
+            }
+            O_NOP => "no-op".to_string(),
+            _ => format!("{} value={}", step.opcode, self.value),
+        };
+
+        step
     }
 }
 
@@ -788,31 +932,30 @@ impl AbilityFrame {
                 let summary_text = Self::first_str(payload, &["summary"])
                     .or_else(|| Self::first_str(frame, &["summary"]))
                     .unwrap_or("");
-                let lac_count = payload.get("count").and_then(|v| v.as_i64())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("count")).and_then(|v| v.as_i64()))
+                let value_payload = payload.get("value");
+                let structured_i64 = |key: &str| {
+                    payload.get(key).and_then(|v| v.as_i64())
+                        .or_else(|| params.get(key).and_then(|v| v.as_i64()))
+                        .or_else(|| value_payload.and_then(|v| v.get(key)).and_then(|v| v.as_i64()))
+                };
+                let structured_bool = |key: &str| {
+                    payload.get(key).and_then(|v| v.as_bool())
+                        .or_else(|| params.get(key).and_then(|v| v.as_bool()))
+                        .or_else(|| value_payload.and_then(|v| v.get(key)).and_then(|v| v.as_bool()))
+                };
+                let lac_count = structured_i64("count")
                     .or_else(|| Self::extract_u8_from_text(decoded_text, &["look=", "look_count=", "count="]).map(|v| v as i64))
                     .or_else(|| Self::extract_u8_from_text(summary_text, &["look at ", "look ", "count="]).map(|v| v as i64))
                     .unwrap_or(value as i64) as u8;
-                let lac_choose = payload.get("choose_count").and_then(|v| v.as_i64())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("choose_count")).and_then(|v| v.as_i64()))
+                let lac_choose = structured_i64("choose_count")
                     .or_else(|| Self::extract_u8_from_text(decoded_text, &["choose=", "choose "]).map(|v| v as i64))
                     .or_else(|| Self::extract_u8_from_text(summary_text, &["choose "]).map(|v| v as i64))
                     .unwrap_or(0) as u8;
-                let lac_reveal = payload.get("reveal").and_then(|v| v.as_bool())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("reveal")).and_then(|v| v.as_bool()))
-                    .unwrap_or(false);
-                let lac_dest = payload.get("dest_discard").and_then(|v| v.as_bool())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("dest_discard")).and_then(|v| v.as_bool()))
-                    .unwrap_or(false);
-                let lac_c1 = payload.get("char_id_1").and_then(|v| v.as_i64())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_1")).and_then(|v| v.as_i64()))
-                    .unwrap_or(0) as u8;
-                let lac_c2 = payload.get("char_id_2").and_then(|v| v.as_i64())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_2")).and_then(|v| v.as_i64()))
-                    .unwrap_or(0) as u8;
-                let lac_c3 = payload.get("char_id_3").and_then(|v| v.as_i64())
-                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_3")).and_then(|v| v.as_i64()))
-                    .unwrap_or(0) as u8;
+                let lac_reveal = structured_bool("reveal").unwrap_or(false);
+                let lac_dest = structured_bool("dest_discard").unwrap_or(false);
+                let lac_c1 = structured_i64("char_id_1").unwrap_or(0) as u8;
+                let lac_c2 = structured_i64("char_id_2").unwrap_or(0) as u8;
+                let lac_c3 = structured_i64("char_id_3").unwrap_or(0) as u8;
                 let packed = crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
                     count: lac_count, choose_count: lac_choose, reveal: lac_reveal,
                     dest_discard: lac_dest, char_id_1: lac_c1, char_id_2: lac_c2, char_id_3: lac_c3,
@@ -1746,6 +1889,22 @@ impl Ability {
     pub fn frames(&self) -> Vec<AbilityFrame> {
         self.resolved_frames().into_owned()
     }
+
+    pub fn trace_view(&self) -> AbilityTraceView {
+        let steps = self
+            .resolved_frames()
+            .iter()
+            .map(|frame| frame.components().to_trace_step())
+            .collect();
+
+        AbilityTraceView {
+            trigger: self.trigger,
+            frame_source: self.resolved_frame_source().to_string(),
+            raw_text: self.raw_text.clone(),
+            choice_count: self.choice_count,
+            steps,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -1828,6 +1987,53 @@ mod tests {
         assert_eq!(frame_data.value, 1);
         assert_eq!(frame_data.target_player_index(0), 1);
         assert_eq!(frame_data.slot.dest_zone, Zone::Discard);
+    }
+
+    #[test]
+    fn trace_view_uses_human_readable_steps() {
+        let ability = Ability {
+            trigger: TriggerType::OnPlay,
+            raw_text: "draw 1".to_string(),
+            frame_program: Some(FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_DRAW, 1, 0, 0, false),
+                    AbilityFrame::new_return(),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let trace = ability.trace_view();
+        assert_eq!(trace.frame_source, "frame_program");
+        assert_eq!(trace.steps[0].summary, "draw 1 card(s)");
+        assert_eq!(trace.steps[1].summary, "return");
+    }
+
+    #[test]
+    fn look_and_choose_trace_step_preserves_choose_count_from_params() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "LOOK_AND_CHOOSE",
+            "value": 7,
+            "slot": {
+                "source_zone": "DECK",
+                "dest_zone": "DISCARD",
+                "target_slot": 6
+            },
+            "params": {
+                "count": 7,
+                "choose_count": 3,
+                "reveal": true,
+                "dest_discard": true
+            }
+        }));
+
+        let trace = frame.components().to_trace_step();
+        assert_eq!(trace.opcode, "LOOK_AND_CHOOSE");
+        assert_eq!(trace.choose_count, Some(3));
+        assert_eq!(trace.reveal, Some(true));
+        assert_eq!(trace.remainder_to_discard, Some(true));
+        assert!(trace.summary.contains("look 7 choose 3"));
     }
 
     #[test]

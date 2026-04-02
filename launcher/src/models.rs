@@ -110,6 +110,49 @@ pub struct ParsedDecks {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActionKind {
+    Pass,
+    ToggleMulligan,
+    PlayMember,
+    ActivateMember,
+    ActivateFromDiscard,
+    ActivateFromHand,
+    PlaceLive,
+    SelectChoice,
+    SelectHand,
+    SelectCards,
+    SelectColor,
+    SelectEnergy,
+    ChooseTurnOrder,
+    Formation,
+    Rps,
+    Unknown,
+}
+
+impl ActionKind {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            ActionKind::Pass => "PASS",
+            ActionKind::ToggleMulligan => "TOGGLE_MULLIGAN",
+            ActionKind::PlayMember => "PLAY_MEMBER",
+            ActionKind::ActivateMember => "ACTIVATE_MEMBER",
+            ActionKind::ActivateFromDiscard => "ACTIVATE_FROM_DISCARD",
+            ActionKind::ActivateFromHand => "ACTIVATE_FROM_HAND",
+            ActionKind::PlaceLive => "PLACE_LIVE",
+            ActionKind::SelectChoice => "SELECT_CHOICE",
+            ActionKind::SelectHand => "SELECT_HAND",
+            ActionKind::SelectCards => "SELECT_CARDS",
+            ActionKind::SelectColor => "SELECT_COLOR",
+            ActionKind::SelectEnergy => "SELECT_ENERGY",
+            ActionKind::ChooseTurnOrder => "CHOOSE_TURN_ORDER",
+            ActionKind::Formation => "FORMATION",
+            ActionKind::Rps => "RPS",
+            ActionKind::Unknown => "UNKNOWN",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
     Pass,
     ToggleMulligan { hand_idx: usize },
@@ -228,9 +271,7 @@ impl Action {
         }
     }
 
-    pub fn semantic_kind(&self) -> engine_rust::core::ActionKind {
-        use engine_rust::core::ActionKind;
-
+    pub fn semantic_kind(&self) -> ActionKind {
         match self {
             Action::Pass => ActionKind::Pass,
             Action::ToggleMulligan { .. } => ActionKind::ToggleMulligan,

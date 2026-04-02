@@ -200,14 +200,16 @@ export const DebugModal = {
 
     init: () => {},
 
-    openDebugModal: async () => {
+    openDebugModal: async (tab = 'json') => {
         const modal = document.getElementById('debug-modal');
         if (!modal) return;
 
+        const targetTab = tab || 'json';
+        DebugModal._activeTab = targetTab;
         modal.style.display = 'flex';
         await DebugModal._ensureTraceEnabled();
         await DebugModal.renderAll();
-        DebugModal.switchTab(DebugModal._activeTab);
+        DebugModal.switchTab(targetTab);
     },
 
     closeDebugModal: () => {
@@ -1034,23 +1036,27 @@ export const DebugModal = {
         const [modeTitle, modeHint] = labels[DebugModal._jsonMode] || labels.checkpoint;
 
         container.innerHTML = `
-            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:8px; overflow:hidden;">
+            <div style="display:flex; flex-direction:column; height:100%; padding:0; gap:6px; overflow:hidden; min-height:0;">
                 ${renderStatusBanner(DebugModal._status)}
-                <div class="debug-action-row">
-                    <button class="btn btn-secondary btn-xs" data-action="debug-render-minimal-json">Minimal</button>
-                    <button class="btn btn-secondary btn-xs" data-action="debug-render-checkpoint-json">Checkpoint Snapshot</button>
-                    <button class="btn btn-secondary btn-xs" data-action="debug-render-rich-json">Viewer State</button>
-                    <button class="btn btn-secondary btn-xs" data-action="debug-copy-json-state">Copy</button>
-                    <button class="btn btn-secondary btn-xs" data-action="debug-load-json-file">Load File</button>
-                    <button class="btn btn-primary btn-xs" data-action="debug-apply-json-state">Apply</button>
-                    <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; padding:2px 0 0 0; min-height:0;">
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+                        <button class="btn btn-secondary btn-xs" data-action="debug-render-minimal-json">Minimal</button>
+                        <button class="btn btn-secondary btn-xs" data-action="debug-render-checkpoint-json">Checkpoint</button>
+                        <button class="btn btn-secondary btn-xs" data-action="debug-render-rich-json">Viewer</button>
+                    </div>
+                    <div style="flex:1; min-width:220px; display:flex; justify-content:flex-end; align-items:center; gap:8px; font-size:10px; line-height:1.35; opacity:0.82; text-align:right;">
+                        <strong id="debug-json-mode-title" style="font-size:10px; letter-spacing:0.04em; text-transform:uppercase;">${modeTitle}</strong>
+                        <span id="debug-json-mode-hint">${modeHint}</span>
+                    </div>
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-left:auto;">
+                        <button class="btn btn-secondary btn-xs" data-action="debug-copy-json-state">Copy</button>
+                        <button class="btn btn-secondary btn-xs" data-action="debug-load-json-file">Load</button>
+                        <button class="btn btn-primary btn-xs" data-action="debug-apply-json-state">Apply</button>
+                        <input type="file" id="debug-json-file" style="display:none;" accept=".json,.txt,.b64">
+                    </div>
                 </div>
-                <div style="font-size:11px; opacity:0.88; background:rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; border-left:3px solid #64748b; line-height:1.45;">
-                    <strong id="debug-json-mode-title">${modeTitle}</strong><br/>
-                    <span id="debug-json-mode-hint" style="font-size:10px;">${modeHint}</span>
-                </div>
-                <textarea id="debug-json-textarea" spellcheck="false" style="flex:1; width:100%; background:#020617; color:#e2e8f0; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:12px; resize:none; box-sizing:border-box;"></textarea>
-                <div id="debug-json-result" style="font-size:10px; opacity:0.84; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border-left:2px solid #666; display:none;"></div>
+                <textarea id="debug-json-textarea" spellcheck="false" style="flex:1; min-height:0; width:100%; background:#020617; color:#e2e8f0; border:1px solid #334155; border-radius:6px; padding:10px; font-family:'Cascadia Code', monospace; font-size:12px; resize:none; box-sizing:border-box;"></textarea>
+                <div id="debug-json-result" style="font-size:10px; opacity:0.84; background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; border-left:2px solid #666; display:none; margin-top:2px;"></div>
             </div>
         `;
 
@@ -1321,12 +1327,12 @@ export const DebugModal = {
 };
 
 window.DebugModal = DebugModal;
-window.openDebugModal = () => DebugModal.openDebugModal();
+window.openDebugModal = (tab) => DebugModal.openDebugModal(tab ?? 'json');
 window.closeDebugModal = () => DebugModal.closeDebugModal();
 window.switchDebugTab = (tab) => DebugModal.switchTab(tab);
 
 window.Modals = window.Modals || {};
-window.Modals.openDebugModal = () => DebugModal.openDebugModal();
+window.Modals.openDebugModal = (tab) => DebugModal.openDebugModal(tab ?? 'json');
 window.Modals.closeDebugModal = () => DebugModal.closeDebugModal();
 window.Modals.toggleDebugMode = () => DebugModal.toggleDebugMode();
 window.Modals.rewind = () => DebugModal.rewind();

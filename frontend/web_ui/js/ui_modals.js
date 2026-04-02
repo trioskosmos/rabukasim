@@ -63,8 +63,8 @@ export const Modals = {
     downloadReport: () => ReportModal.downloadReport(),
 
     // --- Debug ---
-    openDebugModal: (tab) => {
-        DebugModal.openDebugModal();
+    openDebugModal: (tab = 'json') => {
+        DebugModal.openDebugModal(tab);
         if (tab) DebugModal.switchTab(tab);
     },
     closeDebugModal: () => DebugModal.closeDebugModal(),

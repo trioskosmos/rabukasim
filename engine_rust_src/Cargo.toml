@@ -126,6 +126,11 @@ name = "deep_liveset"
 path = "examples/deep_liveset.rs"
 test = false
 
+[[bin]]
+name = "export_hydrated_abilities"
+path = "examples/export_hydrated_abilities.rs"
+test = false
+
 [[bench]]
 name = "game_simulation"
 path = "benches/game_simulation.rs"
