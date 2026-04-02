@@ -233,8 +233,15 @@ impl CardDatabase {
                                 if let Some(card_obj) = card_ref.as_object() {
                                     if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
                                         if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                            let mut keyed_entry = compact_entry.clone();
+                                            if let Some(trigger) = card_obj.get("trigger") {
+                                                keyed_entry.insert("trigger".to_string(), trigger.clone());
+                                            }
+                                            if let Some(trigger_id) = card_obj.get("trigger_id") {
+                                                keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
+                                            }
                                             let key = format!("{}#{}", card_no, ability_index);
-                                            index.insert(key, Value::Object(compact_entry.clone()));
+                                            index.insert(key, Value::Object(keyed_entry));
                                         }
                                     }
                                 }
@@ -331,10 +338,21 @@ impl CardDatabase {
         for (ability_index, ability) in abilities.iter_mut().enumerate() {
             let key = format!("{}#{}", card_no, ability_index);
             let entry = index.get(&key);
+            let matching_entry = entry.filter(|entry| Self::entry_matches_ability_trigger(entry, ability));
 
             // Populate raw_text from source_text if it's empty
             if ability.raw_text.is_empty() {
-                if let Some(source_text) = entry.and_then(|value| value.get("source_text")).and_then(|v| v.as_str()) {
+                if let Some(source_text) = matching_entry
+                    .and_then(|value| value.get("source_text"))
+                    .and_then(|v| v.as_str())
+                {
+                    ability.raw_text = source_text.to_string();
+                } else if let Some(source_text_en) = matching_entry
+                    .and_then(|value| value.get("source_text_en"))
+                    .and_then(|v| v.as_str())
+                {
+                    ability.raw_text = source_text_en.to_string();
+                } else if let Some(source_text) = entry.and_then(|value| value.get("source_text")).and_then(|v| v.as_str()) {
                     ability.raw_text = source_text.to_string();
                 } else if let Some(source_text_en) = entry.and_then(|value| value.get("source_text_en")).and_then(|v| v.as_str()) {
                     ability.raw_text = source_text_en.to_string();
@@ -343,13 +361,14 @@ impl CardDatabase {
                 }
             }
 
-            if ability
+            let should_replace_frame_program = ability
                 .frame_program
                 .as_ref()
                 .map(|program| program.frames.is_empty())
                 .unwrap_or(true)
-            {
-                if let Some(entry) = entry {
+                || ability.resolved_frame_source() != "frame_program";
+            if should_replace_frame_program {
+                if let Some(entry) = matching_entry {
                     let program = Self::sparse_entry_to_frame_program(entry);
                     if !program.frames.is_empty() {
                         ability.frame_program = Some(program);
@@ -383,57 +402,126 @@ impl CardDatabase {
                         if lac.choose_count == 0 {
                             lac.choose_count = choose_count;
                             frame.value = lac.to_raw();
+                            if frame.params.is_null() {
+                                frame.params = serde_json::json!({});
+                            }
+                            if let Some(params) = frame.params.as_object_mut() {
+                                params.insert(
+                                    "choose_count".to_string(),
+                                    serde_json::Value::from(choose_count),
+                                );
+                                if !params.contains_key("count") {
+                                    params.insert(
+                                        "count".to_string(),
+                                        serde_json::Value::from(lac.count),
+                                    );
+                                }
+                            }
                         }
                     }
                 }
             }
-            // Only sync frame_program data to effects if effects are not already populated
-            // (i.e., from the new semantic compiler output)
-            if ability.effects.is_empty() {
-                if let Some(program) = ability.frame_program.as_ref() {
-                    let mut meaningful_frames = program
-                        .frames
+            if let Some(program) = ability.frame_program.as_ref() {
+                let meaningful_frames: Vec<_> = program
+                    .frames
+                    .iter()
+                    .filter(|frame| Self::frame_matches_effect_metadata(frame))
+                    .collect();
+                let mut next_frame_idx = 0usize;
+                for effect in ability.effects.iter_mut() {
+                    let expected_opcode = if effect.runtime_opcode != 0 {
+                        effect.runtime_opcode
+                    } else {
+                        AbilityFrame::opcode_from_effect_type(effect.effect_type)
+                    };
+                    let Some((matched_idx, frame)) = meaningful_frames
                         .iter()
-                        .filter(|frame| frame.opcode() != O_RETURN);
-                    for effect in ability.effects.iter_mut() {
-                        let Some(frame) = meaningful_frames.next() else {
-                            break;
-                        };
-                        let components = frame.components();
-                        let needs_params = effect.params.is_null()
-                            || effect
-                                .params
-                                .as_object()
-                                .map(|params| !params.contains_key("choices"))
-                                .unwrap_or(true);
-                        if needs_params {
-                            if let Some(params) = components.params {
-                                effect.params = params.clone();
-                            }
+                        .enumerate()
+                        .skip(next_frame_idx)
+                        .find(|(_, frame)| frame.opcode() == expected_opcode)
+                    else {
+                        continue;
+                    };
+                    next_frame_idx = matched_idx + 1;
+                    let components = frame.components();
+                    let needs_params = effect.params.is_null()
+                        || effect
+                            .params
+                            .as_object()
+                            .map(|params| params.is_empty() || !params.contains_key("choices"))
+                            .unwrap_or(true);
+                    if needs_params {
+                        if let Some(params) = components.params {
+                            effect.params = params.clone();
                         }
-                        if effect.runtime_opcode == 0 {
-                            effect.runtime_opcode = components.raw_opcode;
-                        }
-                        if effect.runtime_value == 0 {
-                            effect.runtime_value = components.value;
-                        }
-                        if effect.runtime_attr == 0 {
-                            effect.runtime_attr = components.raw_attr;
-                        }
-                        if effect.runtime_slot == 0 {
-                            effect.runtime_slot = components.raw_slot;
-                        }
+                    }
+                    if effect.runtime_opcode == 0 {
+                        effect.runtime_opcode = components.raw_opcode;
+                    }
+                    if effect.runtime_value == 0 {
+                        effect.runtime_value = components.value;
+                    }
+                    if effect.runtime_attr == 0 {
+                        effect.runtime_attr = components.raw_attr;
+                    }
+                    if effect.runtime_slot == 0 {
+                        effect.runtime_slot = components.raw_slot;
                     }
                 }
             }
             if ability.pseudocode.is_empty() {
-                if let Some(pseudo) = entry.and_then(|value| value.get("pseudocode")).and_then(|v| v.as_str()) {
+                if let Some(pseudo) = matching_entry
+                    .and_then(|value| value.get("pseudocode"))
+                    .and_then(|v| v.as_str())
+                {
+                    ability.pseudocode = pseudo.to_string();
+                } else if let Some(pseudo) = entry.and_then(|value| value.get("pseudocode")).and_then(|v| v.as_str()) {
                     ability.pseudocode = pseudo.to_string();
                 }
             }
         }
 
         Ok(())
+    }
+
+    fn entry_matches_ability_trigger(entry: &Value, ability: &Ability) -> bool {
+        if let Some(trigger_id) = entry.get("trigger_id").and_then(|value| value.as_u64()) {
+            return trigger_id == ability.trigger as u64;
+        }
+
+        let Some(trigger_name) = entry.get("trigger").and_then(|value| value.as_str()) else {
+            return true;
+        };
+
+        trigger_name.eq_ignore_ascii_case(Self::trigger_name(ability.trigger))
+    }
+
+    fn trigger_name(trigger: TriggerType) -> &'static str {
+        match trigger {
+            TriggerType::None => "NONE",
+            TriggerType::OnPlay => "ON_PLAY",
+            TriggerType::OnLiveStart => "ON_LIVE_START",
+            TriggerType::OnLiveSuccess => "ON_LIVE_SUCCESS",
+            TriggerType::TurnStart => "TURN_START",
+            TriggerType::TurnEnd => "TURN_END",
+            TriggerType::Constant => "CONSTANT",
+            TriggerType::Activated => "ACTIVATED",
+            TriggerType::OnLeaves => "ON_LEAVES",
+            TriggerType::OnReveal => "ON_REVEAL",
+            TriggerType::OnPositionChange => "ON_POSITION_CHANGE",
+            TriggerType::OnAbilityResolve => "ON_ABILITY_RESOLVE",
+            TriggerType::OnAbilitySuccess => "ON_ABILITY_SUCCESS",
+            TriggerType::OnMoveToDiscard => "ON_MOVE_TO_DISCARD",
+            TriggerType::OnMemberTap => "ON_MEMBER_TAP",
+        }
+    }
+
+    fn frame_matches_effect_metadata(frame: &AbilityFrame) -> bool {
+        let opcode = frame.opcode();
+        opcode != O_RETURN
+            && opcode != O_JUMP
+            && opcode != O_JUMP_IF_FALSE
+            && parse_condition_type(opcode) == ConditionType::None
     }
 
     pub fn sparse_entry_to_frame_program(entry: &Value) -> FrameProgram {
@@ -628,10 +716,11 @@ impl CardDatabase {
 
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
+            let resolved_frame_source = ab.resolved_frame_source();
+            let resolved_frames = ab.resolved_frames().into_owned();
 
-            // Primary path: derive from frame_program if available
-            if let Some(frame_program) = ab.frame_program.as_ref() {
-                for frame in &frame_program.frames {
+            if !resolved_frames.is_empty() {
+                for frame in &resolved_frames {
                     let op = frame.opcode();
 
                     match op {
@@ -767,6 +856,55 @@ impl CardDatabase {
                         });
                     }
 
+
+                        #[cfg(test)]
+                        mod tests {
+                            use super::*;
+                            use serde_json::json;
+
+                            #[test]
+                            fn sparse_index_preserves_per_card_ref_trigger_metadata() {
+                                let raw = json!({
+                                    "shared ability": {
+                                        "trigger": "ON_LIVE_START",
+                                        "trigger_id": 2,
+                                        "frames": [
+                                            {
+                                                "opcode": "PAY_ENERGY",
+                                                "value": 2
+                                            }
+                                        ],
+                                        "card_refs": [
+                                            {
+                                                "card_no": "TEST-001",
+                                                "ability_index": 0,
+                                                "trigger": "ON_LIVE_START",
+                                                "trigger_id": 2
+                                            },
+                                            {
+                                                "card_no": "TEST-001",
+                                                "ability_index": 1,
+                                                "trigger": "ON_LIVE_SUCCESS",
+                                                "trigger_id": 3
+                                            }
+                                        ]
+                                    }
+                                });
+
+                                let index = CardDatabase::load_sparse_ability_index_from_json(&raw.to_string());
+
+                                assert_eq!(
+                                    index["TEST-001#0"]["trigger_id"].as_i64(),
+                                    Some(2),
+                                    "ability 0 should keep the per-card trigger metadata"
+                                );
+                                assert_eq!(
+                                    index["TEST-001#1"]["trigger_id"].as_i64(),
+                                    Some(3),
+                                    "ability 1 should override the top-level trigger metadata"
+                                );
+                            }
+                        }
                     if !flagged_ops.contains(&op) {
                         unflagged_logic_present = true;
                     }
@@ -774,7 +912,11 @@ impl CardDatabase {
             }
 
             // Frame program fallback for conditions (if effects/conditions not populated)
-            let semantic_program = ab.frame_program.as_ref().cloned();
+            let semantic_program = if resolved_frame_source == "frame_program" {
+                ab.frame_program.as_ref().cloned()
+            } else {
+                None
+            };
             if let Some(frame_program) = semantic_program.as_ref() {
                 let derived_conditions = Self::derive_conditions_from_frame_program(frame_program);
                 if !derived_conditions.is_empty() {
@@ -807,6 +949,25 @@ impl CardDatabase {
                         });
                     }
                 }
+                if (ab.raw_text.contains("自分のエネルギーがすべてアクティブ状態の場合")
+                    || ab.raw_text.contains("if all your energy is active"))
+                    && !ab.conditions.iter().any(|cond| {
+                        cond.condition_type == ConditionType::CountEnergyExact && cond.value == 0
+                    })
+                    && resolved_frames.iter().any(|frame| {
+                        let opcode = frame.opcode();
+                        opcode == O_BOOST_SCORE || opcode == O_META_RULE
+                    })
+                {
+                    ab.conditions.push(Condition {
+                        condition_type: ConditionType::CountEnergyExact,
+                        value: 0,
+                        attr: 0,
+                        target_slot: 0,
+                        is_negated: false,
+                        params: serde_json::Value::Null,
+                    });
+                }
             }
 
             if ab.choice_count > 0 {
@@ -817,6 +978,21 @@ impl CardDatabase {
                             if lac.choose_count == 0 {
                                 lac.choose_count = ab.choice_count;
                                 frame.value = lac.to_raw();
+                                if frame.params.is_null() {
+                                    frame.params = serde_json::json!({});
+                                }
+                                if let Some(params) = frame.params.as_object_mut() {
+                                    params.insert(
+                                        "choose_count".to_string(),
+                                        serde_json::Value::from(ab.choice_count),
+                                    );
+                                    if !params.contains_key("count") {
+                                        params.insert(
+                                            "count".to_string(),
+                                            serde_json::Value::from(lac.count),
+                                        );
+                                    }
+                                }
                             }
                         }
                     }
@@ -988,9 +1164,29 @@ impl CardDatabase {
         let mut s_flags = 0u32;
         let mut synergy_flags = 0u32;
 
-        for ab in &card.abilities {
+        for ab in &mut card.abilities {
             if ab.trigger == TriggerType::OnPlay {
                 s_flags |= 0x01;
+            }
+
+            if (ab.raw_text.contains("自分のエネルギーがすべてアクティブ状態の場合")
+                || ab.raw_text.contains("if all your energy is active"))
+                && !ab.conditions.iter().any(|cond| {
+                    cond.condition_type == ConditionType::CountEnergyExact && cond.value == 0
+                })
+                && ab.resolved_frames().iter().any(|frame| {
+                    let opcode = frame.opcode();
+                    opcode == O_BOOST_SCORE || opcode == O_META_RULE
+                })
+            {
+                ab.conditions.push(Condition {
+                    condition_type: ConditionType::CountEnergyExact,
+                    value: 0,
+                    attr: 0,
+                    target_slot: 0,
+                    is_negated: false,
+                    params: serde_json::Value::Null,
+                });
             }
 
             for c in &ab.conditions {

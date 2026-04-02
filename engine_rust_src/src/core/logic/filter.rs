@@ -159,6 +159,40 @@ pub struct CardFilter {
 
 /// Conversion helpers for filter operations
 impl CardFilter {
+    fn same_name_sources(
+        state: &GameState,
+        db: &CardDatabase,
+        ctx: &AbilityContext,
+    ) -> Vec<String> {
+        let p_idx = ctx.player_id as usize;
+        let mut source_cards: Vec<i32> = state.players[p_idx].revealed_cards.iter().copied().collect();
+        if source_cards.is_empty() {
+            source_cards = ctx
+                .selected_cards
+                .iter()
+                .copied()
+                .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+                .collect();
+        }
+        if source_cards.is_empty() {
+            source_cards = state.players[p_idx]
+                .hand
+                .iter()
+                .copied()
+                .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+                .collect();
+        }
+
+        source_cards
+            .into_iter()
+            .filter_map(|source_cid| {
+                db.get_live(source_cid)
+                    .map(|card| card.name.clone())
+                    .or_else(|| db.get_member(source_cid).map(|card| card.name.clone()))
+            })
+            .collect()
+    }
+
     /// Extract group information with validation
     fn get_group_info(&self) -> (bool, u8) {
         (self.group_enabled, self.group_id)
@@ -449,6 +483,38 @@ impl CardFilter {
                     }
                 }
             } else {
+                return false;
+            }
+        }
+
+        if self.special_id == 3 {
+            if let Some((checked_player, checked_slot)) = checked_slot {
+                if checked_player == ctx.player_id && ctx.area_idx >= 0 && checked_slot == ctx.area_idx {
+                    return false;
+                }
+            } else if cid == ctx.source_card_id {
+                return false;
+            }
+        }
+
+        if self.special_id == 4 {
+            let Some(candidate_name) = db
+                .get_live(cid)
+                .map(|card| card.name.as_str())
+                .or_else(|| db.get_member(cid).map(|card| card.name.as_str()))
+            else {
+                return false;
+            };
+
+            let source_names = Self::same_name_sources(state, db, ctx);
+            if source_names.is_empty() {
+                return false;
+            }
+
+            if !source_names
+                .iter()
+                .any(|source_name| candidate_name.contains(source_name))
+            {
                 return false;
             }
         }

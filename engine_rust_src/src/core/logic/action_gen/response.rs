@@ -12,7 +12,7 @@ use crate::core::logic::{
     Ability, AbilityContext, ActionReceiver, CardDatabase, ChoiceType, GameState,
     PendingInteraction,
 };
-use crate::core::models::CHOICE_DONE;
+use crate::core::models::{AbilityFrame, CHOICE_DONE};
 use crate::core::types::{MAX_LIVE_SET_SIZE, STAGE_SLOT_COUNT};
 
 pub struct ResponseGenerator;
@@ -97,7 +97,10 @@ fn should_enable_targeted_live_bonus(_state: &GameState, pi: &PendingInteraction
 }
 
 fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, option_idx: usize) -> bool {
-    let Some(frames) = ability.get_modal_option_frames(option_idx) else {
+    let Some(frames) = ability
+        .get_modal_option_frames(option_idx)
+        .or_else(|| legacy_select_mode_option_frames(ability, option_idx))
+    else {
         return false;
     };
     let Some(first_frame) = frames.first() else {
@@ -117,6 +120,19 @@ fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, opt
         }
         _ => true,
     }
+}
+
+fn legacy_select_mode_option_frames(ability: &Ability, option_idx: usize) -> Option<Vec<AbilityFrame>> {
+    let frames = ability.resolved_frames();
+    let select_mode_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MODE)?;
+    let jump_frame_idx = select_mode_idx + 1 + option_idx;
+    let jump_frame = frames.get(jump_frame_idx)?;
+    if jump_frame.opcode() != O_JUMP {
+        return None;
+    }
+
+    let target_frame_idx = select_mode_idx + 2 + option_idx + jump_frame.value().max(0) as usize;
+    frames.get(target_frame_idx).cloned().map(|frame| vec![frame])
 }
 
 impl ActionGenerator for ResponseGenerator {
@@ -760,6 +776,7 @@ impl ResponseGenerator {
     ) {
         let player = &state.players[p_idx];
         let mut final_filter_attr = pi.filter_attr;
+        final_filter_attr &= !crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL;
         if final_filter_attr == 0 {
             if let Some(abs) = abilities {
                 let ab_idx_real = if pi.ability_index == -1 {
@@ -855,16 +872,15 @@ impl ResponseGenerator {
                 );
             }
             _ => {
-                let no_filter = final_filter_attr
-                    & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
-                    == 0;
+                let masked_filter = final_filter_attr
+                    & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+                let no_filter = masked_filter == 0;
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
                     if no_filter
                         || state.card_matches_filter_with_ctx(
                             db,
                             cid,
-                            final_filter_attr
-                                & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
+                            masked_filter,
                             &pi.ctx,
                         )
                     {

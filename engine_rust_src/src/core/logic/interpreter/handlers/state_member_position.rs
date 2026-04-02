@@ -90,12 +90,30 @@ pub fn handle_grant_ability(
     v: i32,
     target_slot: i32,
     resolved_slot: i32,
+    selected_target_cid: Option<i32>,
 ) -> HandlerResult {
-    let slot = if resolved_slot >= 0 && resolved_slot < 3 {
-        resolved_slot as usize
+    let slot = if let Some(selected_cid) = selected_target_cid {
+        state.players[p_idx]
+            .stage
+            .iter()
+            .position(|&cid| cid == selected_cid)
+            .or_else(|| {
+                if resolved_slot >= 0 && resolved_slot < 3 {
+                    Some(resolved_slot as usize)
+                } else if target_slot >= 0 && target_slot < 3 {
+                    Some(target_slot as usize)
+                } else {
+                    None
+                }
+            })
+    } else if resolved_slot >= 0 && resolved_slot < 3 {
+        Some(resolved_slot as usize)
     } else if target_slot >= 0 && target_slot < 3 {
-        target_slot as usize
+        Some(target_slot as usize)
     } else {
+        None
+    };
+    let Some(slot) = slot else {
         return HandlerResult::Continue;
     };
     let target_cid = state.players[p_idx].stage[slot];

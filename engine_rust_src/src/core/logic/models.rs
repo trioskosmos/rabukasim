@@ -155,7 +155,7 @@ impl<'a> AbilityFrameComponents<'a> {
 
     /// Extract look and choose parameters from this frame
     pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
-        crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.value)
+        AbilityFrame::decode_look_choose(self.value, self.params)
     }
 
     /// Get the divisor for dynamic value calculation
@@ -172,6 +172,62 @@ impl<'a> AbilityFrameComponents<'a> {
 }
 
 impl AbilityFrame {
+    fn decode_look_choose(
+        value: i32,
+        params: Option<&Value>,
+    ) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+        let mut decoded =
+            crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(value);
+
+        let Some(params) = params else {
+            return decoded;
+        };
+
+        if let Some(count) = params
+            .get("count")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u8::try_from(value).ok())
+        {
+            decoded.count = count;
+        }
+        if let Some(choose_count) = params
+            .get("choose_count")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u8::try_from(value).ok())
+        {
+            decoded.choose_count = choose_count;
+        }
+        if let Some(char_id_1) = params
+            .get("char_id_1")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u8::try_from(value).ok())
+        {
+            decoded.char_id_1 = char_id_1;
+        }
+        if let Some(char_id_2) = params
+            .get("char_id_2")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u8::try_from(value).ok())
+        {
+            decoded.char_id_2 = char_id_2;
+        }
+        if let Some(char_id_3) = params
+            .get("char_id_3")
+            .and_then(|value| value.as_u64())
+            .and_then(|value| u8::try_from(value).ok())
+        {
+            decoded.char_id_3 = char_id_3;
+        }
+        if let Some(reveal) = params.get("reveal").and_then(|value| value.as_bool()) {
+            decoded.reveal = reveal;
+        }
+        if let Some(dest_discard) = params.get("dest_discard").and_then(|value| value.as_bool()) {
+            decoded.dest_discard = dest_discard;
+        }
+
+        decoded
+    }
+
     fn with_components(
         opcode: i32,
         value: i32,
@@ -208,7 +264,7 @@ impl AbilityFrame {
         )
     }
 
-    fn opcode_from_effect_type(effect_type: EffectType) -> i32 {
+    pub(crate) fn opcode_from_effect_type(effect_type: EffectType) -> i32 {
         match effect_type {
             EffectType::Draw => O_DRAW,
             EffectType::PayEnergy => O_PAY_ENERGY,
@@ -738,21 +794,49 @@ impl AbilityFrame {
                     .or_else(|| Self::extract_u8_from_text(summary_text, &["look at ", "look ", "count="]).map(|v| v as i64))
                     .unwrap_or(value as i64) as u8;
                 let lac_choose = payload.get("choose_count").and_then(|v| v.as_i64())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("choose_count")).and_then(|v| v.as_i64()))
+                    .or_else(|| Self::extract_u8_from_text(decoded_text, &["choose=", "choose "]).map(|v| v as i64))
+                    .or_else(|| Self::extract_u8_from_text(summary_text, &["choose "]).map(|v| v as i64))
                     .unwrap_or(0) as u8;
-                let lac_reveal = payload.get("reveal").and_then(|v| v.as_bool()).unwrap_or(false);
-                let lac_dest = payload.get("dest_discard").and_then(|v| v.as_bool()).unwrap_or(false);
-                let lac_c1 = payload.get("char_id_1").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                let lac_c2 = payload.get("char_id_2").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
-                let lac_c3 = payload.get("char_id_3").and_then(|v| v.as_i64()).unwrap_or(0) as u8;
+                let lac_reveal = payload.get("reveal").and_then(|v| v.as_bool())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("reveal")).and_then(|v| v.as_bool()))
+                    .unwrap_or(false);
+                let lac_dest = payload.get("dest_discard").and_then(|v| v.as_bool())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("dest_discard")).and_then(|v| v.as_bool()))
+                    .unwrap_or(false);
+                let lac_c1 = payload.get("char_id_1").and_then(|v| v.as_i64())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_1")).and_then(|v| v.as_i64()))
+                    .unwrap_or(0) as u8;
+                let lac_c2 = payload.get("char_id_2").and_then(|v| v.as_i64())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_2")).and_then(|v| v.as_i64()))
+                    .unwrap_or(0) as u8;
+                let lac_c3 = payload.get("char_id_3").and_then(|v| v.as_i64())
+                    .or_else(|| payload.get("value").and_then(|v| v.get("char_id_3")).and_then(|v| v.as_i64()))
+                    .unwrap_or(0) as u8;
                 let packed = crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
                     count: lac_count, choose_count: lac_choose, reveal: lac_reveal,
                     dest_discard: lac_dest, char_id_1: lac_c1, char_id_2: lac_c2, char_id_3: lac_c3,
                 }.to_raw();
-                Self::with_components(O_LOOK_AND_CHOOSE, packed, filter, slot, is_cost, Value::Null)
+                let mut lac_params = params.as_object().cloned().unwrap_or_default();
+                lac_params.insert("count".to_string(), Value::from(lac_count));
+                lac_params.insert("choose_count".to_string(), Value::from(lac_choose));
+                lac_params.insert("char_id_1".to_string(), Value::from(lac_c1));
+                lac_params.insert("char_id_2".to_string(), Value::from(lac_c2));
+                lac_params.insert("char_id_3".to_string(), Value::from(lac_c3));
+                lac_params.insert("reveal".to_string(), Value::from(lac_reveal));
+                lac_params.insert("dest_discard".to_string(), Value::from(lac_dest));
+                Self::with_components(
+                    O_LOOK_AND_CHOOSE,
+                    packed,
+                    filter,
+                    slot,
+                    is_cost,
+                    Value::Object(lac_params),
+                )
             }
-            "SELECT_MEMBER" => Self::with_components(O_SELECT_MEMBER, value, filter, slot, is_cost, Value::Null),
-            "MOVE_MEMBER" => Self::with_components(O_MOVE_MEMBER, 0, filter, slot, is_cost, Value::Null),
-            "META_RULE" => Self::with_components(O_META_RULE, value, filter, slot, is_cost, Value::Null),
+            "SELECT_MEMBER" => Self::with_components(O_SELECT_MEMBER, value, filter, slot, is_cost, params),
+            "MOVE_MEMBER" => Self::with_components(O_MOVE_MEMBER, value, filter, slot, is_cost, params),
+            "META_RULE" => Self::with_components(O_META_RULE, value, filter, slot, is_cost, params),
             _ => {
                 let raw_op = if is_negated && resolved_opcode_id < crate::core::logic::constants::OPCODE_NEGATION_OFFSET {
                     resolved_opcode_id + crate::core::logic::constants::OPCODE_NEGATION_OFFSET
@@ -959,7 +1043,14 @@ impl AbilityFrame {
     pub fn look_choose(
         &self,
     ) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
-        crate::core::logic::interpreter::instruction::DecodedLookAndChoose::decode(self.value)
+        Self::decode_look_choose(
+            self.value,
+            if self.params.is_null() {
+                None
+            } else {
+                Some(&self.params)
+            },
+        )
     }
     pub fn is_dynamic(&self) -> bool {
         (self.attr()
@@ -1441,6 +1532,7 @@ pub struct Ability {
     #[serde(default)]
     pub raw_text: String,
     pub trigger: TriggerType,
+    #[deprecated(since = "0.1.0", note = "Bytecode is deprecated. Use frame_program for execution.")]
     #[serde(default)]
     pub bytecode: Vec<i32>,
     #[serde(default)]
@@ -1494,6 +1586,69 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
+    fn effect_opcode(effect: &Effect) -> i32 {
+        if effect.runtime_opcode != 0 {
+            effect.runtime_opcode
+        } else {
+            AbilityFrame::opcode_from_effect_type(effect.effect_type)
+        }
+    }
+
+    fn is_runtime_effect_frame(frame: &AbilityFrame) -> bool {
+        let opcode = frame.opcode();
+        opcode != O_RETURN
+            && opcode != O_JUMP
+            && opcode != O_JUMP_IF_FALSE
+            && crate::core::logic::interpreter::conditions::common::parse_condition_type(opcode)
+                == ConditionType::None
+    }
+
+    fn frame_program_matches_effects(&self) -> bool {
+        let Some(frame_program) = self.frame_program.as_ref() else {
+            return false;
+        };
+
+        if self.effects.is_empty() {
+            return !frame_program.frames.is_empty();
+        }
+
+        let expected_opcodes: Vec<i32> = self
+            .effects
+            .iter()
+            .map(Self::effect_opcode)
+            .filter(|opcode| *opcode != O_NOP && *opcode != O_RETURN)
+            .collect();
+        if expected_opcodes.is_empty() {
+            return !frame_program.frames.is_empty();
+        }
+
+        let actual_opcodes: Vec<i32> = frame_program
+            .frames
+            .iter()
+            .filter(|frame| Self::is_runtime_effect_frame(frame))
+            .map(AbilityFrame::opcode)
+            .collect();
+        if actual_opcodes.is_empty() {
+            return false;
+        }
+
+        expected_opcodes
+            .iter()
+            .any(|opcode| actual_opcodes.contains(opcode))
+    }
+
+    pub fn resolved_frame_source(&self) -> &'static str {
+        if self.frame_program.is_some() && self.frame_program_matches_effects() {
+            "frame_program"
+        } else if !self.effects.is_empty() {
+            "effects"
+        } else if self.frame_program.is_some() {
+            "frame_program_unmatched"
+        } else {
+            "none"
+        }
+    }
+
     /// Check if ability has any effects
     pub fn has_effects(&self) -> bool {
         !self.effects.is_empty()
@@ -1534,7 +1689,9 @@ impl Ability {
 
     pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
         if let Some(ref frame_program) = self.frame_program {
-            return Cow::Borrowed(&frame_program.frames);
+            if self.frame_program_matches_effects() {
+                return Cow::Borrowed(&frame_program.frames);
+            }
         }
 
         if !self.effects.is_empty() {
@@ -1546,15 +1703,15 @@ impl Ability {
             );
         }
 
+        if let Some(ref frame_program) = self.frame_program {
+            return Cow::Borrowed(&frame_program.frames);
+        }
+
         Cow::Borrowed(&[])
     }
 
     pub fn has_resolved_frames(&self) -> bool {
-        if let Some(ref frame_program) = self.frame_program {
-            return !frame_program.frames.is_empty();
-        }
-
-        !self.effects.is_empty()
+        !self.resolved_frames().is_empty()
     }
 
     #[allow(deprecated)]
@@ -1631,6 +1788,31 @@ mod tests {
     }
 
     #[test]
+    fn resolved_frames_prefer_effects_when_frame_program_has_no_effect_overlap() {
+        let ability = Ability {
+            trigger: TriggerType::Constant,
+            effects: vec![Effect {
+                effect_type: EffectType::AddBlades,
+                value: Value::from(1),
+                ..Default::default()
+            }],
+            frame_program: Some(FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_RECOVER_LIVE, 1, 0, 0, false),
+                    AbilityFrame::new_return(),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let frames = ability.resolved_frames();
+        assert_eq!(ability.resolved_frame_source(), "effects");
+        assert_eq!(frames.len(), 1);
+        assert_eq!(frames[0].opcode(), O_ADD_BLADES);
+    }
+
+    #[test]
     fn structured_draw_frame_preserves_minimal_hand_semantics() {
         let frame = AbilityFrame::from_json_value(&json!({
             "opcode": "DRAW",
@@ -1667,6 +1849,55 @@ mod tests {
 
         assert!(zone_encoded.components().add_to_hand_uses_looked_cards());
         assert!(slot_encoded.components().add_to_hand_uses_looked_cards());
+    }
+
+    #[test]
+    fn structured_reduce_cost_frame_preserves_card10_style_filter_bits() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "REDUCE_COST",
+            "value": 1,
+            "attr": {
+                "target_player": 1,
+                "special_id": "Not Self",
+                "compare_accumulated": 1
+            },
+            "slot": {
+                "is_dynamic": 1,
+                "remainder_zone": 204
+            }
+        }));
+
+        let frame_data = frame.components();
+        assert_eq!(frame_data.filter.target_player, 1);
+        assert_eq!(frame_data.filter.special_id, 3);
+        assert!(frame_data.filter.compare_accumulated);
+        assert!(frame_data.slot.is_dynamic);
+        assert_eq!(frame_data.slot.remainder_zone, 204);
+    }
+
+    #[test]
+    fn move_member_frame_preserves_structured_params() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "MOVE_MEMBER",
+            "attr": {
+                "is_optional": 1
+            },
+            "slot": {
+                "target_slot": 4
+            },
+            "params": {
+                "source": "STAGE",
+                "destination": "STAGE"
+            }
+        }));
+
+        assert_eq!(frame.opcode(), O_MOVE_MEMBER);
+        assert_eq!(frame.params.get("source").and_then(|value| value.as_str()), Some("STAGE"));
+        assert_eq!(
+            frame.params.get("destination").and_then(|value| value.as_str()),
+            Some("STAGE")
+        );
+        assert!(frame.components().filter.is_optional);
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

@@ -253,6 +253,8 @@ pub fn handle_move_to_discard(
     if !next_ctx.selected_cards.is_empty() {
         ctx.selected_cards = next_ctx.selected_cards.clone();
     }
+    ctx.choice_index = -1;
+    ctx.v_remaining = -1;
 
     // TAP_SELF check: if ability has TAP_SELF effect and we discarded from a member slot, tap it
     let should_tap_self = moved_cards.iter().any(|&cid| db.get_live(cid).is_some())

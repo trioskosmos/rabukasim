@@ -267,6 +267,7 @@ pub fn handle_member_state(
                 v,
                 target_slot,
                 resolved_slot,
+                ctx.selected_cards.last().copied(),
             );
         }
 

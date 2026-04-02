@@ -1410,7 +1410,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                             .iter()
                             .all(|c| state.check_condition(db, p, c, &ctx, 1))
                         {
-                            for frame in ab.frames() {
+                            for frame in ab.resolved_frames().iter() {
                                 let frame_data = frame.components();
                                 if frame_data.opcode == O_BOOST_SCORE {
                                     *constant_bonuses.entry(cid).or_insert(0) +=
@@ -1444,7 +1444,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                                     .iter()
                                     .all(|c| state.check_condition(db, p, c, &ctx, 1))
                                 {
-                                    for frame in ab.frames() {
+                                    for frame in ab.resolved_frames().iter() {
                                         let frame_data = frame.components();
                                         if frame_data.opcode == O_BOOST_SCORE {
                                             *constant_bonuses.entry(source_cid).or_insert(0) +=

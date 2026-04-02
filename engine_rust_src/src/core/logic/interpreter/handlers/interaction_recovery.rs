@@ -277,6 +277,13 @@ fn get_source_cards_for_name_recovery(
         if !selected.is_empty() {
             return selected;
         }
+
+        return state.players[p_idx]
+            .hand
+            .iter()
+            .copied()
+            .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+            .collect();
     }
     cards
 }

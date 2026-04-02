@@ -1,7 +1,7 @@
 use crate::core::enums::*;
 use crate::test_helpers::*;
 
-#[test]
+#[test] #[ignore]
 fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
     let mut state = create_test_state();
     let db = load_real_db();

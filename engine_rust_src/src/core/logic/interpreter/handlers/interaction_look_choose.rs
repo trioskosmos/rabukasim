@@ -249,13 +249,6 @@ fn apply_look_choice(
         if !state.players[p_idx].revealed_cards.contains(&chosen) {
             state.players[p_idx].revealed_cards.push(chosen);
         }
-        let new_ctx = AbilityContext {
-            source_card_id: chosen,
-            player_id: p_idx as u8,
-            activator_id: p_idx as u8,
-            ..Default::default()
-        };
-        state.trigger_abilities(db, TriggerType::OnReveal, &new_ctx);
     }
 
     // Source zone 15 = stage_energy - remove energy under member

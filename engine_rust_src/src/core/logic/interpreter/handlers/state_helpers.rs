@@ -77,7 +77,7 @@ pub fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Opt
                 .find(|ability| ability.raw_text.contains("VALUE_GE("))
         })?;
 
-    let has_structured_branching = ability.frames().iter().any(|frame| {
+    let has_structured_branching = ability.resolved_frames().iter().any(|frame| {
         let opcode = frame.opcode();
         opcode == O_JUMP_IF_FALSE
             || opcode == O_JUMP

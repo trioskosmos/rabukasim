@@ -110,6 +110,28 @@ pub fn suspend_interaction(
     p_ctx.original_phase = Some(original_phase);
     let chooser_p_idx = ctx.player_id;
     let mut final_actions = actions.clone();
+
+    state.interaction_stack.push(PendingInteraction {
+        ctx: p_ctx,
+        card_id: ctx.source_card_id,
+        ability_index: ctx.ability_index,
+        effect_opcode,
+        target_slot,
+        choice_type,
+        filter_attr,
+        choice_text: choice_text.to_string(),
+        v_remaining,
+        original_phase,
+        original_current_player: original_cp,
+        options: options.clone(),
+        actions: Vec::new(),
+        execution_id,
+        ..Default::default()
+    });
+    if !state.ui.silent {
+        state.log("Rule 11.2.2: Pushing new interaction to stack.".to_string());
+    }
+
     if final_actions.is_empty() {
         let saved_phase = state.phase;
         let saved_current_player = state.current_player;
@@ -158,31 +180,12 @@ pub fn suspend_interaction(
         && has_only_pass
         && (is_optional || ctx.source_card_id == 448)
     {
+        state.interaction_stack.pop();
         return false;
     }
     if choice_type == ChoiceType::Optional && has_only_pass {
+        state.interaction_stack.pop();
         return false;
-    }
-
-    state.interaction_stack.push(PendingInteraction {
-        ctx: p_ctx,
-        card_id: ctx.source_card_id,
-        ability_index: ctx.ability_index,
-        effect_opcode,
-        target_slot,
-        choice_type,
-        filter_attr,
-        choice_text: choice_text.to_string(),
-        v_remaining,
-        original_phase,
-        original_current_player: original_cp,
-        options: options.clone(),
-        actions: final_actions.clone(),
-        execution_id,
-        ..Default::default()
-    });
-    if !state.ui.silent {
-        state.log("Rule 11.2.2: Pushing new interaction to stack.".to_string());
     }
     if state.debug.debug_mode {
         if let Some(interaction) = state.interaction_stack.last() {

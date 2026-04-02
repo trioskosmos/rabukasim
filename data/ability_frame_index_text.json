@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-04-03T00:00:00Z",
+  "source": "data/ability_frame_index.json",
+  "status": "starter draft",
+  "note": "Text-first index draft. Packed frame, opcode, and pseudocode fields are intentionally omitted.",
+  "summary": {
+    "ability_count": 1,
+    "card_count": 39,
+    "unique_ability_count": 1
+  },
+  "abilities": [
+    {
+      "signature": "ACTIVATED|c36bcc8d6453b8122d6449756169e3228a5d10ac",
+      "trigger": "ACTIVATED",
+      "card_count": 39,
+      "ability_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
+      "representative_card": {
+        "card_no": "PL!-PR-003-PR",
+        "name": "南ことり",
+        "ability_index": 0,
+        "card_id": 15
+      },
+      "example_cards": [
+        "PL!-PR-003-PR | 南ことり [member_db:15] (ab#0 ACTIVATED)",
+        "PL!-PR-004-PR | 園田海未 [member_db:16] (ab#0 ACTIVATED)",
+        "PL!-bp4-003-P | 南 ことり [member_db:56] (ab#0 ACTIVATED)",
+        "PL!-bp4-003-R | 南 ことり [member_db:4152] (ab#0 ACTIVATED)",
+        "PL!-bp5-009-AR | 矢澤にこ [member_db:658] (ab#0 ACTIVATED)"
+      ]
+    }
+  ]
+}

@@ -22,7 +22,10 @@ fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
 }
 
 fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
-    ability.frames().iter().any(|frame| frame.opcode() == opcode)
+    ability
+        .resolved_frames()
+        .iter()
+        .any(|frame| frame.opcode() == opcode)
 }
 
 fn matches_pending_ability(ability: &Ability, pi: &PendingInteraction) -> bool {
@@ -96,7 +99,7 @@ pub fn pending_member_ability<'a>(
 }
 
 pub fn is_distinct_optional_mode_live_ability(ability: &Ability) -> bool {
-    let frames = ability.frames();
+    let frames = ability.resolved_frames();
     let has_select_mode = frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE);
     ability.trigger == TriggerType::OnLiveSuccess
         && frames.iter().any(|frame| frame.opcode() == O_ENERGY_CHARGE)
@@ -130,7 +133,7 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
     }
 
     let is_initial_optional_effect = ability
-        .frames()
+        .resolved_frames()
         .iter()
         .any(|frame| frame.opcode() == pi.effect_opcode);
     if is_initial_optional_effect {
@@ -171,8 +174,8 @@ pub fn pending_targeted_live_heart_bonus(
     pi: &PendingInteraction,
 ) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
-    let frames = ability.frames();
-    let [draw, discard, select_effect, follow_up, boost] = frames.as_slice() else {
+    let frames = ability.resolved_frames();
+    let [draw, discard, select_effect, follow_up, boost] = &*frames else {
         return None;
     };
 
@@ -199,7 +202,7 @@ pub fn pending_targeted_live_heart_bonus(
 }
 
 pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
-    let frames = ability.frames();
+    let frames = ability.resolved_frames();
     ability.trigger == TriggerType::OnLiveStart
         && frames
             .first()

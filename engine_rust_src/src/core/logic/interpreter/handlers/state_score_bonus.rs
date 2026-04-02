@@ -21,10 +21,14 @@ fn resolve_dynamic_multiplier(
         Zone::Stage => C_COUNT_STAGE,
         Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
         Zone::Default => {
-            // For Zone::Default, use dynamic multiplier if this is O_REDUCE_COST
-            // and we have any params configuration (indicating database frame with per_card)
+            // Legacy/default-slot reduce-cost frames often encode dynamic hand counting
+            // in structured slot/filter bits instead of JSON params.
             let has_dynamic_config = frame_data.opcode == O_REDUCE_COST
-                && frame_data.params.as_ref().map_or(false, |p| !p.is_null());
+                && (frame_data.slot.is_dynamic
+                    || frame_data.filter.compare_accumulated
+                    || frame_data.filter.special_id == 3
+                    || frame_data.slot.remainder_zone >= 200
+                    || frame_data.params.as_ref().map_or(false, |p| !p.is_null()));
             if has_dynamic_config {
                 C_COUNT_HAND
             } else {
@@ -46,17 +50,31 @@ fn resolve_dynamic_multiplier(
     );
 
     // Exclude source card from count when it's part of the counted zone
-    if frame_data.opcode == O_REDUCE_COST
-        && frame_data.filter.special_id == 0
-        && count > 0
-    {
+    if frame_data.opcode == O_REDUCE_COST && count > 0 {
         let p_idx = ctx.player_id as usize;
         let source_card_id = ctx.source_card_id;
-        let source_in_hand = state.players[p_idx]
-            .hand
-            .iter()
-            .any(|&id| id == source_card_id);
-        if source_in_hand {
+        let source_is_counted = match frame_data.slot.source_zone {
+            Zone::Hand | Zone::Default => state.players[p_idx]
+                .hand
+                .iter()
+                .any(|&id| id == source_card_id),
+            Zone::Discard => state.players[p_idx]
+                .discard
+                .iter()
+                .any(|&id| id == source_card_id),
+            Zone::Stage => state.players[p_idx]
+                .stage
+                .iter()
+                .any(|&id| id == source_card_id),
+            Zone::SuccessPile => state.players[p_idx]
+                .success_lives
+                .iter()
+                .any(|&id| id == source_card_id),
+            _ => false,
+        };
+        let source_matches_filter = filter_attr == 0
+            || state.card_matches_filter_with_ctx(db, source_card_id, filter_attr, ctx);
+        if source_is_counted && source_matches_filter {
             count -= 1;
         }
     }

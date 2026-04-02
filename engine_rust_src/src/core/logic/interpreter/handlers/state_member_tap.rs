@@ -242,7 +242,10 @@ pub fn handle_tap_member(
     } else {
         false
     };
-    let needs_selection = is_select_member_choice || (a & 0x02) != 0 || (!fixed_slot_matches && filter_attr != 0);
+    let needs_selection = is_select_member_choice
+        || (a & 0x02) != 0
+        || (!fixed_slot_matches && filter_attr != 0)
+        || (resolved_slot == 4 && self_source_is_on_stage && frame_data.value > 1);
     let is_choice_done = ctx.choice_index == CHOICE_DONE || ctx.choice_index == 99;
     let active_optional_prompt = state.interaction_stack.last()
         .map(|i| i.choice_type == ChoiceType::Optional)
@@ -281,6 +284,10 @@ pub fn handle_tap_member(
             state.set_member_tapped(p_idx, resolved_slot as usize, true, db);
             return HandlerResult::SetCond(true);
         }
+        if resolved_slot == 4 && self_source_is_on_stage {
+            state.set_member_tapped(p_idx, ctx.area_idx as usize, true, db);
+            return HandlerResult::SetCond(true);
+        }
         return HandlerResult::Continue;
     }
 
@@ -307,6 +314,10 @@ pub fn handle_tap_member(
                 state.set_member_tapped(p_idx, resolved_slot as usize, true, db);
                 return HandlerResult::SetCond(true);
             }
+            if resolved_slot == 4 && self_source_is_on_stage {
+                state.set_member_tapped(p_idx, ctx.area_idx as usize, true, db);
+                return HandlerResult::SetCond(true);
+            }
             return HandlerResult::Continue;
         }
         if ctx.choice_index >= 0 && ctx.choice_index < 3 {
@@ -325,6 +336,12 @@ pub fn handle_tap_member(
 
     if is_optional && ctx.v_remaining != -1 && ctx.choice_index >= 0 && ctx.choice_index < 3 {
         let slot = ctx.choice_index as usize;
+        let target_cid = state.players[p_idx].stage[slot];
+        ctx.target_slot = slot as i16;
+        ctx.target_card_id = target_cid;
+        if target_cid >= 0 && !ctx.selected_cards.contains(&target_cid) {
+            ctx.selected_cards.push(target_cid);
+        }
         state.set_member_tapped(p_idx, slot, true, db);
         return HandlerResult::SetCond(true);
     }
@@ -336,6 +353,12 @@ pub fn handle_tap_member(
 
     if ctx.choice_index >= 0 && ctx.choice_index < 3 {
         let slot = ctx.choice_index as usize;
+        let target_cid = state.players[p_idx].stage[slot];
+        ctx.target_slot = slot as i16;
+        ctx.target_card_id = target_cid;
+        if target_cid >= 0 && !ctx.selected_cards.contains(&target_cid) {
+            ctx.selected_cards.push(target_cid);
+        }
         state.set_member_tapped(p_idx, slot, true, db);
         ctx.v_accumulated += 1;
         if ctx.v_remaining > 1 {

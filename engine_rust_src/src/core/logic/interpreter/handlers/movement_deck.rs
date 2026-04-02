@@ -484,8 +484,12 @@ fn handle_look_cards(
 ) -> HandlerResult {
     let count = v as usize;
     let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or(a as u64);
+    let source_zone = frame_data.slot.source_zone;
+    let legacy_choose_to_hand = op == O_LOOK_DECK
+        && source_zone != crate::core::enums::Zone::Hand
+        && frame_data.slot.target_slot == 6;
 
-    if resolved_slot == 6 {
+    if source_zone == crate::core::enums::Zone::Hand {
         // Reveal from hand
         if ctx.choice_index == -1 && ctx.v_remaining == -1 {
             state.players[p_idx].revealed_cards.clear();
@@ -528,24 +532,63 @@ fn handle_look_cards(
         }
     } else {
         // Look at top of deck
-        if state.players[p_idx].deck.len() < count {
-            state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
-            state.resolve_deck_refresh(p_idx);
-        }
-        let deck_len = state.players[p_idx].deck.len();
-        let mut revealed_cids = Vec::new();
-        for _ in 0..count.min(deck_len) {
-            if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                state.players[p_idx].looked_cards.push(cid);
-                revealed_cids.push(cid);
+        if state.players[p_idx].looked_cards.is_empty() {
+            if state.players[p_idx].deck.len() < count {
+                state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
+                state.resolve_deck_refresh(p_idx);
+            }
+            let deck_len = state.players[p_idx].deck.len();
+            let mut revealed_cids = Vec::new();
+            for _ in 0..count.min(deck_len) {
+                if let Some(cid) = state.players[p_idx].pop_deck_card() {
+                    state.players[p_idx].looked_cards.push(cid);
+                    revealed_cids.push(cid);
+                }
+            }
+
+            if op != O_LOOK_DECK {
+                for cid in revealed_cids {
+                    let mut new_ctx = ctx.clone();
+                    new_ctx.source_card_id = cid;
+                    state.trigger_abilities(db, TriggerType::OnReveal, &new_ctx);
+                }
             }
         }
-        if op != O_LOOK_DECK {
-            for cid in revealed_cids {
-                let mut new_ctx = ctx.clone();
-                new_ctx.source_card_id = cid;
-                state.trigger_abilities(db, TriggerType::OnReveal, &new_ctx);
+
+        if legacy_choose_to_hand {
+            if ctx.choice_index == -1 {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_LOOK_AND_CHOOSE,
+                        frame_data.raw_slot,
+                        ChoiceType::LookAndChoose,
+                        filter_attr,
+                        1,
+                    ),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
             }
+
+            let choice = ctx.choice_index as usize;
+            if choice < state.players[p_idx].looked_cards.len() {
+                let chosen = state.players[p_idx].looked_cards.remove(choice);
+                state.players[p_idx].gain_hand_card(chosen);
+            }
+
+            let remainder: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
+            for cid in remainder {
+                state.players[p_idx].push_discard_card(cid);
+            }
+            ctx.choice_index = -1;
+            ctx.v_remaining = -1;
+            return HandlerResult::Continue;
         }
     }
 

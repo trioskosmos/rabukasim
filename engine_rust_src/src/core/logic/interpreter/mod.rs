@@ -29,7 +29,6 @@ use std::collections::HashSet;
 use std::fmt;
 use std::sync::{Mutex, OnceLock};
 
-/// Apply an effect directly without going through the frame system
 fn apply_effect_directly(
     state: &mut GameState,
     _db: &CardDatabase,
@@ -37,20 +36,17 @@ fn apply_effect_directly(
     effect: &crate::core::logic::models::Effect,
 ) -> Result<(), InterpreterError> {
     use crate::core::enums::EffectType;
-    
+
     match effect.effect_type {
         EffectType::BoostScore => {
             if let Some(value) = effect.value.as_i64() {
                 let p_idx = ctx.player_id as usize;
                 state.players[p_idx].live_score_bonus += value as i32;
-                eprintln!("[DEBUG_SIMPLE_FIX] Applied BoostScore effect: +{}", value);
             }
         }
-        _ => {
-            eprintln!("[DEBUG_SIMPLE_FIX] Unsupported effect type: {:?}", effect.effect_type);
-        }
+        _ => {}
     }
-    
+
     Ok(())
 }
 
@@ -302,28 +298,11 @@ pub fn resolve_ability(
             ctx_in.source_card_id, ability.conditions.len());
     }
     
-    // Special debug for Setsuna's ability
-    if ctx_in.source_card_id == 4853 {
-        eprintln!("[DEBUG_SETSUNA] resolve_ability called: trigger={:?}, ability_index={}", 
-            ability.trigger, ctx_in.ability_index);
-        eprintln!("[DEBUG_SETSUNA] ability.conditions.len()={}", ability.conditions.len());
-        let frames = ability.frames();
-        eprintln!("[DEBUG_SETSUNA] ability.frames.len()={}", frames.len());
-        if !frames.is_empty() {
-            let first_frame = frames.first().unwrap();
-            eprintln!("[DEBUG_SETSUNA] First frame: opcode={}, value={}, attr={:#x}", 
-                first_frame.opcode(), first_frame.value(), first_frame.attr());
-        }
-    }
-    
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
         return Ok(());
     }
 
-    // Card-specific gate: PL!SP-bp1-024-L (Nonfiction!!) requires both Kanon (PR-003) 
-    // and Keke (PR-004) on stage for its OnLiveSuccess ability.
-    // This is a workaround for incorrect bytecode conditions in the card data.
     if db
         .get_live(ctx_in.source_card_id)
         .map(|live| live.card_no.as_str() == "PL!SP-bp1-024-L")
@@ -334,10 +313,6 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    // Card-specific gate: Card 579 (Nonfiction!! live) ability 0 OnLiveStart requires
-    // self center slot cost > opponent center slot cost.
-    // This is a workaround for incomplete bytecode implementation.
-    // ability_index of -1 means unknown/default, treat as ability 0 for this check.
     let is_ability_0 = ctx_in.ability_index == 0 || ctx_in.ability_index == -1;
     if ctx_in.source_card_id == 579
         && is_ability_0
@@ -347,8 +322,6 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    // Card-specific workaround: PL!N-bp5-003-R is missing its hand-discard cost in data.
-    // The card should still pay one hand discard before resolving the recovery effect.
     if ctx_in.source_card_id == 4849 && ability.trigger == TriggerType::Activated {
         let p_idx = ctx_in.player_id as usize;
         if let Some(cid) = state.players[p_idx].hand.pop() {
@@ -356,8 +329,6 @@ pub fn resolve_ability(
         }
     }
 
-    // Card-specific workaround: 8844's activation branches depend on a hand discard
-    // being recorded before the branch conditions resolve.
     if ctx_in.source_card_id == 8844 && ability.trigger == TriggerType::Activated {
         let p_idx = ctx_in.player_id as usize;
         if let Some(cid) = state.players[p_idx].hand.pop() {
@@ -385,7 +356,7 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    let frames = ability.frames();
+    let frames = ability.resolved_frames();
     if ctx_in.source_card_id == 4331 {
         if state.debug.debug_mode && !state.ui.silent {
             eprintln!(
@@ -397,12 +368,12 @@ pub fn resolve_ability(
         }
     }
     if frames.is_empty() {
+        if let Some(effect) = ability.effects.first() {
+            return apply_effect_directly(state, db, ctx_in, effect);
+        }
         return Ok(());
     }
 
-    // Card 579 ability 1 has a broken compiled condition block in the sparse data.
-    // The frame logic itself is the source of truth for the heart-filter prompt, so
-    // let it execute directly instead of dropping the whole ability here.
     if ctx_in.source_card_id == 579
         && ability.trigger == TriggerType::OnLiveStart
         && ctx_in.ability_index == 1
@@ -440,9 +411,6 @@ pub fn resolve_ability(
     resolve_semantic_frames(state, db, &frames, ctx_in)
 }
 
-/// Card-specific prerequisite: PL!SP-bp1-024-L (Nonfiction!!) requires both Kanon
-/// (PR-003) and Keke (PR-004) on stage for its OnLiveSuccess ability.
-/// This check works around incorrectly compiled bytecode conditions.
 fn check_nonfiction_prerequisite(
     state: &GameState,
     db: &CardDatabase,
@@ -460,9 +428,6 @@ fn check_nonfiction_prerequisite(
     has_kanon && has_keke
 }
 
-/// Card-specific gate: Card 579 (Nonfiction!! live) OnLiveStart requires
-/// self center slot cost > opponent center slot cost to proceed.
-/// This check works around incomplete bytecode implementation.
 fn check_card_579_cost_gate(state: &GameState, db: &CardDatabase, ctx: &AbilityContext) -> bool {
     let p_idx = ctx.player_id as usize;
     let opp_idx = 1 - (p_idx.min(1));
@@ -513,50 +478,28 @@ pub fn resolve_semantic_frames(
     if !state.ui.silent && start_idx == 0 {
         state.log("Processing individual frame instruction.".to_string());
     }
-    // Special debug for Setsuna's ability
-    if ctx.source_card_id == 4853 {
-        eprintln!("[DEBUG_SETSUNA] resolve_semantic_frames: frames.len()={}", frames.len());
-        for (i, frame) in frames.iter().enumerate() {
-            eprintln!("[DEBUG_SETSUNA] Frame {}: opcode={}, value={}, attr={:#x}", 
-                i, frame.opcode(), frame.value(), frame.attr());
-        }
-    }
-    
-    // Simple fix for abilities with effects but no frames (like Q203)
+
     if frames.is_empty() {
         if let Some(live) = db.get_live(ctx.source_card_id) {
             if ctx.ability_index >= 0 && ctx.ability_index < live.abilities.len() as i16 {
                 let ability = &live.abilities[ctx.ability_index as usize];
                 if !ability.effects.is_empty() {
-                    eprintln!("[DEBUG_SIMPLE_FIX] Executing {} effects directly for card {}", 
-                        ability.effects.len(), ctx.source_card_id);
-                    
-                    // For Q203: execute the first effect (BoostScore +1) for energy activation
                     if ctx.source_card_id == 358 && ability.effects.len() >= 2 {
-                        // Check if energy was activated (group 2)
                         let p_idx = ctx.player_id as usize;
-                        let energy_activated = (state.players[p_idx].activated_energy_group_mask & (1 << 2)) != 0;
-                        let member_activated = (state.players[p_idx].activated_member_group_mask & (1 << 2)) != 0;
-                        
+                        let energy_activated =
+                            (state.players[p_idx].activated_energy_group_mask & (1 << 2)) != 0;
+                        let member_activated =
+                            (state.players[p_idx].activated_member_group_mask & (1 << 2)) != 0;
+
                         if energy_activated && !member_activated {
-                            // Energy activation only - use first effect (+1)
-                            eprintln!("[DEBUG_Q203] Executing energy activation effect (+1)");
                             let effect = &ability.effects[0];
                             return apply_effect_directly(state, db, &ctx, effect);
-                        } else if member_activated && !energy_activated {
-                            // Member activation only - use second effect (+2)
-                            eprintln!("[DEBUG_Q203] Executing member activation effect (+2)");
-                            let effect = &ability.effects[1];
-                            return apply_effect_directly(state, db, &ctx, effect);
-                        } else if energy_activated && member_activated {
-                            // Both activated - use second effect (+2)
-                            eprintln!("[DEBUG_Q203] Executing both activation effect (+2)");
+                        } else if member_activated {
                             let effect = &ability.effects[1];
                             return apply_effect_directly(state, db, &ctx, effect);
                         }
                     }
-                    
-                    // Default: execute first effect
+
                     let effect = &ability.effects[0];
                     return apply_effect_directly(state, db, &ctx, effect);
                 }
@@ -815,7 +758,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         }
 
         let has_optional_frame = ability
-            .frames()
+            .resolved_frames()
             .iter()
             .any(|frame| frame.components().filter.is_optional);
         let has_optional_cost = ability.costs.iter().any(|cost| cost.is_optional);

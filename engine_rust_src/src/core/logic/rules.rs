@@ -54,6 +54,45 @@ fn stage_has_cost_13_or_more(state: &GameState, db: &CardDatabase) -> bool {
     })
 }
 
+fn inferred_tapped_group_requirement(ab: &Ability) -> Option<u8> {
+    if !ab.conditions.is_empty() {
+        return None;
+    }
+
+    if !ab.resolved_frames().iter().any(|frame| frame.opcode() == O_REDUCE_COST) {
+        return None;
+    }
+
+    let text = if !ab.raw_text.is_empty() {
+        ab.raw_text.as_str()
+    } else {
+        ab.pseudocode.as_str()
+    };
+
+    if text.contains("ウェイト状態")
+        && (text.contains("虹ヶ咲") || text.contains("Nijigasaki"))
+    {
+        Some(GROUP_NIJIGASAKI as u8)
+    } else {
+        None
+    }
+}
+
+fn stage_has_tapped_group_member(
+    state: &GameState,
+    db: &CardDatabase,
+    player_idx: usize,
+    group_id: u8,
+) -> bool {
+    iter_stage_cards(state, player_idx).any(|(slot_idx, cid)| {
+        cid >= 0
+            && state.players[player_idx].is_tapped(slot_idx)
+            && db.get_member(cid)
+                .map(|member| member.groups.contains(&group_id))
+                .unwrap_or(false)
+    })
+}
+
 fn ability_conditions_met(
     state: &GameState,
     db: &CardDatabase,
@@ -61,6 +100,12 @@ fn ability_conditions_met(
     ab: &Ability,
     ctx: &AbilityContext,
 ) -> bool {
+    if let Some(group_id) = inferred_tapped_group_requirement(ab) {
+        if !stage_has_tapped_group_member(state, db, player_idx, group_id) {
+            return false;
+        }
+    }
+
     if !ab.conditions.is_empty()
         && !ab
             .conditions
@@ -226,7 +271,7 @@ fn apply_reduce_cost_modifiers(
         let frame_data = frame.components();
         let params = frame_data
             .params
-            .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
+            .or_else(|| ab.effects.get(frame_idx.saturating_sub(1)).map(|effect| &effect.params));
 
         let mut multiplier = 1;
         let per_card = params
@@ -267,9 +312,17 @@ fn apply_reduce_cost_modifiers(
             };
 
             // Fallback to remainder_zone for dynamic cost reductions (e.g. BP2-001)
-            if count_op == 0 && frame_data.slot.is_dynamic && frame_data.slot.remainder_zone >= 200
-            {
-                count_op = frame_data.slot.remainder_zone as i32;
+            if count_op == 0 && frame_data.slot.is_dynamic {
+                count_op = match frame_data.slot.source_zone {
+                    Zone::Hand | Zone::Default if frame_data.slot.remainder_zone >= 200 => {
+                        C_COUNT_HAND
+                    }
+                    Zone::Discard if frame_data.slot.remainder_zone >= 100 => C_COUNT_DISCARD,
+                    Zone::Stage if frame_data.slot.remainder_zone < 100 => C_COUNT_STAGE,
+                    Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
+                    _ if frame_data.slot.remainder_zone >= 200 => C_COUNT_HAND,
+                    _ => 0,
+                };
             }
 
             if count_op != 0 {
@@ -285,11 +338,7 @@ fn apply_reduce_cost_modifiers(
                     ctx,
                     depth + 1,
                 );
-                if op == O_REDUCE_COST
-                    && frame_data.filter.special_id == 0
-                    && frame_data.raw_attr == 0
-                    && multiplier > 0
-                {
+                if op == O_REDUCE_COST && multiplier > 0 {
                     let owner_idx = if frame_data.slot.is_opponent {
                         1 - p_idx
                     } else {
@@ -319,7 +368,21 @@ fn apply_reduce_cost_modifiers(
                             .any(|&id| id == source_card_id),
                         _ => false,
                     };
-                    if source_is_counted {
+                    let source_matches_filter = frame_data.raw_attr == 0
+                        || state.card_matches_filter_with_ctx(
+                            db,
+                            source_card_id,
+                            frame_data.raw_attr,
+                            ctx,
+                        );
+                    if source_is_counted
+                        && source_matches_filter
+                        && (frame_data.filter.special_id == 3
+                            || frame_data.slot.source_zone != Zone::Default
+                            || frame_data.filter.compare_accumulated
+                            || default_hand_count
+                            || per_card.is_some())
+                    {
                         multiplier -= 1;
                     }
                 }
@@ -510,15 +573,41 @@ pub fn get_member_cost(
     } else {
         return 0;
     };
+    let has_baton_source = [slot_idx, secondary_slot_idx].into_iter().any(|candidate_slot| {
+        candidate_slot >= 0
+            && candidate_slot < STAGE_SLOT_COUNT as i16
+            && state.players[p_idx].stage[candidate_slot as usize] >= 0
+    });
+    let projected_state = has_baton_source.then(|| {
+        let mut projected = state.clone();
+        for candidate_slot in [slot_idx, secondary_slot_idx] {
+            if candidate_slot >= 0 && candidate_slot < STAGE_SLOT_COUNT as i16 {
+                projected.players[p_idx].stage[candidate_slot as usize] = -1;
+            }
+        }
+        projected
+    });
+    let cost_state = projected_state.as_ref().unwrap_or(state);
     let mut cost = m.cost as i32;
+    let trace_cost = state.debug.debug_mode && (card_id == 10 || card_id == 4433);
     if state.debug.debug_mode && !state.ui.silent {
         println!(
             "[DEBUG] get_member_cost: card_id={}, base_cost={}",
             card_id, cost
         );
     }
+    if trace_cost {
+        eprintln!(
+            "[COST_DBG] start card={} base_cost={} global_cost_reduction={} slot_idx={} secondary_slot_idx={}",
+            card_id,
+            cost,
+            state.players[p_idx].cost_reduction,
+            slot_idx,
+            secondary_slot_idx
+        );
+    }
 
-    let query_aura = get_query_aura(state, p_idx, db, depth);
+    let query_aura = get_query_aura(cost_state, p_idx, db, depth);
     let mut fallback_aura: Option<BoardAura> = None;
     if state.debug.debug_mode && !state.ui.silent {
         println!(
@@ -530,13 +619,21 @@ pub fn get_member_cost(
     }
 
     // 1. Global reduction
-    cost -= state.players[p_idx].cost_reduction as i32;
+    cost -= cost_state.players[p_idx].cost_reduction as i32;
+    if trace_cost {
+        eprintln!(
+            "[COST_DBG] after_global card={} cost={} applied_global={}",
+            card_id,
+            cost,
+            cost_state.players[p_idx].cost_reduction
+        );
+    }
 
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
-    if !state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
+    if !cost_state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
         if let Some(target_m) = db.get_member(card_id) {
-            let hand_idx = state.players[p_idx].hand.iter().position(|&id| id == card_id);
+            let hand_idx = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id);
             let ctx = AbilityContext {
                 source_card_id: card_id,
                 player_id: p_idx as u8,
@@ -553,7 +650,17 @@ pub fn get_member_cost(
                     if state.debug.debug_mode && !state.ui.silent {
                         println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
                     }
-                    apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
+                    apply_reduce_cost_modifiers(&mut cost, ab, cost_state, db, p_idx, &ctx, depth + 1);
+                    if trace_cost {
+                        eprintln!(
+                            "[COST_DBG] after_self_constant card={} ab_idx={} trigger={:?} cost={} frames={}",
+                            card_id,
+                            idx,
+                            ab.trigger,
+                            cost,
+                            ab.resolved_frames().len()
+                        );
+                    }
                 }
             }
         }
@@ -563,7 +670,7 @@ pub fn get_member_cost(
     if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
         let aura_ref = query_aura
             .as_ref()
-            .unwrap_or(&state.players[p_idx].board_aura);
+            .unwrap_or(&cost_state.players[p_idx].board_aura);
         cost += aura_ref.slot_cost_modifiers[slot_idx as usize] as i32;
 
         for modif in &aura_ref.cost_modifiers {
@@ -579,7 +686,7 @@ pub fn get_member_cost(
                         is_static_eval: true,
                         ..Default::default()
                     };
-                    if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx)
+                    if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx)
                     {
                         apply = false;
                     }
@@ -591,6 +698,16 @@ pub fn get_member_cost(
                 }
                 if apply {
                     cost -= modif.amount as i32;
+                    if trace_cost {
+                        eprintln!(
+                            "[COST_DBG] after_slot_aura card={} source_cid={} amount={} target_mask={:03b} cost={}",
+                            card_id,
+                            modif.source_cid,
+                            modif.amount,
+                            modif.target_mask,
+                            cost
+                        );
+                    }
                 }
             }
         }
@@ -605,7 +722,7 @@ pub fn get_member_cost(
         let aura_ref = if let Some(aura) = query_aura.as_ref() {
             aura
         } else {
-            fallback_aura.get_or_insert_with(|| calculate_board_aura(state, p_idx, db))
+            fallback_aura.get_or_insert_with(|| calculate_board_aura(cost_state, p_idx, db))
         };
 
         for modif in &aura_ref.cost_modifiers {
@@ -619,7 +736,7 @@ pub fn get_member_cost(
                     is_static_eval: true,
                     ..Default::default()
                 };
-                if !state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
+                if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
                     apply = false;
                 }
             } else if let Some(src_m) = db.get_member(modif.source_cid) {
@@ -630,6 +747,16 @@ pub fn get_member_cost(
             }
             if apply {
                 cost -= modif.amount as i32;
+                if trace_cost {
+                    eprintln!(
+                        "[COST_DBG] after_global_aura card={} source_cid={} amount={} target_mask={:03b} cost={}",
+                        card_id,
+                        modif.source_cid,
+                        modif.amount,
+                        modif.target_mask,
+                        cost
+                    );
+                }
             }
         }
     }
@@ -689,9 +816,18 @@ pub fn get_member_cost(
             is_static_eval: true,
             ..Default::default()
         };
-        apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
+        apply_reduce_cost_modifiers(&mut cost, ab, cost_state, db, p_idx, &ctx, depth + 1);
         if state.debug.debug_mode && !state.ui.silent {
             println!("[DEBUG] get_member_cost: after granted ability, cost={}", cost);
+        }
+        if trace_cost {
+            eprintln!(
+                "[COST_DBG] after_granted card={} source_cid={} ab_idx={} cost={}",
+                card_id,
+                source_cid,
+                ab_idx,
+                cost
+            );
         }
     }
 
@@ -705,9 +841,21 @@ pub fn get_member_cost(
             is_static_eval: true,
             ..Default::default()
         };
-        if check_condition(state, db, p_idx, cond, &ctx, depth + 1) {
+        if check_condition(cost_state, db, p_idx, cond, &ctx, depth + 1) {
             cost += *amount;
+            if trace_cost {
+                eprintln!(
+                    "[COST_DBG] after_temp_modifier card={} amount={} cost={}",
+                    card_id,
+                    amount,
+                    cost
+                );
+            }
         }
+    }
+
+    if trace_cost {
+        eprintln!("[COST_DBG] final card={} cost={}", card_id, cost.max(0));
     }
 
     cost.max(0)
@@ -735,32 +883,48 @@ pub fn has_restriction(
         return false;
     };
 
-    // Fast rejection via bitmask
-    if (m.ability_opcodes_mask & (1u128 << (opcode as u32 % 128))) == 0 {
-        return false;
-    }
+    let opcode_bit = 1u128 << (opcode as u32 % 128);
+    let has_fast_opcode = (m.ability_opcodes_mask & opcode_bit) != 0;
 
     // 1. Self constant abilities
-    if (m.effect_mask & EFFECT_MASK_RULE) != 0 {
-        for ab in &m.abilities {
-            if ab.trigger == TriggerType::Constant {
-                if (ab.opcodes_mask & (1u128 << (opcode as u32 % 128))) != 0 {
-                    let ctx = AbilityContext {
-                        source_card_id: cid,
-                        player_id: p_idx as u8,
-                        activator_id: p_idx as u8,
-                        area_idx: slot_idx as i16,
-                        is_static_eval: true,
-                        ..Default::default()
+    for ab in &m.abilities {
+        if ab.trigger == TriggerType::Constant {
+            let frames = ab.resolved_frames();
+            let has_opcode = (ab.opcodes_mask & opcode_bit) != 0
+                || frames.iter().any(|frame| frame.opcode() == opcode)
+                || ab.effects.iter().any(|effect| {
+                    let effect_opcode = if effect.runtime_opcode != 0 {
+                        effect.runtime_opcode
+                    } else {
+                        AbilityFrame::opcode_from_effect_type(effect.effect_type)
                     };
-                    if ab
-                        .conditions
-                        .iter()
-                        .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+                    effect_opcode == opcode
+                });
+            if has_opcode {
+                let ctx = AbilityContext {
+                    source_card_id: cid,
+                    player_id: p_idx as u8,
+                    activator_id: p_idx as u8,
+                    area_idx: slot_idx as i16,
+                    is_static_eval: true,
+                    ..Default::default()
+                };
+                if ab
+                    .conditions
+                    .iter()
+                    .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
+                {
+                    if frames.iter().any(|frame| frame.opcode() == opcode)
+                        || ab.effects.iter().any(|effect| {
+                            let effect_opcode = if effect.runtime_opcode != 0 {
+                                effect.runtime_opcode
+                            } else {
+                                AbilityFrame::opcode_from_effect_type(effect.effect_type)
+                            };
+                            effect_opcode == opcode
+                        })
                     {
-                        if ab.resolved_frames().iter().any(|frame| frame.opcode() == opcode) {
-                            return true;
-                        }
+                        return true;
                     }
                 }
             }
@@ -775,7 +939,18 @@ pub fn has_restriction(
         if let Some(src_m) = db.get_member(source_cid) {
             if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
                 if ab.trigger == TriggerType::Constant {
-                    if (ab.opcodes_mask & (1u128 << (opcode as u32 % 128))) != 0 {
+                    let frames = ab.resolved_frames();
+                    let has_opcode = (ab.opcodes_mask & opcode_bit) != 0
+                        || frames.iter().any(|frame| frame.opcode() == opcode)
+                        || ab.effects.iter().any(|effect| {
+                            let effect_opcode = if effect.runtime_opcode != 0 {
+                                effect.runtime_opcode
+                            } else {
+                                AbilityFrame::opcode_from_effect_type(effect.effect_type)
+                            };
+                            effect_opcode == opcode
+                        });
+                    if has_opcode {
                         let ctx = AbilityContext {
                             source_card_id: cid,
                             player_id: p_idx as u8,
@@ -789,7 +964,16 @@ pub fn has_restriction(
                             .iter()
                             .all(|c| check_condition(state, db, p_idx, c, &ctx, 0))
                         {
-                            if ab.resolved_frames().iter().any(|frame| frame.opcode() == opcode) {
+                            if frames.iter().any(|frame| frame.opcode() == opcode)
+                                || ab.effects.iter().any(|effect| {
+                                    let effect_opcode = if effect.runtime_opcode != 0 {
+                                        effect.runtime_opcode
+                                    } else {
+                                        AbilityFrame::opcode_from_effect_type(effect.effect_type)
+                                    };
+                                    effect_opcode == opcode
+                                })
+                            {
                                 return true;
                             }
                         }
@@ -797,6 +981,10 @@ pub fn has_restriction(
                 }
             }
         }
+    }
+
+    if !has_fast_opcode {
+        return false;
     }
 
     false

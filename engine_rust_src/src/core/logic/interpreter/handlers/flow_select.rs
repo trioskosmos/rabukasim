@@ -33,6 +33,45 @@ fn resolve_select_member_target_player(
     resolve_target_player(slot_info, filter_attr, p_idx)
 }
 
+fn normalize_select_member_filter_attr(filter_attr: u64, selection_count: i32) -> u64 {
+    if filter_attr == 0 || selection_count <= 0 {
+        return filter_attr;
+    }
+
+    let mut filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr as i64);
+    let looks_like_packed_count = filter.value_enabled
+        && !filter.is_le
+        && !filter.is_cost_type
+        && filter.value_threshold == selection_count as u8
+        && filter.card_type == 0
+        && !filter.group_enabled
+        && !filter.unit_enabled
+        && filter.color_mask == 0
+        && filter.char_id_1 == 0
+        && filter.char_id_2 == 0
+        && filter.char_id_3 == 0
+        && filter.zone_mask == 0
+        && filter.special_id == 0
+        && !filter.is_tapped
+        && !filter.has_blade_heart
+        && !filter.not_has_blade_heart
+        && !filter.unique_names
+        && !filter.is_setsuna
+        && !filter.compare_accumulated
+        && !filter.keyword_energy
+        && !filter.keyword_member;
+
+    if !looks_like_packed_count {
+        return filter_attr;
+    }
+
+    filter.value_enabled = false;
+    filter.value_threshold = 0;
+    filter.is_le = false;
+    filter.is_cost_type = false;
+    filter.to_attr()
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
@@ -54,9 +93,14 @@ pub fn handle_select_ops(
         filter.is_enabled = true;
         filter
     };
-    let resolved_filter_attr = filter_attr_from_params(frame_data.params)
+    let raw_filter_attr = filter_attr_from_params(frame_data.params)
         .map(|attr| attr | frame_filter_attr)
         .unwrap_or_else(|| if frame_filter_attr != 0 { frame_filter_attr } else { a as u64 });
+    let resolved_filter_attr = if op == O_SELECT_MEMBER {
+        normalize_select_member_filter_attr(raw_filter_attr, v)
+    } else {
+        raw_filter_attr
+    };
     let _real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
     let next_frame = if op == O_SELECT_MEMBER {
         db.get_member(ctx.source_card_id)
@@ -187,11 +231,36 @@ pub fn handle_select_ops(
                 .collect()
         };
 
+        if state.debug.debug_mode && op == O_SELECT_MEMBER {
+            eprintln!(
+                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} raw_slot={} raw_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
+                ctx.source_card_id,
+                p_idx,
+                select_member_target_player,
+                effective_slot_info.source_zone,
+                s,
+                a as u64,
+                resolved_filter_attr,
+                is_targeted_select_member_cost,
+                ctx.choice_index,
+                v,
+                next_frame.as_ref().map(|frame| frame.opcode())
+            );
+        }
+
         if op == O_SELECT_MEMBER {
             let looked_cards = {
                 let cards = matching_cards(select_member_target_player);
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[SELECT_DBG] initial_candidates source={} target_player={} cards={:?}",
+                        ctx.source_card_id,
+                        select_member_target_player,
+                        cards
+                    );
+                }
                 if cards.is_empty() {
-                    state.players[select_member_target_player]
+                    let fallback_cards = state.players[select_member_target_player]
                         .stage
                         .iter()
                         .enumerate()
@@ -210,7 +279,16 @@ pub fn handle_select_ops(
                                 None
                             }
                         })
-                        .collect::<Vec<i32>>()
+                        .collect::<Vec<i32>>();
+                    if state.debug.debug_mode {
+                        eprintln!(
+                            "[SELECT_DBG] structured_fallback source={} target_player={} cards={:?}",
+                            ctx.source_card_id,
+                            select_member_target_player,
+                            fallback_cards
+                        );
+                    }
+                    fallback_cards
                 } else {
                     cards
                 }
@@ -238,8 +316,26 @@ pub fn handle_select_ops(
                 looked_cards
             };
             if looked_cards.is_empty() {
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[SELECT_DBG] no_candidates source={} target_player={} source_zone={:?} filter=0x{:x}",
+                        ctx.source_card_id,
+                        select_member_target_player,
+                        effective_slot_info.source_zone,
+                        resolved_filter_attr
+                    );
+                }
                 return HandlerResult::Return;
             };
+
+            if state.debug.debug_mode {
+                eprintln!(
+                    "[SELECT_DBG] suspending source={} target_player={} looked_cards={:?}",
+                    ctx.source_card_id,
+                    select_member_target_player,
+                    looked_cards
+                );
+            }
 
             state.players[select_member_target_player].looked_cards = looked_cards.into();
         }

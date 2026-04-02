@@ -170,7 +170,7 @@ pub fn get_live_requirements(
                 }
 
                 let mut touches_live_requirements = false;
-                for frame in ab.frames() {
+                for frame in ab.resolved_frames().iter() {
                     let op = frame.opcode();
                     if op == O_INCREASE_HEART_COST {
                         touches_live_requirements = true;
@@ -218,7 +218,7 @@ pub fn get_live_requirements(
                 .iter()
                 .all(|c| check_condition(state, db, p_idx, c, &ctx, 1))
             {
-                let frames = ab.frames();
+                let frames = ab.resolved_frames();
                 if !frames.is_empty() {
                     // Pass empty vec for adjustments in silent mode
                     let mut dummy_adjustments = Vec::new();

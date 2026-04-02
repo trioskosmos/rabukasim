@@ -67,7 +67,7 @@ fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: 
     let ability = abilities.get(ab_idx).or_else(|| {
         abilities.iter().find(|ability| {
             ability
-                .frames()
+                .resolved_frames()
                 .iter()
                 .any(|frame| frame.opcode() == O_SELECT_MEMBER)
         })
@@ -77,7 +77,7 @@ fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: 
     };
 
     ability
-        .frames()
+        .resolved_frames()
         .iter()
         .find(|frame| frame.opcode() == O_SELECT_MEMBER)
         .and_then(|frame| filter_attr_from_params(frame.components().params))
