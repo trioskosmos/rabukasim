@@ -7,6 +7,37 @@ mod state_member_play_discard_select;
 
 pub use state_member_play_discard_place::handle_discard_placement;
 
+pub fn discard_play_choice_type(target_slot_flags: i32) -> ChoiceType {
+    if ((target_slot_flags as u64) & FLAG_BATON_SLOT_ONLY) != 0 {
+        ChoiceType::SelectStageEmptyBaton
+    } else {
+        ChoiceType::SelectStageEmpty
+    }
+}
+
+pub fn discard_play_slot_is_legal(
+    player: &crate::core::logic::PlayerState,
+    slot_idx: usize,
+    target_slot_flags: i32,
+) -> bool {
+    if slot_idx >= 3 {
+        return false;
+    }
+
+    let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
+    let occupied = player.stage[slot_idx] >= 0;
+    let baton_only = ((target_slot_flags as u64) & FLAG_BATON_SLOT_ONLY) != 0;
+
+    !prevented
+        && !player.is_moved(slot_idx)
+        && !occupied
+        && (!baton_only || player.baton_source_slots.contains(&slot_idx))
+}
+
+pub fn clear_discard_play_buffer(state: &mut GameState, target_p_idx: usize) {
+    state.players[target_p_idx].looked_cards.clear();
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_discard(
     state: &mut GameState,
@@ -41,8 +72,8 @@ pub fn handle_play_member_from_discard(
         (a as u64, t_idx)
     };
 
-    let empty_slot_only = ((s as u64) & FLAG_EMPTY_SLOT_ONLY) != 0;
     let baton_slot_only = ((s as u64) & FLAG_BATON_SLOT_ONLY) != 0;
+    let requires_empty_stage_slot = true;
 
     // Total Cost detection:
     // Support modern bit 60 (compare_accumulated)
@@ -81,7 +112,7 @@ pub fn handle_play_member_from_discard(
             frame_idx,
             target_p_idx,
             filter_attr_base,
-            empty_slot_only,
+            requires_empty_stage_slot,
             baton_slot_only,
             is_total_cost,
             remaining,
@@ -98,7 +129,7 @@ pub fn handle_play_member_from_discard(
                 frame_idx,
                 target_p_idx,
                 filter_attr_base,
-                empty_slot_only,
+                requires_empty_stage_slot,
                 baton_slot_only,
                 is_total_cost,
                 remaining,
@@ -114,7 +145,7 @@ pub fn handle_play_member_from_discard(
         ctx,
         target_p_idx,
         filter_attr_base,
-        empty_slot_only,
+        requires_empty_stage_slot,
         baton_slot_only,
         is_total_cost,
         frame_idx,

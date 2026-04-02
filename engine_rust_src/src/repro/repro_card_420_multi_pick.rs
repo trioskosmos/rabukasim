@@ -99,8 +99,14 @@ fn test_repro_card_420_multi_pick_from_discard() {
     let picked_members: Vec<i32> = state.players[p_idx]
         .stage
         .iter()
-        .copied()
-        .filter(|cid| discard_members.contains(cid))
+        .enumerate()
+        .filter_map(|(slot_idx, &cid)| {
+            if slot_idx != 0 && discard_members.contains(&cid) {
+                Some(cid)
+            } else {
+                None
+            }
+        })
         .collect();
     assert_eq!(
         picked_members.len(),
@@ -145,7 +151,7 @@ fn test_repro_card_420_second_pick_can_be_skipped() {
         "Need at least 3 vanilla cost-2 members in DB"
     );
 
-    state.players[p_idx].stage = [-1, -1, -1];
+    state.players[p_idx].stage = [discard_members[2], -1, -1];
     state.players[p_idx].hand = vec![card_420_id].into();
     state.players[p_idx].discard = discard_members.clone().into();
     state.players[p_idx].deck = vec![9999; 5].into();
@@ -164,6 +170,29 @@ fn test_repro_card_420_second_pick_can_be_skipped() {
     );
 
     state.step(&db, ACTION_BASE_CHOICE + 0).unwrap();
+    assert!(
+        matches!(
+            state.interaction_stack.last().map(|pi| pi.choice_type),
+            Some(crate::core::enums::ChoiceType::SelectStageEmpty)
+        ),
+        "Discard-play placement should only target empty stage slots"
+    );
+
+    let mut actions = Vec::new();
+    state.generate_legal_actions(&db, p_idx, &mut actions);
+    assert!(
+        !actions.contains(&(ACTION_BASE_STAGE_SLOTS as usize)),
+        "Occupied stage slot 0 should not be offered"
+    );
+    assert!(
+        actions.contains(&((ACTION_BASE_STAGE_SLOTS + 1) as usize)),
+        "Empty stage slot 1 should be offered"
+    );
+    assert!(
+        actions.contains(&((ACTION_BASE_STAGE_SLOTS + 2) as usize)),
+        "Empty stage slot 2 should be offered"
+    );
+
     let slot_1 = state.players[p_idx]
         .stage
         .iter()
@@ -186,6 +215,10 @@ fn test_repro_card_420_second_pick_can_be_skipped() {
     assert!(
         state.interaction_stack.is_empty(),
         "Choosing no second card should finish the effect"
+    );
+    assert!(
+        state.players[p_idx].looked_cards.is_empty(),
+        "Discard-play cleanup should clear the looked-cards buffer"
     );
 
     let picked_members: Vec<i32> = state.players[p_idx]

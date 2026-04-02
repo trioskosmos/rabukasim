@@ -1,6 +1,8 @@
 // Handlers module - simplified data flow from YAML to code
 
+use crate::core::*;
 use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::models::AbilityContext;
 
 // --- Modularized Opcode Handlers ---
 pub mod flow_context;
@@ -28,16 +30,7 @@ pub use state::*;
 
 use crate::core::enums::*;
 use crate::core::logic::models::AbilityFrame;
-use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-
-// Helper functions for dispatch
-fn p_idx(ctx: &AbilityContext) -> usize {
-    ctx.player_id as usize
-}
-
-fn base_p(ctx: &AbilityContext) -> usize {
-    ctx.activator_id as usize
-}
+use crate::core::logic::{CardDatabase, GameState};
 
 /// Result of an opcode handler execution
 #[derive(Debug)]

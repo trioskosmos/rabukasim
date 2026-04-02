@@ -1,3 +1,4 @@
+use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};

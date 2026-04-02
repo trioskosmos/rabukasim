@@ -218,6 +218,19 @@ fn main() {
 }
 
 fn load_db_from_json() -> CardDatabase {
+    let disk_paths = [
+        "../data/cards_compiled.json",
+        "static_content/data/cards_compiled.json",
+    ];
+
+    for path in disk_paths {
+        if let Ok(db_json) = std::fs::read_to_string(path) {
+            println!("[DB] Loading live JSON file: {}", path);
+            return CardDatabase::from_json(&db_json)
+                .unwrap_or_else(|err| panic!("Failed to parse CardDatabase from {}: {}", path, err));
+        }
+    }
+
     let db_file = Assets::get("data/cards_compiled.json").expect("Missing cards_compiled.json!");
     println!("[DB] Loading embedded launcher asset: data/cards_compiled.json");
     let db_json = std::str::from_utf8(db_file.data.as_ref()).expect("Failed to read DB json");

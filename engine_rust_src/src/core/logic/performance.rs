@@ -1919,6 +1919,9 @@ pub fn finalize_live_result(state: &mut GameState) {
 
         state.players[p].current_turn_notes = 0;
     }
+    for player in &mut state.players {
+        player.granted_abilities.clear();
+    }
     state.live_result_selection_pending = false;
     state.live_result_triggers_done = false;
     state.live_result_processed_mask = [0, 0];

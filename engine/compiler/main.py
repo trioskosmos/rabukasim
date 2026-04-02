@@ -74,7 +74,12 @@ def _dict_or_empty(v: Any) -> dict:
 
 
 def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
-    """Convert card to runtime format - semantic-only, no frame_program."""
+    """Convert card to the compact runtime export.
+
+    The runtime payload keeps semantic `effects`/`conditions`/`costs` and omits
+    `frame_program`. The Rust loader can rehydrate executable frames from the
+    sparse authored index and from semantic effects when needed.
+    """
     if not isinstance(card_dump, dict):
         return card_dump
     
@@ -192,8 +197,8 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
-            "source_note": "Derived from cards.json plus the authored frame source. For ability-logic fixes, edit data/consolidated_abilities.json / data/ability_frame_index.yaml, then rebuild.",
-            "execution_model": "frame_program_only",
+            "source_note": "Derived from cards.json plus authored ability sources. Runtime exports ship semantic effects/conditions/costs; Rust rebuilds executable frames from authored sparse data and semantic fallbacks.",
+            "execution_model": "semantic_runtime_export",
         },
     }
 
@@ -826,7 +831,7 @@ def _compute_ability_flags(ab: Ability) -> dict[str, int]:
         # Choice detection
         if et == EffectType.LOOK_AND_CHOOSE:
             choice_flags |= CHOICE_FLAG_LOOK
-            choice_count = eff.params.get("choose_count", 3)
+            choice_count = eff.params.get("choose_count", 0)
         elif et == EffectType.SELECT_MODE:
             choice_flags |= CHOICE_FLAG_MODE
             choice_count = eff.params.get("num_options", 2)

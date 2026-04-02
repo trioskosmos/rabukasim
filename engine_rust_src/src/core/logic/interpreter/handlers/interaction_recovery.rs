@@ -4,7 +4,7 @@ use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
-use crate::core::models::Zone;
+use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
 
 /// Recovery handler - consolidated from interaction_recovery_resolve.rs

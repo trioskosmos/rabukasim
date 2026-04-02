@@ -69,7 +69,7 @@ pub fn handle_select_mode(
                 ctx,
                 choice_ctx,
                 frame_idx,
-                crate::core::enums::O_SELECT_MODE,
+                O_SELECT_MODE,
                 0,
                 choice_type,
                 0,
@@ -108,13 +108,13 @@ pub fn handle_select_mode(
     if v == 2 {
         let first_is_live_reveal = resolve_option(0)
             .map(|target| {
-                target.opcode() == crate::core::enums::O_REVEAL_UNTIL
+                target.opcode() == O_REVEAL_UNTIL
                     && (target.slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
             })
             .unwrap_or(false);
         let second_is_live_reveal = resolve_option(1)
             .map(|target| {
-                target.opcode() == crate::core::enums::O_REVEAL_UNTIL
+                target.opcode() == O_REVEAL_UNTIL
                     && (target.slot() as u32 & FLAG_REVEAL_UNTIL_IS_LIVE as u32) != 0
             })
             .unwrap_or(false);
@@ -179,7 +179,7 @@ pub fn handle_select_mode_simple(
             ctx,
             ctx,
             frame_idx,
-            crate::core::enums::O_SELECT_MODE,
+            O_SELECT_MODE,
             v,
             ChoiceType::SelectMode,
             0,

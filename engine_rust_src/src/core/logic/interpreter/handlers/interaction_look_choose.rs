@@ -29,21 +29,11 @@ fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &Ab
         }
     }
 
-    if ctx.source_card_id == 12707 {
-        choose_count = choose_count.max(3);
-    }
-
     choose_count
 }
 
-fn resolve_look_count(_db: &CardDatabase, ctx: &AbilityContext, _frame_data: &AbilityFrameComponents<'_>, lc: &DecodedLookAndChoose) -> usize {
+fn resolve_look_count(_db: &CardDatabase, _ctx: &AbilityContext, _frame_data: &AbilityFrameComponents<'_>, lc: &DecodedLookAndChoose) -> usize {
     let base_count = lc.count.max(1) as usize;
-
-    // Card 12707 (PL!S-bp2-005-SEC) has look_count=7 and choose_count=3
-    // but the bytecode may encode the wrong value
-    if ctx.source_card_id == 12707 && base_count < 7 {
-        return 7;
-    }
 
     base_count
 }

@@ -3,6 +3,7 @@
  * Handles drag events for playing cards and arranging the board.
  */
 import { State } from './state.js';
+import { findMatchingAction, getActionValue } from './interaction_meta.js';
 
 export const DragDrop = {
     draggedCardIdx: -1,
@@ -255,15 +256,33 @@ export const DragDrop = {
         let action = null;
         if (source === 'hand') {
             if (targetZone === 'stage') {
-                action = state.legal_actions.find(a => (a.type === 'PLAY' || a.type === 'FORMATION') && a.hand_idx === index && (a.area_idx === targetIndex || a.slot_idx === targetIndex));
+                action = findMatchingAction(state.legal_actions, a =>
+                    getActionValue(a, 'source_zone') === 'hand'
+                    && getActionValue(a, 'source_index', 'hand_idx') === index
+                    && getActionValue(a, 'target_zone') === 'stage'
+                    && getActionValue(a, 'target_index', 'slot_idx', 'area_idx') === targetIndex
+                );
             } else if (targetZone === 'live') {
-                action = state.legal_actions.find(a => (a.type === 'PLAY' || a.type === 'LIVE_SET') && a.hand_idx === index);
+                action = findMatchingAction(state.legal_actions, a =>
+                    getActionValue(a, 'source_zone') === 'hand'
+                    && getActionValue(a, 'source_index', 'hand_idx') === index
+                    && getActionValue(a, 'target_zone') === 'live'
+                );
             } else if (targetZone === 'discard') {
-                action = state.legal_actions.find(a => (a.hand_idx === index || a.index === index) && (a.type === 'SELECT_HAND' || (a.name && (a.name.includes('Discard') || a.name.includes('控え室')))));
+                action = findMatchingAction(state.legal_actions, a =>
+                    getActionValue(a, 'source_zone') === 'hand'
+                    && getActionValue(a, 'source_index', 'hand_idx') === index
+                    && getActionValue(a, 'target_zone') === 'discard'
+                );
             }
         } else if (source === 'stage') {
             if (targetZone === 'stage') {
-                action = state.legal_actions.find(a => (a.type === 'FORMATION' || a.type === 'MOVE') && (a.source_idx === index || a.prev_idx === index) && (a.area_idx === targetIndex || a.slot_idx === targetIndex));
+                action = findMatchingAction(state.legal_actions, a =>
+                    getActionValue(a, 'source_zone') === 'stage'
+                    && getActionValue(a, 'source_index', 'source_idx', 'prev_idx', 'slot_idx', 'area_idx') === index
+                    && getActionValue(a, 'target_zone') === 'stage'
+                    && getActionValue(a, 'target_index', 'slot_idx', 'area_idx') === targetIndex
+                );
             }
         }
 

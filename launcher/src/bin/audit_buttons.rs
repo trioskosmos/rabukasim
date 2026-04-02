@@ -35,13 +35,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for (ab_idx, _) in member.abilities.iter().enumerate() {
             let aid = ACTION_BASE_STAGE + (0 * 10) + ab_idx as i32;
-            let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
+            let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
+            let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
 
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "en");
                 let entry = json!({
                     "context": format!("On Stage (AbIdx {})", ab_idx),
                     "id": aid,
+                    "kind": action_kind,
                     "type": t_str.clone(),
                     "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
                     "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -62,13 +64,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         gs_ds.players[0].discard.push(cid);
         for (ab_idx, _) in member.abilities.iter().enumerate() {
             let aid = ACTION_BASE_DISCARD_ACTIVATE + (0 * 10) + ab_idx as i32;
-            let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ds, &card_db, 0, "jp");
+            let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_ds, &card_db, 0, "jp");
+            let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
 
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ds, &card_db, 0, "en");
                 let entry = json!({
                     "context": format!("In Discard (AbIdx {})", ab_idx),
                     "id": aid,
+                    "kind": action_kind,
                     "type": t_str.clone(),
                     "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
                     "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -109,13 +113,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         for (ab_idx, _) in live.abilities.iter().enumerate() {
             let aid = ACTION_BASE_STAGE + (0 * 10) + ab_idx as i32;
-            let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
+            let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "jp");
+            let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
 
             if t_str == "ABILITY" || t_str == "ACTIVATE" {
                 let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_ab, &card_db, 0, "en");
                 let entry = json!({
                     "context": format!("Live Ability (AbIdx {})", ab_idx),
                     "id": aid,
+                    "kind": action_kind,
                     "type": t_str.clone(),
                     "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
                     "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -156,11 +162,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut entries = Vec::new();
     for choice_idx in 0..2 {
         let aid = ACTION_BASE_CHOICE + choice_idx as i32; // Action::SelectChoice { choice_idx }
-        let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_sel, &card_db, 0, "jp");
+        let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_sel, &card_db, 0, "jp");
+        let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
         let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_sel, &card_db, 0, "en");
         let entry = json!({
             "context": format!("SelectChoice (Looked Card Index {})", choice_idx),
             "id": aid,
+            "kind": action_kind,
             "type": t_str.clone(),
             "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
             "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -187,11 +195,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut entries = Vec::new();
     for hand_idx in 0..2 {
         let aid = ACTION_BASE_HAND_SELECT + hand_idx as i32; // Action::SelectHand { hand_idx }
-        let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_rec, &card_db, 0, "jp");
+        let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_rec, &card_db, 0, "jp");
+        let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
         let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_rec, &card_db, 0, "en");
         let entry = json!({
             "context": format!("SelectHand (Recover Live) Index {}", hand_idx),
             "id": aid,
+            "kind": action_kind,
             "type": t_str.clone(),
             "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
             "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -218,11 +228,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut entries = Vec::new();
     for slot_idx in 0..2 {
         let aid = ACTION_BASE_CHOICE + slot_idx as i32; // Action::SelectChoice { choice_idx }
-        let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_sm, &card_db, 0, "jp");
+        let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_sm, &card_db, 0, "jp");
+        let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
         let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_sm, &card_db, 0, "en");
         let entry = json!({
             "context": format!("SelectChoice (Select Member Slot {})", slot_idx),
             "id": aid,
+            "kind": action_kind,
             "type": t_str.clone(),
             "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
             "en": { "label": l_en.clone(), "desc": d_en.clone() }
@@ -249,11 +261,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut entries = Vec::new();
     for slot_idx in 0..1 {
         let aid = ACTION_BASE_CHOICE + slot_idx as i32; // Action::SelectChoice { choice_idx }
-        let (l_jp, d_jp, t_str, _, _) = get_action_desc_rich(aid, &gs_to, &card_db, 0, "jp");
+        let (l_jp, d_jp, t_str, _, meta) = get_action_desc_rich(aid, &gs_to, &card_db, 0, "jp");
+        let action_kind = meta.get("action_kind").cloned().unwrap_or_else(|| json!("Unknown"));
         let (l_en, d_en, _, _, _) = get_action_desc_rich(aid, &gs_to, &card_db, 0, "en");
         let entry = json!({
             "context": format!("SelectChoice (Tap Opponent Slot {})", slot_idx),
             "id": aid,
+            "kind": action_kind,
             "type": t_str.clone(),
             "jp": { "label": l_jp.clone(), "desc": d_jp.clone() },
             "en": { "label": l_en.clone(), "desc": d_en.clone() }

@@ -227,4 +227,27 @@ impl Action {
             }
         }
     }
+
+    pub fn semantic_kind(&self) -> engine_rust::core::ActionKind {
+        use engine_rust::core::ActionKind;
+
+        match self {
+            Action::Pass => ActionKind::Pass,
+            Action::ToggleMulligan { .. } => ActionKind::ToggleMulligan,
+            Action::PlayMember { .. } | Action::PlayMemberWithChoice { .. } | Action::PlayMemberDouble { .. } => ActionKind::PlayMember,
+            Action::ActivateAbility { .. } | Action::ActivateAbilityWithChoice { .. } => ActionKind::ActivateMember,
+            Action::ActivateFromDiscard { .. } => ActionKind::ActivateFromDiscard,
+            Action::ActivateFromHand { .. } => ActionKind::ActivateFromHand,
+            Action::PlaceLive { .. } => ActionKind::PlaceLive,
+            Action::SelectChoice { .. } => ActionKind::SelectChoice,
+            Action::SelectHand { .. } => ActionKind::SelectHand,
+            Action::SelectResponseSlot { .. } => ActionKind::SelectCards,
+            Action::SelectResponseColor { .. } => ActionKind::SelectColor,
+            Action::SelectEnergy { .. } => ActionKind::SelectEnergy,
+            Action::ChooseTurnOrder { .. } => ActionKind::ChooseTurnOrder,
+            Action::Formation { .. } => ActionKind::Formation,
+            Action::Rps { .. } => ActionKind::Rps,
+            Action::Unknown(_) => ActionKind::Unknown,
+        }
+    }
 }

@@ -1,5 +1,6 @@
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::models::AbilityContext;
 
 use super::*;
 
@@ -237,7 +238,7 @@ pub fn handle_select_ops(
                 looked_cards
             };
             if looked_cards.is_empty() {
-                return HandlerResult::Continue;
+                return HandlerResult::Return;
             };
 
             state.players[select_member_target_player].looked_cards = looked_cards.into();

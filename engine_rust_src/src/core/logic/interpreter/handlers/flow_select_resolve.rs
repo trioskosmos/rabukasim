@@ -4,6 +4,7 @@ use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
+use crate::core::models::AbilityContext;
 
 fn selected_target_key(source_zone: u8, slot_idx: i32) -> i32 {
     ((source_zone as i32) << 8) | (slot_idx & 0xFF)

@@ -101,6 +101,10 @@ fn test_repro_card_420_cost_sum_limit() {
             "Cost 4 card (ID {}) should be on stage. Stage: {:?}",
             cost_4_id, state.players[p_idx].stage
         );
+        assert!(
+            state.players[p_idx].looked_cards.is_empty(),
+            "Discard-play cleanup should clear looked cards after the chain ends"
+        );
     }
 
     // Scenario 2: Pick Cost 2 -> Should allow another Cost 2 but NOT Cost 4

@@ -2,6 +2,7 @@ import { State } from '../state.js';
 import { ActionButtons } from './ActionButtons.js';
 import * as i18n from '../i18n/index.js';
 import { StringUtils } from '../utils/StringUtils.js';
+import { ensureSourceCardId, getActionCategory, isMulliganAction, isSystemAction } from '../interaction_meta.js';
 
 export const ActionListView = {
     render: (state, perspectivePlayer, container) => {
@@ -21,30 +22,16 @@ export const ActionListView = {
         const otherActions = [];
 
         state.legal_actions.forEach(a => {
-            const category = a.category || a.type;
+            const category = getActionCategory(a);
             const hIdx = a.hand_idx;
-            const sIdx = a.slot_idx;
+            ensureSourceCardId(a, state, perspectivePlayer);
 
-            if (a.source_card_id === undefined && a.card_id !== undefined) {
-                a.source_card_id = a.card_id;
-            }
-
-            if (a.source_card_id === undefined) {
-                if (hIdx !== undefined) {
-                    const card = state.players[perspectivePlayer]?.hand[hIdx];
-                    if (card) a.source_card_id = card.id;
-                } else if (category === 'ABILITY' && sIdx !== undefined) {
-                    const card = state.players[perspectivePlayer]?.stage[sIdx];
-                    if (card) a.source_card_id = card.id;
-                }
-            }
-
-            if (a.id === 0 || a.type === 'SYSTEM' || a.id < 10 || a.name?.includes('End') || a.name?.includes('終了')) {
+            if (isSystemAction(a)) {
                 systemActions.push(a);
             } else if (category === 'PLAY' && hIdx !== undefined) {
                 if (!playActionsByHand[hIdx]) playActionsByHand[hIdx] = [];
                 playActionsByHand[hIdx].push(a);
-            } else if ((a.type === 'MULLIGAN' || (a.id >= 300 && a.id <= 359)) && hIdx !== undefined) {
+            } else if (isMulliganAction(a) && hIdx !== undefined) {
                 if (!mulliganActions[hIdx]) mulliganActions[hIdx] = [];
                 mulliganActions[hIdx].push(a);
             } else if (category === 'ABILITY') {

@@ -193,7 +193,7 @@ fn next_condition_block_starts_here(frames: &[AbilityFrame], next_idx: usize) ->
 }
 
 fn is_pure_nop(frame_data: &AbilityFrameComponents<'_>) -> bool {
-    frame_data.opcode == crate::core::enums::O_NOP as i32
+    frame_data.opcode == O_NOP
         && frame_data.value == 0
         && frame_data.raw_attr == 0
         && frame_data.raw_slot == 0
@@ -610,7 +610,7 @@ pub fn resolve_semantic_frames(
             effect_idx += 1;
             continue;
         }
-        if frame_data.opcode == crate::core::enums::O_RETURN as i32 {
+        if frame_data.opcode == O_RETURN {
             if !state.ui.silent {
                 state.log("Instruction sequence finished (Return).".to_string());
                 if let Some(ref mut set) = state.debug.executed_opcodes {
@@ -694,7 +694,7 @@ pub fn resolve_semantic_frames(
             continue;
         }
 
-        if frame_data.opcode == crate::core::enums::O_JUMP as i32 {
+        if frame_data.opcode == O_JUMP {
             if !state.ui.silent {
                 state.log("Unconditional jump executed.".to_string());
             }
@@ -702,7 +702,7 @@ pub fn resolve_semantic_frames(
             ctx.choice_index = -1;
             continue;
         }
-        if frame_data.opcode == crate::core::enums::O_JUMP_IF_FALSE as i32 {
+        if frame_data.opcode == O_JUMP_IF_FALSE {
             if !cond {
                 if !state.ui.silent {
                     state.log("Conditional jump (False branch) taken.".to_string());
@@ -882,11 +882,11 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
 
             // Fire resolution triggers
             let res_trigger = match _trigger {
-                crate::core::enums::TriggerType::OnLiveStart => {
-                    Some(crate::core::enums::TriggerType::OnAbilityResolve)
+                TriggerType::OnLiveStart => {
+                    Some(TriggerType::OnAbilityResolve)
                 }
-                crate::core::enums::TriggerType::OnLiveSuccess => {
-                    Some(crate::core::enums::TriggerType::OnAbilitySuccess)
+                TriggerType::OnLiveSuccess => {
+                    Some(TriggerType::OnAbilitySuccess)
                 }
                 _ => None,
             };

@@ -477,6 +477,7 @@ pub fn get_action_desc_rich(
     let action = Action::from_id(id, gs.phase);
     let mut metadata = HashMap::new();
     metadata.insert("action_id".into(), json!(id));
+    metadata.insert("action_kind".into(), json!(action.semantic_kind().as_str()));
 
     let (name, text, type_str, area_idx_opt) = match action {
         Action::Pass => {

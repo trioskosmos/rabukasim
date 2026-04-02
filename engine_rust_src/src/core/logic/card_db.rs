@@ -640,9 +640,11 @@ impl CardDatabase {
             
             // Print final report
             unsafe {
-                if TOTAL_ABILITIES_CHECKED % 100 == 0 || TOTAL_ABILITIES_CHECKED <= 5 {
+                let total_checked = TOTAL_ABILITIES_CHECKED;
+                let empty_bytecode = EMPTY_BYTECODE_COUNT;
+                if total_checked % 100 == 0 || total_checked <= 5 {
                     eprintln!("[DEBUG_BYTECODE] Progress: {} abilities checked, {} with empty bytecode", 
-                        TOTAL_ABILITIES_CHECKED, EMPTY_BYTECODE_COUNT);
+                        total_checked, empty_bytecode);
                 }
             }
             
@@ -708,8 +710,15 @@ impl CardDatabase {
                 .find(|effect| {
                     effect.runtime_opcode == O_LOOK_AND_CHOOSE
                         || effect.effect_type == EffectType::LookAndChoose
+                        || effect.params.get("choose_count").is_some()
+                        || effect.params.get("CHOOSE_COUNT").is_some()
                 })
-                .and_then(|effect| effect.params.get("choose_count"))
+                .and_then(|effect| {
+                    effect
+                        .params
+                        .get("choose_count")
+                        .or_else(|| effect.params.get("CHOOSE_COUNT"))
+                })
                 .and_then(Self::parse_u8_value)
             {
                 if let Some(program) = ability.frame_program.as_mut() {
@@ -726,6 +735,7 @@ impl CardDatabase {
                     }
                 }
             }
+            Self::normalize_legacy_look_deck_search(ability);
             // Only sync frame_program data to effects if effects are not already populated
             // (i.e., from the new semantic compiler output)
             if ability.effects.is_empty() {
@@ -774,10 +784,12 @@ impl CardDatabase {
         
         // Print final summary
         unsafe {
-            if TOTAL_ABILITIES_CHECKED > 0 && TOTAL_ABILITIES_CHECKED % 50 == 0 {
+            let total_checked = TOTAL_ABILITIES_CHECKED;
+            let empty_bytecode = EMPTY_BYTECODE_COUNT;
+            if total_checked > 0 && total_checked % 50 == 0 {
                 eprintln!("[DEBUG_BYTECODE] SUMMARY: {}/{} abilities have empty bytecode ({:.1}%)", 
-                    EMPTY_BYTECODE_COUNT, TOTAL_ABILITIES_CHECKED, 
-                    (EMPTY_BYTECODE_COUNT as f64 / TOTAL_ABILITIES_CHECKED as f64) * 100.0);
+                    empty_bytecode, total_checked, 
+                    (empty_bytecode as f64 / total_checked as f64) * 100.0);
             }
         }
         
@@ -806,6 +818,108 @@ impl CardDatabase {
             .as_u64()
             .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
             .map(|v| v as u8)
+    }
+
+    fn infer_legacy_search_choose_count(raw_text: &str) -> Option<u8> {
+        if raw_text.contains("好きな枚数") {
+            return None;
+        }
+
+        for count in (1..=9).rev() {
+            let exact = format!("その中から{}枚", count);
+            let limit = format!("{}枚まで", count);
+            if raw_text.contains(&exact) || raw_text.contains(&limit) {
+                return Some(count as u8);
+            }
+        }
+
+        if raw_text.contains("その中の1枚") {
+            return Some(1);
+        }
+
+        None
+    }
+
+    fn should_normalize_legacy_look_deck_search(raw_text: &str) -> bool {
+        raw_text.contains("デッキの上からカードを")
+            && raw_text.contains("その中から")
+            && raw_text.contains("手札に加")
+            && raw_text.contains("残りを控え室")
+            && !raw_text.contains("好きな枚数")
+    }
+
+    fn normalize_legacy_look_deck_search(ability: &mut Ability) {
+        if !Self::should_normalize_legacy_look_deck_search(&ability.raw_text) {
+            return;
+        }
+
+        let Some(program) = ability.frame_program.as_mut() else {
+            return;
+        };
+
+        let Some(look_idx) = program.frames.iter().position(|frame| {
+            frame.opcode() == O_LOOK_DECK && frame.dslot().target_slot == 6
+        }) else {
+            return;
+        };
+
+        let trailing_non_return: Vec<usize> = program
+            .frames
+            .iter()
+            .enumerate()
+            .skip(look_idx + 1)
+            .filter_map(|(idx, frame)| (frame.opcode() != O_RETURN).then_some(idx))
+            .collect();
+
+        let add_to_hand_idx = match trailing_non_return.as_slice() {
+            [] => None,
+            [idx] if program.frames[*idx].opcode() == O_ADD_TO_HAND => Some(*idx),
+            _ => return,
+        };
+
+        let look_count = program.frames[look_idx].value().max(1) as u8;
+        let mut filter = add_to_hand_idx
+            .map(|idx| program.frames[idx].filter())
+            .unwrap_or_else(|| program.frames[look_idx].filter());
+
+        let choose_count = add_to_hand_idx
+            .map(|idx| program.frames[idx].value().max(1) as u8)
+            .or_else(|| Self::infer_legacy_search_choose_count(&ability.raw_text))
+            .unwrap_or(1);
+        let selection_is_optional = add_to_hand_idx
+            .map(|idx| program.frames[idx].filter().is_optional)
+            .unwrap_or_else(|| ability.raw_text.contains("手札に加えてもよい"));
+        filter.is_optional = filter.is_optional || selection_is_optional;
+
+        let packed = crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
+            count: look_count,
+            choose_count,
+            reveal: ability.raw_text.contains("公開"),
+            dest_discard: true,
+            char_id_1: filter.char_id_1,
+            char_id_2: filter.char_id_2,
+            char_id_3: filter.char_id_3,
+        }
+        .to_raw();
+        let raw_slot = crate::core::logic::interpreter::instruction::DecodedSlot {
+            target_slot: 6,
+            source_zone: Zone::DeckTop,
+            dest_zone: Zone::Discard,
+            ..Default::default()
+        }
+        .to_raw();
+
+        program.frames[look_idx] = AbilityFrame::new(
+            O_LOOK_AND_CHOOSE,
+            packed,
+            filter.to_attr() as i64,
+            raw_slot,
+            false,
+        );
+
+        if let Some(idx) = add_to_hand_idx {
+            program.frames.remove(idx);
+        }
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
@@ -1017,8 +1131,15 @@ impl CardDatabase {
                                         .find(|effect| {
                                             effect.runtime_opcode == O_LOOK_AND_CHOOSE
                                                 || effect.effect_type == EffectType::LookAndChoose
+                                                || effect.params.get("choose_count").is_some()
+                                                || effect.params.get("CHOOSE_COUNT").is_some()
                                         })
                                         .and_then(|effect| effect.params.get("choose_count"))
+                                        .or_else(|| {
+                                            ab.effects.iter().find_map(|effect| {
+                                                effect.params.get("CHOOSE_COUNT")
+                                            })
+                                        })
                                         .and_then(Self::parse_u8_value)
                                         .unwrap_or(0);
                                     ab.choice_count = if effect_pick > 0 { effect_pick } else { 1 };
@@ -1117,8 +1238,13 @@ impl CardDatabase {
             // Frame program fallback for conditions (if effects/conditions not populated)
             let semantic_program = ab.frame_program.as_ref().cloned();
             if let Some(frame_program) = semantic_program.as_ref() {
-                if ab.conditions.is_empty() {
-                    ab.conditions = Self::derive_conditions_from_frame_program(frame_program);
+                let derived_conditions = Self::derive_conditions_from_frame_program(frame_program);
+                if !derived_conditions.is_empty() {
+                    // Prefer the leading authored condition block from executable frames.
+                    // Compiled semantic exports may flatten later branch conditions into
+                    // `ab.conditions`, which makes trigger prechecks stricter than the
+                    // actual frame control flow.
+                    ab.conditions = derived_conditions;
                 }
                 // Handle special case for NotHasExcessHeart condition
                 if ab

@@ -39,7 +39,7 @@ USAGE:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 
@@ -58,7 +58,7 @@ class Condition:
 class Effect:
     """An effect that modifies game state."""
     effect_type: EffectType
-    value: int = 0
+    value: Union[int, Dict[str, Any]] = 0
     target: TargetType = TargetType.SELF
     params: Dict[str, Any] = field(default_factory=dict)
     is_optional: bool = False

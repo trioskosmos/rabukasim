@@ -37,9 +37,9 @@ struct DecodedSlotStructuredRaw {
     target_slot: Option<u8>,
     #[serde(default)]
     comparison: Option<u8>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_zone")]
     source_zone: Option<Zone>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_zone")]
     dest_zone: Option<Zone>,
     #[serde(default)]
     remainder_zone: Option<u8>,
@@ -62,6 +62,39 @@ struct DecodedSlotStructuredRaw {
 fn as_bool_robust(v: &Value) -> bool {
     v.as_bool()
         .unwrap_or_else(|| v.as_i64().map(|i| i != 0).unwrap_or(false))
+}
+
+fn deserialize_optional_zone<'de, D>(deserializer: D) -> Result<Option<Zone>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    let Some(value) = value else {
+        return Ok(None);
+    };
+
+    let parsed = match value {
+        Value::String(text) => match text.trim().to_ascii_uppercase().as_str() {
+            "HAND" | "CARD_HAND" => Some(Zone::Hand),
+            "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
+            "STAGE" => Some(Zone::Stage),
+            "DECK" => Some(Zone::Deck),
+            "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
+            "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
+            "ENERGY" => Some(Zone::Energy),
+            "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
+            "YELL" => Some(Zone::Yell),
+            _ => None,
+        },
+        Value::Number(number) => number
+            .as_u64()
+            .and_then(|raw| serde_json::from_value::<Zone>(Value::Number(raw.into())).ok()),
+        other => serde_json::from_value::<Zone>(other).ok(),
+    };
+
+    parsed
+        .map(Some)
+        .ok_or_else(|| serde::de::Error::custom("invalid zone value"))
 }
 
 impl From<DecodedSlotRaw> for DecodedSlot {

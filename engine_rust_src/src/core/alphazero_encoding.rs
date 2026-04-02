@@ -1,3 +1,12 @@
+const AZ_ZONE_HAND: u8 = 1;
+const AZ_ZONE_STAGE: u8 = 2;
+const AZ_ZONE_ENERGY: u8 = 3;
+const AZ_ZONE_DISCARD: u8 = 4;
+const AZ_ZONE_DECK: u8 = 5;
+const AZ_ZONE_SUCCESS_LIVES: u8 = 6;
+const AZ_ZONE_LIVE_ZONE: u8 = 7;
+const AZ_ZONE_ENERGY_DECK: u8 = 8;
+
 use crate::core::analysis::pro_vision::ProVisionHints;
 use crate::core::logic::{CardDatabase, GameState, PlayerState};
 
@@ -135,14 +144,14 @@ impl AlphaZeroEncoding for GameState {
                     // Find card Template ID by scanning the zone (only done once per state)
                     let p = &self.core.players[owner];
                     let cid = match zone {
-                        1 => p.hand[z_idx],
-                        2 => p.stage[z_idx],
-                        3 => p.energy_zone[z_idx],
-                        4 => p.discard[z_idx],
-                        5 => p.deck[z_idx],
-                        6 => p.success_lives[z_idx],
-                        7 => p.live_zone[z_idx],
-                        8 => p.energy_deck[z_idx],
+                        AZ_ZONE_HAND => p.hand[z_idx],
+                        AZ_ZONE_STAGE => p.stage[z_idx],
+                        AZ_ZONE_ENERGY => p.energy_zone[z_idx],
+                        AZ_ZONE_DISCARD => p.discard[z_idx],
+                        AZ_ZONE_DECK => p.deck[z_idx],
+                        AZ_ZONE_SUCCESS_LIVES => p.success_lives[z_idx],
+                        AZ_ZONE_LIVE_ZONE => p.live_zone[z_idx],
+                        AZ_ZONE_ENERGY_DECK => p.energy_deck[z_idx],
                         _ => -1,
                     };
 
@@ -180,7 +189,7 @@ fn append_entity_vector(
     // 1. Meta Block (16 floats)
     tensor.push(1.0); // Exists
     tensor.push(if is_me { 0.0 } else { 1.0 }); // Owner
-    tensor.push(zone as f32 / 10.0); // Zone (1=Hand, 2=Stage, 3=Energy, etc.)
+    tensor.push(zone as f32 / 10.0); // Encoded zone index
     tensor.push(z_idx as f32 / 25.0); // Index in zone
 
     // Hidden Information Masking
@@ -188,8 +197,12 @@ fn append_entity_vector(
     // - Card is Mine and NOT in Deck
     // - Card is Opponent's and in Stage, SuccessLives, or Discard (Common knowledge)
     // - Card is Opponent's Hand and we have a specific reveal (not implemented yet, but possible)
-    let is_revealed = is_me && (zone != 5 && zone != 8)
-        || (!is_me && (zone == 2 || zone == 4 || zone == 6 || zone == 7));
+    let is_revealed = is_me && (zone != AZ_ZONE_DECK && zone != AZ_ZONE_ENERGY_DECK)
+        || (!is_me
+            && (zone == AZ_ZONE_STAGE
+                || zone == AZ_ZONE_DISCARD
+                || zone == AZ_ZONE_SUCCESS_LIVES
+                || zone == AZ_ZONE_LIVE_ZONE));
 
     // Meta Padding
     for _ in 0..12 {
@@ -236,7 +249,7 @@ fn append_entity_vector(
         for h in 0..7 {
             tensor.push(m.hearts[h] as f32 / 10.0);
         }
-        let tapped = if zone == 2 {
+        let tapped = if zone == AZ_ZONE_STAGE {
             player.is_tapped(z_idx)
         } else {
             false

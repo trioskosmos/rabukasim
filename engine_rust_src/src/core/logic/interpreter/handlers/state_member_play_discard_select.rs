@@ -45,18 +45,17 @@ pub fn handle_discard_selection(
     frame_idx: usize,
     target_p_idx: usize,
     filter_attr_base: u64,
-    empty_slot_only: bool,
-    baton_slot_only: bool,
+    _empty_slot_only: bool,
+    _baton_slot_only: bool,
     is_total_cost: bool,
     remaining: i16,
     s: i32,
 ) -> HandlerResult {
-    // If no valid slots exist (board full), skip this effect
-    if state.players[target_p_idx].stage.iter().all(|&c| c >= 0) {
-        return HandlerResult::Continue;
-    }
-
-    if empty_slot_only && state.players[target_p_idx].stage.iter().all(|&c| c >= 0) {
+    let has_legal_slot = (0..3).any(|slot_idx| {
+        super::discard_play_slot_is_legal(&state.players[target_p_idx], slot_idx, s)
+    });
+    if !has_legal_slot {
+        super::clear_discard_play_buffer(state, target_p_idx);
         return HandlerResult::Continue;
     }
 
@@ -104,6 +103,7 @@ pub fn handle_discard_selection(
             .collect();
         state.players[target_p_idx].looked_cards.extend(matched_ids);
         if state.players[target_p_idx].looked_cards.is_empty() {
+            super::clear_discard_play_buffer(state, target_p_idx);
             return HandlerResult::Continue;
         }
 
@@ -141,6 +141,7 @@ pub fn handle_discard_selection(
 
     // Handle CHOICE_DONE (99) - user wants to stop selecting cards
     if ctx.choice_index == crate::core::logic::constants::CHOICE_DONE {
+        super::clear_discard_play_buffer(state, target_p_idx);
         ctx.v_remaining = 0;
         return HandlerResult::Continue;
     }
@@ -179,13 +180,7 @@ pub fn handle_discard_selection(
             top.ctx.target_card_id = cid;
         }
 
-        let choice_type = if baton_slot_only {
-            ChoiceType::SelectStageEmptyBaton
-        } else if empty_slot_only {
-            ChoiceType::SelectStageEmpty
-        } else {
-            ChoiceType::SelectStage
-        };
+        let choice_type = super::discard_play_choice_type(s);
         if matches!(
             suspend_choice(
                 state,

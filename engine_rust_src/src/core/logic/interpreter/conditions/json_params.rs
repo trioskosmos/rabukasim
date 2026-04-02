@@ -1,6 +1,6 @@
 use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
 use super::opcodes::check_condition_opcode;
-use crate::core::enums::*;
+use crate::core::*;
 use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};

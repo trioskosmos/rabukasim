@@ -812,6 +812,7 @@ impl PyGameState {
                     pi.ctx.source_card_id
                 };
                 serde_json::json!({
+                    "choice_type": pi.choice_type.as_str(),
                     "source_card_id": source_card_id,
                     "source_player": pi.ctx.player_id,
                     "source_area": pi.ctx.area_idx,
@@ -820,6 +821,10 @@ impl PyGameState {
                     "effect_opcode": pi.effect_opcode,
                     "target_slot": pi.target_slot,
                     "choice_text": pi.choice_text,
+                    "v_remaining": pi.v_remaining,
+                    "actions": pi.actions,
+                    "options": pi.options,
+                    "execution_id": pi.execution_id,
                 })
             })
             .unwrap_or_else(|| serde_json::json!({}));

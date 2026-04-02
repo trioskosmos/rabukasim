@@ -2,7 +2,7 @@ use crate::core::enums::*;
 use crate::test_helpers::*;
 
 #[test]
-fn test_hazuki_500_optional_cost_skip() {
+fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
     let mut state = create_test_state();
     let db = load_real_db();
     state.ui.silent = true;
@@ -10,56 +10,83 @@ fn test_hazuki_500_optional_cost_skip() {
     let p_idx = 0usize;
     state.current_player = p_idx as u8;
 
-    // Ren Hazuki (500)
-    // [On Play] You may put 1 card from your hand into the waiting room:
-    // Look at the top 5 cards of your deck. You may reveal up to 1 'Liella!' card among them and add it to your hand.
-    // Put the rest into the waiting room.
-
     let hazuki_id = 500;
-    state.players[p_idx].hand.push(hazuki_id);
-    state.players[p_idx].hand.push(999); // Dummy card to discard
-    state.players[p_idx].stage[0] = hazuki_id; // Set on stage
+    let liella_cards: Vec<i32> = db
+        .members
+        .iter()
+        .filter(|(id, member)| **id != hazuki_id && member.groups.contains(&3))
+        .map(|(id, _)| *id)
+        .take(5)
+        .collect();
+    assert_eq!(liella_cards.len(), 5, "Need five real Liella! cards in the deck");
 
-    // Set up deck with some Liella cards
-    state.players[p_idx].deck = vec![101, 101, 101, 101, 101].into();
+    let resolved_frames = db
+        .members
+        .get(&hazuki_id)
+        .expect("Hazuki should exist in the DB")
+        .abilities[0]
+        .resolved_frames();
+    println!("[HAZUKI_500] frame 4 look_choose = {:?}", resolved_frames[4].look_choose());
 
-    // Trigger OnPlay
-    // Trigger OnPlay using the unified entry point
-    state.trigger_event(&db, TriggerType::OnPlay, p_idx, hazuki_id, 0, 0, -1);
+    state.players[p_idx].hand = vec![hazuki_id, 999].into();
+    state.players[p_idx].deck = liella_cards.into();
+    state.phase = Phase::Main;
+
+    state
+        .step(
+            &db,
+            Action::PlayMember {
+                hand_idx: 0,
+                slot_idx: 0,
+            }
+            .id(),
+        )
+        .expect("play should succeed");
+
+    let discard_prompt = state
+        .interaction_stack
+        .last()
+        .expect("Ren's optional discard prompt should be pending");
+    assert_eq!(discard_prompt.choice_type, ChoiceType::SelectHandDiscard);
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, p_idx, &mut actions);
+    let discard_action = actions
+        .actions
+        .iter()
+        .copied()
+        .find(|action| *action >= crate::core::generated_constants::ACTION_BASE_HAND_SELECT)
+        .expect("expected a hand card to discard");
+
+    state
+        .step(&db, discard_action as i32)
+        .expect("discard choice should resolve");
     state.process_trigger_queue(&db);
 
-    // Initial state: Should be suspended for optional discard
-    assert_eq!(state.phase, Phase::Response);
+    let look_prompt = state
+        .interaction_stack
+        .last()
+        .expect("Ren's look-and-choose prompt should be pending");
+    assert_eq!(look_prompt.choice_type, ChoiceType::LookAndChoose);
+    assert_eq!(state.players[p_idx].looked_cards.len(), 5);
+    assert_eq!(look_prompt.ctx.v_remaining, 1);
 
-    // Simulate user choosing NOT to pay (Skip/Cancel)
-    // For ChoiceType::Optional, usually 1 is skip, but standard ChoiceType is CHOICE_DONE (99) or 1?
-    // Let's check interaction.rs for Optional prompt.
-    // Wait, handle_move_to_discard uses ChoiceType::Optional if it's the first prompt?
-    // Actually handle_move_to_discard uses ChoiceType::SelectHandDiscard (12).
-    // Ren Hazuki pseudocode: DISCARD_HAND(1) (Optional) -> SUCCESS
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, p_idx, &mut actions);
+    let choose_action = actions
+        .actions
+        .iter()
+        .copied()
+        .find(|action| *action >= crate::core::generated_constants::ACTION_BASE_CHOICE)
+        .expect("expected a looked-card choice action");
 
-    // Let's check current interaction
-    let interact = state.interaction_stack.last().expect("Should be suspended");
-    assert_eq!(
-        interact.choice_type as u8,
-        ChoiceType::SelectHandDiscard as u8
-    );
+    state
+        .step(&db, choose_action as i32)
+        .expect("look-and-choose resolution should succeed");
+    state.process_trigger_queue(&db);
 
-    // Send Pass action (0) to skip optional discard
-    state.step(&db, 0).expect("Should handle skip");
-
-    // In the FIXED version, it returns RETURN (finishing the ability)
-    // because JUMP_IF_FALSE (ip=05) should now jump to ip=20
-    assert_eq!(
-        state.phase,
-        Phase::Main,
-        "Should have returned to Main phase after skipping cost"
-    );
-
-    // If it proceeds, deck would be moved to looked_cards
-    assert_eq!(
-        state.players[p_idx as usize].looked_cards.len(),
-        0,
-        "Should NOT have cards in looked_cards if cost was skipped"
-    );
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.players[p_idx].looked_cards.len(), 0);
+    assert_eq!(state.players[p_idx].hand.len(), 1);
+    assert_eq!(state.players[p_idx].discard.len(), 5);
 }

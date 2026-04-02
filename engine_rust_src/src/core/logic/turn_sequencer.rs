@@ -52,7 +52,8 @@ use std::time::{Duration, Instant};
 use crate::core::enums::Phase;
 use crate::core::logic::constants::*;
 use crate::core::logic::{CardDatabase, GameState};
-use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET, ACTION_BASE_PASS};
+use crate::core::{ACTION_BASE_HAND, ACTION_BASE_LIVESET};
+use crate::core::logic::constants::ACTION_BASE_PASS;
 use std::ops::BitXor;
 
 // ═════════════════════════════════════════════════════════════════════════════

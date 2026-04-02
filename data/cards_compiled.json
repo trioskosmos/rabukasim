@@ -45646,7 +45646,9 @@
                 "dest_discard": 1
               },
               "target": 4,
-              "params": {},
+              "params": {
+                "choose_count": 1
+              },
               "is_optional": false
             }
           ],
@@ -49525,7 +49527,9 @@
                 "reveal": 1
               },
               "target": 6,
-              "params": {},
+              "params": {
+                "choose_count": 3
+              },
               "is_optional": false
             }
           ],
@@ -49596,7 +49600,9 @@
                 "reveal": 1
               },
               "target": 6,
-              "params": {},
+              "params": {
+                "choose_count": 3
+              },
               "is_optional": false
             }
           ],
@@ -49667,7 +49673,9 @@
                 "reveal": 1
               },
               "target": 6,
-              "params": {},
+              "params": {
+                "choose_count": 3
+              },
               "is_optional": false
             }
           ],
@@ -49738,7 +49746,9 @@
                 "reveal": 1
               },
               "target": 6,
-              "params": {},
+              "params": {
+                "choose_count": 3
+              },
               "is_optional": false
             }
           ],
@@ -61638,7 +61648,9 @@
                 "reveal": 1
               },
               "target": 4,
-              "params": {},
+              "params": {
+                "choose_count": 1
+              },
               "is_optional": false
             }
           ],
@@ -61717,7 +61729,9 @@
                 "reveal": 1
               },
               "target": 4,
-              "params": {},
+              "params": {
+                "choose_count": 1
+              },
               "is_optional": false
             }
           ],
@@ -94392,7 +94406,7 @@
     "version": "1.0",
     "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards.json",
     "ability_source": "data/ability_frame_index.yaml",
-    "source_note": "Derived from cards.json plus the authored frame source. For ability-logic fixes, edit data/consolidated_abilities.json / data/ability_frame_index.yaml, then rebuild.",
-    "execution_model": "frame_program_only"
+    "source_note": "Derived from cards.json plus authored ability sources. Runtime exports ship semantic effects/conditions/costs; Rust rebuilds executable frames from authored sparse data and semantic fallbacks.",
+    "execution_model": "semantic_runtime_export"
   }
 }

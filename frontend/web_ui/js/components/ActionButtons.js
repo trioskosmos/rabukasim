@@ -3,20 +3,19 @@ import { State } from '../state.js';
 import * as i18n from '../i18n/index.js';
 import { Tooltips } from '../ui_tooltips.js';
 import { Phase } from '../constants.js';
+import { getActionCategory, getActionMeta, getActionName, getActionValue, getDisplayCardId } from '../interaction_meta.js';
 
 export const ActionButtons = {
     getActionLabel: (a, isMini = false, state) => {
         const currentLang = State.currentLang;
+        const meta = getActionMeta(a);
         const sourceCard = a.source_card_id !== undefined ? Tooltips.findCardById(a.source_card_id) : null;
-        const displayCardId = a.card_id !== undefined ? a.card_id : a.source_card_id;
+        const displayCardId = getDisplayCardId(a);
         const displayCard = displayCardId !== undefined ? Tooltips.findCardById(displayCardId) : sourceCard;
 
         if (a.id === 0 && state.pending_choice) {
-            // If backend provided a descriptive name (like "【スキップ】..."), use it.
-            // Otherwise fallback to generic i18n keys.
-            const descriptiveName = a.metadata?.name ?? a.name;
+            const descriptiveName = getActionName(a);
             if (descriptiveName && (descriptiveName.includes('【') || descriptiveName.includes('['))) {
-                // Proceed to normal labeling
             } else {
                 if (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) {
                     return i18n.t('done');
@@ -29,8 +28,9 @@ export const ActionButtons = {
 
         let cost = a.metadata?.cost ?? a.cost ?? a.base_cost ?? null;
         const isBaton = (a.name && (a.name.includes('Baton') || a.name.includes('バトン')));
-        let name = a.metadata?.name ?? a.name ?? "";
-        const isChoiceAction = a.metadata?.category === 'CHOICE' || a.type === 'CHOICE';
+        let name = getActionName(a);
+        const actionCategory = getActionCategory(a);
+        const isChoiceAction = actionCategory === 'CHOICE';
 
         if (name.match(/^Action\s+30\d$/) && a.metadata?.category !== 'ABILITY') {
             const liveIdx = parseInt(name.replace("Action 30", ""), 10);
@@ -41,20 +41,17 @@ export const ActionButtons = {
             }
         }
 
-        // REMOVED: Aggressive cleaning here毀損 descriptive labels like 【起動】
-        // name = StringUtils.cleanCardName(name);
-
         if (!name || name.startsWith('Action ')) {
-            if (a.id >= 580 && a.id < 590) {
-                const colorIdx = a.id - 580;
+            if (actionCategory === 'COLOR_SELECT' || actionCategory === 'CHOICE' && getActionValue(a, 'target_zone') === 'color') {
+                const colorIdx = getActionValue(a, 'choice_idx');
                 const colorKeys = ['PINK', 'RED', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE'];
                 if (colorIdx < colorKeys.length) {
                     const colorKey = colorKeys[colorIdx];
                     const trans = i18n.getCurrentTranslations();
                     name = trans?.params?.COLOR?.[colorKey] || colorKey;
                 }
-            } else if (a.id >= 500 && a.id < 510) {
-                const modeIdx = a.id - 500;
+            } else if (actionCategory === 'SELECT_MODE' || actionCategory === 'CHOICE' && state.pending_choice?.options) {
+                const modeIdx = getActionValue(a, 'choice_idx');
                 const pc = state.pending_choice;
                 if (pc && pc.options) {
                     const opt = pc.options[modeIdx];
@@ -68,8 +65,8 @@ export const ActionButtons = {
                 if (!name) {
                     name = i18n.t('mode_n', { n: modeIdx });
                 }
-            } else if (a.id >= 600 && a.id <= 602) {
-                const slotIdx = a.id - 600;
+            } else if (actionCategory === 'SELECT_STAGE') {
+                const slotIdx = getActionValue(a, 'slot_idx', 'area_idx', 'target_index');
                 const trans = i18n.getCurrentTranslations();
                 name = trans?.params?.AREA?.[slotIdx] || i18n.t('slot_n', { n: slotIdx });
             }
@@ -85,10 +82,10 @@ export const ActionButtons = {
             return Tooltips.enrichAbilityText(label);
         } else {
             let displayName = name;
-            if (a.metadata?.secondary_slot_idx !== undefined && a.metadata?.areas_desc) {
+            if (meta.secondary_slot_idx !== undefined && meta.areas_desc) {
                 displayName = (currentLang === 'jp')
-                    ? a.metadata.areas_desc.replace(' & ', '＆')
-                    : a.metadata.areas_desc;
+                    ? meta.areas_desc.replace(' & ', '＆')
+                    : meta.areas_desc;
             }
 
             const category = a.category || a.type;

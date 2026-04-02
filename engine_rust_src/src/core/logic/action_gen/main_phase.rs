@@ -1,8 +1,10 @@
 use crate::core::enums::*;
+use crate::core::generated_constants::*;
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
 use crate::core::logic::interpreter::costs::check_frame_cost;
 use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState, MemberCard};
+use crate::core::types::{MAX_HAND_SIZE, STAGE_SLOT_COUNT};
 
 pub struct MainPhaseGenerator;
 
@@ -67,8 +69,8 @@ fn ability_costs_payable(
 
     // 3. Check frame-based choice preconditions that must be available before activation.
     for frame in frames.iter() {
-        if frame.opcode == crate::core::generated_constants::O_LOOK_AND_CHOOSE {
-            let is_cost = frame.is_cost;
+        if frame.opcode() == crate::core::generated_constants::O_LOOK_AND_CHOOSE {
+            let is_cost = frame.is_cost();
             if is_cost {
                 continue;
             }
@@ -139,12 +141,12 @@ impl ActionGenerator for MainPhaseGenerator {
             player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
 
         // Pre-calculate stage slot costs, data, and restrictions (CRITICAL OPTIMIZATION)
-        let mut slot_costs = [0; 3];
-        let mut stage_data = [None; 3];
-        let mut slot_prevents_baton_touch = [false; 3];
-        let mut has_empty_slots = [false; 3];
+        let mut slot_costs = [0; STAGE_SLOT_COUNT];
+        let mut stage_data = [None; STAGE_SLOT_COUNT];
+        let mut slot_prevents_baton_touch = [false; STAGE_SLOT_COUNT];
+        let mut has_empty_slots = [false; STAGE_SLOT_COUNT];
         
-        for s in 0..3 {
+        for s in 0..STAGE_SLOT_COUNT {
             if player.stage[s] >= 0 {
                 if let Some(prev) = db.get_member(player.stage[s]) {
                     slot_costs[s] = prev.cost as i32;
@@ -160,14 +162,14 @@ impl ActionGenerator for MainPhaseGenerator {
         // 1. Play Member from Hand
         for (hand_idx, &cid) in player.hand.iter().enumerate() {
             let i = hand_idx as i32;
-            if i >= 60 {
+            if i >= MAX_HAND_SIZE as i32 {
                 break;
             } // Safety cap
 
             if let Some(card) = db.get_member(cid) {
                 let base_cost = (card.cost as i32 - player.cost_reduction as i32).max(0);
 
-                for slot_idx in 0..3 {
+                for slot_idx in 0..STAGE_SLOT_COUNT {
                     if player.is_moved(slot_idx) {
                         continue;
                     }
@@ -247,7 +249,7 @@ impl ActionGenerator for MainPhaseGenerator {
                             continue;
                         }
 
-                        for other_slot in 0..3 {
+                        for other_slot in 0..STAGE_SLOT_COUNT {
                             if other_slot == slot_idx {
                                 continue;
                             }
@@ -265,7 +267,7 @@ impl ActionGenerator for MainPhaseGenerator {
                             let combined_cost =
                                 (base_cost - slot_costs[slot_idx] - slot_costs[other_slot]).max(0);
                             if combined_cost <= available_energy {
-                                let is_next = other_slot == (slot_idx + 1) % 3;
+                                let is_next = other_slot == (slot_idx + 1) % STAGE_SLOT_COUNT;
                                 let combo_idx = slot_idx * 2 + (if is_next { 1 } else { 0 });
                                 let aid = crate::core::logic::ACTION_BASE_HAND
                                     + (i * 10)
@@ -281,7 +283,7 @@ impl ActionGenerator for MainPhaseGenerator {
 
         // 2. Activate Stage Ability
         if abilities_enabled && player.prevent_activate() == 0 {
-            for slot_idx in 0..3 {
+            for slot_idx in 0..STAGE_SLOT_COUNT {
                 let cid = player.stage[slot_idx];
                 if cid >= 0 {
                     if let Some(card) = stage_data[slot_idx] {
@@ -337,7 +339,7 @@ impl ActionGenerator for MainPhaseGenerator {
         if abilities_enabled && player.prevent_activate() == 0 {
             for (hand_idx, &cid) in player.hand.iter().enumerate() {
                 let i = hand_idx as i32;
-                if i >= 60 {
+                if i >= MAX_HAND_SIZE as i32 {
                     break;
                 }
 

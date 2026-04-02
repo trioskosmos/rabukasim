@@ -92,7 +92,7 @@ pub struct AbilityFrameComponents<'a> {
 impl<'a> AbilityFrameComponents<'a> {
     /// Resolve which player this frame targets based on the structured slot data.
     pub fn target_player_index(&self, controller_idx: usize) -> usize {
-        if self.slot.is_opponent {
+        if self.slot.is_opponent || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
             1 - controller_idx
         } else {
             controller_idx
@@ -413,6 +413,28 @@ impl AbilityFrame {
         }
     }
 
+    fn extract_u8_from_text(text: &str, keys: &[&str]) -> Option<u8> {
+        let lower = text.to_ascii_lowercase();
+        for key in keys {
+            if let Some(pos) = lower.find(key) {
+                let mut digits = String::new();
+                for ch in lower[pos + key.len()..].chars() {
+                    if ch.is_ascii_digit() {
+                        digits.push(ch);
+                    } else if digits.is_empty() && (ch == ' ' || ch == '=' || ch == ':') {
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                if let Ok(value) = digits.parse::<u8>() {
+                    return Some(value);
+                }
+            }
+        }
+        None
+    }
+
     fn first_field<'a>(value: &'a Value, keys: &[&str]) -> Option<&'a Value> {
         keys.iter().find_map(|key| value.get(*key))
     }
@@ -478,8 +500,8 @@ impl AbilityFrame {
             }
         }
 
-        let opcode_name = Self::first_str(payload, &["opcode_name", "op"])
-            .or_else(|| Self::first_str(frame, &["opcode_name", "op"]))
+        let opcode_name = Self::first_str(payload, &["opcode_name", "opcode", "op"])
+            .or_else(|| Self::first_str(frame, &["opcode_name", "opcode", "op"]))
             .unwrap_or("");
         let opcode_id = Self::first_i64(payload, &["opcode_id", "opcode", "op"])
             .or_else(|| Self::first_i64(frame, &["opcode_id", "opcode"]))
@@ -515,11 +537,13 @@ impl AbilityFrame {
         } else {
             params
         };
-        let filter = CardFilter::from_frame_json(payload, &options, &params);
-        let slot = payload
+        let mut filter = CardFilter::from_frame_json(payload, &options, &params);
+        let slot_value = payload
             .get("slot")
             .or_else(|| frame.get("slot"))
-            .cloned()
+            .cloned();
+        let slot = slot_value
+            .clone()
             .and_then(|value| serde_json::from_value::<DecodedSlot>(value).ok())
             .unwrap_or_default();
         let is_negated = payload
@@ -530,10 +554,78 @@ impl AbilityFrame {
             .unwrap_or(false);
         let recover_params = params.clone();
         let mut slot = slot;
+        if let Some(slot_obj) = slot_value.as_ref().and_then(Value::as_object) {
+            if let Some(target_slot) = slot_obj.get("target_slot").and_then(Value::as_u64) {
+                slot.target_slot = target_slot as u8;
+            }
+            if let Some(comparison) = slot_obj.get("comparison").and_then(Value::as_u64) {
+                slot.comparison = comparison as u8;
+            }
+            if let Some(source_zone) = slot_obj
+                .get("source_zone")
+                .and_then(Value::as_str)
+                .and_then(Self::zone_from_text)
+            {
+                slot.source_zone = source_zone;
+            }
+            if let Some(dest_zone) = slot_obj
+                .get("dest_zone")
+                .and_then(Value::as_str)
+                .and_then(Self::zone_from_text)
+            {
+                slot.dest_zone = dest_zone;
+            }
+            if let Some(remainder_zone) = slot_obj.get("remainder_zone").and_then(Value::as_u64) {
+                slot.remainder_zone = remainder_zone as u8;
+            }
+            if let Some(area_idx) = slot_obj.get("area_idx").and_then(Value::as_u64) {
+                slot.area_idx = area_idx as u8;
+            }
+            if let Some(is_opponent) = slot_obj.get("is_opponent") {
+                slot.is_opponent = is_opponent.as_bool().unwrap_or_else(|| {
+                    is_opponent.as_i64().map(|value| value != 0).unwrap_or(false)
+                });
+            }
+            if let Some(is_reveal_until_live) = slot_obj.get("is_reveal_until_live") {
+                slot.is_reveal_until_live = is_reveal_until_live.as_bool().unwrap_or_else(|| {
+                    is_reveal_until_live
+                        .as_i64()
+                        .map(|value| value != 0)
+                        .unwrap_or(false)
+                });
+            }
+            if let Some(is_baton_slot) = slot_obj.get("is_baton_slot") {
+                slot.is_baton_slot = is_baton_slot.as_bool().unwrap_or_else(|| {
+                    is_baton_slot.as_i64().map(|value| value != 0).unwrap_or(false)
+                });
+            }
+            if let Some(is_empty_slot) = slot_obj.get("is_empty_slot") {
+                slot.is_empty_slot = is_empty_slot.as_bool().unwrap_or_else(|| {
+                    is_empty_slot.as_i64().map(|value| value != 0).unwrap_or(false)
+                });
+            }
+            if let Some(is_wait) = slot_obj.get("is_wait") {
+                slot.is_wait = is_wait.as_bool().unwrap_or_else(|| {
+                    is_wait.as_i64().map(|value| value != 0).unwrap_or(false)
+                });
+            }
+            if let Some(is_dynamic) = slot_obj.get("is_dynamic") {
+                slot.is_dynamic = is_dynamic.as_bool().unwrap_or_else(|| {
+                    is_dynamic.as_i64().map(|value| value != 0).unwrap_or(false)
+                });
+            }
+        }
         if let Some(options_slot) = options.get("slot") {
             if let Ok(decoded_slot) = serde_json::from_value::<DecodedSlot>(options_slot.clone()) {
                 slot = decoded_slot;
             }
+        }
+        if filter.target_player == 0 {
+            filter.target_player = if slot.is_opponent {
+                TARGET_PLAYER_OPPONENT as u8
+            } else {
+                TARGET_PLAYER_SELF as u8
+            };
         }
         if let Some(params_obj) = params.as_object() {
             let from_zone = params_obj
@@ -634,8 +726,16 @@ impl AbilityFrame {
             ),
             "LOOK_AND_CHOOSE" => {
                 // Read individual LAC fields if present; fall back to packed `value`.
+                let decoded_text = Self::first_str(payload, &["decoded"])
+                    .or_else(|| Self::first_str(frame, &["decoded"]))
+                    .unwrap_or("");
+                let summary_text = Self::first_str(payload, &["summary"])
+                    .or_else(|| Self::first_str(frame, &["summary"]))
+                    .unwrap_or("");
                 let lac_count = payload.get("count").and_then(|v| v.as_i64())
                     .or_else(|| payload.get("value").and_then(|v| v.get("count")).and_then(|v| v.as_i64()))
+                    .or_else(|| Self::extract_u8_from_text(decoded_text, &["look=", "look_count=", "count="]).map(|v| v as i64))
+                    .or_else(|| Self::extract_u8_from_text(summary_text, &["look at ", "look ", "count="]).map(|v| v as i64))
                     .unwrap_or(value as i64) as u8;
                 let lac_choose = payload.get("choose_count").and_then(|v| v.as_i64())
                     .unwrap_or(0) as u8;

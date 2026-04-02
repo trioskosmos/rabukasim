@@ -1,5 +1,6 @@
 import { State } from '../state.js';
 import { Tooltips } from '../ui_tooltips.js';
+import { getActionMeta, getActionTargetElementIds, getActionValue, getPlayerPrefix, zoneElementId } from '../interaction_meta.js';
 
 export const Highlighter = {
     addHighlight: (idOrEl, className) => {
@@ -40,152 +41,38 @@ export const Highlighter = {
         const perspectivePlayer = State.perspectivePlayer;
         const actingPlayer = state.current_player ?? state.active_player;
         const selfPrefix = (actingPlayer === perspectivePlayer ? 'my' : 'opp');
-        const oppPrefix = (actingPlayer === perspectivePlayer ? 'opp' : 'my');
-
-        const getPlayerPrefix = (targetId) => {
-            if (targetId === undefined) return selfPrefix;
-            return (targetId === perspectivePlayer ? 'my' : 'opp');
-        };
-
-        const m = a.metadata || {};
-        const targetPlayer = m.target_player;
-        const targetPrefix = getPlayerPrefix(targetPlayer);
+        const meta = getActionMeta(a);
+        const sourceZone = getActionValue(a, 'source_zone');
+        const sourceIndex = getActionValue(a, 'source_index', 'hand_idx', 'slot_idx', 'area_idx', 'energy_idx', 'selection_index');
+        const targetZone = getActionValue(a, 'target_zone');
+        const targetIndex = getActionValue(a, 'target_index', 'selection_index', 'hand_idx', 'slot_idx', 'area_idx', 'energy_idx');
+        const sourcePlayer = getActionValue(a, 'source_player');
+        const targetPlayer = getActionValue(a, 'target_player');
 
         let specificHighlighted = false;
 
-        if (a.type === 'PLAY' || (a.id >= 1000 && a.id <= 1599)) {
-            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 1000 && a.id <= 1599 ? Math.floor((a.id - 1000) / 10) : undefined);
-            const sIdx = a.area_idx !== undefined ? a.area_idx : (a.id >= 1000 && a.id <= 1599 ? (a.id - 1000) % 10 : undefined);
-            if (hIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
-                specificHighlighted = true;
-            }
-            if (sIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'LIVE_SET' || (a.id >= 400 && a.id <= 459)) {
-            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 400 && a.id <= 459 ? a.id - 400 : undefined);
-            if (hIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
-                specificHighlighted = true;
-            }
-            Highlighter.addHighlight(`${selfPrefix}-live`, 'highlight-target');
+        const sourcePrefix = getPlayerPrefix(sourcePlayer, perspectivePlayer, selfPrefix);
+        const targetPrefix = getPlayerPrefix(targetPlayer, perspectivePlayer, selfPrefix);
+
+        const sourceEl = zoneElementId(sourcePrefix, sourceZone, sourceIndex);
+        if (sourceEl) {
+            Highlighter.addHighlight(sourceEl, 'highlight-source');
             specificHighlighted = true;
-        } else if (a.type === 'ABILITY' || m.category === 'ABILITY' || (a.id >= 8300 && a.id <= 8599) || (a.id >= 1600 && a.id <= 2199) || (a.id >= 9300 && a.id <= 9999)) {
-            if (a.location === 'discard' || m.location === 'discard' || (a.id >= 9300 && a.id <= 9999)) {
-                Highlighter.addHighlight(`${selfPrefix}-discard`, 'highlight-source');
-                specificHighlighted = true;
-            } else if (a.id >= 8300 && a.id <= 8599) {
-                const sIdx = Math.floor((a.id - 8300) / 100);
-                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-source');
-                specificHighlighted = true;
-            } else if (a.id >= 1600 && a.id <= 2199) {
-                const hIdx = Math.floor((a.id - 1600) / 10);
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-source');
-                specificHighlighted = true;
-            } else if (a.area_idx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${a.area_idx}`, 'highlight-source');
-                specificHighlighted = true;
-            } else if (a.slot_idx !== undefined) {
-                Highlighter.addHighlight(`${targetPrefix}-stage-slot-${a.slot_idx}`, 'highlight-source');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'CHOICE' || (a.id >= 2200 && a.id <= 2799) || (a.id >= 8600 && a.id <= 8899)) {
-            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 2200 && a.id <= 2799 ? Math.floor((a.id - 2200) / 10) : undefined);
-            const sIdx = a.area_idx !== undefined ? a.area_idx : a.slot_idx !== undefined ? a.slot_idx : (a.id >= 8600 && a.id <= 8899 ? Math.floor((a.id - 8600) / 100) : undefined);
-            if (hIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-target');
-                specificHighlighted = true;
-            } else if (sIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-stage-slot-${sIdx}`, 'highlight-target');
-                specificHighlighted = true;
-            } else if (a.index !== undefined || a.id !== undefined) {
-                Highlighter.addHighlight(`select-list-item-${a.index ?? a.id}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'MULLIGAN' || (a.id >= 300 && a.id <= 359)) {
-            const hIdx = a.hand_idx !== undefined ? a.hand_idx : (a.id >= 300 && a.id <= 359 ? a.id - 300 : undefined);
-            if (hIdx !== undefined) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${hIdx}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'SELECT_HAND' || (a.id >= 100 && a.id <= 159) || (a.id >= 500 && a.id <= 559) || (a.id >= 8200 && a.id <= 8259)) {
-            let hIdx = a.hand_idx ?? m.hand_idx;
-            if (hIdx === undefined) {
-                if (a.id >= 100 && a.id <= 159) hIdx = a.id - 100;
-                else if (a.id >= 500 && a.id <= 559) hIdx = a.id - 500;
-                else if (a.id >= 8200 && a.id <= 8259) hIdx = a.id - 8200;
-            }
-            if (hIdx !== undefined) {
-                const id = `${targetPrefix}-hand-card-${hIdx}`;
-                Highlighter.addHighlight(id, 'highlight-source');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'SELECT_STAGE' || (a.id >= 600 && a.id <= 602)) {
-            const idx = a.slot_idx ?? a.area_idx ?? m.slot_idx ?? (a.id >= 600 && a.id <= 602 ? a.id - 600 : undefined);
-            if (idx !== undefined) {
-                Highlighter.addHighlight(`${targetPrefix}-stage-slot-${idx}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.type === 'SELECT_LIVE' || (a.id >= 900 && a.id <= 929)) {
-            const idx = a.area_idx ?? a.slot_idx ?? (a.id >= 900 && a.id <= 929 ? a.id - 900 : undefined);
-            if (idx !== undefined) {
-                Highlighter.addHighlight(`${targetPrefix}-live-slot-${idx}`, 'highlight-target');
-                specificHighlighted = true;
-            }
-        } else if (a.id >= 10000 && a.id <= 10999) {
-            Highlighter.addHighlight(`${selfPrefix}-energy-slot-${a.id - 10000}`, 'highlight-target');
+        }
+
+        const targetEl = zoneElementId(targetPrefix, targetZone, targetIndex);
+        if (targetEl) {
+            Highlighter.addHighlight(targetEl, 'highlight-target');
+            specificHighlighted = true;
+        }
+
+        if (!specificHighlighted && meta.location === 'discard') {
+            Highlighter.addHighlight(`${sourcePrefix}-discard-visual`, 'highlight-source');
             specificHighlighted = true;
         }
 
         if (!specificHighlighted) {
-            const aid = a.id;
-            if (aid >= 600 && aid < 610) {
-                const liveIdx = aid - 600;
-                if (state.phase === 'LiveResult' || a.type === 'LIVE_PERFORM' || (a.metadata && a.metadata.category === 'LIVE')) {
-                    Highlighter.addHighlight(`${selfPrefix}-live-slot-${liveIdx}`, 'highlight-target');
-                } else {
-                    Highlighter.addHighlight(`${oppPrefix}-stage-slot-${liveIdx}`, 'highlight-target');
-                }
-                specificHighlighted = true;
-            } else if (a.type === 'SELECT_DISCARD' || (a.metadata && (a.metadata.from_discard || a.metadata.category === 'DISCARD'))) {
-                Highlighter.addHighlight(`${selfPrefix}-discard-visual`, 'highlight-target');
-                specificHighlighted = true;
-            } else if (aid >= 300 && aid <= 399) {
-                if (state.phase && state.phase.includes('Mulligan')) {
-                    Highlighter.addHighlight(`${selfPrefix}-hand-card-${aid - 300}`, 'highlight-target');
-                    specificHighlighted = true;
-                }
-            } else if (aid >= 400 && aid <= 499) {
-                Highlighter.addHighlight(`${selfPrefix}-hand-card-${aid - 400}`, 'highlight-source');
-                Highlighter.addHighlight(`${selfPrefix}-live`, 'highlight-target');
-                specificHighlighted = true;
-            } else if (aid >= 500 && aid <= 509) {
-                // Do nothing
-            } else if (aid >= 8000 && aid <= 8999) {
-                // Do nothing
-            } else {
-                const slotIdx = a.slot_idx !== undefined ? a.slot_idx : (a.index !== undefined ? a.index : a.choice_idx);
-                if (slotIdx !== undefined && slotIdx !== -1) {
-                    if (a.type === 'SELECT_LIVE' || (a.id >= 900 && a.id <= 902)) {
-                        Highlighter.addHighlight(`${selfPrefix}-live-slot-${slotIdx}`, 'highlight-target');
-                    } else {
-                        Highlighter.addHighlight(`${selfPrefix}-stage-slot-${slotIdx}`, 'highlight-target');
-                    }
-                }
-                if (a.hand_idx !== undefined && a.hand_idx !== -1) {
-                    Highlighter.addHighlight(`${selfPrefix}-hand-card-${a.hand_idx}`, 'highlight-target');
-                }
-                if (a.area_idx !== undefined && a.area_idx !== -1) {
-                    const id = a.type === 'LIVE_SET' ? `${selfPrefix}-live-slot-${a.area_idx}` : `${selfPrefix}-stage-slot-${a.area_idx}`;
-                    Highlighter.addHighlight(id, 'highlight-target');
-                }
-            }
-        }
-
-        if (!specificHighlighted) {
-            let srcCardId = a.source_card_id;
+            let srcCardId = getActionValue(a, 'source_card_id');
             if ((srcCardId === undefined || srcCardId === -1) && state.pending_choice) {
                 srcCardId = state.pending_choice.source_card_id || state.pending_choice.card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
             }
@@ -206,9 +93,9 @@ export const Highlighter = {
 
         let found = false;
         const perspectivePlayer = State.perspectivePlayer;
-        const selfPrefix = (state.active_player === perspectivePlayer ? 'my' : 'opp');
+        const selfPrefix = getPlayerPrefix(choice.source_player, perspectivePlayer, (state.active_player === perspectivePlayer ? 'my' : 'opp'));
 
-        const area = choice.area !== undefined ? choice.area : (choice.params ? choice.params.area : undefined);
+        const area = choice.source_area !== undefined ? choice.source_area : (choice.area !== undefined ? choice.area : (choice.params ? choice.params.area : undefined));
         if (area !== undefined) {
             Highlighter.addHighlight(`${selfPrefix}-stage-slot-${area}`, 'highlight-source');
             found = true;
@@ -294,37 +181,8 @@ export const Highlighter = {
         const handIdx = index;
 
         state.legal_actions.forEach(a => {
-            if (source === 'hand') {
-                if (a.hand_idx === handIdx) {
-                    if (a.type === 'PLAY' || a.type === 'FORMATION') {
-                        if (a.area_idx !== undefined) validTargets.add(`my-stage-slot-${a.area_idx}`);
-                        if (a.slot_idx !== undefined) validTargets.add(`my-stage-slot-${a.slot_idx}`);
-                    }
-                    if (a.type === 'LIVE_SET') {
-                        if (a.slot_idx !== undefined) {
-                            validTargets.add(`my-live-slot-${a.slot_idx}`);
-                        } else {
-                            for (let i = 0; i < 3; i++) validTargets.add(`my-live-slot-${i}`);
-                        }
-                    }
-                }
-                if ((a.hand_idx === handIdx || a.index === handIdx) &&
-                    (a.type === 'SELECT_HAND' || (a.name && a.name.includes('Discard')))) {
-                    validTargets.add('my-discard-visual');
-                }
-                if (a.hand_idx === handIdx && a.id >= 600 && a.id <= 602) {
-                    validTargets.add(`opp-stage-slot-${a.id - 600}`);
-                }
-            } else if (source === 'stage') {
-                const sourceSlot = index;
-                if (a.id >= 600 && a.id <= 602) {
-                    validTargets.add(`opp-stage-slot-${a.id - 600}`);
-                }
-                if ((a.type === 'FORMATION' || a.type === 'MOVE') &&
-                    (a.source_idx === sourceSlot || a.prev_idx === sourceSlot)) {
-                    if (a.area_idx !== undefined) validTargets.add(`my-stage-slot-${a.area_idx}`);
-                    if (a.slot_idx !== undefined) validTargets.add(`my-stage-slot-${a.slot_idx}`);
-                }
+            if (source === 'hand' || source === 'stage') {
+                getActionTargetElementIds(a, source, index).forEach(id => validTargets.add(id));
             } else if (source === 'discard') {
                 if (a.discard_idx === index || a.index === index) {
                     if (a.type === 'SELECT_DISCARD' || a.type === 'SELECT_CARD') {

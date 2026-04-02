@@ -1,3 +1,4 @@
+use crate::core::*;
 
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -78,8 +79,8 @@ pub fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Opt
 
     let has_structured_branching = ability.frames().iter().any(|frame| {
         let opcode = frame.opcode();
-        opcode == crate::core::enums::O_JUMP_IF_FALSE
-            || opcode == crate::core::enums::O_JUMP
+        opcode == O_JUMP_IF_FALSE
+            || opcode == O_JUMP
             || crate::core::logic::interpreter::is_condition_opcode(opcode)
     });
     if has_structured_branching {
@@ -117,10 +118,10 @@ pub fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u
             if let Some(program) = &ability.frame_program {
                 for frame in &program.frames {
                     match frame.opcode() {
-                        crate::core::enums::O_TAP_MEMBER | crate::core::enums::O_MOVE_MEMBER => {
+                        O_TAP_MEMBER | O_MOVE_MEMBER => {
                             saw_tap_member = true
                         }
-                        crate::core::enums::O_TAP_OPPONENT if saw_tap_member => return true,
+                        O_TAP_OPPONENT if saw_tap_member => return true,
                         _ => {}
                     }
                 }

@@ -1134,15 +1134,20 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                                     for &id in &action_ids {
                                         if (id as usize) < 22000 {
                                             let logit = p_slice[id as usize];
-                                            let (desc, _, _, _, _) = get_action_desc_rich(
+                                            let (desc, _, _, _, meta) = get_action_desc_rich(
                                                 id,
                                                 &new_state,
                                                 &state.card_db,
                                                 new_state.current_player as usize,
                                                 "en"
                                             );
+                                            let action_kind = meta
+                                                .get("action_kind")
+                                                .cloned()
+                                                .unwrap_or_else(|| json!("Unknown"));
                                             action_results.push(json!({
                                                 "id": id,
+                                                "kind": action_kind,
                                                 "desc": desc,
                                                 "logit": logit
                                             }));

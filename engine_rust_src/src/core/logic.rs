@@ -1,7 +1,11 @@
+// Ability system entry point.
+// Runtime execution is frame-first in Rust, with semantic/effect data loaded
+// from compiled JSON and legacy bytecode/interpreter compatibility still present
+// in some tests and fallback paths.
+
 pub mod ability_patterns;
 pub mod action_factory;
 pub mod action_gen;
-pub mod ability_manifest;
 pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;
@@ -10,7 +14,6 @@ pub mod effects;
 pub mod execution;
 pub mod filter;
 pub mod filter_attr_compat;
-pub mod filter_bench;
 pub mod game;
 mod game_action_processor;
 mod game_logging;
@@ -34,8 +37,8 @@ pub mod turn_sequencer;
 pub use constants::*;
 
 // Re-export core structures
-pub use action_factory::ActionFactory;
 pub use card_db::{CardDatabase, LiveCard, MemberCard, LOGIC_ID_MASK};
+pub use action_factory::ActionFactory;
 pub use handlers::{
     MainPhaseController, MulliganController, ResponseController, TurnController,
     TurnPhaseController,
@@ -43,24 +46,16 @@ pub use handlers::{
 pub use player::PlayerState;
 pub use standard_state::StandardizedState;
 pub use state::{ActionReceiver, CoreGameState, DebugState, GameState, UIState};
-
-// Re-export models
 pub use models::{
-    Ability, AbilityContext, AbilityFrame, Condition, Cost, DeckStats, Effect, EnergyCard,
-    FrameProgram, PendingInteraction, TurnEvent,
+    Ability, AbilityContext, PendingInteraction, Effect, AbilityFrame, Condition, Cost,
+    DeckStats, EnergyCard, FrameProgram,
 };
+pub use interpreter::suspension::suspend_interaction;
 
 // Re-export enums and constants
 pub use crate::core::enums::*;
 pub use crate::core::hearts::HeartBoard;
 
 // Heuristic utility re-exports
-pub use interpreter::conditions::{check_condition, check_condition_opcode};
-pub use interpreter::costs::{check_cost, pay_cost};
-pub use interpreter::suspension::suspend_interaction;
-pub use interpreter::{check_once_per_turn, consume_once_per_turn, process_trigger_queue};
 pub use performance::PerformanceResults;
 pub use rules::get_effective_blades;
-
-// Heuristic flags (moved to constants.rs)
-// They are re-exported via 'pub use constants::*;' above

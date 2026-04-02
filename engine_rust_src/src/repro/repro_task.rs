@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use crate::core::*;
     use crate::core::enums::*;
     use crate::core::logic::card_db::CardDatabase;
     use crate::core::logic::game::{ActionReceiver, GameState};

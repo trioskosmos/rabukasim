@@ -3,6 +3,7 @@
 //! This module provides a single, clear dispatch point for all ability opcodes.
 //! Each opcode maps directly to its implementation function without intermediate layers.
 
+use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::models::{AbilityFrame, AbilityFrameComponents};
 use crate::core::logic::interpreter::logging;

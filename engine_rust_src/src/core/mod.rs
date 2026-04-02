@@ -11,6 +11,7 @@ pub mod heuristics;
 pub mod logic;
 pub mod mcts;
 pub mod models;
+pub mod types;
 
 pub use generated_constants::*;
 pub use generated_layout::*;

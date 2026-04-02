@@ -4,8 +4,17 @@ Semantic Frame Processor
 Converts frame_program instructions into semantic effects, conditions, and costs.
 """
 
+import re
+import unicodedata
+
 from ..models.ability import Ability, Effect, Condition, Cost
 from ..models.generated_enums import EffectType, ConditionType, AbilityCostType, TargetType
+
+
+_LOOK_AND_CHOOSE_COUNT_PATTERNS = (
+    re.compile(r"([0-9]+)枚まで"),
+    re.compile(r"choose(?: up to)?\s*([0-9]+)", re.IGNORECASE),
+)
 
 
 def _opcode_to_effect_type(opcode: str) -> EffectType:
@@ -235,6 +244,22 @@ def _determine_target(slot_data: dict) -> TargetType:
     return TargetType.SELF
 
 
+def _infer_look_and_choose_count(ability_text: str) -> int:
+    """Infer LOOK_AND_CHOOSE choose_count from authored card text."""
+    if not ability_text:
+        return 0
+
+    normalized = unicodedata.normalize("NFKC", ability_text)
+    for pattern in _LOOK_AND_CHOOSE_COUNT_PATTERNS:
+        match = pattern.search(normalized)
+        if match:
+            try:
+                return int(match.group(1))
+            except (TypeError, ValueError):
+                return 0
+    return 0
+
+
 def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
     """Populate effects/conditions/costs from frame_program data."""
     for ab in abilities:
@@ -250,6 +275,7 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
         ab.effects = []
         ab.conditions = []
         ab.costs = []
+        ability_text = str(getattr(ab, "raw_text", "") or "")
         
         for frame in instructions:
             data = _extract_frame_data(frame)
@@ -304,10 +330,16 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
             # Handle effects
             eff_type = _opcode_to_effect_type(opcode)
             if eff_type != EffectType.NONE:
+                params = dict(data["params"])
+                if eff_type == EffectType.LOOK_AND_CHOOSE and "choose_count" not in params:
+                    inferred_choose_count = _infer_look_and_choose_count(ability_text)
+                    if inferred_choose_count > 0:
+                        params["choose_count"] = inferred_choose_count
+
                 ab.effects.append(Effect(
                     effect_type=eff_type, value=data["value"],
                     target=_determine_target(data["slot"]),
-                    params=data["params"], is_optional=data["is_optional"]
+                    params=params, is_optional=data["is_optional"]
                 ))
 
 

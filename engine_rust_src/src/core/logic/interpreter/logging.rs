@@ -1,4 +1,5 @@
 use crate::core::enums::ChoiceType;
+use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::DecodedSlot;

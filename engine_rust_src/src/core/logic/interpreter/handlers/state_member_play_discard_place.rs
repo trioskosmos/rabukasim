@@ -19,6 +19,7 @@ pub fn handle_discard_placement(
         return HandlerResult::Continue;
     }
     if ctx.choice_index == CHOICE_DONE {
+        super::clear_discard_play_buffer(state, target_p_idx);
         return HandlerResult::Continue;
     }
 
@@ -61,6 +62,10 @@ pub fn handle_discard_placement(
     } else {
         resolved_slot as usize
     };
+
+    if !super::discard_play_slot_is_legal(&state.players[target_p_idx], slot_idx, s) {
+        return HandlerResult::Continue;
+    }
     
     if state.debug.debug_mode && !state.ui.silent {
         println!("[DEBUG] handle_discard_placement: choice_index={}, resolved_slot={}, slot_idx={}, card_id={}", 
@@ -126,6 +131,8 @@ pub fn handle_discard_placement(
             s,
         );
     }
+
+    super::clear_discard_play_buffer(state, target_p_idx);
 
     HandlerResult::Continue
 }

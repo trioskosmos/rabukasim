@@ -1,5 +1,5 @@
+use crate::core::*;
 use crate::core::enums::*;
-use crate::core::generated_constants::{ACTION_BASE_RPS, ACTION_BASE_RPS_P2};
 use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::{
     ability_patterns::{
@@ -737,9 +737,10 @@ impl ResponseController for GameState {
             DecodedAction::SelectMode { mode_idx }
             | DecodedAction::SelectChoice { choice_idx: mode_idx }
             | DecodedAction::SelectColor { color_idx: mode_idx } => mode_idx,
-            DecodedAction::PlayMember { hand_idx, .. }
-            | DecodedAction::SelectEnergy { energy_idx: hand_idx }
-            | DecodedAction::SelectStageSlot { slot_idx: hand_idx } => hand_idx as i32,
+            DecodedAction::SelectHand { hand_idx } => hand_idx as i32,
+            DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
+            DecodedAction::SelectEnergy { energy_idx } => energy_idx as i32,
+            DecodedAction::SelectStageSlot { slot_idx } => slot_idx as i32,
             _ => -1,
         };
 
@@ -1084,6 +1085,10 @@ impl ResponseController for GameState {
                             || (pending.filter_attr & (1u64 << 50)) != 0;
                         let frame_idx = play_ctx.program_counter as usize;
                         let remaining = play_ctx.v_remaining;
+                        let target_slot_flags = pending.target_slot;
+                        let baton_slot_only = ((target_slot_flags as u64)
+                            & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
+                            != 0;
 
                         let result = crate::core::logic::interpreter::handlers::state::handle_discard_placement(
                             self,
@@ -1091,12 +1096,12 @@ impl ResponseController for GameState {
                             &mut play_ctx,
                             p_idx,
                             pending.filter_attr,
-                            false,
-                            false,
+                            true,
+                            baton_slot_only,
                             is_total_cost,
                             frame_idx,
                             remaining,
-                            stage_slot as i32,
+                            target_slot_flags,
                         );
 
                         if !self.interaction_stack.is_empty() {
@@ -1128,6 +1133,7 @@ impl ResponseController for GameState {
             {
                 // Handle CHOICE_DONE (99) - user wants to skip selecting more cards
                 if choice_idx == crate::core::logic::constants::CHOICE_DONE as i32 {
+                    self.core.players[p_idx].looked_cards.clear();
                     crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
                     return Ok(());
                 }
@@ -1152,6 +1158,14 @@ impl ResponseController for GameState {
                 }
 
                 crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+                let choice_type = if ((pending.target_slot as u64)
+                    & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
+                    != 0
+                {
+                    ChoiceType::SelectStageEmptyBaton
+                } else {
+                    ChoiceType::SelectStageEmpty
+                };
                 crate::core::logic::interpreter::suspension::suspend_interaction(
                     self,
                     db,
@@ -1159,7 +1173,7 @@ impl ResponseController for GameState {
                     play_ctx.program_counter as usize,
                     O_PLAY_MEMBER_FROM_DISCARD,
                     -1,
-                    ChoiceType::SelectStage,
+                    choice_type,
                     &crate::core::models::interpreter::get_choice_text(db, &play_ctx),
                     pending.filter_attr,
                     pending.v_remaining,
@@ -1623,6 +1637,21 @@ impl GameState {
         }
 
         let player = &self.core.players[p_idx];
+        if pending.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD {
+            let prevented = (player.prevent_play_to_slot_mask() & (1 << stage_slot)) != 0;
+            let occupied = player.stage[stage_slot] >= 0;
+            let baton_only = ((pending.target_slot as u64)
+                & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
+                != 0;
+            let baton_ok = !baton_only || player.baton_source_slots.contains(&stage_slot);
+
+            if !prevented && !player.is_moved(stage_slot) && !occupied && baton_ok {
+                return stage_slot;
+            }
+
+            return stage_slot;
+        }
+
         let is_open = |slot_idx: usize| {
             let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
             !prevented && !player.is_moved(slot_idx)
