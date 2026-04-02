@@ -879,6 +879,11 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 state.log("Rule 9.5.4, Rule 9.6.2.4: Executing frame-level instructions for effect resolution.".to_string());
             }
             let _ = resolve_ability(state, db, ability, &ctx);
+            
+            // If the ability suspended for player choice, transition to Response phase
+            if !state.interaction_stack.is_empty() && state.phase != Phase::Response {
+                state.phase = Phase::Response;
+            }
 
             // Fire resolution triggers
             let res_trigger = match _trigger {

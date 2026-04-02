@@ -68,12 +68,9 @@ impl CardRef {
 }
 
 // Consolidated abilities is the single runtime-friendly view of the authored
-// frame data. Keep the legacy frame index only as a fallback so older exports
-// still load, but make the canonical path obvious.
+// frame data. Runtime loading should stay aligned with that canonical artifact.
 const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =
     include_str!("../../../../data/consolidated_abilities.json");
-const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
-    include_str!("../../../../data/ability_frame_index.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -217,27 +214,20 @@ impl CardDatabase {
         let parsed_root = serde_json::from_str::<Value>(json).ok();
         if let Some(root) = parsed_root {
             let mut index = HashMap::new();
-            
-            // Try consolidated abilities format first (object with ability text as keys)
+
             if let Some(abilities_obj) = root.as_object() {
-                eprintln!("[DEBUG_DB] Loading from consolidated abilities format with {} entries", abilities_obj.len());
                 for (_ability_key, ability_data) in abilities_obj {
-                    // Extract frames from the ability data
                     if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
-                        // Create a compact entry with the frames
                         let mut compact_entry = serde_json::Map::new();
-                        
-                        // Copy basic fields
+
                         for key in ["pseudocode", "source_text", "source_text_en", "trigger", "trigger_id"] {
                             if let Some(value) = ability_data.get(key) {
                                 compact_entry.insert(key.to_string(), value.clone());
                             }
                         }
-                        
-                        // Add frames
+
                         compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
-                        
-                        // Process card references
+
                         if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
                             for card_ref in card_refs {
                                 if let Some(card_obj) = card_ref.as_object() {
@@ -253,111 +243,10 @@ impl CardDatabase {
                     }
                 }
             }
-            
-            // If no entries found, try ability frame index format (array under "abilities")
-            if index.is_empty() {
-                if let Some(abilities) = root.get("abilities").and_then(|v| v.as_array()) {
-                    eprintln!("[DEBUG_DB] Loading from ability frame index format with {} entries", abilities.len());
-                    for entry in abilities {
-                        let refs = entry
-                            .get("card_refs")
-                            .and_then(|v| v.as_array())
-                            .or_else(|| entry.get("cards").and_then(|v| v.as_array()));
-                        let Some(cards) = refs else {
-                            continue;
-                        };
-                        let compact_entry = Self::compact_sparse_ability_entry(entry);
-                        for card in cards {
-                            if let Some(card_obj) = card.as_object() {
-                                let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str())
-                                else {
-                                    continue;
-                                };
-                                let Some(ability_index) =
-                                    card_obj.get("ability_index").and_then(|v| v.as_i64())
-                                else {
-                                    continue;
-                                };
-                                let key = format!("{}#{}", card_no, ability_index);
-                                index.insert(key, compact_entry.clone());
-                                continue;
-                            }
 
-                            if let Some(card_str) = card.as_str() {
-                                let Some((card_no_part, tail)) = card_str.split_once(" |") else {
-                                    continue;
-                                };
-                                let Some(ab_marker) = tail.rfind("(ab#") else {
-                                    continue;
-                                };
-                                let ab_fragment = &tail[ab_marker + 4..];
-                                let Some((ability_index_str, _)) = ab_fragment.split_once(' ') else {
-                                    continue;
-                                };
-                                let Some(ability_index) = ability_index_str.parse::<i64>().ok() else {
-                                    continue;
-                                };
-                                let key = format!("{}#{}", card_no_part.trim(), ability_index);
-                                index.insert(key, compact_entry.clone());
-                            }
-                        }
-                    }
-                }
-            }
-            
-            eprintln!("[DEBUG_DB] Loaded {} ability entries from sparse index", index.len());
             return index;
         }
         HashMap::new()
-    }
-
-    fn normalize_legacy_tap_member_ability(ability: &mut Ability) {
-        let has_stale_tap_effect = ability.effects.iter().any(|effect| {
-            effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
-        });
-
-        if !has_stale_tap_effect {
-            return;
-        }
-
-        let opcodes: Vec<i32> = ability.frames().iter().map(AbilityFrame::opcode).collect();
-
-        let mentions_tap =
-            ability.raw_text.contains("TAP_MEMBER") || opcodes.iter().any(|op| *op == O_TAP_MEMBER);
-        let mentions_move = ability.raw_text.contains("MOVE_MEMBER")
-            || opcodes.iter().any(|op| *op == O_MOVE_MEMBER);
-
-        if !mentions_tap || mentions_move {
-            return;
-        }
-
-        for effect in &mut ability.effects {
-            if effect.effect_type == EffectType::TapMember && effect.runtime_opcode == O_MOVE_MEMBER
-            {
-                effect.runtime_opcode = O_TAP_MEMBER;
-            }
-        }
-
-        if let Some(program) = &mut ability.frame_program {
-            for frame in &mut program.frames {
-                if frame.opcode == O_MOVE_MEMBER {
-                    frame.opcode = O_TAP_MEMBER;
-                    frame.value = 0;
-                }
-            }
-        }
-    }
-
-    fn normalize_member_runtime_compatibility(card: &mut MemberCard) {
-        for ability in &mut card.abilities {
-            Self::normalize_legacy_tap_member_ability(ability);
-        }
-    }
-
-    fn normalize_live_runtime_compatibility(card: &mut LiveCard) {
-        for ability in &mut card.abilities {
-            Self::normalize_legacy_tap_member_ability(ability);
-        }
     }
 
     fn derive_conditions_from_frame_program(program: &FrameProgram) -> Vec<Condition> {
@@ -396,8 +285,6 @@ impl CardDatabase {
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
         for path in [
-            "data/ability_frame_index.json",
-            "../data/ability_frame_index.json",
             "data/consolidated_abilities.json",
             "../data/consolidated_abilities.json",
         ] {
@@ -413,11 +300,6 @@ impl CardDatabase {
             Self::load_sparse_ability_index_from_json(EMBEDDED_CONSOLIDATED_ABILITIES_JSON);
         if !consolidated.is_empty() {
             return consolidated;
-        }
-
-        let embedded = Self::load_sparse_ability_index_from_json(EMBEDDED_ABILITY_FRAME_INDEX_JSON);
-        if !embedded.is_empty() {
-            return embedded;
         }
 
         HashMap::new()
@@ -440,268 +322,38 @@ impl CardDatabase {
         aliases
     }
 
-    fn compact_sparse_ability_entry(entry: &Value) -> Value {
-        let mut compact = serde_json::Map::new();
-
-        for key in [
-            "pseudocode",
-            "source_text",
-            "source_text_en",
-            "signature",
-            "signature_hash",
-            "signature_source",
-            "round_trip_matches",
-            "source_words",
-            "trigger_id",
-            "trigger",
-            "frame_count",
-            "opcode_sequence",
-            "opcode_names",
-            "rust_opcode_sequence",
-            "is_once_per_turn",
-            "requires_selection",
-            "choice_flags",
-            "choice_count",
-        ] {
-            if let Some(value) = entry.get(key) {
-                compact.insert(key.to_string(), value.clone());
-            }
-        }
-
-        if let Some(cards) = entry.get("cards").and_then(|v| v.as_array()) {
-            compact.insert(
-                "cards".to_string(),
-                Value::Array(
-                    cards
-                        .iter()
-                        .filter_map(|card| {
-                            card.as_str()
-                                .map(|card_no| Value::String(card_no.to_string()))
-                        })
-                        .collect(),
-                ),
-            );
-        }
-
-        if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
-            compact.insert(
-                "frames".to_string(),
-                Value::Array(frames.iter().map(Self::compact_sparse_frame).collect()),
-            );
-        }
-
-        Value::Object(compact)
-    }
-
-    fn synthesize_sparse_ability_entry(
-        card_no: &str,
-        _ability_index: usize,
-        ability: &Ability,
-    ) -> Value {
-        let mut compact = serde_json::Map::new();
-        compact.insert("trigger".to_string(), Value::from(ability.trigger as i64));
-        compact.insert(
-            "trigger_id".to_string(),
-            Value::from(ability.trigger as i64),
-        );
-        compact.insert(
-            "pseudocode".to_string(),
-            Value::from(if ability.pseudocode.is_empty() {
-                ability.raw_text.clone()
-            } else {
-                ability.pseudocode.clone()
-            }),
-        );
-        compact.insert(
-            "card_refs".to_string(),
-            Value::Array(vec![serde_json::json!({
-                "card_no": card_no,
-                "ability_index": 0,
-            })]),
-        );
-
-        let frame_program_value = if let Some(program) = ability.frame_program.as_ref() {
-            serde_json::to_value(program).unwrap_or_else(|_| Value::Object(serde_json::Map::new()))
-        } else {
-            Value::Object(serde_json::Map::new())
-        };
-        compact.insert("frame_program".to_string(), frame_program_value.clone());
-
-        let source_words = ability.words();
-        compact.insert(
-            "source_words".to_string(),
-            Value::Array(source_words.iter().copied().map(Value::from).collect()),
-        );
-        compact.insert(
-            "frames".to_string(),
-            frame_program_value
-                .get("frames")
-                .cloned()
-                .unwrap_or(Value::Array(vec![])),
-        );
-
-        Value::Object(compact)
-    }
-
-    fn compact_sparse_frame(frame: &Value) -> Value {
-        let mut compact = serde_json::Map::new();
-
-        if let Some(value) = frame.get("op") {
-            compact.insert("op".to_string(), value.clone());
-        }
-
-        for key in [
-            "kind",
-            "opcode_id",
-            "opcode",
-            "rust_opcode",
-            "value",
-            "filter",
-            "slot",
-            "is_negated",
-            "params",
-            "attr",
-            "source_words",
-        ] {
-            if let Some(value) = frame.get(key) {
-                compact.insert(key.to_string(), value.clone());
-            }
-        }
-
-        if !compact.contains_key("opcode") {
-            if let Some(value) = compact.get("op").cloned() {
-                compact.insert("opcode".to_string(), value);
-            }
-        }
-
-        Value::Object(compact)
-    }
-
     fn attach_sparse_ability_index(
         card_no: &str,
         abilities: &mut [Ability],
         index: &HashMap<String, Value>,
         text_index: &HashMap<String, String>,
     ) -> serde_json::Result<()> {
-        static mut EMPTY_BYTECODE_COUNT: usize = 0;
-        static mut TOTAL_ABILITIES_CHECKED: usize = 0;
-        
-        // Debug for Q203
-        if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-            eprintln!("[DEBUG_Q203_DB] attach_sparse_ability_index called for card: {}", card_no);
-            eprintln!("[DEBUG_Q203_DB] Available keys in index: {}", index.len());
-            for (key, _) in index.iter().take(5) {
-                if key.contains("358") {
-                    eprintln!("[DEBUG_Q203_DB] Found key: {}", key);
-                }
-            }
-        }
-        
         for (ability_index, ability) in abilities.iter_mut().enumerate() {
             let key = format!("{}#{}", card_no, ability_index);
-            let entry = index.get(&key).cloned().unwrap_or_else(|| {
-                Self::synthesize_sparse_ability_entry(card_no, ability_index, ability)
-            });
-            
-            // Count abilities with empty bytecode
-            unsafe {
-                TOTAL_ABILITIES_CHECKED += 1;
-                if ability.frames().is_empty() {
-                    EMPTY_BYTECODE_COUNT += 1;
-                    eprintln!("[DEBUG_BYTECODE] Card {} ability {}: EMPTY bytecode (effects: {})", 
-                        card_no, ability_index, ability.effects.len());
-                    
-                    // Special case: abilities with effects but no bytecode (like Q203)
-                    if !ability.effects.is_empty() {
-                        eprintln!("[DEBUG_BYTECODE] *** HAS EFFECTS BUT NO BYTECODE ***");
-                        for (i, effect) in ability.effects.iter().enumerate() {
-                            eprintln!("[DEBUG_BYTECODE]   Effect {}: {:?} = {:?}", i, effect.effect_type, effect.value);
-                        }
-                    }
-                }
-            }
-            
-            // Debug for Q203
-            if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-                eprintln!("[DEBUG_Q203_DB] Processing ability {}: key={}, entry found={}", 
-                    ability_index, key, index.contains_key(&key));
-            }
-            
+            let entry = index.get(&key);
+
             // Populate raw_text from source_text if it's empty
             if ability.raw_text.is_empty() {
-                if let Some(source_text) = entry.get("source_text").and_then(|v| v.as_str()) {
+                if let Some(source_text) = entry.and_then(|value| value.get("source_text")).and_then(|v| v.as_str()) {
                     ability.raw_text = source_text.to_string();
-                } else if let Some(source_text_en) = entry.get("source_text_en").and_then(|v| v.as_str()) {
+                } else if let Some(source_text_en) = entry.and_then(|value| value.get("source_text_en")).and_then(|v| v.as_str()) {
                     ability.raw_text = source_text_en.to_string();
                 } else if let Some(text) = text_index.get(&key) {
                     ability.raw_text = text.clone();
                 }
             }
-            
-            // Print final report
-            unsafe {
-                let total_checked = TOTAL_ABILITIES_CHECKED;
-                let empty_bytecode = EMPTY_BYTECODE_COUNT;
-                if total_checked % 100 == 0 || total_checked <= 5 {
-                    eprintln!("[DEBUG_BYTECODE] Progress: {} abilities checked, {} with empty bytecode", 
-                        total_checked, empty_bytecode);
-                }
-            }
-            
-            // Debug for Q203
-            if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-                eprintln!("[DEBUG_Q203_DB] Processing ability {}: frame_program.is_none={}, frame_program.frames.is_empty={}", 
-                    ability_index,
-                    ability.frame_program.is_none(),
-                    ability.frame_program.as_ref().map(|p| p.frames.is_empty()).unwrap_or(true));
-                eprintln!("[DEBUG_Q203_DB] Card number: {}, looking for key: {}#{}", card_no, card_no, ability_index);
-            }
-            
+
             if ability
                 .frame_program
                 .as_ref()
                 .map(|program| program.frames.is_empty())
                 .unwrap_or(true)
             {
-                let program = Self::sparse_entry_to_frame_program(&entry);
-                // Debug for Q203
-                if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-                    eprintln!("[DEBUG_Q203_DB] Frame program frames empty: {}, entry keys: {:?}", 
-                        program.frames.is_empty(), entry.as_object().map(|o| o.keys().collect::<Vec<_>>()));
-                }
-                // FIX: If sparse entry produces empty frames, synthesize from ability data
-                if program.frames.is_empty() {
-                    // Try to create frames from ability effects
-                    let mut synthesized_frames = Vec::new();
-                    for effect in &ability.effects {
-                        synthesized_frames.push(AbilityFrame::from_effect(effect));
+                if let Some(entry) = entry {
+                    let program = Self::sparse_entry_to_frame_program(entry);
+                    if !program.frames.is_empty() {
+                        ability.frame_program = Some(program);
                     }
-                    // Add RETURN frame at the end
-                    synthesized_frames.push(AbilityFrame::new_return());
-                    
-                    if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-                        eprintln!("[DEBUG_Q203_DB] Synthesized {} frames from {} effects", 
-                            synthesized_frames.len(), ability.effects.len());
-                    }
-                    
-                    if synthesized_frames.len() > 1 {
-                        // We have real frames from effects
-                        ability.frame_program = Some(FrameProgram {
-                            frames: synthesized_frames,
-                            raw_program: Some(entry.clone()),
-                        });
-                    } else {
-                        // Last resort: create minimal RETURN frame for abilities without effects
-                        ability.frame_program = Some(FrameProgram {
-                            frames: vec![AbilityFrame::new_return()],
-                            raw_program: Some(entry.clone()),
-                        });
-                    }
-                } else {
-                    if card_no.contains("358") || card_no.contains("Cara Tesoro") {
-                        eprintln!("[DEBUG_Q203_DB] Using existing frames from sparse entry");
-                    }
-                    ability.frame_program = Some(program);
                 }
             }
             if let Some(choose_count) = ability
@@ -735,7 +387,6 @@ impl CardDatabase {
                     }
                 }
             }
-            Self::normalize_legacy_look_deck_search(ability);
             // Only sync frame_program data to effects if effects are not already populated
             // (i.e., from the new semantic compiler output)
             if ability.effects.is_empty() {
@@ -776,23 +427,12 @@ impl CardDatabase {
                 }
             }
             if ability.pseudocode.is_empty() {
-                if let Some(pseudo) = entry.get("pseudocode").and_then(|v| v.as_str()) {
+                if let Some(pseudo) = entry.and_then(|value| value.get("pseudocode")).and_then(|v| v.as_str()) {
                     ability.pseudocode = pseudo.to_string();
                 }
             }
         }
-        
-        // Print final summary
-        unsafe {
-            let total_checked = TOTAL_ABILITIES_CHECKED;
-            let empty_bytecode = EMPTY_BYTECODE_COUNT;
-            if total_checked > 0 && total_checked % 50 == 0 {
-                eprintln!("[DEBUG_BYTECODE] SUMMARY: {}/{} abilities have empty bytecode ({:.1}%)", 
-                    empty_bytecode, total_checked, 
-                    (empty_bytecode as f64 / total_checked as f64) * 100.0);
-            }
-        }
-        
+
         Ok(())
     }
 
@@ -818,108 +458,6 @@ impl CardDatabase {
             .as_u64()
             .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
             .map(|v| v as u8)
-    }
-
-    fn infer_legacy_search_choose_count(raw_text: &str) -> Option<u8> {
-        if raw_text.contains("好きな枚数") {
-            return None;
-        }
-
-        for count in (1..=9).rev() {
-            let exact = format!("その中から{}枚", count);
-            let limit = format!("{}枚まで", count);
-            if raw_text.contains(&exact) || raw_text.contains(&limit) {
-                return Some(count as u8);
-            }
-        }
-
-        if raw_text.contains("その中の1枚") {
-            return Some(1);
-        }
-
-        None
-    }
-
-    fn should_normalize_legacy_look_deck_search(raw_text: &str) -> bool {
-        raw_text.contains("デッキの上からカードを")
-            && raw_text.contains("その中から")
-            && raw_text.contains("手札に加")
-            && raw_text.contains("残りを控え室")
-            && !raw_text.contains("好きな枚数")
-    }
-
-    fn normalize_legacy_look_deck_search(ability: &mut Ability) {
-        if !Self::should_normalize_legacy_look_deck_search(&ability.raw_text) {
-            return;
-        }
-
-        let Some(program) = ability.frame_program.as_mut() else {
-            return;
-        };
-
-        let Some(look_idx) = program.frames.iter().position(|frame| {
-            frame.opcode() == O_LOOK_DECK && frame.dslot().target_slot == 6
-        }) else {
-            return;
-        };
-
-        let trailing_non_return: Vec<usize> = program
-            .frames
-            .iter()
-            .enumerate()
-            .skip(look_idx + 1)
-            .filter_map(|(idx, frame)| (frame.opcode() != O_RETURN).then_some(idx))
-            .collect();
-
-        let add_to_hand_idx = match trailing_non_return.as_slice() {
-            [] => None,
-            [idx] if program.frames[*idx].opcode() == O_ADD_TO_HAND => Some(*idx),
-            _ => return,
-        };
-
-        let look_count = program.frames[look_idx].value().max(1) as u8;
-        let mut filter = add_to_hand_idx
-            .map(|idx| program.frames[idx].filter())
-            .unwrap_or_else(|| program.frames[look_idx].filter());
-
-        let choose_count = add_to_hand_idx
-            .map(|idx| program.frames[idx].value().max(1) as u8)
-            .or_else(|| Self::infer_legacy_search_choose_count(&ability.raw_text))
-            .unwrap_or(1);
-        let selection_is_optional = add_to_hand_idx
-            .map(|idx| program.frames[idx].filter().is_optional)
-            .unwrap_or_else(|| ability.raw_text.contains("手札に加えてもよい"));
-        filter.is_optional = filter.is_optional || selection_is_optional;
-
-        let packed = crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
-            count: look_count,
-            choose_count,
-            reveal: ability.raw_text.contains("公開"),
-            dest_discard: true,
-            char_id_1: filter.char_id_1,
-            char_id_2: filter.char_id_2,
-            char_id_3: filter.char_id_3,
-        }
-        .to_raw();
-        let raw_slot = crate::core::logic::interpreter::instruction::DecodedSlot {
-            target_slot: 6,
-            source_zone: Zone::DeckTop,
-            dest_zone: Zone::Discard,
-            ..Default::default()
-        }
-        .to_raw();
-
-        program.frames[look_idx] = AbilityFrame::new(
-            O_LOOK_AND_CHOOSE,
-            packed,
-            filter.to_attr() as i64,
-            raw_slot,
-            false,
-        );
-
-        if let Some(idx) = add_to_hand_idx {
-            program.frames.remove(idx);
-        }
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
@@ -1566,7 +1104,6 @@ impl CardDatabase {
                             &db.sparse_ability_index,
                             &text_index,
                         )?;
-                        Self::normalize_member_runtime_compatibility(&mut card);
                         Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
@@ -1605,7 +1142,6 @@ impl CardDatabase {
                             &db.sparse_ability_index,
                             &text_index,
                         )?;
-                        Self::normalize_live_runtime_compatibility(&mut card);
                         Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());

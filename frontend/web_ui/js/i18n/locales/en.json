@@ -720,7 +720,7 @@
     "enabled": "ENABLED",
     "disabled": "DISABLED",
     "debug_mode": "Debug Mode",
-    "debug_bytecode_log": "Bytecode Logging",
+    "debug_bytecode_log": "Execution Log",
     "slot": "Slot",
     "you": "You",
     "opponent": "Opponent",

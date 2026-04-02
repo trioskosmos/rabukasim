@@ -4,7 +4,7 @@ description: Unified workflow for end-to-end development, debugging, and verific
 
 # Ability Development Workflow
 
-Use this workflow to implement new cards, fix broken logic, or verify bytecode.
+Use this workflow to implement new cards, fix broken logic, or verify frame programs.
 
 ## Phase 1: Research & Triage
 1. **Analyze Card**: `uv run python tools/card_finder.py "<ID>"`
@@ -13,14 +13,14 @@ Use this workflow to implement new cards, fix broken logic, or verify bytecode.
 
 ## Phase 2: Logic Refinement
 1. **Update Pseudocode**:
-   - Edit `data/consolidated_abilities.json` (Standard) or `data/manual_pseudocode.json` (Override).
+   - Edit `data/ability_frame_index.yaml` for authored logic, then regenerate `data/consolidated_abilities.json` as the derived runtime view.
 2. **Compile**: `uv run python -m compiler.main`
-3. **Verify Bytecode**: check the "Decoded Bytecode" in `card_finder.py`.
+3. **Verify Frames**: check the "Ability Frames" section in `card_finder.py`.
 
 ## Phase 3: Engine Verification
 1. **Create Repro Test**:
    - Add a test case in `engine_rust_src/src/repro/` or `qa_verification_tests.rs`.
-   - Use `load_real_db()` - **NEVER** mock bytecode in high-level tests.
+   - Use `load_real_db()` - **NEVER** mock execution frames in high-level tests.
 2. **Trace Execution**:
    - Add `state.debug.debug_mode = true` to the test.
    - Run: `cargo test <test_name> --nocapture`.

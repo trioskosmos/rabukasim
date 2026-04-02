@@ -720,7 +720,7 @@
     "enabled": "有効",
     "disabled": "無効",
     "debug_mode": "デバッグモード",
-    "debug_bytecode_log": "バイトコードログ",
+    "debug_bytecode_log": "実行ログ",
     "slot": "スロット",
     "color_transform_all": "{src} → {dst} 変換",
     "heart_req_reduction": "【必要ピース】 減少 (-{amt})",

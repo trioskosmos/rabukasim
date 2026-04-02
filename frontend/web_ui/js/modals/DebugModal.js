@@ -460,7 +460,7 @@ export const DebugModal = {
                         ${renderScalarCell('snapshot', DebugModal._snapshot ? 'available' : 'fallback')}
                         ${renderScalarCell('debug_mode', DebugModal._snapshot?.debug_mode ? 'enabled' : 'disabled')}
                         ${renderScalarCell('trace lines', String(traceCount))}
-                        ${renderScalarCell('bytecode lines', String(bytecodeCount))}
+                        ${renderScalarCell('execution lines', String(bytecodeCount))}
                     </div>
                 </div>
                 ${players.map((player, index) => `
@@ -934,7 +934,7 @@ export const DebugModal = {
         if (!container || !State.data) return;
 
         const traceLines = DebugModal._snapshot?.trace_log || [];
-        const bytecodeLines = DebugModal._snapshot?.bytecode_log || State.data.bytecode_log || [];
+        const executionLines = DebugModal._snapshot?.bytecode_log || State.data.bytecode_log || [];
         const historyEntry = DebugModal._getSelectedHistoryEntry();
 
         container.innerHTML = `
@@ -948,7 +948,7 @@ export const DebugModal = {
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
                     ${renderScalarCell('debug_mode', DebugModal._snapshot?.debug_mode ? 'enabled' : 'disabled')}
                     ${renderScalarCell('trace lines', String(traceLines.length))}
-                    ${renderScalarCell('bytecode lines', String(bytecodeLines.length))}
+                    ${renderScalarCell('execution lines', String(executionLines.length))}
                     ${renderScalarCell('snapshot', DebugModal._snapshot ? 'backend /api/debug/snapshot' : 'viewer fallback')}
                 </div>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:12px; flex:1; min-height:0;">
@@ -957,8 +957,8 @@ export const DebugModal = {
                         <div id="debug-trace-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(traceLines, 'No engine trace has been captured. Enable Debug Mode, then execute game actions.')}</div>
                     </div>
                     <div style="display:flex; flex-direction:column; min-height:0; background:#020617; border:1px solid #1e293b; border-radius:8px; overflow:hidden;">
-                        <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#86efac;">UI Bytecode Log</div>
-                        <div id="debug-bytecode-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(bytecodeLines, 'No bytecode log has been captured for the current state.')}</div>
+                        <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#86efac;">UI Execution Log</div>
+                        <div id="debug-bytecode-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(executionLines, 'No execution log has been captured for the current state.')}</div>
                     </div>
                 </div>
             </div>

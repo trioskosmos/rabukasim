@@ -16,7 +16,6 @@ fn main() {
     for rel in [
         "data/cards.json",
         "data/ability_frame_index.yaml",
-        "data/ability_frame_index.json",
         "data/consolidated_abilities.json",
         "data/cards_compiled.json",
         "data/metadata.json",

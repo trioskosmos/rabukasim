@@ -33,13 +33,15 @@ If you need to see the exact logic the card uses:
   ```
 
 > [!TIP]
-> This is the most reliable way to inspect card logic, opcodes, and related QA rulings without needing to decode legacy bytecode.
+> This is the most reliable way to inspect card logic, frames, and related QA rulings without needing to decode legacy runtime encodings.
 
 ## 🆔 ID System Standards
 - **Unified Encoding**: `(logic_id & 0x0FFF) | (variant_idx << 12)`.
 - **Logic ID Range**: `[0, 4095]`.
 - **Safe Test IDs**: Use `[3000-3999]` for dummy cards to avoid collisions with official data `(0-1500)`.
-- **Primary Source of Truth**: `data/ability_frames.json`.
+- **Primary Authored Ability Source**: `data/ability_frame_index.yaml`.
+- **Primary Derived Runtime Ability View**: `data/consolidated_abilities.json`.
+- **Frame Program Field**: the JSON output exposes `frame_program` for executable logic and `signature` for lookup.
 
 ## 🗺️ Legacy ID Mapping
 Test scenarios often use "Old IDs" (`real_card_id`). Bridge them via `Card No`:

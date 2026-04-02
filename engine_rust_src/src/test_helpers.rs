@@ -920,7 +920,7 @@ pub fn add_card(
     for (t, logic, c) in abilities {
         let (bytecode, frame_program) = match logic {
             AbilityLogic::Bytecode(b) => {
-                let fp = FrameProgram::from_bytecode(&b);
+                let fp = FrameProgram::from_words(&b);
                 (b, Some(fp))
             }
             AbilityLogic::Frames(f) => {

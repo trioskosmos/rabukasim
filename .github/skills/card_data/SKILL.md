@@ -39,7 +39,8 @@ If you need to see the exact logic the card uses:
 - **Unified Encoding**: `(logic_id & 0x0FFF) | (variant_idx << 12)`.
 - **Logic ID Range**: `[0, 4095]`.
 - **Safe Test IDs**: Use `[3000-3999]` for dummy cards to avoid collisions with official data `(0-1500)`.
-- **Primary Source of Truth**: `data/ability_frames.json`.
+- **Primary Authored Ability Source**: `data/ability_frame_index.yaml`.
+- **Primary Derived Runtime Ability View**: `data/consolidated_abilities.json`.
 
 ## 🗺️ Legacy ID Mapping
 Test scenarios often use "Old IDs" (`real_card_id`). Bridge them via `Card No`:

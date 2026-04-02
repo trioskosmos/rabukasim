@@ -4,7 +4,7 @@ use crate::core::generated_layout::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 #[allow(deprecated)]
-use crate::core::logic::interpreter::instruction::{BytecodeInstruction, BytecodeProgram};
+use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -1012,12 +1012,6 @@ impl From<&AbilityFrame> for AbilityFrame {
     }
 }
 
-#[allow(deprecated)]
-impl From<&crate::core::logic::interpreter::instruction::BytecodeInstruction> for AbilityFrame {
-    fn from(instr: &crate::core::logic::interpreter::instruction::BytecodeInstruction) -> Self {
-        AbilityFrame::from_instruction(instr)
-    }
-}
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FrameProgram {
     pub frames: Vec<AbilityFrame>,
@@ -1106,8 +1100,15 @@ impl Hash for FrameProgram {
 impl FrameProgram {
     #[allow(deprecated)]
     pub fn from_words(words: &[i32]) -> Self {
-        let decoded = BytecodeProgram::from_slice(words).decode_all();
-        let frames = decoded.iter().map(AbilityFrame::from_instruction).collect();
+        let mut frames = Vec::with_capacity(
+            words.len() / crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
+        );
+        let mut ip = 0;
+        while ip < words.len() {
+            let instr = BytecodeInstruction::decode(words, ip);
+            frames.push(AbilityFrame::from_instruction(&instr));
+            ip += crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
+        }
 
         Self {
             frames,
@@ -1116,10 +1117,6 @@ impl FrameProgram {
                 "bytecode": words,
             })),
         }
-    }
-
-    pub fn from_bytecode(bytecode: &[i32]) -> Self {
-        Self::from_words(bytecode)
     }
 
     #[allow(deprecated)]
@@ -1583,10 +1580,6 @@ impl Ability {
         }
 
         Vec::new()
-    }
-
-    pub fn bytecode(&self) -> Vec<i32> {
-        self.words()
     }
 
     pub fn get_frame(&self, frame_idx: usize) -> Option<AbilityFrame> {

@@ -50,8 +50,8 @@ The first priority is to:
 If a ruling appears to fail, check all of these before assuming the Rust runtime is correct:
 - `data/consolidated_abilities.json` may show that the card-text simplification or translation is wrong.
 - `compiler/` may show that the parser/compiler translated the pseudocode to conditions/effects incorrectly.
-- The **Frame Sequence** in `data/ability_frames.json` may not actually represent the behavior printed on the card.
-- The `signature` mapping between card data and `data/ability_frames.json` might be broken.
+- The derived frame sequence in `data/consolidated_abilities.json` may not actually represent the behavior printed on the card.
+- The mapping between card data and authored sparse entries in `data/ability_frame_index.yaml` may be broken.
 
 Do not prefer “easy passing coverage” over finding defects. A good QA test is allowed to fail first if that failure exposes a real engine or card-data bug.
 
@@ -67,7 +67,7 @@ Do not prefer “easy passing coverage” over finding defects. A good QA test i
 ### Phase 3: Engine Verification (Rust)
 1. Identify the rule ID (e.g., Q195).
 2. Use `cf.py "Q195"` to find related cards, signatures, and frame programs.
-3. Cross-check the ruling against `data/consolidated_abilities.json`, `compiler/`, and the **Frame Sequence** for the signature in `data/ability_frames.json` before assuming the current data is correct.
+3. Cross-check the ruling against `data/consolidated_abilities.json`, `data/ability_frame_index.yaml`, and `compiler/` before assuming the current data is correct.
 3. Implement a focused test in `qa_verification_tests.rs`.
    - **CRITICAL:** Include original ability text and QA ruling as comments.
 4. Run `cargo test qa_verification_tests` to verify compliance.
@@ -381,10 +381,7 @@ assert!(!in_discard, "Card was discarded instead");
 ```bash
 python tools/cf.py "Q89" | grep -A5 "name.*description"
 ```
-2. Check `data/ability_frames.json` for the frame sequence of the card signature:
-```bash
-grep -A20 "SIGNATURE_HERE" data/ability_frames.json
-```
+2. Check `data/consolidated_abilities.json` and `data/ability_frame_index.yaml` for the card's derived and authored frame sequence.
 
 ### Matrix Inconsistencies
 

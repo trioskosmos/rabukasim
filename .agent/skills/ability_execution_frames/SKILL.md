@@ -10,9 +10,10 @@ This skill provides a unified reference for the LovecaSim "Ability Frame" system
 ## 🏗️ Core Architecture: Frame-First
 The engine now executes logic from **Frame Programs** rather than raw bytecode.
 
-- **Primary Source of Truth**: `data/ability_frames.json`
-- **Mapping Key**: `signature` (or `signature_hash`)
-- **Runtime Representation**: `AbilityFrame` (Rust Enum)
+- **Primary Authored Source**: `data/ability_frame_index.yaml`
+- **Primary Derived Runtime Frame View**: `data/consolidated_abilities.json`
+- **Mapping Key**: card reference plus `ability_index`
+- **Runtime Representation**: `AbilityFrame`
 
 ### 🧩 AbilityFrame Variants
 Abilities are sequences of `AbilityFrame` objects. Key variants include:
@@ -26,7 +27,7 @@ Abilities are sequences of `AbilityFrame` objects. Key variants include:
 Cards are linked to their logic via a unique **Signature**.
 
 1. **Find Card Signature**: Use `cf.py "<CARD_NO>" --json` to see the `signature` field.
-2. **Lookup Frame Sequence**: Search for that signature in `data/ability_frames.json`.
+2. **Lookup Frame Sequence**: Inspect the card entry in `data/consolidated_abilities.json` or the authored sparse entry in `data/ability_frame_index.yaml`.
 3. **Inspect Implementation**: Review the `frames` array in the JSON to see exactly what the card does.
 
 ### 🔍 Quick Discovery with `cf.py`
@@ -40,12 +41,13 @@ Then view the "Ability Frames" section in the generated report.
 When working on card abilities, follow this cycle:
 
 1. **Discovery**: Use `cf.py` to check the current Frame sequence and Signature.
-2. **Validation**: Cross-reference with `data/ability_frames.json` to ensure the logic matches the card text.
-3. **Execution**: Verify in Rust using `FrameProgram::from_bytecode` (for tests) or by building frames directly.
+2. **Validation**: Cross-reference with `data/consolidated_abilities.json` and `data/ability_frame_index.yaml` to ensure the logic matches the card text.
+3. **Execution**: Verify in Rust using `FrameProgram::from_words` or by building frames directly.
 4. **Verification**: Confirm behavior in `qa_verification_tests.rs` using real card IDs.
 
 ## 🛡️ Single Source of Truth (SSOT)
-- **Logic Definition**: `data/ability_frames.json` (Editable source for new logic).
+- **Logic Definition**: `data/ability_frame_index.yaml` (Authored sparse frame source).
+- **Derived Runtime Frame View**: `data/consolidated_abilities.json`.
 - **Metadata**: `data/metadata.json` (Defines opcodes, triggers, and UI strings).
 - **Engine Models**: `engine_rust_src/src/core/logic/models.rs` (The Rust definition of `AbilityFrame`).
 
@@ -55,6 +57,7 @@ When working on card abilities, follow this cycle:
 - **Raw Frames**: Prefer `Semantic` frames over `Raw` frames for better readability and engine integration.
 
 ## Related Files
-- [ability_frames.json](file:///c:/Users/trios/../data/ability_frames.json)
+- [data/ability_frame_index.yaml](file:///c:/Users/trios/../data/ability_frame_index.yaml)
+- [data/consolidated_abilities.json](file:///c:/Users/trios/../data/consolidated_abilities.json)
 - [models.rs (AbilityFrame)](file:///c:/Users/trios/../engine_rust_src/src/core/logic/models.rs)
 - [cf.py](file:///c:/Users/trios/../tools/cf.py)
