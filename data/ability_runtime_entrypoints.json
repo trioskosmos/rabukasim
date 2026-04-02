@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_unix_seconds": 1775154355,
+    "generated_unix_seconds": 1775155492,
     "hydration_boundary": "CardDatabase::attach_sparse_ability_index()",
     "extraction_entrypoint": "Ability::resolved_frames() + Ability::trace_view()",
     "compiled_cards_source": "data/cards_compiled.json"
@@ -522,7 +522,7 @@
         {
           "opcode": 74,
           "value": 6,
-          "attr": 2306971108147658753,
+          "attr": 2306971108143792129,
           "slot": 5701639,
           "is_cost": false
         },
@@ -572,8 +572,8 @@
               "has_blade_heart": false,
               "not_has_blade_heart": false,
               "unique_names": false,
-              "unit_enabled": true,
-              "unit_id": 29,
+              "unit_enabled": false,
+              "unit_id": 0,
               "value_enabled": false,
               "value_threshold": 0,
               "is_le": false,
@@ -829,7 +829,7 @@
         {
           "opcode": 41,
           "value": 5,
-          "attr": 1688849866227713,
+          "attr": 1688849860263937,
           "slot": 65542,
           "is_cost": false,
           "params": {
@@ -883,8 +883,8 @@
               "has_blade_heart": false,
               "not_has_blade_heart": false,
               "unique_names": false,
-              "unit_enabled": true,
-              "unit_id": 45,
+              "unit_enabled": false,
+              "unit_id": 0,
               "value_enabled": false,
               "value_threshold": 0,
               "is_le": false,
@@ -1002,7 +1002,7 @@
         {
           "opcode": 41,
           "value": 5,
-          "attr": 1688849866227713,
+          "attr": 1688849860263937,
           "slot": 65542,
           "is_cost": false,
           "params": {
@@ -1056,8 +1056,8 @@
               "has_blade_heart": false,
               "not_has_blade_heart": false,
               "unique_names": false,
-              "unit_enabled": true,
-              "unit_id": 45,
+              "unit_enabled": false,
+              "unit_id": 0,
               "value_enabled": false,
               "value_threshold": 0,
               "is_le": false,
@@ -11827,7 +11827,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 317827579905,
           "slot": 4,
           "is_cost": false
         },
@@ -11874,7 +11874,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 74,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -11977,7 +11977,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 317827579905,
           "slot": 4,
           "is_cost": false
         },
@@ -12024,7 +12024,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 74,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -12127,7 +12127,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 317827579905,
           "slot": 4,
           "is_cost": false
         },
@@ -12174,7 +12174,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 74,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -12277,7 +12277,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 317827579905,
           "slot": 4,
           "is_cost": false
         },
@@ -12324,7 +12324,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 74,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -12427,7 +12427,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 317827579905,
           "slot": 4,
           "is_cost": false
         },
@@ -12474,7 +12474,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 74,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -25268,7 +25268,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 481036337153,
           "slot": 4,
           "is_cost": false
         },
@@ -25315,7 +25315,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 112,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -128148,7 +128148,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 240518168577,
           "slot": 4,
           "is_cost": false
         },
@@ -128188,7 +128188,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 56,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -128457,7 +128457,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 300647710721,
           "slot": 4,
           "is_cost": false
         },
@@ -128497,7 +128497,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 70,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,
@@ -205021,7 +205021,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 1,
           "is_cost": false
         },
@@ -205035,7 +205035,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 2,
           "is_cost": false
         },
@@ -205113,8 +205113,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -205212,8 +205212,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -205286,7 +205286,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 1,
           "is_cost": false
         },
@@ -205300,7 +205300,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 2,
           "is_cost": false
         },
@@ -205378,8 +205378,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -205477,8 +205477,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -205551,7 +205551,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 1,
           "is_cost": false
         },
@@ -205565,7 +205565,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 115,
+          "attr": 3,
           "slot": 2,
           "is_cost": false
         },
@@ -205643,8 +205643,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -205742,8 +205742,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -220965,7 +220965,7 @@
         {
           "opcode": 20,
           "value": 99,
-          "attr": 2305843009213694067,
+          "attr": 2305843009213693955,
           "slot": 1,
           "is_cost": false
         },
@@ -221126,8 +221126,8 @@
               "is_enabled": true,
               "target_player": 3,
               "card_type": 0,
-              "group_enabled": true,
-              "group_id": 3,
+              "group_enabled": false,
+              "group_id": 0,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -244639,7 +244639,7 @@
         {
           "opcode": 203,
           "value": 0,
-          "attr": 22539995152385,
+          "attr": 22539988402177,
           "slot": 48,
           "is_cost": false
         },
@@ -244673,8 +244673,8 @@
               "has_blade_heart": false,
               "not_has_blade_heart": false,
               "unique_names": true,
-              "unit_enabled": true,
-              "unit_id": 51,
+              "unit_enabled": false,
+              "unit_id": 0,
               "value_enabled": false,
               "value_threshold": 0,
               "is_le": false,
@@ -244734,7 +244734,7 @@
         {
           "opcode": 65,
           "value": 1,
-          "attr": 3540977204002817,
+          "attr": 3540977197252609,
           "slot": 262148,
           "is_cost": false
         },
@@ -244790,8 +244790,8 @@
               "has_blade_heart": false,
               "not_has_blade_heart": false,
               "unique_names": false,
-              "unit_enabled": true,
-              "unit_id": 51,
+              "unit_enabled": false,
+              "unit_id": 0,
               "value_enabled": false,
               "value_threshold": 0,
               "is_le": false,
@@ -246666,7 +246666,7 @@
         {
           "opcode": 45,
           "value": 1,
-          "attr": 1,
+          "attr": 300647710721,
           "slot": 4,
           "is_cost": false
         },
@@ -246713,7 +246713,7 @@
               "value_threshold": 0,
               "is_le": false,
               "is_cost_type": false,
-              "color_mask": 0,
+              "color_mask": 70,
               "char_id_1": 0,
               "char_id_2": 0,
               "char_id_3": 0,

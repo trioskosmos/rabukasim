@@ -159,6 +159,32 @@ pub struct CardFilter {
 
 /// Conversion helpers for filter operations
 impl CardFilter {
+    pub fn from_json_value(value: &Value) -> Option<Self> {
+        let candidate = if let Some(obj) = value.as_object() {
+            obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value)
+        } else {
+            value
+        };
+
+        match candidate {
+            Value::Null => None,
+            Value::Number(number) => number
+                .as_i64()
+                .map(Self::from_attr_legacy)
+                .or_else(|| number.as_u64().map(|attr| Self::from_attr_legacy(attr as i64))),
+            Value::Object(object) => {
+                let mut filter = serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
+                if filter != Self::default() {
+                    filter.is_enabled = true;
+                    Some(filter)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
     fn same_name_sources(
         state: &GameState,
         db: &CardDatabase,
@@ -801,16 +827,20 @@ impl CardFilter {
 
     /// Create CardFilter from authored frame JSON without accepting raw packed attrs.
     pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
-        let mut filter = filter_attr_from_params(Some(payload))
-            .map(|attr| Self::from_attr_legacy(attr as i64))
+        let mut filter = Self::from_json_value(payload)
+            .or_else(|| filter_attr_from_params(Some(payload)).map(|attr| Self::from_attr_legacy(attr as i64)))
             .unwrap_or_default();
 
-        if let Some(options_attr) = filter_attr_from_params(Some(options)) {
-            filter = filter.with_overlay(&Self::from_attr_legacy(options_attr as i64));
+        if let Some(options_filter) = Self::from_json_value(options)
+            .or_else(|| filter_attr_from_params(Some(options)).map(|attr| Self::from_attr_legacy(attr as i64)))
+        {
+            filter = filter.with_overlay(&options_filter);
         }
 
-        if let Some(params_attr) = filter_attr_from_params(Some(params)) {
-            filter = filter.with_overlay(&Self::from_attr_legacy(params_attr as i64));
+        if let Some(params_filter) = Self::from_json_value(params)
+            .or_else(|| filter_attr_from_params(Some(params)).map(|attr| Self::from_attr_legacy(attr as i64)))
+        {
+            filter = filter.with_overlay(&params_filter);
         }
 
         if options

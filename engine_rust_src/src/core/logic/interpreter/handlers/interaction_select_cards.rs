@@ -1,7 +1,6 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES};
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::interpreter::handlers::HandlerResult;
@@ -31,11 +30,11 @@ pub fn handle_select_cards(
     instr_ip: usize,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let filter = if let Some(extra_attr) = filter_attr_from_params(frame_data.params) {
-        frame_data.filter.with_overlay(&CardFilter::from_attr_legacy(extra_attr as i64))
-    } else {
-        frame_data.filter
-    };
+    let filter = frame_data
+        .params
+        .and_then(CardFilter::from_json_value)
+        .map(|extra_filter| frame_data.filter.with_overlay(&extra_filter))
+        .unwrap_or(frame_data.filter);
     let a = filter.to_attr() as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;

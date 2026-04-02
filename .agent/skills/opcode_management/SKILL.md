@@ -1,12 +1,8 @@
 ---
 name: opcode_management
-description: "[CONSOLIDATED] - See ability_execution_frames/SKILL.md instead"
+description: Deprecated. Use ability_execution_frames for opcode and frame work.
 ---
-
-# ⚠️ Deprecated - See ability_execution_frames
-
-This skill has been **consolidated** into a unified framework.
-
-**New Location**: `.agent/skills/ability_execution_frames/SKILL.md`
-
-...has been merged into the **ability_execution_frames** skill along with related functionality from ability_logic and pseudocode_guidelines.
+# Deprecated Skill
+- This file is a compatibility stub.
+- Do not add new guidance here.
+- Route new opcode work to ability_execution_frames.

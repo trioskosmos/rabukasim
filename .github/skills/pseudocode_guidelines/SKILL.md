@@ -1,12 +1,8 @@
 ---
 name: pseudocode_guidelines
-description: "[CONSOLIDATED] - See ability_execution_frames/SKILL.md instead"
+description: Deprecated. Use ability_execution_frames for pseudocode and execution mapping.
 ---
-
-# ⚠️ Deprecated - See ability_execution_frames
-
-This skill has been **consolidated** into a unified framework.
-
-**New Location**: `.agent/skills/ability_execution_frames/SKILL.md`
-
-...has been merged into the **ability_execution_frames** skill along with related functionality from ability_logic and opcode_management.
+# Deprecated Skill
+- This file is a compatibility stub.
+- Do not add new guidance here.
+- Route new pseudocode work to ability_execution_frames.
