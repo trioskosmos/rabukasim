@@ -904,6 +904,55 @@ pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     parsed.to_attr() | extras
 }
 
+fn apply_keyword_param(
+    filter: &mut CardFilter,
+    extras: &mut u64,
+    keyword: &str,
+    group_id: Option<u64>,
+) {
+    match keyword.to_ascii_uppercase().as_str() {
+        "PLAYED_THIS_TURN" | "COUNT_PLAYED_THIS_TURN" => {
+            *extras |= KEYWORD_PLAYED_THIS_TURN;
+        }
+        "YELL_COUNT" | "COUNT_YELL_REVEALED" => {
+            *extras |= KEYWORD_YELL_COUNT;
+        }
+        "HAS_LIVE_SET" => {
+            *extras |= KEYWORD_HAS_LIVE_SET;
+        }
+        "UNIQUE_NAMES" | "COUNT_UNIQUE_NAMES" => {
+            filter.is_enabled = true;
+            filter.unique_names = true;
+        }
+        "DID_ACTIVATE_ENERGY"
+        | "DID_ACTIVATE_ENERGY_BY_GROUP"
+        | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT"
+        | "ACTIVATED_ENERGY" => {
+            filter.is_enabled = true;
+            filter.keyword_energy = true;
+            if let Some(group_id) = group_id {
+                filter.group_enabled = true;
+                filter.group_id = (group_id & 0x7F) as u8;
+            }
+        }
+        "DID_ACTIVATE_MEMBER"
+        | "DID_ACTIVATE_MEMBER_BY_GROUP"
+        | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT"
+        | "ACTIVATED_MEMBER" => {
+            filter.is_enabled = true;
+            filter.keyword_member = true;
+            if let Some(group_id) = group_id {
+                filter.group_enabled = true;
+                filter.group_id = (group_id & 0x7F) as u8;
+            }
+        }
+        "REVEALED_CONTAINS" => {
+            *extras |= FILTER_REVEALED_CONTEXT;
+        }
+        _ => {}
+    }
+}
+
 pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(CardFilter, u64)> {
     let obj = params_object(params)?;
     let mut filter = CardFilter::default();
@@ -922,6 +971,8 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
 
     if let Some(target_player) = obj
         .get("target_player")
+        .or_else(|| obj.get("player"))
+        .or_else(|| obj.get("PLAYER"))
         .and_then(parse_target_player)
     {
         filter.is_enabled = true;
@@ -1000,6 +1051,15 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         filter.is_enabled = true;
         filter.special_id = special_id;
     }
+    if let Some(area) = obj
+        .get("area")
+        .or_else(|| obj.get("AREA"))
+        .and_then(Value::as_str)
+    {
+        if area.eq_ignore_ascii_case("ANY_STAGE") || area.eq_ignore_ascii_case("ALL_AREAS") {
+            extras |= FILTER_ANY_STAGE;
+        }
+    }
     set_flag!(obj.get("is_setsuna"), is_setsuna);
     set_flag!(obj.get("compare_accumulated"), compare_accumulated);
     set_flag!(
@@ -1010,6 +1070,18 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     );
     set_flag!(obj.get("keyword_energy"), keyword_energy);
     set_flag!(obj.get("keyword_member"), keyword_member);
+    if let Some(keyword) = obj
+        .get("keyword")
+        .or_else(|| obj.get("KEYWORD"))
+        .and_then(Value::as_str)
+    {
+        apply_keyword_param(
+            &mut filter,
+            &mut extras,
+            keyword,
+            obj.get("group_id").and_then(Value::as_u64),
+        );
+    }
 
     if let Some(filter_str) = obj
         .get("FILTER")
@@ -1037,7 +1109,7 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         }
 
         let (parsed, parsed_extras) = filter_from_semantic_string(filter_str);
-        filter = parsed;
+        filter = parsed.with_overlay(&filter);
         extras |= parsed_extras;
     }
 
@@ -1061,6 +1133,17 @@ pub fn filter_from_params(params: Option<&serde_json::Value>) -> Option<CardFilt
 
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
     filter_parts_from_params(params).map(|(filter, extras)| filter.to_attr() | extras)
+}
+
+pub fn merge_filter_attr_with_params(base_attr: u64, params: Option<&serde_json::Value>) -> u64 {
+    let base_filter = CardFilter::from_attr_legacy(base_attr as i64);
+    let base_passthrough = base_attr & !base_filter.to_attr();
+
+    if let Some((params_filter, params_passthrough)) = filter_parts_from_params(params) {
+        base_filter.with_overlay(&params_filter).to_attr() | base_passthrough | params_passthrough
+    } else {
+        base_attr
+    }
 }
 
 fn parse_target_player(value: &Value) -> Option<u8> {
@@ -1409,4 +1492,44 @@ fn params_object<'a>(params: Option<&'a Value>) -> Option<&'a serde_json::Map<St
         obj = sub_obj;
     }
     Some(obj)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn filter_parts_from_params_support_keyword_area_and_player_aliases() {
+        let params = json!({
+            "player": "OPPONENT",
+            "area": "ANY_STAGE",
+            "keyword": "COUNT_UNIQUE_NAMES"
+        });
+
+        let (filter, extras) = filter_parts_from_params(Some(&params)).unwrap();
+
+        assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
+        assert!(filter.unique_names);
+        assert_ne!(extras & FILTER_ANY_STAGE, 0);
+    }
+
+    #[test]
+    fn merge_filter_attr_with_params_preserves_passthrough_and_overlays_filter_bits() {
+        let base_attr = FILTER_REVEALED_CONTEXT | TARGET_PLAYER_SELF as u64;
+        let params = json!({
+            "player": "OPPONENT",
+            "keyword": "DID_ACTIVATE_MEMBER",
+            "group_id": 3
+        });
+
+        let merged = merge_filter_attr_with_params(base_attr, Some(&params));
+        let merged_filter = CardFilter::from_attr_legacy(merged as i64);
+
+        assert_eq!(merged_filter.target_player, TARGET_PLAYER_OPPONENT as u8);
+        assert!(merged_filter.keyword_member);
+        assert!(merged_filter.group_enabled);
+        assert_eq!(merged_filter.group_id, 3);
+        assert_ne!(merged & FILTER_REVEALED_CONTEXT, 0);
+    }
 }

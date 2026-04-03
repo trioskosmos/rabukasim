@@ -1,4 +1,4 @@
-use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
+use crate::core::logic::constants::CHOICE_DONE;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -16,14 +16,11 @@ pub fn handle_move_to_discard(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
-    let semantic = frame_data.semantic_view();
     
     // Resolve count (handle compare_accumulated and UNTIL_SIZE)
-    let v = if semantic.uses_total_cost_budget() {
-        let count_op = semantic.embedded_count_opcode().unwrap_or(s);
+    let v = if frame_data.uses_total_cost_budget() {
+        let count_op = frame_data.embedded_count_opcode().unwrap_or(frame_data.raw_slot);
         resolve_count(state, db, count_op, frame_data.count_filter_attr(), p_idx as i32, ctx, 0) as i32
     } else {
         frame_data.value
@@ -31,8 +28,7 @@ pub fn handle_move_to_discard(
     
     let base_p = ctx.activator_id as usize;
     let slot = frame_data.slot;
-    
-    let mut source_zone = semantic.discard_source_zone();
+    let mut source_zone = frame_data.discard_source_zone();
     
     // Determine target player from slot
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
@@ -54,12 +50,7 @@ pub fn handle_move_to_discard(
     
     // Special case: Stage UNTIL_SIZE means Hand
     if source_zone == Zone::Stage {
-        let is_until_size = frame_data.params.as_ref()
-            .and_then(|p| p.get("operation"))
-            .and_then(|v| v.as_str())
-            .map(|s| s.eq_ignore_ascii_case("UNTIL_SIZE"))
-            .unwrap_or(false);
-        if is_until_size {
+        if frame_data.is_until_size_operation() {
             source_zone = Zone::Hand;
         }
     }
@@ -69,9 +60,8 @@ pub fn handle_move_to_discard(
         return HandlerResult::Continue;
     }
 
-    let filter_attr = (a as u64) & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-    let is_optional = frame_data.filter.is_optional
-        || (a as u64 & FILTER_IS_OPTIONAL) != 0
+    let filter_attr = frame_data.filter_attr_without_state_flags();
+    let is_optional = frame_data.is_optional()
         || ((ctx.source_card_id == 122 || ctx.source_card_id == 4331)
             && source_zone == Zone::Hand
             && frame_data.value == 1);
@@ -110,7 +100,7 @@ pub fn handle_move_to_discard(
         } else if is_optional && is_deck_zone(source_zone) {
             // Optional deck discard - ask yes/no
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, ChoiceType::Optional, filter_attr, count as i16),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, ChoiceType::Optional, filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -128,7 +118,7 @@ pub fn handle_move_to_discard(
                 filter_obj.to_attr() | frame_data.raw_attr.max(frame_data.filter.to_attr());
 
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr_with_mask as u64, v as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -157,7 +147,7 @@ pub fn handle_move_to_discard(
             if next_ctx.v_remaining > 0 || (next_ctx.v_remaining == -1 && count > 0) {
                 let remaining = if next_ctx.v_remaining > 0 { next_ctx.v_remaining } else { count as i16 };
                 if matches!(
-                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, remaining),
+                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr, remaining),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;
@@ -168,7 +158,7 @@ pub fn handle_move_to_discard(
 
         // Remove selected card by index - inlined from remove_card_by_index
         let idx = next_ctx.choice_index as usize;
-        let allow_under_member = (s & (1 << 25)) != 0;
+        let allow_under_member = frame_data.allow_under_member_selection();
         let removed_cid = remove_card_at_index(state, target_player_idx, source_zone, idx, allow_under_member).unwrap_or(-1);
         
         if removed_cid < 0 {
@@ -216,7 +206,7 @@ pub fn handle_move_to_discard(
 
             let v_remaining = next_ctx.v_remaining;
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr, v_remaining),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr, v_remaining),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;

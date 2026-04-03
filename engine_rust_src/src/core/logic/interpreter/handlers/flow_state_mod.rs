@@ -18,7 +18,6 @@ pub fn handle_state_modifiers(
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.player_id as usize;
-    let slot_info = frame_data.slot;
     let target_slot = frame_data.slot.target_slot as i32;
     let semantic = frame_data.semantic_view();
     match op {
@@ -36,12 +35,7 @@ pub fn handle_state_modifiers(
             }
         }
         O_PREVENT_ACTIVATE | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE | O_PREVENT_PLAY_TO_SLOT => {
-            let filter_target = (a as u64) & 0x03;
-            let target_p_idx = if filter_target == 2 || slot_info.is_opponent || target_slot == 2 {
-                1 - base_p
-            } else {
-                base_p
-            };
+            let target_p_idx = frame_data.resolved_target_player(base_p);
             match op {
                 O_PREVENT_ACTIVATE => state.players[target_p_idx].set_prevent_activate(1),
                 O_PREVENT_BATON_TOUCH => state.players[target_p_idx].set_prevent_baton_touch(1),

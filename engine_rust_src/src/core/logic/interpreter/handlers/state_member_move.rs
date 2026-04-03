@@ -1,7 +1,6 @@
 use super::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrameComponents;
 
 #[allow(clippy::too_many_arguments)]
@@ -27,21 +26,16 @@ pub fn handle_move_member(
                 || params.get("SOURCE").is_some()
         })
         .unwrap_or(false);
-    let filter_attr = if frame_data.resolved_filter_attr() != 0 {
+    let filter_attr = if frame_data.raw_attr != 0 || frame_data.filter.to_attr() != 0 {
         frame_data.resolved_filter_attr()
     } else {
-        let frame_filter_attr = frame_data.filter.to_attr();
-        if frame_filter_attr != 0 {
-            frame_filter_attr
-        } else {
-            a as u64
-        }
+        a as u64
     };
 
     let mut target_p_idx = if is_position_change_choice {
         ctx.player_id as usize
     } else {
-        resolve_target_player(slot_info, filter_attr, p_idx)
+        frame_data.resolved_target_player(p_idx)
     };
     if !is_position_change_choice {
         if let Some(&selected_cid) = ctx.selected_cards.last() {

@@ -2,8 +2,10 @@
 //! This ensures 100% coverage of logic.rs opcodes.
 
 use crate::core::enums::TriggerType;
+use crate::core::generated_constants::FILTER_ANY_STAGE;
 use crate::core::generated_constants::O_DRAW;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
+use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condition;
 use crate::core::logic::interpreter::resolve_ability;
 use crate::core::logic::models::{Ability, AbilityFrame, FrameProgram};
 use crate::core::models::MemberCard;
@@ -67,6 +69,69 @@ fn test_conditions_basic_state() {
     state.players[1].success_lives.push(8288);
     state.players[1].success_lives.push(12384);
     assert!(!check_cond(&mut state, &db, C_LIFE_LEAD, 0, 0, 0));
+}
+
+#[test]
+fn test_any_stage_scope_applies_consistently() {
+    let db = create_test_db();
+    let mut state = create_test_state();
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
+
+    state.players[1].stage[0] = 20;
+
+    assert!(!state.check_condition_opcode(&db, C_COUNT_STAGE, 1, 0, 0, &ctx, 0));
+    assert!(state.check_condition_opcode(&db, C_COUNT_STAGE, 1, FILTER_ANY_STAGE, 0, &ctx, 0));
+
+    assert!(!state.check_condition_opcode(&db, 306, 0, 0, 0, &ctx, 0));
+    assert!(state.check_condition_opcode(&db, 306, 0, FILTER_ANY_STAGE, 0, &ctx, 0));
+
+    let cond = Condition {
+        condition_type: ConditionType::None,
+        value: 0,
+        attr: 0,
+        target_slot: 0,
+        is_negated: false,
+        params: serde_json::json!({
+            "raw_cond": "COUNT_STAGE",
+            "AREA": "ANY_STAGE",
+            "MIN": 1,
+        }),
+    };
+
+    let params = cond.params.as_object().unwrap();
+    assert!(evaluate_raw_condition(&state, &db, 0, &cond, &ctx, 0, params));
+}
+
+#[test]
+fn test_json_params_shared_filter_translation_overlays_player_keyword_and_passthrough() {
+    let db = create_test_db();
+    let mut state = create_test_state();
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
+
+    state.players[1].stage[0] = 20;
+
+    let cond = Condition {
+        condition_type: ConditionType::None,
+        value: 0,
+        attr: crate::core::logic::constants::FILTER_REVEALED_CONTEXT,
+        target_slot: 0,
+        is_negated: false,
+        params: serde_json::json!({
+            "raw_cond": "COUNT_MEMBER",
+            "player": "OPPONENT",
+            "keyword": "COUNT_UNIQUE_NAMES",
+            "MIN": 1,
+        }),
+    };
+
+    let params = cond.params.as_object().unwrap();
+    assert!(evaluate_raw_condition(&state, &db, 0, &cond, &ctx, 0, params));
 }
 
 #[test]

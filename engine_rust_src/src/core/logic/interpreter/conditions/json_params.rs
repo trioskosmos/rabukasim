@@ -1,7 +1,8 @@
 use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
 use super::opcodes::check_condition_opcode;
 use crate::core::*;
-use crate::core::logic::filter::map_filter_string_to_attr;
+use crate::core::generated_constants::FILTER_ANY_STAGE;
+use crate::core::logic::filter::merge_filter_attr_with_params;
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
@@ -67,12 +68,16 @@ fn resolved_filter_attr(
     params: &serde_json::Map<String, serde_json::Value>,
     fallback_attr: u64,
 ) -> u64 {
-    get_param_case_insensitive(params, "FILTER")
-        .or_else(|| get_param_case_insensitive(params, "filter"))
-        .and_then(|value| value.as_str())
-        .map(map_filter_string_to_attr)
-        .filter(|&attr| attr != 0)
-        .unwrap_or(fallback_attr)
+    let params_value = serde_json::Value::Object(params.clone());
+    merge_filter_attr_with_params(fallback_attr, Some(&params_value))
+}
+
+fn apply_area_semantics(attr: u64, area: &str) -> u64 {
+    if area.eq_ignore_ascii_case("ANY_STAGE") || area.eq_ignore_ascii_case("ALL_AREAS") {
+        attr | FILTER_ANY_STAGE
+    } else {
+        attr
+    }
 }
 
 fn resolved_condition_player(
@@ -177,10 +182,7 @@ pub fn evaluate_raw_condition(
                 .or_else(|| get_param_case_insensitive(params, "area"))
                 .and_then(|v| v.as_str())
             {
-                if area.eq_ignore_ascii_case("ANY_STAGE") || area.eq_ignore_ascii_case("ALL_AREAS")
-                {
-                    filter_attr = (filter_attr & !0x3) | (TARGET_PLAYER_BOTH as u64);
-                }
+                filter_attr = apply_area_semantics(filter_attr, area);
             }
 
             let mut value = cond.value;
@@ -269,12 +271,7 @@ pub fn evaluate_raw_condition(
             depth + 1,
         ),
         "ALL_CARDS_MATCH" => {
-            let filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
-                .and_then(|value| value.as_str())
-                .map(map_filter_string_to_attr)
-                .filter(|&attr| attr != 0)
-                .unwrap_or(cond.attr);
+            let filter_attr = resolved_filter_attr(params, cond.attr);
 
             let mut value = cond.value;
             if get_param_case_insensitive(params, "all")
@@ -296,12 +293,7 @@ pub fn evaluate_raw_condition(
             )
         }
         "HAS_SUCCESS_LIVE" | "NOT_HAS_SUCCESS_LIVE" => {
-            let filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
-                .and_then(|value| value.as_str())
-                .map(map_filter_string_to_attr)
-                .filter(|&attr| attr != 0)
-                .unwrap_or(cond.attr);
+            let filter_attr = resolved_filter_attr(params, cond.attr);
 
             let has_matching_success_live = state.players[ctx.player_id as usize]
                 .success_lives
@@ -761,78 +753,16 @@ pub fn check_condition(
             }
         }
 
-        let mut mapped_attr = 0;
-        if let Some(filter_str) = get_param("filter").and_then(|v| v.as_str()) {
-            mapped_attr = map_filter_string_to_attr(filter_str);
-        }
+        attr = merge_filter_attr_with_params(attr, Some(&cond.params));
 
-        if let Some(area_str) = get_param("area").and_then(|v| v.as_str()) {
-            if area_str == "ANY_STAGE" || area_str == "ALL_AREAS" {
-                mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64;
+        if matches!(get_param("keyword").and_then(|v| v.as_str()), Some("REVEALED_CONTAINS")) {
+            if let Some(val_str) = params.get("value").and_then(|v| v.as_str()) {
+                if val_str == "live" {
+                    val = CARD_TYPE_LIVE;
+                } else if val_str == "member" {
+                    val = CARD_TYPE_MEMBER;
+                }
             }
-        }
-
-        if let Some(p_val) = get_param("player").and_then(|v| v.as_i64()) {
-            match p_val {
-                x if x == TARGET_PLAYER_SELF as i64 => {
-                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_SELF as u64;
-                }
-                x if x == TARGET_PLAYER_OPPONENT as i64 => {
-                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_OPPONENT as u64;
-                }
-                x if x == TARGET_PLAYER_BOTH as i64 => {
-                    mapped_attr = (mapped_attr & !0x3) | TARGET_PLAYER_BOTH as u64;
-                }
-                _ => {}
-            }
-        }
-
-        if let Some(kw) = get_param("keyword").and_then(|v| v.as_str()) {
-            match kw {
-                "PLAYED_THIS_TURN" | "COUNT_PLAYED_THIS_TURN" => {
-                    mapped_attr |= KEYWORD_PLAYED_THIS_TURN
-                }
-                "YELL_COUNT" | "COUNT_YELL_REVEALED" => mapped_attr |= KEYWORD_YELL_COUNT,
-                "HAS_LIVE_SET" => mapped_attr |= KEYWORD_HAS_LIVE_SET,
-                "UNIQUE_NAMES" | "COUNT_UNIQUE_NAMES" => mapped_attr |= FILTER_UNIQUE_NAMES,
-                "DID_ACTIVATE_ENERGY"
-                | "DID_ACTIVATE_ENERGY_BY_GROUP"
-                | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => {
-                    mapped_attr |= KEYWORD_ACTIVATED_ENERGY_BY_GROUP;
-                    // Also set group info if present in params
-                    if let Some(group_id) = params.get("group_id").and_then(|v| v.as_u64()) {
-                        mapped_attr |= FILTER_GROUP_ENABLE;
-                        mapped_attr |= (group_id & 0x7F) << FILTER_GROUP_SHIFT;
-                    }
-                }
-                "DID_ACTIVATE_MEMBER"
-                | "DID_ACTIVATE_MEMBER_BY_GROUP"
-                | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => {
-                    mapped_attr |= KEYWORD_ACTIVATED_MEMBER_BY_GROUP;
-                    // Also set group info if present in params
-                    if let Some(group_id) = params.get("group_id").and_then(|v| v.as_u64()) {
-                        mapped_attr |= FILTER_GROUP_ENABLE;
-                        mapped_attr |= (group_id & 0x7F) << FILTER_GROUP_SHIFT;
-                    }
-                }
-                "REVEALED_CONTAINS" => {
-                    mapped_attr |= FILTER_REVEALED_CONTEXT;
-                    if let Some(val_str) = params.get("value").and_then(|v| v.as_str()) {
-                        if val_str == "live" {
-                            val = CARD_TYPE_LIVE;
-                        } else if val_str == "member" {
-                            val = CARD_TYPE_MEMBER;
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if attr == 0 {
-            attr = mapped_attr;
-        } else {
-            attr |= mapped_attr;
         }
 
         if cond.condition_type == ConditionType::GroupFilter

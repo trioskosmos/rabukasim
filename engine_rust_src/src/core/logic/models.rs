@@ -189,6 +189,23 @@ impl<'a> SemanticFrameView<'a> {
         self.slot.target_slot as i32
     }
 
+    pub fn debug_slot_value(&self) -> i32 {
+        self.raw_slot & 0xFF
+    }
+
+    pub fn has_any_stage_scope(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0
+    }
+
+    pub fn stage_player_scope(&self, controller_idx: usize) -> (usize, Option<usize>) {
+        match self.filter.target_player {
+            x if x == TARGET_PLAYER_OPPONENT as u8 => (1 - controller_idx, None),
+            x if x == TARGET_PLAYER_BOTH as u8 => (controller_idx, Some(1 - controller_idx)),
+            _ if self.has_any_stage_scope() => (controller_idx, Some(1 - controller_idx)),
+            _ => (controller_idx, None),
+        }
+    }
+
     pub fn is_baton_slot_only(&self) -> bool {
         ((self.raw_slot as u64) & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY) != 0
     }
@@ -353,6 +370,23 @@ impl<'a> SemanticFrameView<'a> {
         self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER
     }
 
+    pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
+        let filter_attr = self.count_filter_attr();
+        if filter_attr != 0 {
+            filter_attr as i32
+        } else {
+            fallback_value
+        }
+    }
+
+    pub fn heart_compare_color_index(&self) -> usize {
+        if self.filter.color_mask != 0 {
+            self.filter.color_mask.trailing_zeros() as usize
+        } else {
+            (self.count_filter_attr() & 0x7F) as usize
+        }
+    }
+
     pub fn uses_count_multiplier(&self) -> bool {
         self.slot.is_dynamic
             || self.filter.compare_accumulated
@@ -505,14 +539,33 @@ impl<'a> AbilityFrameComponents<'a> {
         }
     }
 
+    pub fn stage_player_scope(&self, controller_idx: usize) -> (usize, Option<usize>) {
+        self.semantic_view().stage_player_scope(controller_idx)
+    }
+
     /// `ADD_TO_HAND` is effectively two effects: draw from deck, or consume the
     /// shared `looked_cards` buffer produced by search/reveal effects.
     pub fn add_to_hand_uses_looked_cards(&self) -> bool {
         self.semantic_view().context_mode() == SemanticContextMode::LookedCards
     }
 
+    pub fn resolved_target_player(&self, controller_idx: usize) -> usize {
+        if self.slot.is_opponent
+            || self.slot.target_slot as i32 == TARGET_PLAYER_OPPONENT
+            || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8
+        {
+            1 - controller_idx
+        } else {
+            controller_idx
+        }
+    }
+
     pub fn resolved_filter_attr(&self) -> u64 {
         self.semantic_view().resolved_filter_attr()
+    }
+
+    pub fn filter_attr_without_state_flags(&self) -> u64 {
+        self.resolved_filter_attr() & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
     }
 
     pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
@@ -533,6 +586,88 @@ impl<'a> AbilityFrameComponents<'a> {
 
     pub fn count_filter_attr(&self) -> u64 {
         self.semantic_view().count_filter_attr()
+    }
+
+    pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
+        self.semantic_view().resolved_filter_value(fallback_value)
+    }
+
+    pub fn normalized_select_member_filter_attr(&self) -> u64 {
+        let filter_attr = self.resolved_filter_attr();
+        if filter_attr == 0 || self.value <= 0 {
+            return filter_attr;
+        }
+
+        let semantic = SemanticFrameView::from_parts(self.value, filter_attr, 0, None);
+        let mut filter = semantic.filter;
+        let looks_like_packed_count = filter.value_enabled
+            && semantic.comparison_mode() == SemanticComparisonMode::GreaterEqual
+            && !filter.is_cost_type
+            && filter.value_threshold == self.value as u8
+            && filter.card_type == 0
+            && !filter.group_enabled
+            && !filter.unit_enabled
+            && filter.color_mask == 0
+            && filter.char_id_1 == 0
+            && filter.char_id_2 == 0
+            && filter.char_id_3 == 0
+            && filter.zone_mask == 0
+            && filter.special_id == 0
+            && !filter.is_tapped
+            && !filter.has_blade_heart
+            && !filter.not_has_blade_heart
+            && !filter.unique_names
+            && !filter.is_setsuna
+            && !filter.compare_accumulated
+            && !filter.keyword_energy
+            && !filter.keyword_member;
+
+        if !looks_like_packed_count {
+            return filter_attr;
+        }
+
+        filter.value_enabled = false;
+        filter.value_threshold = 0;
+        filter.is_le = false;
+        filter.is_cost_type = false;
+        filter.to_attr()
+    }
+
+    pub fn targeted_select_member_filter_attr(&self) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr();
+        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
+            && filter_attr != 0
+        {
+            (filter_attr & !0x3) | TARGET_PLAYER_SELF as u64
+        } else {
+            filter_attr
+        }
+    }
+
+    pub fn is_optional(&self) -> bool {
+        self.filter.is_optional
+            || (self.raw_attr & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0
+    }
+
+    pub fn allow_under_member_selection(&self) -> bool {
+        (self.raw_slot & (1 << 25)) != 0
+    }
+
+    pub fn embedded_count_opcode(&self) -> Option<i32> {
+        self.semantic_view().embedded_count_opcode()
+    }
+
+    pub fn discard_source_zone(&self) -> Zone {
+        self.semantic_view().discard_source_zone()
+    }
+
+    pub fn is_until_size_operation(&self) -> bool {
+        self.params
+            .and_then(|params| params.get("operation"))
+            .and_then(|value| value.as_str())
+            .map(|value| value.eq_ignore_ascii_case("UNTIL_SIZE"))
+            .unwrap_or(false)
+            || ((self.value as u32) & (1 << 31)) != 0
     }
 
     pub fn has_revealed_context_passthrough(&self) -> bool {

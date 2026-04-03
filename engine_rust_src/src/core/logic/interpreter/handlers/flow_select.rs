@@ -32,52 +32,6 @@ fn resolve_select_member_target_player(
     resolve_target_player(slot_info, filter_attr, p_idx)
 }
 
-fn normalize_select_member_filter_attr(filter_attr: u64, selection_count: i32) -> u64 {
-    if filter_attr == 0 || selection_count <= 0 {
-        return filter_attr;
-    }
-
-    let semantic = crate::core::logic::models::SemanticFrameView::from_parts(
-        selection_count,
-        filter_attr,
-        0,
-        None,
-    );
-    let mut filter = semantic.filter;
-    let looks_like_packed_count = filter.value_enabled
-        && semantic.comparison_mode()
-            == crate::core::logic::models::SemanticComparisonMode::GreaterEqual
-        && !filter.is_cost_type
-        && filter.value_threshold == selection_count as u8
-        && filter.card_type == 0
-        && !filter.group_enabled
-        && !filter.unit_enabled
-        && filter.color_mask == 0
-        && filter.char_id_1 == 0
-        && filter.char_id_2 == 0
-        && filter.char_id_3 == 0
-        && filter.zone_mask == 0
-        && filter.special_id == 0
-        && !filter.is_tapped
-        && !filter.has_blade_heart
-        && !filter.not_has_blade_heart
-        && !filter.unique_names
-        && !filter.is_setsuna
-        && !filter.compare_accumulated
-        && !filter.keyword_energy
-        && !filter.keyword_member;
-
-    if !looks_like_packed_count {
-        return filter_attr;
-    }
-
-    filter.value_enabled = false;
-    filter.value_threshold = 0;
-    filter.is_le = false;
-    filter.is_cost_type = false;
-    filter.to_attr()
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
@@ -93,7 +47,6 @@ pub fn handle_select_ops(
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
-    let semantic = frame_data.semantic_view();
     let frame_filter_attr = frame_data.filter.to_attr();
     let structured_filter = {
         let mut filter = frame_data.filter;
@@ -101,12 +54,12 @@ pub fn handle_select_ops(
         filter
     };
     let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
-        semantic.resolved_filter_attr()
+        frame_data.resolved_filter_attr()
     } else {
         a as u64
     };
     let resolved_filter_attr = if op == O_SELECT_MEMBER {
-        normalize_select_member_filter_attr(raw_filter_attr, v)
+        frame_data.normalized_select_member_filter_attr()
     } else {
         raw_filter_attr
     };
@@ -165,7 +118,7 @@ pub fn handle_select_ops(
 
     let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
-        (resolved_filter_attr & !0x3) | 1
+        frame_data.targeted_select_member_filter_attr()
     } else {
         resolved_filter_attr
     };

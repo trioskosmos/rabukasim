@@ -1,7 +1,8 @@
 use super::HandlerResult;
 use crate::core::*;
 use crate::core::enums::*;
-use crate::core::logic::filter::map_filter_string_to_attr;
+use crate::core::logic::filter::merge_filter_attr_with_params;
+use crate::core::logic::interpreter::conditions::get_condition_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::flow_helpers::{
     discard_current_yell_pile,
@@ -27,7 +28,7 @@ pub fn handle_meta_rule(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.resolved_filter_attr() as i64;
+    let a = frame_data.raw_attr as i64;
     let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.activator_id as usize;
@@ -52,27 +53,8 @@ pub fn handle_meta_rule(
         .map(|value| value.to_ascii_uppercase());
 
     if matches!(raw_effect, Some("COUNT_MEMBER")) {
-        let filter_attr = frame_data
-            .params
-            .and_then(|p| p.get("filter"))
-            .and_then(|value: &serde_json::Value| value.as_str())
-            .map(map_filter_string_to_attr)
-            .filter(|&attr| attr != 0)
-            .unwrap_or(a as u64);
-        let target_player = match (filter_attr & 0x3) as u8 {
-            2 => 1 - p_idx,
-            3 => 1,
-            _ => p_idx,
-        };
-
-        ctx.v_accumulated = state.players[target_player]
-            .stage
-            .iter()
-            .copied()
-            .filter(|&cid| {
-                cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
-            })
-            .count() as i16;
+        let filter_attr = merge_filter_attr_with_params(frame_data.raw_attr, frame_data.params);
+        ctx.v_accumulated = get_condition_count(state, db, C_COUNT_STAGE, filter_attr, ctx) as i16;
     } else if matches!(raw_effect, Some("DISCARD_YELL_PILE")) {
         if (a as u64 & FILTER_IS_OPTIONAL) != 0 && ctx.choice_index == -1 {
             if matches!(

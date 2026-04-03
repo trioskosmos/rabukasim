@@ -191,7 +191,7 @@ fn check_condition_with_parts(
 
     let cid = get_cid();
     let area_val = slot_info.area_idx;
-    let real_slot = slot & 0xFF;
+    let real_slot = semantic.debug_slot_value();
     if state.debug.debug_mode {
         if !state.ui.silent {
             let attr_desc = logging::describe_filter_bits(attr);
@@ -248,11 +248,7 @@ fn check_condition_with_parts(
                     false
                 })
             } else {
-                let color_idx = if attr != 0 {
-                    attr as usize
-                } else {
-                    val as usize
-                };
+                let color_idx = semantic.resolved_filter_value(val) as usize;
                 if color_idx < 7 {
                     player.stage.iter().filter(|&&c| c >= 0).any(|&c| {
                         if let Some(m) = db.get_member(c) {
@@ -347,7 +343,7 @@ fn check_condition_with_parts(
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
             let opp_lives = opponent.success_lives.len() as i32;
-            let reversed = (attr & 0x01) != 0;
+            let reversed = semantic.comparison_reversed();
             let diff = if reversed {
                 opp_lives - my_lives
             } else {
@@ -458,8 +454,8 @@ fn check_condition_with_parts(
                 res = compare_i32(player.yell_cards.len() as i32, val, slot);
             }
             if !res && semantic.requests_played_this_turn_keyword() {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = semantic.semantic_group_id(val).unwrap_or_default() as u64;
+                if let Some(group_id) = semantic.semantic_group_id(val) {
+                    let group_id = group_id as u64;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
                 } else if val == 0 && semantic.requests_played_this_turn_keyword() {
                     res = player.play_count_this_turn() > 0;
@@ -515,32 +511,11 @@ fn check_condition_with_parts(
             }
         }
         C_COUNT_LIVE_ZONE => {
-            let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if semantic.counts_unique_names() {
-                let mut names = std::collections::HashSet::new();
-                for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
-                    if state.card_matches_filter(db, id, filter_attr) {
-                        if let Some(l) = db.get_live(id) {
-                            names.insert(&l.name);
-                        }
-                    }
-                }
-                names.len() as i32
-            } else {
-                player
-                    .live_zone
-                    .iter()
-                    .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
-                    .count() as i32
-            };
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_TYPE_CHECK => {
-            let check_val = if val == 0 && (attr & 0x00000000FFFFFFFF) != 0 {
-                (attr & 0x00000000FFFFFFFF) as i32
-            } else {
-                val
-            };
+            let check_val = semantic.resolved_filter_value(val);
             let card_id = player
                 .looked_cards
                 .first()
@@ -720,11 +695,7 @@ fn check_condition_with_parts(
                 0
             };
             let hearts = state.get_effective_hearts(p_idx, slot, db, depth + 1);
-            let color_idx = if filter.color_mask != 0 {
-                filter.color_mask.trailing_zeros() as usize
-            } else {
-                (attr & 0x7F) as usize
-            };
+            let color_idx = semantic.heart_compare_color_index();
             let count = if color_idx < 7 {
                 hearts.to_array()[color_idx] as i32
             } else {
@@ -807,15 +778,8 @@ fn check_condition_with_parts(
             }
             let mut check_ids = Vec::new();
             if area_val == 0 {
-                for p in 0..2 {
-                    let player_idx = if (attr & (1u64 << 40)) != 0 {
-                        1 - p_idx
-                    } else {
-                        p_idx
-                    };
-                    if p == 1 && (attr & (1u64 << 40)) == 0 {
-                        continue;
-                    }
+                let (player_idx, other_player_idx) = semantic.stage_player_scope(p_idx);
+                for player_idx in std::iter::once(player_idx).chain(other_player_idx.into_iter()) {
                     check_ids.extend(
                         state.players[player_idx]
                             .stage

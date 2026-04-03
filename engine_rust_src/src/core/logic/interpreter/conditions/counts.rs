@@ -90,6 +90,7 @@ fn resolve_structured_zone_count(
     let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
         || filter.target_player == TARGET_PLAYER_BOTH as u8;
     let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
+    let (stage_primary_player, stage_secondary_player) = semantic.stage_player_scope(p_idx);
 
     let zone_mask = filter.zone_mask as u64;
     let has_zone_mask = zone_mask != 0;
@@ -138,10 +139,24 @@ fn resolve_structured_zone_count(
 
     let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
 
-    if !only_opponent {
-        if check_stage {
-            extend_with_slot(&mut ids, &player.stage, p_idx as u8, 0);
+    if check_stage {
+        extend_with_slot(
+            &mut ids,
+            &state.players[stage_primary_player].stage,
+            stage_primary_player as u8,
+            0,
+        );
+        if let Some(other_player) = stage_secondary_player {
+            extend_with_slot(
+                &mut ids,
+                &state.players[other_player].stage,
+                other_player as u8,
+                0,
+            );
         }
+    }
+
+    if !only_opponent {
         if check_discard {
             extend_with_slot(&mut ids, &player.discard, p_idx as u8, 100);
         }
@@ -153,9 +168,6 @@ fn resolve_structured_zone_count(
         }
     }
     if include_opponent {
-        if check_stage {
-            extend_with_slot(&mut ids, &opponent.stage, (1 - p_idx) as u8, 0);
-        }
         if check_discard {
             extend_with_slot(&mut ids, &opponent.discard, (1 - p_idx) as u8, 100);
         }
@@ -192,6 +204,35 @@ fn resolve_structured_zone_count(
     }
 }
 
+fn resolve_live_zone_count(
+    state: &GameState,
+    db: &CardDatabase,
+    frame: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+) -> i32 {
+    let p_idx = ctx.player_id as usize;
+    let player = &state.players[p_idx];
+    let filter_attr = frame.count_filter_attr();
+
+    if frame.counts_unique_names() {
+        let mut names = std::collections::HashSet::new();
+        for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
+            if state.card_matches_filter(db, id, filter_attr) {
+                if let Some(live) = db.get_live(id) {
+                    names.insert(live.name.clone());
+                }
+            }
+        }
+        names.len() as i32
+    } else {
+        player
+            .live_zone
+            .iter()
+            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
+            .count() as i32
+    }
+}
+
 fn resolve_count_components(
     state: &GameState,
     db: &CardDatabase,
@@ -201,7 +242,9 @@ fn resolve_count_components(
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
 
-    if is_structured_zone_count(frame) {
+    if frame.opcode == C_COUNT_LIVE_ZONE {
+        resolve_live_zone_count(state, db, frame, ctx)
+    } else if is_structured_zone_count(frame) {
         resolve_structured_zone_count(state, db, frame, ctx)
     } else {
         match frame.opcode {
