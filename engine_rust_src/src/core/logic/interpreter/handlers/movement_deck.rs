@@ -1,4 +1,4 @@
-use crate::core::enums::ChoiceType;
+use crate::core::enums::{ChoiceType, Zone};
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER, FLAG_REVEAL_UNTIL_IS_LIVE};
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -56,6 +56,63 @@ fn place_member_on_stage(
     state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
 }
 
+fn finalize_legacy_look_remainder(
+    state: &mut GameState,
+    p_idx: usize,
+    remainder_zone: Zone,
+    remainder: Vec<i32>,
+) {
+    match remainder_zone {
+        Zone::Discard => {
+            for cid in remainder {
+                state.players[p_idx].push_discard_card(cid);
+            }
+        }
+        Zone::DeckBottom => {
+            for cid in remainder.into_iter().rev() {
+                state.players[p_idx].deck.insert(0, cid);
+            }
+        }
+        Zone::Deck | Zone::DeckTop | Zone::Default => {
+            for cid in remainder.into_iter().rev() {
+                state.players[p_idx].push_deck_card(cid);
+            }
+        }
+        Zone::Hand => {
+            for cid in remainder {
+                state.players[p_idx].gain_hand_card(cid);
+            }
+        }
+        _ => {
+            for cid in remainder {
+                state.players[p_idx].push_discard_card(cid);
+            }
+        }
+    }
+
+    if state.players[p_idx].deck.is_empty() && !state.players[p_idx].discard.is_empty() {
+        state.players[p_idx].set_flag(PlayerState::FLAG_SUPPRESS_AUTO_DECK_REFRESH, true);
+    }
+}
+
+fn resolved_legacy_look_remainder_zone(
+    frame_data: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+) -> Zone {
+    if frame_data.slot.dest_zone != Zone::Default {
+        return frame_data.slot.dest_zone;
+    }
+
+    let is_real_ability = ctx.ability_index >= 0
+        || ctx.ability_card_id >= 0
+        || ctx.trigger_type != TriggerType::None;
+    if is_real_ability && frame_data.slot.target_slot == Zone::Hand as u8 {
+        Zone::Discard
+    } else {
+        Zone::Default
+    }
+}
+
 // Main router for deck-related opcodes
 #[allow(clippy::too_many_arguments)]
 pub fn handle_deck_zones(
@@ -78,8 +135,11 @@ pub fn handle_deck_zones(
         resolve_target_slot(target_slot, ctx) as i32
     };
     let look_resolved_slot = if op == O_REVEAL_CARDS {
-        if s == 6 || slot.source_zone as i32 == 6 || resolved_slot == 6 {
-            6
+        if s == Zone::Hand as i32
+            || slot.source_zone == Zone::Hand
+            || resolved_slot == Zone::Hand as i32
+        {
+            Zone::Hand as i32
         } else {
             resolved_slot
         }
@@ -446,9 +506,9 @@ fn handle_reveal_until(
 
             if matches {
                 let dest_slot = resolved_slot & 0x0F;
-                if dest_slot == 6 {
+                if dest_slot == Zone::Hand as i32 {
                     state.players[p_idx].gain_hand_card(cid);
-                } else if dest_slot == 7 {
+                } else if dest_slot == Zone::Discard as i32 {
                     state.players[p_idx].push_discard_card(cid);
                 }
                 found = true;
@@ -480,14 +540,14 @@ fn handle_look_cards(
     v: i32,
     a: i64,
     frame_idx: usize,
-    resolved_slot: i32,
+    _resolved_slot: i32,
 ) -> HandlerResult {
     let count = v as usize;
     let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or(a as u64);
     let source_zone = frame_data.slot.source_zone;
     let legacy_choose_to_hand = op == O_LOOK_DECK
         && source_zone != crate::core::enums::Zone::Hand
-        && frame_data.slot.target_slot == 6;
+        && frame_data.slot.target_slot == Zone::Hand as u8;
 
     if source_zone == crate::core::enums::Zone::Hand {
         // Reveal from hand
@@ -583,9 +643,12 @@ fn handle_look_cards(
             }
 
             let remainder: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
-            for cid in remainder {
-                state.players[p_idx].push_discard_card(cid);
-            }
+            finalize_legacy_look_remainder(
+                state,
+                p_idx,
+                resolved_legacy_look_remainder_zone(frame_data, ctx),
+                remainder,
+            );
             ctx.choice_index = -1;
             ctx.v_remaining = -1;
             return HandlerResult::Continue;

@@ -167,9 +167,17 @@ mod tests {
 
     #[test]
     fn test_name_in_filter() {
-        let db = create_test_db();
+        let mut db = create_test_db();
+        db.members.insert(
+            1003,
+            MemberCard {
+                card_id: 1003,
+                name: "Kanon".to_string(),
+                ..Default::default()
+            },
+        );
         let mut state = GameState::default();
-        state.players[0].hand = vec![100, 101].into(); // Kanon, Other
+        state.players[0].hand = vec![1003, 121].into(); // Kanon, Other
 
         let ctx = AbilityContext::default();
 
@@ -182,6 +190,17 @@ mod tests {
             params: serde_json::json!({"filter": "NAME_IN=KANON"}),
             is_negated: false,
         };
+        let filter_attr = crate::core::logic::filter::merge_filter_attr_with_params(0, Some(&cond.params));
+        let matched_count = crate::core::logic::interpreter::conditions::get_condition_count(
+            &state,
+            &db,
+            crate::core::generated_constants::C_COUNT_HAND,
+            filter_attr,
+            &ctx,
+        );
+        println!("filter_attr={:#x} matched_count={}", filter_attr, matched_count);
+        assert!(state.card_matches_filter_with_ctx(&db, 1003, filter_attr, &ctx));
+        assert!(!state.card_matches_filter_with_ctx(&db, 121, filter_attr, &ctx));
         assert!(check_condition(&state, &db, 0, &cond, &ctx, 0));
     }
 

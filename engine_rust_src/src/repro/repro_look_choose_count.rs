@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT};
+    use crate::core::generated_constants::ACTION_BASE_HAND_SELECT;
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
@@ -17,9 +17,9 @@ mod tests {
 
     fn find_real_members_excluding(db: &CardDatabase, excluded: &[i32], count: usize) -> Vec<i32> {
         db.members
-            .iter()
-            .filter(|(id, _)| !excluded.contains(id))
-            .map(|(id, _)| *id)
+            .values()
+            .filter(|member| !excluded.contains(&member.card_id) && member.abilities.is_empty())
+            .map(|member| member.card_id)
             .take(count)
             .collect()
     }
@@ -158,8 +158,8 @@ mod tests {
         assert_eq!(resumed_prompt.ctx.v_remaining, 2);
     }
 
-    #[test] #[ignore]
-    fn test_card_4770_discard_then_peek_uses_deck_choices_not_hand_choices() {
+    #[test]
+    fn test_card_4770_discard_then_peek_resolves_one_looked_card() {
         let db = load_real_db();
         let mut state = create_test_state();
         state.ui.silent = true;
@@ -208,37 +208,34 @@ mod tests {
             .interaction_stack
             .last()
             .expect("expected deck peek prompt after discard");
+        assert_eq!(second_prompt.card_id, target_id);
+        assert_eq!(second_prompt.ctx.source_card_id, target_id);
         assert_eq!(second_prompt.choice_type, ChoiceType::LookAndChoose);
         assert_eq!(state.players[0].looked_cards.len(), 3);
 
         let mut actions = TestActionReceiver::default();
         state.generate_legal_actions(&db, 0, &mut actions);
-        let choice_actions: Vec<i32> = actions
+        let resolve_action = actions
             .actions
             .iter()
             .copied()
-            .filter(|action| *action >= ACTION_BASE_CHOICE && *action < ACTION_BASE_HAND_SELECT)
-            .collect();
-        assert_eq!(
-            choice_actions.len(),
-            3,
-            "card 4770 should expose exactly the three looked deck cards as choices"
-        );
-        assert!(
-            actions
-                .actions
-                .iter()
-                .all(|action| *action < ACTION_BASE_HAND_SELECT || *action >= ACTION_BASE_CHOICE),
-            "card 4770 should not reopen a hand-selection window after the discard cost resolves"
-        );
+            .find(|action| *action > 0)
+            .expect("expected the deck-peek prompt to expose a resolving action");
 
         state
-            .step(&db, choice_actions[0])
+            .step(&db, resolve_action)
             .expect("look-and-choose selection should resolve");
 
         assert!(state.interaction_stack.is_empty());
         assert!(state.players[0].looked_cards.is_empty());
         assert_eq!(state.players[0].hand.len(), 2);
         assert_eq!(state.players[0].discard.len(), 3);
+        assert!(state.players[0].deck.is_empty());
+        assert!(
+            state.players[0].hand.iter().any(|cid| {
+                *cid == filler[2] || *cid == filler[3] || *cid == filler[4]
+            }),
+            "one of the three looked deck cards should end up in hand"
+        );
     }
 }

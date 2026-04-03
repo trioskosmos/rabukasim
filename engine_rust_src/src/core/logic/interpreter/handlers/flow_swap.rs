@@ -1,4 +1,5 @@
 use super::HandlerResult;
+use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, GameState};
 
@@ -10,8 +11,8 @@ pub fn handle_swap_area(
     let base_p = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = frame_data.slot.target_slot as i32;
-    let a = frame_data.resolved_filter_attr() as i64;
-    let s = frame_data.slot.to_raw();
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let v = frame_data.value;
     let target_p_idx = if slot_info.is_opponent || target_slot == 2 {
         1 - base_p
@@ -37,7 +38,7 @@ pub fn handle_swap_area(
             p.set_moved(src, temp_moved[dst]);
             p.set_moved(dst, temp_moved[src]);
         }
-    } else if s == 4 {
+    } else if s == TARGET_SLOT_STAGE as i32 {
         p.stage[0] = temp_stage[1];
         p.stage[1] = temp_stage[2];
         p.stage[2] = temp_stage[0];

@@ -40,15 +40,9 @@ mod tests {
             .step(&db, ACTION_BASE_CHOICE + 0)
             .expect("Step failed");
 
-        // Verify destination: Hand (6)
-        assert!(
-            state.players[0].hand.contains(&chosen_card_id),
-            "Card 563 should be in hand!"
-        );
-        assert!(
-            !state.players[0].discard.contains(&chosen_card_id),
-            "Card 563 should NOT be in discard!"
-        );
+        // The looked cards are identical IDs, so verify zone counts rather than instance identity.
+        assert_eq!(state.players[0].hand.iter().filter(|&&cid| cid == chosen_card_id).count(), 1);
+        assert_eq!(state.players[0].discard.iter().filter(|&&cid| cid == chosen_card_id).count(), 2);
     }
 
     #[test]
@@ -117,7 +111,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_card_275_sequential_interaction_resumption() {
         let mut state = GameState::default();
         let card_id = 275; // Setsuna

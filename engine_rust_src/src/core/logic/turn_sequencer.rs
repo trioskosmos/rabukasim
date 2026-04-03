@@ -482,8 +482,9 @@ fn state_cache_key(state: &GameState) -> u64 {
     for pending in &state.interaction_stack {
         hash_pending_interaction(pending, &mut hasher);
     }
-    for (card_id, opcode, ctx, mandatory, trigger) in &state.trigger_queue {
+    for (card_id, ability_card_id, opcode, ctx, mandatory, trigger) in &state.trigger_queue {
         card_id.hash(&mut hasher);
+        ability_card_id.hash(&mut hasher);
         opcode.hash(&mut hasher);
         ctx.hash(&mut hasher);
         mandatory.hash(&mut hasher);

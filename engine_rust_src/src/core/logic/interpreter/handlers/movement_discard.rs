@@ -60,10 +60,7 @@ pub fn handle_move_to_discard(
     }
 
     let filter_attr = discard.filter_attr;
-    let is_optional = discard.is_optional
-        || ((ctx.source_card_id == 122 || ctx.source_card_id == 4331)
-            && source_zone == Zone::Hand
-            && discard.requested_count == 1);
+    let is_optional = discard.is_optional;
 
     // Handle skip of optional discard (CHOICE_DONE = user declined)
     if is_optional && ctx.choice_index == CHOICE_DONE {

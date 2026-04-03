@@ -2652,7 +2652,8 @@ mod tests {
         };
         let is_live = engine.db.get_live(real_id as u16).is_some();
         state.trigger_queue.push_back((
-            real_id as u16,
+            real_id,
+            real_id,
             ab_idx as u16,
             actx,
             is_live,

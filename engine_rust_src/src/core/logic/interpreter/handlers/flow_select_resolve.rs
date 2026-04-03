@@ -1,23 +1,33 @@
 use super::*;
 use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_STAGE, ZONE_DISCARD, ZONE_HAND};
+use crate::core::enums::Zone;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::models::AbilityContext;
 
-fn selected_target_key(source_zone: u8, slot_idx: i32) -> i32 {
-    ((source_zone as i32) << 8) | (slot_idx & 0xFF)
+fn selected_target_key(source_zone: Zone, slot_idx: i32) -> i32 {
+    ((source_zone as i32) << 8) | slot_idx
 }
 
-fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u8) -> Vec<i32> {
+fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: Zone) -> Vec<i32> {
     match source_zone {
-        x if x == ZONE_HAND as u8 => state.players[target_player].hand.to_vec(),
-        x if x == ZONE_DISCARD as u8 => state.players[target_player].discard.to_vec(),
+        Zone::Hand => state.players[target_player].hand.to_vec(),
+        Zone::Discard => state.players[target_player].discard.to_vec(),
         _ => state.players[target_player].stage.to_vec(),
     }
 }
 
+fn selection_source_zone(raw_zone: u8) -> Zone {
+    match raw_zone {
+        x if x == ZONE_HAND as u8 => Zone::Hand,
+        x if x == ZONE_DISCARD as u8 => Zone::Discard,
+        _ => Zone::Stage,
+    }
+}
+
 fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize {
+    let source_zone = selection_source_zone(source_zone);
     cards
         .iter()
         .enumerate()
@@ -36,6 +46,7 @@ fn count_remaining_targets(
     keys: &[i32],
     filter_attr: u64,
 ) -> usize {
+    let source_zone = selection_source_zone(source_zone);
     cards
         .iter()
         .enumerate()
@@ -149,8 +160,9 @@ pub fn resolve_select_choice(
     } else {
         resolve_target_player(slot_info, filter_attr, ctx.player_id as usize)
     };
+    let source_zone_enum = selection_source_zone(source_zone);
     let selected_cid = {
-        let source_cards = cards_for_source_zone(state, target_player, source_zone);
+        let source_cards = cards_for_source_zone(state, target_player, source_zone_enum);
         let idx = if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
             choice.saturating_sub(1) as usize
         } else {
@@ -185,7 +197,7 @@ pub fn resolve_select_choice(
         ctx.choice_index = -1;
         ctx.v_remaining = -1;
     }
-    let selected_key = selected_target_key(source_zone, choice);
+    let selected_key = selected_target_key(source_zone_enum, choice);
     if !ctx.selected_target_keys.contains(&selected_key) {
         ctx.selected_target_keys.push(selected_key);
     }
@@ -211,7 +223,7 @@ pub fn resolve_select_choice(
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {
         let current_selection_count = count_selected_targets(
-            cards_for_source_zone(state, target_player, source_zone).as_slice(),
+            cards_for_source_zone(state, target_player, source_zone_enum).as_slice(),
             source_zone,
             &ctx.selected_target_keys,
         );
@@ -219,7 +231,7 @@ pub fn resolve_select_choice(
             state,
             db,
             ctx,
-            cards_for_source_zone(state, target_player, source_zone).as_slice(),
+            cards_for_source_zone(state, target_player, source_zone_enum).as_slice(),
             source_zone,
             &ctx.selected_target_keys,
             filter_attr,

@@ -22,7 +22,7 @@ pub fn handle_trigger_remote(
         .and_then(|v: &serde_json::Value| v.as_str())
         .map(|s| s.eq_ignore_ascii_case("DISCARD"))
         .unwrap_or(false);
-    let filter_attr = frame_data.resolved_filter_attr();
+    let filter_attr = frame_data.raw_attr;
 
     let mut target_cid = -1;
     let mut target_area = -1;

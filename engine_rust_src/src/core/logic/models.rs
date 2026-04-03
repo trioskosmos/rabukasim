@@ -116,41 +116,193 @@ pub enum SemanticScaleSource {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SemanticContextMode {
-    Default,
-    LookedCards,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SemanticComparisonMode {
     GreaterEqual,
     LessEqual,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SemanticFrameView<'a> {
-    pub value: i32,
-    pub raw_attr: u64,
-    pub raw_slot: i32,
-    pub filter: CardFilter,
-    pub slot: DecodedSlot,
-    pub params: Option<&'a Value>,
+pub struct SemanticDiscardSpec {
+    pub requested_count: i32,
+    pub source_zone: Zone,
+    pub filter_attr: u64,
+    pub prompt_filter_attr: u64,
+    pub suspend_slot: i32,
+    pub is_optional: bool,
+    pub allow_under_member_selection: bool,
+    pub is_until_size_operation: bool,
+    pub embedded_count_opcode: Option<i32>,
 }
 
-impl<'a> SemanticFrameView<'a> {
-    pub fn from_parts(
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SemanticLookAndChooseSpec {
+    pub look_count: usize,
+    pub choose_count: usize,
+    pub source_zone: Zone,
+    pub target_slot: u8,
+    pub remainder_zone: Zone,
+    pub reveal: bool,
+    pub remainder_to_discard: bool,
+    pub selection_filter: CardFilter,
+    pub selection_filter_attr: u64,
+    pub suspend_slot: i32,
+}
+
+impl SemanticLookAndChooseSpec {
+    pub fn finalize_destination(&self) -> Zone {
+        if self.remainder_to_discard {
+            Zone::Discard
+        } else if self.remainder_zone != Zone::Default {
+            self.remainder_zone
+        } else {
+            self.source_zone
+        }
+    }
+
+    pub fn choice_type(&self) -> ChoiceType {
+        match self.source_zone {
+            Zone::Hand => ChoiceType::SelectHandDiscard,
+            Zone::Discard => ChoiceType::SelectDiscardPlay,
+            _ => ChoiceType::LookAndChoose,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AbilityTraceStep {
+    pub opcode: String,
+    pub summary: String,
+    #[serde(default)]
+    pub is_cost: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub value: Option<i32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_zone: Option<Zone>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dest_zone: Option<Zone>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_slot: Option<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub choose_count: Option<u8>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reveal: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remainder_to_discard: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub filter: Option<CardFilter>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slot: Option<DecodedSlot>,
+    #[serde(default, skip_serializing_if = "Value::is_null")]
+    pub params: Value,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AbilityTraceView {
+    pub trigger: TriggerType,
+    pub frame_source: String,
+    #[serde(default)]
+    pub raw_text: String,
+    #[serde(default)]
+    pub choice_count: u8,
+    #[serde(default)]
+    pub steps: Vec<AbilityTraceStep>,
+}
+
+fn trace_opcode_name(opcode: i32) -> String {
+    match opcode {
+        O_DRAW => "DRAW".to_string(),
+        O_MOVE_TO_DISCARD => "MOVE_TO_DISCARD".to_string(),
+        O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE".to_string(),
+        O_RECOVER_LIVE => "RECOVER_LIVE".to_string(),
+        O_RECOVER_MEMBER => "RECOVER_MEMBER".to_string(),
+        O_RETURN => "RETURN".to_string(),
+        O_JUMP => "JUMP".to_string(),
+        O_JUMP_IF_FALSE => "JUMP_IF_FALSE".to_string(),
+        O_PAY_ENERGY => "PAY_ENERGY".to_string(),
+        O_SELECT_MEMBER => "SELECT_MEMBER".to_string(),
+        O_ADD_BLADES => "ADD_BLADES".to_string(),
+        O_ADD_HEARTS => "ADD_HEARTS".to_string(),
+        O_BOOST_SCORE => "BOOST_SCORE".to_string(),
+        O_TAP_MEMBER => "TAP_MEMBER".to_string(),
+        O_SET_TAPPED => "SET_TAPPED".to_string(),
+        O_NOP => "NOP".to_string(),
+        _ => format!("OP_{}", opcode),
+    }
+}
+
+fn trace_zone(zone: Zone) -> Option<Zone> {
+    if zone == Zone::Default {
+        None
+    } else {
+        Some(zone)
+    }
+}
+
+impl<'a> AbilityFrameComponents<'a> {
+    pub fn from_raw_parts(
+        raw_opcode: i32,
         value: i32,
         raw_attr: u64,
         raw_slot: i32,
+        is_cost: bool,
         params: Option<&'a Value>,
     ) -> Self {
+        let is_negated = raw_opcode >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
+        let opcode = if is_negated {
+            raw_opcode - crate::core::logic::constants::OPCODE_NEGATION_OFFSET
+        } else {
+            raw_opcode
+        };
         Self {
+            raw_opcode,
+            opcode,
             value,
-            raw_attr,
-            raw_slot,
             filter: CardFilter::from_attr(raw_attr),
             slot: DecodedSlot::decode(raw_slot),
+            raw_attr,
+            raw_slot,
+            is_negated,
+            is_cost,
             params,
+        }
+    }
+
+    /// Resolve which player this frame targets based on the structured slot data.
+    pub fn target_player_index(&self, controller_idx: usize) -> usize {
+        if self.slot.is_opponent || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
+            1 - controller_idx
+        } else {
+            controller_idx
+        }
+    }
+
+    pub fn stage_player_scope(&self, controller_idx: usize) -> (usize, Option<usize>) {
+        match self.filter.target_player {
+            x if x == TARGET_PLAYER_OPPONENT as u8 => (1 - controller_idx, None),
+            x if x == TARGET_PLAYER_BOTH as u8 => (controller_idx, Some(1 - controller_idx)),
+            _ if (self.raw_attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0 => {
+                (controller_idx, Some(1 - controller_idx))
+            }
+            _ => (controller_idx, None),
+        }
+    }
+
+    /// `ADD_TO_HAND` is effectively two effects: draw from deck, or consume the
+    /// shared `looked_cards` buffer produced by search/reveal effects.
+    pub fn add_to_hand_uses_looked_cards(&self) -> bool {
+        (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
+            || self.raw_slot == crate::core::generated_constants::ZONE_LOOKED_CARDS
+            || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
+    }
+
+    pub fn resolved_target_player(&self, controller_idx: usize) -> usize {
+        if self.slot.is_opponent
+            || self.slot.target_slot as i32 == TARGET_PLAYER_OPPONENT
+            || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8
+        {
+            1 - controller_idx
+        } else {
+            controller_idx
         }
     }
 
@@ -162,13 +314,15 @@ impl<'a> SemanticFrameView<'a> {
         }
     }
 
+    pub fn filter_attr_without_state_flags(&self) -> u64 {
+        self.resolved_filter_attr() & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
+    }
+
     pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
         let lower_attr = self.raw_attr & 0x00000000FFFF_FFFF;
         if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
             Some((lower_attr & 0x7F) as u8)
-        } else if self.filter.group_enabled {
-            Some(self.filter.group_id)
-        } else if self.filter.group_id > 0 {
+        } else if self.filter.group_enabled || self.filter.group_id > 0 {
             Some(self.filter.group_id)
         } else if fallback_value > 0 {
             Some((fallback_value & 0x7F) as u8)
@@ -191,44 +345,17 @@ impl<'a> SemanticFrameView<'a> {
             || (self.raw_attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0
     }
 
-    pub fn target_area(&self) -> i32 {
-        self.slot.target_slot as i32
+    pub fn count_filter_attr(&self) -> u64 {
+        self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER
     }
 
-    pub fn debug_slot_value(&self) -> i32 {
-        self.raw_slot & 0xFF
-    }
-
-    pub fn has_any_stage_scope(&self) -> bool {
-        (self.raw_attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0
-    }
-
-    pub fn stage_player_scope(&self, controller_idx: usize) -> (usize, Option<usize>) {
-        match self.filter.target_player {
-            x if x == TARGET_PLAYER_OPPONENT as u8 => (1 - controller_idx, None),
-            x if x == TARGET_PLAYER_BOTH as u8 => (controller_idx, Some(1 - controller_idx)),
-            _ if self.has_any_stage_scope() => (controller_idx, Some(1 - controller_idx)),
-            _ => (controller_idx, None),
-        }
-    }
-
-    pub fn is_baton_slot_only(&self) -> bool {
-        ((self.raw_slot as u64) & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY) != 0
-    }
-
-    pub fn context_mode(&self) -> SemanticContextMode {
-        if (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
-            || self.raw_slot == crate::core::generated_constants::ZONE_LOOKED_CARDS
-            || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
-        {
-            SemanticContextMode::LookedCards
+    pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
+        let filter_attr = self.count_filter_attr();
+        if filter_attr != 0 {
+            filter_attr as i32
         } else {
-            SemanticContextMode::Default
+            fallback_value
         }
-    }
-
-    pub fn has_revealed_context_passthrough(&self) -> bool {
-        self.context_mode() == SemanticContextMode::LookedCards
     }
 
     pub fn comparison_mode(&self) -> SemanticComparisonMode {
@@ -364,25 +491,16 @@ impl<'a> SemanticFrameView<'a> {
         SemanticScaleSource::None
     }
 
-    pub fn embedded_count_opcode(&self) -> Option<i32> {
-        if (self.raw_slot & 0x1_0000) != 0 {
-            Some((self.raw_slot >> 8) & 0xFFFF)
-        } else {
-            None
-        }
+    pub fn target_area(&self) -> i32 {
+        self.slot.target_slot as i32
     }
 
-    pub fn count_filter_attr(&self) -> u64 {
-        self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER
+    pub fn debug_slot_value(&self) -> i32 {
+        self.raw_slot & 0xFF
     }
 
-    pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
-        let filter_attr = self.count_filter_attr();
-        if filter_attr != 0 {
-            filter_attr as i32
-        } else {
-            fallback_value
-        }
+    pub fn is_baton_slot_only(&self) -> bool {
+        ((self.raw_slot as u64) & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY) != 0
     }
 
     pub fn heart_compare_color_index(&self) -> usize {
@@ -431,338 +549,15 @@ impl<'a> SemanticFrameView<'a> {
         }
     }
 
-    pub fn discard_source_zone(&self) -> Zone {
-        match self.slot.source_zone {
-            Zone::Default => {
-                let target_slot = self.slot.target_slot;
-                if target_slot == 4 {
-                    Zone::Stage
-                } else if target_slot == 6 {
-                    Zone::Hand
-                } else if (9..=11).contains(&target_slot) {
-                    Zone::LiveSet
-                } else {
-                    Zone::Deck
-                }
-            }
-            Zone::Hand => Zone::Hand,
-            Zone::Stage => Zone::Stage,
-            Zone::Discard => Zone::Discard,
-            Zone::Yell => Zone::Yell,
-            other => other,
-        }
-    }
-
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SemanticDiscardSpec {
-    pub requested_count: i32,
-    pub source_zone: Zone,
-    pub filter_attr: u64,
-    pub prompt_filter_attr: u64,
-    pub suspend_slot: i32,
-    pub is_optional: bool,
-    pub allow_under_member_selection: bool,
-    pub is_until_size_operation: bool,
-    pub embedded_count_opcode: Option<i32>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct SemanticLookAndChooseSpec {
-    pub look_count: usize,
-    pub choose_count: usize,
-    pub source_zone: Zone,
-    pub target_slot: u8,
-    pub remainder_zone: Zone,
-    pub reveal: bool,
-    pub remainder_to_discard: bool,
-    pub selection_filter: CardFilter,
-    pub selection_filter_attr: u64,
-    pub suspend_slot: i32,
-}
-
-impl SemanticLookAndChooseSpec {
-    pub fn destination_zone(&self) -> Zone {
-        match self.target_slot {
-            4 => Zone::Stage,
-            6 => Zone::Hand,
-            7 => Zone::Discard,
-            8 => Zone::Deck,
-            13 => Zone::SuccessPile,
-            _ => Zone::Hand,
-        }
-    }
-
-    pub fn finalize_destination(&self) -> Zone {
-        if self.remainder_to_discard {
-            Zone::Discard
-        } else if self.remainder_zone != Zone::Default {
-            self.remainder_zone
-        } else {
-            self.source_zone
-        }
-    }
-
-    pub fn choice_type(&self) -> ChoiceType {
-        match self.source_zone {
-            Zone::Hand => ChoiceType::SelectHandDiscard,
-            Zone::Discard => ChoiceType::SelectDiscardPlay,
-            _ => ChoiceType::LookAndChoose,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AbilityTraceStep {
-    pub opcode: String,
-    pub summary: String,
-    #[serde(default)]
-    pub is_cost: bool,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub value: Option<i32>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub source_zone: Option<Zone>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub dest_zone: Option<Zone>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_slot: Option<u8>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub choose_count: Option<u8>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub reveal: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub remainder_to_discard: Option<bool>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub filter: Option<CardFilter>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub slot: Option<DecodedSlot>,
-    #[serde(default, skip_serializing_if = "Value::is_null")]
-    pub params: Value,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AbilityTraceView {
-    pub trigger: TriggerType,
-    pub frame_source: String,
-    #[serde(default)]
-    pub raw_text: String,
-    #[serde(default)]
-    pub choice_count: u8,
-    #[serde(default)]
-    pub steps: Vec<AbilityTraceStep>,
-}
-
-fn trace_opcode_name(opcode: i32) -> String {
-    match opcode {
-        O_DRAW => "DRAW".to_string(),
-        O_MOVE_TO_DISCARD => "MOVE_TO_DISCARD".to_string(),
-        O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE".to_string(),
-        O_RECOVER_LIVE => "RECOVER_LIVE".to_string(),
-        O_RECOVER_MEMBER => "RECOVER_MEMBER".to_string(),
-        O_RETURN => "RETURN".to_string(),
-        O_JUMP => "JUMP".to_string(),
-        O_JUMP_IF_FALSE => "JUMP_IF_FALSE".to_string(),
-        O_PAY_ENERGY => "PAY_ENERGY".to_string(),
-        O_SELECT_MEMBER => "SELECT_MEMBER".to_string(),
-        O_ADD_BLADES => "ADD_BLADES".to_string(),
-        O_ADD_HEARTS => "ADD_HEARTS".to_string(),
-        O_BOOST_SCORE => "BOOST_SCORE".to_string(),
-        O_TAP_MEMBER => "TAP_MEMBER".to_string(),
-        O_SET_TAPPED => "SET_TAPPED".to_string(),
-        O_NOP => "NOP".to_string(),
-        _ => format!("OP_{}", opcode),
-    }
-}
-
-fn trace_zone(zone: Zone) -> Option<Zone> {
-    if zone == Zone::Default {
-        None
-    } else {
-        Some(zone)
-    }
-}
-
-impl<'a> AbilityFrameComponents<'a> {
-    pub fn from_raw_parts(
-        raw_opcode: i32,
-        value: i32,
-        raw_attr: u64,
-        raw_slot: i32,
-        is_cost: bool,
-        params: Option<&'a Value>,
-    ) -> Self {
-        let is_negated = raw_opcode >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
-        let opcode = if is_negated {
-            raw_opcode - crate::core::logic::constants::OPCODE_NEGATION_OFFSET
-        } else {
-            raw_opcode
-        };
-        Self {
-            raw_opcode,
-            opcode,
-            value,
-            filter: CardFilter::from_attr(raw_attr),
-            slot: DecodedSlot::decode(raw_slot),
-            raw_attr,
-            raw_slot,
-            is_negated,
-            is_cost,
-            params,
-        }
-    }
-
-    pub fn semantic_view(&self) -> SemanticFrameView<'a> {
-        SemanticFrameView {
-            value: self.value,
-            raw_attr: self.raw_attr,
-            raw_slot: self.raw_slot,
-            filter: self.filter,
-            slot: self.slot,
-            params: self.params,
-        }
-    }
-
-    /// Resolve which player this frame targets based on the structured slot data.
-    pub fn target_player_index(&self, controller_idx: usize) -> usize {
-        if self.slot.is_opponent || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
-            1 - controller_idx
-        } else {
-            controller_idx
-        }
-    }
-
-    pub fn stage_player_scope(&self, controller_idx: usize) -> (usize, Option<usize>) {
-        self.semantic_view().stage_player_scope(controller_idx)
-    }
-
-    /// `ADD_TO_HAND` is effectively two effects: draw from deck, or consume the
-    /// shared `looked_cards` buffer produced by search/reveal effects.
-    pub fn add_to_hand_uses_looked_cards(&self) -> bool {
-        self.semantic_view().context_mode() == SemanticContextMode::LookedCards
-    }
-
-    pub fn resolved_target_player(&self, controller_idx: usize) -> usize {
-        if self.slot.is_opponent
-            || self.slot.target_slot as i32 == TARGET_PLAYER_OPPONENT
-            || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8
-        {
-            1 - controller_idx
-        } else {
-            controller_idx
-        }
-    }
-
-    pub fn resolved_filter_attr(&self) -> u64 {
-        self.semantic_view().resolved_filter_attr()
-    }
-
-    pub fn filter_attr_without_state_flags(&self) -> u64 {
-        self.resolved_filter_attr() & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
-    }
-
-    pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
-        self.semantic_view().semantic_group_id(fallback_value)
-    }
-
-    pub fn counts_unique_names(&self) -> bool {
-        self.semantic_view().counts_unique_names()
-    }
-
-    pub fn compare_accumulated(&self) -> bool {
-        self.semantic_view().compare_accumulated()
-    }
-
-    pub fn uses_total_cost_budget(&self) -> bool {
-        self.semantic_view().uses_total_cost_budget()
-    }
-
-    pub fn count_filter_attr(&self) -> u64 {
-        self.semantic_view().count_filter_attr()
-    }
-
-    pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
-        self.semantic_view().resolved_filter_value(fallback_value)
-    }
-
-    pub fn comparison_mode(&self) -> SemanticComparisonMode {
-        self.semantic_view().comparison_mode()
-    }
-
-    pub fn comparison_reversed(&self) -> bool {
-        self.semantic_view().comparison_reversed()
-    }
-
-    pub fn requests_keyword_energy(&self) -> bool {
-        self.semantic_view().requests_keyword_energy()
-    }
-
-    pub fn requests_keyword_member(&self) -> bool {
-        self.semantic_view().requests_keyword_member()
-    }
-
-    pub fn requests_played_this_turn_keyword(&self) -> bool {
-        self.semantic_view().requests_played_this_turn_keyword()
-    }
-
-    pub fn requests_yell_count_keyword(&self) -> bool {
-        self.semantic_view().requests_yell_count_keyword()
-    }
-
-    pub fn requests_has_live_set_keyword(&self) -> bool {
-        self.semantic_view().requests_has_live_set_keyword()
-    }
-
-    pub fn inferred_count_zone(&self) -> Option<SemanticCountZone> {
-        self.semantic_view().inferred_count_zone()
-    }
-
-    pub fn count_opcode_hint(&self, default_hand_for_dynamic_cost: bool) -> Option<i32> {
-        self.semantic_view().count_opcode_hint(default_hand_for_dynamic_cost)
-    }
-
-    pub fn scale_source(&self) -> SemanticScaleSource {
-        self.semantic_view().scale_source()
-    }
-
-    pub fn target_area(&self) -> i32 {
-        self.semantic_view().target_area()
-    }
-
-    pub fn debug_slot_value(&self) -> i32 {
-        self.semantic_view().debug_slot_value()
-    }
-
-    pub fn is_baton_slot_only(&self) -> bool {
-        self.semantic_view().is_baton_slot_only()
-    }
-
-    pub fn heart_compare_color_index(&self) -> usize {
-        self.semantic_view().heart_compare_color_index()
-    }
-
-    pub fn uses_count_multiplier(&self) -> bool {
-        self.semantic_view().uses_count_multiplier()
-    }
-
-    pub fn resolved_color_index(&self, selected_color: usize, any_fallback: usize) -> usize {
-        self.semantic_view().resolved_color_index(selected_color, any_fallback)
-    }
-
-    pub fn normalized_baton_filter_attr(&self) -> u64 {
-        self.semantic_view().normalized_baton_filter_attr()
-    }
-
     pub fn normalized_select_member_filter_attr(&self) -> u64 {
         let filter_attr = self.resolved_filter_attr();
         if filter_attr == 0 || self.value <= 0 {
             return filter_attr;
         }
 
-        let semantic = SemanticFrameView::from_parts(self.value, filter_attr, 0, None);
-        let mut filter = semantic.filter;
+        let mut filter = CardFilter::from_attr(filter_attr);
         let looks_like_packed_count = filter.value_enabled
-            && semantic.comparison_mode() == SemanticComparisonMode::GreaterEqual
+            && self.comparison_mode() == SemanticComparisonMode::GreaterEqual
             && !filter.is_cost_type
             && filter.value_threshold == self.value as u8
             && filter.card_type == 0
@@ -815,20 +610,42 @@ impl<'a> AbilityFrameComponents<'a> {
     }
 
     pub fn embedded_count_opcode(&self) -> Option<i32> {
-        self.semantic_view().embedded_count_opcode()
+        if (self.raw_slot & 0x1_0000) != 0 {
+            Some((self.raw_slot >> 8) & 0xFFFF)
+        } else {
+            None
+        }
     }
 
     pub fn discard_source_zone(&self) -> Zone {
-        self.semantic_view().discard_source_zone()
+        match self.slot.source_zone {
+            Zone::Default => {
+                let target_slot = self.slot.target_slot;
+                if target_slot == TARGET_SLOT_STAGE {
+                    Zone::Stage
+                } else if target_slot == Zone::Hand as u8 {
+                    Zone::Hand
+                } else if (9..=11).contains(&target_slot) {
+                    Zone::LiveSet
+                } else {
+                    Zone::Deck
+                }
+            }
+            Zone::Hand => Zone::Hand,
+            Zone::Stage => Zone::Stage,
+            Zone::Discard => Zone::Discard,
+            Zone::Yell => Zone::Yell,
+            other => other,
+        }
     }
 
     pub fn semantic_discard_spec(&self) -> SemanticDiscardSpec {
         let filter_attr = self.filter_attr_without_state_flags();
         let mut prompt_filter = CardFilter::default();
         match self.discard_source_zone() {
-            Zone::Stage => prompt_filter.zone_mask = 4,
-            Zone::Hand => prompt_filter.zone_mask = 6,
-            Zone::Discard => prompt_filter.zone_mask = 7,
+            Zone::Stage => prompt_filter.zone_mask = Zone::Stage as u8,
+            Zone::Hand => prompt_filter.zone_mask = Zone::Hand as u8,
+            Zone::Discard => prompt_filter.zone_mask = Zone::Discard as u8,
             _ => {}
         }
 
@@ -855,7 +672,7 @@ impl<'a> AbilityFrameComponents<'a> {
     }
 
     pub fn has_revealed_context_passthrough(&self) -> bool {
-        self.semantic_view().has_revealed_context_passthrough()
+        self.add_to_hand_uses_looked_cards()
     }
 
     /// Check if this frame uses dynamic value calculation (accumulated compare)
@@ -2262,6 +2079,8 @@ pub struct AbilityContext {
     pub activator_id: u8, // The player who originally triggered/activated the ability
     pub area_idx: i16,
     pub source_card_id: i32,
+    #[serde(default)]
+    pub ability_card_id: i32,
     pub target_card_id: i32,
     pub target_slot: i16,
     pub selected_hand_idx: i16,
@@ -2296,6 +2115,7 @@ pub struct StaticAbilityContext {
     pub activator_id: u8,
     pub area_idx: i16,
     pub source_card_id: i32,
+    pub ability_card_id: i32,
     pub target_card_id: i32,
     pub target_slot: i16,
     pub ability_index: i16,
@@ -2324,6 +2144,7 @@ impl Default for AbilityContext {
             activator_id: 0,
             area_idx: -1,
             source_card_id: -1,
+            ability_card_id: -1,
             target_card_id: -1,
             target_slot: -1,
             selected_hand_idx: -1,
@@ -2352,6 +2173,7 @@ impl AbilityContext {
             activator_id: self.activator_id,
             area_idx: self.area_idx,
             source_card_id: self.source_card_id,
+            ability_card_id: self.ability_card_id,
             target_card_id: self.target_card_id,
             target_slot: self.target_slot,
             ability_index: self.ability_index,
@@ -2398,10 +2220,12 @@ impl AbilityContext {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PendingInteraction {
     pub ctx: AbilityContext,
     pub card_id: i32,
+    #[serde(default)]
+    pub ability_card_id: i32,
     pub ability_index: i16,
     pub effect_opcode: i32,
     pub target_slot: i32,
@@ -2420,6 +2244,28 @@ pub struct PendingInteraction {
     pub options: Vec<Value>,
     #[serde(default)]
     pub execution_id: u32,
+}
+
+impl Default for PendingInteraction {
+    fn default() -> Self {
+        Self {
+            ctx: AbilityContext::default(),
+            card_id: -1,
+            ability_card_id: -1,
+            ability_index: -1,
+            effect_opcode: 0,
+            target_slot: -1,
+            choice_type: ChoiceType::default(),
+            filter_attr: 0,
+            choice_text: String::new(),
+            v_remaining: -1,
+            original_phase: Phase::default(),
+            original_current_player: 0,
+            actions: Vec::new(),
+            options: Vec::new(),
+            execution_id: 0,
+        }
+    }
 }
 
 impl PendingInteraction {
@@ -2501,6 +2347,28 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
+    pub fn implicit_activated_energy_cost(&self) -> usize {
+        if self.trigger != TriggerType::Activated {
+            return 0;
+        }
+
+        if !self.costs.is_empty()
+            || self.resolved_frames().iter().any(|frame| {
+                frame.is_cost()
+                    && matches!(frame.opcode(), O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY)
+            })
+        {
+            return 0;
+        }
+
+        let prefix = self
+            .raw_text
+            .split('：')
+            .next()
+            .unwrap_or(self.raw_text.as_str());
+        prefix.matches("{{icon_energy.png|E}}").count()
+    }
+
     fn effect_opcode(effect: &Effect) -> i32 {
         if effect.runtime_opcode != 0 {
             effect.runtime_opcode

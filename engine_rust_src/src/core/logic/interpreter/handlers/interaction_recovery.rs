@@ -17,7 +17,7 @@ pub fn handle_recovery(
     op: i32,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = frame_data.resolved_filter_attr() as i64;
+    let a = frame_data.raw_attr as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
@@ -32,21 +32,12 @@ pub fn handle_recovery(
     } else {
         frame_data.opcode
     };
-    let use_name_filter = frame_data.filter.special_id == 4
-        || ctx.source_card_id == 4789;
+    let use_name_filter = frame_data.filter.special_id == 4;
 
     // Handle "same name" style recovery when the frame has no explicit filter.
     let mut handled_same_name = false;
     if use_name_filter {
-        let mut source_cards = get_source_cards_for_name_recovery(state, db, ctx, p_idx);
-        if source_cards.is_empty() && ctx.source_card_id == 4789 {
-            source_cards = state.players[p_idx]
-                .hand
-                .iter()
-                .copied()
-                .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
-                .collect();
-        }
+        let source_cards = get_source_cards_for_name_recovery(state, db, ctx, p_idx);
         let revealed_names: Vec<String> = source_cards
             .iter()
             .filter_map(|cid| {
@@ -66,7 +57,10 @@ pub fn handle_recovery(
                 .map(|c| c.name.clone())
                 .or_else(|| db.get_member(*cid).map(|c| c.name.clone()));
             if let Some(name) = candidate_name {
-                if revealed_names.iter().any(|revealed| name.contains(revealed)) {
+                if revealed_names
+                    .iter()
+                    .any(|revealed| same_name_recovery_matches(&name, revealed))
+                {
                     state.players[p_idx].looked_cards.push(*cid);
                 }
             }
@@ -189,6 +183,16 @@ fn normalized_source_zone(zone: crate::core::logic::Zone) -> Zone {
     }
 }
 
+fn normalize_same_name(name: &str) -> String {
+    name.replace(' ', "")
+}
+
+fn same_name_recovery_matches(candidate_name: &str, revealed_name: &str) -> bool {
+    let normalized_candidate = normalize_same_name(candidate_name);
+    let normalized_revealed = normalize_same_name(revealed_name);
+    normalized_candidate.contains(&normalized_revealed)
+}
+
 fn collect_zone_cards(state: &GameState, p_idx: usize, zone: Zone) -> Vec<i32> {
     match zone {
         Zone::Yell => state.players[p_idx].yell_cards.iter().copied().collect(),
@@ -265,24 +269,25 @@ fn get_source_cards_for_name_recovery(
     ctx: &AbilityContext,
     p_idx: usize,
 ) -> Vec<i32> {
-    let cards: Vec<i32> = state.players[p_idx].revealed_cards.iter().copied().collect();
-    if cards.is_empty() {
-        let selected: Vec<i32> = ctx
-            .selected_cards
-            .iter()
-            .copied()
-            .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
-            .collect();
-        if !selected.is_empty() {
-            return selected;
-        }
-
-        return state.players[p_idx]
-            .hand
-            .iter()
-            .copied()
-            .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
-            .collect();
+    let selected: Vec<i32> = ctx
+        .selected_cards
+        .iter()
+        .copied()
+        .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+        .collect();
+    if !selected.is_empty() {
+        return selected;
     }
-    cards
+
+    let hand: Vec<i32> = state.players[p_idx]
+        .hand
+        .iter()
+        .copied()
+        .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+        .collect();
+    if !hand.is_empty() {
+        return hand;
+    }
+
+    state.players[p_idx].revealed_cards.iter().copied().collect()
 }

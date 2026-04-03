@@ -50,4 +50,54 @@ mod tests {
             "A selectable hand-discard action must exist so the optional ability can be accepted"
         );
     }
+
+    #[test]
+    fn debug_card_122_hydrated_frames() {
+        let db = load_real_db();
+        let ability = &db
+            .get_member(122)
+            .expect("card 122 should exist")
+            .abilities[1];
+        let frames = ability.resolved_frames();
+        eprintln!(
+            "[CARD122_DBG] source={} frame_program_present={} frame_program_len={} frame_count={} first={:?} first_optional={} first_slot={:?}",
+            ability.resolved_frame_source(),
+            ability.frame_program.is_some(),
+            ability.frame_program.as_ref().map(|p| p.frames.len()).unwrap_or(0),
+            frames.len(),
+            frames.first().map(|frame| frame.opcode()),
+            frames
+                .first()
+                .map(|frame| frame.components().filter.is_optional)
+                .unwrap_or(false),
+            frames.first().map(|frame| frame.components().slot)
+        );
+        assert!(!frames.is_empty(), "card 122 should hydrate at least one frame");
+    }
+
+    #[test]
+    fn debug_failed_card_hydration_probe() {
+        let db = load_real_db();
+        for card_id in [163, 707, 423, 275, 4558] {
+            let card = db
+                .get_member(card_id)
+                .unwrap_or_else(|| panic!("card {card_id} should exist"));
+            let key = format!("{}#0", card.card_no);
+            let sparse = db.sparse_ability_index.get(&key);
+            let ab = card.abilities.first().expect("ability missing");
+            let frames = ab.resolved_frames();
+            eprintln!(
+                "[HYDRATE_DBG] card_id={} card_no={} sparse={} frame_program={} frame_len={} resolved_source={} first_opt={} effect0_opt={} effects={}",
+                card_id,
+                card.card_no,
+                sparse.is_some(),
+                ab.frame_program.is_some(),
+                ab.frame_program.as_ref().map(|p| p.frames.len()).unwrap_or(0),
+                ab.resolved_frame_source(),
+                frames.first().map(|f| f.components().filter.is_optional).unwrap_or(false),
+                ab.effects.first().map(|e| e.is_optional).unwrap_or(false),
+                ab.effects.len(),
+            );
+        }
+    }
 }

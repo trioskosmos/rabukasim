@@ -4,6 +4,7 @@
 //! and resolving target slots.
 
 use crate::core::enums::ChoiceType;
+use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
@@ -114,6 +115,11 @@ pub fn suspend_interaction(
     state.interaction_stack.push(PendingInteraction {
         ctx: p_ctx,
         card_id: ctx.source_card_id,
+        ability_card_id: if ctx.ability_card_id >= 0 {
+            ctx.ability_card_id
+        } else {
+            ctx.source_card_id
+        },
         ability_index: ctx.ability_index,
         effect_opcode,
         target_slot,
@@ -168,9 +174,15 @@ pub fn suspend_interaction(
     if choice_type == ChoiceType::Optional
         && (final_actions.is_empty() || final_actions.iter().all(|action| *action == 0))
     {
-        final_actions.clear();
-        final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32);
-        final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32 + 1);
+        let decoded_slot = DecodedSlot::decode(target_slot);
+        let is_hand_discard_prompt =
+            effect_opcode == crate::core::logic::constants::O_MOVE_TO_DISCARD
+                && decoded_slot.source_zone == crate::core::enums::Zone::Hand;
+        if !is_hand_discard_prompt {
+            final_actions.clear();
+            final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32);
+            final_actions.push(crate::core::logic::ACTION_BASE_CHOICE as i32 + 1);
+        }
     }
 
     let is_optional = choice_type == ChoiceType::Optional
@@ -184,6 +196,14 @@ pub fn suspend_interaction(
         return false;
     }
     if choice_type == ChoiceType::Optional && has_only_pass {
+        let decoded_slot = DecodedSlot::decode(target_slot);
+        let is_hand_discard_prompt =
+            effect_opcode == crate::core::logic::constants::O_MOVE_TO_DISCARD
+                && decoded_slot.source_zone == crate::core::enums::Zone::Hand;
+        if is_hand_discard_prompt {
+            state.interaction_stack.last_mut().unwrap().actions = final_actions.clone();
+            return false;
+        }
         state.interaction_stack.pop();
         return false;
     }
@@ -219,9 +239,9 @@ pub fn resolve_target_slot(target_slot: i32, ctx: &AbilityContext) -> usize {
     if target_slot == 0 && ctx.target_slot >= 0 {
         return ctx.target_slot as usize;
     }
-    if target_slot == 4 && ctx.area_idx >= 0 {
+    if target_slot == TARGET_SLOT_STAGE as i32 && ctx.area_idx >= 0 {
         ctx.area_idx as usize
-    } else if target_slot == -1 || target_slot == 4 {
+    } else if target_slot == -1 || target_slot == TARGET_SLOT_STAGE as i32 {
         if ctx.area_idx >= 0 {
             ctx.area_idx as usize
         } else {

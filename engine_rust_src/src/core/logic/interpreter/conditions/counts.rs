@@ -3,6 +3,14 @@ use crate::core::logic::filter::CardFilter;
 use crate::core::logic::models::{AbilityFrameComponents, SemanticCountZone};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+fn decode_count_filter(attr: u64) -> CardFilter {
+    let mut filter = CardFilter::from_attr(attr);
+    if (attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0 && filter.target_player == 0 {
+        filter.target_player = TARGET_PLAYER_BOTH as u8;
+    }
+    filter
+}
+
 fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize>) {
     match filter.target_player {
         2 => (1 - p_idx, None),
@@ -21,7 +29,7 @@ fn count_components(op: i32, attr: u64, slot: i32) -> AbilityFrameComponents<'st
             op
         },
         value: 0,
-        filter: CardFilter::from_attr(attr),
+        filter: decode_count_filter(attr),
         slot: crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot),
         raw_attr: attr,
         raw_slot: slot,
@@ -38,7 +46,7 @@ fn is_structured_zone_count(frame: &AbilityFrameComponents<'_>) -> bool {
         || op == C_COUNT_DISCARD
         || op == C_COUNT_SUCCESS_LIVE
         || op == C_COUNT_GROUP
-        || op == 307
+        || op == C_SUCCESS_PILE_COUNT
         || op == 13
         || (op >= 400 && op < 500)
         || frame.slot.is_dynamic
@@ -367,7 +375,7 @@ pub fn get_condition_count(
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
-    let filter = CardFilter::from_attr(attr);
+    let filter = decode_count_filter(attr);
     let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
 
     let count_zone = |cards: &[i32]| -> i32 {

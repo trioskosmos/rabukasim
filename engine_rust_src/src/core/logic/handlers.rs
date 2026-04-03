@@ -17,6 +17,43 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
 
+fn should_precheck_condition(cond: &crate::core::logic::Condition) -> bool {
+    !matches!(
+        cond.condition_type,
+        ConditionType::SumValue | ConditionType::DiscardedCards
+    )
+}
+
+fn implicit_activated_energy_cost_for_card(
+    card: &crate::core::logic::MemberCard,
+    ability: &crate::core::logic::Ability,
+) -> usize {
+    let explicit = ability.implicit_activated_energy_cost();
+    if explicit > 0 || ability.trigger != TriggerType::Activated {
+        return explicit;
+    }
+
+    if !ability.raw_text.trim().is_empty() {
+        return 0;
+    }
+
+    let activated_count = card
+        .abilities
+        .iter()
+        .filter(|candidate| candidate.trigger == TriggerType::Activated)
+        .count();
+    if activated_count != 1 {
+        return 0;
+    }
+
+    let prefix = card
+        .original_text
+        .split('：')
+        .next()
+        .unwrap_or(card.original_text.as_str());
+    prefix.matches("{{icon_energy.png|E}}").count()
+}
+
 pub trait TurnController {
     fn handle_rps(&mut self, action: i32) -> Result<(), String>;
     fn handle_turn_choice(&mut self, action: i32) -> Result<(), String>;
@@ -996,7 +1033,14 @@ impl ResponseController for GameState {
                 if target_slot >= 0 {
                     c.target_slot = target_slot as i16;
                 }
-                (pending.card_id, c)
+                (
+                    if pending.ability_card_id >= 0 {
+                        pending.ability_card_id
+                    } else {
+                        pending.card_id
+                    },
+                    c,
+                )
             };
 
             if pending.choice_type == ChoiceType::SelectStage {
@@ -1357,6 +1401,7 @@ impl ResponseController for GameState {
 
         let mut ctx = AbilityContext {
             source_card_id: cid,
+            ability_card_id: cid,
             player_id: p_idx as u8,
             activator_id: p_idx as u8,
             area_idx: slot_idx as i16,
@@ -1388,31 +1433,49 @@ impl ResponseController for GameState {
                 }
             }
 
-            if cid != 8844 {
-                for cond in &ab.conditions {
-                    if !self.check_condition_opcode(
-                        db,
-                        cond.condition_type as i32,
-                        cond.value,
-                        cond.attr,
-                        cond.target_slot as i32,
-                        &ctx,
-                        1,
-                    ) {
-                        if !self.ui.silent {
-                            let cond_desc = super::interpreter::logging::describe_condition(
-                                cond.condition_type as i32,
-                                cond.value,
-                                cond.attr,
-                            );
-                            self.log(format!("Ability activation failed: {}.", cond_desc));
-                        }
-                        return Err("Conditions not met".to_string());
+            for cond in &ab.conditions {
+                if !should_precheck_condition(cond) {
+                    continue;
+                }
+                if !self.check_condition_opcode(
+                    db,
+                    cond.condition_type as i32,
+                    cond.value,
+                    cond.attr,
+                    cond.target_slot as i32,
+                    &ctx,
+                    1,
+                ) {
+                    if !self.ui.silent {
+                        let cond_desc = super::interpreter::logging::describe_condition(
+                            cond.condition_type as i32,
+                            cond.value,
+                            cond.attr,
+                        );
+                        self.log(format!("Ability activation failed: {}.", cond_desc));
                     }
+                    return Err("Conditions not met".to_string());
                 }
             }
             if !costs::pay_costs_transactional(self, db, &ab.costs, &mut ctx) {
                 return Err("Cannot afford costs".to_string());
+            }
+
+            let implicit_energy_cost = implicit_activated_energy_cost_for_card(card, ab);
+            if implicit_energy_cost > 0 {
+                let mut tapped = 0usize;
+                for energy_idx in 0..self.core.players[p_idx].energy_zone.len() {
+                    if tapped >= implicit_energy_cost {
+                        break;
+                    }
+                    if !self.core.players[p_idx].is_energy_tapped(energy_idx) {
+                        self.core.players[p_idx].set_energy_tapped(energy_idx, true);
+                        tapped += 1;
+                    }
+                }
+                if tapped < implicit_energy_cost {
+                    return Err("Cannot afford costs".to_string());
+                }
             }
 
             if ab.is_once_per_turn {
@@ -1433,7 +1496,15 @@ fn is_optional_live_start_discard_decline(
 ) -> bool {
     choice_idx == 1
         && ctx.trigger_type == crate::core::enums::TriggerType::OnLiveStart
-        && pending_member_ability(db, ctx.source_card_id, ctx.ability_index)
+        && pending_member_ability(
+            db,
+            if ctx.ability_card_id >= 0 {
+                ctx.ability_card_id
+            } else {
+                ctx.source_card_id
+            },
+            ctx.ability_index,
+        )
             .map(is_optional_live_start_discard_count_ability)
             .unwrap_or(false)
 }
@@ -1451,7 +1522,7 @@ mod tests {
     use super::*;
     use crate::core::generated_constants::ACTION_BASE_STAGE;
     use crate::core::logic::card_db::LOGIC_ID_MASK;
-    use crate::core::models::{Ability, MemberCard};
+    use crate::core::models::{Ability, FrameProgram, MemberCard};
     use crate::test_helpers::create_test_state;
 
     #[test]
@@ -1463,7 +1534,9 @@ mod tests {
             card_id: 700,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+                frame_program: Some(FrameProgram::from_words(&[
+                    O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                ])),
                 ..Default::default()
             }],
             ..Default::default()

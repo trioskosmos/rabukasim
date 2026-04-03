@@ -261,7 +261,31 @@ fn check_condition_with_parts(
             }
         }
         C_COUNT_STAGE => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            let count = if (attr & FILTER_ANY_STAGE) != 0 {
+                let matcher_attr = attr & FILTER_MASK_LOWER;
+                let count_for_player = |player_idx: usize| {
+                    state.players[player_idx]
+                        .stage
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, &cid)| cid >= 0)
+                        .filter(|(slot_idx, &cid)| {
+                            matcher_attr == 0
+                                || state.card_matches_filter_with_struct(
+                                    db,
+                                    cid,
+                                    Some((player_idx as u8, *slot_idx as i16)),
+                                    &filter,
+                                    ctx,
+                                )
+                        })
+                        .count() as i32
+                };
+
+                count_for_player(p_idx) + count_for_player(1 - p_idx)
+            } else {
+                resolve_count(state, db, op, attr, slot, ctx, depth)
+            };
             if val == 0 {
                 count > 0
             } else {
@@ -757,40 +781,37 @@ fn check_condition_with_parts(
         }
         305 => state.current_player == (p_idx as u8) && state.phase == Phase::Main,
         306 => {
-            if cid == 579 {
-                return state.players[p_idx]
-                    .stage
-                    .iter()
-                    .enumerate()
-                    .any(|(slot_idx, &stage_cid)| {
-                        stage_cid >= 0
-                            && db.get_member(stage_cid).map(|m| m.groups.contains(&3)).unwrap_or(false)
-                            && state
-                                .get_effective_hearts(p_idx, slot_idx, db, depth)
-                                .to_array()[2]
-                                >= 3
-                    });
-            }
             if ctx.target_card_id >= 0 {
                 return true;
             }
+            let matcher_attr = attr & FILTER_MASK_LOWER;
             let mut check_ids = Vec::new();
             if area_val == 0 {
                 let (player_idx, other_player_idx) = semantic.stage_player_scope(p_idx);
                 for player_idx in std::iter::once(player_idx).chain(other_player_idx.into_iter()) {
-                    check_ids.extend(
-                        state.players[player_idx]
-                            .stage
-                            .iter()
-                            .filter(|&&id| id >= 0),
-                    );
+                    for (slot_idx, &stage_cid) in state.players[player_idx].stage.iter().enumerate() {
+                        if stage_cid < 0 {
+                            continue;
+                        }
+                        if matcher_attr == 0
+                            || state.card_matches_filter_with_struct(
+                                db,
+                                stage_cid,
+                                Some((player_idx as u8, slot_idx as i16)),
+                                &filter,
+                                ctx,
+                            )
+                        {
+                            check_ids.push(stage_cid);
+                        }
+                    }
                 }
             } else if area_val >= 1 && area_val <= 3 {
-                check_ids.push(&player.stage[(area_val - 1) as usize]);
+                check_ids.push(player.stage[(area_val - 1) as usize]);
             }
             check_ids
                 .into_iter()
-                .any(|&cid| cid >= 0 && state.card_matches_filter(db, cid, attr))
+                .any(|cid| cid >= 0)
         }
         307 => compare_i32(
             resolve_count(state, db, op, attr, slot, ctx, depth),

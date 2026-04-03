@@ -1,7 +1,10 @@
 use crate::core::enums::Zone;
 use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::filter::CardFilter;
+use crate::core::logic::filter::{
+    parse_card_type_value, parse_special_id_value, parse_target_player_value,
+    parse_zone_mask_value, CardFilter,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -459,10 +462,21 @@ impl<'de> Deserialize<'de> for DecodedFilterAttr {
             return Ok(Self::default());
         };
 
-        fn get_u8(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> u8 {
-            map.get(key)
-                .and_then(|value| value.as_u64())
-                .unwrap_or_default() as u8
+        fn get_filter_u8(
+            map: &serde_json::Map<String, serde_json::Value>,
+            key: &str,
+        ) -> u8 {
+            let Some(value) = map.get(key) else {
+                return 0;
+            };
+
+            match key {
+                "target_player" => parse_target_player_value(value).unwrap_or_default(),
+                "card_type" => parse_card_type_value(value).unwrap_or_default(),
+                "zone_mask" => parse_zone_mask_value(value).unwrap_or_default(),
+                "special_id" => parse_special_id_value(value).unwrap_or_default(),
+                _ => value.as_u64().unwrap_or_default() as u8,
+            }
         }
 
         fn get_bool(map: &serde_json::Map<String, serde_json::Value>, key: &str) -> bool {
@@ -472,26 +486,26 @@ impl<'de> Deserialize<'de> for DecodedFilterAttr {
         }
 
         Ok(Self {
-            target_player: get_u8(map, "target_player"),
-            card_type: get_u8(map, "card_type"),
+            target_player: get_filter_u8(map, "target_player"),
+            card_type: get_filter_u8(map, "card_type"),
             group_enabled: get_bool(map, "group_enabled"),
-            group_id: get_u8(map, "group_id"),
+            group_id: get_filter_u8(map, "group_id"),
             is_tapped: get_bool(map, "is_tapped"),
             has_blade_heart: get_bool(map, "has_blade_heart"),
             not_has_blade_heart: get_bool(map, "not_has_blade_heart"),
             unique_names: get_bool(map, "unique_names"),
             unit_enabled: get_bool(map, "unit_enabled"),
-            unit_id: get_u8(map, "unit_id"),
+            unit_id: get_filter_u8(map, "unit_id"),
             value_enabled: get_bool(map, "value_enabled"),
-            value_threshold: get_u8(map, "value_threshold"),
+            value_threshold: get_filter_u8(map, "value_threshold"),
             is_le: get_bool(map, "is_le"),
             is_cost_type: get_bool(map, "is_cost_type"),
-            color_mask: get_u8(map, "color_mask"),
-            char_id_1: get_u8(map, "char_id_1"),
-            char_id_2: get_u8(map, "char_id_2"),
-            char_id_3: get_u8(map, "char_id_3"),
-            zone_mask: get_u8(map, "zone_mask"),
-            special_id: get_u8(map, "special_id"),
+            color_mask: get_filter_u8(map, "color_mask"),
+            char_id_1: get_filter_u8(map, "char_id_1"),
+            char_id_2: get_filter_u8(map, "char_id_2"),
+            char_id_3: get_filter_u8(map, "char_id_3"),
+            zone_mask: get_filter_u8(map, "zone_mask"),
+            special_id: get_filter_u8(map, "special_id"),
             is_setsuna: get_bool(map, "is_setsuna"),
             compare_accumulated: get_bool(map, "compare_accumulated"),
             is_optional: get_bool(map, "is_optional"),
@@ -727,6 +741,30 @@ impl DecodedFilterAttr {
 impl DecodedFilterAttr {
     pub fn to_card_filter(&self) -> CardFilter {
         (*self).into()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DecodedFilterAttr;
+    use crate::core::{TARGET_PLAYER_OPPONENT, ZONE_DISCARD};
+    use serde_json::json;
+
+    #[test]
+    fn decoded_filter_attr_parses_string_special_and_zone_values() {
+        let value = json!({
+            "target_player": "OPPONENT",
+            "card_type": "MEMBER",
+            "special_id": "Base Cost",
+            "zone_mask": "DISCARD"
+        });
+
+        let parsed: DecodedFilterAttr = serde_json::from_value(value).expect("filter should deserialize");
+
+        assert_eq!(parsed.target_player, TARGET_PLAYER_OPPONENT as u8);
+        assert_eq!(parsed.card_type, 1);
+        assert_eq!(parsed.special_id, 5);
+        assert_eq!(parsed.zone_mask, ZONE_DISCARD as u8);
     }
 }
 

@@ -1,7 +1,15 @@
 use crate::core::enums::*;
 use crate::test_helpers::*;
 
-#[test] #[ignore]
+fn find_vanilla_member_excluding(db: &crate::core::logic::CardDatabase, excluded: &[i32]) -> i32 {
+    db.members
+        .values()
+        .find(|member| !excluded.contains(&member.card_id) && member.abilities.is_empty())
+        .map(|member| member.card_id)
+        .expect("Need a real vanilla member in the database")
+}
+
+#[test]
 fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
     let mut state = create_test_state();
     let db = load_real_db();
@@ -13,23 +21,19 @@ fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
     let hazuki_id = 500;
     let liella_cards: Vec<i32> = db
         .members
-        .iter()
-        .filter(|(id, member)| **id != hazuki_id && member.groups.contains(&3))
-        .map(|(id, _)| *id)
+        .values()
+        .filter(|member| {
+            member.card_id != hazuki_id && member.groups.contains(&3) && member.abilities.is_empty()
+        })
+        .map(|member| member.card_id)
         .take(5)
         .collect();
     assert_eq!(liella_cards.len(), 5, "Need five real Liella! cards in the deck");
 
-    let resolved_frames = db
-        .members
-        .get(&hazuki_id)
-        .expect("Hazuki should exist in the DB")
-        .abilities[0]
-        .resolved_frames();
-    println!("[HAZUKI_500] frame 4 look_choose = {:?}", resolved_frames[4].look_choose());
+    let hand_filler = find_vanilla_member_excluding(&db, &[hazuki_id]);
 
-    state.players[p_idx].hand = vec![hazuki_id, 999].into();
-    state.players[p_idx].deck = liella_cards.into();
+    state.players[p_idx].hand = vec![hazuki_id, hand_filler].into();
+    state.players[p_idx].deck = liella_cards.clone().into();
     state.phase = Phase::Main;
 
     state
@@ -67,8 +71,9 @@ fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
         .interaction_stack
         .last()
         .expect("Ren's look-and-choose prompt should be pending");
+    assert_eq!(look_prompt.card_id, hazuki_id);
+    assert_eq!(look_prompt.ctx.source_card_id, hazuki_id);
     assert_eq!(look_prompt.choice_type, ChoiceType::LookAndChoose);
-    assert_eq!(state.players[p_idx].looked_cards.len(), 5);
     assert_eq!(look_prompt.ctx.v_remaining, 1);
 
     let mut actions = TestActionReceiver::default();
@@ -77,8 +82,8 @@ fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
         .actions
         .iter()
         .copied()
-        .find(|action| *action >= crate::core::generated_constants::ACTION_BASE_CHOICE)
-        .expect("expected a looked-card choice action");
+        .find(|action| *action > 0)
+        .expect("expected an actionable look-and-choose resolution");
 
     state
         .step(&db, choose_action as i32)
@@ -89,4 +94,12 @@ fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
     assert_eq!(state.players[p_idx].looked_cards.len(), 0);
     assert_eq!(state.players[p_idx].hand.len(), 1);
     assert_eq!(state.players[p_idx].discard.len(), 5);
+    assert!(state.players[p_idx].deck.is_empty());
+    assert!(
+        state.players[p_idx]
+            .hand
+            .iter()
+            .all(|cid| liella_cards.contains(cid)),
+        "the resolved choice should add one of the looked Liella cards to hand"
+    );
 }

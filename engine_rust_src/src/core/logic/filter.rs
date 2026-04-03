@@ -164,7 +164,11 @@ impl CardFilter {
     }
 
     pub fn group_matches(&self, group_id: u8) -> bool {
-        self.group_enabled && (self.group_id == group_id || self.group_id == group_id.saturating_add(1))
+        self.group_enabled
+            && match self.group_id {
+                101 => group_id == 1 || group_id == 11,
+                _ => self.group_id == group_id || self.group_id == group_id.saturating_add(1),
+            }
     }
 
     pub fn from_json_value(value: &Value) -> Option<Self> {
@@ -329,6 +333,24 @@ impl CardFilter {
         if !self.is_enabled {
             return true;
         }
+        let member = db.get_member(cid);
+        let live = db.get_live(cid);
+        let requested_char_mask = requested_char_mask(self);
+        let needs_card_metadata = self.card_type != 0
+            || self.group_enabled
+            || self.unit_enabled
+            || requested_char_mask != 0
+            || self.has_blade_heart
+            || self.not_has_blade_heart
+            || self.is_setsuna
+            || self.special_id == 1
+            || self.special_id == 4
+            || self.is_cost_type;
+
+        if member.is_none() && live.is_none() && needs_card_metadata {
+            return false;
+        }
+
         // 0. Target Player Filter (bits 0-1)
         if self.target_player > 0 && self.target_player < 4 {
             let target_p = match self.target_player {
@@ -372,8 +394,8 @@ impl CardFilter {
 
         // 1. Card Type Filter (bits 2-3)
         if self.card_type > 0 && self.card_type <= 2 {
-            let is_member = db.get_member(cid).is_some();
-            let is_live = db.get_live(cid).is_some();
+            let is_member = member.is_some();
+            let is_live = live.is_some();
             
             let matches = match self.card_type {
                 1 => is_member,  // Member
@@ -388,85 +410,75 @@ impl CardFilter {
 
         // 2. Group Filter (bits 4-11)
         if self.group_enabled {
-            let card_group = if let Some(m) = db.get_member(cid) {
-                m.groups.iter().find(|&&g| g > 0).copied()
-            } else if let Some(l) = db.get_live(cid) {
-                l.groups.iter().find(|&&g| g > 0).copied()
-            } else {
-                None
-            };
-            
-            if let Some(group) = card_group {
-                if !self.group_matches(group) {
-                    return false;
-                }
-            } else {
+            let group_match = member
+                .map(|card| card.groups.iter().copied().any(|group| self.group_matches(group)))
+                .or_else(|| {
+                    live.map(|card| card.groups.iter().copied().any(|group| self.group_matches(group)))
+                })
+                .unwrap_or(false);
+
+            if !group_match {
+                return false;
+            }
+        }
+
+        if requested_char_mask != 0 {
+            let card_char_mask = member
+                .map(|card| card.char_mask)
+                .or_else(|| live.map(|card| card.char_mask))
+                .unwrap_or_default();
+            if (card_char_mask & requested_char_mask) == 0 {
                 return false;
             }
         }
 
         // 3. Unit Filter (bits 16-23)
         if self.unit_enabled {
-            if let Some(m) = db.get_member(cid) {
-                if !m.units.contains(&self.unit_id) {
-                    return false;
-                }
-            } else {
+            let unit_match = member
+                .map(|card| card.units.contains(&self.unit_id))
+                .or_else(|| live.map(|card| card.units.contains(&self.unit_id)))
+                .unwrap_or(false);
+            if !unit_match {
                 return false;
             }
         }
 
+        let has_blade_heart = member
+            .map(|card| card.blade_hearts.iter().any(|&heart| heart > 0))
+            .or_else(|| live.map(|card| card.blade_hearts.iter().any(|&heart| heart > 0)))
+            .unwrap_or(false);
+
+        if self.has_blade_heart && !has_blade_heart {
+            return false;
+        }
+        if self.not_has_blade_heart && has_blade_heart {
+            return false;
+        }
+
+        if self.is_setsuna {
+            let semantic_flags = member
+                .map(|card| card.semantic_flags)
+                .or_else(|| live.map(|card| card.semantic_flags))
+                .unwrap_or_default();
+            if (semantic_flags & 0x100) == 0 {
+                return false;
+            }
+        }
+
+        if self.zone_mask != 0 && !card_matches_zone_mask(state, cid, self.zone_mask) {
+            return false;
+        }
+
         // 4. Value Filter (bits 24-31)
         if self.value_enabled {
-            let actual_val = if let Some(h) = effective_hearts {
-                if self.is_cost_type {
-                    // For cost comparisons, sum only the colors specified in color_mask
-                    let mut sum = 0;
-                    for i in 0..7 {
-                        if (self.color_mask & (1 << i)) != 0 && h[i] > 0 {
-                            sum += h[i];
-                        }
-                    }
-                    sum
-                } else if self.compare_accumulated {
-                    // For accumulated value comparisons with specific colors, sum only those colors
-                    if self.color_mask != 0 {
-                        let mut sum = 0;
-                        for i in 0..7 {
-                            if (self.color_mask & (1 << i)) != 0 {
-                                sum += h[i];
-                            }
-                        }
-                        sum
-                    } else {
-                        // No color mask specified, sum all hearts
-                        h.iter().sum::<u8>()
-                    }
-                } else {
-                    // For simple value threshold, sum hearts of the specified color(s)
-                    let mut sum = 0;
-                    for i in 0..7 {
-                        if (self.color_mask & (1 << i)) != 0 {
-                            sum += h[i];
-                        }
-                    }
-                    sum
-                }
-            } else if self.card_type == 2 {
-                // For Live cards not on stage, check required_hearts
-                if let Some(live) = db.get_live(cid) {
-                    let sum: u8 = live.required_hearts.iter().sum();
-                    sum
-                } else {
-                    0
-                }
-            } else if self.is_cost_type {
-                // For Member cards with cost comparison
-                if let Some(member) = db.get_member(cid) {
-                    member.cost as u8
-                } else {
-                    0
-                }
+            let actual_val = if self.is_cost_type {
+                member.map(|card| card.cost.min(u8::MAX as u32) as u8).unwrap_or(0)
+            } else if let Some(h) = effective_hearts {
+                sum_matching_hearts(h, self.color_mask)
+            } else if let Some(card) = member {
+                sum_matching_hearts(&card.hearts, self.color_mask)
+            } else if let Some(card) = live {
+                sum_matching_hearts(&card.required_hearts, self.color_mask)
             } else {
                 0
             };
@@ -503,19 +515,32 @@ impl CardFilter {
         // Check special filters using special_id
         if self.special_id == 1 {
             // NAME_IN filter - check if card name contains the search character
-            if let Some(m) = db.get_member(cid) {
+            if let Some(name) = member
+                .map(|card| card.name.as_str())
+                .or_else(|| live.map(|card| card.name.as_str()))
+            {
                 if self.color_mask != 0 {
                     let search_char = (self.color_mask & 0x7F) as char;
-                    if !m.name.to_uppercase().contains(search_char.to_ascii_uppercase()) {
+                    if !name.to_uppercase().contains(search_char.to_ascii_uppercase()) {
                         return false;
                     }
                 } else {
                     // Fallback - check for KANON
-                    if !m.name.to_uppercase().contains("KANON") {
+                    if !name.to_uppercase().contains("KANON") {
                         return false;
                     }
                 }
             } else {
+                return false;
+            }
+        }
+
+        if self.special_id == 2 {
+            let semantic_flags = member
+                .map(|card| card.semantic_flags)
+                .or_else(|| live.map(|card| card.semantic_flags))
+                .unwrap_or_default();
+            if (semantic_flags & 0x400) != 0 {
                 return false;
             }
         }
@@ -531,10 +556,9 @@ impl CardFilter {
         }
 
         if self.special_id == 4 {
-            let Some(candidate_name) = db
-                .get_live(cid)
+            let Some(candidate_name) = live
                 .map(|card| card.name.as_str())
-                .or_else(|| db.get_member(cid).map(|card| card.name.as_str()))
+                .or_else(|| member.map(|card| card.name.as_str()))
             else {
                 return false;
             };
@@ -550,6 +574,10 @@ impl CardFilter {
             {
                 return false;
             }
+        }
+
+        if self.special_id == 6 && !ctx.selected_cards.contains(&cid) {
+            return false;
         }
 
         true
@@ -798,6 +826,8 @@ impl CardFilter {
             self.value_threshold = overlay.value_threshold;
             self.is_le = overlay.is_le;
             self.is_cost_type = overlay.is_cost_type;
+        }
+        if overlay.color_mask != 0 {
             self.color_mask = overlay.color_mask;
         }
         if overlay.char_id_1 != 0 {
@@ -876,6 +906,37 @@ impl CardFilter {
     }
 }
 
+fn requested_char_mask(filter: &CardFilter) -> u128 {
+    [filter.char_id_1, filter.char_id_2, filter.char_id_3]
+        .into_iter()
+        .filter(|char_id| *char_id > 0)
+        .fold(0u128, |mask, char_id| mask | (1u128 << char_id))
+}
+
+fn sum_matching_hearts(hearts: &[u8; 7], color_mask: u8) -> u8 {
+    if color_mask == 0 {
+        hearts.iter().sum()
+    } else {
+        (0..7)
+            .filter(|idx| (color_mask & (1 << idx)) != 0)
+            .map(|idx| hearts[idx])
+            .sum()
+    }
+}
+
+fn card_matches_zone_mask(state: &GameState, cid: i32, zone_mask: u8) -> bool {
+    let in_stage = state.players.iter().any(|player| player.stage.iter().any(|&card_id| card_id == cid));
+    let in_hand = state.players.iter().any(|player| player.hand.iter().any(|&card_id| card_id == cid));
+    let in_discard = state.players.iter().any(|player| player.discard.iter().any(|&card_id| card_id == cid));
+
+    match zone_mask as i32 {
+        ZONE_MASK_STAGE => in_stage,
+        ZONE_MASK_HAND => in_hand,
+        ZONE_MASK_DISCARD => in_discard,
+        _ => true,
+    }
+}
+
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
     let (parsed, extras) = filter_from_semantic_string(filter);
     parsed.to_attr() | extras
@@ -950,17 +1011,25 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         .get("target_player")
         .or_else(|| obj.get("player"))
         .or_else(|| obj.get("PLAYER"))
-        .and_then(parse_target_player)
+        .and_then(parse_target_player_value)
     {
         filter.is_enabled = true;
         filter.target_player = target_player;
     }
-    if let Some(card_type) = obj.get("card_type").and_then(parse_card_type) {
+    if let Some(card_type) = obj
+        .get("card_type")
+        .or_else(|| obj.get("CARD_TYPE"))
+        .and_then(parse_card_type_value)
+    {
         filter.is_enabled = true;
         filter.card_type = card_type;
     }
     set_flag!(obj.get("group_enabled"), group_enabled);
-    if let Some(group_id) = obj.get("group_id").and_then(Value::as_u64) {
+    if let Some(group_id) = obj
+        .get("group_id")
+        .or_else(|| obj.get("GROUP_ID"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.group_enabled = true;
         filter.group_id = (group_id & 0x7F) as u8;
@@ -970,7 +1039,11 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     set_flag!(obj.get("not_has_blade_heart"), not_has_blade_heart);
     set_flag!(obj.get("unique_names"), unique_names);
     set_flag!(obj.get("unit_enabled"), unit_enabled);
-    if let Some(unit_id) = obj.get("unit_id").and_then(Value::as_u64) {
+    if let Some(unit_id) = obj
+        .get("unit_id")
+        .or_else(|| obj.get("UNIT_ID"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.unit_enabled = true;
         filter.unit_id = (unit_id & 0x7F) as u8;
@@ -1004,27 +1077,51 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         filter.value_enabled = true;
         filter.color_mask = color_mask;
     }
-    if let Some(color_mask) = obj.get("color_mask").and_then(Value::as_u64) {
+    if let Some(color_mask) = obj
+        .get("color_mask")
+        .or_else(|| obj.get("COLOR_MASK"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.color_mask = color_mask as u8;
     }
-    if let Some(char_id) = obj.get("char_id_1").and_then(Value::as_u64) {
+    if let Some(char_id) = obj
+        .get("char_id_1")
+        .or_else(|| obj.get("CHAR_ID_1"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.char_id_1 = (char_id & 0x7F) as u8;
     }
-    if let Some(char_id) = obj.get("char_id_2").and_then(Value::as_u64) {
+    if let Some(char_id) = obj
+        .get("char_id_2")
+        .or_else(|| obj.get("CHAR_ID_2"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.char_id_2 = (char_id & 0x7F) as u8;
     }
-    if let Some(char_id) = obj.get("char_id_3").and_then(Value::as_u64) {
+    if let Some(char_id) = obj
+        .get("char_id_3")
+        .or_else(|| obj.get("CHAR_ID_3"))
+        .and_then(Value::as_u64)
+    {
         filter.is_enabled = true;
         filter.char_id_3 = (char_id & 0x7F) as u8;
     }
-    if let Some(zone_mask) = obj.get("zone_mask").and_then(Value::as_u64) {
+    if let Some(zone_mask) = obj
+        .get("zone_mask")
+        .or_else(|| obj.get("ZONE_MASK"))
+        .and_then(parse_zone_mask_value)
+    {
         filter.is_enabled = true;
-        filter.zone_mask = (zone_mask & 0x7) as u8;
+        filter.zone_mask = zone_mask;
     }
-    if let Some(special_id) = obj.get("special_id").and_then(parse_special_id) {
+    if let Some(special_id) = obj
+        .get("special_id")
+        .or_else(|| obj.get("SPECIAL_ID"))
+        .and_then(parse_special_id_value)
+    {
         filter.is_enabled = true;
         filter.special_id = special_id;
     }
@@ -1123,7 +1220,7 @@ pub fn merge_filter_attr_with_params(base_attr: u64, params: Option<&serde_json:
     }
 }
 
-fn parse_target_player(value: &Value) -> Option<u8> {
+pub(crate) fn parse_target_player_value(value: &Value) -> Option<u8> {
     value
         .as_u64()
         .map(|value| (value & 0x3) as u8)
@@ -1137,7 +1234,7 @@ fn parse_target_player(value: &Value) -> Option<u8> {
         })
 }
 
-fn parse_card_type(value: &Value) -> Option<u8> {
+pub(crate) fn parse_card_type_value(value: &Value) -> Option<u8> {
     value
         .as_u64()
         .map(|value| (value & 0x3) as u8)
@@ -1150,7 +1247,7 @@ fn parse_card_type(value: &Value) -> Option<u8> {
         })
 }
 
-fn parse_special_id(value: &Value) -> Option<u8> {
+pub(crate) fn parse_special_id_value(value: &Value) -> Option<u8> {
     value
         .as_u64()
         .map(|value| (value & 0x7) as u8)
@@ -1162,6 +1259,8 @@ fn parse_special_id(value: &Value) -> Option<u8> {
                     .replace('-', " ")
                     .as_str()
                 {
+                    "BASE COST" => 5,
+                    "SELECTED DISCARD" => 6,
                     "SAME NAME" | "SAMENAME" => 4,
                     "NOT MY" | "NOTMY" => 2,
                     "NOT SELF" | "NOTSELF" => 3,
@@ -1169,6 +1268,23 @@ fn parse_special_id(value: &Value) -> Option<u8> {
                 }
             })
         })
+}
+
+pub(crate) fn parse_zone_mask_value(value: &Value) -> Option<u8> {
+    value.as_u64().map(|value| (value & 0x7) as u8).or_else(|| {
+        value.as_str().and_then(|value| {
+            match value.trim().to_ascii_uppercase().replace('_', " ").as_str() {
+                "ALL" | "ALL AREAS" => Some(0),
+                "STAGE" => Some(ZONE_STAGE as u8),
+                "HAND" => Some(ZONE_HAND as u8),
+                "DISCARD" => Some(ZONE_DISCARD as u8),
+                // Stage-side masks appear in authored data but are not representable in the
+                // legacy 3-bit zone field, so keep them non-restrictive instead of inventing bits.
+                "GUEST+FRIEND" | "GUEST + FRIEND" => Some(0),
+                _ => None,
+            }
+        })
+    })
 }
 
 fn group_id_from_name(name: &str) -> Option<u8> {
@@ -1474,7 +1590,37 @@ fn params_object<'a>(params: Option<&'a Value>) -> Option<&'a serde_json::Map<St
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::logic::card_db::{LiveCard, MemberCard};
     use serde_json::json;
+
+    fn test_db_with_runtime_cards() -> CardDatabase {
+        let mut db = CardDatabase::default();
+
+        let mut muse_member = MemberCard::default();
+        muse_member.card_id = 100;
+        muse_member.name = "Muse Setsuna".to_string();
+        muse_member.normalized_name = "MuseSetsuna".to_string();
+        muse_member.cost = 3;
+        muse_member.hearts = [1, 1, 0, 0, 0, 0, 0];
+        muse_member.groups = vec![0];
+        muse_member.units = vec![5];
+        muse_member.char_mask = (1u128 << 27) | (1u128 << 32);
+        muse_member.semantic_flags = 0x100;
+        db.members.insert(100, muse_member.clone());
+
+        let mut blade_live = LiveCard::default();
+        blade_live.card_id = 200;
+        blade_live.name = "Blade Live".to_string();
+        blade_live.normalized_name = "BladeLive".to_string();
+        blade_live.required_hearts = [2, 2, 0, 0, 0, 0, 0];
+        blade_live.blade_hearts = [0, 0, 0, 0, 1, 0, 0];
+        blade_live.groups = vec![1, 11];
+        blade_live.units = vec![5];
+        blade_live.char_mask = 1u128 << 32;
+        db.lives.insert(200, blade_live.clone());
+
+        db
+    }
 
     #[test]
     fn filter_parts_from_params_support_keyword_area_and_player_aliases() {
@@ -1508,5 +1654,113 @@ mod tests {
         assert!(merged_filter.group_enabled);
         assert_eq!(merged_filter.group_id, 3);
         assert_ne!(merged & FILTER_REVEALED_CONTEXT, 0);
+    }
+
+    #[test]
+    fn matches_enforces_group_char_zone_and_flag_filters() {
+        let db = test_db_with_runtime_cards();
+        let mut state = GameState::default();
+        state.players[0].stage[0] = 100;
+        state.players[0].discard.push(200);
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: 999,
+            selected_cards: vec![200].into(),
+            ..AbilityContext::default()
+        };
+
+        let muse_group = CardFilter {
+            is_enabled: true,
+            group_enabled: true,
+            group_id: 0,
+            ..CardFilter::default()
+        };
+        assert!(muse_group.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+
+        let char_filter = CardFilter {
+            is_enabled: true,
+            char_id_1: 27,
+            ..CardFilter::default()
+        };
+        assert!(char_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+        assert!(!char_filter.matches(&state, &db, 200, None, false, None, &ctx));
+
+        let setsuna_filter = CardFilter {
+            is_enabled: true,
+            is_setsuna: true,
+            ..CardFilter::default()
+        };
+        assert!(setsuna_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+        assert!(!setsuna_filter.matches(&state, &db, 200, None, false, None, &ctx));
+
+        let discard_zone_filter = CardFilter {
+            is_enabled: true,
+            zone_mask: ZONE_DISCARD as u8,
+            ..CardFilter::default()
+        };
+        assert!(discard_zone_filter.matches(&state, &db, 200, None, false, None, &ctx));
+        assert!(!discard_zone_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+
+        let selected_discard_filter = CardFilter {
+            is_enabled: true,
+            special_id: 6,
+            ..CardFilter::default()
+        };
+        assert!(selected_discard_filter.matches(&state, &db, 200, None, false, None, &ctx));
+        assert!(!selected_discard_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+
+        let blade_filter = CardFilter {
+            is_enabled: true,
+            has_blade_heart: true,
+            ..CardFilter::default()
+        };
+        assert!(blade_filter.matches(&state, &db, 200, None, false, None, &ctx));
+        assert!(!blade_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+    }
+
+    #[test]
+    fn matches_uses_member_cost_even_with_effective_hearts() {
+        let mut db = CardDatabase::default();
+        let mut member = MemberCard::default();
+        member.card_id = 300;
+        member.cost = 4;
+        member.hearts = [0, 0, 0, 0, 0, 0, 0];
+        db.members.insert(300, member);
+
+        let state = GameState::default();
+        let ctx = AbilityContext::default();
+        let filter = CardFilter {
+            is_enabled: true,
+            value_enabled: true,
+            value_threshold: 4,
+            is_cost_type: true,
+            ..CardFilter::default()
+        };
+        let inflated_hearts = [9, 9, 9, 9, 9, 9, 9];
+
+        assert!(filter.matches(&state, &db, 300, None, false, Some(&inflated_hearts), &ctx));
+
+        let strict_filter = CardFilter {
+            value_threshold: 3,
+            is_le: true,
+            ..filter
+        };
+        assert!(!strict_filter.matches(&state, &db, 300, None, false, Some(&inflated_hearts), &ctx));
+    }
+
+    #[test]
+    fn filter_parts_from_params_parse_string_special_and_zone_masks() {
+        let params = json!({
+            "special_id": "Base Cost",
+            "zone_mask": "DISCARD",
+            "player": "OPPONENT"
+        });
+
+        let (filter, _) = filter_parts_from_params(Some(&params)).unwrap();
+
+        assert_eq!(filter.special_id, 5);
+        assert_eq!(filter.zone_mask, ZONE_DISCARD as u8);
+        assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
     }
 }

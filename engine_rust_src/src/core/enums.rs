@@ -24,9 +24,6 @@ pub enum Zone {
 }
 
 impl Zone {
-    pub fn legacy_id(self) -> u8 {
-        self as u8
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr, Deserialize_repr, Default)]

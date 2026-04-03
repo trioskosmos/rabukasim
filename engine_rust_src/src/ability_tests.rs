@@ -1,5 +1,5 @@
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_state, load_real_db};
+use crate::test_helpers::{create_test_state, load_real_db, BytecodeBuilder};
 
 /// Verifies that O_DRAW and O_MOVE_TO_DISCARD correctly manipulate hand and deck using real card IDs.
 #[test]
@@ -160,7 +160,7 @@ fn test_conditions_basic() {
     assert_eq!(state.players[0].hand.len(), 3);
 }
 
-/// Verifies that O_LOOK_AND_CHOOSE correctly defaults to deck and moves remainder to discard using real data.
+/// Verifies that O_LOOK_AND_CHOOSE keeps the unlooked card in deck and moves the looked remainder to discard.
 #[test]
 fn test_look_and_choose_remainder() {
     let db = load_real_db();
@@ -172,24 +172,13 @@ fn test_look_and_choose_remainder() {
         ..Default::default()
     };
 
-    // O_LOOK_DECK 4 -> O_LOOK_AND_CHOOSE 1 to Hand (Source 6)
-    let bc = vec![
-        O_LOOK_DECK,
-        4,
-        0,
-        0,
-        0,
-        O_LOOK_AND_CHOOSE,
-        1,
-        0,
-        0,
-        6,
-        O_RETURN,
-        0,
-        0,
-        0,
-        0,
-    ];
+    let bc = BytecodeBuilder::new(O_LOOK_AND_CHOOSE)
+        .v(4)
+        .source(Zone::Deck)
+        .dest(Zone::Discard)
+        .target(Zone::Hand as u8)
+        .op(O_RETURN)
+        .build();
 
     // Execution 1: Reveal cards
     state.resolve_frames(&db, &bc, &ctx);
@@ -209,7 +198,8 @@ fn test_look_and_choose_remainder() {
     state2.resolve_frames(&db, &bc, &ctx2);
 
     assert_eq!(state2.players[0].hand.len(), 1);
-    assert_eq!(state2.players[0].deck.len(), 4); // 1 unlooked + 3 remainder
+    assert_eq!(state2.players[0].deck.len(), 1); // Only the unlooked card remains in deck
+    assert_eq!(state2.players[0].discard.len(), 3); // The looked remainder moves to discard
     assert_eq!(state2.players[0].looked_cards.len(), 0);
 
     // Execution 2: Skip selection (999)
@@ -224,5 +214,6 @@ fn test_look_and_choose_remainder() {
     state3.resolve_frames(&db, &bc, &ctx3);
 
     assert_eq!(state3.players[0].hand.len(), 0);
-    assert_eq!(state3.players[0].deck.len(), 5); // All 4 + 1 back to deck
+    assert_eq!(state3.players[0].deck.len(), 1); // Only the unlooked card remains in deck
+    assert_eq!(state3.players[0].discard.len(), 4); // All looked cards move to discard
 }

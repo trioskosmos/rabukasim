@@ -1,5 +1,6 @@
 use super::*;
 use crate::core::hearts::HeartBoard;
+use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrameComponents;
 
@@ -65,7 +66,8 @@ pub fn handle_move_member(
     };
 
     let needs_choice = a == 99 || (a < 0 || a > 2);
-    let legacy_tap_selection = is_optional && needs_choice && s == 4 && !slot_info.is_opponent;
+    let legacy_tap_selection =
+        is_optional && needs_choice && s == TARGET_SLOT_STAGE as i32 && !slot_info.is_opponent;
 
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(

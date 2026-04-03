@@ -18,9 +18,11 @@
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::interpreter::conditions::common::parse_condition_type;
+use crate::core::models::interpreter::instruction::DecodedSlot;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs;
 use super::models::*;
 
@@ -67,10 +69,14 @@ impl CardRef {
     }
 }
 
-// Consolidated abilities is the single runtime-friendly view of the authored
-// frame data. Runtime loading should stay aligned with that canonical artifact.
+// The runtime prefers the structured ability frame index. Consolidated ability
+// data remains a fallback for older exports and partial regeneration states.
+const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
+    include_str!("../../../../data/ability_frame_index.json");
 const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =
     include_str!("../../../../data/consolidated_abilities.json");
+const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
+    include_str!("../../../../data/card_122_overlay.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -205,15 +211,132 @@ pub struct CardDatabase {
 
 pub const LOGIC_ID_MASK: i32 = 0x0FFF;
 
+fn sanitize_sparse_json_text(json: &str) -> String {
+    let mut sanitized = String::with_capacity(json.len());
+    let mut in_string = false;
+    let mut escaped = false;
+
+    for ch in json.chars() {
+        if in_string {
+            if escaped {
+                sanitized.push(ch);
+                escaped = false;
+                continue;
+            }
+
+            match ch {
+                '\\' => {
+                    sanitized.push(ch);
+                    escaped = true;
+                }
+                '"' => {
+                    sanitized.push(ch);
+                    in_string = false;
+                }
+                c if c.is_control() => {
+                    let _ = write!(&mut sanitized, "\\u{:04x}", c as u32);
+                }
+                _ => sanitized.push(ch),
+            }
+        } else {
+            match ch {
+                '"' => {
+                    sanitized.push(ch);
+                    in_string = true;
+                }
+                c if c.is_control() && !matches!(c, '\n' | '\r' | '\t') => {}
+                _ => sanitized.push(ch),
+            }
+        }
+    }
+
+    sanitized
+}
+
 impl CardDatabase {
     fn normalize_card_no(card_no: &str) -> String {
         card_no.replace('＋', "+")
     }
 
     fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String, Value> {
-        let parsed_root = serde_json::from_str::<Value>(json).ok();
+        let json = sanitize_sparse_json_text(json);
+        let json = json.trim_start_matches(|c: char| c.is_whitespace() || c == '\u{feff}' || c == '\0');
+        let json = if let Some(start) = json.find('{') {
+            &json[start..]
+        } else if let Some(start) = json.find('[') {
+            &json[start..]
+        } else {
+            json
+        };
+
+        let parsed_root = match serde_json::from_str::<Value>(json) {
+            Ok(root) => Some(root),
+            Err(json_err) => match serde_yaml::from_str::<Value>(json) {
+                Ok(root) => Some(root),
+                Err(yaml_err) => {
+                    eprintln!("[SPARSE_DBG] parse_error={}", json_err);
+                    eprintln!("[SPARSE_DBG] yaml_parse_error={}", yaml_err);
+                    None
+                }
+            },
+        };
         if let Some(root) = parsed_root {
             let mut index = HashMap::new();
+
+            if let Some(abilities_arr) = root.get("abilities").and_then(|v| v.as_array()) {
+                for ability_data in abilities_arr {
+                    if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
+                        let mut compact_entry = serde_json::Map::new();
+
+                        for key in [
+                            "pseudocode",
+                            "source_text",
+                            "source_text_en",
+                            "trigger",
+                            "trigger_id",
+                        ] {
+                            if let Some(value) = ability_data.get(key) {
+                                compact_entry.insert(key.to_string(), value.clone());
+                            }
+                        }
+
+                        compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
+
+                        if let Some(cards) = ability_data.get("cards").and_then(|v| v.as_array()) {
+                            for card in cards {
+                                let Some(card_entry) = card.as_str() else {
+                                    continue;
+                                };
+                                let Some(card_no) = card_entry.split(" | ").next() else {
+                                    continue;
+                                };
+                                let Some(ability_index_part) = card_entry.split("(ab#").nth(1) else {
+                                    continue;
+                                };
+                                let ability_index = ability_index_part
+                                    .split_whitespace()
+                                    .next()
+                                    .and_then(|value| value.trim_end_matches(')').parse::<i64>().ok());
+                                let Some(ability_index) = ability_index else {
+                                    continue;
+                                };
+
+                                let mut keyed_entry = compact_entry.clone();
+                                if let Some(trigger) = ability_data.get("trigger") {
+                                    keyed_entry.insert("trigger".to_string(), trigger.clone());
+                                }
+                                if let Some(trigger_id) = ability_data.get("trigger_id") {
+                                    keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
+                                }
+                                let key = format!("{}#{}", card_no, ability_index);
+                                index.insert(key, Value::Object(keyed_entry));
+                            }
+                        }
+                    }
+                }
+
+                return index;
+            }
 
             if let Some(abilities_obj) = root.as_object() {
                 for (_ability_key, ability_data) in abilities_obj {
@@ -291,22 +414,63 @@ impl CardDatabase {
     }
 
     fn load_sparse_ability_index() -> HashMap<String, Value> {
+        let mut merged_index = HashMap::new();
+        let mut loaded_any = false;
+
         for path in [
+            "data/ability_frame_index.json",
+            "../data/ability_frame_index.json",
             "data/consolidated_abilities.json",
             "../data/consolidated_abilities.json",
         ] {
             if let Ok(json) = fs::read_to_string(path) {
                 let index = Self::load_sparse_ability_index_from_json(&json);
-                if !index.is_empty() {
-                    return index;
+                eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
+                if index.is_empty() {
+                    continue;
                 }
+                if path.contains("ability_frame_index") {
+                    merged_index.extend(index);
+                } else {
+                    for (key, value) in index {
+                        merged_index.entry(key).or_insert(value);
+                    }
+                }
+                loaded_any = true;
             }
         }
 
-        let consolidated =
-            Self::load_sparse_ability_index_from_json(EMBEDDED_CONSOLIDATED_ABILITIES_JSON);
-        if !consolidated.is_empty() {
-            return consolidated;
+        for json in [
+            EMBEDDED_ABILITY_FRAME_INDEX_JSON,
+            EMBEDDED_CONSOLIDATED_ABILITIES_JSON,
+            EMBEDDED_CARD_122_OVERLAY_JSON,
+        ] {
+            let index = Self::load_sparse_ability_index_from_json(json);
+            let label = if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_INDEX_JSON) {
+                "embedded_frame_index"
+            } else if std::ptr::eq(json, EMBEDDED_CONSOLIDATED_ABILITIES_JSON) {
+                "embedded_consolidated"
+            } else {
+                "embedded_card_122_overlay"
+            };
+            eprintln!("[SPARSE_DBG] source={} entries={}", label, index.len());
+            if index.is_empty() {
+                continue;
+            }
+            if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_INDEX_JSON) {
+                merged_index.extend(index);
+            } else if std::ptr::eq(json, EMBEDDED_CONSOLIDATED_ABILITIES_JSON) {
+                for (key, value) in index {
+                    merged_index.entry(key).or_insert(value);
+                }
+            } else {
+                merged_index.extend(index);
+            }
+            loaded_any = true;
+        }
+
+        if loaded_any {
+            return merged_index;
         }
 
         HashMap::new()
@@ -335,8 +499,32 @@ impl CardDatabase {
         index: &HashMap<String, Value>,
         text_index: &HashMap<String, String>,
     ) -> serde_json::Result<()> {
+        let mut lookup_keys = vec![format!("{}#", card_no)];
+        let normalized_card_no = Self::normalize_card_no(card_no);
+        if normalized_card_no != card_no {
+            lookup_keys.push(format!("{}#", normalized_card_no));
+        }
+        if card_no.contains('+') {
+            lookup_keys.push(format!("{}#", card_no.replace('+', "＋")));
+        }
+        if card_no.contains('＋') {
+            lookup_keys.push(format!("{}#", card_no.replace('＋', "+")));
+        }
+        if let Some(rest) = card_no.strip_prefix("PL!-") {
+            lookup_keys.push(format!("PL!HS-{}#", rest));
+        }
+
         for (ability_index, ability) in abilities.iter_mut().enumerate() {
-            let key = format!("{}#{}", card_no, ability_index);
+            let key_suffix = ability_index.to_string();
+            let key_candidates: Vec<String> = lookup_keys
+                .iter()
+                .map(|prefix| format!("{}{}", prefix, key_suffix))
+                .collect();
+            let key = key_candidates
+                .iter()
+                .find(|candidate| index.contains_key(candidate.as_str()))
+                .cloned()
+                .unwrap_or_else(|| format!("{}#{}", card_no, ability_index));
             let entry = index.get(&key);
             let matching_entry = entry.filter(|entry| Self::entry_matches_ability_trigger(entry, ability));
 
@@ -356,23 +544,18 @@ impl CardDatabase {
                     ability.raw_text = source_text.to_string();
                 } else if let Some(source_text_en) = entry.and_then(|value| value.get("source_text_en")).and_then(|v| v.as_str()) {
                     ability.raw_text = source_text_en.to_string();
-                } else if let Some(text) = text_index.get(&key) {
+                } else if let Some(text) = key_candidates
+                    .iter()
+                    .find_map(|candidate| text_index.get(candidate))
+                {
                     ability.raw_text = text.clone();
                 }
             }
 
-            let should_replace_frame_program = ability
-                .frame_program
-                .as_ref()
-                .map(|program| program.frames.is_empty())
-                .unwrap_or(true)
-                || ability.resolved_frame_source() != "frame_program";
-            if should_replace_frame_program {
-                if let Some(entry) = matching_entry {
-                    let program = Self::sparse_entry_to_frame_program(entry);
-                    if !program.frames.is_empty() {
-                        ability.frame_program = Some(program);
-                    }
+            if let Some(entry) = matching_entry {
+                let program = Self::sparse_entry_to_frame_program(entry);
+                if !program.frames.is_empty() {
+                    ability.frame_program = Some(program);
                 }
             }
             if let Some(choose_count) = ability
@@ -466,6 +649,34 @@ impl CardDatabase {
                     }
                     if effect.runtime_slot == 0 {
                         effect.runtime_slot = components.raw_slot;
+                    }
+                    if effect.runtime_opcode == O_MOVE_TO_DISCARD && effect.runtime_slot == 0 {
+                        let raw_text = ability.raw_text.to_ascii_lowercase();
+                        if ability.raw_text.contains("手札") || raw_text.contains("hand") {
+                            let mut slot = DecodedSlot::decode(effect.runtime_slot);
+                            slot.source_zone = Zone::Hand;
+                            effect.runtime_slot = slot.to_raw();
+                        }
+                    }
+                    if !effect.is_optional {
+                        let raw_text = ability.raw_text.to_ascii_lowercase();
+                        effect.is_optional = components.is_optional()
+                            || (
+                                matches!(
+                                    effect.runtime_opcode,
+                                    O_MOVE_TO_DISCARD
+                                        | O_SELECT_MODE
+                                        | O_SELECT_CARDS
+                                        | O_LOOK_AND_CHOOSE
+                                        | O_SELECT_MEMBER
+                                        | O_SELECT_LIVE
+                                        | O_SELECT_PLAYER
+                                        | O_PAY_ENERGY
+                                )
+                                    && (ability.raw_text.contains("もよい")
+                                        || raw_text.contains("may")
+                                        || raw_text.contains("optional"))
+                            );
                     }
                 }
             }

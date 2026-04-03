@@ -316,7 +316,7 @@ mod tests {
         };
         state
             .trigger_queue
-            .push_back((eli_id, 0, actx, false, TriggerType::OnPlay));
+            .push_back((eli_id, eli_id, 0, actx, false, TriggerType::OnPlay));
         state.process_trigger_queue(&db);
 
         if let Some(interaction) = state.interaction_stack.last() {

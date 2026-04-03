@@ -1,4 +1,21 @@
-use crate::test_helpers::{create_test_state, load_real_db};
+use crate::core::enums::{ChoiceType, TriggerType};
+use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS};
+use crate::core::hearts::HeartBoard;
+use crate::core::logic::card_db::LOGIC_ID_MASK;
+use crate::core::logic::filter::CardFilter;
+use crate::core::logic::{Ability, AbilityContext, MemberCard, O_ADD_BLADES, O_PAY_ENERGY, O_RETURN, O_TAP_MEMBER};
+use crate::test_helpers::{create_test_db, create_test_state, load_real_db, FrameBuilder, TestActionReceiver};
+
+fn add_test_member(db: &mut crate::core::logic::CardDatabase, mut member: MemberCard) {
+    member.hearts_board = HeartBoard::from_array(&member.hearts);
+    member.blade_hearts_board = HeartBoard::from_array(&member.blade_hearts);
+    let id = member.card_id;
+    db.members.insert(id, member.clone());
+    let logic_id = (id as usize) & LOGIC_ID_MASK as usize;
+    if logic_id < db.members_vec.len() {
+        db.members_vec[logic_id] = Some(member);
+    }
+}
 
 /// Verifies that granted abilities (Wave 2) are correctly applied to a target card using real IDs.
 #[test]
@@ -48,4 +65,534 @@ fn test_stat_buff_combination() {
     // 2. Check effective blades (Base + Buff 3)
     let effective = state.get_effective_blades(0, 0, &db, 0);
     assert_eq!(effective, base_blades as u32 + 3);
+}
+
+#[test]
+fn test_card_163_optional_live_start_prompt_uses_yes_no_actions_only() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.players[0].stage[0] = 163;
+    state.players[0].energy_zone = vec![2000].into();
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("card 163 should suspend for optional energy payment");
+    assert_eq!(pending.choice_type, ChoiceType::Optional);
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+
+    assert!(actions.actions.contains(&ACTION_BASE_CHOICE));
+    assert!(actions.actions.contains(&(ACTION_BASE_CHOICE + 1)));
+    assert!(actions.actions.iter().all(|action| {
+        *action == 0
+            || *action >= ACTION_BASE_CHOICE
+            || *action >= ACTION_BASE_STAGE
+    }));
+    assert!(!actions.actions.iter().any(|action| {
+        *action >= ACTION_BASE_HAND_SELECT && *action < ACTION_BASE_STAGE
+    }));
+}
+
+#[test]
+fn test_granted_live_start_optional_ability_uses_definition_card_on_resume() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let target_id = 9100;
+    let source_id = 9101;
+
+    let target_program = FrameBuilder::new()
+        .op(O_PAY_ENERGY)
+        .v(1)
+        .optional(true)
+        .op(O_ADD_BLADES)
+        .v(2)
+        .target(4)
+        .op(O_RETURN)
+        .build_prog();
+    let source_program = FrameBuilder::new()
+        .op(O_PAY_ENERGY)
+        .v(1)
+        .optional(true)
+        .op(O_ADD_BLADES)
+        .v(3)
+        .target(4)
+        .op(O_RETURN)
+        .build_prog();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: target_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnLiveStart,
+                frame_program: Some(target_program),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnLiveStart,
+                frame_program: Some(source_program),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+
+    state.players[0].stage[0] = target_id;
+    state.players[0].energy_zone = vec![2000, 2001].into();
+    state.players[0]
+        .granted_abilities
+        .push((target_id, source_id, 0));
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+    let mut resolved_prompts = 0;
+    while resolved_prompts < 3 && (!state.interaction_stack.is_empty() || !state.trigger_queue.is_empty()) {
+        if state.interaction_stack.is_empty() {
+            state.process_trigger_queue(&db);
+        }
+        if state.interaction_stack.is_empty() {
+            break;
+        }
+
+        state
+            .step(&db, ACTION_BASE_CHOICE)
+            .expect("live-start optional trigger should resolve");
+        resolved_prompts += 1;
+    }
+
+    assert_eq!(resolved_prompts, 2);
+    assert!(state.interaction_stack.is_empty());
+    assert_eq!(state.players[0].blade_buffs[0], 5);
+}
+
+#[test]
+fn test_card_163_can_trigger_again_after_turn_cleanup() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.players[0].stage[0] = 163;
+    state.players[0].energy_zone = vec![2000, 2001].into();
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+    state
+        .step(&db, ACTION_BASE_CHOICE)
+        .expect("first live-start prompt should resolve");
+    assert_eq!(state.players[0].blade_buffs[0], 2);
+
+    state.players[0].untap_all(false);
+    assert_eq!(state.players[0].blade_buffs[0], 0);
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+    assert!(!state.interaction_stack.is_empty());
+    state
+        .step(&db, ACTION_BASE_CHOICE)
+        .expect("second live-start prompt should resolve after cleanup");
+    assert_eq!(state.players[0].blade_buffs[0], 2);
+}
+
+#[test]
+fn test_tap_m_select_uses_opponent_cost_filter_for_wait_targets() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9707;
+    let low_cost_left = 9708;
+    let high_cost_middle = 9709;
+    let low_cost_right = 9710;
+
+    let filter_attr = CardFilter {
+        is_enabled: true,
+        target_player: 2,
+        value_enabled: true,
+        value_threshold: 4,
+        is_le: true,
+        is_cost_type: true,
+        ..Default::default()
+    }
+    .to_attr();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(O_TAP_MEMBER)
+                        .v(2)
+                        .a(filter_attr as i64)
+                        .target(4)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: low_cost_left,
+            cost: 4,
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: high_cost_middle,
+            cost: 5,
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: low_cost_right,
+            cost: 4,
+            ..Default::default()
+        },
+    );
+
+    state.players[0].stage[0] = source_id;
+    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+    let ctx = AbilityContext {
+        source_card_id: source_id,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("tap-member ability should suspend for target selection");
+    assert_eq!(pending.choice_type, ChoiceType::TapMSelect);
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+
+    assert!(actions.actions.contains(&ACTION_BASE_STAGE_SLOTS));
+    assert!(!actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)));
+    assert!(actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)));
+}
+
+#[test]
+fn test_card_707_wait_prompt_excludes_opponent_members_above_cost_4() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.phase = crate::core::enums::Phase::Main;
+
+    let low_cost_left = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost == 4).then_some(cid))
+        .expect("real DB should contain a cost-4 member");
+    let high_cost_middle = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost >= 5).then_some(cid))
+        .expect("real DB should contain a cost-5-or-higher member");
+    let low_cost_right = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost <= 3 && cid != low_cost_left).then_some(cid))
+        .expect("real DB should contain another cost-4-or-lower member");
+
+    state.players[0].stage[0] = 707;
+    state.players[0].hand = vec![121].into();
+    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+    let ctx = AbilityContext {
+        source_card_id: 707,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("card 707 should prompt for optional discard");
+    assert_eq!(pending.choice_type, ChoiceType::SelectHandDiscard);
+
+    state
+        .step(&db, ACTION_BASE_HAND_SELECT)
+        .expect("card 707 discard cost should resolve");
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("card 707 should prompt for opponent wait targets");
+    assert_eq!(pending.choice_type, ChoiceType::TapO);
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+
+    assert!(actions.actions.contains(&ACTION_BASE_STAGE_SLOTS));
+    assert!(!actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)));
+    assert!(actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)));
+}
+
+#[test]
+fn test_tap_member_opponent_target_execution_honors_cost_filter() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9713;
+    let low_cost_left = 9714;
+    let high_cost_middle = 9715;
+    let low_cost_right = 9716;
+
+    let filter_attr = CardFilter {
+        is_enabled: true,
+        target_player: 2,
+        value_enabled: true,
+        value_threshold: 4,
+        is_le: true,
+        is_cost_type: true,
+        ..Default::default()
+    }
+    .to_attr();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(crate::core::logic::O_TAP_MEMBER)
+                        .v(2)
+                        .a(filter_attr as i64)
+                        .target(4)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: low_cost_left,
+            cost: 4,
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: high_cost_middle,
+            cost: 5,
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: low_cost_right,
+            cost: 3,
+            ..Default::default()
+        },
+    );
+
+    state.players[0].stage[0] = source_id;
+    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+    let ctx = AbilityContext {
+        source_card_id: source_id,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS)
+        .expect("first filtered opponent tap selection should resolve");
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS + 2)
+        .expect("second filtered opponent tap selection should resolve");
+
+    assert!(state.players[1].is_tapped(0));
+    assert!(!state.players[1].is_tapped(1));
+    assert!(state.players[1].is_tapped(2));
+}
+
+#[test]
+fn test_card_707_wait_execution_honors_cost_filter() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.phase = crate::core::enums::Phase::Main;
+
+    let low_cost_left = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost == 4).then_some(cid))
+        .expect("real DB should contain a cost-4 member");
+    let high_cost_middle = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost >= 5).then_some(cid))
+        .expect("real DB should contain a cost-5-or-higher member");
+    let low_cost_right = db
+        .members
+        .iter()
+        .find_map(|(&cid, member)| (member.cost <= 3 && cid != low_cost_left).then_some(cid))
+        .expect("real DB should contain another cost-4-or-lower member");
+
+    state.players[0].stage[0] = 707;
+    state.players[0].hand = vec![121].into();
+    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+    let ctx = AbilityContext {
+        source_card_id: 707,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    state
+        .step(&db, ACTION_BASE_HAND_SELECT)
+        .expect("card 707 discard cost should resolve");
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS)
+        .expect("card 707 first wait target should resolve");
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS + 2)
+        .expect("card 707 second wait target should resolve");
+
+    assert!(state.players[1].is_tapped(0));
+    assert!(!state.players[1].is_tapped(1));
+    assert!(state.players[1].is_tapped(2));
+}
+
+#[test]
+fn test_tap_opponent_single_ineligible_target_does_not_auto_tap() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9711;
+    let high_cost_target = 9712;
+    let filter_attr = CardFilter {
+        is_enabled: true,
+        target_player: 2,
+        value_enabled: true,
+        value_threshold: 4,
+        is_le: true,
+        is_cost_type: true,
+        ..Default::default()
+    }
+    .to_attr();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(crate::core::logic::O_TAP_OPPONENT)
+                        .v(1)
+                        .a(filter_attr as i64)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: high_cost_target,
+            cost: 5,
+            ..Default::default()
+        },
+    );
+
+    state.players[0].stage[0] = source_id;
+    state.players[1].stage[0] = high_cost_target;
+
+    let ctx = AbilityContext {
+        source_card_id: source_id,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    assert!(state.interaction_stack.is_empty());
+    assert!(!state.players[1].is_tapped(0));
 }

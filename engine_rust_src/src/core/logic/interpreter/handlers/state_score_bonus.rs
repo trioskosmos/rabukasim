@@ -47,7 +47,11 @@ fn resolve_dynamic_multiplier(
         };
         let source_matches_filter = filter_attr == 0
             || state.card_matches_filter_with_ctx(db, source_card_id, filter_attr, ctx);
-        if source_is_counted && source_matches_filter {
+        let should_exclude_source = source_is_counted
+            && source_matches_filter
+            && (frame_data.slot.source_zone != Zone::Default
+                || frame_data.compare_accumulated());
+        if should_exclude_source {
             count -= 1;
         }
     }

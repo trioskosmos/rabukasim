@@ -1,5 +1,7 @@
 // Basic imports
 #[cfg(feature = "extension-module")]
+use crate::core::alphazero_encoding_vanilla::AlphaZeroVanillaEncoding;
+#[cfg(feature = "extension-module")]
 use crate::core::generated_constants::{
     ACTION_BASE_HAND, ACTION_BASE_LIVESET, ACTION_BASE_MULLIGAN, ACTION_BASE_PASS, ACTION_BASE_RPS,
     ACTION_BASE_RPS_P2, ACTION_BASE_STAGE_SLOTS, ACTION_BASE_TURN_ORDER_FIRST,
@@ -193,7 +195,7 @@ impl AlphaZeroEvaluator for PyAlphaZeroEvaluator {
             // 1. Encode all states to tensors
             let tensors: Vec<Vec<f32>> = states
                 .iter()
-                .map(|state: &GameState| encode_state_for_python_model(state, db))
+                .map(|state: &GameState| state.to_vanilla_tensor(db))
                 .collect();
 
             // 2. Wrap in NumPy arrays (or just list of lists) and call Python
@@ -255,37 +257,4 @@ impl AlphaZeroEvaluator for PyAlphaZeroEvaluator {
                 .collect()
         })
     }
-}
-
-#[cfg(feature = "extension-module")]
-fn encode_state_for_python_model(state: &GameState, db: &CardDatabase) -> Vec<f32> {
-    let me = state.current_player as usize;
-    let opp = 1 - me;
-    let mut tensor = Vec::with_capacity(32);
-
-    tensor.push(state.phase as i32 as f32);
-    tensor.push(state.turn as f32 / 20.0);
-    tensor.push(state.first_player as f32);
-    tensor.push(state.core.players[me].score as f32 / 10.0);
-    tensor.push(state.core.players[opp].score as f32 / 10.0);
-    tensor.push(state.core.players[me].hand.len() as f32 / 15.0);
-    tensor.push(state.core.players[me].energy_zone.len() as f32 / 10.0);
-    tensor.push(state.core.players[me].stage.len() as f32 / 3.0);
-    tensor.push(state.core.players[me].discard.len() as f32 / 25.0);
-    tensor.push(state.core.players[me].live_zone.len() as f32 / 3.0);
-    tensor.push(state.core.players[me].success_lives.len() as f32 / 9.0);
-    tensor.push(state.core.players[me].baton_touch_count() as f32 / 5.0);
-    tensor.push(state.core.players[me].baton_touch_limit() as f32 / 5.0);
-    tensor.push(state.core.players[me].hand_increased_this_turn as f32 / 5.0);
-    tensor.push(state.core.performance_yell_done[me] as u8 as f32);
-    tensor.push(state.core.performance_yell_done[opp] as u8 as f32);
-    tensor.push(state.core.live_result_selection_pending as u8 as f32);
-    tensor.push(db.members.len() as f32 / 500.0);
-    tensor.push(db.lives.len() as f32 / 500.0);
-
-    while tensor.len() < 32 {
-        tensor.push(0.0);
-    }
-
-    tensor
 }

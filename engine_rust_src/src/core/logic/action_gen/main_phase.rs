@@ -30,22 +30,63 @@ fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
         .any(|frame| frame.dslot().source_zone == Zone::DeckTop)
 }
 
+fn implicit_activated_energy_cost_for_card(
+    card: &MemberCard,
+    ability: &crate::core::logic::Ability,
+) -> usize {
+    let explicit = ability.implicit_activated_energy_cost();
+    if explicit > 0 || ability.trigger != TriggerType::Activated {
+        return explicit;
+    }
+
+    if !ability.raw_text.trim().is_empty() {
+        return 0;
+    }
+
+    let activated_count = card
+        .abilities
+        .iter()
+        .filter(|candidate| candidate.trigger == TriggerType::Activated)
+        .count();
+    if activated_count != 1 {
+        return 0;
+    }
+
+    let prefix = card
+        .original_text
+        .split('：')
+        .next()
+        .unwrap_or(card.original_text.as_str());
+    prefix.matches("{{icon_energy.png|E}}").count()
+}
+
+fn should_precheck_activation_condition(condition: &crate::core::logic::Condition) -> bool {
+    !matches!(
+        condition.condition_type,
+        ConditionType::SumValue | ConditionType::DiscardedCards
+    )
+}
+
 fn ability_costs_payable(
     state: &GameState,
     db: &CardDatabase,
     p_idx: usize,
     ctx: &AbilityContext,
+    card: &MemberCard,
     ab: &crate::core::logic::Ability,
 ) -> bool {
-    if ctx.source_card_id == 8844 {
-        return true;
-    }
-
     // 1. Check legacy costs if any
     if !ab.costs.is_empty() {
         if !ab.costs.iter().all(|c| state.check_cost(db, p_idx, c, ctx)) {
             return false;
         }
+    }
+
+    let implicit_energy_cost = implicit_activated_energy_cost_for_card(card, ab);
+    let untapped_energy = state.players[p_idx].energy_zone.len()
+        - state.players[p_idx].tapped_energy_count() as usize;
+    if implicit_energy_cost > 0 && untapped_energy < implicit_energy_cost {
+        return false;
     }
 
     // 2. Check frame-based costs
@@ -108,11 +149,6 @@ fn ability_costs_payable(
                 return false;
             }
         }
-    }
-
-    // Workaround for Kinako (4955) whose bytecode is missing its deck-cost text.
-    if ctx.source_card_id == 4955 && state.players[p_idx].deck.len() < 3 {
-        return false;
     }
 
     if ability_requires_deck_top_window(ab)
@@ -297,15 +333,12 @@ impl ActionGenerator for MainPhaseGenerator {
                                         ..Default::default()
                                     };
 
-                                    let cond_ok = if cid == 8844 {
-                                        true
-                                    } else {
-                                        ab.conditions
-                                            .iter()
-                                            .all(|c| state.check_condition(db, p_idx, c, &ctx, 0))
-                                    };
+                                    let cond_ok = ab.conditions
+                                        .iter()
+                                        .filter(|condition| should_precheck_activation_condition(condition))
+                                        .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
                                     let cost_ok =
-                                        ability_costs_payable(state, db, p_idx, &ctx, ab);
+                                        ability_costs_payable(state, db, p_idx, &ctx, card, ab);
 
                                     if cond_ok
                                         && cost_ok
@@ -356,9 +389,10 @@ impl ActionGenerator for MainPhaseGenerator {
                                 let cond_ok = ab
                                     .conditions
                                     .iter()
+                                    .filter(|condition| should_precheck_activation_condition(condition))
                                     .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
                                 let cost_ok =
-                                    ability_costs_payable(state, db, p_idx, &ctx, ab);
+                                    ability_costs_payable(state, db, p_idx, &ctx, card, ab);
                                 if cond_ok
                                     && cost_ok
                                     && state.check_once_per_turn(
@@ -391,6 +425,7 @@ mod tests {
         ACTION_BASE_STAGE_CHOICE,
     };
     use crate::core::logic::card_db::LOGIC_ID_MASK;
+    use crate::core::models::FrameProgram;
     use crate::test_helpers::{create_test_state, TestActionReceiver};
 
     fn insert_member(db: &mut CardDatabase, cid: i32, card: crate::core::logic::MemberCard) {
@@ -411,7 +446,7 @@ mod tests {
             card_id: 100,
             abilities: vec![crate::core::logic::Ability {
                 trigger: TriggerType::Activated,
-                frame_program: Some(crate::core::logic::models::FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_words(&[
                     O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
                 ])),
                 ..Default::default()

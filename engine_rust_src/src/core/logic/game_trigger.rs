@@ -4,6 +4,13 @@ use super::state::GameState;
 use crate::core::enums::{ConditionType, TriggerType};
 use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
 
+fn should_precheck_trigger_condition(cond: &crate::core::logic::Condition) -> bool {
+    !matches!(
+        cond.condition_type,
+        ConditionType::SumValue | ConditionType::DiscardedCards
+    )
+}
+
 fn parse_resolution_trigger_subtype(raw_text: &str) -> Option<TriggerType> {
     let type_start = raw_text.find("TYPE=\"")? + 6;
     let type_end = raw_text[type_start..].find('"')? + type_start;
@@ -169,6 +176,7 @@ impl GameState {
     pub fn enqueue_trigger(
         &mut self,
         cid: i32,
+        ability_card_id: i32,
         ab_idx: u16,
         ctx: AbilityContext,
         is_live: bool,
@@ -182,7 +190,7 @@ impl GameState {
         }
         self.core
             .trigger_queue
-            .push_back((cid, ab_idx, ctx, is_live, trigger));
+            .push_back((cid, ability_card_id, ab_idx, ctx, is_live, trigger));
     }
 
     /// Unified trigger entry point to reduce boilerplate
@@ -315,6 +323,7 @@ impl GameState {
 
         for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
             ab_ctx.source_card_id = cid;
+            ab_ctx.ability_card_id = def_cid;
             ab_ctx.ability_index = ab_idx as i16;
 
             let Some(ability) = ability_from_db(db, def_cid, is_live, ab_idx as usize) else {
@@ -377,6 +386,9 @@ impl GameState {
                 } else {
                     // Normal AND logic
                     for (i, cond) in conditions.iter().enumerate() {
+                        if !should_precheck_trigger_condition(cond) {
+                            continue;
+                        }
                         let passed = super::interpreter::conditions::check_condition(
                             self, db, p_idx, cond, &ab_ctx, 1,
                         );
@@ -447,7 +459,7 @@ impl GameState {
                 // PHASE 3: Queue instead of immediate resolve to decouple mutations
                 eprintln!("[DEBUG_TRIGGER] Enqueuing ability: cid={}, ab_idx={}, trigger={:?}, conditions={}", 
                     cid, ab_idx, trigger, conditions.len());
-                self.enqueue_trigger(cid, ab_idx as u16, ab_ctx, is_live, trigger);
+                self.enqueue_trigger(cid, def_cid, ab_idx as u16, ab_ctx, is_live, trigger);
             } else {
                 eprintln!("[DEBUG_TRIGGER] NOT enqueuing ability: cid={}, ab_idx={}, all_met={}, conditions={}", 
                     cid, ab_idx, all_met, conditions.len());

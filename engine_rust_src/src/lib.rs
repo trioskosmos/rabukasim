@@ -89,6 +89,8 @@ mod new_opcode_tests;
 
 #[cfg(test)]
 mod debug_q203;
+#[cfg(all(test, feature = "extension-module"))]
+mod vanilla_encoding_tests;
 
 #[cfg(feature = "extension-module")]
 use pyo3::prelude::*;

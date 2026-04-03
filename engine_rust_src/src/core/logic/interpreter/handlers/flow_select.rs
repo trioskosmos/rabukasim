@@ -1,6 +1,7 @@
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::models::AbilityContext;
+use crate::core::enums::Zone;
 
 use super::*;
 
@@ -11,12 +12,16 @@ use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, TARGET_S
 #[path = "flow_select_resolve.rs"]
 mod flow_select_resolve;
 
-fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: u8) -> &[i32] {
+fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: Zone) -> &[i32] {
     match source_zone {
-        6 => state.players[target_player].hand.as_slice(),
-        7 => state.players[target_player].discard.as_slice(),
+        Zone::Hand => state.players[target_player].hand.as_slice(),
+        Zone::Discard => state.players[target_player].discard.as_slice(),
         _ => state.players[target_player].stage.as_slice(),
     }
+}
+
+fn selected_target_key(source_zone: Zone, slot_idx: usize) -> i32 {
+    ((source_zone as i32) << 8) | slot_idx as i32
 }
 
 fn resolve_select_member_target_player(
@@ -134,14 +139,14 @@ pub fn handle_select_ops(
         ctx.selected_target_keys.clear();
 
         for (slot_idx, &cid) in
-            cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
+            cards_for_source_zone(state, target_player, effective_slot_info.source_zone)
                 .iter()
                 .enumerate()
         {
             if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
                 ctx.selected_cards.push(cid);
                 ctx.selected_target_keys
-                    .push(((4_i32) << 8) | (slot_idx as i32 & 0xFF));
+                    .push(selected_target_key(Zone::Stage, slot_idx));
             }
         }
 
@@ -173,7 +178,7 @@ pub fn handle_select_ops(
             is_targeted_select_member_cost,
         );
         let matching_cards = |target_player: usize| -> Vec<i32> {
-            cards_for_source_zone(state, target_player, effective_slot_info.source_zone as u8)
+            cards_for_source_zone(state, target_player, effective_slot_info.source_zone)
                 .iter()
                 .enumerate()
                 .filter_map(|(_slot_idx, &cid)| {
@@ -255,28 +260,7 @@ pub fn handle_select_ops(
                     cards
                 }
             };
-            let looked_cards = if looked_cards.is_empty() && ctx.source_card_id == 579 {
-                state.players[select_member_target_player]
-                    .stage
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(slot_idx, &cid)| {
-                        let effective_hearts = state
-                            .get_effective_hearts(select_member_target_player, slot_idx, db, 0)
-                            .to_array();
-                        if cid >= 0
-                            && db.get_member(cid).map(|m| m.groups.contains(&3)).unwrap_or(false)
-                            && effective_hearts[2] >= 3
-                        {
-                            Some(cid)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<i32>>()
-            } else {
-                looked_cards
-            };
+            let looked_cards = looked_cards;
             if looked_cards.is_empty() {
                 if state.debug.debug_mode {
                     eprintln!(

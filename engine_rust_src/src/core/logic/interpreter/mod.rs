@@ -15,7 +15,7 @@ use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use super::CardDatabase;
-use crate::core::enums::{Phase, TriggerType};
+use crate::core::enums::{ConditionType, Phase, TriggerType};
 use crate::core::logic::constants::*;
 use crate::core::models::{AbilityContext, GameState};
 pub use conditions::{check_condition, check_condition_frame, check_condition_opcode};
@@ -28,6 +28,13 @@ pub use suspension::{
 };
 
 use std::collections::HashSet;
+
+fn should_precheck_ability_condition(cond: &crate::core::logic::Condition) -> bool {
+    !matches!(
+        cond.condition_type,
+        ConditionType::SumValue | ConditionType::DiscardedCards
+    )
+}
 use std::fmt;
 use std::sync::{Mutex, OnceLock};
 
@@ -389,6 +396,9 @@ pub fn resolve_ability(
     if !ability.conditions.is_empty() && ability.has_resolved_frames() {
         let mut all_conditions_pass = true;
         for (i, cond) in ability.conditions.iter().enumerate() {
+            if !should_precheck_ability_condition(cond) {
+                continue;
+            }
             let passed = conditions::check_condition(
                 state, db, ctx_in.player_id as usize, cond, ctx_in, 0
             );
@@ -731,7 +741,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         return;
     }
 
-    while let Some((cid, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
+    while let Some((cid, ability_card_id, ab_idx, ctx, is_live, _trigger)) = state.trigger_queue.pop_front() {
         if !state.ui.silent {
             state.log(format!("Processing queued trigger for card {}.", cid));
         }
@@ -747,10 +757,10 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
         }
 
         let (ability, costs) = if is_live {
-            let ab = &db.get_live(cid).unwrap().abilities[ab_idx as usize];
+            let ab = &db.get_live(ability_card_id).unwrap().abilities[ab_idx as usize];
             (ab, &ab.costs)
         } else {
-            let ab = &db.get_member(cid).unwrap().abilities[ab_idx as usize];
+            let ab = &db.get_member(ability_card_id).unwrap().abilities[ab_idx as usize];
             (ab, &ab.costs)
         };
 

@@ -967,6 +967,10 @@ impl PyGameState {
         self.inner.get_observation(&self.db.inner)
     }
 
+    pub fn to_vanilla_tensor(&self) -> Vec<f32> {
+        use crate::core::alphazero_encoding_vanilla::AlphaZeroVanillaEncoding;
+        self.inner.to_vanilla_tensor(&self.db.inner)
+    }
 }
 
 // Second #[pymethods] block — PyO3 abi3 has a per-block inventory limit
@@ -1928,6 +1932,14 @@ impl PyHybridMCTS {
     }
 }
 
+// AlphaZero Tensor Type Enum
+#[pyclass(eq, eq_int)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum AlphaZeroTensorType {
+    #[default]
+    Vanilla = 0,
+}
+
 // PyAlphaZeroEvaluator wrapper for network-guided MCTS
 #[pyclass]
 pub struct PyAlphaZeroEvaluator {
@@ -1937,7 +1949,7 @@ pub struct PyAlphaZeroEvaluator {
 #[pymethods]
 impl PyAlphaZeroEvaluator {
     #[new]
-    fn new(model: PyObject) -> Self {
+    fn new(model: PyObject, _tensor_type: AlphaZeroTensorType) -> Self {
         #[cfg(feature = "extension-module")]
         {
             let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model);
@@ -1963,6 +1975,7 @@ pub fn register_python_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SearchHorizon>()?;
     m.add_class::<EvalMode>()?;
     m.add_class::<HeuristicConfig>()?;
+    m.add_class::<AlphaZeroTensorType>()?;
     m.add_class::<PyAlphaZeroEvaluator>()?;
     Ok(())
 }

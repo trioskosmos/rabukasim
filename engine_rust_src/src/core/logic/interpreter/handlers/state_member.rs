@@ -5,6 +5,7 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::*;
 use crate::core::enums::*;
 
+use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -174,8 +175,8 @@ pub fn handle_member_state(
             }
 
             // Determine if we need to suspend for user selection
-            let needs_select = is_select_member_choice || ability_filter_attr != 0;
-            let is_valid_target_slot = target_slot == 4;
+            let needs_select = is_select_member_choice || filter_attr != 0;
+            let is_valid_target_slot = target_slot == TARGET_SLOT_STAGE as i32;
             let allow_tap_flag = a & 0x02 == 0; // Bit 2 set means no-tap mode
             let has_selection_flag = a & 0x01 != 0 || a & 0x80 != 0 || is_select_member_choice;
             
@@ -190,7 +191,7 @@ pub fn handle_member_state(
                         O_TAP_MEMBER,
                         0,
                         ChoiceType::TapMSelect,
-                        ability_filter_attr,
+                        filter_attr,
                         v as i16,
                     ),
                     HandlerResult::Suspend

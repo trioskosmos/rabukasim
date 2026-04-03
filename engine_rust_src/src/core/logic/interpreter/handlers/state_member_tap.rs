@@ -134,6 +134,7 @@ pub fn handle_tap_opponent(
     v: i32,
 ) -> HandlerResult {
     let target_p_idx = 1 - (ctx.activator_id as usize);
+    let filter_attr = a as u64;
     let count = if ctx.v_remaining == -1 {
         v as i16
     } else {
@@ -144,15 +145,25 @@ pub fn handle_tap_opponent(
     }
 
     if ctx.choice_index == -1 {
-        let occupied_slots: Vec<usize> = state.players[target_p_idx]
+        let eligible_slots: Vec<usize> = state.players[target_p_idx]
             .stage
             .iter()
             .enumerate()
-            .filter_map(|(idx, &cid)| (cid >= 0).then_some(idx))
+            .filter_map(|(idx, &cid)| {
+                (cid >= 0
+                    && !state.players[target_p_idx].is_tapped(idx)
+                    && (filter_attr == 0
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)))
+                    .then_some(idx)
+            })
             .collect();
 
-        if occupied_slots.len() == 1 {
-            state.set_member_tapped(target_p_idx, occupied_slots[0], true, db);
+        if eligible_slots.is_empty() {
+            return HandlerResult::Continue;
+        }
+
+        if eligible_slots.len() == 1 {
+            state.set_member_tapped(target_p_idx, eligible_slots[0], true, db);
             return HandlerResult::Continue;
         }
 
@@ -177,6 +188,16 @@ pub fn handle_tap_opponent(
     } else {
         let slot_idx = ctx.choice_index as usize;
         if slot_idx < 3 {
+            let cid = state.players[target_p_idx].stage[slot_idx];
+            let is_eligible = cid >= 0
+                && !state.players[target_p_idx].is_tapped(slot_idx)
+                && (filter_attr == 0
+                    || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx));
+            if !is_eligible {
+                ctx.choice_index = -1;
+                return HandlerResult::Continue;
+            }
+
             state.set_member_tapped(target_p_idx, slot_idx, true, db);
             ctx.v_remaining = count - 1;
             ctx.choice_index = -1;
@@ -235,10 +256,17 @@ pub fn handle_tap_member(
     let filter_attr = filter_attr_from_params(frame_data.params)
         .unwrap_or(frame_data.resolved_filter_attr().max(frame_data.filter.to_attr()))
         & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+    let filter_ctx = ctx.clone();
+
+    let slot_matches_filter = |slot: usize| {
+        let cid = state.players[p_idx].stage[slot];
+        cid >= 0
+            && (filter_attr == 0
+                || state.card_matches_filter_with_ctx(db, cid, filter_attr, &filter_ctx))
+    };
     
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {
-        let cid = state.players[p_idx].stage[resolved_slot as usize];
-        cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+        slot_matches_filter(resolved_slot as usize)
     } else {
         false
     };
@@ -311,6 +339,9 @@ pub fn handle_tap_member(
                 return HandlerResult::Continue;
             }
             if resolved_slot >= 0 && resolved_slot < 3 {
+                if !slot_matches_filter(resolved_slot as usize) {
+                    return HandlerResult::SetCond(false);
+                }
                 state.set_member_tapped(p_idx, resolved_slot as usize, true, db);
                 return HandlerResult::SetCond(true);
             }
@@ -321,6 +352,9 @@ pub fn handle_tap_member(
             return HandlerResult::Continue;
         }
         if ctx.choice_index >= 0 && ctx.choice_index < 3 {
+            if !slot_matches_filter(ctx.choice_index as usize) {
+                return HandlerResult::SetCond(false);
+            }
             state.set_member_tapped(p_idx, ctx.choice_index as usize, true, db);
             return HandlerResult::SetCond(true);
         }
@@ -336,6 +370,9 @@ pub fn handle_tap_member(
 
     if is_optional && ctx.v_remaining != -1 && ctx.choice_index >= 0 && ctx.choice_index < 3 {
         let slot = ctx.choice_index as usize;
+        if !slot_matches_filter(slot) {
+            return HandlerResult::SetCond(false);
+        }
         let target_cid = state.players[p_idx].stage[slot];
         ctx.target_slot = slot as i16;
         ctx.target_card_id = target_cid;
@@ -353,6 +390,9 @@ pub fn handle_tap_member(
 
     if ctx.choice_index >= 0 && ctx.choice_index < 3 {
         let slot = ctx.choice_index as usize;
+        if !slot_matches_filter(slot) {
+            return HandlerResult::Continue;
+        }
         let target_cid = state.players[p_idx].stage[slot];
         ctx.target_slot = slot as i16;
         ctx.target_card_id = target_cid;

@@ -18,7 +18,18 @@ pub fn decode_optional_mode_mask(value: i16) -> Option<i16> {
 }
 
 fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
-    [pi.card_id, pi.ctx.source_card_id]
+    [
+        if pi.ability_card_id >= 0 {
+            pi.ability_card_id
+        } else {
+            pi.card_id
+        },
+        if pi.ctx.ability_card_id >= 0 {
+            pi.ctx.ability_card_id
+        } else {
+            pi.ctx.source_card_id
+        },
+    ]
 }
 
 fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {

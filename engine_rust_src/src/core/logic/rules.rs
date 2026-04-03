@@ -348,13 +348,12 @@ fn apply_reduce_cost_modifiers(
                             semantic.raw_attr,
                             ctx,
                         );
-                    if source_is_counted
+                    let should_exclude_source = source_is_counted
                         && source_matches_filter
-                        && (semantic.filter.special_id == 3
-                            || semantic.slot.source_zone != Zone::Default
+                        && (semantic.slot.source_zone != Zone::Default
                             || semantic.compare_accumulated()
-                            || per_card.is_some())
-                    {
+                            || per_card.is_some());
+                    if should_exclude_source {
                         multiplier -= 1;
                     }
                 }
@@ -603,10 +602,8 @@ pub fn get_member_cost(
 
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
-    let mut applied_self_constant_reduction = false;
     if !cost_state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
         if let Some(target_m) = db.get_member(card_id) {
-            let self_constant_cost_before = cost;
             let ctx = AbilityContext {
                 source_card_id: card_id,
                 player_id: p_idx as u8,
@@ -644,7 +641,6 @@ pub fn get_member_cost(
                     }
                 }
             }
-            applied_self_constant_reduction = cost < self_constant_cost_before;
         }
     }
 
@@ -695,7 +691,7 @@ pub fn get_member_cost(
         }
 
         let old_cid = state.players[p_idx].stage[slot_idx as usize];
-        if old_cid >= 0 && !applied_self_constant_reduction {
+        if old_cid >= 0 && old_cid != card_id {
             if let Some(old_m) = db.get_member(old_cid) {
                 cost -= old_m.cost as i32;
             }

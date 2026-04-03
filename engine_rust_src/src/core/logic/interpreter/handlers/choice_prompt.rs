@@ -1,6 +1,7 @@
 use super::HandlerResult;
 use crate::core::*;
 use crate::core::enums::*;
+use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::get_choice_text;
@@ -38,7 +39,7 @@ pub fn handle_optional_nop(
     }
 
     let choice_type = if is_interactive_frame(frame_data) {
-        if frame_data.slot.target_slot == 4 {
+        if frame_data.slot.target_slot == TARGET_SLOT_STAGE {
             ChoiceType::SelectStage
         } else if frame_data.opcode == O_SELECT_CARDS {
             ChoiceType::SelectCards
@@ -62,7 +63,7 @@ pub fn handle_optional_nop(
         ctx,
         frame_idx,
         frame_data.opcode,
-        frame_data.slot.to_raw(),
+        frame_data.raw_slot,
         choice_type,
         frame_data.resolved_filter_attr(),
         frame_data.value as i16,

@@ -170,7 +170,7 @@ pub struct CoreGameState {
     #[serde(default)]
     pub performance_yell_done: [bool; 2],
     #[serde(default)]
-    pub trigger_queue: VecDeque<(i32, u16, AbilityContext, bool, TriggerType)>,
+    pub trigger_queue: VecDeque<(i32, i32, u16, AbilityContext, bool, TriggerType)>,
     #[serde(skip, default = "SmallRng::from_os_rng")]
     pub rng: SmallRng,
     #[serde(default)]
