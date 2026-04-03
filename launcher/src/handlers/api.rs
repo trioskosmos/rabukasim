@@ -6,8 +6,6 @@ use std::thread;
 use std::collections::{HashMap, VecDeque};
 use uuid::Uuid;
 use engine_rust::core::logic::{GameState, StandardizedState};
-#[cfg(feature = "nn")]
-use engine_rust::core::alphazero_encoding::AlphaZeroEncoding;
 use engine_rust::core::logic::Phase;
 use engine_rust::core::mcts::{MCTS, SearchHorizon};
 
@@ -973,13 +971,8 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
 
                     let history_vec: Vec<GameState> = room.history_timeline.iter().cloned().collect();
 
-                    let std_state = StandardizedState::new(
-                        room.state.clone(),
-                        &state.card_db,
-                        room_info,
-                        true,
-                        Some(history_vec),
-                    );
+                    let std_state =
+                        StandardizedState::new(room.state.clone(), room_info, Some(history_vec));
 
                     match serde_json::to_string(&std_state) {
                         Ok(json) => {
@@ -1089,100 +1082,6 @@ pub fn handle_api_request(mut request: Request, path: &str, query: Option<&str>,
                 }
                 response_json = json!({"success": true}).to_string();
             } else { status = 400; }
-        },
-        "api/v1/analyze_model" => {
-            #[cfg(feature = "nn")]
-            {
-                if let Some(session_arc) = &state.model_session {
-                    match parse_body::<GameState>(&mut request) {
-                        Ok(new_state) => {
-                            let input_vec = new_state.to_alphazero_tensor(&state.card_db);
-                            let legal_mask = new_state.get_legal_actions(&state.card_db);
-                            let mut action_ids = Vec::new();
-                            let mut nn_mask = vec![0.0f32; 22000];
-
-                            for (id, &is_legal) in legal_mask.iter().enumerate() {
-                                if is_legal {
-                                    action_ids.push(id as i32);
-                                    if id < 22000 {
-                                        nn_mask[id] = 1.0;
-                                    }
-                                }
-                            }
-
-                            let input_shape = [1, 20500];
-                            let mask_shape = [1, 22000];
-
-                            let mut session = lock_recover(session_arc.as_ref(), "session");
-                            let input_tensor = ort::value::Value::from_array((input_shape, input_vec)).unwrap();
-                            let mask_tensor = ort::value::Value::from_array((mask_shape, nn_mask)).unwrap();
-
-                            let run_result = session.run(ort::inputs![input_tensor, mask_tensor]);
-                            if let Ok(outputs) = run_result {
-                                let policy_val = outputs.get("policy").expect("Missing policy output");
-                                let value_val = outputs.get("value").expect("Missing value output");
-
-                                if let (Ok((_, p_slice)), Ok((_, v_slice))) = (
-                                    policy_val.try_extract_tensor::<f32>(),
-                                    value_val.try_extract_tensor::<f32>()
-                                ) {
-                                    let win_prob = v_slice[0];
-                                    let momentum = v_slice[1];
-                                    let efficiency = v_slice[2];
-
-                                    let mut action_results = Vec::new();
-                                    for &id in &action_ids {
-                                        if (id as usize) < 22000 {
-                                            let logit = p_slice[id as usize];
-                                            let (desc, _, _, _, meta) = get_action_desc_rich(
-                                                id,
-                                                &new_state,
-                                                &state.card_db,
-                                                new_state.current_player as usize,
-                                                "en"
-                                            );
-                                            let action_kind = meta
-                                                .get("action_kind")
-                                                .cloned()
-                                                .unwrap_or_else(|| json!("Unknown"));
-                                            action_results.push(json!({
-                                                "id": id,
-                                                "kind": action_kind,
-                                                "desc": desc,
-                                                "logit": logit
-                                            }));
-                                        }
-                                    }
-
-                                    action_results.sort_by(|a, b| b["logit"].as_f64().unwrap().partial_cmp(&a["logit"].as_f64().unwrap()).unwrap());
-
-                                    response_json = json!({
-                                        "success": true,
-                                        "value": {
-                                            "win_prob": win_prob,
-                                            "momentum": momentum,
-                                            "efficiency": efficiency
-                                        },
-                                        "actions": action_results
-                                    }).to_string();
-                                }
-                            }
-                        },
-                        Err(e) => {
-                            status = 400;
-                            response_json = json!({"success": false, "error": e}).to_string();
-                        }
-                    }
-                } else {
-                    status = 501;
-                    response_json = json!({"error": "Model not loaded"}).to_string();
-                }
-            }
-            #[cfg(not(feature = "nn"))]
-            {
-                status = 501;
-                response_json = json!({"error": "NN feature not enabled"}).to_string();
-            }
         },
         "api/ai_suggest" => {
             let room_id = get_header(&request, "X-Room-Id");

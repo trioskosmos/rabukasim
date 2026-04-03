@@ -88,8 +88,6 @@ mod untested_opcode_tests;
 mod new_opcode_tests;
 
 #[cfg(test)]
-mod alphazero_verification_tests;
-#[cfg(test)]
 mod debug_q203;
 #[cfg(test)]
 mod vanilla_encoding_tests;

@@ -25,13 +25,6 @@ pub trait AlphaZeroEvaluator: Send + Sync {
     fn evaluate_batch(&self, states: &[GameState], db: &CardDatabase) -> Vec<AlphaZeroOutput>;
 }
 
-#[cfg(feature = "extension-module")]
-#[derive(Debug, Clone, Copy)]
-pub enum PythonTensorEncoding {
-    Vanilla,
-    Original,
-}
-
 /// Baseline evaluator that uses the default heuristic.
 /// Useful for bootstrapping or when NN is not available.
 pub struct HeuristicBaselineEvaluator;
@@ -68,24 +61,17 @@ impl AlphaZeroEvaluator for HeuristicBaselineEvaluator {
 }
 
 #[cfg(feature = "extension-module")]
-use crate::core::alphazero_encoding::AlphaZeroEncoding;
-
-#[cfg(feature = "extension-module")]
 use pyo3::prelude::*;
 
 #[cfg(feature = "extension-module")]
 pub struct PyAlphaZeroEvaluator {
     model: PyObject, // A Python object with a `.predict_batch(tensors)` method
-    tensor_encoding: PythonTensorEncoding,
 }
 
 #[cfg(feature = "extension-module")]
 impl PyAlphaZeroEvaluator {
-    pub fn new(model: PyObject, tensor_encoding: PythonTensorEncoding) -> Self {
-        Self {
-            model,
-            tensor_encoding,
-        }
+    pub fn new(model: PyObject) -> Self {
+        Self { model }
     }
 }
 
@@ -209,10 +195,7 @@ impl AlphaZeroEvaluator for PyAlphaZeroEvaluator {
             // 1. Encode all states to tensors
             let tensors: Vec<Vec<f32>> = states
                 .iter()
-                .map(|state: &GameState| match self.tensor_encoding {
-                    PythonTensorEncoding::Vanilla => state.to_vanilla_tensor(db),
-                    PythonTensorEncoding::Original => state.to_alphazero_tensor(db),
-                })
+                .map(|state: &GameState| state.to_vanilla_tensor(db))
                 .collect();
 
             // 2. Wrap in NumPy arrays (or just list of lists) and call Python
@@ -235,12 +218,8 @@ impl AlphaZeroEvaluator for PyAlphaZeroEvaluator {
                 .enumerate()
                 .map(|(i, v)| {
                     let legal_actions = states[i].get_legal_action_ids(db);
-                    let policy = match self.tensor_encoding {
-                        PythonTensorEncoding::Vanilla => {
-                            expand_vanilla_policy_to_engine_space(&policies[i], &legal_actions)
-                        }
-                        PythonTensorEncoding::Original => policies[i].clone(),
-                    };
+                    let policy =
+                        expand_vanilla_policy_to_engine_space(&policies[i], &legal_actions);
 
                     // Map weights back to HeuristicConfig if applicable
                     // (This assumes the Transformer outputs exactly the fields in HeuristicConfig order)

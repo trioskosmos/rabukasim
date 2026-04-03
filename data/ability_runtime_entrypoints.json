@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_unix_seconds": 1775197754,
+    "generated_unix_seconds": 1775198785,
     "hydration_boundary": "CardDatabase::attach_sparse_ability_index()",
     "extraction_entrypoint": "Ability::resolved_frames() + Ability::trace_view()",
     "compiled_cards_source": "data/cards_compiled.json"

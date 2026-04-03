@@ -1,4 +1,3 @@
-use crate::core::alphazero_encoding::AlphaZeroEncoding;
 use crate::core::alphazero_evaluator::AlphaZeroEvaluator;
 use crate::core::heuristics::{EvalMode, HeuristicConfig, LegacyHeuristic, OriginalHeuristic};
 use crate::core::logic::constants::STAGE_SLOT_COUNT;
@@ -651,7 +650,7 @@ impl PyGameState {
         &self,
         room_id: String,
         mode: String,
-        include_tensor: bool,
+        _include_tensor: bool,
         history: Option<Vec<PyRef<PyGameState>>>,
     ) -> PyResult<String> {
         let mut room_info = std::collections::HashMap::new();
@@ -660,13 +659,7 @@ impl PyGameState {
 
         let rs_history = history.map(|h| h.into_iter().map(|gh| gh.inner.clone()).collect());
 
-        let std = StandardizedState::new(
-            self.inner.clone(),
-            &self.db.inner,
-            room_info,
-            include_tensor,
-            rs_history,
-        );
+        let std = StandardizedState::new(self.inner.clone(), room_info, rs_history);
 
         serde_json::to_string(&std).map_err(|e| {
             pyo3::exceptions::PyValueError::new_err(format!("Serialization error: {}", e))
@@ -972,10 +965,6 @@ impl PyGameState {
 
     fn get_observation(&self) -> Vec<f32> {
         self.inner.get_observation(&self.db.inner)
-    }
-
-    pub fn to_alphazero_tensor(&self) -> Vec<f32> {
-        self.inner.to_alphazero_tensor(&self.db.inner)
     }
 
     pub fn to_vanilla_tensor(&self) -> Vec<f32> {
@@ -1949,7 +1938,6 @@ impl PyHybridMCTS {
 pub enum AlphaZeroTensorType {
     #[default]
     Vanilla = 0,
-    Original = 1,
 }
 
 // PyAlphaZeroEvaluator wrapper for network-guided MCTS
@@ -1961,19 +1949,10 @@ pub struct PyAlphaZeroEvaluator {
 #[pymethods]
 impl PyAlphaZeroEvaluator {
     #[new]
-    fn new(model: PyObject, tensor_type: AlphaZeroTensorType) -> Self {
+    fn new(model: PyObject, _tensor_type: AlphaZeroTensorType) -> Self {
         #[cfg(feature = "extension-module")]
         {
-            let tensor_encoding = match tensor_type {
-                AlphaZeroTensorType::Vanilla => {
-                    crate::core::alphazero_evaluator::PythonTensorEncoding::Vanilla
-                }
-                AlphaZeroTensorType::Original => {
-                    crate::core::alphazero_evaluator::PythonTensorEncoding::Original
-                }
-            };
-            let evaluator_impl =
-                crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model, tensor_encoding);
+            let evaluator_impl = crate::core::alphazero_evaluator::PyAlphaZeroEvaluator::new(model);
             Self {
                 evaluator: Arc::new(Box::new(evaluator_impl)),
             }
