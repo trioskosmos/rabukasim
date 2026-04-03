@@ -1,7 +1,7 @@
 use crate::core::enums::ChoiceType;
 use crate::core::*;
 use crate::core::enums::*;
-use crate::core::logic::filter::CardFilter;
+use crate::core::logic::filter::{structured_filter_from_attr, CardFilter};
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, PendingInteraction};
@@ -217,7 +217,7 @@ pub fn describe_frame_words(op: i32, v: i32, a: i64, s: i32) -> String {
     }
 
     let a_desc = if a != 0 && op != O_NOP as i32 && op != O_RETURN as i32 {
-        let attr_desc = describe_filter_attr(CardFilter::from_attr(a as u64));
+        let attr_desc = describe_filter_bits(a as u64);
         if attr_desc == "-" {
             "-".to_string()
         } else {
@@ -299,6 +299,152 @@ fn join_parts(parts: Vec<String>) -> String {
     }
 }
 
+fn describe_target_player(target_player: u8) -> Option<&'static str> {
+    match target_player {
+        1 => Some("self"),
+        2 => Some("opponent"),
+        3 => Some("both"),
+        _ => None,
+    }
+}
+
+fn describe_card_type(card_type: u8) -> Option<&'static str> {
+    match card_type {
+        1 => Some("member"),
+        2 => Some("live"),
+        _ => None,
+    }
+}
+
+fn describe_zone_mask(zone_mask: u8) -> String {
+    match zone_mask as i32 {
+        ZONE_MASK_STAGE => "stage".to_string(),
+        ZONE_MASK_HAND => "hand".to_string(),
+        ZONE_MASK_DISCARD => "discard".to_string(),
+        _ => format!("mask:{}", zone_mask),
+    }
+}
+
+fn describe_color_mask(color_mask: u8) -> String {
+    let color_names = ["pink", "red", "yellow", "green", "blue", "purple", "any"];
+    let colors: Vec<&str> = color_names
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, name)| ((color_mask & (1 << idx)) != 0).then_some(*name))
+        .collect();
+
+    if colors.is_empty() {
+        format!("mask:{}", color_mask)
+    } else {
+        colors.join("|")
+    }
+}
+
+fn describe_filter_passthrough_flags(attr: u64) -> Vec<String> {
+    let mut parts = Vec::new();
+
+    if (attr & FILTER_ANY_STAGE) != 0 {
+        parts.push("scope=any_stage".to_string());
+    }
+    if (attr & FILTER_REVEALED_CONTEXT) != 0 {
+        parts.push("source=revealed".to_string());
+    }
+    if (attr & KEYWORD_PLAYED_THIS_TURN) != 0 {
+        parts.push("keyword=played_this_turn".to_string());
+    }
+    if (attr & KEYWORD_YELL_COUNT) != 0 {
+        parts.push("keyword=yell_count".to_string());
+    }
+    if (attr & KEYWORD_HAS_LIVE_SET) != 0 {
+        parts.push("keyword=has_live_set".to_string());
+    }
+    if (attr & FILTER_TOTAL_COST) != 0 {
+        parts.push("value=total_cost".to_string());
+    }
+
+    parts
+}
+
+fn describe_filter_attr_with_bits(filter: CardFilter, attr: u64) -> String {
+    let mut parts = Vec::new();
+
+    if let Some(target) = describe_target_player(filter.target_player) {
+        parts.push(format!("target={}", target));
+    }
+    if let Some(card_type) = describe_card_type(filter.card_type) {
+        parts.push(format!("type={}", card_type));
+    }
+    if filter.group_enabled {
+        parts.push(format!(
+            "group={}({})",
+            filter.group_id,
+            get_group_name(filter.group_id, "en")
+        ));
+    }
+    if filter.unit_enabled {
+        parts.push(format!(
+            "unit={}({})",
+            filter.unit_id,
+            get_unit_name(filter.unit_id, "en")
+        ));
+    }
+    if filter.char_id_1 != 0 {
+        parts.push(format!("char_1={}", filter.char_id_1));
+    }
+    if filter.char_id_2 != 0 {
+        parts.push(format!("char_2={}", filter.char_id_2));
+    }
+    if filter.char_id_3 != 0 {
+        parts.push(format!("char_3={}", filter.char_id_3));
+    }
+    if filter.zone_mask != 0 {
+        parts.push(format!("zone={}", describe_zone_mask(filter.zone_mask)));
+    }
+    if filter.color_mask != 0 {
+        parts.push(format!("color={}", describe_color_mask(filter.color_mask)));
+    }
+    if filter.is_tapped {
+        parts.push("tapped".to_string());
+    }
+    if filter.has_blade_heart {
+        parts.push("has_blade".to_string());
+    }
+    if filter.not_has_blade_heart {
+        parts.push("no_blade".to_string());
+    }
+    if filter.unique_names {
+        parts.push("unique_names".to_string());
+    }
+    if filter.value_enabled {
+        parts.push(format!(
+            "value{}{}",
+            if filter.is_le { "<=" } else { ">=" },
+            filter.value_threshold
+        ));
+    }
+    if filter.special_id != 0 {
+        parts.push(format!("special={}", filter.special_id));
+    }
+    if filter.is_setsuna {
+        parts.push("setsuna".to_string());
+    }
+    if filter.compare_accumulated {
+        parts.push("compare_accumulated".to_string());
+    }
+    if filter.is_optional {
+        parts.push("optional".to_string());
+    }
+    if filter.keyword_energy {
+        parts.push("keyword=activated_energy".to_string());
+    }
+    if filter.keyword_member {
+        parts.push("keyword=activated_member".to_string());
+    }
+
+    parts.extend(describe_filter_passthrough_flags(attr));
+    join_parts(parts)
+}
+
 fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
     let card_texts = db
         .get_member(card_id)
@@ -341,86 +487,11 @@ fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
 }
 
 pub fn describe_filter_attr(filter: CardFilter) -> String {
-    let mut parts = Vec::new();
-
-    if filter.target_player != 0 {
-        parts.push(format!("target_player={}", filter.target_player));
-    }
-    if filter.card_type != 0 {
-        parts.push(format!("card_type={}", filter.card_type));
-    }
-    if filter.group_enabled {
-        parts.push(format!(
-            "group={}({})",
-            filter.group_id,
-            get_group_name(filter.group_id, "en")
-        ));
-    }
-    if filter.unit_enabled {
-        parts.push(format!(
-            "unit={}({})",
-            filter.unit_id,
-            get_unit_name(filter.unit_id, "en")
-        ));
-    }
-    if filter.char_id_1 != 0 {
-        parts.push(format!("char_1={}", filter.char_id_1));
-    }
-    if filter.char_id_2 != 0 {
-        parts.push(format!("char_2={}", filter.char_id_2));
-    }
-    if filter.char_id_3 != 0 {
-        parts.push(format!("char_3={}", filter.char_id_3));
-    }
-    if filter.zone_mask != 0 {
-        parts.push(format!("zone=0x{:X}", filter.zone_mask));
-    }
-    if filter.color_mask != 0 {
-        parts.push(format!("color=0x{:X}", filter.color_mask));
-    }
-    if filter.is_tapped {
-        parts.push("tapped".to_string());
-    }
-    if filter.has_blade_heart {
-        parts.push("has_blade".to_string());
-    }
-    if filter.not_has_blade_heart {
-        parts.push("no_blade".to_string());
-    }
-    if filter.unique_names {
-        parts.push("unique_names".to_string());
-    }
-    if filter.value_enabled {
-        parts.push(format!(
-            "value{}{}",
-            if filter.is_le { "<=" } else { ">=" },
-            filter.value_threshold
-        ));
-    }
-    if filter.special_id != 0 {
-        parts.push(format!("special={}", filter.special_id));
-    }
-    if filter.is_setsuna {
-        parts.push("setsuna".to_string());
-    }
-    if filter.compare_accumulated {
-        parts.push("compare_accumulated".to_string());
-    }
-    if filter.is_optional {
-        parts.push("optional".to_string());
-    }
-    if filter.keyword_energy {
-        parts.push("keyword_energy".to_string());
-    }
-    if filter.keyword_member {
-        parts.push("keyword_member".to_string());
-    }
-
-    join_parts(parts)
+    describe_filter_attr_with_bits(filter, filter.to_attr())
 }
 
 pub fn describe_filter_bits(attr: u64) -> String {
-    describe_filter_attr(CardFilter::from_attr(attr as u64))
+    describe_filter_attr_with_bits(structured_filter_from_attr(attr), attr)
 }
 
 pub fn describe_slot(slot: DecodedSlot) -> String {
@@ -503,7 +574,7 @@ pub fn describe_frame_semantics(
         "card={} trace={} filter=[{}] slot=[{}] params=[{}] {} {}",
         card_name,
         trace_json,
-        describe_filter_attr(frame.filter),
+        describe_filter_bits(frame.resolved_filter_attr()),
         describe_slot(frame.slot),
         describe_params(frame.params),
         describe_card_texts(db, ctx.source_card_id),
@@ -582,5 +653,56 @@ pub fn describe_condition(op: i32, val: i32, _attr: u64) -> String {
         314 => "Ability resolved on member".to_string(),
         315 => "Member has no hearts".to_string(),
         _ => format!("Condition {} (val={})", op, val),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn describe_filter_bits_uses_semantic_labels_and_passthrough_flags() {
+        let attr = CardFilter {
+            is_enabled: true,
+            target_player: TARGET_PLAYER_SELF as u8,
+            card_type: 1,
+            zone_mask: ZONE_MASK_DISCARD as u8,
+            color_mask: (1 << HEART_COLOR_RED) | (1 << HEART_COLOR_BLUE),
+            keyword_energy: true,
+            ..CardFilter::default()
+        }
+        .to_attr()
+            | FILTER_ANY_STAGE
+            | FILTER_REVEALED_CONTEXT
+            | KEYWORD_PLAYED_THIS_TURN;
+
+        let desc = describe_filter_bits(attr);
+
+        assert!(desc.contains("target=self"));
+        assert!(desc.contains("type=member"));
+        assert!(desc.contains("zone=discard"));
+        assert!(desc.contains("color=red|blue"));
+        assert!(desc.contains("keyword=activated_energy"));
+        assert!(desc.contains("scope=any_stage"));
+        assert!(desc.contains("source=revealed"));
+        assert!(desc.contains("keyword=played_this_turn"));
+    }
+
+    #[test]
+    fn describe_frame_words_preserves_passthrough_filter_semantics() {
+        let attr = CardFilter {
+            is_enabled: true,
+            target_player: TARGET_PLAYER_BOTH as u8,
+            card_type: 2,
+            ..CardFilter::default()
+        }
+        .to_attr()
+            | FILTER_ANY_STAGE;
+
+        let desc = describe_frame_words(O_DRAW, 1, attr as i64, 0);
+
+        assert!(desc.contains("target=both"));
+        assert!(desc.contains("type=live"));
+        assert!(desc.contains("scope=any_stage"));
     }
 }

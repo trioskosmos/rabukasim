@@ -2,8 +2,7 @@ use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
 use super::opcodes::check_condition_opcode;
 use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
-use crate::core::generated_constants::FILTER_MASK_LOWER;
-use crate::core::logic::filter::merge_filter_attr_with_params;
+use crate::core::logic::filter::{has_structured_filter_constraints, merge_filter_attr_with_params};
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
@@ -161,7 +160,7 @@ pub fn evaluate_raw_condition(
         }
         "COUNT_MEMBER" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
-            let matcher_attr = filter_attr & FILTER_MASK_LOWER;
+            let has_filter_constraints = has_structured_filter_constraints(filter_attr);
             let target_player = resolved_condition_player(params, ctx);
 
             let count = state.players[target_player]
@@ -170,8 +169,8 @@ pub fn evaluate_raw_condition(
                 .copied()
                 .filter(|&cid| cid >= 0)
                 .filter(|&cid| {
-                    matcher_attr == 0
-                        || state.card_matches_filter_with_ctx(db, cid, matcher_attr, ctx)
+                    !has_filter_constraints
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
                 })
                 .count() as i32;
 
@@ -217,7 +216,7 @@ pub fn evaluate_raw_condition(
         }
         "ALL_MEMBERS" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
-            let matcher_attr = filter_attr & FILTER_MASK_LOWER;
+            let has_filter_constraints = has_structured_filter_constraints(filter_attr);
             let target_player = resolved_condition_player(params, ctx);
 
             let stage = &state.players[target_player].stage;
@@ -227,8 +226,8 @@ pub fn evaluate_raw_condition(
                 .copied()
                 .filter(|&cid| cid >= 0)
                 .filter(|&cid| {
-                    matcher_attr == 0
-                        || state.card_matches_filter_with_ctx(db, cid, matcher_attr, ctx)
+                    !has_filter_constraints
+                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
                 })
                 .count() as i32;
 

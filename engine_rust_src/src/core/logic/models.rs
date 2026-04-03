@@ -318,14 +318,26 @@ impl<'a> AbilityFrameComponents<'a> {
         self.resolved_filter_attr() & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
     }
 
+    pub fn has_structured_filter_constraints(&self) -> bool {
+        crate::core::logic::filter::has_structured_filter_constraints(self.resolved_filter_attr())
+    }
+
+    pub fn legacy_group_id_hint(&self) -> Option<u8> {
+        let lower_attr = self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER;
+        if (lower_attr & FILTER_GROUP_ENABLE) == 0 && lower_attr != 0 && lower_attr < 300 {
+            Some((lower_attr & A_STANDARD_GROUP_ID_MASK) as u8)
+        } else {
+            None
+        }
+    }
+
     pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
-        let lower_attr = self.raw_attr & 0x00000000FFFF_FFFF;
-        if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
-            Some((lower_attr & 0x7F) as u8)
+        if let Some(group_id) = self.legacy_group_id_hint() {
+            Some(group_id)
         } else if self.filter.group_enabled || self.filter.group_id > 0 {
             Some(self.filter.group_id)
         } else if fallback_value > 0 {
-            Some((fallback_value & 0x7F) as u8)
+            Some((fallback_value as u64 & A_STANDARD_GROUP_ID_MASK) as u8)
         } else {
             None
         }
@@ -347,6 +359,26 @@ impl<'a> AbilityFrameComponents<'a> {
 
     pub fn count_filter_attr(&self) -> u64 {
         self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER
+    }
+
+    pub fn count_filter(&self) -> CardFilter {
+        crate::core::logic::filter::structured_filter_from_attr(self.count_filter_attr())
+    }
+
+    pub fn has_count_filter_constraints(&self) -> bool {
+        crate::core::logic::filter::has_structured_filter_constraints(self.count_filter_attr())
+    }
+
+    pub fn dynamic_count_filter_attr(&self) -> u64 {
+        self.count_filter_attr()
+    }
+
+    pub fn restriction_id(&self) -> u8 {
+        self.count_filter_attr() as u8
+    }
+
+    pub fn negate_count_limit(&self) -> i32 {
+        self.resolved_filter_value(1).max(1)
     }
 
     pub fn resolved_filter_value(&self, fallback_value: i32) -> i32 {
@@ -507,7 +539,7 @@ impl<'a> AbilityFrameComponents<'a> {
         if self.filter.color_mask != 0 {
             self.filter.color_mask.trailing_zeros() as usize
         } else {
-            (self.count_filter_attr() & 0x7F) as usize
+            (self.count_filter_attr() & A_STANDARD_COLOR_MASK_MASK) as usize
         }
     }
 
@@ -528,7 +560,7 @@ impl<'a> AbilityFrameComponents<'a> {
 
         let color_mask = self.filter.color_mask as usize;
         if color_mask != 0 {
-            if color_mask == 0x7F {
+            if color_mask == A_STANDARD_COLOR_MASK_MASK as usize {
                 return selected_color;
             }
             return color_mask.trailing_zeros() as usize;
@@ -542,8 +574,9 @@ impl<'a> AbilityFrameComponents<'a> {
 
     pub fn normalized_baton_filter_attr(&self) -> u64 {
         let attr = self.raw_attr;
-        if (attr & 0xFFFFFFFF00000000) == 0 && (attr & 0x1F) == 0 && attr != 0 && attr < 300 {
-            0x10 | (attr << 5)
+        let lower_attr = attr & crate::core::logic::constants::FILTER_MASK_LOWER;
+        if (attr >> 32) == 0 && (lower_attr & ((1 << FILTER_GROUP_ID_SHIFT) - 1)) == 0 && attr != 0 && attr < 300 {
+            FILTER_GROUP_ENABLE | (attr << FILTER_GROUP_ID_SHIFT)
         } else {
             attr
         }
@@ -594,7 +627,10 @@ impl<'a> AbilityFrameComponents<'a> {
         if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
             && filter_attr != 0
         {
-            (filter_attr & !0x3) | TARGET_PLAYER_SELF as u64
+            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
+            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+            filter.target_player = TARGET_PLAYER_SELF as u8;
+            filter.to_attr() | passthrough
         } else {
             filter_attr
         }
@@ -2269,6 +2305,25 @@ impl Default for PendingInteraction {
 }
 
 impl PendingInteraction {
+    pub fn filter_attr_without_state_flags(&self) -> u64 {
+        self.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
+    }
+
+    pub fn has_structured_filter_constraints(&self) -> bool {
+        crate::core::logic::filter::has_structured_filter_constraints(self.filter_attr)
+    }
+
+    pub fn selection_target_zone(&self) -> Option<usize> {
+        let filter = crate::core::logic::filter::structured_filter_from_attr(self.filter_attr);
+        if filter.zone_mask != 0 {
+            Some(filter.zone_mask as usize)
+        } else {
+            let packed_zone =
+                ((self.filter_attr & crate::core::logic::constants::FILTER_MASK_LOWER) >> 12) & 0x0F;
+            (packed_zone > 0).then_some(packed_zone as usize)
+        }
+    }
+
     pub fn uses_total_cost_budget(&self) -> bool {
         let filter = CardFilter::from_attr(self.filter_attr as u64);
         filter.compare_accumulated
@@ -2820,6 +2875,45 @@ mod tests {
         };
 
         assert!(pending.uses_total_cost_budget());
+    }
+
+    #[test]
+    fn targeted_select_member_filter_attr_preserves_passthrough_flags() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_MEMBER",
+            "value": 1,
+            "attr": {
+                "card_type": "MEMBER",
+                "target_player": "OPPONENT"
+            },
+            "slot": {
+                "target_slot": 4
+            },
+            "params": {
+                "area": "ANY_STAGE"
+            }
+        }));
+
+        let target_attr = frame.components().targeted_select_member_filter_attr();
+        let target_filter = CardFilter::from_attr(target_attr);
+
+        assert_eq!(target_filter.target_player, TARGET_PLAYER_SELF as u8);
+        assert_ne!(target_attr & FILTER_ANY_STAGE, 0);
+    }
+
+    #[test]
+    fn pending_interaction_selection_target_zone_prefers_semantic_zone_mask() {
+        let pending = PendingInteraction {
+            filter_attr: CardFilter {
+                is_enabled: true,
+                zone_mask: ZONE_MASK_DISCARD as u8,
+                ..Default::default()
+            }
+            .to_attr(),
+            ..Default::default()
+        };
+
+        assert_eq!(pending.selection_target_zone(), Some(Zone::Discard as usize));
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

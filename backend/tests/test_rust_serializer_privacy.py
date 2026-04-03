@@ -7,6 +7,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from backend.rust_serializer import RustGameStateSerializer
+from engine.game.enums import Phase
 
 
 def make_player(player_id):
@@ -37,13 +38,22 @@ def make_player(player_id):
 def make_state():
     return SimpleNamespace(
         current_player=0,
+        phase=Phase.RESPONSE,
         turn=1,
         db=SimpleNamespace(is_vanilla=False),
         get_legal_actions=lambda: [],
         get_effective_blades=lambda *_: 0,
         get_effective_hearts=lambda *_: [0, 0, 0, 0, 0, 0, 0],
+        get_total_member_hearts=lambda *_: [0, 0, 0, 0, 0, 0, 0],
         get_total_hearts=lambda *_: [0, 0, 0, 0, 0, 0, 0],
         get_total_blades=lambda *_: 0,
+        pending_choice_text="",
+        pending_card_id=-1,
+        pending_choices=[],
+        rule_log=[],
+        last_performance_results="{}",
+        is_terminal=lambda: False,
+        get_winner=lambda: -1,
     )
 
 
@@ -64,3 +74,56 @@ def test_serialize_player_hides_private_deck_lists_from_opponent_view():
     assert hidden["energy_deck"] == []
     assert hidden["deck_count"] == 2
     assert hidden["energy_deck_count"] == 1
+
+
+def test_normalize_pending_choice_preserves_sparse_selection_indices():
+    serializer = RustGameStateSerializer({}, {}, {})
+    state = make_state()
+    state.players = [make_player(0), make_player(1)]
+    state.get_player = lambda idx: state.players[idx]
+    state.players[0].looked_cards = [-1, 202, -1, 404]
+
+    pending_choice = serializer._normalize_pending_choice(
+        state,
+        "select_from_list",
+        {
+            "choice_type": "LOOK_AND_CHOOSE",
+            "source_card_id": 7,
+            "source_player": 0,
+        },
+        lang="en",
+    )
+
+    assert [card["selection_idx"] for card in pending_choice["selection_cards"]] == [1, 3]
+    assert [card["id"] for card in pending_choice["selection_cards"]] == [202, 404]
+
+
+def test_serialize_state_maps_sparse_choice_action_to_original_selection_index():
+    serializer = RustGameStateSerializer({}, {}, {})
+    state = make_state()
+    state.players = [make_player(0), make_player(1)]
+    state.get_player = lambda idx: state.players[idx]
+    state.pending_card_id = 7
+    state.players[0].looked_cards = [-1, -1, 303]
+
+    legal_mask = [False] * 11003
+    legal_mask[11002] = True
+    state.get_legal_actions = lambda: legal_mask
+    state.pending_choices = [(
+        "select_from_list",
+        {
+            "choice_type": "LOOK_AND_CHOOSE",
+            "source_card_id": 7,
+            "source_player": 0,
+            "target_player": 0,
+            "cards": [-1, -1, 303],
+        },
+    )]
+
+    serialized = serializer.serialize_state(state, viewer_idx=0, lang="en")
+
+    assert serialized["pending_choice"]["selection_cards"][0]["selection_idx"] == 2
+    action = serialized["legal_actions"][0]
+    assert action["selection_index"] == 2
+    assert action["target_index"] == 2
+    assert action["card_id"] == 303

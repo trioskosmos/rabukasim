@@ -4,7 +4,7 @@ use crate::core::logic::ability_patterns::{
     pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus,
 };
 use crate::core::logic::action_gen::ActionGenerator;
-use crate::core::logic::filter::filter_attr_from_params;
+use crate::core::logic::filter::{filter_attr_from_params, structured_filter_from_attr};
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
@@ -155,7 +155,7 @@ impl ResponseGenerator {
         let decoded_slot = DecodedSlot::decode(pi.target_slot);
         pi.effect_opcode == O_SELECT_MEMBER
             && decoded_slot.target_slot == Zone::Stage as u8
-            && (pi.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK) != 0
+            && pi.has_structured_filter_constraints()
     }
 
     fn add_filtered_stage_actions<R: ActionReceiver + ?Sized>(
@@ -1049,9 +1049,8 @@ impl ResponseGenerator {
             return;
         }
 
-        let packed_zone = (filter_attr >> 12) & 0x0F;
-        let target_slot = if packed_zone > 0 {
-            packed_zone as usize
+        let target_slot = if let Some(target_zone) = pi.selection_target_zone() {
+            target_zone
         } else {
             if pi.effect_opcode == O_SELECT_MEMBER
                 || pi.choice_type == ChoiceType::TapMSelect
@@ -1063,7 +1062,7 @@ impl ResponseGenerator {
             }
         };
 
-        let filter_struct = crate::core::logic::filter::CardFilter::from_attr(filter_attr);
+        let filter_struct = structured_filter_from_attr(filter_attr);
         let source_slot = if pi.ctx.area_idx >= 0 && pi.ctx.area_idx < STAGE_SLOT_COUNT as i16 {
             Some(pi.ctx.area_idx as usize)
         } else {

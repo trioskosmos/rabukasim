@@ -1,6 +1,6 @@
 use super::HandlerResult;
 use crate::core::*;
-use crate::core::logic::constants::{DYNAMIC_VALUE, FILTER_MASK_LOWER};
+use crate::core::logic::constants::DYNAMIC_VALUE;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -27,7 +27,7 @@ pub fn handle_state_modifiers(
             }
         }
         O_RESTRICTION => {
-            let restriction_id = (a as u64 & FILTER_MASK_LOWER) as u8;
+            let restriction_id = frame_data.restriction_id();
             state.players[p_idx].restrictions.push(restriction_id);
             if restriction_id == 1 || v == 1 {
                 state.players[p_idx].set_flag(crate::core::logic::player::PlayerState::FLAG_CANNOT_LIVE, true);
@@ -60,7 +60,7 @@ pub fn handle_state_modifiers(
         O_REDUCE_YELL_COUNT => {
             let final_v = if (a as u64 & DYNAMIC_VALUE) != 0 {
                 let count_op = frame_data.embedded_count_opcode().unwrap_or(s);
-                resolve_count(state, db, count_op, a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER, p_idx as i32, ctx, 0)
+                resolve_count(state, db, count_op, frame_data.dynamic_count_filter_attr(), p_idx as i32, ctx, 0)
             } else {
                 v
             };

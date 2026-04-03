@@ -96,15 +96,6 @@ Phase: Response
 ID 500 | [JP] 選択肢 1           | モードを選択します。 (CHOICE)
        | [EN] Choice 1        | Select mode. (CHOICE)
 -------
-ID 501 | [JP] 選択肢 2           | モードを選択します。 (CHOICE)
-       | [EN] Choice 2        | Select mode. (CHOICE)
--------
-ID 502 | [JP] 選択肢 3           | モードを選択します。 (CHOICE)
-       | [EN] Choice 3        | Select mode. (CHOICE)
--------
-ID 503 | [JP] 選択肢 4           | モードを選択します。 (CHOICE)
-       | [EN] Choice 4        | Select mode. (CHOICE)
--------
 
 === Scenario: Choice: Look and Choose (Filtering Members from Mix) ===
 Phase: Response
@@ -204,8 +195,8 @@ Phase: Main
 ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
        | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
 -------
-ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
-       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act] (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】全体: 控え室に置く: 1 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
+       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act]All: Discard: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
 -------
 
 [Dump Complete]

@@ -10,6 +10,7 @@ use crate::core::hearts::*;
 pub use crate::core::logic::models::*;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct CachedCostModifier {
@@ -58,6 +59,46 @@ fn frame_uses_count_multiplier(
     has_per_card: bool,
 ) -> bool {
     frame_data.uses_count_multiplier() || has_per_card
+}
+
+fn cost_scope_frames<'a>(ab: &'a Ability) -> Cow<'a, [AbilityFrame]> {
+    if let Some(frame_program) = ab.frame_program.as_ref() {
+        return Cow::Borrowed(&frame_program.frames);
+    }
+
+    ab.resolved_frames()
+}
+
+fn is_hand_only_self_cost_modifier(frame_data: &AbilityFrameComponents<'_>, op: i32) -> bool {
+    if op != O_REDUCE_COST && op != O_INCREASE_COST {
+        return false;
+    }
+
+    let has_per_card = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+        .is_some();
+
+    if !frame_uses_count_multiplier(frame_data, has_per_card) {
+        return false;
+    }
+
+    let count_zone = match frame_data.scale_source() {
+        SemanticScaleSource::CountZone(zone) => Some(zone),
+        SemanticScaleSource::SuccessPile => Some(SemanticCountZone::SuccessPile),
+        SemanticScaleSource::None => match frame_data.count_opcode_hint(op == O_REDUCE_COST) {
+            Some(C_COUNT_HAND) => Some(SemanticCountZone::Hand),
+            Some(C_COUNT_DISCARD) => Some(SemanticCountZone::Discard),
+            Some(C_COUNT_STAGE) => Some(SemanticCountZone::Stage),
+            Some(C_COUNT_SUCCESS_LIVE) => Some(SemanticCountZone::SuccessPile),
+            _ => None,
+        },
+    };
+
+    matches!(count_zone, Some(SemanticCountZone::Hand))
+        && frame_data.filter.target_player == TARGET_PLAYER_SELF as u8
+        && (frame_data.filter.special_id == 3 || frame_data.compare_accumulated())
 }
 
 fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
@@ -263,13 +304,9 @@ fn apply_reduce_cost_modifiers(
         return;
     }
 
-    let mut frame_idx = 0;
     let mut applied_any_frame = false;
-    loop {
-        let Some(frame) = ab.get_frame(frame_idx) else {
-            break;
-        };
-        frame_idx += 1;
+    let frames = cost_scope_frames(ab);
+    for (frame_idx, frame) in frames.iter().enumerate() {
 
         let op = frame.opcode();
         if op != O_REDUCE_COST && op != O_INCREASE_COST {
@@ -281,7 +318,7 @@ fn apply_reduce_cost_modifiers(
         let frame_data = frame.components();
         let params = frame_data
             .params
-            .or_else(|| ab.effects.get(frame_idx.saturating_sub(1)).map(|effect| &effect.params));
+            .or_else(|| ab.effects.get(frame_idx).map(|effect| &effect.params));
         let semantic = AbilityFrameComponents::from_raw_parts(
             frame_data.raw_opcode,
             frame_data.value,
@@ -341,13 +378,42 @@ fn apply_reduce_cost_modifiers(
                             .any(|&id| id == source_card_id),
                         None => false,
                     };
-                    let source_matches_filter = semantic.raw_attr == 0
-                        || state.card_matches_filter_with_ctx(
+                    let source_checked_slot = match semantic.inferred_count_zone() {
+                        Some(SemanticCountZone::Hand) => state.players[owner_idx]
+                            .hand
+                            .iter()
+                            .position(|&id| id == source_card_id)
+                            .map(|idx| (owner_idx as u8, 200 + idx as i16)),
+                        Some(SemanticCountZone::Discard) => state.players[owner_idx]
+                            .discard
+                            .iter()
+                            .position(|&id| id == source_card_id)
+                            .map(|idx| (owner_idx as u8, 100 + idx as i16)),
+                        Some(SemanticCountZone::Stage) => state.players[owner_idx]
+                            .stage
+                            .iter()
+                            .position(|&id| id == source_card_id)
+                            .map(|idx| (owner_idx as u8, idx as i16)),
+                        Some(SemanticCountZone::SuccessPile) | None => None,
+                    };
+                    let source_matches_filter = if semantic.raw_attr == 0 {
+                        true
+                    } else if let Some(slot) = source_checked_slot {
+                        state.card_matches_filter_with_struct(
+                            db,
+                            source_card_id,
+                            Some(slot),
+                            &semantic.filter,
+                            ctx,
+                        )
+                    } else {
+                        state.card_matches_filter_with_ctx(
                             db,
                             source_card_id,
                             semantic.raw_attr,
                             ctx,
-                        );
+                        )
+                    };
                     let should_exclude_source = source_is_counted
                         && source_matches_filter
                         && (semantic.slot.source_zone != Zone::Default
@@ -409,7 +475,7 @@ fn apply_external_reduce_cost_modifiers(
         return;
     }
 
-    let frames = ab.resolved_frames();
+    let frames = cost_scope_frames(ab);
     for frame in frames.iter() {
         let op = frame.opcode();
         if op == O_REDUCE_COST {
@@ -602,17 +668,13 @@ pub fn get_member_cost(
 
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
-    if !cost_state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
+    if let Some(hand_idx) = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id) {
         if let Some(target_m) = db.get_member(card_id) {
             let ctx = AbilityContext {
                 source_card_id: card_id,
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
-                area_idx: if let Some(idx) = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id) {
-                    200 + idx as i16
-                } else {
-                    -1
-                },
+                area_idx: 200 + hand_idx as i16,
                 is_static_eval: true,
                 ..Default::default()
             };
@@ -621,6 +683,23 @@ pub fn get_member_cost(
                     println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
                 }
                 if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart) {
+                    let applies_while_in_hand = cost_scope_frames(ab).iter().any(|frame| {
+                        let frame_data = frame.components();
+                        is_hand_only_self_cost_modifier(&frame_data, frame_data.opcode)
+                    });
+                    if trace_cost {
+                        eprintln!(
+                            "[COST_DBG] self_constant_probe card={} ab_idx={} source={} frame_program_present={} applies_while_in_hand={}",
+                            card_id,
+                            idx,
+                            ab.resolved_frame_source(),
+                            ab.frame_program.is_some(),
+                            applies_while_in_hand
+                        );
+                    }
+                    if !applies_while_in_hand {
+                        continue;
+                    }
                     if state.debug.debug_mode && !state.ui.silent {
                         println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
                     }
@@ -636,7 +715,7 @@ pub fn get_member_cost(
                             idx,
                             ab.trigger,
                             cost,
-                            ab.resolved_frames().len()
+                            cost_scope_frames(ab).len()
                         );
                     }
                 }
@@ -1014,7 +1093,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-            let frames = ab.resolved_frames();
+            let frames = cost_scope_frames(ab);
             let has_filters = !frames.is_empty();
 
             for frame in frames.iter() {
@@ -1028,6 +1107,9 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                    if is_hand_only_self_cost_modifier(&frame_data, op) {
+                        continue;
+                    }
                     aura.cost_modifiers.push(CachedCostModifier {
                         source_cid: cid,
                         amount: if op == O_REDUCE_COST {
@@ -1103,7 +1185,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 continue;
             }
 
-            let frames = ab.resolved_frames();
+            let frames = cost_scope_frames(ab);
             let target_mask = if slot_idx < 3 {
                 if let Some(first_frame) = frames.first() {
                     let first_frame_data = first_frame.components();
@@ -1125,6 +1207,9 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let s = frame_data.raw_slot;
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
+                    if is_hand_only_self_cost_modifier(&frame_data, op) {
+                        continue;
+                    }
                     aura.cost_modifiers.push(CachedCostModifier {
                         source_cid,
                         amount: if op == O_REDUCE_COST {

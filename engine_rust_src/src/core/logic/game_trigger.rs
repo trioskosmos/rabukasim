@@ -2,13 +2,53 @@ use super::card_db::CardDatabase;
 use super::models::AbilityContext;
 use super::state::GameState;
 use crate::core::enums::{ConditionType, TriggerType};
+use crate::core::generated_constants::{
+    C_COUNT_BLADES, C_COUNT_HEARTS, O_COLOR_SELECT, O_LOOK_AND_CHOOSE, O_SELECT_CARDS,
+    O_SELECT_LIVE, O_SELECT_MEMBER, O_SELECT_MODE, O_SELECT_PLAYER, O_TAP_MEMBER,
+    O_TAP_OPPONENT, O_TRIGGER_REMOTE,
+};
 use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
+use crate::core::logic::Ability;
 
 fn should_precheck_trigger_condition(cond: &crate::core::logic::Condition) -> bool {
     !matches!(
         cond.condition_type,
         ConditionType::SumValue | ConditionType::DiscardedCards
     )
+}
+
+fn should_defer_trigger_condition_precheck(
+    ability: &Ability,
+    cond: &crate::core::logic::Condition,
+) -> bool {
+    let condition_opcode = match cond.condition_type {
+        ConditionType::CountBlades => C_COUNT_BLADES,
+        ConditionType::CountHearts => C_COUNT_HEARTS,
+        _ => return false,
+    };
+
+    let mut saw_interactive_prompt = false;
+    for frame in ability.resolved_frames().iter() {
+        match frame.opcode() {
+            O_SELECT_MEMBER
+            | O_SELECT_LIVE
+            | O_SELECT_PLAYER
+            | O_SELECT_MODE
+            | O_SELECT_CARDS
+            | O_LOOK_AND_CHOOSE
+            | O_COLOR_SELECT
+            | O_TAP_MEMBER
+            | O_TAP_OPPONENT
+            | O_TRIGGER_REMOTE => saw_interactive_prompt = true,
+            _ => {}
+        }
+
+        if frame.opcode() == condition_opcode {
+            return saw_interactive_prompt;
+        }
+    }
+
+    false
 }
 
 fn parse_resolution_trigger_subtype(raw_text: &str) -> Option<TriggerType> {
@@ -386,7 +426,9 @@ impl GameState {
                 } else {
                     // Normal AND logic
                     for (i, cond) in conditions.iter().enumerate() {
-                        if !should_precheck_trigger_condition(cond) {
+                        if !should_precheck_trigger_condition(cond)
+                            || should_defer_trigger_condition_precheck(ability, cond)
+                        {
                             continue;
                         }
                         let passed = super::interpreter::conditions::check_condition(

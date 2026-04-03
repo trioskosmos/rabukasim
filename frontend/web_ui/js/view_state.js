@@ -61,7 +61,10 @@ export const ViewState = {
 
         const pendingChoice = state.pending_choice || null;
         const selectionCards = pendingChoice?.selection_cards || [];
-        const selectionActions = selectionCards.map((_, idx) => validTargets.selection?.[idx]);
+        const selectionActions = selectionCards.map((card, idx) => {
+            const selectionIdx = card?.selection_idx ?? idx;
+            return validTargets.selection?.[selectionIdx];
+        });
 
         return {
             perspectivePlayer,

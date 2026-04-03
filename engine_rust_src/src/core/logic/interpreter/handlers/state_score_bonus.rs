@@ -45,8 +45,31 @@ fn resolve_dynamic_multiplier(
                 .iter()
                 .any(|&id| id == source_card_id),
         };
-        let source_matches_filter = filter_attr == 0
-            || state.card_matches_filter_with_ctx(db, source_card_id, filter_attr, ctx);
+        let source_checked_slot = match frame_data.inferred_count_zone() {
+            Some(crate::core::logic::models::SemanticCountZone::Hand) => state.players[p_idx]
+                .hand
+                .iter()
+                .position(|&id| id == source_card_id)
+                .map(|idx| (p_idx as u8, 200 + idx as i16)),
+            Some(crate::core::logic::models::SemanticCountZone::Discard) => state.players[p_idx]
+                .discard
+                .iter()
+                .position(|&id| id == source_card_id)
+                .map(|idx| (p_idx as u8, 100 + idx as i16)),
+            Some(crate::core::logic::models::SemanticCountZone::Stage) => state.players[p_idx]
+                .stage
+                .iter()
+                .position(|&id| id == source_card_id)
+                .map(|idx| (p_idx as u8, idx as i16)),
+            Some(crate::core::logic::models::SemanticCountZone::SuccessPile) | None => None,
+        };
+        let source_matches_filter = if filter_attr == 0 {
+            true
+        } else if let Some(slot) = source_checked_slot {
+            state.card_matches_filter_with_struct(db, source_card_id, Some(slot), &frame_data.filter, ctx)
+        } else {
+            state.card_matches_filter_with_ctx(db, source_card_id, filter_attr, ctx)
+        };
         let should_exclude_source = source_is_counted
             && source_matches_filter
             && (frame_data.slot.source_zone != Zone::Default

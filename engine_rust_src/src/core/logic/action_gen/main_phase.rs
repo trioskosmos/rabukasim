@@ -177,7 +177,6 @@ impl ActionGenerator for MainPhaseGenerator {
             player.energy_zone.len() as i32 - player.tapped_energy_count() as i32;
 
         // Pre-calculate stage slot costs, data, and restrictions (CRITICAL OPTIMIZATION)
-        let mut slot_costs = [0; STAGE_SLOT_COUNT];
         let mut stage_data = [None; STAGE_SLOT_COUNT];
         let mut slot_prevents_baton_touch = [false; STAGE_SLOT_COUNT];
         let mut has_empty_slots = [false; STAGE_SLOT_COUNT];
@@ -185,7 +184,6 @@ impl ActionGenerator for MainPhaseGenerator {
         for s in 0..STAGE_SLOT_COUNT {
             if player.stage[s] >= 0 {
                 if let Some(prev) = db.get_member(player.stage[s]) {
-                    slot_costs[s] = prev.cost as i32;
                     stage_data[s] = Some(prev);
                     slot_prevents_baton_touch[s] =
                         GameState::has_restriction(state, p_idx, s, O_PREVENT_BATON_TOUCH, db);
@@ -203,8 +201,6 @@ impl ActionGenerator for MainPhaseGenerator {
             } // Safety cap
 
             if let Some(card) = db.get_member(cid) {
-                let base_cost = (card.cost as i32 - player.cost_reduction as i32).max(0);
-
                 for slot_idx in 0..STAGE_SLOT_COUNT {
                     if player.is_moved(slot_idx) {
                         continue;
@@ -215,10 +211,7 @@ impl ActionGenerator for MainPhaseGenerator {
                         continue;
                     }
 
-                    // Fast path: skip empty slots that don't need baton touch logic
-                    let mut cost = base_cost;
                     if player.stage[slot_idx] >= 0 {
-                        cost = (cost - slot_costs[slot_idx]).max(0);
                         // Check global baton touch prevention
                         if player.prevent_baton_touch() > 0 {
                             continue;
@@ -228,6 +221,8 @@ impl ActionGenerator for MainPhaseGenerator {
                             continue;
                         }
                     }
+
+                    let cost = state.get_member_cost(p_idx, cid, slot_idx as i16, -1, db, 0);
 
                     if cost <= available_energy {
                         // Check for OnPlay choices (Limit to first 10 cards to stay within Action ID space)
@@ -300,8 +295,14 @@ impl ActionGenerator for MainPhaseGenerator {
                                 continue;
                             }
 
-                            let combined_cost =
-                                (base_cost - slot_costs[slot_idx] - slot_costs[other_slot]).max(0);
+                            let combined_cost = state.get_member_cost(
+                                p_idx,
+                                cid,
+                                slot_idx as i16,
+                                other_slot as i16,
+                                db,
+                                0,
+                            );
                             if combined_cost <= available_energy {
                                 let is_next = other_slot == (slot_idx + 1) % STAGE_SLOT_COUNT;
                                 let combo_idx = slot_idx * 2 + (if is_next { 1 } else { 0 });

@@ -19,6 +19,79 @@ use crate::test_helpers::load_real_db;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::generated_constants::ACTION_BASE_HAND;
+    use crate::test_helpers::TestActionReceiver;
+
+    #[test]
+    fn test_card_10_playability_uses_effective_hand_cost() {
+        let mut state = GameState::default();
+        let db = load_real_db();
+
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].hand = vec![10, 121, 124].into();
+        state.players[0].energy_zone = (1..=18).collect::<Vec<i32>>().into();
+
+        let effective_cost = state.get_member_cost(0, 10, 0, -1, &db, 0);
+        assert_eq!(effective_cost, 18, "card 10 should cost 18 with two other cards in hand");
+
+        let mut receiver = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut receiver);
+
+        assert!(
+            receiver.actions.contains(&ACTION_BASE_HAND),
+            "card 10 should be playable when available energy matches its reduced cost"
+        );
+    }
+
+    #[test]
+    fn test_card_10_on_stage_does_not_reduce_other_hand_cards() {
+        let mut state = GameState::default();
+        let db = load_real_db();
+
+        state.players[0].stage[0] = 10;
+        state.players[0].hand = vec![121, 124].into();
+
+        let card_121 = db.get_member(121).expect("Card 121 should exist");
+        let cost_121 = state.get_member_cost(0, 121, -1, -1, &db, 0);
+
+        assert_eq!(
+            cost_121,
+            card_121.cost as i32,
+            "card 10 on stage must not leak a flat cost reduction onto other hand cards"
+        );
+    }
+
+    #[test]
+    fn test_second_copy_of_card_10_keeps_hand_reduction_after_first_is_played() {
+        let mut state = GameState::default();
+        let db = load_real_db();
+
+        state.players[0].stage[1] = 10;
+        state.players[0].hand = vec![10, 121].into();
+
+        let in_hand_copy_cost = state.get_member_cost(0, 10, -1, -1, &db, 0);
+
+        assert_eq!(
+            in_hand_copy_cost,
+            19,
+            "the remaining in-hand copy should still count the other hand card and reduce itself by 1"
+        );
+    }
+
+    #[test]
+    fn test_card_10_counts_other_hand_cards_not_itself() {
+        let mut state = GameState::default();
+        let db = load_real_db();
+
+        state.players[0].hand = vec![10, 121, 124, 100, 200].into();
+
+        assert_eq!(
+            state.get_member_cost(0, 10, -1, -1, &db, 0),
+            16,
+            "card 10 should reduce by the four other hand cards, not by all five cards in hand"
+        );
+    }
 
     /// Test Case 1: Card 10 as singleton in hand
     /// Expected: Card 10 cost = base_cost (no reduction, only 1 card in hand)
@@ -300,6 +373,7 @@ mod tests {
             player_id: 0,
             source_card_id: 10,
             ability_index: 0,
+            area_idx: 200,
             ..AbilityContext::default()
         };
 
@@ -375,6 +449,7 @@ mod tests {
                 player_id: 0,
                 source_card_id: 10,
                 ability_index: 0,
+                area_idx: 200,
                 ..AbilityContext::default()
             };
 
@@ -578,6 +653,8 @@ mod tests {
 
             let ctx = AbilityContext {
                 player_id: 0,
+                source_card_id: 10,
+                area_idx: 200,
                 ..AbilityContext::default()
             };
 

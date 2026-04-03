@@ -35,6 +35,40 @@ fn should_precheck_ability_condition(cond: &crate::core::logic::Condition) -> bo
         ConditionType::SumValue | ConditionType::DiscardedCards
     )
 }
+
+fn should_defer_ability_condition_precheck(
+    ability: &Ability,
+    cond: &crate::core::logic::Condition,
+) -> bool {
+    let condition_opcode = match cond.condition_type {
+        ConditionType::CountBlades => crate::core::generated_constants::C_COUNT_BLADES,
+        ConditionType::CountHearts => crate::core::generated_constants::C_COUNT_HEARTS,
+        _ => return false,
+    };
+
+    let mut saw_interactive_prompt = false;
+    for frame in ability.resolved_frames().iter() {
+        match frame.opcode() {
+            O_SELECT_MEMBER
+            | O_SELECT_LIVE
+            | O_SELECT_PLAYER
+            | O_SELECT_MODE
+            | O_SELECT_CARDS
+            | O_LOOK_AND_CHOOSE
+            | O_COLOR_SELECT
+            | O_TAP_MEMBER
+            | O_TAP_OPPONENT
+            | O_TRIGGER_REMOTE => saw_interactive_prompt = true,
+            _ => {}
+        }
+
+        if frame.opcode() == condition_opcode {
+            return saw_interactive_prompt;
+        }
+    }
+
+    false
+}
 use std::fmt;
 use std::sync::{Mutex, OnceLock};
 
@@ -396,7 +430,9 @@ pub fn resolve_ability(
     if !ability.conditions.is_empty() && ability.has_resolved_frames() {
         let mut all_conditions_pass = true;
         for (i, cond) in ability.conditions.iter().enumerate() {
-            if !should_precheck_ability_condition(cond) {
+            if !should_precheck_ability_condition(cond)
+                || should_defer_ability_condition_precheck(ability, cond)
+            {
                 continue;
             }
             let passed = conditions::check_condition(

@@ -11,7 +11,6 @@ use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, TriggerType};
 use crate::core::*;
 use crate::core::enums::*;
-use crate::core::logic::constants::FILTER_MASK_LOWER;
 use super::HandlerResult;
 
 /// Conditional operations
@@ -157,7 +156,7 @@ pub mod remote {
         NegateParams {
             trigger_type,
             target_card: frame_data.slot.target_slot as i32,
-            count: (frame_data.resolved_filter_attr() & FILTER_MASK_LOWER).max(1) as i32,
+            count: frame_data.negate_count_limit(),
         }
     }
 

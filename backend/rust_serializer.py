@@ -300,6 +300,19 @@ class RustGameStateSerializer:
                 cards.append(card)
         return cards
 
+    def _serialize_selection_cards(self, card_ids, lang="jp", is_vanilla=False):
+        cards = []
+        for selection_idx, cid in enumerate(card_ids or []):
+            cid_int = _safe_int(cid, -1)
+            if cid_int < 0:
+                continue
+            card = self.serialize_card(cid_int, lang=lang, is_vanilla=is_vanilla)
+            if card:
+                selection_card = dict(card)
+                selection_card["selection_idx"] = selection_idx
+                cards.append(selection_card)
+        return cards
+
     def _default_prompt_text(self, choice_type, lang="jp"):
         s = SERIALIZER_STRINGS.get(lang, SERIALIZER_STRINGS["jp"])
         kind = _normalize_choice_key(choice_type)
@@ -446,12 +459,12 @@ class RustGameStateSerializer:
 
         selection_ids = []
         if isinstance(params.get("cards"), list):
-            selection_ids = [_safe_int(cid, -1) for cid in params.get("cards", []) if _safe_int(cid, -1) >= 0]
+            selection_ids = [_safe_int(cid, -1) for cid in params.get("cards", [])]
         elif _normalize_choice_key(raw_choice_type) in {"select_from_list", "orderdeck", "order_deck"}:
             chooser = gs.get_player(source_player)
-            selection_ids = [_safe_int(cid, -1) for cid in getattr(chooser, "looked_cards", []) if _safe_int(cid, -1) >= 0]
+            selection_ids = [_safe_int(cid, -1) for cid in getattr(chooser, "looked_cards", [])]
 
-        selection_cards = self._serialize_card_ids(selection_ids, lang=lang, is_vanilla=gs.db.is_vanilla)
+        selection_cards = self._serialize_selection_cards(selection_ids, lang=lang, is_vanilla=gs.db.is_vanilla)
         v_remaining = _safe_int(params.get("v_remaining"), -1)
         choose_count = _safe_int(params.get("choose_count"), -1)
         if choose_count < 0 and v_remaining >= 0:
@@ -780,7 +793,11 @@ class RustGameStateSerializer:
         pending_source_player = pending_choice["source_player"] if pending_choice else gs.current_player
         pending_target_player = pending_choice["target_player"] if pending_choice else gs.current_player
         pending_selection_cards = pending_choice.get("selection_cards", []) if pending_choice else []
-        pending_selection_ids = [card.get("id", -1) for card in pending_selection_cards]
+        pending_selection_map = {
+            _safe_int(card.get("selection_idx"), idx): _safe_int(card.get("id"), -1)
+            for idx, card in enumerate(pending_selection_cards)
+            if _safe_int(card.get("id"), -1) >= 0
+        }
 
         players = [
             self.serialize_player(gs.get_player(0), gs, 0, viewer_idx, legal_mask, lang=lang),
@@ -929,8 +946,8 @@ class RustGameStateSerializer:
                         meta["source_player"] = pending_source_player
                         if meta["choice_idx"] == CHOICE_DONE:
                             meta["name"] = self._resolve_choice_name(CHOICE_DONE, pending_choice or {}, lang)
-                        elif meta["choice_idx"] < len(pending_selection_ids):
-                            cid = pending_selection_ids[meta["choice_idx"]]
+                        elif meta["choice_idx"] in pending_selection_map:
+                            cid = pending_selection_map[meta["choice_idx"]]
                             self._populate_card_fields(meta, cid, lang=lang, is_vanilla=gs.db.is_vanilla, source_card_id=pending_source_card_id)
                             meta.update({
                                 "target_zone": "selection",

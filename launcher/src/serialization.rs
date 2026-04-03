@@ -1775,8 +1775,8 @@ pub fn serialize_state_rich(
     let p1 = serialize_player_rich(&gs.players[1], gs, db, 1, viewer_idx, &legal_mask, lang);
 
     let triggered_abilities: Vec<Value> = gs.trigger_queue.iter()
-        .filter(|(_cid, _, ctx, _, _)| ctx.player_id == 0)
-        .map(|(cid, ab_idx, _, _, _)| {
+        .filter(|(_cid, _, _, ctx, _, _)| ctx.player_id == 0)
+        .map(|(cid, ab_idx, _, _, _, _)| {
             let member = db.get_member(*cid);
             let name = member.map(|m| m.name.clone()).unwrap_or_else(|| "Member".to_string());
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
@@ -1786,8 +1786,8 @@ pub fn serialize_state_rich(
         }).collect();
 
     let opponent_triggered_abilities: Vec<Value> = gs.trigger_queue.iter()
-        .filter(|(_cid, _, ctx, _, _)| ctx.player_id == 1)
-        .map(|(cid, ab_idx, _, _, _)| {
+        .filter(|(_cid, _, _, ctx, _, _)| ctx.player_id == 1)
+        .map(|(cid, ab_idx, _, _, _, _)| {
             let member = db.get_member(*cid);
             let name = member.map(|m| m.name.clone()).unwrap_or_else(|| "Member".to_string());
             let text = member.and_then(|m| m.abilities.get(*ab_idx as usize))
@@ -1833,10 +1833,21 @@ pub fn serialize_state_rich(
         let mut options = Vec::new();
         let mut actions = Vec::new();
         let mut action_map = serde_json::Map::new();
+        let mut selection_cards = Vec::new();
         use crate::models::Action;
 
         for &id in &legal_actions {
             let (name, text, _type_str, _area, meta) = get_action_desc_rich(id, gs, db, viewer_idx, lang);
+            if let (Some(selection_idx), Some(card_id)) = (
+                meta.get("selection_idx").and_then(|v| v.as_u64()),
+                meta.get("card_id").and_then(|v| v.as_i64()),
+            ) {
+                let mut card = serialize_card(card_id as i32, db, true, lang);
+                if let Some(card_map) = card.as_object_mut() {
+                    card_map.insert("selection_idx".into(), json!(selection_idx));
+                }
+                selection_cards.push((selection_idx as usize, card));
+            }
             let mut opt_obj = json!({ "name": name, "text": text });
             if let Some(opt_map) = opt_obj.as_object_mut() {
                 for (k, v) in meta {
@@ -1977,6 +1988,7 @@ pub fn serialize_state_rich(
 
         let source_card_id = source_card_id_for_pending(gs).unwrap_or(pending.card_id);
         let source_location = find_card_location(gs, source_card_id);
+        selection_cards.sort_by_key(|(selection_idx, _)| *selection_idx);
 
         json!({
             "type": pending.choice_type,
@@ -1990,6 +2002,7 @@ pub fn serialize_state_rich(
             "options": options,
             "actions": actions,
             "action_map": action_map,
+            "selection_cards": selection_cards.into_iter().map(|(_, card)| card).collect::<Vec<Value>>(),
             "choose_count": choose_count,
             "v_remaining": pending.v_remaining,
             "ability_index": pending.ability_index,
@@ -2312,6 +2325,30 @@ mod tests {
         let state = serialize_state_rich(&gs, &db, "pve", 0, 0, false, String::new(), "en", false);
         let pending = state.get("pending_choice").and_then(|v| v.as_object()).expect("pending_choice");
         assert_eq!(pending.get("title").and_then(|v| v.as_str()), Some("Select empty stage slot"));
+    }
+
+    #[test]
+    fn pending_choice_serialization_preserves_sparse_selection_indices() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.players[0].looked_cards = vec![-1, 42].into();
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 7,
+            effect_opcode: engine_rust::core::logic::O_SELECT_CARDS,
+            choice_type: ChoiceType::LookAndChoose,
+            ctx: AbilityContext { player_id: 0, source_card_id: 7, ..Default::default() },
+            ..Default::default()
+        });
+
+        let state = serialize_state_rich(&gs, &db, "pve", 0, 0, false, String::new(), "en", false);
+        let pending = state.get("pending_choice").and_then(|v| v.as_object()).expect("pending_choice");
+        let selection_cards = pending.get("selection_cards").and_then(|v| v.as_array()).expect("selection_cards");
+
+        assert_eq!(selection_cards.len(), 1);
+        assert_eq!(selection_cards[0].get("selection_idx").and_then(|v| v.as_u64()), Some(1));
+        assert_eq!(selection_cards[0].get("id").and_then(|v| v.as_i64()), Some(42));
     }
 
     #[test]

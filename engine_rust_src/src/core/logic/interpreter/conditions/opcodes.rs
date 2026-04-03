@@ -3,7 +3,7 @@ use super::counts::resolve_count;
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::constants::*;
-use crate::core::logic::filter::CardFilter;
+use crate::core::logic::filter::{has_structured_filter_constraints, structured_filter_from_attr, CardFilter};
 use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condition;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
@@ -69,7 +69,7 @@ impl<'a> ConditionParams<'a> {
             raw_attr: attr,
             raw_slot: slot,
             params: None,
-            filter: CardFilter::from_attr(attr),
+            filter: structured_filter_from_attr(attr),
             slot: DecodedSlot::decode(slot),
             depth,
         }
@@ -262,7 +262,7 @@ fn check_condition_with_parts(
         }
         C_COUNT_STAGE => {
             let count = if (attr & FILTER_ANY_STAGE) != 0 {
-                let matcher_attr = attr & FILTER_MASK_LOWER;
+                let has_filter_constraints = has_structured_filter_constraints(attr);
                 let count_for_player = |player_idx: usize| {
                     state.players[player_idx]
                         .stage
@@ -270,7 +270,7 @@ fn check_condition_with_parts(
                         .enumerate()
                         .filter(|(_, &cid)| cid >= 0)
                         .filter(|(slot_idx, &cid)| {
-                            matcher_attr == 0
+                            !has_filter_constraints
                                 || state.card_matches_filter_with_struct(
                                     db,
                                     cid,
@@ -784,7 +784,7 @@ fn check_condition_with_parts(
             if ctx.target_card_id >= 0 {
                 return true;
             }
-            let matcher_attr = attr & FILTER_MASK_LOWER;
+            let has_filter_constraints = has_structured_filter_constraints(attr);
             let mut check_ids = Vec::new();
             if area_val == 0 {
                 let (player_idx, other_player_idx) = semantic.stage_player_scope(p_idx);
@@ -793,7 +793,7 @@ fn check_condition_with_parts(
                         if stage_cid < 0 {
                             continue;
                         }
-                        if matcher_attr == 0
+                        if !has_filter_constraints
                             || state.card_matches_filter_with_struct(
                                 db,
                                 stage_cid,

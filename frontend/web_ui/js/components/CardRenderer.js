@@ -587,7 +587,8 @@ export const CardRenderer = {
                 return;
             }
 
-            const aid = validActionMap[idx];
+            const selectionIdx = c?.selection_idx ?? idx;
+            const aid = validActionMap[selectionIdx];
             const isClickable = (aid !== undefined && aid !== null && aid !== 0);
 
             const viewModel = CardRenderer.getCardViewModel(c, {
@@ -605,7 +606,7 @@ export const CardRenderer = {
             
             // Explicitly set class and ID for the item
             cardEl.classList.add('looked-card-item');
-            cardEl.id = `looked-card-${idx}`;
+            cardEl.id = `looked-card-${selectionIdx}`;
             
             content.appendChild(cardEl);
         });

@@ -105,6 +105,28 @@ where
 
 // --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
 pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
+pub const FILTER_PASSTHROUGH_MASK: u64 = FILTER_ANY_STAGE
+    | FILTER_REVEALED_CONTEXT
+    | KEYWORD_PLAYED_THIS_TURN
+    | KEYWORD_YELL_COUNT
+    | KEYWORD_HAS_LIVE_SET
+    | FILTER_TOTAL_COST;
+
+pub fn passthrough_filter_attr(attr: u64) -> u64 {
+    attr & FILTER_PASSTHROUGH_MASK
+}
+
+pub fn structured_filter_attr(attr: u64) -> u64 {
+    attr & !FILTER_PASSTHROUGH_MASK
+}
+
+pub fn structured_filter_from_attr(attr: u64) -> CardFilter {
+    CardFilter::from_attr(structured_filter_attr(attr))
+}
+
+pub fn has_structured_filter_constraints(attr: u64) -> bool {
+    structured_filter_from_attr(attr).to_attr() != 0
+}
 
 /// A structured representation of the 64-bit filter attribute
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -1210,8 +1232,8 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
 }
 
 pub fn merge_filter_attr_with_params(base_attr: u64, params: Option<&serde_json::Value>) -> u64 {
-    let base_filter = CardFilter::from_attr(base_attr);
-    let base_passthrough = base_attr & !base_filter.to_attr();
+    let base_filter = structured_filter_from_attr(base_attr);
+    let base_passthrough = passthrough_filter_attr(base_attr);
 
     if let Some((params_filter, params_passthrough)) = filter_parts_from_params(params) {
         base_filter.with_overlay(&params_filter).to_attr() | base_passthrough | params_passthrough
