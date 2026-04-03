@@ -1,0 +1,173 @@
+{
+  "[Live Start] You may put 1 card from your hand into the waiting room: Choose [Heart 01], [Heart 03], or [Heart 06]. This member gets the chosen Heart until the end of the live phase.": {
+    "ability_count": 1,
+    "card_refs": [
+      {
+        "ability_index": 1,
+        "card_id": 122,
+        "card_no": "PL!-sd1-003-SD",
+        "name": "蜊・縺薙→繧・",
+        "trigger": "ON_LIVE_START",
+        "trigger_id": 2
+      }
+    ],
+    "cards": [
+      "PL!-sd1-003-SD"
+    ],
+    "frames": [
+      {
+        "opcode_id": 58,
+        "opcode": "MOVE_TO_DISCARD",
+        "ability_frame_index": 0,
+        "value": 1,
+        "attr": {
+          "is_optional": 1
+        },
+        "slot": {
+          "target_slot": 6
+        },
+        "semantic": {
+          "opcode_id": 58,
+          "opcode_name": "MOVE_TO_DISCARD",
+          "opcode_section": "opcodes",
+          "decoded": "MOVE_TO_DISCARD           | count=1, filter=[optional], slot=[target=Hand (Zone)]",
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": 6
+          },
+          "metadata_refs": [
+            "opcodes.MOVE_TO_DISCARD",
+            "slot_indices.HAND"
+          ]
+        }
+      },
+      {
+        "opcode_id": 3,
+        "opcode": "JUMP_IF_FALSE",
+        "ability_frame_index": 1,
+        "value": 4,
+        "semantic": {
+          "opcode_id": 3,
+          "opcode_name": "JUMP_IF_FALSE",
+          "opcode_section": "opcodes",
+          "decoded": "JUMP_IF_FALSE             | offset=4",
+          "value": 4,
+          "metadata_refs": [
+            "opcodes.JUMP_IF_FALSE",
+            "slot_indices.STAGE_0"
+          ]
+        }
+      },
+      {
+        "opcode_id": 312,
+        "opcode": "SUM_VALUE",
+        "ability_frame_index": 2,
+        "semantic": {
+          "opcode_id": 312,
+          "opcode_name": "SUM_VALUE",
+          "opcode_section": "conditions",
+          "decoded": "SUM_VALUE                 | value=0, filter=[none], slot=[compare=EQ (==), slot=Left Stage (0)]",
+          "metadata_refs": [
+            "conditions.SUM_VALUE",
+            "slot_indices.STAGE_0"
+          ]
+        }
+      },
+      {
+        "opcode_id": 3,
+        "opcode": "JUMP_IF_FALSE",
+        "ability_frame_index": 3,
+        "value": 2,
+        "semantic": {
+          "opcode_id": 3,
+          "opcode_name": "JUMP_IF_FALSE",
+          "opcode_section": "opcodes",
+          "decoded": "JUMP_IF_FALSE             | offset=2",
+          "value": 2,
+          "metadata_refs": [
+            "opcodes.JUMP_IF_FALSE",
+            "slot_indices.STAGE_0"
+          ]
+        }
+      },
+      {
+        "opcode_id": 30,
+        "opcode": "SELECT_MODE",
+        "ability_frame_index": 4,
+        "value": 1,
+        "slot": {
+          "target_slot": 4
+        },
+        "semantic": {
+          "opcode_id": 30,
+          "opcode_name": "SELECT_MODE",
+          "opcode_section": "opcodes",
+          "decoded": "SELECT_MODE               | options=1, filter=[none], slot=[target=Context Card]",
+          "value": 1,
+          "slot": {
+            "target_slot": 4
+          },
+          "metadata_refs": [
+            "opcodes.SELECT_MODE",
+            "slot_indices.CONTEXT"
+          ]
+        }
+      },
+      {
+        "opcode_id": 12,
+        "opcode": "ADD_HEARTS",
+        "ability_frame_index": 5,
+        "value": 1,
+        "slot": {
+          "target_slot": 4
+        },
+        "semantic": {
+          "opcode_id": 12,
+          "opcode_name": "ADD_HEARTS",
+          "opcode_section": "opcodes",
+          "decoded": "ADD_HEARTS                | count=1, heart_type=pink, slot=[target=Context Card]",
+          "value": 1,
+          "slot": {
+            "target_slot": 4
+          },
+          "metadata_refs": [
+            "opcodes.ADD_HEARTS",
+            "slot_indices.CONTEXT"
+          ]
+        }
+      },
+      {
+        "opcode_id": 1,
+        "opcode": "RETURN",
+        "ability_frame_index": 6,
+        "semantic": {
+          "opcode_id": 1,
+          "opcode_name": "RETURN",
+          "opcode_section": "opcodes",
+          "decoded": "RETURN                    | done",
+          "metadata_refs": [
+            "opcodes.RETURN",
+            "slot_indices.STAGE_0"
+          ]
+        }
+      }
+    ],
+    "opcode_sequence": [
+      "MOVE_TO_DISCARD",
+      "JUMP_IF_FALSE",
+      "SUM_VALUE",
+      "JUMP_IF_FALSE",
+      "SELECT_MODE",
+      "ADD_HEARTS",
+      "RETURN"
+    ],
+    "pseudocode": "May put 1 card from your hand into the waiting room. Choose a heart. This member gets the chosen Heart until the end of the live phase.",
+    "source_text_en": "[Live Start] You may put 1 card from your hand into the waiting room: Choose [Heart 01], [Heart 03], or [Heart 06]. This member gets the chosen Heart until the end of the live phase.",
+    "summary": "May put 1 card from your hand into the waiting room, then choose a heart.",
+    "trigger": "ON_LIVE_START",
+    "trigger_id": 2
+  }
+}
