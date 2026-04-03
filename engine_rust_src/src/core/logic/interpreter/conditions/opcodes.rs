@@ -8,7 +8,9 @@ use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condi
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
-use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::logic::models::{
+    AbilityFrameComponents, SemanticComparisonMode, SemanticFrameView,
+};
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -19,8 +21,8 @@ struct ConditionParams<'a> {
     ctx: &'a AbilityContext,
     opcode: i32,
     value: i32,
-    attr_word: u64,
-    slot_word: i32,
+    raw_attr: u64,
+    raw_slot: i32,
     params: Option<&'a serde_json::Value>,
     filter: CardFilter,
     slot: DecodedSlot,
@@ -41,8 +43,8 @@ impl<'a> ConditionParams<'a> {
             ctx,
             opcode: frame.opcode,
             value: frame.value,
-            attr_word: frame.raw_attr,
-            slot_word: frame.raw_slot,
+            raw_attr: frame.raw_attr,
+            raw_slot: frame.raw_slot,
             params: frame.params,
             filter: frame.filter,
             slot: frame.slot,
@@ -66,8 +68,8 @@ impl<'a> ConditionParams<'a> {
             ctx,
             opcode: op,
             value: val,
-            attr_word: attr,
-            slot_word: slot,
+            raw_attr: attr,
+            raw_slot: slot,
             params: None,
             filter: CardFilter::from_attr_legacy(attr as i64),
             slot: DecodedSlot::decode(slot),
@@ -92,27 +94,6 @@ fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
             })
         })
         .unwrap_or(false)
-}
-
-fn legacy_group_id_from_attr(attr: u64) -> Option<u8> {
-    let lower_attr = attr & 0x00000000FFFFFFFF;
-    if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
-        Some((lower_attr & 0x7F) as u8)
-    } else {
-        None
-    }
-}
-
-fn resolve_group_id(filter: &CardFilter, attr: u64, value: i32) -> Option<u8> {
-    legacy_group_id_from_attr(attr).or_else(|| filter.semantic_group_id(value))
-}
-
-fn has_revealed_context_passthrough(attr: u64) -> bool {
-    (attr & FILTER_REVEALED_CONTEXT) != 0
-}
-
-fn counts_unique_names(filter: &CardFilter) -> bool {
-    filter.unique_names
 }
 
 pub fn check_condition_frame(
@@ -168,8 +149,8 @@ fn check_condition_with_parts_internal(params: ConditionParams) -> bool {
         params.db,
         params.opcode,
         params.value,
-        params.attr_word,
-        params.slot_word,
+        params.raw_attr,
+        params.raw_slot,
         params.params,
         params.filter,
         params.slot,
@@ -197,6 +178,7 @@ fn check_condition_with_parts(
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
+    let semantic = SemanticFrameView::from_parts(val, attr, slot, params);
     let get_cid = || {
         if ctx.source_card_id >= 0 {
             ctx.source_card_id
@@ -360,11 +342,7 @@ fn check_condition_with_parts(
                 .stage
                 .iter()
                 .filter(|&&id| id >= 0)
-                .any(|&cid| {
-                    cid == val
-                        || (attr != 0
-                            && state.card_matches_filter(db, cid, attr))
-                })
+                .any(|&cid| cid == val || (attr != 0 && state.card_matches_filter(db, cid, attr)))
         }
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
@@ -386,7 +364,7 @@ fn check_condition_with_parts(
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_GROUP_FILTER => {
-            let group_id = resolve_group_id(&filter, attr, val);
+            let group_id = semantic.semantic_group_id(val);
 
             if (val & 0x04) != 0 {
                 group_id.map_or(false, |group_id| {
@@ -405,7 +383,8 @@ fn check_condition_with_parts(
         C_SELF_IS_GROUP => {
             let cid = get_cid();
             if cid >= 0 {
-                resolve_group_id(&filter, attr, val)
+                semantic
+                    .semantic_group_id(val)
                     .map(|group_id| card_matches_group(db, cid, group_id))
                     .unwrap_or(false)
             } else {
@@ -458,16 +437,16 @@ fn check_condition_with_parts(
             (opp_energy - my_energy) >= val
         }
         C_HAS_KEYWORD => {
-            if filter.keyword_energy {
-                if let Some(group_id) = resolve_group_id(&filter, attr, val) {
+            if semantic.requests_keyword_energy() {
+                if let Some(group_id) = semantic.semantic_group_id(val) {
                     let group_id = group_id as u64;
                     let mask = player.activated_energy_group_mask;
                     return (mask & (1 << group_id)) != 0;
                 }
                 return player.activated_energy_group_mask != 0;
             }
-            if filter.keyword_member {
-                if let Some(group_id) = resolve_group_id(&filter, attr, val) {
+            if semantic.requests_keyword_member() {
+                if let Some(group_id) = semantic.semantic_group_id(val) {
                     let group_id = group_id as u64;
                     return (player.activated_member_group_mask & (1 << group_id)) != 0;
                 }
@@ -478,23 +457,23 @@ fn check_condition_with_parts(
             if state.phase == Phase::LiveResult && !player.yell_cards.is_empty() {
                 res = compare_i32(player.yell_cards.len() as i32, val, slot);
             }
-            if !res && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
-                if filter.group_enabled {
-                    let group_id = filter.group_id as u64;
+            if !res && semantic.requests_played_this_turn_keyword() {
+                if (attr & FILTER_GROUP_ENABLE) != 0 {
+                    let group_id = semantic.semantic_group_id(val).unwrap_or_default() as u64;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
-                } else if val == 0 && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
+                } else if val == 0 && semantic.requests_played_this_turn_keyword() {
                     res = player.play_count_this_turn() > 0;
                 } else {
                     res = compare_i32(player.play_count_this_turn() as i32, val, slot);
                 }
             }
-            if (attr & KEYWORD_YELL_COUNT) != 0 {
+            if semantic.requests_yell_count_keyword() {
                 res = compare_i32(player.yell_cards.len() as i32, val, slot);
             }
-            if (attr & KEYWORD_HAS_LIVE_SET) != 0 {
+            if semantic.requests_has_live_set_keyword() {
                 res = player.live_zone.iter().any(|&c| c >= 0);
             }
-            if has_revealed_context_passthrough(attr) {
+            if semantic.has_revealed_context_passthrough() {
                 if val == 1 {
                     res = player
                         .looked_cards
@@ -523,15 +502,7 @@ fn check_condition_with_parts(
             if !count_ok {
                 return false;
             }
-            let filter_attr = if (attr & 0xFFFFFFFF00000000) == 0
-                && (attr & 0x1F) == 0
-                && attr != 0
-                && attr < 300
-            {
-                0x10 | (attr << 5)
-            } else {
-                attr
-            };
+            let filter_attr = semantic.normalized_baton_filter_attr();
             if filter_attr != 0 {
                 player
                     .baton_source_ids
@@ -545,7 +516,7 @@ fn check_condition_with_parts(
         }
         C_COUNT_LIVE_ZONE => {
             let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if counts_unique_names(&filter) {
+            let count = if semantic.counts_unique_names() {
                 let mut names = std::collections::HashSet::new();
                 for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
                     if state.card_matches_filter(db, id, filter_attr) {
@@ -621,7 +592,7 @@ fn check_condition_with_parts(
                 .and_then(|id| db.get_member(id))
                 .map(|m| m.cost as i32)
                 .unwrap_or(0);
-            let reversed = (attr & 0x01) != 0;
+            let reversed = semantic.comparison_reversed();
             let diff = if reversed {
                 opp_cost - self_cost
             } else {
@@ -636,7 +607,7 @@ fn check_condition_with_parts(
         C_SCORE_LEAD => {
             let self_score = player.score as i32;
             let opp_score = opponent.score as i32;
-            let reversed = (attr & 0x01) != 0;
+            let reversed = semantic.comparison_reversed();
             let diff = if reversed {
                 opp_score - self_score
             } else {
@@ -657,7 +628,7 @@ fn check_condition_with_parts(
                 .map(|&x| x as i32)
                 .sum::<i32>();
             let opp_total = opp_hearts.to_array().iter().map(|&x| x as i32).sum::<i32>();
-            let reversed = (attr & 0x01) != 0;
+            let reversed = semantic.comparison_reversed();
             let diff = if reversed {
                 opp_total - self_total
             } else {
@@ -736,8 +707,7 @@ fn check_condition_with_parts(
                 0
             };
             let blades = state.get_effective_blades(p_idx, slot, db, depth + 1);
-            let is_le = (attr & 0x40000000) != 0;
-            if is_le {
+            if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
                 blades <= val as u32
             } else {
                 blades >= val as u32
@@ -750,14 +720,17 @@ fn check_condition_with_parts(
                 0
             };
             let hearts = state.get_effective_hearts(p_idx, slot, db, depth + 1);
-            let color_idx = (attr & 0x7F) as usize;
+            let color_idx = if filter.color_mask != 0 {
+                filter.color_mask.trailing_zeros() as usize
+            } else {
+                (attr & 0x7F) as usize
+            };
             let count = if color_idx < 7 {
                 hearts.to_array()[color_idx] as i32
             } else {
                 hearts.get_total_count() as i32
             };
-            let is_le = (attr & 0x40000000) != 0;
-            if is_le {
+            if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
                 count <= val
             } else {
                 count >= val

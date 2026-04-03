@@ -4,6 +4,8 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::core::logic::card_db::CardDatabase;
+use crate::core::logic::filter::CardFilter;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::models::{AbilityFrame, AbilityTraceView};
 use serde::Serialize;
 
@@ -38,6 +40,29 @@ struct ExportSummary {
 }
 
 #[derive(Debug, Serialize)]
+struct SemanticAbilityFrameExport {
+    opcode: i32,
+    value: i32,
+    attr: CardFilter,
+    slot: DecodedSlot,
+    is_cost: bool,
+    params: serde_json::Value,
+}
+
+impl From<&AbilityFrame> for SemanticAbilityFrameExport {
+    fn from(frame: &AbilityFrame) -> Self {
+        Self {
+            opcode: frame.opcode,
+            value: frame.value,
+            attr: frame.filter(),
+            slot: frame.dslot(),
+            is_cost: frame.is_cost,
+            params: frame.params.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
 struct HydratedAbilityEntry {
     card_kind: &'static str,
     card_id: i32,
@@ -54,7 +79,7 @@ struct HydratedAbilityEntry {
     effect_count: usize,
     condition_count: usize,
     cost_count: usize,
-    resolved_frames: Vec<AbilityFrame>,
+    resolved_frames: Vec<SemanticAbilityFrameExport>,
     trace_view: AbilityTraceView,
 }
 
@@ -110,7 +135,11 @@ fn push_member_entries(
     for member in members {
         for (ability_index, ability) in member.abilities.iter().enumerate() {
             let resolved_frame_source = ability.resolved_frame_source().to_string();
-            let resolved_frames = ability.frames();
+            let resolved_frames: Vec<SemanticAbilityFrameExport> = ability
+                .resolved_frames()
+                .iter()
+                .map(SemanticAbilityFrameExport::from)
+                .collect();
             let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
 
@@ -162,7 +191,11 @@ fn push_live_entries(
     for live in lives {
         for (ability_index, ability) in live.abilities.iter().enumerate() {
             let resolved_frame_source = ability.resolved_frame_source().to_string();
-            let resolved_frames = ability.frames();
+            let resolved_frames: Vec<SemanticAbilityFrameExport> = ability
+                .resolved_frames()
+                .iter()
+                .map(SemanticAbilityFrameExport::from)
+                .collect();
             let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
 

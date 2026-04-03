@@ -348,7 +348,6 @@ impl CardFilter {
         effective_hearts: Option<&[u8; 7]>,
         ctx: &crate::core::logic::AbilityContext,
     ) -> bool {
-        // Implementation moved here directly from filter_attr_compat
         if !self.is_enabled {
             return true;
         }
@@ -901,11 +900,153 @@ impl CardFilter {
 }
 
 pub fn map_filter_string_to_attr(filter: &str) -> u64 {
-    crate::core::logic::filter_attr_compat::map_filter_string_to_attr(filter)
+    let (parsed, extras) = filter_from_semantic_string(filter);
+    parsed.to_attr() | extras
 }
 
 pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(CardFilter, u64)> {
-    crate::core::logic::filter_attr_compat::filter_parts_from_params(params)
+    let obj = params_object(params)?;
+    let mut filter = CardFilter::default();
+    let mut extras = 0u64;
+
+    macro_rules! set_flag {
+        ($value:expr, $field:ident) => {
+            if let Some(value) = $value {
+                if as_bool_robust(value) {
+                    filter.is_enabled = true;
+                    filter.$field = true;
+                }
+            }
+        };
+    }
+
+    if let Some(target_player) = obj
+        .get("target_player")
+        .and_then(parse_target_player)
+    {
+        filter.is_enabled = true;
+        filter.target_player = target_player;
+    }
+    if let Some(card_type) = obj.get("card_type").and_then(parse_card_type) {
+        filter.is_enabled = true;
+        filter.card_type = card_type;
+    }
+    set_flag!(obj.get("group_enabled"), group_enabled);
+    if let Some(group_id) = obj.get("group_id").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.group_enabled = true;
+        filter.group_id = (group_id & 0x7F) as u8;
+    }
+    set_flag!(obj.get("is_tapped"), is_tapped);
+    set_flag!(obj.get("has_blade_heart"), has_blade_heart);
+    set_flag!(obj.get("not_has_blade_heart"), not_has_blade_heart);
+    set_flag!(obj.get("unique_names"), unique_names);
+    set_flag!(obj.get("unit_enabled"), unit_enabled);
+    if let Some(unit_id) = obj.get("unit_id").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.unit_enabled = true;
+        filter.unit_id = (unit_id & 0x7F) as u8;
+    }
+    set_flag!(obj.get("value_enabled"), value_enabled);
+    if let Some(threshold) = obj
+        .get("value_threshold")
+        .and_then(Value::as_u64)
+        .or_else(|| {
+            obj.get("heart_count")
+                .or_else(|| obj.get("min_count"))
+                .or_else(|| obj.get("min"))
+                .or_else(|| obj.get("count"))
+                .or_else(|| obj.get("threshold"))
+                .or_else(|| obj.get("value"))
+                .and_then(Value::as_u64)
+        })
+    {
+        filter.is_enabled = true;
+        filter.value_enabled = true;
+        filter.value_threshold = (threshold & 0x1F) as u8;
+    }
+    set_flag!(obj.get("is_le"), is_le);
+    set_flag!(obj.get("is_cost_type"), is_cost_type);
+    if let Some(color_mask) = obj
+        .get("heart_color")
+        .or_else(|| obj.get("heart_type"))
+        .and_then(semantic_heart_mask_from_value)
+    {
+        filter.is_enabled = true;
+        filter.value_enabled = true;
+        filter.color_mask = color_mask;
+    }
+    if let Some(color_mask) = obj.get("color_mask").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.color_mask = color_mask as u8;
+    }
+    if let Some(char_id) = obj.get("char_id_1").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.char_id_1 = (char_id & 0x7F) as u8;
+    }
+    if let Some(char_id) = obj.get("char_id_2").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.char_id_2 = (char_id & 0x7F) as u8;
+    }
+    if let Some(char_id) = obj.get("char_id_3").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.char_id_3 = (char_id & 0x7F) as u8;
+    }
+    if let Some(zone_mask) = obj.get("zone_mask").and_then(Value::as_u64) {
+        filter.is_enabled = true;
+        filter.zone_mask = (zone_mask & 0x7) as u8;
+    }
+    if let Some(special_id) = obj.get("special_id").and_then(parse_special_id) {
+        filter.is_enabled = true;
+        filter.special_id = special_id;
+    }
+    set_flag!(obj.get("is_setsuna"), is_setsuna);
+    set_flag!(obj.get("compare_accumulated"), compare_accumulated);
+    set_flag!(
+        obj.get("is_optional")
+            .or_else(|| obj.get("optional"))
+            .or_else(|| obj.get("IS_OPTIONAL")),
+        is_optional
+    );
+    set_flag!(obj.get("keyword_energy"), keyword_energy);
+    set_flag!(obj.get("keyword_member"), keyword_member);
+
+    if let Some(filter_str) = obj
+        .get("FILTER")
+        .or_else(|| obj.get("filter"))
+        .and_then(Value::as_str)
+    {
+        let normalized = filter_str.trim();
+        if normalized.eq_ignore_ascii_case("Umi/Yoshiko/Rina")
+            || normalized.eq_ignore_ascii_case("Umi / Yoshiko / Rina")
+        {
+            return Some((
+                CardFilter {
+                    is_enabled: true,
+                    char_id_1: 4,
+                    char_id_2: 16,
+                    is_optional: obj
+                        .get("is_optional")
+                        .or_else(|| obj.get("IS_OPTIONAL"))
+                        .map(as_bool_robust)
+                        .unwrap_or(true),
+                    ..CardFilter::default()
+                },
+                0,
+            ));
+        }
+
+        let (parsed, parsed_extras) = filter_from_semantic_string(filter_str);
+        filter = parsed;
+        extras |= parsed_extras;
+    }
+
+    let attr = filter.to_attr() | extras;
+    if attr == 0 {
+        None
+    } else {
+        Some((filter, extras))
+    }
 }
 
 pub fn filter_from_params(params: Option<&serde_json::Value>) -> Option<CardFilter> {
@@ -919,5 +1060,353 @@ pub fn filter_from_params(params: Option<&serde_json::Value>) -> Option<CardFilt
 }
 
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
-    crate::core::logic::filter_attr_compat::filter_attr_from_params(params)
+    filter_parts_from_params(params).map(|(filter, extras)| filter.to_attr() | extras)
+}
+
+fn parse_target_player(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x3) as u8)
+        .or_else(|| {
+            value.as_str().map(|value| match value.to_ascii_uppercase().as_str() {
+                "SELF" | "ME" | "PLAYER" => 1,
+                "OPPONENT" => 2,
+                "BOTH" | "ALL" => 3,
+                _ => 0,
+            })
+        })
+}
+
+fn parse_card_type(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x3) as u8)
+        .or_else(|| {
+            value.as_str().map(|value| match value.to_ascii_uppercase().as_str() {
+                "MEMBER" => 1,
+                "LIVE" => 2,
+                _ => 0,
+            })
+        })
+}
+
+fn parse_special_id(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x7) as u8)
+        .or_else(|| {
+            value.as_str().map(|value| {
+                match value
+                    .to_ascii_uppercase()
+                    .replace('_', " ")
+                    .replace('-', " ")
+                    .as_str()
+                {
+                    "SAME NAME" | "SAMENAME" => 4,
+                    "NOT MY" | "NOTMY" => 2,
+                    "NOT SELF" | "NOTSELF" => 3,
+                    _ => 0,
+                }
+            })
+        })
+}
+
+fn group_id_from_name(name: &str) -> Option<u8> {
+    match name {
+        "HASUNOSORA" | "HASU" => Some(4),
+        "LIELLA" => Some(3),
+        "NIJIGASAKI" | "NIJIGAKU" | "NIJI" => Some(2),
+        "AQOURS" | "AQUOURS" => Some(1),
+        "MUSE" | "MUS" | "U'S" | "M'S" => Some(0),
+        "ARISE" => Some(10),
+        "SAINT_SNOW" => Some(11),
+        "SUNNY_PASSION" => Some(12),
+        "MUSICAL" => Some(13),
+        _ => None,
+    }
+}
+
+fn unit_id_from_name(name: &str) -> Option<u8> {
+    match name {
+        "PRINTEMPS" => Some(0),
+        "LILY_WHITE" | "LILYWHITE" => Some(1),
+        "BIBI" => Some(2),
+        "CYARON" => Some(3),
+        "AZALEA" => Some(4),
+        "GUILTY_KISS" | "GUILTYKISS" => Some(5),
+        "DIVER_DIVA" | "DIVERDIVA" => Some(6),
+        "A_ZU_NA" | "AZUNA" => Some(7),
+        "QU4RTZ" => Some(8),
+        "R3BIRTH" => Some(9),
+        "CATCHU" => Some(10),
+        "KALEIDOSCORE" => Some(11),
+        "5YNCRI5E" | "SYNCRISE" => Some(12),
+        "CERISE_BOUQUET" | "CERISE" => Some(13),
+        "DOLLCHESTRA" | "DOLL" => Some(14),
+        "MIRA_CRA_PARK" | "MIRA-CRA" | "MIRAKURA" => Some(15),
+        _ => None,
+    }
+}
+
+fn parse_semantic_heart_filter(part: &str) -> Option<(u8, u8)> {
+    let upper = part.trim().to_ascii_uppercase();
+    let token = upper.strip_prefix("HAS_").unwrap_or(upper.as_str());
+    let token = token
+        .strip_prefix("HEART_")
+        .or_else(|| token.strip_prefix("COLOR_"))
+        .unwrap_or(token);
+    let (color_part, threshold_part) = token.rsplit_once("_X").or_else(|| token.rsplit_once('X'))?;
+
+    let color_mask = match color_part {
+        "SMILE" | "PINK" | "COLOR_0" | "00" | "0" => 1 << 0,
+        "RED" | "COLOR_1" | "01" | "1" => 1 << 1,
+        "YELLOW" | "COLOR_2" | "02" | "2" => 1 << 2,
+        "GREEN" | "PURE" | "COLOR_3" | "03" | "3" => 1 << 3,
+        "BLUE" | "COOL" | "COLOR_4" | "04" | "4" => 1 << 4,
+        "PURPLE" | "COLOR_5" | "05" | "5" => 1 << 5,
+        "ANY" | "ALL" | "COLOR_7" => 1 << 6,
+        _ => return None,
+    };
+
+    threshold_part
+        .trim_start_matches('_')
+        .parse::<u8>()
+        .ok()
+        .map(|threshold| (color_mask, threshold))
+}
+
+fn semantic_heart_mask_from_value(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .and_then(|value| match value {
+            0 => Some(1 << 0),
+            1 => Some(1 << 1),
+            2 => Some(1 << 2),
+            3 => Some(1 << 3),
+            4 => Some(1 << 4),
+            5 => Some(1 << 5),
+            6 => Some(1 << 6),
+            _ => None,
+        })
+        .or_else(|| {
+            value.as_str().and_then(|value| match value.trim().to_ascii_uppercase().as_str() {
+                "PINK" | "SMILE" | "0" | "COLOR_0" => Some(1 << 0),
+                "RED" | "1" | "COLOR_1" => Some(1 << 1),
+                "YELLOW" | "2" | "COLOR_2" => Some(1 << 2),
+                "GREEN" | "PURE" | "3" | "COLOR_3" => Some(1 << 3),
+                "BLUE" | "COOL" | "4" | "COLOR_4" => Some(1 << 4),
+                "PURPLE" | "5" | "COLOR_5" => Some(1 << 5),
+                "ANY" | "ALL" | "6" | "COLOR_7" => Some(1 << 6),
+                _ => None,
+            })
+        })
+}
+
+fn apply_string_token(filter: &mut CardFilter, extras: &mut u64, part: &str) {
+    let trimmed = part.trim();
+    let upper = trimmed.to_ascii_uppercase();
+    if upper.is_empty() {
+        return;
+    }
+
+    match upper.as_str() {
+        "OPPONENT" | "TARGET=OPPONENT" | "TARGET_OPPONENT" => {
+            filter.is_enabled = true;
+            filter.target_player = 2;
+            return;
+        }
+        "SELF" | "ME" | "PLAYER" | "TARGET=SELF" | "TARGET_PLAYER" => {
+            filter.is_enabled = true;
+            filter.target_player = 1;
+            return;
+        }
+        "BOTH" | "ALL" | "TARGET=BOTH" | "TARGET_ALL" => {
+            filter.is_enabled = true;
+            filter.target_player = 3;
+            return;
+        }
+        "HAS_GROUP_AQOURS_OR_SAINT_SNOW" => {
+            filter.is_enabled = true;
+            filter.group_enabled = true;
+            filter.group_id = 101;
+            return;
+        }
+        "SAME_NAME_AS_REVEALED" => {
+            filter.is_enabled = true;
+            filter.special_id = 4;
+            return;
+        }
+        "SELECTED_DISCARD" => {
+            filter.is_enabled = true;
+            filter.special_id = 6;
+            return;
+        }
+        "TAPPED" | "STATUS=TAPPED" => {
+            filter.is_enabled = true;
+            filter.is_tapped = true;
+            return;
+        }
+        "HAS_BLADE_HEART" => {
+            filter.is_enabled = true;
+            filter.has_blade_heart = true;
+            return;
+        }
+        "NOT_HAS_BLADE_HEART" => {
+            filter.is_enabled = true;
+            filter.not_has_blade_heart = true;
+            return;
+        }
+        "TYPE_MEMBER" => {
+            filter.is_enabled = true;
+            filter.card_type = 1;
+            return;
+        }
+        "TYPE_LIVE" => {
+            filter.is_enabled = true;
+            filter.card_type = 2;
+            return;
+        }
+        "UNIQUE_NAMES=TRUE" | "UNIQUE_NAMES" | "SAME_UNIQUE_NAMES" => {
+            filter.is_enabled = true;
+            filter.unique_names = true;
+            return;
+        }
+        "COST_LE_REVEALED" => {
+            filter.is_enabled = true;
+            filter.value_enabled = true;
+            filter.value_threshold = 1;
+            filter.is_le = true;
+            filter.is_cost_type = true;
+            *extras |= crate::core::generated_constants::FILTER_REVEALED_CONTEXT;
+            return;
+        }
+        _ => {}
+    }
+
+    if trimmed.contains("NAME_IN") {
+        filter.is_enabled = true;
+        filter.special_id = 1;
+        if let Some(eq_pos) = trimmed.find('=') {
+            if let Some(first_char) = trimmed[eq_pos + 1..].trim().chars().next() {
+                filter.color_mask = (first_char as u8) & 0x7F;
+            }
+        }
+        return;
+    }
+    if trimmed.contains("NOT_NAME=MY") {
+        filter.is_enabled = true;
+        filter.special_id = 2;
+        return;
+    }
+    if let Some((color_mask, threshold)) = parse_semantic_heart_filter(trimmed) {
+        filter.is_enabled = true;
+        filter.value_enabled = true;
+        filter.value_threshold = threshold;
+        filter.color_mask = color_mask;
+        return;
+    }
+    if upper.starts_with("COST") {
+        let value = upper
+            .rsplit(['=', '_'])
+            .next()
+            .and_then(|value| value.parse::<u8>().ok());
+        if let Some(threshold) = value {
+            filter.is_enabled = true;
+            filter.value_enabled = true;
+            filter.value_threshold = threshold;
+            filter.is_le = upper.contains("_LE");
+            filter.is_cost_type = true;
+        }
+        return;
+    }
+    if upper.starts_with("GROUP_ID=") || upper.starts_with("GROUP_ID_") {
+        if let Some(group_id) = upper
+            .rsplit(['=', '_'])
+            .next()
+            .and_then(|value| value.parse::<u8>().ok())
+        {
+            filter.is_enabled = true;
+            filter.group_enabled = true;
+            filter.group_id = group_id;
+        }
+        return;
+    }
+    if upper.starts_with("UNIT_") {
+        let unit_name = upper.replace("UNIT_", "").replace("_ONLY", "");
+        if let Some(unit_id) = unit_id_from_name(unit_name.as_str()) {
+            filter.is_enabled = true;
+            filter.unit_enabled = true;
+            filter.unit_id = unit_id;
+        } else if let Some(group_id) = group_id_from_name(unit_name.as_str()) {
+            filter.is_enabled = true;
+            filter.group_enabled = true;
+            filter.group_id = group_id;
+        }
+        return;
+    }
+    if upper.starts_with("BLADE_LE") || upper.starts_with("BLADE_GE") {
+        if let Some(threshold) = upper
+            .replace("BLADE_LE", "")
+            .replace("BLADE_GE", "")
+            .replace('_', "")
+            .parse::<u8>()
+            .ok()
+        {
+            filter.is_enabled = true;
+            filter.value_enabled = true;
+            filter.value_threshold = threshold;
+            filter.is_le = upper.starts_with("BLADE_LE");
+            *extras |= crate::core::generated_constants::FILTER_BLADE_FILTER_FLAG;
+        }
+        return;
+    }
+
+    let color_mask = match upper.as_str() {
+        "SMILE" | "PINK" | "COLOR_0" | "HEART_PINK" => Some(1 << 0),
+        "RED" | "COLOR_1" => Some(1 << 1),
+        "YELLOW" | "COLOR_2" => Some(1 << 2),
+        "PURE" | "GREEN" | "COLOR_3" => Some(1 << 3),
+        "COOL" | "BLUE" | "COLOR_4" | "HEART_BLUE" => Some(1 << 4),
+        "PURPLE" | "COLOR_5" => Some(1 << 5),
+        "ANY" | "COLOR_7" => Some(1 << 6),
+        _ => None,
+    };
+    if let Some(color_mask) = color_mask {
+        filter.is_enabled = true;
+        filter.color_mask |= color_mask;
+        return;
+    }
+
+    if let Some(group_id) = group_id_from_name(upper.as_str()) {
+        filter.is_enabled = true;
+        filter.group_enabled = true;
+        filter.group_id = group_id;
+    }
+}
+
+fn filter_from_semantic_string(filter: &str) -> (CardFilter, u64) {
+    let mut parsed = CardFilter::default();
+    let mut extras = 0u64;
+    for part in filter.split(',') {
+        apply_string_token(&mut parsed, &mut extras, part);
+    }
+    (parsed, extras)
+}
+
+fn as_bool_robust(value: &Value) -> bool {
+    value
+        .as_bool()
+        .unwrap_or_else(|| value.as_i64().map(|value| value != 0).unwrap_or(false))
+}
+
+fn params_object<'a>(params: Option<&'a Value>) -> Option<&'a serde_json::Map<String, Value>> {
+    let mut obj = params.and_then(Value::as_object)?;
+    if let Some(sub_obj) = obj
+        .get("attr")
+        .or_else(|| obj.get("filter"))
+        .and_then(Value::as_object)
+    {
+        obj = sub_obj;
+    }
+    Some(obj)
 }

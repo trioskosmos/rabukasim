@@ -17,6 +17,29 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
         .expect("export should include summary.ability_count");
 
     assert!(ability_count > 0, "export should contain hydrated abilities");
+
+    let first_attr = export
+        .get("abilities")
+        .and_then(|abilities| abilities.as_array())
+        .and_then(|abilities| {
+            abilities
+                .iter()
+                .flat_map(|ability| {
+                    ability
+                        .get("resolved_frames")
+                        .and_then(|frames| frames.as_array())
+                        .into_iter()
+                        .flatten()
+                })
+                .find_map(|frame| frame.get("attr"))
+        })
+        .expect("export should include semantic resolved frame attr");
+
+    assert!(
+        first_attr.is_object(),
+        "resolved frame attr should be serialized as a semantic object"
+    );
+
     assert_eq!(
         export
             .get("metadata")

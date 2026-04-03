@@ -1,7 +1,6 @@
-use crate::core::enums::*;
 use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::logic::models::{AbilityFrameComponents, SemanticCountZone};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize>) {
@@ -80,9 +79,10 @@ fn resolve_structured_zone_count(
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
+    let semantic = frame.semantic_view();
     let mut filter = frame.filter;
     if frame.opcode == C_COUNT_GROUP {
-        if let Some(group_id) = frame.semantic_group_id(frame.raw_attr as i32) {
+        if let Some(group_id) = semantic.semantic_group_id(frame.raw_attr as i32) {
             filter.group_enabled = true;
             filter.group_id = group_id;
         }
@@ -93,8 +93,7 @@ fn resolve_structured_zone_count(
 
     let zone_mask = filter.zone_mask as u64;
     let has_zone_mask = zone_mask != 0;
-
-    let s_zone = frame.slot.source_zone;
+    let inferred_zone = semantic.inferred_count_zone();
 
     let is_explicit_success_count =
         frame.opcode == C_COUNT_SUCCESS_LIVE || frame.opcode == 307 || frame.opcode == 405;
@@ -104,35 +103,38 @@ fn resolve_structured_zone_count(
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 401
             || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
-            || (!has_zone_mask && s_zone == Zone::Stage)
+            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Stage))
     } else if has_zone_mask {
         zone_mask == ZONE_STAGE as u64
     } else {
-        frame.opcode == C_COUNT_STAGE || frame.opcode == C_COUNT_GROUP || s_zone == Zone::Stage
+        frame.opcode == C_COUNT_STAGE
+            || frame.opcode == C_COUNT_GROUP
+            || inferred_zone == Some(SemanticCountZone::Stage)
     };
     let check_discard = if is_explicit_success_count {
         false
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 403
             || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
-            || (!has_zone_mask && s_zone == Zone::Discard)
+            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Discard))
     } else if has_zone_mask {
         zone_mask == ZONE_DISCARD as u64
     } else {
-        frame.opcode == C_COUNT_DISCARD || s_zone == Zone::Discard
+        frame.opcode == C_COUNT_DISCARD || inferred_zone == Some(SemanticCountZone::Discard)
     };
     let check_hand = if is_explicit_success_count {
         false
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 402
             || (has_zone_mask && zone_mask == ZONE_HAND as u64)
-            || (!has_zone_mask && s_zone == Zone::Hand)
+            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Hand))
     } else if has_zone_mask {
         zone_mask == ZONE_HAND as u64
     } else {
-        frame.opcode == C_COUNT_HAND || s_zone == Zone::Hand
+        frame.opcode == C_COUNT_HAND || inferred_zone == Some(SemanticCountZone::Hand)
     };
-    let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
+    let check_success =
+        is_explicit_success_count || inferred_zone == Some(SemanticCountZone::SuccessPile);
 
     let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
 
@@ -165,7 +167,7 @@ fn resolve_structured_zone_count(
         }
     }
 
-    if frame.counts_unique_names() {
+    if semantic.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
         for (id, slot) in ids {
             let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);

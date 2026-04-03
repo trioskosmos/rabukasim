@@ -8,7 +8,9 @@ mod state_member_play_discard_select;
 pub use state_member_play_discard_place::handle_discard_placement;
 
 pub fn discard_play_choice_type(target_slot_flags: i32) -> ChoiceType {
-    if ((target_slot_flags as u64) & FLAG_BATON_SLOT_ONLY) != 0 {
+    if crate::core::logic::models::SemanticFrameView::from_parts(0, 0, target_slot_flags, None)
+        .is_baton_slot_only()
+    {
         ChoiceType::SelectStageEmptyBaton
     } else {
         ChoiceType::SelectStageEmpty
@@ -26,7 +28,13 @@ pub fn discard_play_slot_is_legal(
 
     let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
     let occupied = player.stage[slot_idx] >= 0;
-    let baton_only = ((target_slot_flags as u64) & FLAG_BATON_SLOT_ONLY) != 0;
+    let baton_only = crate::core::logic::models::SemanticFrameView::from_parts(
+        0,
+        0,
+        target_slot_flags,
+        None,
+    )
+    .is_baton_slot_only();
 
     !prevented
         && !player.is_moved(slot_idx)
@@ -72,21 +80,16 @@ pub fn handle_play_member_from_discard(
         (a as u64, t_idx)
     };
 
-    let baton_slot_only = ((s as u64) & FLAG_BATON_SLOT_ONLY) != 0;
+    let baton_slot_only = frame_data.semantic_view().is_baton_slot_only();
     let requires_empty_stage_slot = true;
 
-    // Total Cost detection:
-    // Support modern bit 60 (compare_accumulated)
-    // Support legacy bit 50 (FILTER_TOTAL_COST)
-    // Support bit 31 (FILTER_COST_TYPE_FLAG) + bit 30 (FILTER_COST_LE) for legacy compiled cards
-    let is_total_cost =
-        (filter_attr_base & (1u64 << 60)) != 0 || (filter_attr_base & (1u64 << 50)) != 0;
+    let uses_total_cost_budget = frame_data.uses_total_cost_budget();
 
     let remaining = if ctx.v_remaining == -1 {
         if ctx.repeat_count <= 0 {
             ctx.repeat_count = v as i16;
         }
-        if is_total_cost {
+        if uses_total_cost_budget {
             ctx.v_accumulated = ((filter_attr_base
                 >> crate::core::logic::constants::FILTER_VALUE_THRESHOLD_SHIFT)
                 & 0x1F) as i16;
@@ -114,7 +117,7 @@ pub fn handle_play_member_from_discard(
             filter_attr_base,
             requires_empty_stage_slot,
             baton_slot_only,
-            is_total_cost,
+            uses_total_cost_budget,
             remaining,
             s,
         );
@@ -131,7 +134,7 @@ pub fn handle_play_member_from_discard(
                 filter_attr_base,
                 requires_empty_stage_slot,
                 baton_slot_only,
-                is_total_cost,
+                uses_total_cost_budget,
                 remaining,
                 s,
             );
@@ -147,7 +150,7 @@ pub fn handle_play_member_from_discard(
         filter_attr_base,
         requires_empty_stage_slot,
         baton_slot_only,
-        is_total_cost,
+        uses_total_cost_budget,
         frame_idx,
         remaining,
         s,

@@ -1,8 +1,4 @@
 use super::*;
-use crate::core::enums::Zone;
-use crate::core::logic::constants::{
-    C_COUNT_DISCARD, C_COUNT_HAND, C_COUNT_STAGE, C_COUNT_SUCCESS_LIVE,
-};
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::state_helpers::{
     inline_value_ge_threshold, update_live_score_snapshot,
@@ -14,37 +10,16 @@ fn resolve_dynamic_multiplier(
     ctx: &AbilityContext,
     frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> Option<i32> {
-    // Determine which counting opcode to use based on source_zone or per_card config
-    let count_opcode = match frame_data.slot.source_zone {
-        Zone::Hand => C_COUNT_HAND,
-        Zone::Discard => C_COUNT_DISCARD,
-        Zone::Stage => C_COUNT_STAGE,
-        Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
-        Zone::Default => {
-            // Legacy/default-slot reduce-cost frames often encode dynamic hand counting
-            // in structured slot/filter bits instead of JSON params.
-            let has_dynamic_config = frame_data.opcode == O_REDUCE_COST
-                && (frame_data.slot.is_dynamic
-                    || frame_data.filter.compare_accumulated
-                    || frame_data.filter.special_id == 3
-                    || frame_data.slot.remainder_zone >= 200
-                    || frame_data.params.as_ref().map_or(false, |p| !p.is_null()));
-            if has_dynamic_config {
-                C_COUNT_HAND
-            } else {
-                return None; // No dynamic config, use static value
-            }
-        }
-        _ => return None, // Other zones don't support dynamic counting
-    };
+    let semantic = frame_data.semantic_view();
+    let count_opcode = semantic.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)?;
 
-    let filter_attr = frame_data.resolved_filter_attr();
+    let filter_attr = frame_data.filter.to_attr();
     let mut count = resolve_count(
         state,
         db,
         count_opcode,
-        filter_attr,
-        frame_data.slot.to_raw(),
+        frame_data.raw_attr,
+        frame_data.raw_slot,
         ctx,
         0,
     );
@@ -53,24 +28,23 @@ fn resolve_dynamic_multiplier(
     if frame_data.opcode == O_REDUCE_COST && count > 0 {
         let p_idx = ctx.player_id as usize;
         let source_card_id = ctx.source_card_id;
-        let source_is_counted = match frame_data.slot.source_zone {
-            Zone::Hand | Zone::Default => state.players[p_idx]
+        let source_is_counted = match semantic.inferred_count_zone() {
+            Some(crate::core::logic::models::SemanticCountZone::Hand) | None => state.players[p_idx]
                 .hand
                 .iter()
                 .any(|&id| id == source_card_id),
-            Zone::Discard => state.players[p_idx]
+            Some(crate::core::logic::models::SemanticCountZone::Discard) => state.players[p_idx]
                 .discard
                 .iter()
                 .any(|&id| id == source_card_id),
-            Zone::Stage => state.players[p_idx]
+            Some(crate::core::logic::models::SemanticCountZone::Stage) => state.players[p_idx]
                 .stage
                 .iter()
                 .any(|&id| id == source_card_id),
-            Zone::SuccessPile => state.players[p_idx]
+            Some(crate::core::logic::models::SemanticCountZone::SuccessPile) => state.players[p_idx]
                 .success_lives
                 .iter()
                 .any(|&id| id == source_card_id),
-            _ => false,
         };
         let source_matches_filter = filter_attr == 0
             || state.card_matches_filter_with_ctx(db, source_card_id, filter_attr, ctx);
@@ -128,8 +102,8 @@ pub fn handle_boost_score(
     }
 
     let v = frame_data.value;
-    let a = frame_data.resolved_filter_attr() as i64;
-    let s = frame_data.slot.to_raw();
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
 
     // Q203 Fix: Check activated keyword conditions
     if let Some(params) = frame_data.params {
@@ -144,7 +118,7 @@ pub fn handle_boost_score(
         let base = frame_data.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
-    } else if frame_data.filter.compare_accumulated || frame_data.slot.is_dynamic {
+    } else if frame_data.semantic_view().uses_count_multiplier() {
         let count = resolve_dynamic_multiplier(state, db, ctx, &frame_data).unwrap_or(0);
         final_v = v * count;
     }

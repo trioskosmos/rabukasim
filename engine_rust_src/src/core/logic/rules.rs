@@ -7,7 +7,6 @@ use std::cell::Cell;
 use crate::core::enums::*;
 pub use crate::core::generated_constants::*;
 use crate::core::hearts::*;
-use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 pub use crate::core::logic::models::*;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -58,21 +57,11 @@ fn frame_uses_count_multiplier(
     frame_data: &AbilityFrameComponents<'_>,
     has_per_card: bool,
 ) -> bool {
-    frame_data.slot.is_dynamic
-        || frame_data.compare_accumulated()
-        || has_per_card
-        || frame_data.slot.source_zone != Zone::Default
+    frame_data.semantic_view().uses_count_multiplier() || has_per_card
 }
 
 fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
     matches!((raw_slot as u32) & 0xFF, 0 | 1 | 4)
-}
-
-fn requests_success_pile_multiplier(raw_attr: u64, raw_slot: i32, value: i32) -> bool {
-    (raw_attr & 0x40) != 0
-        || raw_attr == ConditionType::SuccessPileCount as u64
-        || ((raw_attr & 0xFFFFFFFF) == 1 && (raw_attr >> 32) > 0x00FFFFFF)
-        || (value > 0xFFFF && (raw_slot & 0x10000) != 0)
 }
 
 fn inferred_tapped_group_requirement(ab: &Ability) -> Option<u8> {
@@ -293,6 +282,12 @@ fn apply_reduce_cost_modifiers(
         let params = frame_data
             .params
             .or_else(|| ab.effects.get(frame_idx.saturating_sub(1)).map(|effect| &effect.params));
+        let semantic = SemanticFrameView::from_parts(
+            frame_data.value,
+            frame_data.raw_attr,
+            frame_data.raw_slot,
+            params,
+        );
 
         let mut multiplier = 1;
         let per_card = params
@@ -301,39 +296,7 @@ fn apply_reduce_cost_modifiers(
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
         if frame_uses_count_multiplier(&frame_data, per_card.is_some()) {
-            let mut count_op = if let Some(ref per_card) = per_card {
-                match per_card.as_str() {
-                    "HAND" => C_COUNT_HAND,
-                    "DISCARD" | "DISCARD_COUNT" => C_COUNT_DISCARD,
-                    "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => C_COUNT_SUCCESS_LIVE,
-                    "STAGE" => C_COUNT_STAGE,
-                    _ => 0,
-                }
-            } else {
-                match frame_data.slot.source_zone {
-                    Zone::Hand => C_COUNT_HAND,
-                    Zone::Discard => C_COUNT_DISCARD,
-                    Zone::Stage => C_COUNT_STAGE,
-                    Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
-                    _ => 0,
-                }
-            };
-
-            // Fallback to remainder_zone for dynamic cost reductions (e.g. BP2-001)
-            if count_op == 0 && frame_data.slot.is_dynamic {
-                count_op = match frame_data.slot.source_zone {
-                    Zone::Hand | Zone::Default if frame_data.slot.remainder_zone >= 200 => {
-                        C_COUNT_HAND
-                    }
-                    Zone::Discard if frame_data.slot.remainder_zone >= 100 => C_COUNT_DISCARD,
-                    Zone::Stage if frame_data.slot.remainder_zone < 100 => C_COUNT_STAGE,
-                    Zone::SuccessPile => C_COUNT_SUCCESS_LIVE,
-                    _ if frame_data.slot.remainder_zone >= 200 => C_COUNT_HAND,
-                    _ => 0,
-                };
-            }
-
-            if count_op != 0 {
+            if let Some(count_op) = semantic.count_opcode_hint(op == O_REDUCE_COST) {
                 if state.debug.debug_mode && !state.ui.silent {
                     println!("[DEBUG] apply_reduce_cost_modifiers: count_op={}", count_op);
                 }
@@ -353,41 +316,41 @@ fn apply_reduce_cost_modifiers(
                         p_idx
                     };
                     let source_card_id = ctx.source_card_id;
-                    let source_is_counted = match frame_data.slot.source_zone {
-                        Zone::Hand => state.players[owner_idx]
+                    let source_is_counted = match semantic.inferred_count_zone() {
+                        Some(SemanticCountZone::Hand) => state.players[owner_idx]
                             .hand
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Zone::Default if op == O_REDUCE_COST => state.players[owner_idx]
-                            .hand
-                            .iter()
-                            .any(|&id| id == source_card_id),
-                        Zone::Stage => state.players[owner_idx]
-                            .stage
-                            .iter()
-                            .any(|&id| id == source_card_id),
-                        Zone::Discard => state.players[owner_idx]
+                        Some(SemanticCountZone::Discard) => state.players[owner_idx]
                             .discard
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Zone::SuccessPile => state.players[owner_idx]
+                        Some(SemanticCountZone::Stage) => state.players[owner_idx]
+                            .stage
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        Some(SemanticCountZone::SuccessPile) => state.players[owner_idx]
                             .success_lives
                             .iter()
                             .any(|&id| id == source_card_id),
-                        _ => false,
+                        None if op == O_REDUCE_COST => state.players[owner_idx]
+                            .hand
+                            .iter()
+                            .any(|&id| id == source_card_id),
+                        None => false,
                     };
-                    let source_matches_filter = frame_data.raw_attr == 0
+                    let source_matches_filter = semantic.raw_attr == 0
                         || state.card_matches_filter_with_ctx(
                             db,
                             source_card_id,
-                            frame_data.raw_attr,
+                            semantic.raw_attr,
                             ctx,
                         );
                     if source_is_counted
                         && source_matches_filter
-                        && (frame_data.filter.special_id == 3
-                            || frame_data.slot.source_zone != Zone::Default
-                            || frame_data.compare_accumulated()
+                        && (semantic.filter.special_id == 3
+                            || semantic.slot.source_zone != Zone::Default
+                            || semantic.compare_accumulated()
                             || per_card.is_some())
                     {
                         multiplier -= 1;
@@ -1060,10 +1023,11 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let frame_data = frame.components();
                 let op = frame_data.opcode;
                 let v = frame_data.value;
-                let a = frame_data.raw_attr;
+                let semantic = frame_data.semantic_view();
+                let a = semantic.resolved_filter_attr();
                 let s = frame_data.raw_slot;
                 let params = frame_data.params;
-                let target_area = s & 0xFF;
+                let target_area = semantic.target_area();
                 let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
@@ -1145,8 +1109,10 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             let frames = ab.resolved_frames();
             let target_mask = if slot_idx < 3 {
                 if let Some(first_frame) = frames.first() {
-                    let target_area = first_frame.slot() & 0xFF;
-                    let runtime_attr = first_frame.attr();
+                    let first_frame_data = first_frame.components();
+                    let semantic = first_frame_data.semantic_view();
+                    let target_area = semantic.target_area();
+                    let runtime_attr = semantic.resolved_filter_attr();
                     aura_target_mask(slot_idx, target_area, runtime_attr, !frames.is_empty())
                 } else {
                     0b111
@@ -1159,7 +1125,8 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let frame_data = frame.components();
                 let op = frame_data.opcode;
                 let v = frame_data.value;
-                let a = frame_data.raw_attr;
+                let semantic = frame_data.semantic_view();
+                let a = semantic.resolved_filter_attr();
                 let s = frame_data.raw_slot;
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
@@ -1209,87 +1176,35 @@ fn apply_aura_modifier(
     p_idx: usize,
     target_slot: usize,
 ) {
-    let decode_heart_requirement_color =
-        |raw_slot: i32, raw_attr: u64, params: Option<&serde_json::Value>| -> usize {
-            if let Some(color) = decode_heart_type_from_params(params) {
-                return color;
-            }
-
-            if matches!(raw_slot, 4 | 7) {
-                return 6;
-            }
-
-            let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
-            if color_mask != 0 {
-                if color_mask == 0x7F {
-                    6
-                } else {
-                    color_mask.trailing_zeros() as usize
-                }
-            } else {
-                match raw_slot as usize {
-                    0..=6 => raw_slot as usize,
-                    _ => 6,
-                }
-            }
-        };
+    let semantic = SemanticFrameView::from_parts(v, a, s, params);
 
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;
-    if (s & 0x10000) != 0 {
-        let count_op = (s >> 8) & 0xFFFF;
+    if let Some(count_op) = semantic.embedded_count_opcode() {
         multiplier = resolve_count(state, db, count_op, a, s, ctx, 2);
     }
 
-    // Check if value has high bit set indicating per_card=SUCCESS_PILE
-    if v > 0xFFFF && (v & 0x10000) != 0 {
-        multiplier = state.players[p_idx].success_lives.len() as i32;
-    }
-
     if multiplier == 1 {
-        if let Some(per_card) = params
-            .and_then(|value| value.get("per_card"))
-            .and_then(|value| value.as_str())
-        {
-            multiplier = match per_card.to_ascii_uppercase().as_str() {
-                "HAND" => state.players[p_idx].hand.len() as i32,
-                "DISCARD" | "DISCARD_COUNT" => state.players[p_idx].discard.len() as i32,
-                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
-                    state.players[p_idx].success_lives.len() as i32
-                }
-                "STAGE" => state.players[p_idx]
-                    .stage
-                    .iter()
-                    .copied()
-                    .filter(|&cid| cid >= 0)
-                    .count() as i32,
-                _ => multiplier,
-            };
-        }
-    }
-
-    let decode_heart_color = |raw_slot: i32, raw_attr: u64, params: Option<&serde_json::Value>| -> usize {
-        if let Some(color) = decode_heart_type_from_params(params) {
-            return color;
-        }
-
-        if matches!(raw_slot, 4 | 7) {
-            return 6;
-        }
-
-        let color_mask = raw_attr as usize & FILTER_MASK_LOWER as usize;
-        if color_mask != 0 {
-            if color_mask == 0x7F {
-                return ctx.selected_color as usize;
+        multiplier = match semantic.scale_source() {
+            SemanticScaleSource::None => multiplier,
+            SemanticScaleSource::SuccessPile => state.players[p_idx].success_lives.len() as i32,
+            SemanticScaleSource::CountZone(SemanticCountZone::Hand) => {
+                state.players[p_idx].hand.len() as i32
             }
-            return color_mask.trailing_zeros() as usize;
-        }
-
-        match raw_slot as usize {
-            0..=6 => raw_slot as usize,
-            _ => 6,
-        }
-    };
+            SemanticScaleSource::CountZone(SemanticCountZone::Discard) => {
+                state.players[p_idx].discard.len() as i32
+            }
+            SemanticScaleSource::CountZone(SemanticCountZone::Stage) => state.players[p_idx]
+                .stage
+                .iter()
+                .copied()
+                .filter(|&cid| cid >= 0)
+                .count() as i32,
+            SemanticScaleSource::CountZone(SemanticCountZone::SuccessPile) => {
+                state.players[p_idx].success_lives.len() as i32
+            }
+        };
+    }
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
@@ -1297,24 +1212,25 @@ fn apply_aura_modifier(
             {
                 return;
             }
-            if requests_success_pile_multiplier(a, s, v) {
+            if semantic.scale_source() == SemanticScaleSource::SuccessPile {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             }
             aura.blades[target_slot] += value * multiplier;
         }
         O_ADD_HEARTS => {
-            if (a & 0x02) != 0 && ((s >> 8) & 0xFF) != 0 {
-                let count_op = (s >> 8) & 0xFF;
-                multiplier = resolve_count(state, db, count_op, a, count_op, ctx, 2);
+            if (a & 0x02) != 0 {
+                let count_op = semantic.embedded_count_opcode().unwrap_or(0) & 0xFF;
+                if count_op != 0 {
+                    multiplier = resolve_count(state, db, count_op, a, count_op, ctx, 2);
+                }
             }
-            let color = decode_heart_color(s, a, params);
+            let color = semantic.resolved_color_index(ctx.selected_color as usize, 6);
             if color < 7 {
                 aura.hearts[target_slot].add_to_color(color, value * multiplier);
             }
         }
         O_REDUCE_COST => {
             if is_generic_cost_area_slot(s) {
-                // Generic slot/area reduction
                 aura.slot_cost_modifiers[target_slot] -= value as i16 * multiplier as i16;
             }
         }
@@ -1324,32 +1240,28 @@ fn apply_aura_modifier(
             }
         }
         O_REDUCE_HEART_REQ => {
-            let color = decode_heart_requirement_color(s, a, params);
+            let color = semantic.resolved_color_index(6, 6);
             if color < 7 {
                 aura.heart_req_reductions
                     .add_to_color(color, value * multiplier);
             }
         }
         O_INCREASE_HEART_COST => {
-            let color = decode_heart_requirement_color(s, a, params);
+            let color = semantic.resolved_color_index(6, 6);
             if color < 7 {
                 aura.heart_req_additions
                     .add_to_color(color, value * multiplier);
             }
         }
         O_SET_HEART_COST => {
-            // Unpack up to 6 values from A (each 4 bits) - these are requirements, not additions
-            // The 'v' parameter contains the heart additions (positive = add, negative = remove)
             for i in 0..6 {
                 let req_val = (a >> (i * 4)) & 0xF;
                 if req_val > 0 {
                     aura.heart_req_reductions.add_to_color(i, -(req_val as i32));
-                    // Negative reduction = requirement setting
                 }
             }
-            // Also apply any value-based heart additions from the V parameter
             if value > 0 {
-                let color = decode_heart_color(s, a, params);
+                let color = semantic.resolved_color_index(ctx.selected_color as usize, 6);
                 if color < 7 {
                     aura.hearts[target_slot].add_to_color(color, value);
                 }

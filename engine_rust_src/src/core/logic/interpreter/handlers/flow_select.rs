@@ -37,9 +37,16 @@ fn normalize_select_member_filter_attr(filter_attr: u64, selection_count: i32) -
         return filter_attr;
     }
 
-    let mut filter = crate::core::logic::filter::CardFilter::from_attr_legacy(filter_attr as i64);
+    let semantic = crate::core::logic::models::SemanticFrameView::from_parts(
+        selection_count,
+        filter_attr,
+        0,
+        None,
+    );
+    let mut filter = semantic.filter;
     let looks_like_packed_count = filter.value_enabled
-        && !filter.is_le
+        && semantic.comparison_mode()
+            == crate::core::logic::models::SemanticComparisonMode::GreaterEqual
         && !filter.is_cost_type
         && filter.value_threshold == selection_count as u8
         && filter.card_type == 0
@@ -81,19 +88,20 @@ pub fn handle_select_ops(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.resolved_filter_attr() as i64;
-    let s = frame_data.slot.to_raw();
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
+    let semantic = frame_data.semantic_view();
     let frame_filter_attr = frame_data.filter.to_attr();
     let structured_filter = {
         let mut filter = frame_data.filter;
         filter.is_enabled = true;
         filter
     };
-    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.resolved_filter_attr() != 0 {
-        frame_data.resolved_filter_attr()
+    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
+        semantic.resolved_filter_attr()
     } else {
         a as u64
     };
@@ -234,12 +242,12 @@ pub fn handle_select_ops(
 
         if state.debug.debug_mode && op == O_SELECT_MEMBER {
             eprintln!(
-                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} target_slot={} filter_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
+                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} raw_slot={} raw_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
                 ctx.source_card_id,
                 p_idx,
                 select_member_target_player,
                 effective_slot_info.source_zone,
-                effective_slot_info.target_slot,
+                s,
                 a as u64,
                 resolved_filter_attr,
                 is_targeted_select_member_cost,

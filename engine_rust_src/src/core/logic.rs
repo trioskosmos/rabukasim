@@ -13,7 +13,6 @@ pub mod diagnostics;
 pub mod effects;
 pub mod execution;
 pub mod filter;
-pub mod filter_attr_compat;
 pub mod game;
 mod game_action_processor;
 mod game_logging;

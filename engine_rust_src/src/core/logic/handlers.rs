@@ -1081,14 +1081,11 @@ impl ResponseController for GameState {
                             self.interaction_stack.remove(pos);
                         }
 
-                        let is_total_cost = (pending.filter_attr & (1u64 << 60)) != 0
-                            || (pending.filter_attr & (1u64 << 50)) != 0;
+                        let uses_total_cost_budget = pending.uses_total_cost_budget();
                         let frame_idx = play_ctx.program_counter as usize;
                         let remaining = play_ctx.v_remaining;
                         let target_slot_flags = pending.target_slot;
-                        let baton_slot_only = ((target_slot_flags as u64)
-                            & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
-                            != 0;
+                        let baton_slot_only = pending.is_baton_slot_only();
 
                         let result = crate::core::logic::interpreter::handlers::state::handle_discard_placement(
                             self,
@@ -1098,7 +1095,7 @@ impl ResponseController for GameState {
                             pending.filter_attr,
                             true,
                             baton_slot_only,
-                            is_total_cost,
+                            uses_total_cost_budget,
                             frame_idx,
                             remaining,
                             target_slot_flags,
@@ -1158,10 +1155,7 @@ impl ResponseController for GameState {
                 }
 
                 crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
-                let choice_type = if ((pending.target_slot as u64)
-                    & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
-                    != 0
-                {
+                let choice_type = if pending.is_baton_slot_only() {
                     ChoiceType::SelectStageEmptyBaton
                 } else {
                     ChoiceType::SelectStageEmpty
@@ -1192,10 +1186,6 @@ impl ResponseController for GameState {
                         opcode: pending.effect_opcode,
                         value: pending.ctx.v_remaining as i32,
                         attr: pending.filter_attr,
-                        decoded_filter: crate::core::logic::filter::CardFilter::from_attr_legacy(
-                            pending.filter_attr as i64,
-                        ),
-                        decoded_slot: Default::default(),
                         ..Default::default()
                     },
                     crate::core::logic::models::AbilityFrame::new_return(),
@@ -1473,9 +1463,7 @@ mod tests {
             card_id: 700,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                frame_program: Some(crate::core::logic::models::FrameProgram::from_words(&[
-                    O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
-                ])),
+                bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
                 ..Default::default()
             }],
             ..Default::default()
@@ -1646,9 +1634,7 @@ impl GameState {
         if pending.effect_opcode == O_PLAY_MEMBER_FROM_DISCARD {
             let prevented = (player.prevent_play_to_slot_mask() & (1 << stage_slot)) != 0;
             let occupied = player.stage[stage_slot] >= 0;
-            let baton_only = ((pending.target_slot as u64)
-                & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY)
-                != 0;
+            let baton_only = pending.is_baton_slot_only();
             let baton_ok = !baton_only || player.baton_source_slots.contains(&stage_slot);
 
             if !prevented && !player.is_moved(stage_slot) && !occupied && baton_ok {

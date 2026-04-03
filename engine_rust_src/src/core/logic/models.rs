@@ -28,8 +28,6 @@ pub struct AbilityFrame {
     pub value: i32,
     pub attr: u64,
     pub slot: i32,
-    pub decoded_filter: CardFilter,
-    pub decoded_slot: DecodedSlot,
     pub is_cost: bool,
     pub params: Value,
 }
@@ -71,8 +69,6 @@ impl Default for AbilityFrame {
             value: 0,
             attr: 0,
             slot: 0,
-            decoded_filter: CardFilter::default(),
-            decoded_slot: DecodedSlot::default(),
             is_cost: false,
             params: Value::Null,
         }
@@ -91,6 +87,331 @@ pub struct AbilityFrameComponents<'a> {
     pub is_negated: bool,
     pub is_cost: bool,
     pub params: Option<&'a Value>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticCountZone {
+    Hand,
+    Discard,
+    Stage,
+    SuccessPile,
+}
+
+impl SemanticCountZone {
+    pub fn opcode(self) -> i32 {
+        match self {
+            Self::Hand => C_COUNT_HAND,
+            Self::Discard => C_COUNT_DISCARD,
+            Self::Stage => C_COUNT_STAGE,
+            Self::SuccessPile => C_COUNT_SUCCESS_LIVE,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticScaleSource {
+    None,
+    CountZone(SemanticCountZone),
+    SuccessPile,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticContextMode {
+    Default,
+    LookedCards,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticComparisonMode {
+    GreaterEqual,
+    LessEqual,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SemanticFrameView<'a> {
+    pub value: i32,
+    pub raw_attr: u64,
+    pub raw_slot: i32,
+    pub filter: CardFilter,
+    pub slot: DecodedSlot,
+    pub params: Option<&'a Value>,
+}
+
+impl<'a> SemanticFrameView<'a> {
+    pub fn from_parts(
+        value: i32,
+        raw_attr: u64,
+        raw_slot: i32,
+        params: Option<&'a Value>,
+    ) -> Self {
+        Self {
+            value,
+            raw_attr,
+            raw_slot,
+            filter: CardFilter::from_attr_legacy(raw_attr as i64),
+            slot: DecodedSlot::decode(raw_slot),
+            params,
+        }
+    }
+
+    pub fn resolved_filter_attr(&self) -> u64 {
+        if self.raw_attr != 0 {
+            self.raw_attr
+        } else {
+            self.filter.to_attr()
+        }
+    }
+
+    pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
+        let lower_attr = self.raw_attr & 0x00000000FFFF_FFFF;
+        if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+            Some((lower_attr & 0x7F) as u8)
+        } else {
+            self.filter.semantic_group_id(fallback_value)
+        }
+    }
+
+    pub fn counts_unique_names(&self) -> bool {
+        self.filter.unique_names
+            || (self.raw_attr & crate::core::logic::constants::FILTER_UNIQUE_NAMES) != 0
+    }
+
+    pub fn compare_accumulated(&self) -> bool {
+        self.filter.compare_accumulated
+    }
+
+    pub fn uses_total_cost_budget(&self) -> bool {
+        self.filter.compare_accumulated
+            || (self.raw_attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0
+    }
+
+    pub fn target_area(&self) -> i32 {
+        self.slot.target_slot as i32
+    }
+
+    pub fn is_baton_slot_only(&self) -> bool {
+        ((self.raw_slot as u64) & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY) != 0
+    }
+
+    pub fn context_mode(&self) -> SemanticContextMode {
+        if (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
+            || self.raw_slot == crate::core::generated_constants::ZONE_LOOKED_CARDS
+            || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
+        {
+            SemanticContextMode::LookedCards
+        } else {
+            SemanticContextMode::Default
+        }
+    }
+
+    pub fn has_revealed_context_passthrough(&self) -> bool {
+        self.context_mode() == SemanticContextMode::LookedCards
+    }
+
+    pub fn comparison_mode(&self) -> SemanticComparisonMode {
+        if self.filter.is_le {
+            SemanticComparisonMode::LessEqual
+        } else {
+            SemanticComparisonMode::GreaterEqual
+        }
+    }
+
+    pub fn comparison_reversed(&self) -> bool {
+        (self.raw_attr & 0x01) != 0
+    }
+
+    pub fn requests_keyword_energy(&self) -> bool {
+        self.filter.keyword_energy
+            || (self.raw_attr & crate::core::generated_constants::KEYWORD_ACTIVATED_ENERGY_BY_GROUP)
+                != 0
+    }
+
+    pub fn requests_keyword_member(&self) -> bool {
+        self.filter.keyword_member
+            || (self.raw_attr & crate::core::generated_constants::KEYWORD_ACTIVATED_MEMBER_BY_GROUP)
+                != 0
+    }
+
+    pub fn requests_played_this_turn_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_PLAYED_THIS_TURN) != 0
+            || self.raw_attr == 0
+    }
+
+    pub fn requests_yell_count_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_YELL_COUNT) != 0
+    }
+
+    pub fn requests_has_live_set_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_HAS_LIVE_SET) != 0
+    }
+
+    pub fn inferred_count_zone(&self) -> Option<SemanticCountZone> {
+        match self.slot.source_zone {
+            Zone::Hand => Some(SemanticCountZone::Hand),
+            Zone::Discard => Some(SemanticCountZone::Discard),
+            Zone::Stage => Some(SemanticCountZone::Stage),
+            Zone::SuccessPile => Some(SemanticCountZone::SuccessPile),
+            Zone::Default if self.slot.is_dynamic => {
+                if self.slot.remainder_zone >= 200 {
+                    Some(SemanticCountZone::Hand)
+                } else if self.slot.remainder_zone >= 100 {
+                    Some(SemanticCountZone::Discard)
+                } else {
+                    Some(SemanticCountZone::Stage)
+                }
+            }
+            _ => None,
+        }
+    }
+
+    pub fn count_opcode_hint(&self, default_hand_for_dynamic_cost: bool) -> Option<i32> {
+        if let Some(per_card) = self
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+            .and_then(|value| value.as_str())
+        {
+            let zone = match per_card.to_ascii_uppercase().as_str() {
+                "HAND" => Some(SemanticCountZone::Hand),
+                "DISCARD" | "DISCARD_COUNT" => Some(SemanticCountZone::Discard),
+                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
+                    Some(SemanticCountZone::SuccessPile)
+                }
+                "STAGE" => Some(SemanticCountZone::Stage),
+                _ => None,
+            };
+            if let Some(zone) = zone {
+                return Some(zone.opcode());
+            }
+        }
+
+        if default_hand_for_dynamic_cost
+            && self.slot.source_zone == Zone::Default
+            && (self.slot.is_dynamic
+                || self.filter.compare_accumulated
+                || self.filter.special_id == 3
+                || self.slot.remainder_zone >= 200
+                || self.params.is_some())
+        {
+            return Some(SemanticCountZone::Hand.opcode());
+        }
+
+        self.inferred_count_zone().map(SemanticCountZone::opcode)
+    }
+
+    pub fn scale_source(&self) -> SemanticScaleSource {
+        const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+        const LEGACY_LOW_WORD_MASK: u64 = 0xFFFF_FFFF;
+        const LEGACY_SUCCESS_PILE_SENTINEL: u64 = 1;
+        const LEGACY_SUCCESS_PILE_HIGH_WORD_FLOOR: u64 = 0x00FF_FFFF;
+        const LEGACY_MULTIPLIER_FLAG: i32 = 0x1_0000;
+
+        if let Some(per_card) = self
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+            .and_then(|value| value.as_str())
+        {
+            return match per_card.to_ascii_uppercase().as_str() {
+                "HAND" => SemanticScaleSource::CountZone(SemanticCountZone::Hand),
+                "DISCARD" | "DISCARD_COUNT" => {
+                    SemanticScaleSource::CountZone(SemanticCountZone::Discard)
+                }
+                "STAGE" => SemanticScaleSource::CountZone(SemanticCountZone::Stage),
+                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
+                    SemanticScaleSource::SuccessPile
+                }
+                _ => SemanticScaleSource::None,
+            };
+        }
+
+        if (self.raw_attr & LEGACY_SUCCESS_PILE_FLAG) != 0
+            || self.raw_attr == ConditionType::SuccessPileCount as u64
+            || ((self.raw_attr & LEGACY_LOW_WORD_MASK) == LEGACY_SUCCESS_PILE_SENTINEL
+                && (self.raw_attr >> 32) > LEGACY_SUCCESS_PILE_HIGH_WORD_FLOOR)
+            || (self.value > 0xFFFF && (self.value & LEGACY_MULTIPLIER_FLAG) != 0)
+        {
+            return SemanticScaleSource::SuccessPile;
+        }
+
+        if let Some(zone) = self.inferred_count_zone() {
+            return SemanticScaleSource::CountZone(zone);
+        }
+
+        SemanticScaleSource::None
+    }
+
+    pub fn embedded_count_opcode(&self) -> Option<i32> {
+        if (self.raw_slot & 0x1_0000) != 0 {
+            Some((self.raw_slot >> 8) & 0xFFFF)
+        } else {
+            None
+        }
+    }
+
+    pub fn count_filter_attr(&self) -> u64 {
+        self.raw_attr & crate::core::logic::constants::FILTER_MASK_LOWER
+    }
+
+    pub fn uses_count_multiplier(&self) -> bool {
+        self.slot.is_dynamic
+            || self.filter.compare_accumulated
+            || self.scale_source() != SemanticScaleSource::None
+    }
+
+    pub fn resolved_color_index(&self, selected_color: usize, any_fallback: usize) -> usize {
+        if let Some(color) = crate::core::logic::heart_semantics::decode_heart_type_from_params(self.params) {
+            return color;
+        }
+
+        if matches!(self.raw_slot, 4 | 7) {
+            return any_fallback;
+        }
+
+        let color_mask = self.filter.color_mask as usize;
+        if color_mask != 0 {
+            if color_mask == 0x7F {
+                return selected_color;
+            }
+            return color_mask.trailing_zeros() as usize;
+        }
+
+        match self.raw_slot as usize {
+            0..=6 => self.raw_slot as usize,
+            _ => any_fallback,
+        }
+    }
+
+    pub fn normalized_baton_filter_attr(&self) -> u64 {
+        let attr = self.raw_attr;
+        if (attr & 0xFFFFFFFF00000000) == 0 && (attr & 0x1F) == 0 && attr != 0 && attr < 300 {
+            0x10 | (attr << 5)
+        } else {
+            attr
+        }
+    }
+
+    pub fn discard_source_zone(&self) -> Zone {
+        match self.slot.source_zone {
+            Zone::Default => {
+                let target_slot = self.slot.target_slot;
+                if target_slot == 4 {
+                    Zone::Stage
+                } else if target_slot == 6 {
+                    Zone::Hand
+                } else if (9..=11).contains(&target_slot) {
+                    Zone::LiveSet
+                } else {
+                    Zone::Deck
+                }
+            }
+            Zone::Hand => Zone::Hand,
+            Zone::Stage => Zone::Stage,
+            Zone::Discard => Zone::Discard,
+            Zone::Yell => Zone::Yell,
+            other => other,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -164,6 +485,17 @@ fn trace_zone(zone: Zone) -> Option<Zone> {
 }
 
 impl<'a> AbilityFrameComponents<'a> {
+    pub fn semantic_view(&self) -> SemanticFrameView<'a> {
+        SemanticFrameView {
+            value: self.value,
+            raw_attr: self.raw_attr,
+            raw_slot: self.raw_slot,
+            filter: self.filter,
+            slot: self.slot,
+            params: self.params,
+        }
+    }
+
     /// Resolve which player this frame targets based on the structured slot data.
     pub fn target_player_index(&self, controller_idx: usize) -> usize {
         if self.slot.is_opponent || self.filter.target_player == TARGET_PLAYER_OPPONENT as u8 {
@@ -176,48 +508,35 @@ impl<'a> AbilityFrameComponents<'a> {
     /// `ADD_TO_HAND` is effectively two effects: draw from deck, or consume the
     /// shared `looked_cards` buffer produced by search/reveal effects.
     pub fn add_to_hand_uses_looked_cards(&self) -> bool {
-        self.raw_slot == crate::core::generated_constants::ZONE_LOOKED_CARDS
-            || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
+        self.semantic_view().context_mode() == SemanticContextMode::LookedCards
     }
 
     pub fn resolved_filter_attr(&self) -> u64 {
-        if self.raw_attr != 0 {
-            self.raw_attr
-        } else {
-            self.filter.to_attr()
-        }
+        self.semantic_view().resolved_filter_attr()
     }
 
     pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
-        self.filter.semantic_group_id(fallback_value)
+        self.semantic_view().semantic_group_id(fallback_value)
     }
 
     pub fn counts_unique_names(&self) -> bool {
-        self.filter.unique_names
+        self.semantic_view().counts_unique_names()
     }
 
     pub fn compare_accumulated(&self) -> bool {
-        self.filter.compare_accumulated
+        self.semantic_view().compare_accumulated()
+    }
+
+    pub fn uses_total_cost_budget(&self) -> bool {
+        self.semantic_view().uses_total_cost_budget()
+    }
+
+    pub fn count_filter_attr(&self) -> u64 {
+        self.semantic_view().count_filter_attr()
     }
 
     pub fn has_revealed_context_passthrough(&self) -> bool {
-        (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
-    }
-
-    pub fn comparison_reversed(&self) -> bool {
-        (self.raw_attr & 0x01) != 0
-    }
-
-    pub fn has_played_this_turn_keyword(&self) -> bool {
-        (self.raw_attr & crate::core::generated_constants::KEYWORD_PLAYED_THIS_TURN) != 0
-    }
-
-    pub fn has_yell_count_keyword(&self) -> bool {
-        (self.raw_attr & crate::core::generated_constants::KEYWORD_YELL_COUNT) != 0
-    }
-
-    pub fn has_live_set_keyword(&self) -> bool {
-        (self.raw_attr & crate::core::generated_constants::KEYWORD_HAS_LIVE_SET) != 0
+        self.semantic_view().has_revealed_context_passthrough()
     }
 
     /// Check if this frame uses dynamic value calculation (accumulated compare)
@@ -429,8 +748,6 @@ impl AbilityFrame {
             value,
             attr: filter.to_attr(),
             slot: slot.to_raw(),
-            decoded_filter: filter,
-            decoded_slot: slot,
             is_cost,
             params,
         }
@@ -449,8 +766,6 @@ impl AbilityFrame {
             value,
             attr,
             slot,
-            decoded_filter: CardFilter::from_attr_legacy(attr as i64),
-            decoded_slot: DecodedSlot::decode(slot),
             is_cost,
             params,
         }
@@ -1225,16 +1540,14 @@ impl AbilityFrame {
                     TARGET_PLAYER_SELF as u8
                 };
             }
-            let mut frame = Self::with_components(
-                runtime_opcode,
-                value_i32,
-                filter,
-                slot,
-                false,
-                effect.params.clone(),
-            );
-            frame.attr = filter.to_attr() | runtime_passthrough | params_passthrough;
-            return frame;
+            return AbilityFrame {
+                opcode: runtime_opcode,
+                value: value_i32,
+                attr: filter.to_attr() | runtime_passthrough | params_passthrough,
+                slot: slot.to_raw(),
+                is_cost: false,
+                params: effect.params.clone(),
+            };
         }
         Self::new(runtime_opcode, value_i32, runtime_attr as i64, runtime_slot, false)
     }
@@ -1259,8 +1572,8 @@ impl AbilityFrame {
             raw_opcode,
             opcode,
             value: self.value,
-            filter: self.decoded_filter,
-            slot: self.decoded_slot,
+            filter: CardFilter::from_attr_legacy(self.attr as i64),
+            slot: DecodedSlot::decode(self.slot),
             raw_attr: self.attr,
             raw_slot: self.slot,
             is_negated,
@@ -1318,11 +1631,11 @@ impl AbilityFrame {
     }
 
     pub fn filter(&self) -> CardFilter {
-        self.decoded_filter
+        CardFilter::from_attr_legacy(self.attr as i64)
     }
 
     pub fn dslot(&self) -> DecodedSlot {
-        self.decoded_slot
+        DecodedSlot::decode(self.slot)
     }
 
     #[allow(deprecated)]
@@ -1758,6 +2071,18 @@ pub struct PendingInteraction {
     pub options: Vec<Value>,
     #[serde(default)]
     pub execution_id: u32,
+}
+
+impl PendingInteraction {
+    pub fn uses_total_cost_budget(&self) -> bool {
+        let filter = CardFilter::from_attr_legacy(self.filter_attr as i64);
+        filter.compare_accumulated
+            || (self.filter_attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0
+    }
+
+    pub fn is_baton_slot_only(&self) -> bool {
+        ((self.target_slot as u64) & crate::core::generated_constants::FLAG_BATON_SLOT_ONLY) != 0
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, Hash)]
@@ -2254,6 +2579,30 @@ mod tests {
                 .unwrap_or(0),
             0
         );
+    }
+
+    #[test]
+    fn total_cost_budget_helper_accepts_modern_compare_accumulated() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "PLAY_MEMBER_FROM_DISCARD",
+            "attr": {
+                "compare_accumulated": 1,
+                "value_enabled": 1,
+                "value_threshold": 4
+            }
+        }));
+
+        assert!(frame.components().uses_total_cost_budget());
+    }
+
+    #[test]
+    fn total_cost_budget_helper_accepts_legacy_total_cost_flag() {
+        let pending = PendingInteraction {
+            filter_attr: crate::core::generated_constants::FILTER_TOTAL_COST,
+            ..Default::default()
+        };
+
+        assert!(pending.uses_total_cost_budget());
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

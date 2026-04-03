@@ -2295,13 +2295,6 @@ mod tests {
                     ..Default::default()
                 }
                 .to_raw(),
-                decoded_filter: crate::core::logic::filter::CardFilter::from_attr_legacy(
-                    (6u64 << 53) as i64,
-                ),
-                decoded_slot: crate::core::logic::interpreter::instruction::DecodedSlot {
-                    target_slot: SLOT_HAND as u8,
-                    ..Default::default()
-                },
                 is_cost: false,
                 ..Default::default()
             },

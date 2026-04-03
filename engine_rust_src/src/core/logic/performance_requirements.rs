@@ -6,32 +6,10 @@ use super::player::PlayerState;
 use super::rules::calculate_board_aura;
 use crate::core::enums::*;
 use crate::core::hearts::*;
-use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use serde_json::json; // Value removed
 
 fn decode_heart_requirement_color(frame: &AbilityFrameComponents<'_>) -> usize {
-    let raw_slot = frame.slot.target_slot as usize;
-    if let Some(color) = decode_heart_type_from_params(frame.params) {
-        return color;
-    }
-
-    if matches!(raw_slot, 4 | 7) {
-        return 6;
-    }
-
-    let color_mask = frame.filter.color_mask as usize;
-    if color_mask != 0 {
-        if color_mask == 0x7F {
-            6
-        } else {
-            color_mask.trailing_zeros() as usize
-        }
-    } else {
-        match raw_slot {
-            0..=6 => raw_slot,
-            _ => 6,
-        }
-    }
+    frame.semantic_view().resolved_color_index(6, 6)
 }
 
 pub fn process_heart_modifiers_frames(

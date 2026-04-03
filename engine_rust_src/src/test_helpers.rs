@@ -65,9 +65,6 @@ impl FrameBuilder {
     pub fn a(mut self, a_val: i64) -> Self {
         if let Some(frame) = self.frames.last_mut() {
             frame.attr = a_val as u64;
-            frame.decoded_filter = crate::core::logic::filter::CardFilter::from_attr_legacy(
-                a_val,
-            );
         }
         self
     }
@@ -78,9 +75,6 @@ impl FrameBuilder {
             filter.is_optional = val;
             let a = filter.to_attr() as i64;
             self = self.a(a);
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_filter = filter;
-            }
         }
         self
     }
@@ -88,9 +82,6 @@ impl FrameBuilder {
     pub fn s(mut self, s_val: i32) -> Self {
         if let Some(frame) = self.frames.last_mut() {
             frame.slot = s_val;
-            frame.decoded_slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(
-                s_val,
-            );
         }
         self
     }
@@ -100,9 +91,6 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.source_zone = zone;
             self = self.s(dslot.to_raw());
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_slot = dslot;
-            }
         }
         self
     }
@@ -112,9 +100,6 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.dest_zone = zone;
             self = self.s(dslot.to_raw());
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_slot = dslot;
-            }
         }
         self
     }
@@ -124,9 +109,6 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.target_slot = target_slot;
             self = self.s(dslot.to_raw());
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_slot = dslot;
-            }
         }
         self
     }
@@ -136,9 +118,6 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.area_idx = area_idx;
             self = self.s(dslot.to_raw());
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_slot = dslot;
-            }
         }
         self
     }
@@ -148,9 +127,6 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.comparison = mode;
             self = self.s(dslot.to_raw());
-            if let Some(frame) = self.frames.last_mut() {
-                frame.decoded_slot = dslot;
-            }
         }
         self
     }

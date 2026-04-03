@@ -1,4 +1,4 @@
-use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL, FILTER_MASK_LOWER};
+use crate::core::logic::constants::{CHOICE_DONE, FILTER_IS_OPTIONAL};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -16,21 +16,15 @@ pub fn handle_move_to_discard(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.resolved_filter_attr() as i64;
-    let s = frame_data.slot.to_raw();
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
+    let semantic = frame_data.semantic_view();
     
     // Resolve count (handle compare_accumulated and UNTIL_SIZE)
-    let v = if frame_data.filter.compare_accumulated {
-        resolve_count(
-            state,
-            db,
-            s,
-            frame_data.resolved_filter_attr() & FILTER_MASK_LOWER,
-            p_idx as i32,
-            ctx,
-            0,
-        ) as i32
+    let v = if semantic.uses_total_cost_budget() {
+        let count_op = semantic.embedded_count_opcode().unwrap_or(s);
+        resolve_count(state, db, count_op, frame_data.count_filter_attr(), p_idx as i32, ctx, 0) as i32
     } else {
         frame_data.value
     };
@@ -38,22 +32,7 @@ pub fn handle_move_to_discard(
     let base_p = ctx.activator_id as usize;
     let slot = frame_data.slot;
     
-    // Resolve source zone from slot - inlined from helper
-    let mut source_zone = match slot.source_zone {
-        Zone::Default => {
-            // Infer from target slot - SLOT_CONTEXT=Stage, SLOT_HAND=Hand, live slots=LiveSet, else Deck
-            let ts = slot.target_slot;
-            if ts == 4 { Zone::Stage }
-            else if ts == 6 { Zone::Hand }
-            else if (9..=11).contains(&ts) { Zone::LiveSet }  // SLOT_LIVE_0..=SLOT_LIVE_2
-            else { Zone::Deck }
-        }
-        Zone::Hand => Zone::Hand,
-        Zone::Stage => Zone::Stage,
-        Zone::Discard => Zone::Discard,
-        Zone::Yell => Zone::Yell,
-        _ => Zone::Deck,
-    };
+    let mut source_zone = semantic.discard_source_zone();
     
     // Determine target player from slot
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
@@ -146,7 +125,7 @@ pub fn handle_move_to_discard(
                 _ => {}
             }
             let filter_attr_with_mask =
-                filter_obj.to_attr() | frame_data.resolved_filter_attr().max(frame_data.filter.to_attr());
+                filter_obj.to_attr() | frame_data.raw_attr.max(frame_data.filter.to_attr());
 
             if matches!(
                 suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),

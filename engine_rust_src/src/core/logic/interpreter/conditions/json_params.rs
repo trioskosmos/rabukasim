@@ -63,6 +63,51 @@ pub fn condition_from_clause(clause: &serde_json::Value) -> Condition {
     }
 }
 
+fn resolved_filter_attr(
+    params: &serde_json::Map<String, serde_json::Value>,
+    fallback_attr: u64,
+) -> u64 {
+    get_param_case_insensitive(params, "FILTER")
+        .or_else(|| get_param_case_insensitive(params, "filter"))
+        .and_then(|value| value.as_str())
+        .map(map_filter_string_to_attr)
+        .filter(|&attr| attr != 0)
+        .unwrap_or(fallback_attr)
+}
+
+fn resolved_condition_player(
+    params: &serde_json::Map<String, serde_json::Value>,
+    ctx: &AbilityContext,
+) -> usize {
+    get_param_case_insensitive(params, "val")
+        .or_else(|| get_param_case_insensitive(params, "player"))
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_ascii_uppercase())
+        .map(|value| match value.as_str() {
+            "OPPONENT" => 1 - ctx.player_id as usize,
+            "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
+            _ => ctx.player_id as usize,
+        })
+        .unwrap_or(ctx.player_id as usize)
+}
+
+fn compare_count_thresholds(
+    params: &serde_json::Map<String, serde_json::Value>,
+    count: i32,
+) -> bool {
+    if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
+        count == eq as i32
+    } else if let Some(ge) = get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64()) {
+        count >= ge as i32
+    } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
+        count >= min as i32
+    } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
+        count <= max as i32
+    } else {
+        count > 0
+    }
+}
+
 pub fn evaluate_raw_condition(
     state: &GameState,
     db: &CardDatabase,
@@ -109,23 +154,8 @@ pub fn evaluate_raw_condition(
             player_cost > opponent_cost
         }
         "COUNT_MEMBER" => {
-            let filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
-                .and_then(|value| value.as_str())
-                .map(map_filter_string_to_attr)
-                .filter(|&attr| attr != 0)
-                .unwrap_or(cond.attr);
-
-            let target_player = get_param_case_insensitive(params, "val")
-                .or_else(|| get_param_case_insensitive(params, "player"))
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_ascii_uppercase())
-                .map(|value| match value.as_str() {
-                    "OPPONENT" => 1 - ctx.player_id as usize,
-                    "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
-                    _ => ctx.player_id as usize,
-                })
-                .unwrap_or(ctx.player_id as usize);
+            let filter_attr = resolved_filter_attr(params, cond.attr);
+            let target_player = resolved_condition_player(params, ctx);
 
             let count = state.players[target_player]
                 .stage
@@ -138,31 +168,10 @@ pub fn evaluate_raw_condition(
                 })
                 .count() as i32;
 
-            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
-                count == eq as i32
-            } else if let Some(ge) =
-                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
-            {
-                count >= ge as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
-                count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
-                count <= max as i32
-            } else {
-                count > 0
-            }
+            compare_count_thresholds(params, count)
         }
         "COUNT_STAGE" => {
-            let mut filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
-                .and_then(|value| value.as_str())
-                .map(map_filter_string_to_attr)
-                .filter(|&attr| attr != 0)
-                .unwrap_or(cond.attr);
+            let mut filter_attr = resolved_filter_attr(params, cond.attr);
 
             if let Some(area) = get_param_case_insensitive(params, "AREA")
                 .or_else(|| get_param_case_insensitive(params, "area"))
@@ -203,23 +212,8 @@ pub fn evaluate_raw_condition(
             )
         }
         "ALL_MEMBERS" => {
-            let filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
-                .and_then(|value| value.as_str())
-                .map(map_filter_string_to_attr)
-                .filter(|&attr| attr != 0)
-                .unwrap_or(cond.attr);
-
-            let target_player = get_param_case_insensitive(params, "val")
-                .or_else(|| get_param_case_insensitive(params, "player"))
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_ascii_uppercase())
-                .map(|value| match value.as_str() {
-                    "OPPONENT" => 1 - ctx.player_id as usize,
-                    "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
-                    _ => ctx.player_id as usize,
-                })
-                .unwrap_or(ctx.player_id as usize);
+            let filter_attr = resolved_filter_attr(params, cond.attr);
+            let target_player = resolved_condition_player(params, ctx);
 
             let stage = &state.players[target_player].stage;
             let total = stage.iter().copied().filter(|&cid| cid >= 0).count() as i32;
@@ -235,22 +229,12 @@ pub fn evaluate_raw_condition(
 
             if total == 0 {
                 false
-            } else if let Some(eq) =
-                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
+            } else if get_param_case_insensitive(params, "EQ").is_some()
+                || get_param_case_insensitive(params, "GE").is_some()
+                || get_param_case_insensitive(params, "MIN").is_some()
+                || get_param_case_insensitive(params, "MAX").is_some()
             {
-                matching == eq as i32
-            } else if let Some(ge) =
-                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
-            {
-                matching >= ge as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
-                matching >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
-                matching <= max as i32
+                compare_count_thresholds(params, matching)
             } else {
                 matching == total
             }
@@ -267,23 +251,7 @@ pub fn evaluate_raw_condition(
             };
 
             let energy_count = state.players[target_player].energy_zone.len() as i32;
-            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
-                energy_count == eq as i32
-            } else if let Some(ge) =
-                get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64())
-            {
-                energy_count >= ge as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
-                energy_count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
-                energy_count <= max as i32
-            } else {
-                energy_count > 0
-            }
+            compare_count_thresholds(params, energy_count)
         }
         "DID_ACTIVATE_ENERGY"
         | "DID_ACTIVATE_ENERGY_BY_GROUP"
