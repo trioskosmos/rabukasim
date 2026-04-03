@@ -270,14 +270,14 @@ pub fn describe_frame_step(frame: &AbilityFrameComponents<'_>) -> String {
     describe_trace_step(
         frame.opcode,
         frame.value,
-        frame.raw_attr as i64,
-        frame.raw_slot,
+        frame.resolved_filter_attr() as i64,
+        frame.slot.to_raw(),
         frame.is_negated,
     )
 }
 
 pub fn describe_frame_condition(frame: &AbilityFrameComponents<'_>) -> String {
-    describe_condition(frame.opcode, frame.value, frame.raw_attr)
+    describe_condition(frame.opcode, frame.value, frame.resolved_filter_attr())
 }
 
 fn truncate_text(text: String, max_len: usize) -> String {

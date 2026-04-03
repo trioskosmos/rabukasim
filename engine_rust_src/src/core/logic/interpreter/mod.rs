@@ -12,6 +12,8 @@ pub mod logging;
 pub mod suspension;
 
 use super::models::{Ability, AbilityFrame, AbilityFrameComponents};
+use crate::core::logic::filter::CardFilter;
+use crate::core::logic::interpreter::instruction::DecodedSlot;
 use super::CardDatabase;
 use crate::core::enums::{Phase, TriggerType};
 use crate::core::logic::constants::*;
@@ -191,8 +193,8 @@ fn next_condition_block_starts_here(frames: &[AbilityFrame], next_idx: usize) ->
 fn is_pure_nop(frame_data: &AbilityFrameComponents<'_>) -> bool {
     frame_data.opcode == O_NOP
         && frame_data.value == 0
-        && frame_data.raw_attr == 0
-        && frame_data.raw_slot == 0
+        && frame_data.filter == CardFilter::default()
+        && frame_data.slot == DecodedSlot::default()
         && frame_data.params.is_none()
 }
 
@@ -527,13 +529,13 @@ pub fn resolve_semantic_frames(
         if ctx_in.source_card_id == 4331 {
             if state.debug.debug_mode && !state.ui.silent {
                 eprintln!(
-                    "[FRAME_DBG] ip={} opcode={} value={} optional={} raw_attr={:#x} filter_attr={:#x}",
+                    "[FRAME_DBG] ip={} opcode={} value={} optional={} filter_attr={:#x} slot={}",
                     ip,
                     frame_data.opcode,
                     frame_data.value,
                     frame_data.filter.is_optional,
-                    frame_data.raw_attr,
-                    frame_data.filter.to_attr()
+                    frame_data.resolved_filter_attr(),
+                    frame_data.slot.to_raw()
                 );
             }
         }
@@ -583,7 +585,6 @@ pub fn resolve_semantic_frames(
         if condition_frame.slot.target_slot as i32 == crate::core::generated_constants::SLOT_CONTEXT
         {
             condition_frame.slot.target_slot = ctx.target_slot as u8;
-            condition_frame.raw_slot = condition_frame.slot.to_raw();
         }
 
         if is_condition_frame(&condition_frame) {
@@ -595,9 +596,9 @@ pub fn resolve_semantic_frames(
                         logging::describe_condition(
                             condition_frame.opcode,
                             condition_frame.value,
-                            condition_frame.raw_attr
+                            condition_frame.resolved_filter_attr()
                         ),
-                        logging::describe_filter_bits(condition_frame.raw_attr)
+                        logging::describe_filter_bits(condition_frame.resolved_filter_attr())
                     );
                 }
             }

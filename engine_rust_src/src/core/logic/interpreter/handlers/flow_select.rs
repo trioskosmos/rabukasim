@@ -81,8 +81,8 @@ pub fn handle_select_ops(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
@@ -92,7 +92,7 @@ pub fn handle_select_ops(
         filter.is_enabled = true;
         filter
     };
-    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
+    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.resolved_filter_attr() != 0 {
         frame_data.resolved_filter_attr()
     } else {
         a as u64
@@ -234,12 +234,12 @@ pub fn handle_select_ops(
 
         if state.debug.debug_mode && op == O_SELECT_MEMBER {
             eprintln!(
-                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} raw_slot={} raw_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
+                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} target_slot={} filter_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
                 ctx.source_card_id,
                 p_idx,
                 select_member_target_player,
                 effective_slot_info.source_zone,
-                s,
+                effective_slot_info.target_slot,
                 a as u64,
                 resolved_filter_attr,
                 is_targeted_select_member_cost,

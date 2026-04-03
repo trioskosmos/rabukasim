@@ -49,7 +49,7 @@ pub fn handle_negate_effect(
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.resolved_filter_attr() as i64;
     let p_idx = ctx.player_id as usize;
     let target_slot = frame_data.slot.target_slot as i32;
 
@@ -112,7 +112,7 @@ pub fn handle_flavor_action(state: &mut GameState, _db: &CardDatabase, _ctx: &mu
     if state.debug.debug_mode {
         println!(
             "[DEBUG] FLAVOR_ACTION: {}",
-            logging::describe_words(0, frame_data.value, frame_data.raw_attr as i64, frame_data.raw_slot)
+            logging::describe_words(0, frame_data.value, frame_data.resolved_filter_attr() as i64, frame_data.slot.to_raw())
         );
     }
     HandlerResult::Continue
@@ -283,7 +283,7 @@ pub fn handle_pay_energy(
             use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
             return suspend_choice(
                 state, db, ctx, ctx, frame_idx, O_PAY_ENERGY, 0,
-                ChoiceType::Optional, frame_data.raw_attr, -1,
+                ChoiceType::Optional, frame_data.resolved_filter_attr(), -1,
             );
         }
     }

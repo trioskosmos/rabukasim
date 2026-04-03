@@ -61,18 +61,6 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0, FILTER_IS_OPTIONAL >> 32, 0, O_RETURN, 0, 0, 0, 0] -> bit 61 is OPTIONAL
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            bytecode: vec![
-                O_PAY_ENERGY,
-                1,
-                0,
-                (crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL >> 32) as i32,
-                0,
-                O_RETURN,
-                0,
-                0,
-                0,
-                0,
-            ],
             frame_program: Some(FrameProgram::from_words(&[
                 O_PAY_ENERGY,
                 1,
@@ -136,7 +124,6 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0x82, 0, O_RETURN] -> 0x82 is OPTIONAL | B_ONE
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            bytecode: vec![O_PAY_ENERGY, 1, 0x82, 0, O_RETURN],
             frame_program: Some(FrameProgram::from_words(&[
                 O_PAY_ENERGY,
                 1,
@@ -203,7 +190,6 @@ mod tests {
         member_b.name = "Special Color".to_string();
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            bytecode: vec![O_TRANSFORM_BLADES, 3, 0, 0, 4], // v=3, target=4 (Slot Context)
             frame_program: Some(FrameProgram::from_words(&[O_TRANSFORM_BLADES, 3, 0, 0, 4])),
             ..Default::default()
         });
@@ -467,7 +453,10 @@ mod tests {
             "Live Start Test Card",
             vec![Ability {
                 trigger: TriggerType::OnLiveStart,
-                bytecode: vec![61, 1, 0, 0, 0],
+                frame_program: Some(FrameProgram {
+                    frames: vec![],
+                    raw_program: None,
+                }),
                 ..Default::default()
             }],
             vec![],
@@ -1198,8 +1187,8 @@ mod tests {
         state.players[0].stage[0] = niji_member_id;
 
         println!(
-            "[DEBUG] Bytecode for card 358: {:?}",
-            db.get_live(live_id).unwrap().abilities[0].bytecode
+            "[DEBUG] Frame program for card 358: {:?}",
+            db.get_live(live_id).unwrap().abilities[0].frame_program
         );
 
         // Enforce enough energy for activations/performance
@@ -2306,6 +2295,13 @@ mod tests {
                     ..Default::default()
                 }
                 .to_raw(),
+                decoded_filter: crate::core::logic::filter::CardFilter::from_attr_legacy(
+                    (6u64 << 53) as i64,
+                ),
+                decoded_slot: crate::core::logic::interpreter::instruction::DecodedSlot {
+                    target_slot: SLOT_HAND as u8,
+                    ..Default::default()
+                },
                 is_cost: false,
                 ..Default::default()
             },
@@ -2538,7 +2534,6 @@ mod tests {
         member.name = "Mia Taylor".to_string();
         member.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            bytecode: vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6],
             frame_program: Some(FrameProgram::from_words(&[
                 O_REVEAL_UNTIL,
                 0,

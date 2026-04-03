@@ -36,7 +36,7 @@ pub fn handle_select_cards(
         .map(|extra_filter| frame_data.filter.with_overlay(&extra_filter))
         .unwrap_or(frame_data.filter);
     let a = filter.to_attr() as i64;
-    let s = frame_data.raw_slot;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     let is_optional = filter.is_optional;
     let optional_prompt_marker = -((v as i16) + 2);

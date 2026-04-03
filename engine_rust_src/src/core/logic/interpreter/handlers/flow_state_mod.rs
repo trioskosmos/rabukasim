@@ -14,8 +14,8 @@ pub fn handle_state_modifiers(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.player_id as usize;
     let slot_info = frame_data.slot;

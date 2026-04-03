@@ -65,6 +65,9 @@ impl FrameBuilder {
     pub fn a(mut self, a_val: i64) -> Self {
         if let Some(frame) = self.frames.last_mut() {
             frame.attr = a_val as u64;
+            frame.decoded_filter = crate::core::logic::filter::CardFilter::from_attr_legacy(
+                a_val,
+            );
         }
         self
     }
@@ -75,6 +78,9 @@ impl FrameBuilder {
             filter.is_optional = val;
             let a = filter.to_attr() as i64;
             self = self.a(a);
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_filter = filter;
+            }
         }
         self
     }
@@ -82,6 +88,9 @@ impl FrameBuilder {
     pub fn s(mut self, s_val: i32) -> Self {
         if let Some(frame) = self.frames.last_mut() {
             frame.slot = s_val;
+            frame.decoded_slot = crate::core::logic::interpreter::instruction::DecodedSlot::decode(
+                s_val,
+            );
         }
         self
     }
@@ -91,6 +100,9 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.source_zone = zone;
             self = self.s(dslot.to_raw());
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_slot = dslot;
+            }
         }
         self
     }
@@ -100,6 +112,9 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.dest_zone = zone;
             self = self.s(dslot.to_raw());
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_slot = dslot;
+            }
         }
         self
     }
@@ -109,6 +124,9 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.target_slot = target_slot;
             self = self.s(dslot.to_raw());
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_slot = dslot;
+            }
         }
         self
     }
@@ -118,6 +136,9 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.area_idx = area_idx;
             self = self.s(dslot.to_raw());
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_slot = dslot;
+            }
         }
         self
     }
@@ -127,6 +148,9 @@ impl FrameBuilder {
             let mut dslot = frame.dslot();
             dslot.comparison = mode;
             self = self.s(dslot.to_raw());
+            if let Some(frame) = self.frames.last_mut() {
+                frame.decoded_slot = dslot;
+            }
         }
         self
     }
@@ -757,7 +781,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Bytecode(vec![58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -768,7 +792,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Bytecode(vec![58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -779,7 +803,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -790,9 +814,9 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![
+                    AbilityLogic::Frames(FrameProgram::from_words(&[
                         64, 0, 130, 0, 0, 41, 1, 24577, 0, 0, 14, 3, 0, 0, 0, 41, 1, 0, 0, 0, 1, 0, 0, 0, 0,
-                    ]),
+                    ]).frames),
                     vec![],
                 )],
             );
@@ -803,9 +827,9 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnLiveStart,
-                    AbilityLogic::Bytecode(vec![
+                    AbilityLogic::Frames(FrameProgram::from_words(&[
                         64, 0, 130, 0, 0, 58, 1, 24576, 0, 0, 64, 1, 0, 0, 0, 16, 5, 0, 0, 0, 1, 0, 0, 0, 0,
-                    ]),
+                    ]).frames),
                     vec![],
                 )],
             );
@@ -816,7 +840,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -827,7 +851,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -838,7 +862,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]),
+                    AbilityLogic::Frames(FrameProgram::from_words(&[75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -849,9 +873,9 @@ pub fn create_test_db() -> CardDatabase {
                 vec![2],
                 vec![(
                     TriggerType::OnLiveStart,
-                    AbilityLogic::Bytecode(vec![
+                    AbilityLogic::Frames(FrameProgram::from_words(&[
                         64, 1, 2, 0, 0, 45, 1, 0, 0, 1, 12, 1, 0, 0, 1, 1, 0, 0, 0, 0,
-                    ]),
+                    ]).frames),
                     vec![],
                 )],
             );
@@ -862,9 +886,9 @@ pub fn create_test_db() -> CardDatabase {
                 vec![2],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Bytecode(vec![
+                    AbilityLogic::Frames(FrameProgram::from_words(&[
                         58, 1, 1, 0, 6, 3, 2, 0, 0, 0, 81, 2, 0, 0, 0, 1, 0, 0, 0, 0,
-                    ]),
+                    ]).frames),
                     vec![],
                 )],
             );
@@ -875,10 +899,10 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Bytecode(vec![
+                    AbilityLogic::Frames(FrameProgram::from_words(&[
                         30, 2, 8, 0, 16, 1, 0, 0, 0, 0, 32, 1, 0, 0, 0, 1, 0, 0, 0, 0, 10, 1, 0, 0, 0, 1,
                         0, 0, 0, 0,
-                    ]),
+                    ]).frames),
                     vec![],
                 )],
             );
@@ -905,7 +929,6 @@ pub fn create_test_state() -> GameState {
 }
 
 pub enum AbilityLogic {
-    Bytecode(Vec<i32>),
     Frames(Vec<AbilityFrame>),
 }
 
@@ -918,23 +941,15 @@ pub fn add_card(
 ) {
     let mut abs = Vec::new();
     for (t, logic, c) in abilities {
-        let (bytecode, frame_program) = match logic {
-            AbilityLogic::Bytecode(b) => {
-                let fp = FrameProgram::from_words(&b);
-                (b, Some(fp))
-            }
-            AbilityLogic::Frames(f) => {
-                let fp = FrameProgram {
-                    frames: f,
-                    raw_program: None,
-                };
-                (fp.to_words(), Some(fp))
-            }
+        let frame_program = match logic {
+            AbilityLogic::Frames(f) => Some(FrameProgram {
+                frames: f,
+                raw_program: None,
+            }),
         };
 
         abs.push(Ability {
             trigger: t,
-            bytecode,
             frame_program,
             conditions: c,
             ..Default::default()

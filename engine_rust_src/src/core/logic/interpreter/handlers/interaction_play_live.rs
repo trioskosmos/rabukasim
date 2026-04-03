@@ -14,8 +14,8 @@ pub fn handle_play_live_from_discard(
     frame_idx: usize,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let slot_info = frame_data.slot;
     let target_p_idx = if slot_info.is_opponent {
         1 - (ctx.activator_id as usize)

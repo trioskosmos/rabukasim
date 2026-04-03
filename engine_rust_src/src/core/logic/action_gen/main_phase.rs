@@ -411,7 +411,9 @@ mod tests {
             card_id: 100,
             abilities: vec![crate::core::logic::Ability {
                 trigger: TriggerType::Activated,
-                bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+                frame_program: Some(crate::core::logic::models::FrameProgram::from_words(&[
+                    O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                ])),
                 ..Default::default()
             }],
             ..Default::default()

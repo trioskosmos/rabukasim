@@ -27,8 +27,8 @@ fn decode_heart_color(
         return color_mask.trailing_zeros() as usize;
     }
 
-    // 3. Use raw_attr if it's a valid color (1-6, with 7 mapping to 6)
-    match frame.raw_attr {
+    // 3. Use the resolved filter attr if it's a valid color (1-6, with 7 mapping to 6)
+    match frame.resolved_filter_attr() {
         0 => {} // Fall through to text parsing
         7 => return 6,
         raw if raw <= 6 => return raw as usize,
@@ -168,8 +168,8 @@ pub fn handle_add_hearts(
         if let Some(msg) = logging::get_opcode_log(
             O_ADD_HEARTS,
             frame.value,
-            frame.raw_attr as i64,
-            frame.raw_slot,
+            frame.resolved_filter_attr() as i64,
+            frame.slot.to_raw(),
             0,
         ) {
             state.log(msg);

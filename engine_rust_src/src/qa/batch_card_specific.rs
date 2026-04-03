@@ -151,10 +151,10 @@ mod tests {
     }
 
     fn ren_like_selected_discard_recover_bytecode() -> AbilityLogic {
-        AbilityLogic::Bytecode(vec![
+        AbilityLogic::Frames(FrameProgram::from_words(&[
             305, 0, 0, 0, 48, 64, 1, 0, 536870912, 0, 3, 1, 0, 0, 0, 17, 1, 1, 652214272, 458756,
             1, 0, 0, 0, 0,
-        ])
+        ]).frames)
     }
 
     fn resolve_response_loop(state: &mut GameState, db: &CardDatabase, max_steps: usize) {
@@ -760,8 +760,8 @@ mod tests {
         state.players[0].stage[0] = niji_member_id;
 
         println!(
-            "[DEBUG] Bytecode for card 358: {:?}",
-            db.get_live(live_id).unwrap().abilities[0].bytecode
+            "[DEBUG] Frame program for card 358: {:?}",
+            db.get_live(live_id).unwrap().abilities[0].frame_program
         );
         println!(
             "[DEBUG] Effects for card 358: {:?}",
@@ -1446,7 +1446,9 @@ mod tests {
         let abilities = db.get_live(catchu_live_id).unwrap().abilities.clone();
 
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            if let Some(fp) = ab.frame_program.as_ref() {
+                state.resolve_semantic_frames(&db, &fp.frames, &ctx);
+            }
         }
 
         assert!(state.players[p1].energy_zone.len() >= 10);
@@ -1461,13 +1463,17 @@ mod tests {
 
         // First instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            if let Some(fp) = ab.frame_program.as_ref() {
+                state.resolve_semantic_frames(&db, &fp.frames, &ctx);
+            }
         }
         assert!(state.players[p1].energy_zone.len() >= 10);
 
         // Second instance proc
         for ab in &abilities {
-            state.resolve_bytecode_cref(&db, &ab.bytecode, &ctx);
+            if let Some(fp) = ab.frame_program.as_ref() {
+                state.resolve_semantic_frames(&db, &fp.frames, &ctx);
+            }
         }
         assert!(state.players[p1].energy_zone.len() >= 10);
     }
@@ -1581,17 +1587,17 @@ mod tests {
             source_card_id: card_id,
             ..Default::default()
         };
-        let bytecode = &db.get_member(card_id).unwrap().abilities[0].bytecode;
+        let frames = &db.get_member(card_id).unwrap().abilities[0].frame_program.as_ref().unwrap().frames;
 
         state.players[p1].stage = [557, 557, 557];
 
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
+        state.resolve_semantic_frames(&db, frames, &ctx);
         assert!(state.players[p1].energy_zone.len() >= 7);
 
         // Case 2: Mixed Groups (Fail)
         state.players[p1].energy_zone = vec![3001; 7].into(); // Reset
         state.players[p1].stage = [557, 143, 557]; // Mixed group member in the middle
-        state.resolve_bytecode_cref(&db, bytecode, &ctx);
+        state.resolve_semantic_frames(&db, frames, &ctx);
         assert!(state.players[p1].energy_zone.len() >= 7);
     }
 

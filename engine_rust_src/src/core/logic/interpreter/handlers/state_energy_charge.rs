@@ -170,7 +170,7 @@ pub fn handle_pay_energy(
                 O_PAY_ENERGY,
                 0,
                 ChoiceType::Optional,
-                frame_data.raw_attr,
+                frame_data.resolved_filter_attr(),
                 -1,
             );
         }

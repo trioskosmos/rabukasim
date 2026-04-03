@@ -45,8 +45,8 @@ pub fn handle_look_and_choose(
     frame_idx: usize,
 ) -> HandlerResult {
     let _v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
@@ -130,8 +130,8 @@ pub fn handle_look_and_choose(
                 O_LOOK_AND_CHOOSE,
                 s,
                 choice_type,
-                if frame_data.raw_attr != 0 {
-                    frame_data.raw_attr
+                if frame_data.resolved_filter_attr() != 0 {
+                    frame_data.resolved_filter_attr()
                 } else {
                     filter_obj.to_attr()
                 },
@@ -151,8 +151,8 @@ pub fn handle_look_and_choose(
     // === Phase 3: Resolve (apply chosen cards) ===
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
-    let semantic_attr = if frame_data.raw_attr != 0 {
-        Some(frame_data.raw_attr)
+    let semantic_attr = if frame_data.resolved_filter_attr() != 0 {
+        Some(frame_data.resolved_filter_attr())
     } else {
         None
     };

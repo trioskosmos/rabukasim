@@ -94,14 +94,14 @@ pub fn handle_increase_heart_cost(
 
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let raw_slot = frame.slot.target_slot as usize;
+    let target_slot = frame.slot.target_slot as usize;
     let color = if let Some(color) =
         crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
     {
         color
     } else if ctx.source_card_id == 4632 {
         6
-    } else if matches!(raw_slot, 4 | 7) {
+    } else if matches!(target_slot, 4 | 7) {
         6
     } else if frame.filter.color_mask != 0 {
         if frame.filter.color_mask == 0x7F {
@@ -110,8 +110,8 @@ pub fn handle_increase_heart_cost(
             frame.filter.color_mask.trailing_zeros() as usize
         }
     } else {
-        match raw_slot {
-            0..=6 => raw_slot,
+        match target_slot {
+            0..=6 => target_slot,
             _ => 6,
         }
     };

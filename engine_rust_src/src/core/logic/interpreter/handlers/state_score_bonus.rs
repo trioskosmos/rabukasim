@@ -38,13 +38,13 @@ fn resolve_dynamic_multiplier(
         _ => return None, // Other zones don't support dynamic counting
     };
 
-    let filter_attr = frame_data.filter.to_attr();
+    let filter_attr = frame_data.resolved_filter_attr();
     let mut count = resolve_count(
         state,
         db,
         count_opcode,
-        frame_data.raw_attr,
-        frame_data.raw_slot,
+        filter_attr,
+        frame_data.slot.to_raw(),
         ctx,
         0,
     );
@@ -128,8 +128,8 @@ pub fn handle_boost_score(
     }
 
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
 
     // Q203 Fix: Check activated keyword conditions
     if let Some(params) = frame_data.params {

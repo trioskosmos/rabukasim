@@ -28,6 +28,8 @@ pub struct AbilityFrame {
     pub value: i32,
     pub attr: u64,
     pub slot: i32,
+    pub decoded_filter: CardFilter,
+    pub decoded_slot: DecodedSlot,
     pub is_cost: bool,
     pub params: Value,
 }
@@ -69,6 +71,8 @@ impl Default for AbilityFrame {
             value: 0,
             attr: 0,
             slot: 0,
+            decoded_filter: CardFilter::default(),
+            decoded_slot: DecodedSlot::default(),
             is_cost: false,
             params: Value::Null,
         }
@@ -198,6 +202,22 @@ impl<'a> AbilityFrameComponents<'a> {
 
     pub fn has_revealed_context_passthrough(&self) -> bool {
         (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
+    }
+
+    pub fn comparison_reversed(&self) -> bool {
+        (self.raw_attr & 0x01) != 0
+    }
+
+    pub fn has_played_this_turn_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_PLAYED_THIS_TURN) != 0
+    }
+
+    pub fn has_yell_count_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_YELL_COUNT) != 0
+    }
+
+    pub fn has_live_set_keyword(&self) -> bool {
+        (self.raw_attr & crate::core::generated_constants::KEYWORD_HAS_LIVE_SET) != 0
     }
 
     /// Check if this frame uses dynamic value calculation (accumulated compare)
@@ -409,6 +429,8 @@ impl AbilityFrame {
             value,
             attr: filter.to_attr(),
             slot: slot.to_raw(),
+            decoded_filter: filter,
+            decoded_slot: slot,
             is_cost,
             params,
         }
@@ -427,6 +449,8 @@ impl AbilityFrame {
             value,
             attr,
             slot,
+            decoded_filter: CardFilter::from_attr_legacy(attr as i64),
+            decoded_slot: DecodedSlot::decode(slot),
             is_cost,
             params,
         }
@@ -1201,14 +1225,16 @@ impl AbilityFrame {
                     TARGET_PLAYER_SELF as u8
                 };
             }
-            return AbilityFrame {
-                opcode: runtime_opcode,
-                value: value_i32,
-                attr: filter.to_attr() | runtime_passthrough | params_passthrough,
-                slot: slot.to_raw(),
-                is_cost: false,
-                params: effect.params.clone(),
-            };
+            let mut frame = Self::with_components(
+                runtime_opcode,
+                value_i32,
+                filter,
+                slot,
+                false,
+                effect.params.clone(),
+            );
+            frame.attr = filter.to_attr() | runtime_passthrough | params_passthrough;
+            return frame;
         }
         Self::new(runtime_opcode, value_i32, runtime_attr as i64, runtime_slot, false)
     }
@@ -1233,8 +1259,8 @@ impl AbilityFrame {
             raw_opcode,
             opcode,
             value: self.value,
-            filter: CardFilter::from_attr_legacy(self.attr as i64),
-            slot: DecodedSlot::decode(self.slot),
+            filter: self.decoded_filter,
+            slot: self.decoded_slot,
             raw_attr: self.attr,
             raw_slot: self.slot,
             is_negated,
@@ -1292,11 +1318,11 @@ impl AbilityFrame {
     }
 
     pub fn filter(&self) -> CardFilter {
-        CardFilter::from_attr_legacy(self.attr as i64)
+        self.decoded_filter
     }
 
     pub fn dslot(&self) -> DecodedSlot {
-        DecodedSlot::decode(self.slot)
+        self.decoded_slot
     }
 
     #[allow(deprecated)]

@@ -1,9 +1,10 @@
 
 use crate::core::logic::card_db::LOGIC_ID_MASK;
+use crate::core::logic::models::FrameProgram;
 use crate::core::logic::*;
 // use std::collections::HashMap;
 
-fn create_mini_db_with_bytecode(bc: Vec<i32>) -> CardDatabase {
+fn create_mini_db_with_frames(frames: Vec<AbilityFrame>) -> CardDatabase {
     let mut db = CardDatabase::default();
     let mut m = MemberCard {
         card_id: 101,
@@ -14,7 +15,10 @@ fn create_mini_db_with_bytecode(bc: Vec<i32>) -> CardDatabase {
     };
     m.abilities.push(Ability {
         trigger: TriggerType::Activated,
-        bytecode: bc,
+        frame_program: Some(FrameProgram {
+            frames,
+            raw_program: None,
+        }),
         ..Default::default()
     });
     db.members.insert(101, m.clone());
@@ -36,8 +40,8 @@ fn create_mini_state() -> GameState {
 #[test]
 fn mini_test_o_pay_energy_resumption() {
     // Bytecode: PAY_ENERGY(1), DRAW(1), RETURN
-    let bc = vec![64, 1, 0, 0, 10, 1, 0, 1, 1, 0, 0, 0];
-    let db = create_mini_db_with_bytecode(bc);
+    let frames = FrameProgram::from_words(&[64, 1, 0, 0, 10, 1, 0, 1, 1, 0, 0, 0]).frames;
+    let db = create_mini_db_with_frames(frames);
     let mut state = create_mini_state();
 
     // Setup energy (2 untapped, need 1 -> should suspend for choice)
@@ -63,7 +67,7 @@ fn mini_test_o_pay_energy_resumption() {
 #[test]
 fn mini_test_o_select_mode_resumption() {
     // Bytecode: SELECT_MODE(2 choices), jump targets, Option 1: DRAW(1)+RETURN, Option 2: DRAW(2)+RETURN
-    let bc = vec![
+    let frames = FrameProgram::from_words(&[
         30, 2, 12, 20, // SELECT_MODE, v=2, Jmp0=12, Jmp1=20
         3, 0, 0, 0,  // Option 1 -> instruction 3 (*4 = IP 12)
         5, 0, 0, 0,  // Option 2 -> instruction 5 (*4 = IP 20)
@@ -71,8 +75,8 @@ fn mini_test_o_select_mode_resumption() {
         1, 0, 0, 0,  // IP 16: RETURN
         10, 2, 0, 1, // IP 20: DRAW(2)
         1, 0, 0, 0   // IP 24: RETURN
-    ];
-    let db = create_mini_db_with_bytecode(bc);
+    ]).frames;
+    let db = create_mini_db_with_frames(frames);
     let mut state = create_mini_state();
 
     // Populate deck so DRAW works

@@ -27,7 +27,7 @@ pub fn handle_meta_rule(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.resolved_filter_attr() as i64;
     let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.activator_id as usize;

@@ -27,8 +27,8 @@ pub fn execute_frame(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
 
     // Debug logging for opcode execution
     if state.debug.debug_mode && !state.ui.silent {

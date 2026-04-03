@@ -1192,6 +1192,10 @@ impl ResponseController for GameState {
                         opcode: pending.effect_opcode,
                         value: pending.ctx.v_remaining as i32,
                         attr: pending.filter_attr,
+                        decoded_filter: crate::core::logic::filter::CardFilter::from_attr_legacy(
+                            pending.filter_attr as i64,
+                        ),
+                        decoded_slot: Default::default(),
                         ..Default::default()
                     },
                     crate::core::logic::models::AbilityFrame::new_return(),
@@ -1469,7 +1473,9 @@ mod tests {
             card_id: 700,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                bytecode: vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0],
+                frame_program: Some(crate::core::logic::models::FrameProgram::from_words(&[
+                    O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+                ])),
                 ..Default::default()
             }],
             ..Default::default()

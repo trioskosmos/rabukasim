@@ -16,13 +16,21 @@ pub fn handle_move_to_discard(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     
     // Resolve count (handle compare_accumulated and UNTIL_SIZE)
     let v = if frame_data.filter.compare_accumulated {
-        resolve_count(state, db, s, frame_data.raw_attr & FILTER_MASK_LOWER, p_idx as i32, ctx, 0) as i32
+        resolve_count(
+            state,
+            db,
+            s,
+            frame_data.resolved_filter_attr() & FILTER_MASK_LOWER,
+            p_idx as i32,
+            ctx,
+            0,
+        ) as i32
     } else {
         frame_data.value
     };
@@ -138,7 +146,7 @@ pub fn handle_move_to_discard(
                 _ => {}
             }
             let filter_attr_with_mask =
-                filter_obj.to_attr() | frame_data.raw_attr.max(frame_data.filter.to_attr());
+                filter_obj.to_attr() | frame_data.resolved_filter_attr().max(frame_data.filter.to_attr());
 
             if matches!(
                 suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, s, choice_type, filter_attr_with_mask as u64, v as i16),

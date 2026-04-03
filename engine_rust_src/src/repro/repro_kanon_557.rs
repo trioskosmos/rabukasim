@@ -26,7 +26,7 @@ mod tests {
         let card = db.get_member(557).unwrap();
         let ab = &card.abilities[0]; // Assuming ability 0 is the one
 
-        println!("Bytecode: {:?}", ab.bytecode);
+        println!("Frame program: {:?}", ab.frame_program);
         println!("Effects: {:?}", ab.effects);
         println!("Frame program: {:?}", ab.frame_program);
         println!("Conditions: {:?}", ab.conditions);

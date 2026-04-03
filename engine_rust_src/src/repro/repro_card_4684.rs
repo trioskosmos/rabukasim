@@ -1,4 +1,5 @@
 use crate::core::enums::{Phase, TriggerType};
+use crate::core::logic::FrameProgram;
 use crate::test_helpers::{add_card, create_test_db, create_test_state, AbilityLogic};
 
 #[test]
@@ -15,10 +16,10 @@ fn test_repro_card_4684_score_boost() {
         vec![3], // Liella!
         vec![(
             TriggerType::OnLiveSuccess,
-            AbilityLogic::Bytecode(vec![
+            AbilityLogic::Frames(FrameProgram::from_words(&[
                 64, 6, 0, 536870912, 0, 3, 2, 0, 0, 0, 312, 0, 0, 0, 0, 16, 1, 0, 0, 4, 1, 0, 0, 0,
                 0,
-            ]),
+            ]).frames),
             vec![],
         )],
     );

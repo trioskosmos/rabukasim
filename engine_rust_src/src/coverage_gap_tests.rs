@@ -492,7 +492,6 @@ fn test_frame_program_only_ability_executes() {
 
     let ability = Ability {
         trigger: TriggerType::OnPlay,
-        bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![
                 AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },
@@ -537,7 +536,6 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
     let db = create_test_db();
     let ability_from_frames = Ability {
         trigger: TriggerType::OnPlay,
-        bytecode: Vec::new(),
         frame_program: Some(FrameProgram {
             frames: vec![
                 AbilityFrame { opcode: O_DRAW, value: 1, ..Default::default() },

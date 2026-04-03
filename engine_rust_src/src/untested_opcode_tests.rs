@@ -66,7 +66,9 @@ fn test_opcode_formation_change_triggers_position_change() {
         vec![1],
         vec![(
             TriggerType::OnPositionChange,
-            AbilityLogic::Bytecode(vec![O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0]),
+            AbilityLogic::Frames(FrameProgram::from_words(&[
+                O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
+            ]).frames),
             vec![],
         )],
     );

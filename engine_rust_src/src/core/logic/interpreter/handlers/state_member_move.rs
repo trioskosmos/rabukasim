@@ -27,8 +27,8 @@ pub fn handle_move_member(
                 || params.get("SOURCE").is_some()
         })
         .unwrap_or(false);
-    let filter_attr = if frame_data.raw_attr != 0 {
-        frame_data.raw_attr
+    let filter_attr = if frame_data.resolved_filter_attr() != 0 {
+        frame_data.resolved_filter_attr()
     } else {
         let frame_filter_attr = frame_data.filter.to_attr();
         if frame_filter_attr != 0 {

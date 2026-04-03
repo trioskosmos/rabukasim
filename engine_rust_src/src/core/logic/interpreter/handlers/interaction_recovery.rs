@@ -17,7 +17,7 @@ pub fn handle_recovery(
     op: i32,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.resolved_filter_attr() as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {

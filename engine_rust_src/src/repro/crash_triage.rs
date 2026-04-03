@@ -156,9 +156,9 @@ use std::panic;
 fn test_state_delta_verification() {
     let db = load_real_db();
 
-    // Group abilities by bytecode signature to avoid testing duplicates
+    // Group abilities by frame-program signature to avoid testing duplicates
     let mut seen_signatures: HashMap<Vec<i32>, (String, String, String)> = HashMap::new(); // sig -> (card_no, jp_text, pseudocode)
-    let mut all_entries: Vec<(String, String, String, Vec<i32>, TriggerType, i32)> = Vec::new(); // (card_no, jp_text, pseudo, bytecode, trigger, card_id)
+    let mut all_entries: Vec<(String, String, String, Vec<i32>, TriggerType, i32)> = Vec::new(); // (card_no, jp_text, pseudo, frame_words, trigger, card_id)
 
     let mut card_ids: Vec<i32> = db.members.keys().cloned().collect();
     card_ids.sort();
@@ -166,10 +166,10 @@ fn test_state_delta_verification() {
     for card_id in &card_ids {
         if let Some(card) = db.members.get(card_id) {
             for ability in &card.abilities {
-                if ability.bytecode.is_empty() {
+                let Some(frame_program) = ability.frame_program.as_ref() else {
                     continue;
-                }
-                let sig = ability.bytecode.clone();
+                };
+                let sig = frame_program.to_words();
                 if seen_signatures.contains_key(&sig) {
                     continue;
                 }
@@ -211,11 +211,11 @@ fn test_state_delta_verification() {
     let mut pass_count = 0;
     let mut crashed_cards: Vec<String> = Vec::new();
 
-    for (idx, (card_no, jp_text, pseudo, bytecode, trigger, card_id)) in
+    for (idx, (card_no, jp_text, pseudo, words, trigger, card_id)) in
         all_entries.iter().enumerate()
     {
         // Wrap execution in catch_unwind for fault isolation
-        let bc_clone = bytecode.clone();
+        let bc_clone = words.clone();
         let trigger_clone = *trigger;
         let card_id_clone = *card_id;
 

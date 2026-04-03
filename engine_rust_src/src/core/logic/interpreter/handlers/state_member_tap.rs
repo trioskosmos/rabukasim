@@ -64,7 +64,7 @@ pub fn handle_set_tapped(
                 crate::core::O_SET_TAPPED,
                 resolved_slot as i32,
                 ChoiceType::Optional,
-                frame_data.raw_attr,
+                frame_data.resolved_filter_attr(),
                 -1,
             ),
             HandlerResult::Suspend
@@ -233,7 +233,7 @@ pub fn handle_tap_member(
     }).unwrap_or(false);
     let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
     let filter_attr = filter_attr_from_params(frame_data.params)
-        .unwrap_or(frame_data.raw_attr.max(frame_data.filter.to_attr()))
+        .unwrap_or(frame_data.resolved_filter_attr().max(frame_data.filter.to_attr()))
         & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
     
     let fixed_slot_matches = if resolved_slot >= 0 && resolved_slot < 3 {

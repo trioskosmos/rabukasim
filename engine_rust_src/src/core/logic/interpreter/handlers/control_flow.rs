@@ -71,7 +71,7 @@ pub mod conditional {
             }
             O_JUMP_IF_TRUE => {
                 // Example: check if member is tapped
-                frame_data.raw_attr > 0
+                frame_data.resolved_filter_attr() > 0
             }
             _ => false,
         }
@@ -133,9 +133,9 @@ pub mod remote {
 
         TriggerParams {
             trigger_type,
-            target_player: frame_data.raw_slot as i32,
+            target_player: frame_data.slot.to_raw(),
             target_card: frame_data.slot.target_slot as i32,
-            ability_id: frame_data.raw_attr as i32,
+            ability_id: frame_data.resolved_filter_attr() as i32,
         }
     }
 
@@ -157,7 +157,7 @@ pub mod remote {
         NegateParams {
             trigger_type,
             target_card: frame_data.slot.target_slot as i32,
-            count: (frame_data.raw_attr as u64 & FILTER_MASK_LOWER).max(1) as i32,
+            count: (frame_data.resolved_filter_attr() & FILTER_MASK_LOWER).max(1) as i32,
         }
     }
 
@@ -271,8 +271,8 @@ pub mod meta_rules {
         MetaRuleParams {
             rule_type: frame_data.value,
             target: frame_data.slot.target_slot as i32,
-            value: frame_data.raw_attr as i32,
-            duration: frame_data.raw_slot as i32,
+            value: frame_data.resolved_filter_attr() as i32,
+            duration: frame_data.slot.to_raw(),
         }
     }
 
@@ -280,7 +280,7 @@ pub mod meta_rules {
         RestrictionParams {
             restriction_type: frame_data.value,
             target: frame_data.slot.target_slot as i32,
-            value: frame_data.raw_attr as i32,
+            value: frame_data.resolved_filter_attr() as i32,
         }
     }
 
@@ -288,7 +288,7 @@ pub mod meta_rules {
         ImmunityParams {
             immunity_type: frame_data.value,
             target: frame_data.slot.target_slot as i32,
-            value: frame_data.raw_attr as i32,
+            value: frame_data.resolved_filter_attr() as i32,
         }
     }
 
@@ -398,15 +398,15 @@ pub mod repetition {
         RepeatParams {
             repeat_count: frame_data.value,
             current_count: 0,
-            ability_id: frame_data.raw_attr as i32,
+            ability_id: frame_data.resolved_filter_attr() as i32,
         }
     }
 
     fn extract_loop_params(frame_data: &crate::core::logic::models::AbilityFrameComponents) -> LoopParams {
         LoopParams {
             loop_type: frame_data.value,
-            condition: frame_data.raw_attr as i32,
-            iterations: frame_data.raw_slot as i32,
+            condition: frame_data.resolved_filter_attr() as i32,
+            iterations: frame_data.slot.to_raw(),
             start_frame: 0, // Would be set by loop start
         }
     }
@@ -496,8 +496,8 @@ pub mod targeting {
     fn extract_swap_params(frame_data: &crate::core::logic::models::AbilityFrameComponents) -> SwapParams {
         SwapParams {
             area1: frame_data.value,
-            area2: frame_data.raw_attr as i32,
-            swap_type: frame_data.raw_slot as i32,
+            area2: frame_data.resolved_filter_attr() as i32,
+            swap_type: frame_data.slot.to_raw(),
         }
     }
 
@@ -571,7 +571,7 @@ pub mod calculation {
     fn extract_div_params(frame_data: &crate::core::logic::models::AbilityFrameComponents) -> DivParams {
         DivParams {
             divisor: frame_data.value,
-            rounding_mode: frame_data.raw_attr as i32,
+            rounding_mode: frame_data.resolved_filter_attr() as i32,
         }
     }
 
@@ -636,7 +636,7 @@ pub mod flavor {
         FlavorParams {
             action_type: frame_data.value,
             target: frame_data.slot.target_slot as i32,
-            value: frame_data.raw_attr as i32,
+            value: frame_data.resolved_filter_attr() as i32,
         }
     }
 }

@@ -19,8 +19,8 @@ struct ConditionParams<'a> {
     ctx: &'a AbilityContext,
     opcode: i32,
     value: i32,
-    raw_attr: u64,
-    raw_slot: i32,
+    attr_word: u64,
+    slot_word: i32,
     params: Option<&'a serde_json::Value>,
     filter: CardFilter,
     slot: DecodedSlot,
@@ -41,8 +41,8 @@ impl<'a> ConditionParams<'a> {
             ctx,
             opcode: frame.opcode,
             value: frame.value,
-            raw_attr: frame.raw_attr,
-            raw_slot: frame.raw_slot,
+            attr_word: frame.raw_attr,
+            slot_word: frame.raw_slot,
             params: frame.params,
             filter: frame.filter,
             slot: frame.slot,
@@ -66,8 +66,8 @@ impl<'a> ConditionParams<'a> {
             ctx,
             opcode: op,
             value: val,
-            raw_attr: attr,
-            raw_slot: slot,
+            attr_word: attr,
+            slot_word: slot,
             params: None,
             filter: CardFilter::from_attr_legacy(attr as i64),
             slot: DecodedSlot::decode(slot),
@@ -111,8 +111,8 @@ fn has_revealed_context_passthrough(attr: u64) -> bool {
     (attr & FILTER_REVEALED_CONTEXT) != 0
 }
 
-fn counts_unique_names(filter: &CardFilter, attr: u64) -> bool {
-    filter.unique_names || (attr & FILTER_UNIQUE_NAMES) != 0
+fn counts_unique_names(filter: &CardFilter) -> bool {
+    filter.unique_names
 }
 
 pub fn check_condition_frame(
@@ -168,8 +168,8 @@ fn check_condition_with_parts_internal(params: ConditionParams) -> bool {
         params.db,
         params.opcode,
         params.value,
-        params.raw_attr,
-        params.raw_slot,
+        params.attr_word,
+        params.slot_word,
         params.params,
         params.filter,
         params.slot,
@@ -360,7 +360,11 @@ fn check_condition_with_parts(
                 .stage
                 .iter()
                 .filter(|&&id| id >= 0)
-                .any(|&cid| cid == val || (attr != 0 && state.card_matches_filter(db, cid, attr)))
+                .any(|&cid| {
+                    cid == val
+                        || (attr != 0
+                            && state.card_matches_filter(db, cid, attr))
+                })
         }
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
@@ -454,30 +458,18 @@ fn check_condition_with_parts(
             (opp_energy - my_energy) >= val
         }
         C_HAS_KEYWORD => {
-            eprintln!("[DEBUG_C_HAS_KEYWORD] filter.keyword_energy={}, filter.keyword_member={}, attr={:#x}",
-                filter.keyword_energy, filter.keyword_member, attr);
-            eprintln!("[DEBUG_C_HAS_KEYWORD] KEYWORD_ACTIVATED_ENERGY_BY_GROUP={:#x}, KEYWORD_ACTIVATED_MEMBER_BY_GROUP={:#x}",
-                KEYWORD_ACTIVATED_ENERGY_BY_GROUP, KEYWORD_ACTIVATED_MEMBER_BY_GROUP);
-            if filter.keyword_energy || (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
-                eprintln!("[DEBUG_C_HAS_KEYWORD] Energy check: filter.group_enabled={}, attr & FILTER_GROUP_ENABLE={}",
-                    filter.group_enabled, (attr & FILTER_GROUP_ENABLE));
+            if filter.keyword_energy {
                 if let Some(group_id) = resolve_group_id(&filter, attr, val) {
                     let group_id = group_id as u64;
                     let mask = player.activated_energy_group_mask;
-                    let check = (mask & (1 << group_id)) != 0;
-                    eprintln!("[DEBUG_C_HAS_KEYWORD] Group check: group_id={}, mask={:#b}, check={}", group_id, mask, check);
-                    return check;
+                    return (mask & (1 << group_id)) != 0;
                 }
                 return player.activated_energy_group_mask != 0;
             }
-            if filter.keyword_member || (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
+            if filter.keyword_member {
                 if let Some(group_id) = resolve_group_id(&filter, attr, val) {
-                    eprintln!("[DEBUG_C_HAS_KEYWORD] Member check: filter.group_enabled={}, resolved_group_id={}",
-                        filter.group_enabled, group_id);
                     let group_id = group_id as u64;
-                    let check = (player.activated_member_group_mask & (1 << group_id)) != 0;
-                    eprintln!("[DEBUG_C_HAS_KEYWORD] Member group check: group_id={}, mask={:#b}, check={}", group_id, player.activated_member_group_mask, check);
-                    return check;
+                    return (player.activated_member_group_mask & (1 << group_id)) != 0;
                 }
                 return player.activated_member_group_mask != 0;
             }
@@ -487,8 +479,8 @@ fn check_condition_with_parts(
                 res = compare_i32(player.yell_cards.len() as i32, val, slot);
             }
             if !res && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
-                if (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = (attr >> FILTER_GROUP_ID_SHIFT) & 0x7F;
+                if filter.group_enabled {
+                    let group_id = filter.group_id as u64;
                     res = (player.played_group_mask & (1 << group_id)) != 0;
                 } else if val == 0 && ((attr & KEYWORD_PLAYED_THIS_TURN) != 0 || attr == 0) {
                     res = player.play_count_this_turn() > 0;
@@ -553,7 +545,7 @@ fn check_condition_with_parts(
         }
         C_COUNT_LIVE_ZONE => {
             let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if counts_unique_names(&filter, attr) {
+            let count = if counts_unique_names(&filter) {
                 let mut names = std::collections::HashSet::new();
                 for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
                     if state.card_matches_filter(db, id, filter_attr) {

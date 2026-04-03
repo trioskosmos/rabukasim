@@ -67,8 +67,8 @@ pub fn handle_deck_zones(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
-    let s = frame_data.raw_slot;
+    let a = frame_data.resolved_filter_attr() as i64;
+    let s = frame_data.slot.to_raw();
     let p_idx = ctx.player_id as usize;
     let slot = frame_data.slot;
     let target_slot = slot.target_slot as i32;
@@ -565,7 +565,7 @@ fn handle_look_cards(
                         ctx,
                         frame_idx,
                         O_LOOK_AND_CHOOSE,
-                        frame_data.raw_slot,
+                        frame_data.slot.to_raw(),
                         ChoiceType::LookAndChoose,
                         filter_attr,
                         1,

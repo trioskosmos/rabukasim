@@ -62,7 +62,7 @@ pub fn handle_optional_nop(
         ctx,
         frame_idx,
         frame_data.opcode,
-        frame_data.raw_slot,
+        frame_data.slot.to_raw(),
         choice_type,
         frame_data.resolved_filter_attr(),
         frame_data.value as i16,

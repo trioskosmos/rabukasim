@@ -28,7 +28,7 @@ fn test_card_4558_ability_0_on_live_start_pay_energy() {
         "First ability should be ON_LIVE_START (trigger=2)"
     );
 
-    println!("Ability 0 bytecode: {:?}", ability_0.bytecode);
+    println!("Ability 0 frame program: {:?}", ability_0.frame_program);
 
     // Manually execute the ability through the interpreter
     let mut ctx = AbilityContext::default();
