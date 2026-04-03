@@ -1,4 +1,3 @@
-pub mod alphazero_encoding_vanilla;
 pub mod alphazero_evaluator;
 pub mod enums;
 pub mod generated_constants;
