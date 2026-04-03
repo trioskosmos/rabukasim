@@ -975,10 +975,36 @@ impl AbilityFrame {
                 lac_params.insert("char_id_3".to_string(), Value::from(lac_c3));
                 lac_params.insert("reveal".to_string(), Value::from(lac_reveal));
                 lac_params.insert("dest_discard".to_string(), Value::from(lac_dest));
+                if let Some((params_filter, _)) =
+                    crate::core::logic::filter::filter_parts_from_params(Some(&params))
+                {
+                    filter = filter.with_overlay(&params_filter);
+                }
+                if params
+                    .get("filter")
+                    .and_then(|value| value.as_str())
+                    .map(|value| value.eq_ignore_ascii_case("COST_LE_REVEALED"))
+                    .unwrap_or(false)
+                {
+                    filter.is_enabled = true;
+                    filter.value_enabled = true;
+                    filter.value_threshold = 1;
+                    filter.is_le = true;
+                    filter.is_cost_type = true;
+                }
+                let mut attr = filter.to_attr() | filter_passthrough;
+                if params
+                    .get("filter")
+                    .and_then(|value| value.as_str())
+                    .map(|value| value.eq_ignore_ascii_case("COST_LE_REVEALED"))
+                    .unwrap_or(false)
+                {
+                    attr |= crate::core::generated_constants::FILTER_REVEALED_CONTEXT;
+                }
                 Self::with_raw_parts(
                     O_LOOK_AND_CHOOSE,
                     packed,
-                    filter.to_attr() | filter_passthrough,
+                    attr,
                     slot.to_raw(),
                     is_cost,
                     Value::Object(lac_params),
@@ -1932,9 +1958,9 @@ impl Ability {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::logic::CardDatabase;
     use crate::core::logic::constants::FILTER_REVEALED_CONTEXT;
-    use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice_with_options;
-    use crate::core::models::CardDatabase;
+    use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
     use crate::test_helpers::create_test_state;
     use serde_json::json;
 
@@ -2133,7 +2159,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Legacy passthrough bits not yet supported in structured-only mode"]
     fn semantic_filter_params_preserve_passthrough_bits_in_raw_attr() {
         let frame = AbilityFrame::from_json_value(&json!({
             "opcode": "LOOK_AND_CHOOSE",
@@ -2157,7 +2182,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = suspend_choice_with_options(
+        let result = suspend_choice(
             &mut state,
             &db,
             &ctx,
@@ -2168,8 +2193,6 @@ mod tests {
             ChoiceType::LookAndChoose,
             frame.attr(),
             1,
-            Vec::new(),
-            vec![0],
         );
 
         assert!(matches!(result, crate::core::logic::interpreter::handlers::HandlerResult::Suspend));

@@ -159,6 +159,36 @@ pub struct CardFilter {
 
 /// Conversion helpers for filter operations
 impl CardFilter {
+    pub fn has_group(&self) -> bool {
+        self.group_enabled
+    }
+
+    pub fn group_matches(&self, group_id: u8) -> bool {
+        self.group_enabled && (self.group_id == group_id || self.group_id == group_id.saturating_add(1))
+    }
+
+    pub fn resolve_group_id_from_value(&self, value: i32) -> Option<u8> {
+        if self.group_enabled {
+            Some(self.group_id)
+        } else if value > 0 {
+            Some((value & 0x7F) as u8)
+        } else {
+            None
+        }
+    }
+
+    pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
+        if self.group_enabled {
+            Some(self.group_id)
+        } else if self.group_id > 0 {
+            Some(self.group_id)
+        } else if fallback_value > 0 {
+            Some((fallback_value & 0x7F) as u8)
+        } else {
+            None
+        }
+    }
+
     pub fn from_json_value(value: &Value) -> Option<Self> {
         let candidate = if let Some(obj) = value.as_object() {
             obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value)
@@ -390,7 +420,7 @@ impl CardFilter {
             };
             
             if let Some(group) = card_group {
-                if group != self.group_id && group.saturating_add(1) != self.group_id {
+                if !self.group_matches(group) {
                     return false;
                 }
             } else {

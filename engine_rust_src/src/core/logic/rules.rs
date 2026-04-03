@@ -279,17 +279,10 @@ fn apply_reduce_cost_modifiers(
             .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
-        // Only apply hand count multiplier if the source card is actually in hand
-        let hand_idx = state.players[p_idx].hand.iter().position(|&id| id == ctx.source_card_id);
-        let default_hand_count = op == O_REDUCE_COST 
-            && frame_data.slot.source_zone == Zone::Default
-            && hand_idx.is_some(); // Only if source card is actually in hand
-
         if frame_data.slot.is_dynamic
             || frame_data.filter.compare_accumulated
             || per_card.is_some()
             || frame_data.slot.source_zone != Zone::Default
-            || default_hand_count
         {
             let mut count_op = if let Some(ref per_card) = per_card {
                 match per_card.as_str() {
@@ -299,8 +292,6 @@ fn apply_reduce_cost_modifiers(
                     "STAGE" => C_COUNT_STAGE,
                     _ => 0,
                 }
-            } else if default_hand_count {
-                C_COUNT_HAND
             } else {
                 match frame_data.slot.source_zone {
                     Zone::Hand => C_COUNT_HAND,
@@ -380,7 +371,6 @@ fn apply_reduce_cost_modifiers(
                         && (frame_data.filter.special_id == 3
                             || frame_data.slot.source_zone != Zone::Default
                             || frame_data.filter.compare_accumulated
-                            || default_hand_count
                             || per_card.is_some())
                     {
                         multiplier -= 1;
@@ -631,14 +621,19 @@ pub fn get_member_cost(
 
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
+    let mut applied_self_constant_reduction = false;
     if !cost_state.players[p_idx].stage.iter().any(|&cid| cid == card_id) {
         if let Some(target_m) = db.get_member(card_id) {
-            let hand_idx = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id);
+            let self_constant_cost_before = cost;
             let ctx = AbilityContext {
                 source_card_id: card_id,
                 player_id: p_idx as u8,
                 activator_id: p_idx as u8,
-                area_idx: if let Some(idx) = hand_idx { 200 + idx as i16 } else { -1 },
+                area_idx: if let Some(idx) = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id) {
+                    200 + idx as i16
+                } else {
+                    -1
+                },
                 is_static_eval: true,
                 ..Default::default()
             };
@@ -650,7 +645,11 @@ pub fn get_member_cost(
                     if state.debug.debug_mode && !state.ui.silent {
                         println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
                     }
-                    apply_reduce_cost_modifiers(&mut cost, ab, cost_state, db, p_idx, &ctx, depth + 1);
+                    // Evaluate the source card's own constant cost modifiers against the
+                    // real board state. Baton Touch still needs the tapped source member
+                    // present here so card-specific reductions can see it before the slot
+                    // replacement is applied.
+                    apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
                     if trace_cost {
                         eprintln!(
                             "[COST_DBG] after_self_constant card={} ab_idx={} trigger={:?} cost={} frames={}",
@@ -663,6 +662,7 @@ pub fn get_member_cost(
                     }
                 }
             }
+            applied_self_constant_reduction = cost < self_constant_cost_before;
         }
     }
 
@@ -713,11 +713,12 @@ pub fn get_member_cost(
         }
 
         let old_cid = state.players[p_idx].stage[slot_idx as usize];
-        if old_cid >= 0 {
+        if old_cid >= 0 && !applied_self_constant_reduction {
             if let Some(old_m) = db.get_member(old_cid) {
                 cost -= old_m.cost as i32;
             }
         }
+
     } else {
         let aura_ref = if let Some(aura) = query_aura.as_ref() {
             aura

@@ -76,6 +76,41 @@ impl<'a> ConditionParams<'a> {
     }
 }
 
+fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
+    db.get_member(cid)
+        .map(|member| {
+            member
+                .groups
+                .iter()
+                .any(|&group| group == group_id || group.saturating_add(1) == group_id)
+        })
+        .or_else(|| {
+            db.get_live(cid).map(|live| {
+                live.groups
+                    .iter()
+                    .any(|&group| group == group_id || group.saturating_add(1) == group_id)
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn resolve_group_id(filter: &CardFilter, attr: u64, value: i32) -> Option<u8> {
+    if filter.group_enabled {
+        return Some(filter.group_id);
+    }
+
+    let lower_attr = attr & 0x00000000FFFFFFFF;
+    if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
+        return Some((lower_attr & 0x7F) as u8);
+    }
+
+    if value > 0 {
+        Some((value & 0x7F) as u8)
+    } else {
+        None
+    }
+}
+
 pub fn check_condition_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -343,38 +378,18 @@ fn check_condition_with_parts(
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_GROUP_FILTER => {
-            let lower_attr = attr & 0x00000000FFFFFFFF;
-            let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
-            
-            // FIX: Use filter.group_id if available (from attr), otherwise fall back to val
-            // The attr bits contain the correct group_id from the YAML frame data
-            let group_id_from_filter = if filter.group_enabled {
-                filter.group_id as u64
-            } else {
-                0
-            };
-            
-            let filter =
-                if !is_packed_r5 && (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300
-                {
-                    0x10 | (lower_attr << 5)
-                } else if group_id_from_filter != 0 {
-                    // Use the correct group_id from filter.attr
-                    0x10 | (group_id_from_filter << 5)
-                } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
-                    0x10 | (((val & 0x7F) as u64) << 5)
-                } else {
-                    lower_attr
-                };
+            let group_id = resolve_group_id(&filter, attr, val);
 
             if (val & 0x04) != 0 {
-                player
-                    .stage
-                    .iter()
-                    .filter(|&&cid| cid >= 0)
-                    .all(|&cid| state.card_matches_filter(db, cid, filter))
-            } else if let Some(cid) = state.get_context_card_id(ctx) {
-                state.card_matches_filter(db, cid, filter)
+                group_id.map_or(false, |group_id| {
+                    player
+                        .stage
+                        .iter()
+                        .filter(|&&cid| cid >= 0)
+                        .all(|&cid| card_matches_group(db, cid, group_id))
+                })
+            } else if let (Some(cid), Some(group_id)) = (state.get_context_card_id(ctx), group_id) {
+                card_matches_group(db, cid, group_id)
             } else {
                 false
             }
@@ -382,20 +397,9 @@ fn check_condition_with_parts(
         C_SELF_IS_GROUP => {
             let cid = get_cid();
             if cid >= 0 {
-                let lower_attr = attr & 0x00000000FFFFFFFF;
-                let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
-                let filter = if !is_packed_r5
-                    && (lower_attr & 0x10) == 0
-                    && lower_attr != 0
-                    && lower_attr < 300
-                {
-                    0x10 | (lower_attr << 5)
-                } else if !is_packed_r5 && (lower_attr & 0x10) == 0 && val != 0 {
-                    0x10 | ((val as u64) << 5)
-                } else {
-                    lower_attr
-                };
-                state.card_matches_filter(db, cid, filter)
+                resolve_group_id(&filter, attr, val)
+                    .map(|group_id| card_matches_group(db, cid, group_id))
+                    .unwrap_or(false)
             } else {
                 false
             }
@@ -453,12 +457,8 @@ fn check_condition_with_parts(
             if filter.keyword_energy || (attr & KEYWORD_ACTIVATED_ENERGY_BY_GROUP) != 0 {
                 eprintln!("[DEBUG_C_HAS_KEYWORD] Energy check: filter.group_enabled={}, attr & FILTER_GROUP_ENABLE={}",
                     filter.group_enabled, (attr & FILTER_GROUP_ENABLE));
-                if filter.group_enabled || (attr & FILTER_GROUP_ENABLE) != 0 {
-                    let group_id = if filter.group_enabled {
-                        filter.group_id as u64
-                    } else {
-                        (attr >> FILTER_GROUP_SHIFT) & 0x7F
-                    };
+                if let Some(group_id) = resolve_group_id(&filter, attr, val) {
+                    let group_id = group_id as u64;
                     let mask = player.activated_energy_group_mask;
                     let check = (mask & (1 << group_id)) != 0;
                     eprintln!("[DEBUG_C_HAS_KEYWORD] Group check: group_id={}, mask={:#b}, check={}", group_id, mask, check);
@@ -467,17 +467,10 @@ fn check_condition_with_parts(
                 return player.activated_energy_group_mask != 0;
             }
             if filter.keyword_member || (attr & KEYWORD_ACTIVATED_MEMBER_BY_GROUP) != 0 {
-                // Use attr bits directly since filter may not have been decoded correctly
-                let group_enabled_via_attr = (attr & FILTER_GROUP_ENABLE) != 0;
-                let group_id_via_attr = (attr >> FILTER_GROUP_SHIFT) & 0x7F;
-                eprintln!("[DEBUG_C_HAS_KEYWORD] Member check: filter.group_enabled={}, attr_group_enable={}, group_id={}",
-                    filter.group_enabled, group_enabled_via_attr, group_id_via_attr);
-                if filter.group_enabled || group_enabled_via_attr {
-                    let group_id = if filter.group_enabled {
-                        filter.group_id as u64
-                    } else {
-                        group_id_via_attr
-                    };
+                if let Some(group_id) = resolve_group_id(&filter, attr, val) {
+                    eprintln!("[DEBUG_C_HAS_KEYWORD] Member check: filter.group_enabled={}, resolved_group_id={}",
+                        filter.group_enabled, group_id);
+                    let group_id = group_id as u64;
                     let check = (player.activated_member_group_mask & (1 << group_id)) != 0;
                     eprintln!("[DEBUG_C_HAS_KEYWORD] Member group check: group_id={}, mask={:#b}, check={}", group_id, player.activated_member_group_mask, check);
                     return check;

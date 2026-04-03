@@ -50,6 +50,77 @@ where
         .count()
 }
 
+fn source_stage_slot(ctx: &AbilityContext) -> Option<usize> {
+    (ctx.area_idx >= 0 && ctx.area_idx < 3).then_some(ctx.area_idx as usize)
+}
+
+fn tap_member_cost_slots(
+    state: &GameState,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    required: usize,
+) -> Option<smallvec::SmallVec<[usize; 3]>> {
+    let preferred_slot = source_stage_slot(ctx);
+    let player = &state.players[p_idx];
+
+    if required == 0 {
+        let slot = preferred_slot?;
+        if player.stage[slot] >= 0 && !player.is_tapped(slot) {
+            let mut slots = smallvec::SmallVec::<[usize; 3]>::new();
+            slots.push(slot);
+            return Some(slots);
+        }
+        return None;
+    }
+
+    let mut slots = smallvec::SmallVec::<[usize; 3]>::new();
+    if let Some(slot) = preferred_slot {
+        if player.stage[slot] >= 0 && !player.is_tapped(slot) {
+            slots.push(slot);
+        }
+    }
+
+    for slot in 0..3 {
+        if slots.len() >= required {
+            break;
+        }
+        if Some(slot) == preferred_slot {
+            continue;
+        }
+        if player.stage[slot] >= 0 && !player.is_tapped(slot) {
+            slots.push(slot);
+        }
+    }
+
+    (slots.len() >= required).then_some(slots)
+}
+
+fn can_pay_tap_member_cost(
+    state: &GameState,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    required: usize,
+) -> bool {
+    tap_member_cost_slots(state, p_idx, ctx, required).is_some()
+}
+
+fn pay_tap_member_cost(
+    state: &mut GameState,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    required: usize,
+) -> bool {
+    let Some(slots) = tap_member_cost_slots(state, p_idx, ctx, required) else {
+        return false;
+    };
+
+    for slot in slots {
+        state.players[p_idx].set_tapped(slot, true);
+    }
+
+    true
+}
+
 pub(crate) fn tap_first_untapped_energy(
     state: &GameState,
     p_idx: usize,
@@ -149,22 +220,7 @@ pub fn check_cost(
                 false
             }
         }
-        AbilityCostType::TapMember => {
-            if val == 0 {
-                // FALLBACK: TapMember(0) refers to self (Wait self)
-                if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                    player.stage[ctx.area_idx as usize] >= 0
-                        && !player.is_tapped(ctx.area_idx as usize)
-                } else {
-                    false
-                }
-            } else {
-                let untapped_count = (0..3)
-                    .filter(|&i| player.stage[i] >= 0 && !player.is_tapped(i))
-                    .count();
-                untapped_count >= val
-            }
-        }
+        AbilityCostType::TapMember => can_pay_tap_member_cost(state, p_idx, ctx, val),
         AbilityCostType::TapEnergy => untapped_energy_count(state, p_idx) >= val,
         AbilityCostType::DiscardHand => {
             if has_filter {
@@ -290,17 +346,7 @@ pub fn check_frame_cost(
         }
         O_SET_TAPPED | O_TAP_MEMBER => {
             let required = comp.value.max(0) as usize;
-            if required == 0 {
-                return ctx.area_idx >= 0
-                    && (ctx.area_idx as usize) < 3
-                    && !state.players[p_idx].is_tapped(ctx.area_idx as usize);
-            }
-            let untapped = (0..3)
-                .filter(|&i| {
-                    state.players[p_idx].stage[i] >= 0 && !state.players[p_idx].is_tapped(i)
-                })
-                .count();
-            untapped >= required
+            can_pay_tap_member_cost(state, p_idx, ctx, required)
         }
         _ => true,
     }
@@ -349,40 +395,7 @@ pub fn pay_cost(
                 false
             }
         }
-        AbilityCostType::TapMember => {
-            let player = &mut state.players[p_idx];
-            let mut needed = cost.value as usize;
-            if needed == 0 {
-                // FALLBACK: Value 0 means "Tap Self"
-                if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                    player.set_tapped(ctx.area_idx as usize, true);
-                    return true;
-                }
-                return false;
-            }
-
-            // Prioritize source slot if it's untapped (Wait Self behavior)
-            if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                let slot = ctx.area_idx as usize;
-                if !player.is_tapped(slot) && player.stage[slot] >= 0 {
-                    player.set_tapped(slot, true);
-                    needed -= 1;
-                }
-            }
-
-            if needed > 0 {
-                for i in 0..3 {
-                    if !player.is_tapped(i) && player.stage[i] >= 0 {
-                        player.set_tapped(i, true);
-                        needed -= 1;
-                        if needed == 0 {
-                            break;
-                        }
-                    }
-                }
-            }
-            needed == 0
-        }
+        AbilityCostType::TapMember => pay_tap_member_cost(state, p_idx, ctx, cost.value.max(0) as usize),
         AbilityCostType::TapEnergy => {
             let untap_indices = tap_first_untapped_energy(state, p_idx, cost.value as usize);
             if untap_indices.len() < cost.value as usize {

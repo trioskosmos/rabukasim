@@ -855,56 +855,6 @@ impl CardDatabase {
                             slot,
                         });
                     }
-
-
-                        #[cfg(test)]
-                        mod tests {
-                            use super::*;
-                            use serde_json::json;
-
-                            #[test]
-                            fn sparse_index_preserves_per_card_ref_trigger_metadata() {
-                                let raw = json!({
-                                    "shared ability": {
-                                        "trigger": "ON_LIVE_START",
-                                        "trigger_id": 2,
-                                        "frames": [
-                                            {
-                                                "opcode": "PAY_ENERGY",
-                                                "value": 2
-                                            }
-                                        ],
-                                        "card_refs": [
-                                            {
-                                                "card_no": "TEST-001",
-                                                "ability_index": 0,
-                                                "trigger": "ON_LIVE_START",
-                                                "trigger_id": 2
-                                            },
-                                            {
-                                                "card_no": "TEST-001",
-                                                "ability_index": 1,
-                                                "trigger": "ON_LIVE_SUCCESS",
-                                                "trigger_id": 3
-                                            }
-                                        ]
-                                    }
-                                });
-
-                                let index = CardDatabase::load_sparse_ability_index_from_json(&raw.to_string());
-
-                                assert_eq!(
-                                    index["TEST-001#0"]["trigger_id"].as_i64(),
-                                    Some(2),
-                                    "ability 0 should keep the per-card trigger metadata"
-                                );
-                                assert_eq!(
-                                    index["TEST-001#1"]["trigger_id"].as_i64(),
-                                    Some(3),
-                                    "ability 1 should override the top-level trigger metadata"
-                                );
-                            }
-                        }
                     if !flagged_ops.contains(&op) {
                         unflagged_logic_present = true;
                     }

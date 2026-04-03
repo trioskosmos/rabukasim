@@ -928,7 +928,7 @@ pub fn add_card(
                     frames: f,
                     raw_program: None,
                 };
-                (fp.to_bytecode(), Some(fp))
+                (fp.to_words(), Some(fp))
             }
         };
 

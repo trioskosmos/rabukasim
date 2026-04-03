@@ -12,6 +12,165 @@ fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize
     }
 }
 
+fn is_structured_zone_count(op: i32, slot: i32) -> bool {
+    op == C_COUNT_STAGE
+        || op == C_COUNT_HAND
+        || op == C_COUNT_DISCARD
+        || op == C_COUNT_SUCCESS_LIVE
+        || op == C_COUNT_GROUP
+        || op == 307
+        || op == 13
+        || (op >= 400 && op < 500)
+        || crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot).is_dynamic
+}
+
+fn extend_with_slot(
+    ids: &mut smallvec::SmallVec<[(i32, Option<(u8, i16)>); 32]>,
+    cards: &[i32],
+    p_idx: u8,
+    base_slot: i16,
+) {
+    for (i, &id) in cards.iter().enumerate() {
+        if id >= 0 {
+            let s_idx = if base_slot >= 0 {
+                base_slot + i as i16
+            } else {
+                -1
+            };
+            ids.push((
+                id,
+                if s_idx >= 0 {
+                    Some((p_idx, s_idx))
+                } else {
+                    None
+                },
+            ));
+        }
+    }
+}
+
+fn resolve_structured_zone_count(
+    state: &GameState,
+    db: &CardDatabase,
+    op: i32,
+    attr: u64,
+    slot: i32,
+    ctx: &AbilityContext,
+) -> i32 {
+    let p_idx = ctx.player_id as usize;
+    let player = &state.players[p_idx];
+    let opponent = &state.players[1 - p_idx];
+
+    let mut filter = CardFilter::from_attr_legacy(attr as i64);
+    if op == C_COUNT_GROUP {
+        if let Some(group_id) = filter.semantic_group_id(attr as i32) {
+            filter.group_enabled = true;
+            filter.group_id = group_id;
+        }
+    }
+    let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
+        || filter.target_player == TARGET_PLAYER_BOTH as u8;
+    let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
+
+    let zone_mask = filter.zone_mask as u64;
+    let has_zone_mask = zone_mask != 0;
+
+    let slot_decoded = crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot);
+    let s_zone = slot_decoded.source_zone;
+
+    let is_explicit_success_count = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405;
+
+    let check_stage = if is_explicit_success_count {
+        false
+    } else if op >= 400 && op < 500 {
+        op == 401
+            || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
+            || (!has_zone_mask && s_zone == Zone::Stage)
+    } else if has_zone_mask {
+        zone_mask == ZONE_STAGE as u64
+    } else {
+        op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
+    };
+    let check_discard = if is_explicit_success_count {
+        false
+    } else if op >= 400 && op < 500 {
+        op == 403
+            || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
+            || (!has_zone_mask && s_zone == Zone::Discard)
+    } else if has_zone_mask {
+        zone_mask == ZONE_DISCARD as u64
+    } else {
+        op == C_COUNT_DISCARD || s_zone == Zone::Discard
+    };
+    let check_hand = if is_explicit_success_count {
+        false
+    } else if op >= 400 && op < 500 {
+        op == 402
+            || (has_zone_mask && zone_mask == ZONE_HAND as u64)
+            || (!has_zone_mask && s_zone == Zone::Hand)
+    } else if has_zone_mask {
+        zone_mask == ZONE_HAND as u64
+    } else {
+        op == C_COUNT_HAND || s_zone == Zone::Hand
+    };
+    let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
+
+    let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+
+    if !only_opponent {
+        if check_stage {
+            extend_with_slot(&mut ids, &player.stage, p_idx as u8, 0);
+        }
+        if check_discard {
+            extend_with_slot(&mut ids, &player.discard, p_idx as u8, 100);
+        }
+        if check_hand {
+            extend_with_slot(&mut ids, &player.hand, p_idx as u8, 200);
+        }
+        if check_success {
+            extend_with_slot(&mut ids, &player.success_lives, p_idx as u8, -1);
+        }
+    }
+    if include_opponent {
+        if check_stage {
+            extend_with_slot(&mut ids, &opponent.stage, (1 - p_idx) as u8, 0);
+        }
+        if check_discard {
+            extend_with_slot(&mut ids, &opponent.discard, (1 - p_idx) as u8, 100);
+        }
+        if check_hand {
+            extend_with_slot(&mut ids, &opponent.hand, (1 - p_idx) as u8, 200);
+        }
+        if check_success {
+            extend_with_slot(&mut ids, &opponent.success_lives, (1 - p_idx) as u8, -1);
+        }
+    }
+
+    if (attr & FILTER_UNIQUE_NAMES) != 0 {
+        let mut names = std::collections::HashSet::new();
+        for (id, slot) in ids {
+            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
+            if matched {
+                if let Some(m) = db.get_member(id) {
+                    names.insert(m.name.clone());
+                } else if let Some(l) = db.get_live(id) {
+                    names.insert(l.name.clone());
+                }
+            }
+        }
+        names.len() as i32
+    } else {
+        let mut res = 0;
+        for (id, slot) in ids {
+            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
+            if matched {
+                res += 1;
+            }
+        }
+        res
+    }
+}
+
 pub fn resolve_count_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -40,176 +199,9 @@ pub fn resolve_count(
     depth: u32,
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
-    let player = &state.players[p_idx];
-    let opponent = &state.players[1 - p_idx];
 
-    if op == C_COUNT_STAGE
-        || op == C_COUNT_HAND
-        || op == C_COUNT_DISCARD
-        || op == C_COUNT_SUCCESS_LIVE
-        || op == C_COUNT_GROUP
-        || op == 307
-        || op == 13
-        || (op >= 400 && op < 500)
-        || crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot).is_dynamic
-    {
-        let filter = CardFilter::from_attr_legacy(attr as i64);
-        let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
-            || filter.target_player == TARGET_PLAYER_BOTH as u8;
-        let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
-
-        let zone_mask = filter.zone_mask as u64;
-        let has_zone_mask = zone_mask != 0;
-
-        let slot_decoded = crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot);
-        let s_zone = slot_decoded.source_zone;
-
-        let is_explicit_success_count = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405;
-
-        let check_stage = if is_explicit_success_count {
-            false
-        } else if op >= 400 && op < 500 {
-            op == 401
-                || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
-                || (!has_zone_mask && s_zone == Zone::Stage)
-        } else if has_zone_mask {
-            zone_mask == ZONE_STAGE as u64
-        } else {
-            op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
-        };
-        let check_discard = if is_explicit_success_count {
-            false
-        } else if op >= 400 && op < 500 {
-            op == 403
-                || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
-                || (!has_zone_mask && s_zone == Zone::Discard)
-        } else if has_zone_mask {
-            zone_mask == ZONE_DISCARD as u64
-        } else {
-            op == C_COUNT_DISCARD || s_zone == Zone::Discard
-        };
-        let check_hand = if is_explicit_success_count {
-            false
-        } else if op >= 400 && op < 500 {
-            op == 402
-                || (has_zone_mask && zone_mask == ZONE_HAND as u64)
-                || (!has_zone_mask && s_zone == Zone::Hand)
-        } else if has_zone_mask {
-            zone_mask == ZONE_HAND as u64
-        } else {
-            op == C_COUNT_HAND || s_zone == Zone::Hand
-        };
-        let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
-
-        use smallvec::SmallVec;
-        let mut ids = SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-
-        fn extend_with_slot(
-            ids: &mut SmallVec<[(i32, Option<(u8, i16)>); 32]>,
-            cards: &[i32],
-            p_idx: u8,
-            base_slot: i16,
-        ) {
-            for (i, &id) in cards.iter().enumerate() {
-                if id >= 0 {
-                    let s_idx = if base_slot >= 0 {
-                        base_slot + i as i16
-                    } else {
-                        -1
-                    };
-                    ids.push((
-                        id,
-                        if s_idx >= 0 {
-                            Some((p_idx, s_idx))
-                        } else {
-                            None
-                        },
-                    ));
-                }
-            }
-        }
-
-        if !only_opponent {
-            if check_stage {
-                extend_with_slot(&mut ids, &player.stage, p_idx as u8, 0);
-            }
-            if check_discard {
-                extend_with_slot(&mut ids, &player.discard, p_idx as u8, 100);
-            }
-            if check_hand {
-                extend_with_slot(&mut ids, &player.hand, p_idx as u8, 200);
-            }
-            if check_success {
-                extend_with_slot(&mut ids, &player.success_lives, p_idx as u8, -1);
-            }
-        }
-        if include_opponent {
-            if check_stage {
-                extend_with_slot(&mut ids, &opponent.stage, (1 - p_idx) as u8, 0);
-            }
-            if check_discard {
-                extend_with_slot(&mut ids, &opponent.discard, (1 - p_idx) as u8, 100);
-            }
-            if check_hand {
-                extend_with_slot(&mut ids, &opponent.hand, (1 - p_idx) as u8, 200);
-            }
-            if check_success {
-                extend_with_slot(&mut ids, &opponent.success_lives, (1 - p_idx) as u8, -1);
-            }
-        }
-
-        let is_packed_r5 = (attr & 0xFFFFFFFF00000000) != 0;
-        let group_id_bits = (attr & 0x00000000FFFFFFFF) & !FILTER_UNIQUE_NAMES;
-        let should_auto_encode_group = (op == C_COUNT_GROUP)
-            && !is_packed_r5
-            && (attr & FILTER_GROUP_ENABLE) == 0
-            && group_id_bits > 0
-            && group_id_bits < 300;
-
-        let mut filter_attr = attr;
-        if should_auto_encode_group {
-            let gid = group_id_bits;
-            let group_mask = 0xFFF;
-            let new_group_bits = 0x10 | (gid << 5);
-            filter_attr = (filter_attr & !group_mask) | new_group_bits;
-        }
-
-        let has_value_enabled = (filter_attr & FILTER_VALUE_ENABLE_FLAG) != 0;
-        let is_cost_type = (filter_attr & FILTER_VALUE_TYPE_FLAG) != 0;
-        let has_color_mask = ((filter_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) != 0;
-        if has_value_enabled && !is_cost_type && !has_color_mask && !is_packed_r5 {
-            filter_attr &= !FILTER_VALUE_ENABLE_FLAG;
-        }
-
-        if check_success {
-            filter_attr &= !0x0C;
-        }
-
-        let filter = CardFilter::from_attr_legacy(filter_attr as i64);
-
-        if (attr & FILTER_UNIQUE_NAMES) != 0 {
-            let mut names = std::collections::HashSet::new();
-            for (id, slot) in ids {
-                let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
-                if matched {
-                    if let Some(m) = db.get_member(id) {
-                        names.insert(m.name.clone());
-                    } else if let Some(l) = db.get_live(id) {
-                        names.insert(l.name.clone());
-                    }
-                }
-            }
-            names.len() as i32
-        } else {
-            let mut res = 0;
-            for (id, slot) in ids {
-                let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
-                if matched {
-                    res += 1;
-                }
-            }
-            res
-        }
+    if is_structured_zone_count(op, slot) {
+        resolve_structured_zone_count(state, db, op, attr, slot, ctx)
     } else {
         match op {
             C_COUNT_ENERGY => {
@@ -221,7 +213,7 @@ pub fn resolve_count(
                 }
                 total
             }
-            C_COUNT_BLADES | C_COUNT_HEARTS | C_COUNT_STAGE | C_COUNT_GROUP => {
+            C_COUNT_BLADES | C_COUNT_HEARTS => {
                 let target_slot = slot & 0x0F;
                 let resolved_slot = if target_slot == 10 {
                     (ctx.target_slot as i32).max(0) as usize
@@ -242,7 +234,7 @@ pub fn resolve_count(
                         sum
                     }
                 } else if op == C_COUNT_HEARTS {
-                    let color_mask = (attr >> FILTER_COLOR_SHIFT_R5) & 0x7F;
+                    let color_mask = CardFilter::from_attr_legacy(attr as i64).color_mask as u64;
 
                     if resolved_slot < 3 {
                         let h = state.get_effective_hearts(p_idx, resolved_slot, db, depth);
@@ -312,14 +304,13 @@ pub fn get_condition_count(
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
-    let filter_attr = (attr as u64) & 0x00000000FFFFFFFF;
-    let filter = CardFilter::from_attr_legacy(filter_attr as i64);
+    let filter = CardFilter::from_attr_legacy(attr as i64);
     let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
 
     let count_zone = |cards: &[i32]| -> i32 {
         cards
             .iter()
-            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
+            .filter(|&&id| id >= 0 && state.card_matches_filter_with_struct(db, id, None, &filter, ctx))
             .count() as i32
     };
 
