@@ -176,6 +176,30 @@ impl<'a> AbilityFrameComponents<'a> {
             || self.slot.target_slot as i32 == crate::core::generated_constants::SLOT_HAND
     }
 
+    pub fn resolved_filter_attr(&self) -> u64 {
+        if self.raw_attr != 0 {
+            self.raw_attr
+        } else {
+            self.filter.to_attr()
+        }
+    }
+
+    pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
+        self.filter.semantic_group_id(fallback_value)
+    }
+
+    pub fn counts_unique_names(&self) -> bool {
+        self.filter.unique_names
+    }
+
+    pub fn compare_accumulated(&self) -> bool {
+        self.filter.compare_accumulated
+    }
+
+    pub fn has_revealed_context_passthrough(&self) -> bool {
+        (self.raw_attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0
+    }
+
     /// Check if this frame uses dynamic value calculation (accumulated compare)
     pub fn is_dynamic(&self) -> bool {
         use crate::core::generated_layout::{A_STANDARD_COMPARE_ACCUMULATED_MASK, A_STANDARD_COMPARE_ACCUMULATED_SHIFT};

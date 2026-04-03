@@ -6,21 +6,20 @@ use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::resolve_target_slot;
 
-#[allow(clippy::too_many_arguments)]
 pub fn handle_state_modifiers(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame_data: &AbilityFrameComponents<'_>,
-    op: i32,
-    v: i32,
-    a: i64,
-    s: i32,
-    p_idx: usize,
-    base_p: usize,
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
-    target_slot: i32,
+    frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
+    let op = frame_data.opcode;
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
+    let p_idx = ctx.player_id as usize;
+    let base_p = ctx.player_id as usize;
+    let slot_info = frame_data.slot;
+    let target_slot = frame_data.slot.target_slot as i32;
     match op {
         O_LOSE_EXCESS_HEARTS => state.players[p_idx].excess_hearts = 0,
         O_DIV_VALUE => {
@@ -77,27 +76,4 @@ pub fn handle_state_modifiers(
         _ => {}
     }
     HandlerResult::Continue
-}
-
-/// Simplified version that works directly with frame_data
-pub fn handle_state_modifiers_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
-) -> HandlerResult {
-    handle_state_modifiers(
-        state,
-        db,
-        ctx,
-        frame_data,
-        frame_data.opcode,
-        frame_data.value,
-        frame_data.raw_attr as i64,
-        frame_data.raw_slot,
-        ctx.player_id as usize,
-        ctx.player_id as usize,
-        frame_data.slot,
-        frame_data.slot.target_slot as i32,
-    )
 }

@@ -54,6 +54,27 @@ fn stage_has_cost_13_or_more(state: &GameState, db: &CardDatabase) -> bool {
     })
 }
 
+fn frame_uses_count_multiplier(
+    frame_data: &AbilityFrameComponents<'_>,
+    has_per_card: bool,
+) -> bool {
+    frame_data.slot.is_dynamic
+        || frame_data.compare_accumulated()
+        || has_per_card
+        || frame_data.slot.source_zone != Zone::Default
+}
+
+fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
+    matches!((raw_slot as u32) & 0xFF, 0 | 1 | 4)
+}
+
+fn requests_success_pile_multiplier(raw_attr: u64, raw_slot: i32, value: i32) -> bool {
+    (raw_attr & 0x40) != 0
+        || raw_attr == ConditionType::SuccessPileCount as u64
+        || ((raw_attr & 0xFFFFFFFF) == 1 && (raw_attr >> 32) > 0x00FFFFFF)
+        || (value > 0xFFFF && (raw_slot & 0x10000) != 0)
+}
+
 fn inferred_tapped_group_requirement(ab: &Ability) -> Option<u8> {
     if !ab.conditions.is_empty() {
         return None;
@@ -279,11 +300,7 @@ fn apply_reduce_cost_modifiers(
             .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
-        if frame_data.slot.is_dynamic
-            || frame_data.filter.compare_accumulated
-            || per_card.is_some()
-            || frame_data.slot.source_zone != Zone::Default
-        {
+        if frame_uses_count_multiplier(&frame_data, per_card.is_some()) {
             let mut count_op = if let Some(ref per_card) = per_card {
                 match per_card.as_str() {
                     "HAND" => C_COUNT_HAND,
@@ -370,7 +387,7 @@ fn apply_reduce_cost_modifiers(
                         && source_matches_filter
                         && (frame_data.filter.special_id == 3
                             || frame_data.slot.source_zone != Zone::Default
-                            || frame_data.filter.compare_accumulated
+                            || frame_data.compare_accumulated()
                             || per_card.is_some())
                     {
                         multiplier -= 1;
@@ -1280,13 +1297,7 @@ fn apply_aura_modifier(
             {
                 return;
             }
-            // Check for success pile multiplier through multiple encoding methods
-            if (a & 0x40) != 0 || a == ConditionType::SuccessPileCount as u64 {
-                multiplier = state.players[p_idx].success_lives.len() as i32;
-            } else if (a & 0xFFFFFFFF) == 1 && (a >> 32) > 0x00FFFFFF {
-                multiplier = state.players[p_idx].success_lives.len() as i32;
-            } else if s > 0xFFFF && (s & 0x10000) != 0 {
-                // High bit set in value indicates per_card=SUCCESS_PILE
+            if requests_success_pile_multiplier(a, s, v) {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             }
             aura.blades[target_slot] += value * multiplier;
@@ -1302,13 +1313,13 @@ fn apply_aura_modifier(
             }
         }
         O_REDUCE_COST => {
-            if ((s as u32) & 0xFF) == 0 || ((s as u32) & 0xFF) == 4 || ((s as u32) & 0xFF) == 1 {
+            if is_generic_cost_area_slot(s) {
                 // Generic slot/area reduction
                 aura.slot_cost_modifiers[target_slot] -= value as i16 * multiplier as i16;
             }
         }
         O_INCREASE_COST => {
-            if ((s as u32) & 0xFF) == 0 || ((s as u32) & 0xFF) == 4 || ((s as u32) & 0xFF) == 1 {
+            if is_generic_cost_area_slot(s) {
                 aura.slot_cost_modifiers[target_slot] += value as i16 * multiplier as i16;
             }
         }

@@ -12,10 +12,10 @@ pub fn handle_trigger_remote(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-    v: i32,
-    p_idx: usize,
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
+    let v = frame_data.value;
+    let p_idx = ctx.player_id as usize;
+    let slot_info = frame_data.slot;
     let from_discard = frame_data
         .params
         .and_then(|p| p.get("from"))
@@ -86,55 +86,6 @@ pub fn handle_meta_rule(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-    a: i64,
-    v: i32,
-    p_idx: usize,
-    base_p: usize,
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
-    target_slot: i32,
 ) -> HandlerResult {
-    flow_meta_rule::handle_meta_rule(state, db, ctx, frame_data, frame_idx, a, v, p_idx, base_p, slot_info, target_slot)
-}
-
-/// Simplified version that extracts values from frame_data
-pub fn handle_trigger_remote_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
-    frame_idx: usize,
-) -> HandlerResult {
-    handle_trigger_remote(
-        state,
-        db,
-        ctx,
-        frame_data,
-        frame_idx,
-        frame_data.value,
-        ctx.player_id as usize,
-        frame_data.slot,
-    )
-}
-
-/// Simplified version that extracts values from frame_data
-pub fn handle_meta_rule_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
-    frame_idx: usize,
-) -> HandlerResult {
-    handle_meta_rule(
-        state,
-        db,
-        ctx,
-        frame_data,
-        frame_idx,
-        frame_data.raw_attr as i64,
-        frame_data.value,
-        ctx.player_id as usize,
-        ctx.activator_id as usize,
-        frame_data.slot,
-        frame_data.slot.target_slot as i32,
-    )
+    flow_meta_rule::handle_meta_rule(state, db, ctx, frame_data, frame_idx)
 }

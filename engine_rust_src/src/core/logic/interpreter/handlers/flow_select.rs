@@ -78,13 +78,13 @@ pub fn handle_select_ops(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-    op: i32,
-    v: i32,
-    a: i64,
-    s: i32,
-    p_idx: usize,
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
+    let op = frame_data.opcode;
+    let v = frame_data.value;
+    let a = frame_data.raw_attr as i64;
+    let s = frame_data.raw_slot;
+    let p_idx = ctx.player_id as usize;
+    let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
     let frame_filter_attr = frame_data.filter.to_attr();
     let structured_filter = {
@@ -92,10 +92,8 @@ pub fn handle_select_ops(
         filter.is_enabled = true;
         filter
     };
-    let raw_filter_attr = if frame_data.raw_attr != 0 {
-        frame_data.raw_attr
-    } else if frame_filter_attr != 0 {
-        frame_filter_attr
+    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
+        frame_data.resolved_filter_attr()
     } else {
         a as u64
     };
@@ -383,27 +381,4 @@ pub fn handle_select_ops(
     }
 
     HandlerResult::Continue
-}
-
-/// Simplified version that works directly with frame_data
-pub fn handle_select_ops_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
-    frame_idx: usize,
-) -> HandlerResult {
-    handle_select_ops(
-        state,
-        db,
-        ctx,
-        frame_data,
-        frame_idx,
-        frame_data.opcode,
-        frame_data.value,
-        frame_data.raw_attr as i64,
-        frame_data.raw_slot,
-        ctx.player_id as usize,
-        frame_data.slot,
-    )
 }

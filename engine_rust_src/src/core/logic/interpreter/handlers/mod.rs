@@ -108,7 +108,7 @@ pub fn dispatch(
 
         // Selection operations
         O_SELECT_MEMBER | O_SELECT_LIVE | O_SELECT_PLAYER => {
-            flow_select::handle_select_ops(state, db, ctx, frame_data, frame_idx, frame_data.opcode, frame_data.value, frame_data.raw_attr as i64, frame_data.raw_slot, ctx.player_id as usize, frame_data.slot)
+            flow_select::handle_select_ops(state, db, ctx, frame_data, frame_idx)
         }
 
         // Opponent choose
@@ -118,17 +118,17 @@ pub fn dispatch(
         O_COLOR_SELECT => flow_context::handle_color_select(state, db, ctx, frame_idx),
 
         // Effects
-        O_TRIGGER_REMOTE => flow_effects::handle_trigger_remote(state, db, ctx, frame_data, frame_idx, frame_data.value, ctx.player_id as usize, frame_data.slot),
-        O_META_RULE => flow_effects::handle_meta_rule(state, db, ctx, frame_data, frame_idx, frame_data.raw_attr as i64, frame_data.value, ctx.player_id as usize, ctx.player_id as usize, frame_data.slot, frame_data.slot.target_slot as i32),
+        O_TRIGGER_REMOTE => flow_effects::handle_trigger_remote(state, db, ctx, frame_data, frame_idx),
+        O_META_RULE => flow_effects::handle_meta_rule(state, db, ctx, frame_data, frame_idx),
 
         // Swap area
-        O_SWAP_AREA => flow_swap::handle_swap_area(state, ctx, frame_data, ctx.player_id as usize, frame_data.slot, frame_data.slot.target_slot as i32, frame_data.raw_attr as i64, frame_data.raw_slot, frame_data.value),
+        O_SWAP_AREA => flow_swap::handle_swap_area(state, ctx, frame_data),
 
         // State modifiers
         O_LOSE_EXCESS_HEARTS | O_DIV_VALUE | O_RESTRICTION | O_PREVENT_ACTIVATE 
         | O_PREVENT_BATON_TOUCH | O_PREVENT_SET_TO_SUCCESS_PILE | O_PREVENT_PLAY_TO_SLOT 
         | O_REDUCE_LIVE_SET_LIMIT | O_REDUCE_YELL_COUNT | O_BATON_TOUCH_MOD | O_IMMUNITY => {
-            flow_state_mod::handle_state_modifiers(state, db, ctx, frame_data, frame_data.opcode, frame_data.value, frame_data.raw_attr as i64, frame_data.raw_slot, ctx.player_id as usize, ctx.player_id as usize, frame_data.slot, frame_data.slot.target_slot as i32)
+            flow_state_mod::handle_state_modifiers(state, db, ctx, frame_data)
         }
 
         // Default

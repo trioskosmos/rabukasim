@@ -43,7 +43,7 @@ fn resolve_dynamic_multiplier(
         state,
         db,
         count_opcode,
-        filter_attr,
+        frame_data.raw_attr,
         frame_data.raw_slot,
         ctx,
         0,

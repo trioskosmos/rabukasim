@@ -26,13 +26,13 @@ pub fn handle_meta_rule(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
-    a: i64,
-    v: i32,
-    p_idx: usize,
-    base_p: usize,
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
-    target_slot: i32,
 ) -> HandlerResult {
+    let a = frame_data.raw_attr as i64;
+    let v = frame_data.value;
+    let p_idx = ctx.player_id as usize;
+    let base_p = ctx.activator_id as usize;
+    let slot_info = frame_data.slot;
+    let target_slot = frame_data.slot.target_slot as i32;
     let target_p_idx = target_player_for_meta_rule(base_p, slot_info, target_slot);
     let raw_effect = frame_data
         .params

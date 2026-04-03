@@ -12,7 +12,28 @@ fn target_player_pair(filter: &CardFilter, p_idx: usize) -> (usize, Option<usize
     }
 }
 
-fn is_structured_zone_count(op: i32, slot: i32) -> bool {
+fn count_components(op: i32, attr: u64, slot: i32) -> AbilityFrameComponents<'static> {
+    let is_negated = op >= OPCODE_NEGATION_OFFSET;
+    AbilityFrameComponents {
+        raw_opcode: op,
+        opcode: if is_negated {
+            op - OPCODE_NEGATION_OFFSET
+        } else {
+            op
+        },
+        value: 0,
+        filter: CardFilter::from_attr_legacy(attr as i64),
+        slot: crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot),
+        raw_attr: attr,
+        raw_slot: slot,
+        is_negated,
+        is_cost: false,
+        params: None,
+    }
+}
+
+fn is_structured_zone_count(frame: &AbilityFrameComponents<'_>) -> bool {
+    let op = frame.opcode;
     op == C_COUNT_STAGE
         || op == C_COUNT_HAND
         || op == C_COUNT_DISCARD
@@ -21,7 +42,7 @@ fn is_structured_zone_count(op: i32, slot: i32) -> bool {
         || op == 307
         || op == 13
         || (op >= 400 && op < 500)
-        || crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot).is_dynamic
+        || frame.slot.is_dynamic
 }
 
 fn extend_with_slot(
@@ -52,18 +73,16 @@ fn extend_with_slot(
 fn resolve_structured_zone_count(
     state: &GameState,
     db: &CardDatabase,
-    op: i32,
-    attr: u64,
-    slot: i32,
+    frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
-    let mut filter = CardFilter::from_attr_legacy(attr as i64);
-    if op == C_COUNT_GROUP {
-        if let Some(group_id) = filter.semantic_group_id(attr as i32) {
+    let mut filter = frame.filter;
+    if frame.opcode == C_COUNT_GROUP {
+        if let Some(group_id) = frame.semantic_group_id(frame.raw_attr as i32) {
             filter.group_enabled = true;
             filter.group_id = group_id;
         }
@@ -75,43 +94,43 @@ fn resolve_structured_zone_count(
     let zone_mask = filter.zone_mask as u64;
     let has_zone_mask = zone_mask != 0;
 
-    let slot_decoded = crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot);
-    let s_zone = slot_decoded.source_zone;
+    let s_zone = frame.slot.source_zone;
 
-    let is_explicit_success_count = op == C_COUNT_SUCCESS_LIVE || op == 307 || op == 405;
+    let is_explicit_success_count =
+        frame.opcode == C_COUNT_SUCCESS_LIVE || frame.opcode == 307 || frame.opcode == 405;
 
     let check_stage = if is_explicit_success_count {
         false
-    } else if op >= 400 && op < 500 {
-        op == 401
+    } else if frame.opcode >= 400 && frame.opcode < 500 {
+        frame.opcode == 401
             || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
             || (!has_zone_mask && s_zone == Zone::Stage)
     } else if has_zone_mask {
         zone_mask == ZONE_STAGE as u64
     } else {
-        op == C_COUNT_STAGE || op == C_COUNT_GROUP || s_zone == Zone::Stage
+        frame.opcode == C_COUNT_STAGE || frame.opcode == C_COUNT_GROUP || s_zone == Zone::Stage
     };
     let check_discard = if is_explicit_success_count {
         false
-    } else if op >= 400 && op < 500 {
-        op == 403
+    } else if frame.opcode >= 400 && frame.opcode < 500 {
+        frame.opcode == 403
             || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
             || (!has_zone_mask && s_zone == Zone::Discard)
     } else if has_zone_mask {
         zone_mask == ZONE_DISCARD as u64
     } else {
-        op == C_COUNT_DISCARD || s_zone == Zone::Discard
+        frame.opcode == C_COUNT_DISCARD || s_zone == Zone::Discard
     };
     let check_hand = if is_explicit_success_count {
         false
-    } else if op >= 400 && op < 500 {
-        op == 402
+    } else if frame.opcode >= 400 && frame.opcode < 500 {
+        frame.opcode == 402
             || (has_zone_mask && zone_mask == ZONE_HAND as u64)
             || (!has_zone_mask && s_zone == Zone::Hand)
     } else if has_zone_mask {
         zone_mask == ZONE_HAND as u64
     } else {
-        op == C_COUNT_HAND || s_zone == Zone::Hand
+        frame.opcode == C_COUNT_HAND || s_zone == Zone::Hand
     };
     let check_success = is_explicit_success_count || s_zone == Zone::SuccessPile;
 
@@ -146,7 +165,7 @@ fn resolve_structured_zone_count(
         }
     }
 
-    if (attr & FILTER_UNIQUE_NAMES) != 0 {
+    if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
         for (id, slot) in ids {
             let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
@@ -171,42 +190,21 @@ fn resolve_structured_zone_count(
     }
 }
 
-pub fn resolve_count_frame(
+fn resolve_count_components(
     state: &GameState,
     db: &CardDatabase,
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
     depth: u32,
 ) -> i32 {
-    resolve_count(
-        state,
-        db,
-        frame.opcode,
-        frame.raw_attr,
-        frame.raw_slot,
-        ctx,
-        depth,
-    )
-}
-
-pub fn resolve_count(
-    state: &GameState,
-    db: &CardDatabase,
-    op: i32,
-    attr: u64,
-    slot: i32,
-    ctx: &AbilityContext,
-    depth: u32,
-) -> i32 {
     let p_idx = ctx.player_id as usize;
 
-    if is_structured_zone_count(op, slot) {
-        resolve_structured_zone_count(state, db, op, attr, slot, ctx)
+    if is_structured_zone_count(frame) {
+        resolve_structured_zone_count(state, db, frame, ctx)
     } else {
-        match op {
+        match frame.opcode {
             C_COUNT_ENERGY => {
-                let filter = CardFilter::from_attr_legacy(attr as i64);
-                let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
+                let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
                 let mut total = state.players[primary_player].energy_zone.len() as i32;
                 if let Some(other_player) = secondary_player {
                     total += state.players[other_player].energy_zone.len() as i32;
@@ -214,7 +212,7 @@ pub fn resolve_count(
                 total
             }
             C_COUNT_BLADES | C_COUNT_HEARTS => {
-                let target_slot = slot & 0x0F;
+                let target_slot = frame.slot.target_slot;
                 let resolved_slot = if target_slot == 10 {
                     (ctx.target_slot as i32).max(0) as usize
                 } else if target_slot > 0 && target_slot <= 3 {
@@ -223,7 +221,7 @@ pub fn resolve_count(
                     99
                 };
 
-                if op == C_COUNT_BLADES {
+                if frame.opcode == C_COUNT_BLADES {
                     if resolved_slot < 3 {
                         state.get_effective_blades(p_idx, resolved_slot, db, depth) as i32
                     } else {
@@ -233,8 +231,8 @@ pub fn resolve_count(
                         }
                         sum
                     }
-                } else if op == C_COUNT_HEARTS {
-                    let color_mask = CardFilter::from_attr_legacy(attr as i64).color_mask as u64;
+                } else {
+                    let color_mask = frame.filter.color_mask as u64;
 
                     if resolved_slot < 3 {
                         let h = state.get_effective_hearts(p_idx, resolved_slot, db, depth);
@@ -270,8 +268,6 @@ pub fn resolve_count(
                             sum
                         }
                     }
-                } else {
-                    0
                 }
             }
             250 => {
@@ -291,6 +287,29 @@ pub fn resolve_count(
             _ => 0,
         }
     }
+}
+
+pub fn resolve_count_frame(
+    state: &GameState,
+    db: &CardDatabase,
+    frame: &AbilityFrameComponents<'_>,
+    ctx: &AbilityContext,
+    depth: u32,
+) -> i32 {
+    resolve_count_components(state, db, frame, ctx, depth)
+}
+
+pub fn resolve_count(
+    state: &GameState,
+    db: &CardDatabase,
+    op: i32,
+    attr: u64,
+    slot: i32,
+    ctx: &AbilityContext,
+    depth: u32,
+) -> i32 {
+    let frame = count_components(op, attr, slot);
+    resolve_count_components(state, db, &frame, ctx, depth)
 }
 
 pub fn get_condition_count(

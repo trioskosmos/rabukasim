@@ -94,21 +94,25 @@ fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
         .unwrap_or(false)
 }
 
-fn resolve_group_id(filter: &CardFilter, attr: u64, value: i32) -> Option<u8> {
-    if filter.group_enabled {
-        return Some(filter.group_id);
-    }
-
+fn legacy_group_id_from_attr(attr: u64) -> Option<u8> {
     let lower_attr = attr & 0x00000000FFFFFFFF;
     if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
-        return Some((lower_attr & 0x7F) as u8);
-    }
-
-    if value > 0 {
-        Some((value & 0x7F) as u8)
+        Some((lower_attr & 0x7F) as u8)
     } else {
         None
     }
+}
+
+fn resolve_group_id(filter: &CardFilter, attr: u64, value: i32) -> Option<u8> {
+    legacy_group_id_from_attr(attr).or_else(|| filter.semantic_group_id(value))
+}
+
+fn has_revealed_context_passthrough(attr: u64) -> bool {
+    (attr & FILTER_REVEALED_CONTEXT) != 0
+}
+
+fn counts_unique_names(filter: &CardFilter, attr: u64) -> bool {
+    filter.unique_names || (attr & FILTER_UNIQUE_NAMES) != 0
 }
 
 pub fn check_condition_frame(
@@ -498,7 +502,7 @@ fn check_condition_with_parts(
             if (attr & KEYWORD_HAS_LIVE_SET) != 0 {
                 res = player.live_zone.iter().any(|&c| c >= 0);
             }
-            if (attr & FILTER_REVEALED_CONTEXT) != 0 {
+            if has_revealed_context_passthrough(attr) {
                 if val == 1 {
                     res = player
                         .looked_cards
@@ -549,7 +553,7 @@ fn check_condition_with_parts(
         }
         C_COUNT_LIVE_ZONE => {
             let filter_attr = attr & 0x00000000FFFFFFFF;
-            let count = if (attr & 0x8000) != 0 {
+            let count = if counts_unique_names(&filter, attr) {
                 let mut names = std::collections::HashSet::new();
                 for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
                     if state.card_matches_filter(db, id, filter_attr) {
