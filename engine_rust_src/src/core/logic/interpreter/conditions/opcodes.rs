@@ -8,9 +8,7 @@ use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condi
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
-use crate::core::logic::models::{
-    AbilityFrameComponents, SemanticComparisonMode, SemanticFrameView,
-};
+use crate::core::logic::models::{AbilityFrameComponents, SemanticComparisonMode};
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -71,7 +69,7 @@ impl<'a> ConditionParams<'a> {
             raw_attr: attr,
             raw_slot: slot,
             params: None,
-            filter: CardFilter::from_attr_legacy(attr as i64),
+            filter: CardFilter::from_attr(attr),
             slot: DecodedSlot::decode(slot),
             depth,
         }
@@ -178,7 +176,7 @@ fn check_condition_with_parts(
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
-    let semantic = SemanticFrameView::from_parts(val, attr, slot, params);
+    let semantic = AbilityFrameComponents::from_raw_parts(op, val, attr, slot, false, params);
     let get_cid = || {
         if ctx.source_card_id >= 0 {
             ctx.source_card_id
@@ -843,7 +841,7 @@ fn check_condition_with_parts(
             compare_i32(count, val, slot)
         }
         311 => {
-            let filter = CardFilter::from_attr_legacy(attr as i64);
+            let filter = CardFilter::from_attr(attr);
             let area_override = params
                 .and_then(|value| value.as_object())
                 .and_then(|params| params.get("area").or_else(|| params.get("AREA")))

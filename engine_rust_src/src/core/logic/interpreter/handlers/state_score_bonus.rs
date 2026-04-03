@@ -10,8 +10,7 @@ fn resolve_dynamic_multiplier(
     ctx: &AbilityContext,
     frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> Option<i32> {
-    let semantic = frame_data.semantic_view();
-    let count_opcode = semantic.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)?;
+    let count_opcode = frame_data.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)?;
 
     let filter_attr = frame_data.filter.to_attr();
     let mut count = resolve_count(
@@ -28,7 +27,7 @@ fn resolve_dynamic_multiplier(
     if frame_data.opcode == O_REDUCE_COST && count > 0 {
         let p_idx = ctx.player_id as usize;
         let source_card_id = ctx.source_card_id;
-        let source_is_counted = match semantic.inferred_count_zone() {
+        let source_is_counted = match frame_data.inferred_count_zone() {
             Some(crate::core::logic::models::SemanticCountZone::Hand) | None => state.players[p_idx]
                 .hand
                 .iter()
@@ -118,7 +117,7 @@ pub fn handle_boost_score(
         let base = frame_data.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
-    } else if frame_data.semantic_view().uses_count_multiplier() {
+    } else if frame_data.uses_count_multiplier() {
         let count = resolve_dynamic_multiplier(state, db, ctx, &frame_data).unwrap_or(0);
         final_v = v * count;
     }

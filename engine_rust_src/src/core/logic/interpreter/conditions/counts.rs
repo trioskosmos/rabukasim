@@ -21,7 +21,7 @@ fn count_components(op: i32, attr: u64, slot: i32) -> AbilityFrameComponents<'st
             op
         },
         value: 0,
-        filter: CardFilter::from_attr_legacy(attr as i64),
+        filter: CardFilter::from_attr(attr),
         slot: crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot),
         raw_attr: attr,
         raw_slot: slot,
@@ -79,10 +79,9 @@ fn resolve_structured_zone_count(
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
-    let semantic = frame.semantic_view();
     let mut filter = frame.filter;
     if frame.opcode == C_COUNT_GROUP {
-        if let Some(group_id) = semantic.semantic_group_id(frame.raw_attr as i32) {
+        if let Some(group_id) = frame.semantic_group_id(frame.raw_attr as i32) {
             filter.group_enabled = true;
             filter.group_id = group_id;
         }
@@ -90,11 +89,11 @@ fn resolve_structured_zone_count(
     let include_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8
         || filter.target_player == TARGET_PLAYER_BOTH as u8;
     let only_opponent = filter.target_player == TARGET_PLAYER_OPPONENT as u8;
-    let (stage_primary_player, stage_secondary_player) = semantic.stage_player_scope(p_idx);
+    let (stage_primary_player, stage_secondary_player) = frame.stage_player_scope(p_idx);
 
     let zone_mask = filter.zone_mask as u64;
     let has_zone_mask = zone_mask != 0;
-    let inferred_zone = semantic.inferred_count_zone();
+    let inferred_zone = frame.inferred_count_zone();
 
     let is_explicit_success_count =
         frame.opcode == C_COUNT_SUCCESS_LIVE || frame.opcode == 307 || frame.opcode == 405;
@@ -179,7 +178,7 @@ fn resolve_structured_zone_count(
         }
     }
 
-    if semantic.counts_unique_names() {
+    if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
         for (id, slot) in ids {
             let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
@@ -368,7 +367,7 @@ pub fn get_condition_count(
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
-    let filter = CardFilter::from_attr_legacy(attr as i64);
+    let filter = CardFilter::from_attr(attr);
     let (primary_player, secondary_player) = target_player_pair(&filter, p_idx);
 
     let count_zone = |cards: &[i32]| -> i32 {

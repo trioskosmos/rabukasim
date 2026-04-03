@@ -57,7 +57,7 @@ fn frame_uses_count_multiplier(
     frame_data: &AbilityFrameComponents<'_>,
     has_per_card: bool,
 ) -> bool {
-    frame_data.semantic_view().uses_count_multiplier() || has_per_card
+    frame_data.uses_count_multiplier() || has_per_card
 }
 
 fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
@@ -282,10 +282,12 @@ fn apply_reduce_cost_modifiers(
         let params = frame_data
             .params
             .or_else(|| ab.effects.get(frame_idx.saturating_sub(1)).map(|effect| &effect.params));
-        let semantic = SemanticFrameView::from_parts(
+        let semantic = AbilityFrameComponents::from_raw_parts(
+            frame_data.raw_opcode,
             frame_data.value,
             frame_data.raw_attr,
             frame_data.raw_slot,
+            frame_data.is_cost,
             params,
         );
 
@@ -1023,11 +1025,10 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let frame_data = frame.components();
                 let op = frame_data.opcode;
                 let v = frame_data.value;
-                let semantic = frame_data.semantic_view();
-                let a = semantic.resolved_filter_attr();
+                let a = frame_data.resolved_filter_attr();
                 let s = frame_data.raw_slot;
                 let params = frame_data.params;
-                let target_area = semantic.target_area();
+                let target_area = frame_data.target_area();
                 let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
@@ -1110,9 +1111,8 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             let target_mask = if slot_idx < 3 {
                 if let Some(first_frame) = frames.first() {
                     let first_frame_data = first_frame.components();
-                    let semantic = first_frame_data.semantic_view();
-                    let target_area = semantic.target_area();
-                    let runtime_attr = semantic.resolved_filter_attr();
+                    let target_area = first_frame_data.target_area();
+                    let runtime_attr = first_frame_data.resolved_filter_attr();
                     aura_target_mask(slot_idx, target_area, runtime_attr, !frames.is_empty())
                 } else {
                     0b111
@@ -1125,8 +1125,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let frame_data = frame.components();
                 let op = frame_data.opcode;
                 let v = frame_data.value;
-                let semantic = frame_data.semantic_view();
-                let a = semantic.resolved_filter_attr();
+                let a = frame_data.resolved_filter_attr();
                 let s = frame_data.raw_slot;
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
@@ -1176,7 +1175,7 @@ fn apply_aura_modifier(
     p_idx: usize,
     target_slot: usize,
 ) {
-    let semantic = SemanticFrameView::from_parts(v, a, s, params);
+    let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
 
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;

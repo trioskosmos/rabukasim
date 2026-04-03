@@ -1015,7 +1015,7 @@ impl ResponseGenerator {
             }
         };
 
-        let filter_struct = crate::core::logic::filter::CardFilter::from_attr_legacy(filter_attr as i64);
+        let filter_struct = crate::core::logic::filter::CardFilter::from_attr(filter_attr);
         let source_slot = if pi.ctx.area_idx >= 0 && pi.ctx.area_idx < STAGE_SLOT_COUNT as i16 {
             Some(pi.ctx.area_idx as usize)
         } else {

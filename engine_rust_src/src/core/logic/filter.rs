@@ -167,28 +167,6 @@ impl CardFilter {
         self.group_enabled && (self.group_id == group_id || self.group_id == group_id.saturating_add(1))
     }
 
-    pub fn resolve_group_id_from_value(&self, value: i32) -> Option<u8> {
-        if self.group_enabled {
-            Some(self.group_id)
-        } else if value > 0 {
-            Some((value & 0x7F) as u8)
-        } else {
-            None
-        }
-    }
-
-    pub fn semantic_group_id(&self, fallback_value: i32) -> Option<u8> {
-        if self.group_enabled {
-            Some(self.group_id)
-        } else if self.group_id > 0 {
-            Some(self.group_id)
-        } else if fallback_value > 0 {
-            Some((fallback_value & 0x7F) as u8)
-        } else {
-            None
-        }
-    }
-
     pub fn from_json_value(value: &Value) -> Option<Self> {
         let candidate = if let Some(obj) = value.as_object() {
             obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value)
@@ -200,8 +178,8 @@ impl CardFilter {
             Value::Null => None,
             Value::Number(number) => number
                 .as_i64()
-                .map(Self::from_attr_legacy)
-                .or_else(|| number.as_u64().map(|attr| Self::from_attr_legacy(attr as i64))),
+                .map(|attr| Self::from_attr(attr as u64))
+                .or_else(|| number.as_u64().map(Self::from_attr)),
             Value::Object(object) => {
                 let mut filter = serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
                 if filter != Self::default() {
@@ -598,16 +576,15 @@ impl CardFilter {
         )
     }
 
-    /// Decode from packed 64-bit format (legacy codec only)
-    pub fn from_attr_legacy(a: i64) -> Self {
-        if a == 0 {
+    /// Decode a packed 64-bit filter attribute into its structured form.
+    pub fn from_attr(attr: u64) -> Self {
+        if attr == 0 {
             return Self {
                 is_enabled: true,
                 ..Self::default()
             };
         }
 
-        let attr = a as u64;
         let unit_enabled =
             ((attr >> A_STANDARD_UNIT_ENABLED_SHIFT) & A_STANDARD_UNIT_ENABLED_MASK) != 0;
 
@@ -1136,7 +1113,7 @@ pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64
 }
 
 pub fn merge_filter_attr_with_params(base_attr: u64, params: Option<&serde_json::Value>) -> u64 {
-    let base_filter = CardFilter::from_attr_legacy(base_attr as i64);
+    let base_filter = CardFilter::from_attr(base_attr);
     let base_passthrough = base_attr & !base_filter.to_attr();
 
     if let Some((params_filter, params_passthrough)) = filter_parts_from_params(params) {
@@ -1524,7 +1501,7 @@ mod tests {
         });
 
         let merged = merge_filter_attr_with_params(base_attr, Some(&params));
-        let merged_filter = CardFilter::from_attr_legacy(merged as i64);
+        let merged_filter = CardFilter::from_attr(merged);
 
         assert_eq!(merged_filter.target_player, TARGET_PLAYER_OPPONENT as u8);
         assert!(merged_filter.keyword_member);

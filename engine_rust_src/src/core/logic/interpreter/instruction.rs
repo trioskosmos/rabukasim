@@ -716,7 +716,7 @@ impl From<DecodedFilterAttr> for CardFilter {
 
 impl DecodedFilterAttr {
     pub fn decode(a: i64) -> Self {
-        CardFilter::from_attr_legacy(a).into()
+        CardFilter::from_attr(a as u64).into()
     }
 
     pub fn to_attr(&self) -> u64 {

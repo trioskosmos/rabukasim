@@ -148,7 +148,7 @@ impl<'a> SemanticFrameView<'a> {
             value,
             raw_attr,
             raw_slot,
-            filter: CardFilter::from_attr_legacy(raw_attr as i64),
+            filter: CardFilter::from_attr(raw_attr),
             slot: DecodedSlot::decode(raw_slot),
             params,
         }
@@ -166,8 +166,14 @@ impl<'a> SemanticFrameView<'a> {
         let lower_attr = self.raw_attr & 0x00000000FFFF_FFFF;
         if (lower_attr & 0x10) == 0 && lower_attr != 0 && lower_attr < 300 {
             Some((lower_attr & 0x7F) as u8)
+        } else if self.filter.group_enabled {
+            Some(self.filter.group_id)
+        } else if self.filter.group_id > 0 {
+            Some(self.filter.group_id)
+        } else if fallback_value > 0 {
+            Some((fallback_value & 0x7F) as u8)
         } else {
-            self.filter.semantic_group_id(fallback_value)
+            None
         }
     }
 
@@ -446,6 +452,65 @@ impl<'a> SemanticFrameView<'a> {
             other => other,
         }
     }
+
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SemanticDiscardSpec {
+    pub requested_count: i32,
+    pub source_zone: Zone,
+    pub filter_attr: u64,
+    pub prompt_filter_attr: u64,
+    pub suspend_slot: i32,
+    pub is_optional: bool,
+    pub allow_under_member_selection: bool,
+    pub is_until_size_operation: bool,
+    pub embedded_count_opcode: Option<i32>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SemanticLookAndChooseSpec {
+    pub look_count: usize,
+    pub choose_count: usize,
+    pub source_zone: Zone,
+    pub target_slot: u8,
+    pub remainder_zone: Zone,
+    pub reveal: bool,
+    pub remainder_to_discard: bool,
+    pub selection_filter: CardFilter,
+    pub selection_filter_attr: u64,
+    pub suspend_slot: i32,
+}
+
+impl SemanticLookAndChooseSpec {
+    pub fn destination_zone(&self) -> Zone {
+        match self.target_slot {
+            4 => Zone::Stage,
+            6 => Zone::Hand,
+            7 => Zone::Discard,
+            8 => Zone::Deck,
+            13 => Zone::SuccessPile,
+            _ => Zone::Hand,
+        }
+    }
+
+    pub fn finalize_destination(&self) -> Zone {
+        if self.remainder_to_discard {
+            Zone::Discard
+        } else if self.remainder_zone != Zone::Default {
+            self.remainder_zone
+        } else {
+            self.source_zone
+        }
+    }
+
+    pub fn choice_type(&self) -> ChoiceType {
+        match self.source_zone {
+            Zone::Hand => ChoiceType::SelectHandDiscard,
+            Zone::Discard => ChoiceType::SelectDiscardPlay,
+            _ => ChoiceType::LookAndChoose,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -519,6 +584,34 @@ fn trace_zone(zone: Zone) -> Option<Zone> {
 }
 
 impl<'a> AbilityFrameComponents<'a> {
+    pub fn from_raw_parts(
+        raw_opcode: i32,
+        value: i32,
+        raw_attr: u64,
+        raw_slot: i32,
+        is_cost: bool,
+        params: Option<&'a Value>,
+    ) -> Self {
+        let is_negated = raw_opcode >= crate::core::logic::constants::OPCODE_NEGATION_OFFSET;
+        let opcode = if is_negated {
+            raw_opcode - crate::core::logic::constants::OPCODE_NEGATION_OFFSET
+        } else {
+            raw_opcode
+        };
+        Self {
+            raw_opcode,
+            opcode,
+            value,
+            filter: CardFilter::from_attr(raw_attr),
+            slot: DecodedSlot::decode(raw_slot),
+            raw_attr,
+            raw_slot,
+            is_negated,
+            is_cost,
+            params,
+        }
+    }
+
     pub fn semantic_view(&self) -> SemanticFrameView<'a> {
         SemanticFrameView {
             value: self.value,
@@ -592,6 +685,74 @@ impl<'a> AbilityFrameComponents<'a> {
         self.semantic_view().resolved_filter_value(fallback_value)
     }
 
+    pub fn comparison_mode(&self) -> SemanticComparisonMode {
+        self.semantic_view().comparison_mode()
+    }
+
+    pub fn comparison_reversed(&self) -> bool {
+        self.semantic_view().comparison_reversed()
+    }
+
+    pub fn requests_keyword_energy(&self) -> bool {
+        self.semantic_view().requests_keyword_energy()
+    }
+
+    pub fn requests_keyword_member(&self) -> bool {
+        self.semantic_view().requests_keyword_member()
+    }
+
+    pub fn requests_played_this_turn_keyword(&self) -> bool {
+        self.semantic_view().requests_played_this_turn_keyword()
+    }
+
+    pub fn requests_yell_count_keyword(&self) -> bool {
+        self.semantic_view().requests_yell_count_keyword()
+    }
+
+    pub fn requests_has_live_set_keyword(&self) -> bool {
+        self.semantic_view().requests_has_live_set_keyword()
+    }
+
+    pub fn inferred_count_zone(&self) -> Option<SemanticCountZone> {
+        self.semantic_view().inferred_count_zone()
+    }
+
+    pub fn count_opcode_hint(&self, default_hand_for_dynamic_cost: bool) -> Option<i32> {
+        self.semantic_view().count_opcode_hint(default_hand_for_dynamic_cost)
+    }
+
+    pub fn scale_source(&self) -> SemanticScaleSource {
+        self.semantic_view().scale_source()
+    }
+
+    pub fn target_area(&self) -> i32 {
+        self.semantic_view().target_area()
+    }
+
+    pub fn debug_slot_value(&self) -> i32 {
+        self.semantic_view().debug_slot_value()
+    }
+
+    pub fn is_baton_slot_only(&self) -> bool {
+        self.semantic_view().is_baton_slot_only()
+    }
+
+    pub fn heart_compare_color_index(&self) -> usize {
+        self.semantic_view().heart_compare_color_index()
+    }
+
+    pub fn uses_count_multiplier(&self) -> bool {
+        self.semantic_view().uses_count_multiplier()
+    }
+
+    pub fn resolved_color_index(&self, selected_color: usize, any_fallback: usize) -> usize {
+        self.semantic_view().resolved_color_index(selected_color, any_fallback)
+    }
+
+    pub fn normalized_baton_filter_attr(&self) -> u64 {
+        self.semantic_view().normalized_baton_filter_attr()
+    }
+
     pub fn normalized_select_member_filter_attr(&self) -> u64 {
         let filter_attr = self.resolved_filter_attr();
         if filter_attr == 0 || self.value <= 0 {
@@ -661,6 +822,29 @@ impl<'a> AbilityFrameComponents<'a> {
         self.semantic_view().discard_source_zone()
     }
 
+    pub fn semantic_discard_spec(&self) -> SemanticDiscardSpec {
+        let filter_attr = self.filter_attr_without_state_flags();
+        let mut prompt_filter = CardFilter::default();
+        match self.discard_source_zone() {
+            Zone::Stage => prompt_filter.zone_mask = 4,
+            Zone::Hand => prompt_filter.zone_mask = 6,
+            Zone::Discard => prompt_filter.zone_mask = 7,
+            _ => {}
+        }
+
+        SemanticDiscardSpec {
+            requested_count: self.value,
+            source_zone: self.discard_source_zone(),
+            filter_attr,
+            prompt_filter_attr: prompt_filter.to_attr() | self.raw_attr.max(self.filter.to_attr()),
+            suspend_slot: self.raw_slot,
+            is_optional: self.is_optional(),
+            allow_under_member_selection: self.allow_under_member_selection(),
+            is_until_size_operation: self.is_until_size_operation(),
+            embedded_count_opcode: self.embedded_count_opcode(),
+        }
+    }
+
     pub fn is_until_size_operation(&self) -> bool {
         self.params
             .and_then(|params| params.get("operation"))
@@ -724,6 +908,36 @@ impl<'a> AbilityFrameComponents<'a> {
     /// Extract look and choose parameters from this frame
     pub fn look_choose(&self) -> crate::core::logic::interpreter::instruction::DecodedLookAndChoose {
         AbilityFrame::decode_look_choose(self.value, self.params)
+    }
+
+    pub fn semantic_look_and_choose_spec(&self, fallback_choose_count: usize) -> SemanticLookAndChooseSpec {
+        let look = self.look_choose();
+        let source_zone = if self.slot.source_zone == Zone::Default {
+            Zone::Deck
+        } else {
+            self.slot.source_zone
+        };
+        let mut selection_filter = self.filter;
+        selection_filter.char_id_1 = look.char_id_1;
+        selection_filter.char_id_2 = look.char_id_2;
+        selection_filter.char_id_3 = look.char_id_3;
+
+        SemanticLookAndChooseSpec {
+            look_count: look.count.max(1) as usize,
+            choose_count: look.choose_count.max(fallback_choose_count as u8).max(1) as usize,
+            source_zone,
+            target_slot: self.slot.target_slot,
+            remainder_zone: self.slot.dest_zone,
+            reveal: look.reveal,
+            remainder_to_discard: look.dest_discard,
+            selection_filter,
+            selection_filter_attr: if self.raw_attr != 0 {
+                self.raw_attr
+            } else {
+                selection_filter.to_attr()
+            },
+            suspend_slot: self.raw_slot,
+        }
     }
 
     /// Get the divisor for dynamic value calculation
@@ -1656,7 +1870,7 @@ impl AbilityFrame {
         }
 
         if !effect.params.is_null() || effect.is_optional {
-            let mut filter = CardFilter::from_attr_legacy(runtime_attr as i64);
+            let mut filter = CardFilter::from_attr(runtime_attr as u64);
             let runtime_passthrough = runtime_attr & !filter.to_attr();
             let mut params_passthrough = 0u64;
 
@@ -1707,7 +1921,7 @@ impl AbilityFrame {
             raw_opcode,
             opcode,
             value: self.value,
-            filter: CardFilter::from_attr_legacy(self.attr as i64),
+            filter: CardFilter::from_attr(self.attr),
             slot: DecodedSlot::decode(self.slot),
             raw_attr: self.attr,
             raw_slot: self.slot,
@@ -1766,7 +1980,7 @@ impl AbilityFrame {
     }
 
     pub fn filter(&self) -> CardFilter {
-        CardFilter::from_attr_legacy(self.attr as i64)
+        CardFilter::from_attr(self.attr)
     }
 
     pub fn dslot(&self) -> DecodedSlot {
@@ -2210,7 +2424,7 @@ pub struct PendingInteraction {
 
 impl PendingInteraction {
     pub fn uses_total_cost_budget(&self) -> bool {
-        let filter = CardFilter::from_attr_legacy(self.filter_attr as i64);
+        let filter = CardFilter::from_attr(self.filter_attr as u64);
         filter.compare_accumulated
             || (self.filter_attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0
     }

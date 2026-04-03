@@ -1,11 +1,10 @@
-use crate::core::enums::{ChoiceType, TriggerType, Zone};
+use crate::core::enums::{TriggerType, Zone};
 use crate::core::logic::constants::{
-    CHOICE_ALL, CHOICE_DONE, ZONE_DECK, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
+    CHOICE_ALL, CHOICE_DONE, ZONE_DISCARD, ZONE_HAND, ZONE_YELL,
 };
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::AbilityFrameComponents;
-use crate::core::logic::interpreter::instruction::DecodedLookAndChoose;
+use crate::core::logic::models::{AbilityFrameComponents, SemanticLookAndChooseSpec};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_LOOK_AND_CHOOSE;
 use rand::seq::SliceRandom;
@@ -13,8 +12,7 @@ use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
 fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> usize {
-    let lc = frame_data.look_choose();
-    let mut choose_count = lc.choose_count.max(1) as usize;
+    let mut choose_count = frame_data.look_choose().choose_count.max(1) as usize;
 
     if choose_count <= 1 && ctx.source_card_id >= 0 {
         let abilities = db
@@ -31,10 +29,13 @@ fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &Ab
     choose_count
 }
 
-fn resolve_look_count(_db: &CardDatabase, _ctx: &AbilityContext, _frame_data: &AbilityFrameComponents<'_>, lc: &DecodedLookAndChoose) -> usize {
-    let base_count = lc.count.max(1) as usize;
-
-    base_count
+fn semantic_spec(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+) -> SemanticLookAndChooseSpec {
+    let choose_count = resolve_choose_count(db, ctx, frame_data);
+    frame_data.semantic_look_and_choose_spec(choose_count)
 }
 
 pub fn handle_look_and_choose(
@@ -44,24 +45,14 @@ pub fn handle_look_and_choose(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let _v = frame_data.value;
-    let a = frame_data.resolved_filter_attr() as i64;
-    let s = frame_data.slot.to_raw();
+    let spec = semantic_spec(db, ctx, frame_data);
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
-    let rem_dest = slot_info.dest_zone as u8;
-    // Source zone: Default (0) means use deck. Otherwise use the specified zone.
-    let source_zone = if slot_info.source_zone == Zone::Default {
-        ZONE_DECK
-    } else {
-        slot_info.source_zone as i32
-    };
-    let lc = frame_data.look_choose();
-    let look_count = resolve_look_count(db, ctx, &frame_data, &lc);
-    let reveal_flag = lc.reveal;
-    let dest_discard_v = lc.dest_discard;
-    let compiled_choice_count = resolve_choose_count(db, ctx, &frame_data);
+    let source_zone = spec.source_zone as i32;
+    let look_count = spec.look_count;
+    let reveal_flag = spec.reveal;
+    let compiled_choice_count = spec.choose_count;
     if state.players[p_idx].looked_cards.is_empty() {
         let reveal_count = if source_zone == ZONE_HAND {
             state.players[p_idx].hand.len()
@@ -105,20 +96,6 @@ pub fn handle_look_and_choose(
     }
 
     if ctx.choice_index == -1 {
-        let choice_type = if source_zone == ZONE_HAND {
-            ChoiceType::SelectHandDiscard
-        } else if source_zone == ZONE_DISCARD {
-            ChoiceType::SelectDiscardPlay
-        } else {
-            ChoiceType::LookAndChoose
-        };
-        let lc = frame_data.look_choose();
-
-        let mut filter_obj = frame_data.filter;
-        filter_obj.char_id_1 = lc.char_id_1;
-        filter_obj.char_id_2 = lc.char_id_2;
-        filter_obj.char_id_3 = lc.char_id_3;
-
         let pick_count = i16::from(compiled_choice_count as i16);
         if matches!(
             suspend_choice(
@@ -128,18 +105,14 @@ pub fn handle_look_and_choose(
                 ctx,
                 frame_idx,
                 O_LOOK_AND_CHOOSE,
-                s,
-                choice_type,
-                if frame_data.resolved_filter_attr() != 0 {
-                    frame_data.resolved_filter_attr()
-                } else {
-                    filter_obj.to_attr()
-                },
+                spec.suspend_slot,
+                spec.choice_type(),
+                spec.selection_filter_attr,
                 pick_count,
             ),
             HandlerResult::Suspend
         ) {
-            let is_optional = filter_obj.is_optional;
+            let is_optional = spec.selection_filter.is_optional;
             if is_optional && ctx.choice_index == CHOICE_DONE {
                 let cards: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
                 state.players[p_idx].deck.extend(cards.into_iter().rev());
@@ -151,11 +124,6 @@ pub fn handle_look_and_choose(
     // === Phase 3: Resolve (apply chosen cards) ===
     let choice = ctx.choice_index as i32;
     let mut revealed = std::mem::take(&mut state.players[p_idx].looked_cards);
-    let semantic_attr = if frame_data.resolved_filter_attr() != 0 {
-        Some(frame_data.resolved_filter_attr())
-    } else {
-        None
-    };
     let allow_multi_pick = compiled_choice_count > 1 && compiled_choice_count < look_count;
 
     // Handle CHOICE_DONE (skip)
@@ -184,15 +152,8 @@ pub fn handle_look_and_choose(
             let rem = if ctx.v_remaining > 0 { ctx.v_remaining - 1 } else { 0 };
             if allow_multi_pick && rem > 0 && revealed.iter().any(|&c| c != -1) {
                 state.players[p_idx].looked_cards = revealed.clone();
-                let choice_type = if source_zone == ZONE_HAND as i32 {
-                    ChoiceType::SelectHandDiscard
-                } else if source_zone == ZONE_DISCARD as i32 {
-                    ChoiceType::SelectDiscardPlay
-                } else {
-                    ChoiceType::LookAndChoose
-                };
                 if matches!(
-                    suspend_choice(state, db, ctx, ctx, frame_idx, O_LOOK_AND_CHOOSE, s, choice_type, semantic_attr.unwrap_or(a as u64), rem),
+                    suspend_choice(state, db, ctx, ctx, frame_idx, O_LOOK_AND_CHOOSE, spec.suspend_slot, spec.choice_type(), spec.selection_filter_attr, rem),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;
@@ -202,7 +163,7 @@ pub fn handle_look_and_choose(
     }
 
     // === Phase 4: Finalize (move unchosen cards to destination) ===
-    finalize_look_choice(state, db, ctx, p_idx, rem_dest, source_zone, dest_discard_v, &mut revealed)
+    finalize_look_choice(state, db, ctx, p_idx, spec.finalize_destination(), source_zone, &mut revealed)
 }
 
 // === Inlined helper functions ===
@@ -278,20 +239,20 @@ fn finalize_look_choice(
     _db: &CardDatabase,
     _ctx: &AbilityContext,
     p_idx: usize,
-    rem_dest: u8,
+    final_destination: Zone,
     source_zone: i32,
-    dest_discard_v: bool,
     revealed: &mut smallvec::SmallVec<[i32; 16]>,
 ) -> HandlerResult {
     revealed.retain(|c| *c != -1);
 
     if !revealed.is_empty() {
-        let dest = if dest_discard_v {
-            7
-        } else if rem_dest > 0 {
-            rem_dest as i32
-        } else {
-            source_zone
+        let dest = match final_destination {
+            Zone::Hand => 6,
+            Zone::Discard => 7,
+            Zone::Deck | Zone::DeckTop | Zone::DeckBottom => 8,
+            Zone::Yell => 15,
+            Zone::Default => source_zone,
+            _ => source_zone,
         };
 
         match dest {

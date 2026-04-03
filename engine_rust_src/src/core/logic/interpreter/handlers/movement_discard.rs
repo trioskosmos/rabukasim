@@ -17,18 +17,19 @@ pub fn handle_move_to_discard(
     frame_idx: usize,
 ) -> HandlerResult {
     let p_idx = ctx.player_id as usize;
+    let discard = frame_data.semantic_discard_spec();
     
     // Resolve count (handle compare_accumulated and UNTIL_SIZE)
     let v = if frame_data.uses_total_cost_budget() {
-        let count_op = frame_data.embedded_count_opcode().unwrap_or(frame_data.raw_slot);
+        let count_op = discard.embedded_count_opcode.unwrap_or(discard.suspend_slot);
         resolve_count(state, db, count_op, frame_data.count_filter_attr(), p_idx as i32, ctx, 0) as i32
     } else {
-        frame_data.value
+        discard.requested_count
     };
     
     let base_p = ctx.activator_id as usize;
     let slot = frame_data.slot;
-    let mut source_zone = frame_data.discard_source_zone();
+    let mut source_zone = discard.source_zone;
     
     // Determine target player from slot
     let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
@@ -49,10 +50,8 @@ pub fn handle_move_to_discard(
     };
     
     // Special case: Stage UNTIL_SIZE means Hand
-    if source_zone == Zone::Stage {
-        if frame_data.is_until_size_operation() {
-            source_zone = Zone::Hand;
-        }
+    if source_zone == Zone::Stage && discard.is_until_size_operation {
+        source_zone = Zone::Hand;
     }
 
     // Immunity check
@@ -60,11 +59,11 @@ pub fn handle_move_to_discard(
         return HandlerResult::Continue;
     }
 
-    let filter_attr = frame_data.filter_attr_without_state_flags();
-    let is_optional = frame_data.is_optional()
+    let filter_attr = discard.filter_attr;
+    let is_optional = discard.is_optional
         || ((ctx.source_card_id == 122 || ctx.source_card_id == 4331)
             && source_zone == Zone::Hand
-            && frame_data.value == 1);
+            && discard.requested_count == 1);
 
     // Handle skip of optional discard (CHOICE_DONE = user declined)
     if is_optional && ctx.choice_index == CHOICE_DONE {
@@ -100,25 +99,14 @@ pub fn handle_move_to_discard(
         } else if is_optional && is_deck_zone(source_zone) {
             // Optional deck discard - ask yes/no
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, ChoiceType::Optional, filter_attr, count as i16),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, ChoiceType::Optional, filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
             }
         } else if count > 0 && !is_deck_zone(source_zone) {
-            // Need specific card selection from hand/stage/discard
-            let mut filter_obj = CardFilter::default();
-            match source_zone {
-                Zone::Stage => filter_obj.zone_mask = 4,  // Stage mask
-                Zone::Hand => filter_obj.zone_mask = 6,   // Hand mask
-                Zone::Discard => filter_obj.zone_mask = 7, // Discard mask
-                _ => {}
-            }
-            let filter_attr_with_mask =
-                filter_obj.to_attr() | frame_data.raw_attr.max(frame_data.filter.to_attr());
-
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr_with_mask as u64, v as i16),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, v as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -147,7 +135,7 @@ pub fn handle_move_to_discard(
             if next_ctx.v_remaining > 0 || (next_ctx.v_remaining == -1 && count > 0) {
                 let remaining = if next_ctx.v_remaining > 0 { next_ctx.v_remaining } else { count as i16 };
                 if matches!(
-                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr, remaining),
+                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, filter_attr, remaining),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;
@@ -158,7 +146,7 @@ pub fn handle_move_to_discard(
 
         // Remove selected card by index - inlined from remove_card_by_index
         let idx = next_ctx.choice_index as usize;
-        let allow_under_member = frame_data.allow_under_member_selection();
+        let allow_under_member = discard.allow_under_member_selection;
         let removed_cid = remove_card_at_index(state, target_player_idx, source_zone, idx, allow_under_member).unwrap_or(-1);
         
         if removed_cid < 0 {
@@ -206,7 +194,7 @@ pub fn handle_move_to_discard(
 
             let v_remaining = next_ctx.v_remaining;
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, frame_data.raw_slot, choice_type, filter_attr, v_remaining),
+                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, filter_attr, v_remaining),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -274,11 +262,11 @@ fn has_available_filtered(
 ) -> bool {
     match zone {
         Zone::Hand => state.players[player_idx].hand.iter().any(|&c| {
-            CardFilter::from_attr_legacy(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+            CardFilter::from_attr(filter_attr).matches(state, db, c, None, false, None, ctx)
         }),
         Zone::Stage => state.players[player_idx].stage.iter().any(|&c| {
             if c < 0 { return false; }
-            CardFilter::from_attr_legacy(filter_attr as i64).matches(state, db, c, None, false, None, ctx)
+            CardFilter::from_attr(filter_attr).matches(state, db, c, None, false, None, ctx)
         }),
         _ => true,
     }

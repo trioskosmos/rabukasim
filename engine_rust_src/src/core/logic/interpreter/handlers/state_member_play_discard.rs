@@ -8,8 +8,15 @@ mod state_member_play_discard_select;
 pub use state_member_play_discard_place::handle_discard_placement;
 
 pub fn discard_play_choice_type(target_slot_flags: i32) -> ChoiceType {
-    if crate::core::logic::models::SemanticFrameView::from_parts(0, 0, target_slot_flags, None)
-        .is_baton_slot_only()
+    if crate::core::logic::models::AbilityFrameComponents::from_raw_parts(
+        0,
+        0,
+        0,
+        target_slot_flags,
+        false,
+        None,
+    )
+    .is_baton_slot_only()
     {
         ChoiceType::SelectStageEmptyBaton
     } else {
@@ -28,10 +35,12 @@ pub fn discard_play_slot_is_legal(
 
     let prevented = (player.prevent_play_to_slot_mask() & (1 << slot_idx)) != 0;
     let occupied = player.stage[slot_idx] >= 0;
-    let baton_only = crate::core::logic::models::SemanticFrameView::from_parts(
+    let baton_only = crate::core::logic::models::AbilityFrameComponents::from_raw_parts(
+        0,
         0,
         0,
         target_slot_flags,
+        false,
         None,
     )
     .is_baton_slot_only();
@@ -80,7 +89,7 @@ pub fn handle_play_member_from_discard(
         (a as u64, t_idx)
     };
 
-    let baton_slot_only = frame_data.semantic_view().is_baton_slot_only();
+    let baton_slot_only = frame_data.is_baton_slot_only();
     let requires_empty_stage_slot = true;
 
     let uses_total_cost_budget = frame_data.uses_total_cost_budget();

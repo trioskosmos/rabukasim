@@ -19,7 +19,6 @@ pub fn handle_state_modifiers(
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.player_id as usize;
     let target_slot = frame_data.slot.target_slot as i32;
-    let semantic = frame_data.semantic_view();
     match op {
         O_LOSE_EXCESS_HEARTS => state.players[p_idx].excess_hearts = 0,
         O_DIV_VALUE => {
@@ -60,7 +59,7 @@ pub fn handle_state_modifiers(
         }
         O_REDUCE_YELL_COUNT => {
             let final_v = if (a as u64 & DYNAMIC_VALUE) != 0 {
-                let count_op = semantic.embedded_count_opcode().unwrap_or(s);
+                let count_op = frame_data.embedded_count_opcode().unwrap_or(s);
                 resolve_count(state, db, count_op, a as u64 & !DYNAMIC_VALUE & FILTER_MASK_LOWER, p_idx as i32, ctx, 0)
             } else {
                 v

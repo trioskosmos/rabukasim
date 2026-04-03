@@ -9,7 +9,7 @@ use crate::core::hearts::*;
 use serde_json::json; // Value removed
 
 fn decode_heart_requirement_color(frame: &AbilityFrameComponents<'_>) -> usize {
-    frame.semantic_view().resolved_color_index(6, 6)
+    frame.resolved_color_index(6, 6)
 }
 
 pub fn process_heart_modifiers_frames(
