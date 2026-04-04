@@ -13304,8 +13304,8 @@
   "meta": {
     "version": "1.0",
     "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards.json",
-    "ability_source": "data/consolidated_abilities.json",
-    "source_note": "Derived from cards.json plus consolidated ability source data. Runtime exports ship semantic effects/conditions/costs; Rust rebuilds executable frames from authored sparse data and semantic fallbacks.",
+    "ability_source": "data/ability_frame_index.json",
+    "source_note": "Derived from cards.json plus the shared ability index. Runtime exports ship semantic effects/conditions/costs; Rust rebuilds executable frames from authored sparse data and semantic fallbacks.",
     "execution_model": "semantic_runtime_export"
   }
 }

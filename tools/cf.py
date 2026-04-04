@@ -83,22 +83,25 @@ class DataStore:
         except Exception as e:
             print(f"Warning: Failed to load qa_data.json: {e}")
 
-        # Load Consolidated Pseudocode
+        # Load authored ability index
         try:
-            with open(os.path.join(self.base_path, "data", "consolidated_abilities.json"), "r", encoding="utf-8") as f:
+            with open(os.path.join(self.base_path, "data", "ability_frame_index.json"), "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # Create a card_no mapping for faster lookup
                 self.consolidated_pseudo = {}
                 self.consolidated_pseudo_by_no = {}
-                for text, entry in data.items():
-                    self.consolidated_pseudo[text.strip()] = entry
-                    if isinstance(entry, dict) and "cards" in entry:
-                        for cno in entry["cards"]:
-                            self.consolidated_pseudo_by_no[cno] = entry
+                for entry in data.get("abilities", []):
+                    if not isinstance(entry, dict):
+                        continue
+                    source_text = str(entry.get("source_text", "")).strip()
+                    if source_text:
+                        self.consolidated_pseudo[source_text] = entry
+                    for cno in entry.get("cards", []):
+                        self.consolidated_pseudo_by_no[cno] = entry
         except Exception as e:
             self.consolidated_pseudo = {}
             self.consolidated_pseudo_by_no = {}
-            print(f"Warning: Failed to load consolidated_abilities.json: {e}")
+            print(f"Warning: Failed to load ability_frame_index.json: {e}")
 
         self.loaded = True
         print(f"Sources loaded in {time.time() - t0:.2f}s")

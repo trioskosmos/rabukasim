@@ -1,10 +1,10 @@
 """Minimal ability pipeline - compile runtime card data and mirror live copies."""
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-import json
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
@@ -15,9 +15,7 @@ from tools.sync_launcher_assets import sync_assets
 
 CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
 CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
-FRAME_SOURCE_PATH = ROOT_DIR / "data" / "ability_frame_index.yaml"
-FRAME_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
-ENGINE_FRAME_OUTPUT_PATH = ROOT_DIR / "engine" / "data" / "ability_frame_index.json"
+FRAME_SOURCE_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 
 
@@ -62,20 +60,16 @@ def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
 
 
 def prepare_frame_index(*, quiet: bool = False) -> bool:
-    """Regenerate the derived frame index from the authored YAML source."""
-    _log("Rebuilding derived ability frame index", quiet)
+    """Validate the shared authored/runtime ability index in place."""
+    _log("Validating shared ability index JSON", quiet)
     payload = frame_codec.load_authored_payload(FRAME_SOURCE_PATH)
     metadata = frame_codec.load_json(METADATA_PATH)
-    runtime_index = frame_codec.build_runtime_ability_index(payload, metadata)
-    encoded = json.dumps(runtime_index, indent=2, ensure_ascii=False)
-
-    changed = True
-    if FRAME_OUTPUT_PATH.exists():
-        changed = FRAME_OUTPUT_PATH.read_text(encoding="utf-8") != encoded
-
-    FRAME_OUTPUT_PATH.write_text(encoded, encoding="utf-8")
-    ENGINE_FRAME_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    ENGINE_FRAME_OUTPUT_PATH.write_text(encoded, encoding="utf-8")
+    frame_codec.build_runtime_ability_index(payload, metadata)
+    encoded = FRAME_SOURCE_PATH.read_text(encoding="utf-8")
+    changed = False
+    if not encoded.endswith("\n"):
+        FRAME_SOURCE_PATH.write_text(encoded + "\n", encoding="utf-8")
+        changed = True
     return changed
 
 

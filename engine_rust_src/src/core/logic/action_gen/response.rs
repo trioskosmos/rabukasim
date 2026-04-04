@@ -94,9 +94,14 @@ fn should_enable_targeted_live_bonus(_state: &GameState, pi: &PendingInteraction
 }
 
 fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, option_idx: usize) -> bool {
-    let Some(frames) = ability
-        .get_modal_option_frames(option_idx)
-        .or_else(|| legacy_select_mode_option_frames(ability, option_idx))
+    let Some(frames) = (if ability.frame_program.is_some() {
+        legacy_select_mode_option_frames(ability, option_idx)
+            .or_else(|| ability.get_modal_option_frames(option_idx))
+    } else {
+        ability
+            .get_modal_option_frames(option_idx)
+            .or_else(|| legacy_select_mode_option_frames(ability, option_idx))
+    })
     else {
         return false;
     };
@@ -119,7 +124,7 @@ fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, opt
     }
 }
 
-fn legacy_select_mode_option_frames(ability: &Ability, option_idx: usize) -> Option<Vec<AbilityFrame>> {
+pub(crate) fn legacy_select_mode_option_frames(ability: &Ability, option_idx: usize) -> Option<Vec<AbilityFrame>> {
     let frames = ability.resolved_frames();
     let select_mode_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MODE)?;
     let jump_frame_idx = select_mode_idx + 1 + option_idx;

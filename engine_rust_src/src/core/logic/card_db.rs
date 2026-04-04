@@ -69,12 +69,10 @@ impl CardRef {
     }
 }
 
-// The runtime prefers the per-ability frame index until consolidated authored
-// JSON is normalized to one entry per ability.
+// The runtime and compiler share the per-ability frame index as the active
+// sparse frame-program source.
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
     include_str!("../../../../data/ability_frame_index.json");
-const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =
-    include_str!("../../../../data/consolidated_abilities.json");
 const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
     include_str!("../../../../data/card_122_overlay.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
@@ -417,39 +415,22 @@ impl CardDatabase {
         let mut merged_index = HashMap::new();
         let mut loaded_any = false;
 
-        for path in [
-            "data/ability_frame_index.json",
-            "../data/ability_frame_index.json",
-            "data/consolidated_abilities.json",
-            "../data/consolidated_abilities.json",
-        ] {
+        for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
             if let Ok(json) = fs::read_to_string(path) {
                 let index = Self::load_sparse_ability_index_from_json(&json);
                 eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
                 if index.is_empty() {
                     continue;
                 }
-                if path.contains("ability_frame_index") {
-                    merged_index.extend(index);
-                } else {
-                    for (key, value) in index {
-                        merged_index.entry(key).or_insert(value);
-                    }
-                }
+                merged_index.extend(index);
                 loaded_any = true;
             }
         }
 
-        for json in [
-            EMBEDDED_ABILITY_FRAME_INDEX_JSON,
-            EMBEDDED_CONSOLIDATED_ABILITIES_JSON,
-            EMBEDDED_CARD_122_OVERLAY_JSON,
-        ] {
+        for json in [EMBEDDED_ABILITY_FRAME_INDEX_JSON, EMBEDDED_CARD_122_OVERLAY_JSON] {
             let index = Self::load_sparse_ability_index_from_json(json);
             let label = if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_INDEX_JSON) {
                 "embedded_frame_index"
-            } else if std::ptr::eq(json, EMBEDDED_CONSOLIDATED_ABILITIES_JSON) {
-                "embedded_consolidated"
             } else {
                 "embedded_card_122_overlay"
             };
@@ -457,15 +438,7 @@ impl CardDatabase {
             if index.is_empty() {
                 continue;
             }
-            if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_INDEX_JSON) {
-                merged_index.extend(index);
-            } else if std::ptr::eq(json, EMBEDDED_CONSOLIDATED_ABILITIES_JSON) {
-                for (key, value) in index {
-                    merged_index.entry(key).or_insert(value);
-                }
-            } else {
-                merged_index.extend(index);
-            }
+            merged_index.extend(index);
             loaded_any = true;
         }
 
@@ -1405,16 +1378,13 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
-        // Load consolidated abilities text for raw_text population
+        // Load authored ability text from the shared sparse index for raw_text population.
         let mut text_index = HashMap::new();
-        for path in [
-            "data/consolidated_abilities.json",
-            "../data/consolidated_abilities.json",
-        ] {
+        for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
             if let Ok(json) = fs::read_to_string(path) {
                 if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
-                    if let Some(abilities) = parsed_root.as_object() {
-                        for (_ability_key, ability_data) in abilities {
+                    if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
+                        for ability_data in abilities {
                             if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
                                 if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
                                     for card_ref in card_refs {

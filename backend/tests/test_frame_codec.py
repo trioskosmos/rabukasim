@@ -96,6 +96,66 @@ class FrameCodecTests(unittest.TestCase):
         self.assertEqual(entry["choice_flags"], 4)
         self.assertEqual(entry["choice_count"], 2)
 
+    def test_runtime_index_preserves_attr_metadata(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        payload = {
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "instructions": [
+                        {
+                            "op": "HAS_KEYWORD",
+                            "attr": {"group_enabled": 1, "group_id": 2, "keyword_energy": 1},
+                            "slot": {"target_slot": 48},
+                        },
+                        {"op": "RETURN"},
+                    ],
+                    "cards": [],
+                    "card_refs": [],
+                }
+            ],
+            "summary": {"card_count": 0, "ability_count": 1},
+        }
+
+        runtime_payload = codec.build_runtime_ability_index(payload, metadata)
+        instruction = runtime_payload["abilities"][0]["instructions"][0]
+        self.assertEqual(instruction["attr"]["group_id"], 2)
+        self.assertEqual(instruction["attr"]["keyword_energy"], 1)
+        self.assertEqual(runtime_payload["abilities"][0]["frames"][0]["op"], "HAS_KEYWORD")
+
+    def test_runtime_index_preserves_original_frame_shape(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        payload = {
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [
+                        {
+                            "opcode": "SELECT_MEMBER",
+                            "opcode_id": 65,
+                            "decoded": "SELECT_MEMBER | count=1, filter=[target=self, group=Aqours]",
+                            "value": 1,
+                            "attr": {"target_player": 1, "group_enabled": 1, "group_id": 1},
+                            "slot": {"target_slot": 4, "source_zone": "STAGE"},
+                        },
+                        "Return",
+                    ],
+                    "cards": ["TST-459 | Test Live [live_db:459] (ab#0 ON_LIVE_START)"],
+                }
+            ],
+            "summary": {"card_count": 1, "ability_count": 1},
+        }
+
+        runtime_payload = codec.build_runtime_ability_index(payload, metadata)
+        frame = runtime_payload["abilities"][0]["frames"][0]
+        self.assertEqual(frame["opcode"], "SELECT_MEMBER")
+        self.assertEqual(frame["opcode_id"], 65)
+        self.assertIn("decoded", frame)
+
     def test_ability_to_frame_program_prefers_existing_frames(self) -> None:
         ability = Ability(
             raw_text="authored",

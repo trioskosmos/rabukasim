@@ -2,7 +2,7 @@
 //!
 //! These tests ensure that:
 //! 1. Abilities with costs cannot be activated without paying the cost
-//! 2. The cost inference system properly adds cost frames to consolidated_abilities.json
+//! 2. The cost inference system properly adds cost frames to the shared ability index
 //! 3. Ruby card 423 (and similar cards) now requires self-sacrifice before recovering live
 
 use crate::core::logic::CardDatabase;

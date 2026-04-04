@@ -2943,6 +2943,7 @@ mod tests {
         // - OnLiveStart for Slot 1
         // - Victorious Road's OnAbilityResolve (triggered by Slot 1 resolution)
         state.process_trigger_queue(&db);
+        resolve_response_loop(&mut state, &db, 6);
 
         // 4. Verify Slot 1 now has 1 heart (Type 6 = Wild Heart)
         let h_final = get_effective_hearts(&state, 0, 1, &db, 0);

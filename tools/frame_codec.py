@@ -15,7 +15,7 @@ from typing import Any
 
 
 def load_authored_payload(path: Path | str) -> dict[str, Any]:
-    """Load the canonical authored ability source from YAML or JSON."""
+    """Load the canonical authored ability source from JSON or legacy YAML."""
     path = Path(path)
     if path.suffix.lower() in {".yaml", ".yml"}:
         return load_yaml(path)
@@ -99,8 +99,20 @@ def _normalize_frame(frame: Any, idx: int) -> dict[str, Any]:
     if isinstance(frame.get("options"), dict):
         normalized["options"] = frame["options"]
 
-    # Preserve authored metadata that downstream tests and exporters still read.
-    for key in ("source_words", "value", "filter", "slot", "params", "choice_flags", "choice_count"):
+    # Preserve authored metadata that downstream compiler/runtime hydration still read.
+    for key in (
+        "source_words",
+        "value",
+        "filter",
+        "attr",
+        "slot",
+        "params",
+        "choice_flags",
+        "choice_count",
+        "is_negated",
+        "is_cost",
+        "is_optional",
+    ):
         if key in frame:
             normalized[key] = frame[key]
 
@@ -183,6 +195,7 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
             "trigger": _trigger_name_from_id(trigger_id, metadata),
             "frame_count": len(instructions),
             "opcode_sequence": [f["op"] for f in instructions],
+            "frames": raw_frames,
             "instructions": instructions,
             "cards": cards,
             "card_refs": card_refs,
@@ -210,10 +223,10 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
     return {
         "generated_at": _utc_now(),
-        "source": str(payload.get("source", "data/consolidated_abilities.json")),
+        "source": str(payload.get("source", "data/ability_frame_index.json")),
         "metadata_source": str(payload.get("metadata_source", "data/metadata.json")),
         "schema": "ability_frames.flat.v2",
-        "_comment": "Derived frame/index output. The canonical authored source is data/consolidated_abilities.json; this file is a compatibility cache for frame-program lookup.",
+        "_comment": "Shared authored/runtime ability index. Edit data/ability_frame_index.json directly.",
         "summary": {
             "card_count": len(unique_cards),
             "ability_count": total_card_refs,
@@ -225,7 +238,7 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
 
 def build_runtime_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build runtime ability index - delegates to normalize."""
+    """Validate the shared ability index while preserving authored frame objects."""
     normalized = normalize_authored_ability_index(payload, metadata, card_db)
     normalized["schema"] = "ability_frame_index.flat.v2"
     return normalized

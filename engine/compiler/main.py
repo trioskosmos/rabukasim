@@ -3,8 +3,8 @@
 DATA FLOW:
 ---------
 1. INPUT: data/cards.json (raw card data)
-2. INPUT: data/consolidated_abilities.json (canonical authored ability definitions)
-3. PROCESS: compile_cards() parses each card, resolves abilities from the authored source
+2. INPUT: data/ability_frame_index.json (shared sparse frame-program index)
+3. PROCESS: compile_cards() parses each card, resolves abilities from the shared sparse source
 4. OUTPUT: data/cards_compiled.json (compiled card database)
 """
 
@@ -562,10 +562,9 @@ class SparseSourceManager:
         return self.mapping.get((self._normalize_card_no(card_no), ab_idx))
 
 
-# Global sparse manager. This is the editable authored source of truth used by the compiler.
-# Consolidated authored JSON is not yet normalized per ability. Keep using the
-# per-ability frame index until that migration is completed.
-ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_index.yaml"
+# Global sparse manager. The compiler and runtime share one editable JSON
+# source for authored frame programs.
+ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_index.json"
 SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
@@ -577,7 +576,7 @@ def _build_ability_from_sparse_entry(
     legacy_payload: dict[str, Any] | None = None,
 ) -> Ability:
     """
-    Build an Ability object from a sparse YAML entry.
+    Build an Ability object from a sparse authored entry.
     
     FLOW:
     1. Extract trigger_id, frames, flags from sparse entry
@@ -595,7 +594,7 @@ def _build_ability_from_sparse_entry(
         Ability object ready for semantic population
     """
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
-    instructions = list(entry.get("instructions", entry.get("frames", [])) or [])
+    instructions = list(entry.get("frames", entry.get("instructions", [])) or [])
     ability_raw_text = _select_ability_raw_text(raw_text, ability_index, entry)
     payload = dict(legacy_payload or {})
     payload["trigger"] = trigger_id
