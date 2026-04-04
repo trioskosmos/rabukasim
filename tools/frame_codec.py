@@ -133,11 +133,18 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
         # Get card references
         card_refs = []
-        for ref in entry.get("card_refs", entry.get("cards", [])):
+        cards = []
+        for ref in entry.get("card_refs", []):
             if isinstance(ref, dict):
                 card_refs.append(ref)
+        for ref in entry.get("cards", []):
+            if isinstance(ref, dict):
+                card_refs.append(ref)
+            elif isinstance(ref, str) and ref.strip():
+                cards.append(ref.strip())
 
-        cards = [_card_ref_label(ref) for ref in card_refs if _card_ref_label(ref)]
+        cards.extend(_card_ref_label(ref) for ref in card_refs if _card_ref_label(ref))
+        cards = list(dict.fromkeys(cards))
 
         normalized = {
             "signature": sig["signature"],
@@ -164,6 +171,14 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
     # Sort: by trigger, then by card count (desc), then by hash
     entries.sort(key=lambda e: (e["trigger_id"], -len(e["cards"]), e["signature_hash"]))
 
+    total_card_refs = sum(len(entry["cards"]) for entry in entries)
+    unique_cards = {
+        card_label.split(" | ", 1)[0]
+        for entry in entries
+        for card_label in entry["cards"]
+        if isinstance(card_label, str) and card_label
+    }
+
     return {
         "generated_at": _utc_now(),
         "source": str(payload.get("source", "data/ability_frame_index.yaml")),
@@ -171,14 +186,10 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
         "schema": "ability_frames.flat.v2",
         "_comment": "Derived frame/index output. The canonical semantic source is data/consolidated_abilities.json; this file is for frame-program compilation and lookup.",
         "summary": {
-            "card_count": len({
-                str(card)
-                for entry in payload.get("abilities", [])
-                if isinstance(entry, dict)
-                for card in (entry.get("cards") or [])
-            }),
-            "ability_count": len(entries),
-            "unique_ability_count": len({e["signature_hash"] for e in entries}),
+            "card_count": len(unique_cards),
+            "ability_count": total_card_refs,
+            "unique_ability_count": len(entries),
+            "signature_group_count": len({e["signature_hash"] for e in entries}),
         },
         "abilities": entries,
     }

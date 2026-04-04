@@ -2491,8 +2491,8 @@ impl Ability {
 
     /// Get the number of modal options from effects
     pub fn modal_option_count(&self) -> usize {
-        // Check first effect's modal_options
-        self.effects.first()
+        self.effects
+            .first()
             .and_then(|e| e.modal_options.as_array())
             .map(|opts| opts.len())
             .unwrap_or(0)

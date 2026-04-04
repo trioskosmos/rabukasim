@@ -84,3 +84,4 @@ fn test_repro_card_4684_score_boost() {
         "Card 4684 should register a +1 live score bonus after paying 6 energy"
     );
 }
+

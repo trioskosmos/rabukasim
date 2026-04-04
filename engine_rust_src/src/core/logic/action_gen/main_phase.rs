@@ -60,6 +60,46 @@ fn implicit_activated_energy_cost_for_card(
     prefix.matches("{{icon_energy.png|E}}").count()
 }
 
+fn has_implicit_stage_discard_self_cost_for_card(
+    card: &MemberCard,
+    ability: &crate::core::logic::Ability,
+) -> bool {
+    if ability.trigger != TriggerType::Activated {
+        return false;
+    }
+
+    let has_explicit_self_discard = !ability.costs.is_empty()
+        || ability.resolved_frames().iter().any(|frame| {
+            let components = frame.components();
+            frame.is_cost()
+                && components.opcode == O_MOVE_TO_DISCARD
+                && components.slot.source_zone == Zone::Stage
+        });
+    if has_explicit_self_discard {
+        return false;
+    }
+
+    let raw_text = if !ability.raw_text.trim().is_empty() {
+        ability.raw_text.as_str()
+    } else {
+        let activated_count = card
+            .abilities
+            .iter()
+            .filter(|candidate| candidate.trigger == TriggerType::Activated)
+            .count();
+        if activated_count != 1 {
+            return false;
+        }
+        card.original_text.as_str()
+    };
+
+    raw_text
+        .split('：')
+        .next()
+        .unwrap_or(raw_text)
+        .contains("このメンバーをステージから控え室に置く")
+}
+
 fn should_precheck_activation_condition(condition: &crate::core::logic::Condition) -> bool {
     !matches!(
         condition.condition_type,
@@ -87,6 +127,13 @@ fn ability_costs_payable(
         - state.players[p_idx].tapped_energy_count() as usize;
     if implicit_energy_cost > 0 && untapped_energy < implicit_energy_cost {
         return false;
+    }
+
+    if has_implicit_stage_discard_self_cost_for_card(card, ab) {
+        let slot = ctx.area_idx as usize;
+        if ctx.area_idx < 0 || slot >= STAGE_SLOT_COUNT || state.players[p_idx].stage[slot] < 0 {
+            return false;
+        }
     }
 
     // 2. Check frame-based costs

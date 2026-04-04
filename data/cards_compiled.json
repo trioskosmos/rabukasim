@@ -84772,7 +84772,40 @@
       ],
       "original_text": "",
       "original_text_en": "",
-      "abilities": [],
+      "abilities": [
+        {
+          "trigger": 2,
+          "effects": [
+            {
+              "effect_type": 65,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 16,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            }
+          ],
+          "costs": [],
+          "conditions": [
+            {
+              "type": 224,
+              "value": 6,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
+          "is_once_per_turn": false,
+          "requires_selection": false,
+          "card_no": "PL!S-bp2-019-L"
+        }
+      ],
       "groups": [
         1
       ],

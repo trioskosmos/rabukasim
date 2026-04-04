@@ -47,6 +47,8 @@ pub mod repro_flags;
 #[cfg(test)]
 pub mod repro_hazuki_500;
 #[cfg(test)]
+pub mod repro_card_874_self_discard;
+#[cfg(test)]
 pub mod repro_kanon_557;
 #[cfg(test)]
 pub mod repro_opcode_97;

@@ -653,7 +653,7 @@ def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str,
 
 
 def _card_has_ability_source(data: dict[str, Any]) -> bool:
-    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text")) or bool(
+    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text", "pseudocode")) or bool(
         data.get("abilities")
     ) or bool(
         isinstance(data.get("frame_program"), dict)

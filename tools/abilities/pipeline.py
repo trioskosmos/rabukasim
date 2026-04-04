@@ -4,15 +4,21 @@ from __future__ import annotations
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+import json
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
 
 from engine.compiler import main as compiler_main
+from tools import frame_codec
 from tools.sync_launcher_assets import sync_assets
 
 CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
 CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
+FRAME_SOURCE_PATH = ROOT_DIR / "data" / "ability_frame_index.yaml"
+FRAME_OUTPUT_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
+ENGINE_FRAME_OUTPUT_PATH = ROOT_DIR / "engine" / "data" / "ability_frame_index.json"
+METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 
 
 @dataclass(slots=True)
@@ -55,6 +61,24 @@ def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
         return False
 
 
+def prepare_frame_index(*, quiet: bool = False) -> bool:
+    """Regenerate the derived frame index from the authored YAML source."""
+    _log("Rebuilding derived ability frame index", quiet)
+    payload = frame_codec.load_yaml(FRAME_SOURCE_PATH)
+    metadata = frame_codec.load_json(METADATA_PATH)
+    runtime_index = frame_codec.build_runtime_ability_index(payload, metadata)
+    encoded = json.dumps(runtime_index, indent=2, ensure_ascii=False)
+
+    changed = True
+    if FRAME_OUTPUT_PATH.exists():
+        changed = FRAME_OUTPUT_PATH.read_text(encoding="utf-8") != encoded
+
+    FRAME_OUTPUT_PATH.write_text(encoded, encoding="utf-8")
+    ENGINE_FRAME_OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ENGINE_FRAME_OUTPUT_PATH.write_text(encoded, encoding="utf-8")
+    return changed
+
+
 def prepare_rust_codegen(*, quiet: bool = False) -> bool:
     """Generate Rust code - simplified, no-op for now."""
     _log("Rust codegen skipped (simplified pipeline)", quiet)
@@ -75,7 +99,7 @@ def prepare_runtime(
     """Main entry point for the build pipeline."""
     result = PrepareResult()
     result.cards_changed = prepare_cards(force=force, quiet=quiet)
-    result.frame_index_changed = False  # Simplified - no separate frame index
+    result.frame_index_changed = prepare_frame_index(quiet=quiet)
     result.rust_codegen_changed = prepare_rust_codegen(quiet=quiet)
     if sync_assets:
         result.launcher_assets_changed = prepare_server_assets(quiet=quiet)

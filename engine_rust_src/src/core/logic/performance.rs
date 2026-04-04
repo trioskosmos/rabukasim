@@ -1626,7 +1626,6 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     })
                 })
                 .collect();
-
             if let Some(res) = state.ui.performance_results.get_mut(&(p as u8)) {
                 if let serde_json::Value::Object(ref mut map) = res {
                     map.insert("total_score".to_string(), json!(scores[p]));

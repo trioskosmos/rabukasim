@@ -1,6 +1,6 @@
 #[allow(unused_imports)]
 use crate::core::logic::*;
-use crate::test_helpers::load_real_db;
+use crate::test_helpers::{add_card, create_test_db, load_real_db};
 
 #[test]
 fn test_repro_card_560_double_baton() {
@@ -186,6 +186,26 @@ fn test_repro_card_560_double_baton() {
     eprintln!("The BATON_TOUCH condition params (FILTER, COUNT_EQ_2) are not encoded in bytecode!");
     eprintln!("Current C_BATON only checks if baton_touch_count > 0, not == 2");
     eprintln!("And it doesn't check if baton sources match the FILTER");
+}
+
+#[test]
+fn test_repro_card_560_same_id_baton_keeps_cost_reduction() {
+    let mut db = create_test_db();
+    add_card(&mut db, 560, "TEST-560-SAME", vec![1], vec![]);
+
+    let mut state = GameState::default();
+    state.current_player = 0;
+    state.phase = Phase::Main;
+    state.players[0].stage[0] = 560;
+    state.players[0].hand = vec![560].into();
+
+    let cost = state.get_member_cost(0, 560, 0, -1, &db, 0);
+    assert_eq!(cost, 0, "Baton touching the same card ID should still subtract the old member cost");
+
+    state
+        .play_member(&db, 0, 0)
+        .expect("Same-id Baton touch should be playable after the cost is reduced");
+    assert_eq!(state.players[0].tapped_energy_mask.count_ones(), 0);
 }
 
 /// Test to verify the second ability triggers correctly when conditions are met

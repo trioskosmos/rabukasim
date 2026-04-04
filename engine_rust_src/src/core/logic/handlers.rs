@@ -54,6 +54,46 @@ fn implicit_activated_energy_cost_for_card(
     prefix.matches("{{icon_energy.png|E}}").count()
 }
 
+fn has_implicit_stage_discard_self_cost_for_card(
+    card: &crate::core::logic::MemberCard,
+    ability: &crate::core::logic::Ability,
+) -> bool {
+    if ability.trigger != TriggerType::Activated {
+        return false;
+    }
+
+    let has_explicit_self_discard = !ability.costs.is_empty()
+        || ability.resolved_frames().iter().any(|frame| {
+            let components = frame.components();
+            frame.is_cost()
+                && components.opcode == O_MOVE_TO_DISCARD
+                && components.slot.source_zone == Zone::Stage
+        });
+    if has_explicit_self_discard {
+        return false;
+    }
+
+    let raw_text = if !ability.raw_text.trim().is_empty() {
+        ability.raw_text.as_str()
+    } else {
+        let activated_count = card
+            .abilities
+            .iter()
+            .filter(|candidate| candidate.trigger == TriggerType::Activated)
+            .count();
+        if activated_count != 1 {
+            return false;
+        }
+        card.original_text.as_str()
+    };
+
+    raw_text
+        .split('：')
+        .next()
+        .unwrap_or(raw_text)
+        .contains("このメンバーをステージから控え室に置く")
+}
+
 pub trait TurnController {
     fn handle_rps(&mut self, action: i32) -> Result<(), String>;
     fn handle_turn_choice(&mut self, action: i32) -> Result<(), String>;
@@ -1478,6 +1518,22 @@ impl ResponseController for GameState {
                 }
                 if tapped < implicit_energy_cost {
                     return Err("Cannot afford costs".to_string());
+                }
+            }
+
+            if has_implicit_stage_discard_self_cost_for_card(card, ab) {
+                let slot = ctx.area_idx as usize;
+                if ctx.area_idx < 0 || slot >= STAGE_SLOT_COUNT {
+                    return Err("Cannot afford costs".to_string());
+                }
+
+                let Some(discarded) = self.handle_member_leaves_stage(p_idx, slot, db, &ctx) else {
+                    return Err("Cannot afford costs".to_string());
+                };
+
+                self.core.players[p_idx].push_discard_card(discarded);
+                if !ctx.selected_cards.contains(&discarded) {
+                    ctx.selected_cards.push(discarded);
                 }
             }
 

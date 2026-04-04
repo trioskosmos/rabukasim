@@ -754,7 +754,7 @@ pub fn get_member_cost(
         }
 
         let old_cid = state.players[p_idx].stage[slot_idx as usize];
-        if old_cid >= 0 && old_cid != card_id {
+        if old_cid >= 0 {
             if let Some(old_m) = db.get_member(old_cid) {
                 cost -= old_m.cost as i32;
             }
