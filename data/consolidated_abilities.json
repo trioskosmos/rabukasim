@@ -21915,6 +21915,14 @@
     "card_refs": [
       {
         "ability_index": 0,
+          "card_id": 426,
+          "card_no": "PL!S-bp2-019-L",
+          "name": "Unknown",
+          "trigger": "ON_LIVE_START",
+          "trigger_id": 2
+        },
+        {
+          "ability_index": 0,
         "card_id": 459,
         "card_no": "PL!S-bp3-025-L",
         "name": "SUKI for you, DREAM for you!",
@@ -21923,6 +21931,7 @@
       }
     ],
     "cards": [
+        "PL!S-bp2-019-L",
       "PL!S-bp3-025-L"
     ],
     "frames": [

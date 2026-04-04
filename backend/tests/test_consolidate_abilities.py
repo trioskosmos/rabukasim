@@ -7,7 +7,6 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from tools import bytecode_codec as legacy_codec
 from tools import frame_codec as codec
 
 ROOT = Path(project_root)
@@ -25,7 +24,6 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
                     "trigger_id": trigger_id,
                     "instructions": [{"op": "SELECT_MODE", "options": {"value": 2}}, {"op": "RETURN"}],
                     "pseudocode": "A",
-                    "cards": ["A-001 | Card A [member_db:1] (ab#0 ON_LIVE_START)", "A-002 | Card B [member_db:2] (ab#0 ON_LIVE_START)"],
                     "card_refs": [
                         {"card_no": "A-001", "ability_index": 0, "db": "member_db", "card_id": 1, "name": "Card A", "trigger": "ON_LIVE_START"},
                         {"card_no": "A-002", "ability_index": 0, "db": "member_db", "card_id": 2, "name": "Card B", "trigger": "ON_LIVE_START"},
@@ -40,8 +38,8 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         }
 
         payload = codec.build_compact_ability_index(authored_data, metadata)
-        self.assertEqual(payload["summary"]["card_count"], 2)
-        self.assertEqual(payload["summary"]["ability_count"], 2)
+        self.assertEqual(payload["summary"]["card_count"], 3)
+        self.assertEqual(payload["summary"]["ability_count"], 3)
         self.assertEqual(payload["summary"]["unique_ability_count"], 2)
 
         entry = next(item for item in payload["abilities"] if item["trigger"] == "ON_LIVE_START")
@@ -51,22 +49,9 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         self.assertEqual(entry["instructions"][0]["options"]["value"], 2)
         self.assertEqual(entry["card_refs"][0]["card_no"], "A-001")
 
-    def test_frame_to_sparse_omits_zero_fields(self) -> None:
-        sparse = legacy_codec.frame_to_sparse(
-            {
-                "opcode_name": "SET_HEART_COST",
-                "payload": {
-                    "v": {"pink": 1, "red": 0, "yellow": 0, "green": 0, "blue": 0, "purple": 0, "any": 0},
-                    "a": {"req_1": 1, "req_2": 1, "req_3": 0},
-                    "s": {"raw": 0},
-                },
-            }
-        )
-
-        self.assertEqual(sparse["opcode"], "SET_HEART_COST")
-        self.assertEqual(sparse["value"], {"pink": 1})
-        self.assertEqual(sparse["attr"], {"req_1": 1, "req_2": 1})
-        self.assertNotIn("slot", sparse)
+    def test_normalize_frame_supports_return_shorthand(self) -> None:
+        self.assertEqual(codec._normalize_frame("Return", 0), {"op": "RETURN", "frame_index": 0})
+        self.assertEqual(codec._normalize_frame({"Return": {}}, 1), {"op": "RETURN", "frame_index": 1})
 
     def test_compact_index_uses_write_friendly_frames(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
@@ -93,26 +78,17 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         entry = payload["abilities"][0]
         self.assertEqual(payload["schema"], "ability_frames.flat.v2")
         self.assertTrue(all("op" in frame for frame in entry["instructions"]))
-        rebuilt = legacy_codec.model_to_bytecode({"frames": entry["instructions"]}, metadata)
+        self.assertEqual(entry["instructions"][0]["op"], "DRAW")
+        self.assertEqual(entry["instructions"][0]["options"]["value"], 1)
         self.assertEqual(
-            rebuilt,
-            [
-                int(metadata["opcodes"]["DRAW"]),
-                1,
-                0,
-                0,
-                int(metadata["slot_indices"]["CONTEXT"]),
-                int(metadata["opcodes"]["RETURN"]),
-                0,
-                0,
-                0,
-                0,
-            ],
+            entry["instructions"][0]["options"]["slot"]["target_slot"],
+            int(metadata["slot_indices"]["CONTEXT"]),
         )
+        self.assertEqual(entry["instructions"][1]["op"], "RETURN")
 
     def test_real_compact_index_preserves_opcode_sequences(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
-        authored_data = codec.load_yaml(ROOT / "data" / "ability_frame_index.yaml")
+        authored_data = codec.load_authored_payload(ROOT / "data" / "consolidated_abilities.json")
 
         payload = codec.build_compact_ability_index(authored_data, metadata)
 

@@ -102,7 +102,7 @@ class CardDataLoader:
             # we cannot load raw cards anymore.
             raise RuntimeError(
                 "Legacy cards.json format detected. Runtime parsing is disabled. "
-                "Please run 'uv run compiler/main.py' to generate 'data/cards_compiled.json'."
+                "Please run 'python tools/build_cards.py' to generate 'data/cards_compiled.json'."
             )
 
         return members, lives, energy

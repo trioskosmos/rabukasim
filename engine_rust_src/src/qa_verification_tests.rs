@@ -1626,6 +1626,12 @@ mod tests {
         println!("--- State After Play (Before Resolving OnPlay) ---");
         state.dump_verbose();
 
+        assert_eq!(
+            state.players[0].tapped_energy_mask.count_ones(),
+            13,
+            "Baton Touch play should tap 13 energy before Emma resolves her OnPlay choice"
+        );
+
         // Emma has an OnPlay ability that triggers a SelectMode interaction.
         // We must resolve this interaction for the test to complete.
         if state.phase == Phase::Response {
@@ -1644,12 +1650,12 @@ mod tests {
             "Emma should be on stage"
         );
         // Verified behavior: Emma's own constant reduction applies while the
-        // tapped member is still on stage, then Baton Touch reduces the final
-        // play payment to 13.
+        // tapped member is still on stage, Baton Touch reduces the payment to
+        // 13, and then Emma's chosen OnPlay mode activates 2 energy back.
         assert_eq!(
             state.players[0].tapped_energy_mask.count_ones(),
-            13,
-            "Baton Touch play should tap 13 energy after Emma activates energy"
+            11,
+            "Baton Touch should leave 11 energy tapped after Emma activates 2 energy"
         );
 
         assert!(

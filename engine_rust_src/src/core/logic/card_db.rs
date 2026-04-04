@@ -69,8 +69,8 @@ impl CardRef {
     }
 }
 
-// The runtime prefers the structured ability frame index. Consolidated ability
-// data remains a fallback for older exports and partial regeneration states.
+// The runtime prefers the per-ability frame index until consolidated authored
+// JSON is normalized to one entry per ability.
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
     include_str!("../../../../data/ability_frame_index.json");
 const EMBEDDED_CONSOLIDATED_ABILITIES_JSON: &str =

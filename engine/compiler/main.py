@@ -3,8 +3,8 @@
 DATA FLOW:
 ---------
 1. INPUT: data/cards.json (raw card data)
-2. INPUT: data/ability_frame_index.yaml (ability definitions)
-3. PROCESS: compile_cards() parses each card, resolves abilities from YAML
+2. INPUT: data/consolidated_abilities.json (canonical authored ability definitions)
+3. PROCESS: compile_cards() parses each card, resolves abilities from the authored source
 4. OUTPUT: data/cards_compiled.json (compiled card database)
 """
 
@@ -422,14 +422,14 @@ def _load_translations_if_present(quiet: bool = False):
 
 
 class SparseSourceManager:
-    """Manages loading and looking up abilities from the sparse frame index."""
+    """Manages loading and looking up abilities from the canonical authored ability source."""
 
     _CARD_REF_RE = re.compile(
         r"^(?P<card_no>[^|]+?)\s*\|.*?\(ab#(?P<idx>\d+)(?:[\s\u3000)]|$)"
     )
 
-    def __init__(self, yaml_path: str):
-        self.yaml_path = yaml_path
+    def __init__(self, source_path: str):
+        self.yaml_path = source_path
         # (card_no, ab_idx) -> sparse entry payload
         self.mapping = {}
         self._last_loaded_mtime: float | None = None
@@ -516,12 +516,20 @@ class SparseSourceManager:
                 return
 
             next_mapping = {}
-            abilities_list = data.get("abilities", [])
-            self._log(f"SparseSourceManager.load() found {len(abilities_list)} abilities in YAML")
+            abilities_list = data.get("abilities")
+            if not isinstance(abilities_list, list):
+                abilities_list = [
+                    entry
+                    for key, entry in data.items()
+                    if isinstance(entry, dict)
+                    and not str(key).startswith("_")
+                    and key not in {"generated_at", "source", "metadata_source", "summary", "schema"}
+                ]
+            self._log(f"SparseSourceManager.load() found {len(abilities_list)} authored entries")
 
             for entry in abilities_list:
                 trigger_id = _coerce_int(entry.get("trigger_id", 0))
-                frames = list(entry.get("frames", []) or [])
+                frames = list(entry.get("frames", entry.get("instructions", [])) or [])
                 card_refs = entry.get("card_refs", [])
                 cards_list = card_refs if isinstance(card_refs, list) and card_refs else entry.get("cards", [])
                 for card_ref in cards_list:
@@ -554,8 +562,9 @@ class SparseSourceManager:
         return self.mapping.get((self._normalize_card_no(card_no), ab_idx))
 
 
-# Global sparse manager. This is the editable semantic source of truth used by the compiler.
-# Ability Frame Path should now point to the YAML source of truth.
+# Global sparse manager. This is the editable authored source of truth used by the compiler.
+# Consolidated authored JSON is not yet normalized per ability. Keep using the
+# per-ability frame index until that migration is completed.
 ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_index.yaml"
 SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)

@@ -9,7 +9,7 @@ import json
 ROOT_DIR = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT_DIR))
 
-from engine.compiler import main as compiler_main
+from engine.compiler import runtime_cards as compiler_runtime
 from tools import frame_codec
 from tools.sync_launcher_assets import sync_assets
 
@@ -38,7 +38,7 @@ def _cards_are_current() -> bool:
     """Check if compiled cards are up to date."""
     if not CARDS_OUTPUT_PATH.exists():
         return False
-    compiled_data = compiler_main.load_json(str(CARDS_OUTPUT_PATH))
+    compiled_data = compiler_runtime.load_json(str(CARDS_OUTPUT_PATH))
     if not compiled_data:
         return False
     return True
@@ -49,7 +49,7 @@ def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
     # Always compile to ensure fresh data with current compiler
     _log("Compiling cards from authored sources", quiet)
     try:
-        compiler_main.compile_cards(
+        compiler_runtime.compile_cards(
             str(CARDS_INPUT_PATH),
             str(CARDS_OUTPUT_PATH),
             quiet=quiet,
@@ -64,7 +64,7 @@ def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
 def prepare_frame_index(*, quiet: bool = False) -> bool:
     """Regenerate the derived frame index from the authored YAML source."""
     _log("Rebuilding derived ability frame index", quiet)
-    payload = frame_codec.load_yaml(FRAME_SOURCE_PATH)
+    payload = frame_codec.load_authored_payload(FRAME_SOURCE_PATH)
     metadata = frame_codec.load_json(METADATA_PATH)
     runtime_index = frame_codec.build_runtime_ability_index(payload, metadata)
     encoded = json.dumps(runtime_index, indent=2, ensure_ascii=False)

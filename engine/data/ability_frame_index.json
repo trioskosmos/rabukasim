@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-04-04T04:39:04.628914+00:00",
+  "generated_at": "2026-04-04T05:38:01.219991+00:00",
   "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json",
   "metadata_source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\metadata.json",
   "schema": "ability_frame_index.flat.v2",
-  "_comment": "Derived frame/index output. The canonical semantic source is data/consolidated_abilities.json; this file is for frame-program compilation and lookup.",
+  "_comment": "Derived frame/index output. The canonical authored source is data/consolidated_abilities.json; this file is a compatibility cache for frame-program lookup.",
   "summary": {
     "card_count": 1048,
     "ability_count": 1356,

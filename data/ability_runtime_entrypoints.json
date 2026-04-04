@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_unix_seconds": 1775277338,
+    "generated_unix_seconds": 1775281093,
     "hydration_boundary": "CardDatabase::attach_sparse_ability_index()",
     "extraction_entrypoint": "Ability::resolved_frames() + Ability::trace_view()",
     "compiled_cards_source": "data/cards_compiled.json"
@@ -11,8 +11,8 @@
     "ability_count": 1356,
     "abilities_with_resolved_frames": 1356,
     "source_counts": {
-      "effects": 249,
-      "frame_program": 1107
+      "effects": 248,
+      "frame_program": 1108
     }
   },
   "abilities": [
@@ -435181,11 +435181,11 @@
       "card_name": "Unknown",
       "ability_index": 0,
       "trigger": 2,
-      "resolved_frame_source": "effects",
-      "frame_program_present": false,
+      "resolved_frame_source": "frame_program",
+      "frame_program_present": true,
       "has_resolved_frames": true,
-      "raw_text": "",
-      "pseudocode": "",
+      "raw_text": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
+      "pseudocode": "Choose 1 member(s). Then value=6, filter=[none], slot=[compare=GE (>=), slot=Left Stage (0)]",
       "choice_count": 0,
       "effect_count": 2,
       "condition_count": 1,
@@ -435193,6 +435193,102 @@
       "resolved_frames": [
         {
           "opcode": 65,
+          "value": 1,
+          "attr": {
+            "is_enabled": true,
+            "target_player": 1,
+            "card_type": 0,
+            "group_enabled": true,
+            "group_id": 1,
+            "is_tapped": false,
+            "has_blade_heart": false,
+            "not_has_blade_heart": false,
+            "unique_names": false,
+            "unit_enabled": false,
+            "unit_id": 0,
+            "value_enabled": false,
+            "value_threshold": 0,
+            "is_le": false,
+            "is_cost_type": false,
+            "color_mask": 0,
+            "char_id_1": 0,
+            "char_id_2": 0,
+            "char_id_3": 0,
+            "zone_mask": 0,
+            "special_id": 0,
+            "is_setsuna": false,
+            "compare_accumulated": false,
+            "is_optional": false,
+            "keyword_energy": false,
+            "keyword_member": false
+          },
+          "slot": {
+            "target_slot": 4,
+            "comparison": 0,
+            "source_zone": 4,
+            "dest_zone": 0,
+            "remainder_zone": 0,
+            "is_opponent": false,
+            "is_reveal_until_live": false,
+            "is_baton_slot": false,
+            "is_empty_slot": false,
+            "is_wait": false,
+            "is_dynamic": false,
+            "area_idx": 0
+          },
+          "is_cost": false,
+          "params": null
+        },
+        {
+          "opcode": 224,
+          "value": 6,
+          "attr": {
+            "is_enabled": true,
+            "target_player": 1,
+            "card_type": 0,
+            "group_enabled": false,
+            "group_id": 0,
+            "is_tapped": false,
+            "has_blade_heart": false,
+            "not_has_blade_heart": false,
+            "unique_names": false,
+            "unit_enabled": false,
+            "unit_id": 0,
+            "value_enabled": true,
+            "value_threshold": 6,
+            "is_le": false,
+            "is_cost_type": false,
+            "color_mask": 0,
+            "char_id_1": 0,
+            "char_id_2": 0,
+            "char_id_3": 0,
+            "zone_mask": 0,
+            "special_id": 0,
+            "is_setsuna": false,
+            "compare_accumulated": false,
+            "is_optional": false,
+            "keyword_energy": false,
+            "keyword_member": false
+          },
+          "slot": {
+            "target_slot": 48,
+            "comparison": 3,
+            "source_zone": 0,
+            "dest_zone": 0,
+            "remainder_zone": 0,
+            "is_opponent": false,
+            "is_reveal_until_live": false,
+            "is_baton_slot": false,
+            "is_empty_slot": false,
+            "is_wait": false,
+            "is_dynamic": false,
+            "area_idx": 0
+          },
+          "is_cost": false,
+          "params": null
+        },
+        {
+          "opcode": 3,
           "value": 1,
           "attr": {
             "is_enabled": true,
@@ -435206,8 +435302,8 @@
             "unique_names": false,
             "unit_enabled": false,
             "unit_id": 0,
-            "value_enabled": false,
-            "value_threshold": 0,
+            "value_enabled": true,
+            "value_threshold": 1,
             "is_le": false,
             "is_cost_type": false,
             "color_mask": 0,
@@ -435237,7 +435333,7 @@
             "area_idx": 0
           },
           "is_cost": false,
-          "params": {}
+          "params": null
         },
         {
           "opcode": 16,
@@ -435254,6 +435350,54 @@
             "unique_names": false,
             "unit_enabled": false,
             "unit_id": 0,
+            "value_enabled": true,
+            "value_threshold": 1,
+            "is_le": false,
+            "is_cost_type": false,
+            "color_mask": 0,
+            "char_id_1": 0,
+            "char_id_2": 0,
+            "char_id_3": 0,
+            "zone_mask": 0,
+            "special_id": 0,
+            "is_setsuna": false,
+            "compare_accumulated": false,
+            "is_optional": false,
+            "keyword_energy": false,
+            "keyword_member": false
+          },
+          "slot": {
+            "target_slot": 4,
+            "comparison": 0,
+            "source_zone": 0,
+            "dest_zone": 0,
+            "remainder_zone": 0,
+            "is_opponent": false,
+            "is_reveal_until_live": false,
+            "is_baton_slot": false,
+            "is_empty_slot": false,
+            "is_wait": false,
+            "is_dynamic": false,
+            "area_idx": 0
+          },
+          "is_cost": false,
+          "params": null
+        },
+        {
+          "opcode": 1,
+          "value": 0,
+          "attr": {
+            "is_enabled": true,
+            "target_player": 0,
+            "card_type": 0,
+            "group_enabled": false,
+            "group_id": 0,
+            "is_tapped": false,
+            "has_blade_heart": false,
+            "not_has_blade_heart": false,
+            "unique_names": false,
+            "unit_enabled": false,
+            "unit_id": 0,
             "value_enabled": false,
             "value_threshold": 0,
             "is_le": false,
@@ -435285,13 +435429,13 @@
             "area_idx": 0
           },
           "is_cost": false,
-          "params": {}
+          "params": null
         }
       ],
       "trace_view": {
         "trigger": 2,
-        "frame_source": "effects",
-        "raw_text": "",
+        "frame_source": "frame_program",
+        "raw_text": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
         "choice_count": 0,
         "steps": [
           {
@@ -435299,12 +435443,14 @@
             "summary": "select 1 member(s)",
             "is_cost": false,
             "value": 1,
+            "source_zone": 4,
+            "target_slot": 4,
             "filter": {
               "is_enabled": true,
               "target_player": 1,
               "card_type": 0,
-              "group_enabled": false,
-              "group_id": 0,
+              "group_enabled": true,
+              "group_id": 1,
               "is_tapped": false,
               "has_blade_heart": false,
               "not_has_blade_heart": false,
@@ -435327,11 +435473,73 @@
               "keyword_energy": false,
               "keyword_member": false
             },
-            "params": {}
+            "slot": {
+              "target_slot": 4,
+              "comparison": 0,
+              "source_zone": 4,
+              "dest_zone": 0,
+              "remainder_zone": 0,
+              "is_opponent": false,
+              "is_reveal_until_live": false,
+              "is_baton_slot": false,
+              "is_empty_slot": false,
+              "is_wait": false,
+              "is_dynamic": false,
+              "area_idx": 0
+            }
           },
           {
-            "opcode": "BOOST_SCORE",
-            "summary": "boost score by 1",
+            "opcode": "OP_224",
+            "summary": "OP_224 value=6",
+            "is_cost": false,
+            "value": 6,
+            "target_slot": 48,
+            "filter": {
+              "is_enabled": true,
+              "target_player": 1,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": false,
+              "unit_id": 0,
+              "value_enabled": true,
+              "value_threshold": 6,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "char_id_3": 0,
+              "zone_mask": 0,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false
+            },
+            "slot": {
+              "target_slot": 48,
+              "comparison": 3,
+              "source_zone": 0,
+              "dest_zone": 0,
+              "remainder_zone": 0,
+              "is_opponent": false,
+              "is_reveal_until_live": false,
+              "is_baton_slot": false,
+              "is_empty_slot": false,
+              "is_wait": false,
+              "is_dynamic": false,
+              "area_idx": 0
+            }
+          },
+          {
+            "opcode": "JUMP_IF_FALSE",
+            "summary": "if false jump by 1 frame(s)",
             "is_cost": false,
             "value": 1,
             "filter": {
@@ -435346,8 +435554,43 @@
               "unique_names": false,
               "unit_enabled": false,
               "unit_id": 0,
-              "value_enabled": false,
-              "value_threshold": 0,
+              "value_enabled": true,
+              "value_threshold": 1,
+              "is_le": false,
+              "is_cost_type": false,
+              "color_mask": 0,
+              "char_id_1": 0,
+              "char_id_2": 0,
+              "char_id_3": 0,
+              "zone_mask": 0,
+              "special_id": 0,
+              "is_setsuna": false,
+              "compare_accumulated": false,
+              "is_optional": false,
+              "keyword_energy": false,
+              "keyword_member": false
+            }
+          },
+          {
+            "opcode": "BOOST_SCORE",
+            "summary": "boost score by 1",
+            "is_cost": false,
+            "value": 1,
+            "target_slot": 4,
+            "filter": {
+              "is_enabled": true,
+              "target_player": 1,
+              "card_type": 0,
+              "group_enabled": false,
+              "group_id": 0,
+              "is_tapped": false,
+              "has_blade_heart": false,
+              "not_has_blade_heart": false,
+              "unique_names": false,
+              "unit_enabled": false,
+              "unit_id": 0,
+              "value_enabled": true,
+              "value_threshold": 1,
               "is_le": false,
               "is_cost_type": false,
               "color_mask": 0,
@@ -435362,7 +435605,25 @@
               "keyword_energy": false,
               "keyword_member": false
             },
-            "params": {}
+            "slot": {
+              "target_slot": 4,
+              "comparison": 0,
+              "source_zone": 0,
+              "dest_zone": 0,
+              "remainder_zone": 0,
+              "is_opponent": false,
+              "is_reveal_until_live": false,
+              "is_baton_slot": false,
+              "is_empty_slot": false,
+              "is_wait": false,
+              "is_dynamic": false,
+              "area_idx": 0
+            }
+          },
+          {
+            "opcode": "RETURN",
+            "summary": "return",
+            "is_cost": false
           }
         ]
       }

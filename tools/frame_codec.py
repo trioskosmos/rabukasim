@@ -14,6 +14,33 @@ from pathlib import Path
 from typing import Any
 
 
+def load_authored_payload(path: Path | str) -> dict[str, Any]:
+    """Load the canonical authored ability source from YAML or JSON."""
+    path = Path(path)
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        return load_yaml(path)
+    return load_json(path)
+
+
+def iter_authored_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return authored ability entries from either list-style or object-style payloads."""
+    abilities = payload.get("abilities")
+    if isinstance(abilities, list):
+        return [entry for entry in abilities if isinstance(entry, dict)]
+
+    entries: list[dict[str, Any]] = []
+    for key, value in payload.items():
+        if key.startswith("_"):
+            continue
+        if key in {"generated_at", "source", "metadata_source", "summary", "schema"}:
+            continue
+        if isinstance(value, dict):
+            entry = dict(value)
+            entry.setdefault("source_text", key)
+            entries.append(entry)
+    return entries
+
+
 def load_yaml(path: Path | str) -> dict[str, Any]:
     """Load YAML file with UTF-8 encoding."""
     with open(path, "r", encoding="utf-8") as f:
@@ -121,7 +148,9 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
     """
     entries = []
 
-    for entry in payload.get("abilities", []):
+    source_entries = iter_authored_entries(payload)
+
+    for entry in source_entries:
         trigger_id = int(entry.get("trigger_id", 0))
         raw_frames = entry.get("instructions", entry.get("frames", [])) or []
 
@@ -181,10 +210,10 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
     return {
         "generated_at": _utc_now(),
-        "source": str(payload.get("source", "data/ability_frame_index.yaml")),
+        "source": str(payload.get("source", "data/consolidated_abilities.json")),
         "metadata_source": str(payload.get("metadata_source", "data/metadata.json")),
         "schema": "ability_frames.flat.v2",
-        "_comment": "Derived frame/index output. The canonical semantic source is data/consolidated_abilities.json; this file is for frame-program compilation and lookup.",
+        "_comment": "Derived frame/index output. The canonical authored source is data/consolidated_abilities.json; this file is a compatibility cache for frame-program lookup.",
         "summary": {
             "card_count": len(unique_cards),
             "ability_count": total_card_refs,
@@ -206,7 +235,7 @@ def build_compact_ability_index(payload: dict[str, Any], metadata: dict[str, Any
     """Build the compact authored frame index used by compatibility tests."""
     compact = normalize_authored_ability_index(payload, metadata, card_db)
     entries = compact.get("abilities", [])
-    source_entries = payload.get("abilities", []) if isinstance(payload, dict) else []
+    source_entries = iter_authored_entries(payload)
 
     for idx, entry in enumerate(entries):
         source_entry = source_entries[idx] if idx < len(source_entries) and isinstance(source_entries[idx], dict) else {}
