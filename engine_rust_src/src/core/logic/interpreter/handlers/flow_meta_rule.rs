@@ -1,5 +1,4 @@
 use super::HandlerResult;
-use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::filter::merge_filter_attr_with_params;
 use crate::core::logic::interpreter::conditions::get_condition_count;

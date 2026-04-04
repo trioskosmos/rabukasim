@@ -40,7 +40,7 @@ fn create_mini_state() -> GameState {
 #[test]
 fn mini_test_o_pay_energy_resumption() {
     // Bytecode: PAY_ENERGY(1), DRAW(1), RETURN
-    let frames = FrameProgram::from_words(&[64, 1, 0, 0, 10, 1, 0, 1, 1, 0, 0, 0]).frames;
+    let frames = FrameProgram::from_instruction_words(&[64, 1, 0, 0, 10, 1, 0, 1, 1, 0, 0, 0]).frames;
     let db = create_mini_db_with_frames(frames);
     let mut state = create_mini_state();
 
@@ -67,7 +67,7 @@ fn mini_test_o_pay_energy_resumption() {
 #[test]
 fn mini_test_o_select_mode_resumption() {
     // Bytecode: SELECT_MODE(2 choices), jump targets, Option 1: DRAW(1)+RETURN, Option 2: DRAW(2)+RETURN
-    let frames = FrameProgram::from_words(&[
+    let frames = FrameProgram::from_instruction_words(&[
         30, 2, 12, 20, // SELECT_MODE, v=2, Jmp0=12, Jmp1=20
         3, 0, 0, 0,  // Option 1 -> instruction 3 (*4 = IP 12)
         5, 0, 0, 0,  // Option 2 -> instruction 5 (*4 = IP 20)

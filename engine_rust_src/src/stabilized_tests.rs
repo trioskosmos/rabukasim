@@ -47,7 +47,7 @@ fn verify_manual_recovery_pattern() {
         ..Default::default()
     });
     // Add RECOVER_MEMBER effect via bytecode
-    ab.frame_program = Some(FrameProgram::from_words(&[
+    ab.frame_program = Some(FrameProgram::from_instruction_words(&[
         32, 1, 0, 0, 0, 1, 0, 0, 0, 0,  // RECOVER_MEMBER 1
     ]));
     card406.abilities.push(ab);

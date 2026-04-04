@@ -23,7 +23,6 @@ METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 class PrepareResult:
     cards_changed: bool = False
     frame_index_changed: bool = False
-    rust_codegen_changed: bool = False
     launcher_assets_changed: bool = False
 
 
@@ -65,12 +64,6 @@ def prepare_frame_index(*, quiet: bool = False) -> bool:
     return changed
 
 
-def prepare_rust_codegen(*, quiet: bool = False) -> bool:
-    """Generate Rust code - simplified, no-op for now."""
-    _log("Rust codegen skipped (simplified pipeline)", quiet)
-    return False
-
-
 def prepare_server_assets(*, quiet: bool = False) -> bool:
     """Sync launcher/runtime assets from the freshly compiled root data."""
     return sync_assets(quiet=quiet)
@@ -86,7 +79,6 @@ def prepare_runtime(
     result = PrepareResult()
     result.cards_changed = prepare_cards(force=force, quiet=quiet)
     result.frame_index_changed = prepare_frame_index(quiet=quiet)
-    result.rust_codegen_changed = prepare_rust_codegen(quiet=quiet)
     if sync_assets:
         result.launcher_assets_changed = prepare_server_assets(quiet=quiet)
     return result

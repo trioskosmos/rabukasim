@@ -2,6 +2,8 @@
 
 This document replaces the earlier broad ability-system plan docs. It is derived from the live code path in this workspace.
 
+Detailed follow-up: see `docs/plans/ability_source_hydration_runtime.md` for the authored-source to runtime path, opcode-level hydration notes, and the current runtime file-structure assessment.
+
 ## Active pipeline
 
 ### Authored inputs
@@ -54,7 +56,7 @@ The Rust loader path is centered on:
 - `engine_rust_src/src/core/logic/card_db.rs`
 - `engine_rust_src/src/core/logic/models.rs`
 
-`CardDatabase` loads compiled cards, separately loads the sparse frame index, then mutates loaded abilities to reattach `frame_program`, recover raw text and pseudocode, patch missing `choose_count`, copy runtime fields back into semantic effects, derive top-level conditions from leading condition frames, and compute masks and flags.
+`CardDatabase` loads compiled cards, separately loads the sparse frame index, then routes hydration through `engine_rust_src/src/core/logic/ability_hydration.rs` to reattach `frame_program`, recover raw text and pseudocode, patch missing `choose_count`, copy runtime fields back into semantic effects, derive top-level conditions from leading condition frames, and compute masks and flags.
 
 This is the biggest structural smell in the current pipeline. Rust is not just loading one runtime model. It is reconstructing one by merging a semantic export with the authored sparse source.
 

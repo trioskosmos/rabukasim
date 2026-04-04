@@ -18,7 +18,7 @@ mod tests {
         card_a.name = "Listener".to_string();
         card_a.abilities.push(Ability {
             trigger: TriggerType::OnLeaves,
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 O_META_RULE, 1, 0, 0,
                 O_RETURN, 0, 0, 0,
             ])),

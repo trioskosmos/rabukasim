@@ -58,7 +58,7 @@ export const DebugModal = {
         selectedZone: 'all', // 'all', 'stage', 'live', 'hand', 'success', 'energy', 'discard'
         filterByAbility: true,
         abilitySearch: '',
-        showBytecodeAlways: true,
+        showExecutionLogAlways: true,
     },
 
     init: () => { },
@@ -68,7 +68,7 @@ export const DebugModal = {
         if (modal) {
             modal.style.display = 'flex';
             if (!State.data) {
-                const containers = ['debug-inspector-content', 'debug-bytecode-log'];
+                const containers = ['debug-inspector-content', 'debug-execution-log'];
                 containers.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
@@ -116,7 +116,7 @@ export const DebugModal = {
     renderAll: async () => {
         if (State.roomCode) { await Network.fetchState(); }
         if (!State.data) return;
-        try { DebugModal.renderBytecodeLog(); } catch (e) { console.error("Debug Bytecode Render Fail:", e); }
+        try { DebugModal.renderExecutionLog(); } catch (e) { console.error("Debug Execution Log Render Fail:", e); }
         try { DebugModal.renderInspectorTab(); } catch (e) { console.error("Debug Inspector Error:", e); }
         try { DebugModal.renderJsonTab(); } catch (e) { console.error("Debug JSON Error:", e); }
         try { DebugModal.renderStringTab(); } catch (e) { console.error("Debug String Error:", e); }
@@ -331,16 +331,16 @@ export const DebugModal = {
                             ${DebugModal._renderLogicList('Costs', ab.costs, '#e67e22')}
                             ${DebugModal._renderLogicList('Effects', ab.effects, '#2ecc71')}
 
-                            ${(ab.decoded_bytecode && ab.decoded_bytecode.length > 0) ? `
+                            ${(ab.decoded_instruction_words && ab.decoded_instruction_words.length > 0) ? `
                             <details style="margin-top:4px;">
-                                <summary style="cursor:pointer; opacity:0.5; font-size:9px; padding:2px; background:rgba(255,255,255,0.05); border-radius:3px;">Decoded Bytecode (${ab.decoded_bytecode.length})</summary>
-                                <pre style="font-size:9px; background:#000; padding:6px; border-radius:4px; margin:4px 0; max-height:150px; overflow-y:auto; color:#0f0; font-family: 'Cascadia Code', monospace; line-height:1.2;">${ab.decoded_bytecode.join('\n')}</pre>
+                                <summary style="cursor:pointer; opacity:0.5; font-size:9px; padding:2px; background:rgba(255,255,255,0.05); border-radius:3px;">Decoded Instruction Words (${ab.decoded_instruction_words.length})</summary>
+                                <pre style="font-size:9px; background:#000; padding:6px; border-radius:4px; margin:4px 0; max-height:150px; overflow-y:auto; color:#0f0; font-family: 'Cascadia Code', monospace; line-height:1.2;">${ab.decoded_instruction_words.join('\n')}</pre>
                             </details>` : ''}
 
-                            ${(ab.bytecode && ab.bytecode.length > 0) ? `
+                            ${(ab.instruction_words && ab.instruction_words.length > 0) ? `
                             <details style="margin-top:2px;">
-                                <summary style="cursor:pointer; opacity:0.4; font-size:8px; padding:1px 2px; background:rgba(255,255,255,0.03); border-radius:3px;">Raw Bytecode (${ab.bytecode.length} words)</summary>
-                                <pre style="font-size:8px; background:#000; padding:4px; border-radius:4px; margin:2px 0; max-height:80px; overflow-y:auto; color:#888; font-family:monospace;">${ab.bytecode.join(', ')}</pre>
+                                <summary style="cursor:pointer; opacity:0.4; font-size:8px; padding:1px 2px; background:rgba(255,255,255,0.03); border-radius:3px;">Raw Instruction Words (${ab.instruction_words.length} words)</summary>
+                                <pre style="font-size:8px; background:#000; padding:4px; border-radius:4px; margin:2px 0; max-height:80px; overflow-y:auto; color:#888; font-family:monospace;">${ab.instruction_words.join(', ')}</pre>
                             </details>` : ''}
                         </div>
                     `).join('')}
@@ -811,12 +811,12 @@ export const DebugModal = {
         `;
     },
 
-    renderBytecode: () => {
-        const container = document.getElementById('debug-bytecode-content');
+    renderExecutionLog: () => {
+        const container = document.getElementById('debug-execution-content');
         if (!container || !State.data) return;
         const logs = State.data.bytecode_log || [];
         if (logs.length === 0) {
-            container.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">No execution traces. Enable Debug Mode (<code>Network.toggleDebugMode()</code>) to capture bytecode execution logs.</div>';
+            container.innerHTML = '<div style="padding:40px; text-align:center; opacity:0.5;">No execution traces. Enable Debug Mode (<code>Network.toggleDebugMode()</code>) to capture execution logs.</div>';
             return;
         }
         container.innerHTML = logs.map(l => {

@@ -39,7 +39,7 @@ fn test_sumire_8752_trigger_repro() {
     // Ability 1 is the OnPlay one
     let ab = &card.abilities[1];
     println!("Ability 1 Pseudocode: {}", ab.pseudocode);
-    println!("Ability 1 Bytecode: {:?}", ab.bytecode);
+    println!("Ability 1 Words: {:?}", ab.words());
 
     // Manual step through triggers/conditions to see where it fails
     // In real execution, check_condition is called

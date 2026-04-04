@@ -44,7 +44,7 @@ def main():
     if args.quiet:
         return
 
-    if result.cards_changed or result.frame_index_changed or result.rust_codegen_changed:
+    if result.cards_changed or result.frame_index_changed:
         print_status("Build complete.", is_done=True)
     else:
         print_status("Card and ability artifacts are up to date.", is_done=True)

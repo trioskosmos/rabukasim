@@ -16,7 +16,7 @@ fn test_repro_card_4684_score_boost() {
         vec![3], // Liella!
         vec![(
             TriggerType::OnLiveSuccess,
-            AbilityLogic::Frames(FrameProgram::from_words(&[
+            AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                 64, 6, 0, 536870912, 0, 3, 2, 0, 0, 0, 312, 0, 0, 0, 0, 16, 1, 0, 0, 4, 1, 0, 0, 0,
                 0,
             ]).frames),

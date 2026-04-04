@@ -151,7 +151,7 @@ mod tests {
     }
 
     fn ren_like_selected_discard_recover_bytecode() -> AbilityLogic {
-        AbilityLogic::Frames(FrameProgram::from_words(&[
+        AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
             305, 0, 0, 0, 48, 64, 1, 0, 536870912, 0, 3, 1, 0, 0, 0, 17, 1, 1, 652214272, 458756,
             1, 0, 0, 0, 0,
         ]).frames)
@@ -287,7 +287,7 @@ mod tests {
         member_b.name = "Special Color".to_string();
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            frame_program: Some(FrameProgram::from_words(&[O_TRANSFORM_BLADES, 3, 0, 0, 4])),
+            frame_program: Some(FrameProgram::from_instruction_words(&[O_TRANSFORM_BLADES, 3, 0, 0, 4])),
             ..Default::default()
         });
         db.members.insert(1002, member_b.clone());
@@ -783,10 +783,6 @@ mod tests {
             ..Default::default()
         };
 
-        // Use the handler to simulate activation
-        #[allow(deprecated)]
-        let _instr =
-            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         // Simplified: Directly set the activation mask instead of calling handler
         state.players[0].activated_energy_group_mask |= 1 << 2;
         println!(

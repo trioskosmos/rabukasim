@@ -778,18 +778,8 @@ pub struct BytecodeInstruction {
     pub raw_s: i32,
 }
 
-#[deprecated(since = "0.1.0", note = "Use FrameProgram directly instead of bytecode")]
-#[derive(Debug, Clone)]
-pub struct BytecodeProgram {
-    words: std::sync::Arc<Vec<i32>>,
-}
-
 #[allow(deprecated)]
 impl BytecodeInstruction {
-    pub fn new(op: i32, v: i32, a: i64, raw_s: i32) -> Self {
-        Self { op, v, a, raw_s }
-    }
-
     pub fn decode(words: &[i32], ip: usize) -> Self {
         let op = words[ip];
         let v = if ip + 1 < words.len() { words[ip + 1] } else { 0 };
@@ -798,22 +788,5 @@ impl BytecodeInstruction {
         let raw_s = if ip + 4 < words.len() { words[ip + 4] } else { 0 };
         let a = ((a_high as i64) << 32) | (a_low as i64);
         Self { op, v, a, raw_s }
-    }
-}
-
-#[allow(deprecated)]
-impl BytecodeProgram {
-    pub fn from_slice(words: &[i32]) -> Self {
-        Self { words: std::sync::Arc::new(words.to_vec()) }
-    }
-
-    pub fn decode_all(&self) -> Vec<BytecodeInstruction> {
-        let mut decoded = Vec::new();
-        let mut ip = 0;
-        while ip < self.words.len() {
-            decoded.push(BytecodeInstruction::decode(&self.words, ip));
-            ip += 5;
-        }
-        decoded
     }
 }

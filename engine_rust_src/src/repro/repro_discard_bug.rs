@@ -12,7 +12,7 @@ mod tests {
         card126.card_id = 126;
         let mut ab = crate::core::logic::models::Ability::default();
         ab.trigger = TriggerType::OnPlay;
-        ab.frame_program = Some(FrameProgram::from_words(&[
+        ab.frame_program = Some(FrameProgram::from_instruction_words(&[
             58, 5, 1, 0, 65540, 309, 1, 8, 0, 48, 10, 1, 0, 0, 4, 1, 0, 0, 0, 0,
         ]));
         card126.abilities.push(ab);

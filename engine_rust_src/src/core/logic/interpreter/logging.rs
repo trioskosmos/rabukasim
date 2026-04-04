@@ -1,5 +1,4 @@
 use crate::core::enums::ChoiceType;
-use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::filter::{structured_filter_from_attr, CardFilter};
 use crate::core::logic::interpreter::instruction::DecodedSlot;
@@ -244,7 +243,7 @@ pub fn describe_words(op: i32, v: i32, a: i64, s: i32) -> String {
     describe_frame_words(op, v, a, s)
 }
 
-pub fn describe_bytecode(op: i32, v: i32, a: i64, s: i32) -> String {
+pub fn describe_instruction_words(op: i32, v: i32, a: i64, s: i32) -> String {
     describe_words(op, v, a, s)
 }
 

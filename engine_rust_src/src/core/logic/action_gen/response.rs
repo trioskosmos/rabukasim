@@ -1,5 +1,4 @@
 use crate::core::enums::*;
-use crate::core::generated_constants::*;
 use crate::core::logic::ability_patterns::{
     pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus,
 };
@@ -12,7 +11,7 @@ use crate::core::logic::{
     Ability, AbilityContext, ActionReceiver, CardDatabase, ChoiceType, GameState,
     PendingInteraction,
 };
-use crate::core::models::{AbilityFrame, CHOICE_DONE};
+use crate::core::models::CHOICE_DONE;
 use crate::core::types::{MAX_LIVE_SET_SIZE, STAGE_SLOT_COUNT};
 
 pub struct ResponseGenerator;
@@ -94,14 +93,7 @@ fn should_enable_targeted_live_bonus(_state: &GameState, pi: &PendingInteraction
 }
 
 fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, option_idx: usize) -> bool {
-    let Some(frames) = (if ability.frame_program.is_some() {
-        legacy_select_mode_option_frames(ability, option_idx)
-            .or_else(|| ability.get_modal_option_frames(option_idx))
-    } else {
-        ability
-            .get_modal_option_frames(option_idx)
-            .or_else(|| legacy_select_mode_option_frames(ability, option_idx))
-    })
+    let Some(frames) = ability.get_modal_option_frames(option_idx)
     else {
         return false;
     };
@@ -122,19 +114,6 @@ fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, opt
         }
         _ => true,
     }
-}
-
-pub(crate) fn legacy_select_mode_option_frames(ability: &Ability, option_idx: usize) -> Option<Vec<AbilityFrame>> {
-    let frames = ability.resolved_frames();
-    let select_mode_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MODE)?;
-    let jump_frame_idx = select_mode_idx + 1 + option_idx;
-    let jump_frame = frames.get(jump_frame_idx)?;
-    if jump_frame.opcode() != O_JUMP {
-        return None;
-    }
-
-    let target_frame_idx = select_mode_idx + 2 + option_idx + jump_frame.value().max(0) as usize;
-    frames.get(target_frame_idx).cloned().map(|frame| vec![frame])
 }
 
 impl ActionGenerator for ResponseGenerator {
@@ -799,7 +778,7 @@ impl ResponseGenerator {
         abilities: Option<&Vec<Ability>>,
     ) {
         let player = &state.players[p_idx];
-        let uses_legacy_look_deck_prompt = abilities
+        let uses_select_mode_look_deck_prompt = abilities
             .and_then(|abs| {
                 let ab_idx_real = if pi.ability_index == -1 {
                     abs.iter()
@@ -825,7 +804,7 @@ impl ResponseGenerator {
                 pi.effect_opcode == O_LOOK_AND_CHOOSE && has_look_deck && !has_look_and_choose
             })
             .unwrap_or(false);
-        let mut final_filter_attr = if pi.effect_opcode == O_LOOK_DECK || uses_legacy_look_deck_prompt {
+        let mut final_filter_attr = if pi.effect_opcode == O_LOOK_DECK || uses_select_mode_look_deck_prompt {
             0
         } else {
             pi.filter_attr

@@ -143,13 +143,13 @@ def _process_card_worker(args):
 
     try:
         if ctype == "メンバー":
-            card = parse_member(packed_id, card_no, item, export_profile=export_profile)
+            card = parse_member(packed_id, card_no, item)
             dumped = _MEMBER_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
             if export_profile == "runtime":
                 dumped = _compact_runtime_card_dump(dumped)
             return ("member", str(packed_id), dumped, None)
         elif ctype == "ライブ":
-            card = parse_live(packed_id, card_no, item, export_profile=export_profile)
+            card = parse_live(packed_id, card_no, item)
             dumped = _LIVE_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
             if export_profile == "runtime":
                 dumped = _compact_runtime_card_dump(dumped)
@@ -400,20 +400,6 @@ SYN_FLAG_CENTER = 1 << 3
 SYN_FLAG_LIFE_LEAD = 1 << 4
 
 COST_FLAG_DISCARD = 0x01
-
-
-def _compile_abilities_for_export(
-    abilities: list,
-    card_no: str,
-    scope: str,
-    export_profile: str = "full",
-) -> None:
-    """Process abilities for export - simplified version."""
-    for idx, ab in enumerate(abilities):
-        ab.card_no = card_no
-        # Calculate flags based on effects/conditions (no bytecode)
-        res = _compute_ability_flags(ab)
-        ab.requires_selection = res.get("choice_count", 0) > 0
 
 # Load manual translations
 MANUAL_TRANSLATIONS_EN_PATH = "data/manual_translations_en.json"
@@ -924,23 +910,20 @@ def compute_flags(card):
         card.cost_flags = cost_flags
 
 
-def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "full") -> MemberCard:
+def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     """
     Parse a member card from raw JSON data.
     
     FLOW:
     1. _resolve_abilities() - Get abilities from sparse index
-    2. _compile_abilities_for_export() - Calculate flags
-    3. _populate_semantic_from_frames() - Fill effects/conditions/costs from frames
-    4. Create MemberCard with all fields
-    5. compute_flags() - Calculate card-level flags
+    2. _populate_semantic_from_frames() - Fill effects/conditions/costs from frames
+    3. Create MemberCard with all fields
+    4. compute_flags() - Calculate card-level flags
     
     Args:
         card_id: Bit-packed card ID
         card_no: Card number string
         data: Raw card dict from cards.json
-        export_profile: "runtime" or "full"
-    
     Returns:
         MemberCard ready for JSON export
     """
@@ -951,11 +934,10 @@ def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "
     # Resolve directly from authored frame data.
     abilities = _resolve_abilities("MEMBER", card_no, data)
 
-    # Compile abilities for export first
-    _compile_abilities_for_export(abilities, card_no, "MEMBER", export_profile=export_profile)
+    for ab in abilities:
+        ab.card_no = card_no
 
-    # Populate semantic effects/conditions/costs from frames for direct Rust consumption
-    # This MUST run after _compile_abilities_for_export to ensure effects persist
+    # Populate semantic effects/conditions/costs from frames for direct Rust consumption.
     _populate_semantic_from_frames(abilities, card_no)
 
     card = MemberCard(
@@ -984,7 +966,7 @@ def parse_member(card_id: int, card_no: str, data: dict, export_profile: str = "
     return card
 
 
-def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "full") -> LiveCard:
+def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
     spec = data.get("special_heart", {})
     translation_en = _manual_translations_en.get(card_no)
 
@@ -992,11 +974,10 @@ def parse_live(card_id: int, card_no: str, data: dict, export_profile: str = "fu
     # Resolve directly from authored frame data.
     abilities = _resolve_abilities("LIVE", card_no, data)
 
-    # Compile abilities for export first
-    _compile_abilities_for_export(abilities, card_no, "LIVE", export_profile=export_profile)
+    for ab in abilities:
+        ab.card_no = card_no
 
-    # Populate semantic effects/conditions/costs from frames for direct Rust consumption
-    # This MUST run after _compile_abilities_for_export to ensure effects persist
+    # Populate semantic effects/conditions/costs from frames for direct Rust consumption.
     _populate_semantic_from_frames(abilities, card_no)
 
     card = LiveCard(

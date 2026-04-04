@@ -612,7 +612,7 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
     };
     let ability_from_bytecode = Ability {
         trigger: TriggerType::OnPlay,
-        frame_program: Some(FrameProgram::from_words(&[
+        frame_program: Some(FrameProgram::from_instruction_words(&[
             O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
         ])),
         ..Default::default()

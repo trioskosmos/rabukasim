@@ -19,11 +19,7 @@ for %%a in (%*) do (
     if /i "%%~a"=="--release" set BUILD_PROFILE=--release
 )
 
-echo [build] Cargo will run metadata sync and card compilation through uv.
-
-echo [build] Repairing consolidated ability card references if needed.
-uv run --no-sync --python 3.12 python tools\repair_consolidated_card_ref_names.py --quiet
-if errorlevel 1 goto CMD_FAIL
+echo [build] Running metadata sync and card compilation through uv before Cargo startup.
 
 echo [build] Syncing metadata.
 uv run --no-sync --python 3.12 python tools\sync_metadata.py
@@ -42,7 +38,7 @@ if "%BUILD_PROFILE%"=="--release" (
 ) else (
     echo [run] Debug build enabled for faster iteration.
 )
-echo [wait] Waiting for Cargo to finish metadata sync, card compilation, and server startup. First run may take a while.
+echo [wait] Waiting for Cargo build and server startup. First run may take a while.
 if "%DEBUG_ARG%"=="--debug" echo [run] Debug mode enabled.
 
 cargo run --manifest-path launcher\Cargo.toml %BUILD_PROFILE% %NN_FEATURES% --bin rabuka_launcher -- %DEBUG_ARG%

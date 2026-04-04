@@ -29,7 +29,7 @@ mod tests {
                 Cost { cost_type: AbilityCostType::TapMember, value: 0, ..Default::default() },
                 Cost { cost_type: AbilityCostType::DiscardHand, value: 1, ..Default::default() }
             ],
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 58, 1, 0, 6,
                 15, 1, 0, 6,
                 1, 0, 0, 0,

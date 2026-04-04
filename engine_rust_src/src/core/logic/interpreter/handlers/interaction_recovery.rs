@@ -80,7 +80,7 @@ fn recovery_special_id(
     let Some(ability) = ability else {
         return 0;
     };
-    if cfg!(debug_assertions) && ctx.player_id >= 0 {
+    if cfg!(debug_assertions) {
         let _ = (ability.frame_program.is_some(), ability.resolved_frame_source());
     }
     let Some(frame_program) = ability.frame_program.as_ref() else {

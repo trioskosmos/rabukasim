@@ -3,7 +3,7 @@
 //! This module provides a structured way to handle card filtering logic.
 //! The 64-bit filter attribute is decomposed into meaningful fields for clarity.
 //!
-//! BIT LAYOUT (synchronized with Python _pack_filter_attr, Revision 5):
+//! BIT LAYOUT (synchronized with packed filter layout metadata):
 //! -----------------------------------------------------------------
 //! Bits 0-1:   Target Player (1=Self, 2=Opponent)
 //! Bits 2-3:   Card Type (1=Member, 2=Live)
@@ -25,7 +25,7 @@
 //! Bits 53-55: Zone Mask
 //! Bits 56-58: Special ID
 //! Bit 59:     Setsuna flag
-//! Bit 60:     Compare Against Accumulated flag (New)
+//! Bit 60:     Compare Against Accumulated flag
 //! Bit 61:     Optional flag
 //! Bit 62:     Keyword: Activated Energy
 //! Bit 63:     Keyword: Activated Member

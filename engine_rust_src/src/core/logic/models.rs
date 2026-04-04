@@ -1942,7 +1942,7 @@ impl Hash for FrameProgram {
 
 impl FrameProgram {
     #[allow(deprecated)]
-    pub fn from_words(words: &[i32]) -> Self {
+    pub fn from_instruction_words(words: &[i32]) -> Self {
         let mut frames = Vec::with_capacity(
             words.len() / crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
         );
@@ -1957,7 +1957,7 @@ impl FrameProgram {
             frames,
             raw_program: Some(serde_json::json!({
                 "frames": [],
-                "bytecode": words,
+                "instruction_words": words,
             })),
         }
     }
@@ -1965,15 +1965,15 @@ impl FrameProgram {
     #[allow(deprecated)]
     pub fn to_words(&self) -> Vec<i32> {
         if let Some(raw_program) = &self.raw_program {
-            if let Some(words) = raw_program.get("bytecode").and_then(|v| v.as_array()) {
-                let mut bytecode = Vec::with_capacity(words.len());
+            if let Some(words) = raw_program.get("instruction_words").and_then(|v| v.as_array()) {
+                let mut instruction_words = Vec::with_capacity(words.len());
                 for word in words {
                     if let Some(value) = word.as_i64() {
-                        bytecode.push(value as i32);
+                        instruction_words.push(value as i32);
                     }
                 }
-                if !bytecode.is_empty() {
-                    return bytecode;
+                if !instruction_words.is_empty() {
+                    return instruction_words;
                 }
             }
         }
@@ -1992,9 +1992,6 @@ impl FrameProgram {
         words
     }
 
-    pub fn to_bytecode(&self) -> Vec<i32> {
-        self.to_words()
-    }
 }
 
 // Re-export constants so they're available to all modules using `use super::models::*;`
@@ -2344,9 +2341,6 @@ pub struct Ability {
     #[serde(default)]
     pub raw_text: String,
     pub trigger: TriggerType,
-    #[deprecated(since = "0.1.0", note = "Bytecode is deprecated. Use frame_program for execution.")]
-    #[serde(default)]
-    pub bytecode: Vec<i32>,
     #[serde(default)]
     pub effects: Vec<Effect>,
     #[serde(default)]
@@ -2510,15 +2504,28 @@ impl Ability {
             })
     }
 
-    /// Get modal option frames (backward compatibility)
+    fn legacy_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
+        let frames = self.resolved_frames();
+        let select_mode_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MODE)?;
+        let jump_frame_idx = select_mode_idx + 1 + choice_idx;
+        let jump_frame = frames.get(jump_frame_idx)?;
+        if jump_frame.opcode() != O_JUMP {
+            return None;
+        }
+
+        let target_frame_idx = select_mode_idx + 2 + choice_idx + jump_frame.value().max(0) as usize;
+        frames.get(target_frame_idx).cloned().map(|frame| vec![frame])
+    }
+
+    /// Get modal option frames, preferring structured modal effects before legacy SELECT_MODE recovery.
     pub fn get_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
-        // Convert effects to frames for compatibility
         self.get_modal_effects(choice_idx)
             .map(|effects| {
                 effects.iter()
                     .map(|e| AbilityFrame::from_effect(e))
                     .collect()
             })
+            .or_else(|| self.legacy_modal_option_frames(choice_idx))
     }
 
     pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
@@ -2621,6 +2628,32 @@ mod tests {
     fn ability_modal_count_from_effects() {
         let ability = Ability::default();
         assert_eq!(ability.modal_option_count(), 0);
+    }
+
+    #[test]
+    fn get_modal_option_frames_falls_back_to_legacy_select_mode_frames() {
+        let ability = Ability {
+            frame_program: Some(FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_SELECT_MODE, 2, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 1, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 1, 0, 0, false),
+                    AbilityFrame::new(O_DRAW, 1, 0, 0, false),
+                    AbilityFrame::new(O_ADD_BLADES, 2, 0, 0, false),
+                    AbilityFrame::new_return(),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let option0 = ability.get_modal_option_frames(0).expect("option 0 frames");
+        let option1 = ability.get_modal_option_frames(1).expect("option 1 frames");
+
+        assert_eq!(option0.len(), 1);
+        assert_eq!(option0[0].opcode(), O_DRAW);
+        assert_eq!(option1.len(), 1);
+        assert_eq!(option1[0].opcode(), O_ADD_BLADES);
     }
 
     #[test]

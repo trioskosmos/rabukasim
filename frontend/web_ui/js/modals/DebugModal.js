@@ -766,10 +766,10 @@ export const DebugModal = {
                 ${DebugModal._renderLogicGroup('Costs', ability.costs, 'cost', '#fb923c')}
                 ${DebugModal._renderLogicGroup('Effects', ability.effects, 'effect', '#22c55e')}
 
-                ${(ability.decoded_bytecode && ability.decoded_bytecode.length > 0) ? `
+                ${(ability.decoded_instruction_words && ability.decoded_instruction_words.length > 0) ? `
                     <details>
-                        <summary style="cursor:pointer; opacity:0.65; font-size:9px;">Decoded Bytecode (${ability.decoded_bytecode.length})</summary>
-                        <pre style="margin:6px 0 0 0; padding:8px; background:#05070d; border-radius:4px; font-size:9px; line-height:1.3; color:#8df58d; white-space:pre-wrap; word-break:break-word;">${escapeHtml(ability.decoded_bytecode.join('\n'))}</pre>
+                        <summary style="cursor:pointer; opacity:0.65; font-size:9px;">Decoded Instruction Words (${ability.decoded_instruction_words.length})</summary>
+                        <pre style="margin:6px 0 0 0; padding:8px; background:#05070d; border-radius:4px; font-size:9px; line-height:1.3; color:#8df58d; white-space:pre-wrap; word-break:break-word;">${escapeHtml(ability.decoded_instruction_words.join('\n'))}</pre>
                     </details>
                 ` : ''}
             </div>
@@ -960,7 +960,7 @@ export const DebugModal = {
                     </div>
                     <div style="display:flex; flex-direction:column; min-height:0; background:#020617; border:1px solid #1e293b; border-radius:8px; overflow:hidden;">
                         <div style="padding:8px 10px; border-bottom:1px solid #1e293b; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:#86efac;">UI Execution Log</div>
-                        <div id="debug-bytecode-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(executionLines, 'No execution log has been captured for the current state.')}</div>
+                        <div id="debug-execution-log" style="flex:1; overflow:auto; font-family:'Cascadia Code', monospace;">${renderLogLines(executionLines, 'No execution log has been captured for the current state.')}</div>
                     </div>
                 </div>
             </div>

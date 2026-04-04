@@ -29,7 +29,6 @@ fn main() {
     }
 
     if env::var_os("LOVECA_SKIP_ABILITY_PIPELINE").is_some() {
-        println!("cargo:warning=Skipping ability pipeline because LOVECA_SKIP_ABILITY_PIPELINE is set");
         return;
     }
 

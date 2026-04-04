@@ -53,7 +53,7 @@ def fix_mod_rs(filename):
                 }
 
                 let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                if b_log.len() < MAX_WORD_LOG_SIZE {
                     b_log.push(cond_desc.clone());
                 }
                 state.trace_internal(&cond_desc);
@@ -72,7 +72,7 @@ def fix_mod_rs(filename):
                     println!("[DEBUG] {}", result_line);
                 }
                 let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                if b_log.len() < MAX_WORD_LOG_SIZE {
                     b_log.push(result_line.clone());
                 }
                 state.trace_internal(&result_line);
@@ -102,7 +102,7 @@ def fix_mod_rs(filename):
                 }
 
                 let b_log = &mut state.ui.bytecode_log;
-                if b_log.len() < MAX_BYTECODE_LOG_SIZE {
+                if b_log.len() < MAX_WORD_LOG_SIZE {
                     b_log.push(cond_desc.clone());
                 }
                 state.trace_internal(&cond_desc);

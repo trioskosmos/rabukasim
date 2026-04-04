@@ -61,7 +61,7 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0, FILTER_IS_OPTIONAL >> 32, 0, O_RETURN, 0, 0, 0, 0] -> bit 61 is OPTIONAL
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 O_PAY_ENERGY,
                 1,
                 0,
@@ -124,7 +124,7 @@ mod tests {
         // Ability 0: [O_PAY_ENERGY, 1, 0x82, 0, O_RETURN] -> 0x82 is OPTIONAL | B_ONE
         kasumi.abilities.push(Ability {
             trigger: TriggerType::OnLiveStart,
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 O_PAY_ENERGY,
                 1,
                 0x82,
@@ -190,7 +190,7 @@ mod tests {
         member_b.name = "Special Color".to_string();
         member_b.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            frame_program: Some(FrameProgram::from_words(&[O_TRANSFORM_BLADES, 3, 0, 0, 4])),
+            frame_program: Some(FrameProgram::from_instruction_words(&[O_TRANSFORM_BLADES, 3, 0, 0, 4])),
             ..Default::default()
         });
         db.members.insert(1002, member_b.clone());
@@ -1206,10 +1206,6 @@ mod tests {
             ..Default::default()
         };
 
-        // Use the handler to simulate activation
-        #[allow(deprecated)]
-        let _instr =
-            crate::core::logic::interpreter::instruction::BytecodeInstruction::new(81, 1, 0, 0);
         // Simplified: Directly set the activation mask instead of calling handler
         state.players[0].activated_energy_group_mask |= 1 << 2;
         println!(
@@ -2533,7 +2529,7 @@ mod tests {
         member.name = "Mia Taylor".to_string();
         member.abilities.push(Ability {
             trigger: TriggerType::OnPlay,
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 O_REVEAL_UNTIL,
                 0,
                 0,
@@ -2579,7 +2575,7 @@ mod tests {
 
         let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let frames = FrameProgram::from_words(&bytecode).frames;
+        let frames = FrameProgram::from_instruction_words(&bytecode).frames;
         state.resolve_semantic_frames(&db, &frames, &ctx);
 
         let hand: Vec<i32> = state.players[0].hand.iter().copied().collect();
@@ -2635,7 +2631,7 @@ mod tests {
 
         let bytecode = vec![O_REVEAL_UNTIL, 0, 0, 0, (1 << 25) | 6];
 
-        let frames = FrameProgram::from_words(&bytecode).frames;
+        let frames = FrameProgram::from_instruction_words(&bytecode).frames;
         state.resolve_semantic_frames(&db, &frames, &ctx);
 
         assert!(

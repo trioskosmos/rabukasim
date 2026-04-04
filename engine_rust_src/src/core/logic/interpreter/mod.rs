@@ -157,7 +157,14 @@ pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
 pub const MAX_DEPTH: usize = 8;
 pub const MAX_FRAME_LOG_SIZE: usize = 500;
 // Keep this a literal so the generated CFFI header does not emit a macro alias.
-pub const MAX_BYTECODE_LOG_SIZE: usize = 500;
+pub const MAX_WORD_LOG_SIZE: usize = 500;
+
+const ABILITY_UID_SOURCE_TYPE_SHIFT: u32 = 28;
+const ABILITY_UID_INSTANCE_KEY_SHIFT: u32 = 24;
+const ABILITY_UID_CARD_ID_SHIFT: u32 = 8;
+const ABILITY_UID_INSTANCE_KEY_MASK: u32 = 0x0F;
+const ABILITY_UID_CARD_ID_MASK: u32 = 0xFFFF;
+const ABILITY_UID_ABILITY_INDEX_MASK: u32 = 0xFF;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InterpreterError {
@@ -918,10 +925,10 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
 }
 
 pub fn get_ability_uid(source_type: u8, instance_key: u8, id: u32, ab_idx: u32) -> u32 {
-    ((source_type as u32) << 28)
-        | ((instance_key as u32 & 0x0F) << 24)
-        | ((id & 0xFFFF) << 8)
-        | (ab_idx & 0xFF)
+    ((source_type as u32) << ABILITY_UID_SOURCE_TYPE_SHIFT)
+        | ((instance_key as u32 & ABILITY_UID_INSTANCE_KEY_MASK) << ABILITY_UID_INSTANCE_KEY_SHIFT)
+        | ((id & ABILITY_UID_CARD_ID_MASK) << ABILITY_UID_CARD_ID_SHIFT)
+        | (ab_idx & ABILITY_UID_ABILITY_INDEX_MASK)
 }
 
 pub fn check_once_per_turn(

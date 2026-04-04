@@ -15,7 +15,7 @@ fn create_test_db() -> CardDatabase {
         card_id: 500,
         abilities: vec![Ability {
             trigger: TriggerType::Activated, // or whatever triggers manually
-            frame_program: Some(FrameProgram::from_words(&[
+            frame_program: Some(FrameProgram::from_instruction_words(&[
                 O_RECOVER_MEMBER,
                 1,
                 0,
@@ -181,7 +181,7 @@ fn test_nested_suspension_real_flow() {
             card_id: 501,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_TAP_MEMBER,
                     0,
                     2,         // a_low: 2 (Target Opponent)

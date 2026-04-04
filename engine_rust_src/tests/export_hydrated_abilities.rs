@@ -1,8 +1,18 @@
 use std::fs;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[test]
 fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
-    let output_path = engine_rust::export_hydrated_abilities::run_default()
+    let unique_suffix = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system clock should be after unix epoch")
+        .as_nanos();
+    let output_path = std::env::temp_dir().join(format!(
+        "ability_runtime_entrypoints_test_{}.json",
+        unique_suffix
+    ));
+
+    let output_path = engine_rust::export_hydrated_abilities::run(Some(output_path))
         .expect("hydrated ability export should complete");
 
     let json = fs::read_to_string(&output_path)
@@ -47,4 +57,6 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
             .and_then(|value| value.as_str()),
         Some("Ability::resolved_frames() + Ability::trace_view()")
     );
+
+    let _ = fs::remove_file(&output_path);
 }

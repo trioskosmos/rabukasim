@@ -437,7 +437,7 @@
         "SUCCESS_PILE": 16,
         "YELL": 17
     },
-    "bytecode_layout": {
+    "packed_layout": {
         "words": {
             "0": "OP",
             "1": "V",

@@ -1,5 +1,4 @@
 use crate::core::enums::*;
-use crate::core::generated_constants::*;
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
 use crate::core::logic::interpreter::costs::check_frame_cost;
@@ -494,7 +493,7 @@ mod tests {
             card_id: 100,
             abilities: vec![crate::core::logic::Ability {
                 trigger: TriggerType::Activated,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
                 ])),
                 ..Default::default()

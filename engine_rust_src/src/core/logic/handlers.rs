@@ -1,4 +1,3 @@
-use crate::core::*;
 use crate::core::enums::*;
 use crate::core::logic::constants::STAGE_SLOT_COUNT;
 use crate::core::logic::{
@@ -1593,7 +1592,7 @@ mod tests {
             card_id: 700,
             abilities: vec![Ability {
                 trigger: TriggerType::Activated,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_DRAW, 1, 0, 0, 0, O_RETURN, 0, 0, 0, 0,
                 ])),
                 ..Default::default()

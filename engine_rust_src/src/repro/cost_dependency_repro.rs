@@ -15,7 +15,7 @@ mod tests {
                      // Optional cost ability
                      trigger: TriggerType::Activated,
                      // Cost: Discard 1 (Type 6, Val 1). Effect: Look 5 (Type 41, Val 5)
-                     frame_program: Some(FrameProgram::from_words(&[
+                     frame_program: Some(FrameProgram::from_instruction_words(&[
                          O_MOVE_TO_DISCARD, 1, 2, 6, // Cost (Optional, Hand)
                          O_JUMP_F, 12, 0, 0,         // If skipped, jump to Return (IP 12)
                          O_LOOK_AND_CHOOSE, 5, 0, 6, // Effect

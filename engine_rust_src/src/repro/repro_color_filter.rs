@@ -51,7 +51,7 @@ mod tests {
         // a_low = 1 (Self) | 4 (Type Member) = 5
         // a_high = 0
         // s = 6 (Hand target) | (7 << 8) (remainder discard) | (8 << 16) (source deck) = 526086
-        let frame_program = FrameProgram::from_words(&[41, 117441287, 5, 0, 526086, 0, 0, 0]);
+        let frame_program = FrameProgram::from_instruction_words(&[41, 117441287, 5, 0, 526086, 0, 0, 0]);
         let ability_cid = 1000;
         add_card(
             &mut db,

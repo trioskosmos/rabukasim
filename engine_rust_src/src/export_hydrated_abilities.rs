@@ -241,7 +241,7 @@ fn build_export(db: &CardDatabase) -> HydratedAbilityExport {
     HydratedAbilityExport {
         metadata: ExportMetadata {
             generated_unix_seconds: now_unix_seconds(),
-            hydration_boundary: "CardDatabase::attach_sparse_ability_index()",
+            hydration_boundary: "ability_hydration::attach_sparse_ability_index()",
             extraction_entrypoint: "Ability::resolved_frames() + Ability::trace_view()",
             compiled_cards_source: COMPILED_CARDS_SOURCE_LABEL.to_string(),
         },

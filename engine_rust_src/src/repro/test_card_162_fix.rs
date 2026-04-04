@@ -26,7 +26,7 @@ fn test_card_162_anyoji_himeme_discard_3_cards() {
 
     let mut ability = Ability::default();
     ability.trigger = TriggerType::OnPlay;
-    ability.frame_program = Some(FrameProgram::from_words(&words));
+    ability.frame_program = Some(FrameProgram::from_instruction_words(&words));
 
     card162.abilities = vec![ability];
 

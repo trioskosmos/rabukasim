@@ -19,7 +19,7 @@ mod tests {
             vec![1],
             vec![(
                 TriggerType::Activated,
-                AbilityLogic::Frames(FrameProgram::from_words(&[17, 2, 0, 0]).frames), // O_ADD_BLADES +2
+                AbilityLogic::Frames(FrameProgram::from_instruction_words(&[17, 2, 0, 0]).frames), // O_ADD_BLADES +2
                 vec![],
             )],
         );
@@ -64,7 +64,7 @@ mod tests {
             vec![1],
             vec![(
                 TriggerType::OnPlay,
-                AbilityLogic::Frames(FrameProgram::from_words(&[10, 1, 0, 0]).frames), // O_DRAW 1
+                AbilityLogic::Frames(FrameProgram::from_instruction_words(&[10, 1, 0, 0]).frames), // O_DRAW 1
                 vec![],
             )],
         );

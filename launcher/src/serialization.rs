@@ -204,9 +204,9 @@ pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
     parts.join("/")
 }
 
-pub fn decode_bytecode_to_strings(bytecode: &[i32]) -> Vec<String> {
+pub fn decode_instruction_words_to_strings(words: &[i32]) -> Vec<String> {
     let mut decoded = Vec::new();
-    for (i, chunk) in bytecode.chunks(5).enumerate() {
+    for (i, chunk) in words.chunks(5).enumerate() {
         if chunk.len() < 5 { break; }
         let ip = i * 5;
         let (op, v) = (chunk[0], chunk[1]);
@@ -214,7 +214,7 @@ pub fn decode_bytecode_to_strings(bytecode: &[i32]) -> Vec<String> {
         let a_high = chunk[3] as u32;
         let s = chunk[4];
         let a = ((a_high as i64) << 32) | (a_low as i64);
-        let desc = interpreter::logging::describe_bytecode(op, v, a, s);
+        let desc = interpreter::logging::describe_instruction_words(op, v, a, s);
         decoded.push(format!("ip={:<3} {}", ip, desc));
     }
     decoded
@@ -750,6 +750,7 @@ pub fn get_action_desc_rich(
                    };
 
                    if let Some(ab) = ab {
+                       let instruction_words = ab.words();
                        if choice_idx < ab.option_names.len() {
                            name = ab.option_names[choice_idx].clone();
                        } else if let Some(arr) = ab.modal_options.as_array() {
@@ -771,24 +772,24 @@ pub fn get_action_desc_rich(
                                    }
                                }
                         } else {
-                            // Fallback: Peek into bytecode if no modal_options strings
+                            // Fallback: Peek into instruction words if no modal_options strings.
                             // Each instruction is 5 words in the Rust engine.
                             let instr_ip = pending.map(|p| p.ctx.program_counter).unwrap_or(0) as usize;
-                            if instr_ip + 5 + (choice_idx * 5) + 1 < ab.bytecode.len() {
+                            if instr_ip + 5 + (choice_idx * 5) + 1 < instruction_words.len() {
                                 // For SELECT_MODE, Choice i is followed by an O_JUMP instruction at instr_ip + 5 + i*5
                                 let mut jump_instr_ip = instr_ip + 5 + (choice_idx * 5);
 
                                 // Recursive Jump Following (Safety Limit: 5)
                                 for _ in 0..5 {
-                                    if jump_instr_ip + 1 >= ab.bytecode.len() { break; }
-                                    let jump_op = ab.bytecode[jump_instr_ip];
+                                    if jump_instr_ip + 1 >= instruction_words.len() { break; }
+                                    let jump_op = instruction_words[jump_instr_ip];
                                     if jump_op == engine_rust::core::generated_constants::O_JUMP {
-                                        let jump_val = ab.bytecode[jump_instr_ip + 1] as usize;
+                                        let jump_val = instruction_words[jump_instr_ip + 1] as usize;
                                         // The target is jump_instr_ip + 5 (chunk) + jump_val chunks
                                         let target_instr_ip = jump_instr_ip + 5 + (jump_val * 5);
-                                        if target_instr_ip + 1 < ab.bytecode.len() {
-                                            let op = ab.bytecode[target_instr_ip] as i32;
-                                            let val = ab.bytecode[target_instr_ip + 1];
+                                        if target_instr_ip + 1 < instruction_words.len() {
+                                            let op = instruction_words[target_instr_ip] as i32;
+                                            let val = instruction_words[target_instr_ip + 1];
 
                                             // Handle various opcodes
                                             match op {
@@ -801,7 +802,7 @@ pub fn get_action_desc_rich(
                                                     break;
                                                 },
                                                 O_MOVE_TO_DISCARD => {
-                                                    let slot = ab.bytecode[target_instr_ip + 4];
+                                                    let slot = instruction_words[target_instr_ip + 4];
                                                     if slot == engine_rust::core::enums::TargetType::CardHand as i32 {
                                                         name = if lang == "jp" { format!("手札を{}枚捨てる", val) } else { format!("Discard {} Hand", val) };
                                                     } else {
@@ -1488,8 +1489,10 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
 
                 let abilities: Vec<Value> = m.abilities.iter().map(|ab| {
                     let mut ab_val = safe_json_value(ab, "member.abilities.detail");
+                    let instruction_words = ab.words();
                     if let Some(ab_obj) = ab_val.as_object_mut() {
-                        ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
+                        ab_obj.insert("instruction_words".to_string(), json!(instruction_words));
+                        ab_obj.insert("decoded_instruction_words".to_string(), json!(decode_instruction_words_to_strings(&instruction_words)));
                     }
                     ab_val
                 }).collect();
@@ -1517,8 +1520,10 @@ pub fn serialize_card(cid: i32, db: &CardDatabase, viewable: bool, lang: &str) -
 
                 let abilities: Vec<Value> = l.abilities.iter().map(|ab| {
                     let mut ab_val = safe_json_value(ab, "live.abilities.detail");
+                    let instruction_words = ab.words();
                     if let Some(ab_obj) = ab_val.as_object_mut() {
-                        ab_obj.insert("decoded_bytecode".to_string(), json!(decode_bytecode_to_strings(&ab.bytecode)));
+                        ab_obj.insert("instruction_words".to_string(), json!(instruction_words));
+                        ab_obj.insert("decoded_instruction_words".to_string(), json!(decode_instruction_words_to_strings(&instruction_words)));
                     }
                     ab_val
                 }).collect();

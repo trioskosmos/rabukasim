@@ -127,7 +127,7 @@ fn test_opcode_negate() {
             card_id: target_cid,
             abilities: vec![Ability {
                 trigger: TriggerType::OnLiveStart,
-                frame_program: Some(FrameProgram::from_words(&[O_DRAW, 1, 0, 0, 0])), // Draw 1
+                frame_program: Some(FrameProgram::from_instruction_words(&[O_DRAW, 1, 0, 0, 0])), // Draw 1
                 ..Default::default()
             }],
             ..Default::default()
@@ -174,7 +174,7 @@ fn test_granted_ability_propagation_cost() {
             card_id: source_id,
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_REDUCE_COST,
                     1,
                     0,
@@ -234,7 +234,7 @@ fn test_granted_ability_propagation_hearts() {
             card_id: source_id,
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_ADD_HEARTS,
                     1,
                     0,
@@ -278,7 +278,7 @@ fn test_granted_ability_propagation_score() {
             card_id: source_id,
             abilities: vec![Ability {
                 trigger: TriggerType::Constant,
-                frame_program: Some(FrameProgram::from_words(&[
+                frame_program: Some(FrameProgram::from_instruction_words(&[
                     O_BOOST_SCORE,
                     500,
                     0,

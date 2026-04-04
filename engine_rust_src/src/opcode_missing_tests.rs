@@ -287,7 +287,7 @@ fn test_opcode_heart_modifiers() {
     // Ability 2: Transform Red to Blue (O_TRANSFORM_HEART 2(Red), 5(Blue))
     l.abilities.push(Ability {
         trigger: TriggerType::Constant,
-        frame_program: Some(FrameProgram::from_words(&[
+        frame_program: Some(FrameProgram::from_instruction_words(&[
             O_INCREASE_HEART_COST,
             1,
             1,

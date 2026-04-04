@@ -9,18 +9,18 @@ use std::sync::OnceLock;
 
 #[derive(Debug, Clone, Default)]
 pub struct AbilityBuilder {
-    pub bytecode: Vec<i32>,
+    pub words: Vec<i32>,
 }
 
 impl AbilityBuilder {
     pub fn new() -> Self {
         Self {
-            bytecode: Vec::new(),
+            words: Vec::new(),
         }
     }
 
     pub fn push(mut self, op: i32, arg1: i32, arg2: i32, arg3: i32) -> Self {
-        self.bytecode.extend_from_slice(&[op, arg1, arg2, arg3]);
+        self.words.extend_from_slice(&[op, arg1, arg2, arg3]);
         self
     }
 
@@ -37,7 +37,7 @@ impl AbilityBuilder {
     }
 
     pub fn build(self) -> Vec<i32> {
-        self.bytecode
+        self.words
     }
 }
 
@@ -143,36 +143,36 @@ impl FrameBuilder {
     }
 }
 
-pub struct BytecodeBuilder {
-    pub bytecode: Vec<i32>,
+pub struct InstructionWordBuilder {
+    pub words: Vec<i32>,
 }
 
-impl BytecodeBuilder {
+impl InstructionWordBuilder {
     pub fn new(op: i32) -> Self {
         let mut bc = Vec::with_capacity(5);
         bc.extend_from_slice(&[op, 0, 0, 0, 0]);
-        Self { bytecode: bc }
+        Self { words: bc }
     }
 
     pub fn op(mut self, op: i32) -> Self {
-        self.bytecode.extend_from_slice(&[op, 0, 0, 0, 0]);
+        self.words.extend_from_slice(&[op, 0, 0, 0, 0]);
         self
     }
 
     fn last_idx(&self) -> usize {
-        self.bytecode.len() - 5
+        self.words.len() - 5
     }
 
     pub fn v(mut self, v: i32) -> Self {
         let idx = self.last_idx();
-        self.bytecode[idx + 1] = v;
+        self.words[idx + 1] = v;
         self
     }
 
     pub fn attr(mut self, a: i64) -> Self {
         let idx = self.last_idx();
-        self.bytecode[idx + 2] = a as i32;
-        self.bytecode[idx + 3] = (a >> 32) as i32;
+        self.words[idx + 2] = a as i32;
+        self.words[idx + 3] = (a >> 32) as i32;
         self
     }
 
@@ -183,91 +183,91 @@ impl BytecodeBuilder {
     pub fn optional(mut self, val: bool) -> Self {
         let idx = self.last_idx();
         let mut a =
-            ((self.bytecode[idx + 3] as i64) << 32) | (self.bytecode[idx + 2] as u32 as i64);
+            ((self.words[idx + 3] as i64) << 32) | (self.words[idx + 2] as u32 as i64);
         if val {
             a |= FILTER_IS_OPTIONAL as i64;
         } else {
             a &= !(FILTER_IS_OPTIONAL as i64);
         }
-        self.bytecode[idx + 2] = a as i32;
-        self.bytecode[idx + 3] = (a >> 32) as i32;
+        self.words[idx + 2] = a as i32;
+        self.words[idx + 3] = (a >> 32) as i32;
         self
     }
 
     pub fn slot(mut self, s: i32) -> Self {
         let idx = self.last_idx();
-        self.bytecode[idx + 4] = s;
+        self.words[idx + 4] = s;
         self
     }
 
     pub fn source(mut self, zone: Zone) -> Self {
         let zone_val = self.encode_zone(zone);
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         s &= !((S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT);
         s |= (zone_val as u32 & S_STANDARD_SOURCE_ZONE_MASK as u32) << S_STANDARD_SOURCE_ZONE_SHIFT;
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn dest(mut self, zone: Zone) -> Self {
         let zone_val = self.encode_zone(zone);
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         s &= !((S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT);
         s |= (zone_val as u32 & S_STANDARD_DEST_ZONE_MASK as u32) << S_STANDARD_DEST_ZONE_SHIFT;
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn target(mut self, slot: u8) -> Self {
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         s &= !0x0F;
         s |= slot as u32 & 0x0F;
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn reveal_until_live(mut self, is_live: bool) -> Self {
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         if is_live {
             s |= 1u32 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT;
         } else {
             s &= !(1u32 << S_STANDARD_IS_REVEAL_UNTIL_LIVE_SHIFT);
         }
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn comparison_mode(mut self, mode: u8) -> Self {
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         s &= !(0x0F << 4);
         s |= (mode as u32 & 0x0F) << 4;
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn is_opponent(mut self, val: bool) -> Self {
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         if val {
             s |= 1u32 << S_STANDARD_IS_OPPONENT_SHIFT;
         } else {
             s &= !(1u32 << S_STANDARD_IS_OPPONENT_SHIFT);
         }
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
     pub fn area_idx(mut self, idx_val: u8) -> Self {
         let idx = self.last_idx();
-        let mut s = self.bytecode[idx + 4] as u32;
+        let mut s = self.words[idx + 4] as u32;
         s &= !((S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT);
         s |= (idx_val as u32 & S_STANDARD_AREA_IDX_MASK as u32) << S_STANDARD_AREA_IDX_SHIFT;
-        self.bytecode[idx + 4] = s as i32;
+        self.words[idx + 4] = s as i32;
         self
     }
 
@@ -288,7 +288,7 @@ impl BytecodeBuilder {
     }
 
     pub fn build(self) -> Vec<i32> {
-        self.bytecode
+        self.words
     }
 }
 
@@ -757,7 +757,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[58, 1, 0, 0, 4, 17, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -768,7 +768,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[58, 1, 0, 0, 4, 15, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -779,7 +779,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[58, 1, 2, 0, 6, 41, 3, 1, 0, 6, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -790,7 +790,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                         64, 0, 130, 0, 0, 41, 1, 24577, 0, 0, 14, 3, 0, 0, 0, 41, 1, 0, 0, 0, 1, 0, 0, 0, 0,
                     ]).frames),
                     vec![],
@@ -803,7 +803,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnLiveStart,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                         64, 0, 130, 0, 0, 58, 1, 24576, 0, 0, 64, 1, 0, 0, 0, 16, 5, 0, 0, 0, 1, 0, 0, 0, 0,
                     ]).frames),
                     vec![],
@@ -816,7 +816,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[10, 1, 0, 0, 0, 58, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -827,7 +827,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[10, 2, 0, 0, 0, 58, 2, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -838,7 +838,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[75, 1, 0, 0, 0, 10, 1, 0, 0, 0, 1, 0, 0, 0, 0]).frames),
                     vec![],
                 )],
             );
@@ -849,7 +849,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![2],
                 vec![(
                     TriggerType::OnLiveStart,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                         64, 1, 2, 0, 0, 45, 1, 0, 0, 1, 12, 1, 0, 0, 1, 1, 0, 0, 0, 0,
                     ]).frames),
                     vec![],
@@ -862,7 +862,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![2],
                 vec![(
                     TriggerType::Activated,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                         58, 1, 1, 0, 6, 3, 2, 0, 0, 0, 81, 2, 0, 0, 0, 1, 0, 0, 0, 0,
                     ]).frames),
                     vec![],
@@ -875,7 +875,7 @@ pub fn create_test_db() -> CardDatabase {
                 vec![1],
                 vec![(
                     TriggerType::OnPlay,
-                    AbilityLogic::Frames(FrameProgram::from_words(&[
+                    AbilityLogic::Frames(FrameProgram::from_instruction_words(&[
                         30, 2, 8, 0, 16, 1, 0, 0, 0, 0, 32, 1, 0, 0, 0, 1, 0, 0, 0, 0, 10, 1, 0, 0, 0, 1,
                         0, 0, 0, 0,
                     ]).frames),

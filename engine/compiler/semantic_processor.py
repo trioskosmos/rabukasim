@@ -121,9 +121,25 @@ def _opcode_to_condition_type(opcode: str) -> ConditionType:
         "CHECK_HEART_COMPARE": ConditionType.HEART_COMPARE,
         "CHECK_TYPE_CHECK": ConditionType.TYPE_CHECK,
         "CHECK_SCORE_COMPARE": ConditionType.SCORE_COMPARE,
-        "CHECK_UNIQUE_NAMES": ConditionType.UNIQUE_NAMES_COUNT,
     }
     return mapping.get(opcode.upper(), ConditionType.NONE)
+
+
+def _build_raw_condition(opcode: str, value: int, params: dict, is_negated: bool, attr: int) -> Condition | None:
+    """Preserve condition opcodes that are evaluated through the runtime raw-condition path."""
+    if opcode.upper() != "CHECK_UNIQUE_NAMES":
+        return None
+
+    raw_params = dict(params)
+    raw_params.setdefault("raw_cond", "UNIQUE_NAMES_COUNT")
+    raw_params.setdefault("MIN", value)
+    return Condition(
+        type=ConditionType.NONE,
+        value=value,
+        params=raw_params,
+        is_negated=is_negated,
+        attr=attr,
+    )
 
 
 def _encode_keyword_filter(params: dict, filter_data: dict, attr_data: dict = None) -> dict:
@@ -286,13 +302,30 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
             
             # Handle conditions
             cond_type = _opcode_to_condition_type(opcode)
+            raw_condition = None
+            filter_data = data.get("filter", {})
+            params = dict(data.get("params", {}))
+            attr_data = data.get("attr", {})
+
+            # Encode attr from frame data for both typed and raw conditions.
+            attr = _encode_attr_from_frame(attr_data)
+
+            if cond_type == ConditionType.NONE:
+                raw_condition = _build_raw_condition(
+                    opcode,
+                    data["value"],
+                    params,
+                    data["is_negated"],
+                    attr,
+                )
+                if raw_condition is not None:
+                    ab.conditions.append(raw_condition)
+                    continue
+
             if cond_type != ConditionType.NONE:
                 # For HAS_KEYWORD conditions, encode keyword into filter for Rust compatibility
-                filter_data = data.get("filter", {})
-                params = dict(data.get("params", {}))  # Copy params
                 if cond_type == ConditionType.HAS_KEYWORD:
                     # Get attr data which contains keyword_energy/keyword_member flags
-                    attr_data = data.get("attr", {})
                     keyword_filter = _encode_keyword_filter(params, filter_data, attr_data)
                     filter_data.update(keyword_filter)
                     # Also ensure keyword is in params for Rust check_condition
@@ -306,10 +339,6 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
                         # Add group_id if present
                         if keyword_filter.get("group_enabled"):
                             params["group_id"] = keyword_filter.get("group_id", 0)
-                
-                # Encode attr from frame data
-                attr_data = data.get("attr", {})
-                attr = _encode_attr_from_frame(attr_data)
                 
                 ab.conditions.append(Condition(
                     type=cond_type, value=data["value"], params=params,

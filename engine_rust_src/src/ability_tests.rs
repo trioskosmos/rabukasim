@@ -1,5 +1,5 @@
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_state, load_real_db, BytecodeBuilder};
+use crate::test_helpers::{create_test_state, load_real_db, InstructionWordBuilder};
 
 /// Verifies that O_DRAW and O_MOVE_TO_DISCARD correctly manipulate hand and deck using real card IDs.
 #[test]
@@ -172,7 +172,7 @@ fn test_look_and_choose_remainder() {
         ..Default::default()
     };
 
-    let bc = BytecodeBuilder::new(O_LOOK_AND_CHOOSE)
+    let bc = InstructionWordBuilder::new(O_LOOK_AND_CHOOSE)
         .v(4)
         .source(Zone::Deck)
         .dest(Zone::Discard)

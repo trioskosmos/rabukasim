@@ -8,7 +8,6 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from compiler.ability_compiler import AbilityCompiler
 from engine.models.ability import Ability
 from engine.models.generated_enums import TriggerType
 from tools import frame_codec as codec
@@ -170,20 +169,6 @@ class FrameCodecTests(unittest.TestCase):
 
         self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "RETURN"])
 
-    def test_compiler_compile_to_frames_uses_authored_source(self) -> None:
-        ability = Ability(
-            raw_text="authored",
-            trigger=TriggerType.CONSTANT,
-            effects=[],
-            frame_program={"frames": [{"op": "DRAW", "options": {"value": 1}}, {"op": "RETURN"}]},
-        )
-        compiler = AbilityCompiler()
-
-        with patch.object(compiler, "compile_to_bytecode", side_effect=AssertionError("bytecode path should not run")):
-            frames = compiler.compile_to_frames(ability)
-
-        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "RETURN"])
-
     def test_bytecode_no_longer_drives_frame_program_generation(self) -> None:
         ability = Ability(
             raw_text="legacy",
@@ -198,22 +183,6 @@ class FrameCodecTests(unittest.TestCase):
 
         self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "RETURN"])
         self.assertEqual(ability.frame_program["frames"][0]["op"], "DRAW")
-
-    def test_compiler_compile_to_frames_uses_authored_frames_even_with_bytecode_present(self) -> None:
-        ability = Ability(
-            raw_text="legacy",
-            trigger=TriggerType.CONSTANT,
-            effects=[],
-            frame_program={"frames": [{"op": "DRAW", "options": {"value": 1}}, {"op": "RETURN"}]},
-            bytecode=[999, 888, 777, 666, 555],
-        )
-        compiler = AbilityCompiler()
-
-        with patch.object(compiler, "compile_to_bytecode", side_effect=AssertionError("bytecode path should not run")):
-            frames = compiler.compile_to_frames(ability)
-
-        self.assertEqual([frame["op"] if isinstance(frame, dict) else frame for frame in frames], ["DRAW", "RETURN"])
-
 
 if __name__ == "__main__":
     unittest.main()

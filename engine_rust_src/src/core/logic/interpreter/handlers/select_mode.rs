@@ -100,17 +100,7 @@ pub fn handle_select_mode(
 
     let resolve_option = |idx: usize| -> Option<AbilityFrame> {
         ability.and_then(|ability| {
-            let option_frames = if ability.frame_program.is_some() {
-                crate::core::logic::action_gen::response::legacy_select_mode_option_frames(
-                    ability,
-                    idx,
-                )
-                .or_else(|| ability.get_modal_option_frames(idx))
-            } else {
-                ability
-                    .get_modal_option_frames(idx)
-                    .or_else(|| crate::core::logic::action_gen::response::legacy_select_mode_option_frames(ability, idx))
-            };
+            let option_frames = ability.get_modal_option_frames(idx);
 
             option_frames.and_then(|frames| frames.into_iter().next())
         })
