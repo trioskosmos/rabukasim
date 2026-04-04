@@ -149,16 +149,16 @@ impl AbilityManifest {
             for (ability_index, ability) in abilities.iter().enumerate() {
                 let trigger_id = ability.get("trigger").and_then(Value::as_i64).unwrap_or(0) as i32;
                 let trigger = trigger_name(metadata, trigger_id);
-                let instructions = ability
+                let frames = ability
                     .get("frame_program")
-                    .and_then(|program| program.get("instructions").or_else(|| program.get("frames")))
+                    .and_then(|program| program.get("frames"))
                     .and_then(Value::as_array)
                     .cloned()
                     .unwrap_or_default();
 
                 let mut frame_values = Vec::new();
                 let mut opcode_sequence = Vec::new();
-                for (idx, frame) in instructions.iter().enumerate() {
+                for (idx, frame) in frames.iter().enumerate() {
                     if !frame.is_object() {
                         continue;
                     }
@@ -167,7 +167,7 @@ impl AbilityManifest {
                     frame_values.push(normalized);
                 }
 
-                let (flow_pattern, summary) = summarize_frames(metadata, &instructions);
+                let (flow_pattern, summary) = summarize_frames(metadata, &frames);
 
                 *trigger_counts.entry(trigger.clone()).or_default() += 1;
                 *flow_counts.entry(flow_pattern.clone()).or_default() += 1;

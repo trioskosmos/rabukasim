@@ -5,7 +5,7 @@
 > All active development and logic execution for the LovecaSim engine must happen in `engine_rust_src/`.
 
 ### Why is this folder still here?
-The `compiler/` tool still relies on `engine.models` for certain data structures and type definitions during the `data/cards.json` -> `data/cards_compiled.json` compilation process.
+The `compiler/` tool still relies on `engine.models` for data structures and type definitions during the `data/cards.json` -> `data/cards_compiled.json` compilation process.
 
 Most legacy runtime helpers that used to live under `engine/game/` now live in `engine/deprecated/game/` instead. The `engine/game/` package is now compatibility-only.
 
@@ -16,5 +16,5 @@ Most legacy runtime helpers that used to live under `engine/game/` now live in `
 - **DO NOT** rely on this engine for production-level card behavior verification.
 
 ### What should I do?
-- **ONLY** modify `engine/models/ability.py` if it's necessary to update the schema for the Rust engine's bytecode.
+- **ONLY** modify `engine/models/ability.py` if it's necessary to update the shared ability schema used by the Rust runtime export path.
 - All engine logic changes belong in `engine_rust_src/`.

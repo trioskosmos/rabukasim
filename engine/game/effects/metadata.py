@@ -11,10 +11,10 @@ def _describe_ability(ability: "Ability") -> str:
         if pseudocode:
             return str(pseudocode)
 
-        instructions = frame_program.get("instructions")
-        if isinstance(instructions, list) and instructions:
+        frames = frame_program.get("frames")
+        if isinstance(frames, list) and frames:
             parts = []
-            for frame in instructions[:4]:
+            for frame in frames[:4]:
                 if isinstance(frame, dict):
                     decoded = frame.get("decoded") or frame.get("op") or frame.get("opcode")
                     if decoded:

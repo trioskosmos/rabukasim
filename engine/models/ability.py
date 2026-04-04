@@ -101,19 +101,19 @@ class Ability:
         return self.to_frame_program()
 
     def to_frame_program(self):
-        """Return authored frame instructions when present, otherwise synthesize a minimal program."""
-        instructions = self.frame_program.get("instructions") if isinstance(self.frame_program, dict) else None
-        if instructions:
-            return instructions
+        """Return authored frames when present, otherwise synthesize a minimal program."""
+        frames = self.frame_program.get("frames") if isinstance(self.frame_program, dict) else None
+        if frames:
+            return frames
 
-        instructions = []
+        frames = []
         for cost in self.costs:
-            instructions.append(cost)
+            frames.append(cost)
         for condition in self.conditions:
-            instructions.append(condition)
+            frames.append(condition)
         for effect in self.effects:
-            instructions.append(effect)
-        return instructions
+            frames.append(effect)
+        return frames
 
 
 @dataclass

@@ -14,13 +14,13 @@ class AbilityCompiler:
         return list(bytecode) if isinstance(bytecode, list) else []
 
     def compile_to_frames(self, ability: Any) -> list:
-        """Prefer authored frame_program instructions over bytecode compilation."""
+        """Prefer authored frame_program frames over bytecode compilation."""
         if hasattr(ability, "to_frame_program"):
             frames = ability.to_frame_program()
             if isinstance(frames, list) and frames:
                 return frames
         if hasattr(ability, "frame_program") and isinstance(ability.frame_program, dict):
-            frames = ability.frame_program.get("instructions")
+            frames = ability.frame_program.get("frames")
             if isinstance(frames, list):
                 return frames
         _ = self.compile_to_bytecode(ability)

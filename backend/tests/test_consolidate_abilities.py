@@ -22,7 +22,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             "abilities": [
                 {
                     "trigger_id": trigger_id,
-                    "instructions": [{"op": "SELECT_MODE", "options": {"value": 2}}, {"op": "RETURN"}],
+                    "frames": [{"op": "SELECT_MODE", "options": {"value": 2}}, {"op": "RETURN"}],
                     "pseudocode": "A",
                     "card_refs": [
                         {"card_no": "A-001", "ability_index": 0, "db": "member_db", "card_id": 1, "name": "Card A", "trigger": "ON_LIVE_START"},
@@ -31,7 +31,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
                 },
                 {
                     "trigger_id": int(metadata["triggers"]["CONSTANT"]),
-                    "instructions": [{"op": "RETURN"}],
+                    "frames": [{"op": "RETURN"}],
                     "card_refs": [{"card_no": "A-003", "ability_index": 0}],
                 },
             ],
@@ -46,7 +46,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         self.assertEqual(len(entry["cards"]), 2)
         self.assertEqual(len(entry["card_refs"]), 2)
         self.assertEqual(entry["opcode_sequence"], ["SELECT_MODE", "RETURN"])
-        self.assertEqual(entry["instructions"][0]["options"]["value"], 2)
+        self.assertEqual(entry["frames"][0]["options"]["value"], 2)
         self.assertEqual(entry["card_refs"][0]["card_no"], "A-001")
 
     def test_normalize_frame_supports_return_shorthand(self) -> None:
@@ -62,7 +62,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
             "abilities": [
                 {
                     "trigger_id": trigger_id,
-                    "instructions": [
+                    "frames": [
                         {
                             "op": "DRAW",
                             "options": {"value": 1, "slot": {"target_slot": int(metadata["slot_indices"]["CONTEXT"])}},
@@ -77,14 +77,14 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
         self.assertEqual(payload["schema"], "ability_frames.flat.v2")
-        self.assertTrue(all("op" in frame for frame in entry["instructions"]))
-        self.assertEqual(entry["instructions"][0]["op"], "DRAW")
-        self.assertEqual(entry["instructions"][0]["options"]["value"], 1)
+        self.assertTrue(all("op" in frame for frame in entry["frames"]))
+        self.assertEqual(entry["frames"][0]["op"], "DRAW")
+        self.assertEqual(entry["frames"][0]["options"]["value"], 1)
         self.assertEqual(
-            entry["instructions"][0]["options"]["slot"]["target_slot"],
+            entry["frames"][0]["options"]["slot"]["target_slot"],
             int(metadata["slot_indices"]["CONTEXT"]),
         )
-        self.assertEqual(entry["instructions"][1]["op"], "RETURN")
+        self.assertEqual(entry["frames"][1]["op"], "RETURN")
 
     def test_real_compact_index_preserves_opcode_sequences(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
@@ -93,8 +93,8 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         payload = codec.build_compact_ability_index(authored_data, metadata)
 
         for entry in payload["abilities"]:
-            instructions = entry["instructions"]
-            opcodes = [frame["op"] for frame in instructions]
+            frames = entry["frames"]
+            opcodes = [frame["op"] for frame in frames]
 
             self.assertTrue(all(opcodes), msg=f"missing opcode in {entry.get('signature')}")
             self.assertEqual(
@@ -102,7 +102,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
                 opcodes,
                 msg=f"opcode sequence mismatch in {entry.get('signature')}",
             )
-            self.assertEqual(entry["frame_count"], len(instructions))
+            self.assertEqual(entry["frame_count"], len(frames))
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 """
 Semantic Frame Processor
 
-Converts frame_program instructions into semantic effects, conditions, and costs.
+Converts frame_program frames into semantic effects, conditions, and costs.
 """
 
 import re
@@ -267,8 +267,8 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
         if not isinstance(frame_program, dict):
             continue
         
-        instructions = frame_program.get("instructions", [])
-        if not isinstance(instructions, list):
+        frames = frame_program.get("frames", [])
+        if not isinstance(frames, list):
             continue
         
         # Clear and repopulate
@@ -277,7 +277,7 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
         ab.costs = []
         ability_text = str(getattr(ab, "raw_text", "") or "")
         
-        for frame in instructions:
+        for frame in frames:
             data = _extract_frame_data(frame)
             opcode = data["opcode"]
             

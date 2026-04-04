@@ -40,7 +40,7 @@ def generate_interactions():
         abilities = card_data.get("abilities", [])
         for ab_idx, ab in enumerate(abilities):
             frame_program = ab.get("frame_program", {})
-            frames = frame_program.get("instructions", frame_program.get("frames", [])) if isinstance(frame_program, dict) else []
+            frames = frame_program.get("frames", []) if isinstance(frame_program, dict) else []
             if not frames:
                 continue
             
@@ -107,7 +107,7 @@ def generate_interactions():
         abilities = card_data.get("abilities", [])
         for ab_idx, ab in enumerate(abilities):
             frame_program = ab.get("frame_program", {})
-            frames = frame_program.get("instructions", frame_program.get("frames", [])) if isinstance(frame_program, dict) else []
+            frames = frame_program.get("frames", []) if isinstance(frame_program, dict) else []
             if not frames:
                 continue
             

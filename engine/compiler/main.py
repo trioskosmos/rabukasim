@@ -107,7 +107,6 @@ def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
     # For semantic migration, we include effects, conditions, costs in output
     # These are now the primary data source instead of frame_program
     exclude_ability_fields = {
-        "instructions": True,
         "bytecode": True,
         "raw_text": True,
         "pseudocode": True,
@@ -168,15 +167,15 @@ def _process_card_worker(args):
 # COMPILATION PIPELINE - Top Level Entry Point
 # =============================================================================
 
-def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "runtime"):
+def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "runtime") -> bool:
     """
     Main compilation pipeline.
     
     FLOW:
     1. Load raw card JSON
-    2. Pre-compile unique abilities (optimization: O(total) -> O(unique))
+    2. Resolve semantic/runtime data for each card
     3. Parallel worker compilation of cards
-    4. Write compiled JSON output
+    4. Write compiled JSON output only when content changed
     
     Args:
         input_path: Path to raw cards.json
@@ -332,8 +331,16 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
                 compiled_data["energy_db"][pk] = data
             success_count += 1
 
-    with open(output_path, "w", encoding="utf-8", newline="\n") as f:
-        json.dump(compiled_data, f, ensure_ascii=False, indent=2)
+    encoded_output = json.dumps(compiled_data, ensure_ascii=False, indent=2) + "\n"
+    existing_output = None
+    if os.path.exists(output_path):
+        with open(output_path, "r", encoding="utf-8") as f:
+            existing_output = f.read()
+
+    changed = encoded_output != existing_output
+    if changed:
+        with open(output_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(encoded_output)
 
     if not quiet:
         if errors:
@@ -341,6 +348,8 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         else:
             print(f"\nCompiled {success_count} cards successfully")
         print("Done.")
+
+    return changed
 
 
 def _resolve_img_path(data: dict) -> str:
@@ -529,7 +538,7 @@ class SparseSourceManager:
 
             for entry in abilities_list:
                 trigger_id = _coerce_int(entry.get("trigger_id", 0))
-                frames = list(entry.get("frames", entry.get("instructions", [])) or [])
+                frames = list(entry.get("frames", []) or [])
                 card_refs = entry.get("card_refs", [])
                 cards_list = card_refs if isinstance(card_refs, list) and card_refs else entry.get("cards", [])
                 for card_ref in cards_list:
@@ -594,7 +603,7 @@ def _build_ability_from_sparse_entry(
         Ability object ready for semantic population
     """
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
-    instructions = list(entry.get("frames", entry.get("instructions", [])) or [])
+    frames = list(entry.get("frames", []) or [])
     ability_raw_text = _select_ability_raw_text(raw_text, ability_index, entry)
     payload = dict(legacy_payload or {})
     payload["trigger"] = trigger_id
@@ -613,7 +622,7 @@ def _build_ability_from_sparse_entry(
     ability = _ability_from_dict(payload)
     ability.raw_text = ability_raw_text
     # Store frame data so the semantic processor can rebuild effects/costs.
-    frame_data = {"instructions": instructions}
+    frame_data = {"frames": frames}
     ability.frame_program = frame_data
     return ability
 
@@ -665,7 +674,7 @@ def _card_has_ability_source(data: dict[str, Any]) -> bool:
         data.get("abilities")
     ) or bool(
         isinstance(data.get("frame_program"), dict)
-        and (data["frame_program"].get("instructions") or data["frame_program"].get("frames"))
+        and data["frame_program"].get("frames")
     )
 
 def _ability_from_dict(payload: dict[str, Any]) -> Ability:

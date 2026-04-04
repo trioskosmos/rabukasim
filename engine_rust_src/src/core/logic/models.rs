@@ -1869,7 +1869,7 @@ impl Serialize for FrameProgram {
     {
         if let Some(raw) = &self.raw_program {
             let has_structured_frames = raw
-                .get("instructions")
+                .get("frames")
                 .and_then(|v| v.as_array())
                 .map(|frames| !frames.is_empty())
                 .unwrap_or(false);
@@ -1880,7 +1880,7 @@ impl Serialize for FrameProgram {
 
             let mut merged = raw.as_object().cloned().unwrap_or_default();
             merged.insert(
-                "instructions".to_string(),
+                "frames".to_string(),
                 Value::Array(
                     self.frames
                         .iter()
@@ -1893,7 +1893,7 @@ impl Serialize for FrameProgram {
 
         let mut map = serde_json::Map::new();
         map.insert(
-            "instructions".to_string(),
+            "frames".to_string(),
             Value::Array(
                 self.frames
                     .iter()
@@ -1912,8 +1912,7 @@ impl<'de> Deserialize<'de> for FrameProgram {
     {
         let raw_program = Value::deserialize(deserializer)?;
         let frames = raw_program
-            .get("instructions")
-            .or_else(|| raw_program.get("frames"))
+            .get("frames")
             .and_then(|v| v.as_array())
             .map(|frames| {
                 frames
@@ -1957,7 +1956,7 @@ impl FrameProgram {
         Self {
             frames,
             raw_program: Some(serde_json::json!({
-                "instructions": [],
+                "frames": [],
                 "bytecode": words,
             })),
         }

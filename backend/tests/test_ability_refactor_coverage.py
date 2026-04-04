@@ -52,7 +52,7 @@ class AbilityRefactorCoverageTests(unittest.TestCase):
             trigger=TriggerType.ON_PLAY,
             effects=[],
             frame_program={
-                "instructions": [
+                "frames": [
                     {"opcode": "COUNT_HAND", "value": 2, "is_negated": True},
                     {"opcode": "PAY_ENERGY", "value": 1, "is_cost": True},
                     {"opcode": "ACTIVATE_ENERGY", "value": 1},

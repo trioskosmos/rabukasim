@@ -32,28 +32,16 @@ def _log(message: str, quiet: bool) -> None:
         print(f"[build] {message}")
 
 
-def _cards_are_current() -> bool:
-    """Check if compiled cards are up to date."""
-    if not CARDS_OUTPUT_PATH.exists():
-        return False
-    compiled_data = compiler_runtime.load_json(str(CARDS_OUTPUT_PATH))
-    if not compiled_data:
-        return False
-    return True
-
-
 def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
     """Compile cards."""
-    # Always compile to ensure fresh data with current compiler
     _log("Compiling cards from authored sources", quiet)
     try:
-        compiler_runtime.compile_cards(
+        return compiler_runtime.compile_cards(
             str(CARDS_INPUT_PATH),
             str(CARDS_OUTPUT_PATH),
             quiet=quiet,
             export_profile="runtime",
         )
-        return True
     except Exception as e:
         _log(f"Compilation error: {e}", quiet)
         return False
@@ -65,8 +53,12 @@ def prepare_frame_index(*, quiet: bool = False) -> bool:
     payload = frame_codec.load_authored_payload(FRAME_SOURCE_PATH)
     metadata = frame_codec.load_json(METADATA_PATH)
     frame_codec.build_runtime_ability_index(payload, metadata)
+    cleaned_payload = frame_codec.strip_duplicate_instruction_entries(payload)
     encoded = FRAME_SOURCE_PATH.read_text(encoding="utf-8")
-    changed = False
+    changed = cleaned_payload != payload
+    if changed:
+        frame_codec.dump_json(FRAME_SOURCE_PATH, cleaned_payload)
+        encoded = FRAME_SOURCE_PATH.read_text(encoding="utf-8")
     if not encoded.endswith("\n"):
         FRAME_SOURCE_PATH.write_text(encoded + "\n", encoding="utf-8")
         changed = True

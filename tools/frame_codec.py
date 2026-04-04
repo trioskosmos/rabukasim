@@ -119,12 +119,12 @@ def _normalize_frame(frame: Any, idx: int) -> dict[str, Any]:
     return normalized
 
 
-def _signature_hash(trigger_id: int, instructions: list[dict]) -> dict[str, str]:
+def _signature_hash(trigger_id: int, frames: list[dict]) -> dict[str, str]:
     """Generate a signature hash for an ability."""
     # Build minimal signature payload
     sig_payload = {
         "trigger": trigger_id,
-        "instructions": [{"op": f["op"]} for f in instructions]
+        "frames": [{"op": frame["op"]} for frame in frames],
     }
     sig_source = json.dumps(sig_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     sig_hash = sha1(sig_source.encode("utf-8")).hexdigest()
@@ -148,6 +148,48 @@ def _trigger_name_from_id(trigger_id: int, metadata: dict[str, Any]) -> str:
     return "TRIGGER_" + str(trigger_id)
 
 
+def strip_duplicate_instruction_entries(payload: dict[str, Any]) -> dict[str, Any]:
+    """Remove legacy `instructions` keys when a canonical `frames` list is present."""
+    cleaned = dict(payload)
+    abilities = payload.get("abilities")
+    if isinstance(abilities, list):
+        cleaned_abilities: list[Any] = []
+        changed = False
+        for item in abilities:
+            if not isinstance(item, dict):
+                cleaned_abilities.append(item)
+                continue
+            cleaned_item = dict(item)
+            frames = cleaned_item.get("frames")
+            if isinstance(frames, list) and "instructions" in cleaned_item:
+                cleaned_item.pop("instructions", None)
+                changed = True
+            if isinstance(frames, list):
+                sig = _signature_hash(
+                    int(cleaned_item.get("trigger_id", 0) or 0),
+                    [_normalize_frame(frame, idx) for idx, frame in enumerate(frames)],
+                )
+                for key in ("signature", "signature_hash", "signature_source"):
+                    if cleaned_item.get(key) != sig[key]:
+                        cleaned_item[key] = sig[key]
+                        changed = True
+            cleaned_abilities.append(cleaned_item)
+        if changed:
+            cleaned["abilities"] = cleaned_abilities
+        return cleaned
+
+    changed = False
+    for key, value in payload.items():
+        if not isinstance(value, dict):
+            continue
+        if isinstance(value.get("frames"), list) and "instructions" in value:
+            entry = dict(value)
+            entry.pop("instructions", None)
+            cleaned[key] = entry
+            changed = True
+    return cleaned if changed else payload
+
+
 def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str, Any], card_db: dict[str, Any] | None = None) -> dict[str, Any]:
     """
     Normalize ability entries from the YAML source.
@@ -164,13 +206,13 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
     for entry in source_entries:
         trigger_id = int(entry.get("trigger_id", 0))
-        raw_frames = entry.get("instructions", entry.get("frames", [])) or []
+        raw_frames = entry.get("frames", []) or []
 
         # Normalize frames
-        instructions = [_normalize_frame(f, i) for i, f in enumerate(raw_frames)]
+        normalized_frames = [_normalize_frame(f, i) for i, f in enumerate(raw_frames)]
 
         # Get signature
-        sig = _signature_hash(trigger_id, instructions)
+        sig = _signature_hash(trigger_id, normalized_frames)
 
         # Get card references
         card_refs = []
@@ -193,10 +235,9 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
             "signature_source": sig["signature_source"],
             "trigger_id": trigger_id,
             "trigger": _trigger_name_from_id(trigger_id, metadata),
-            "frame_count": len(instructions),
-            "opcode_sequence": [f["op"] for f in instructions],
+            "frame_count": len(normalized_frames),
+            "opcode_sequence": [frame["op"] for frame in normalized_frames],
             "frames": raw_frames,
-            "instructions": instructions,
             "cards": cards,
             "card_refs": card_refs,
             "pseudocode": "",  # Simplified - no complex pseudocode generation
@@ -253,6 +294,7 @@ def build_compact_ability_index(payload: dict[str, Any], metadata: dict[str, Any
     for idx, entry in enumerate(entries):
         source_entry = source_entries[idx] if idx < len(source_entries) and isinstance(source_entries[idx], dict) else {}
         entry["source_mode"] = "frame_authored"
+        entry["frames"] = [_normalize_frame(frame, frame_idx) for frame_idx, frame in enumerate(entry.get("frames", []))]
         if "choice_flags" in source_entry:
             entry["choice_flags"] = int(source_entry.get("choice_flags", 0) or 0)
         if "choice_count" in source_entry:
