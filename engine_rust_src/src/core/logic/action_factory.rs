@@ -6,6 +6,21 @@ use crate::core::logic::models::AbilityContext;
 use crate::core::logic::state::GameState;
 use serde_json::json;
 
+fn summarize_modal_option_label(ability: &crate::core::logic::Ability, index: usize) -> Option<String> {
+    let frames = ability.get_modal_option_frames(index)?;
+    let summary = frames
+        .iter()
+        .find(|frame| frame.opcode() != crate::core::logic::O_RETURN)
+        .map(|frame| frame.components().to_trace_step().summary)?;
+
+    let cleaned = summary
+        .trim()
+        .trim_end_matches('.')
+        .replace("card(s)", "cards")
+        .replace("member(s)", "members");
+    (!cleaned.is_empty()).then_some(cleaned)
+}
+
 /// Decoded action from action ID
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DecodedAction {
@@ -306,6 +321,7 @@ impl ActionFactory {
                     .get(index)
                     .cloned()
                     .filter(|label| !label.is_empty())
+                    .or_else(|| summarize_modal_option_label(ability, index))
                     .unwrap_or_else(|| format!("Option {}", index + 1));
                 json!({
                     "index": index,

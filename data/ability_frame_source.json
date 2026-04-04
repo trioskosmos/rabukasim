@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-04T12:55:31.581081+00:00",
+  "generated_at": "2026-04-04T14:36:18.178669+00:00",
   "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json",
   "metadata_source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\metadata.json",
   "schema": "ability_frame_source.flat.v2",
@@ -8,12 +8,12 @@
     "card_count": 1221,
     "ability_count": 2712,
     "unique_ability_count": 544,
-    "signature_group_count": 411,
+    "signature_group_count": 412,
     "text_covered_ability_count": 544,
     "text_missing_ability_count": 0
   },
   "opcode_catalog": {
-    "used_count": 96,
+    "used_count": 97,
     "unknown_count": 0,
     "used_entries": [
       {
@@ -217,7 +217,7 @@
         "section": "conditions",
         "opcode_id": 309,
         "entry_count": 6,
-        "frame_count": 12
+        "frame_count": 11
       },
       {
         "name": "SYNC_COST",
@@ -258,14 +258,14 @@
         "name": "JUMP",
         "section": "opcodes",
         "opcode_id": 2,
-        "entry_count": 22,
-        "frame_count": 96
+        "entry_count": 23,
+        "frame_count": 97
       },
       {
         "name": "JUMP_IF_FALSE",
         "section": "opcodes",
         "opcode_id": 3,
-        "entry_count": 338,
+        "entry_count": 339,
         "frame_count": 428
       },
       {
@@ -482,8 +482,8 @@
         "name": "MOVE_TO_DISCARD",
         "section": "opcodes",
         "opcode_id": 58,
-        "entry_count": 124,
-        "frame_count": 139
+        "entry_count": 126,
+        "frame_count": 141
       },
       {
         "name": "GRANT_ABILITY",
@@ -517,8 +517,8 @@
         "name": "PAY_ENERGY",
         "section": "opcodes",
         "opcode_id": 64,
-        "entry_count": 40,
-        "frame_count": 40
+        "entry_count": 41,
+        "frame_count": 41
       },
       {
         "name": "SELECT_MEMBER",
@@ -587,8 +587,8 @@
         "name": "SELECT_CARDS",
         "section": "opcodes",
         "opcode_id": 74,
-        "entry_count": 15,
-        "frame_count": 15
+        "entry_count": 16,
+        "frame_count": 16
       },
       {
         "name": "OPPONENT_CHOOSE",
@@ -650,6 +650,13 @@
         "name": "PREVENT_BATON_TOUCH",
         "section": "opcodes",
         "opcode_id": 90,
+        "entry_count": 1,
+        "frame_count": 1
+      },
+      {
+        "name": "PAY_ENERGY_DYNAMIC",
+        "section": "opcodes",
+        "opcode_id": 96,
         "entry_count": 1,
         "frame_count": 1
       },
@@ -45110,6 +45117,158 @@
       "source_mode": "frame_authored"
     },
     {
+      "signature": "T7|9311a2efd3972f9dc599f91b516c488eb9937596",
+      "signature_hash": "9311a2efd3972f9dc599f91b516c488eb9937596",
+      "signature_source": "{\"frames\":[{\"op\":\"PAY_ENERGY\"},{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"DISCARDED_CARDS\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"LOOK_AND_CHOOSE\"},{\"op\":\"JUMP\"},{\"op\":\"RECOVER_LIVE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
+      "trigger_id": 7,
+      "trigger": "ACTIVATED",
+      "frame_count": 8,
+      "opcode_sequence": [
+        "PAY_ENERGY",
+        "MOVE_TO_DISCARD",
+        "DISCARDED_CARDS",
+        "JUMP_IF_FALSE",
+        "LOOK_AND_CHOOSE",
+        "JUMP",
+        "RECOVER_LIVE",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "DISCARDED_CARDS",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": 0
+          },
+          "slot": {
+            "target_slot": 48
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 2
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 4,
+          "value": {
+            "count": 4
+          },
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "RECOVER_LIVE",
+          "frame_index": 6,
+          "value": 1,
+          "attr": {
+            "zone_mask": "ALL",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": 6,
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 7
+        }
+      ],
+      "cards": [
+        "PL!-bp5-003-AR | 南 ことり [member_db:652] (ab#1 ACTIVATED)",
+        "PL!-bp5-003-R＋ | 南 ことり [member_db:4748] (ab#1 ACTIVATED)",
+        "PL!-bp5-003-P | 南 ことり [member_db:8844] (ab#1 ACTIVATED)",
+        "PL!-bp5-003-SEC | 南 ことり [member_db:12940] (ab#1 ACTIVATED)",
+        "PL!-bp5-003-AR | 南 ことり (ab#1)",
+        "PL!-bp5-003-R+ | 南 ことり (ab#1)",
+        "PL!-bp5-003-P | 南 ことり (ab#1)",
+        "PL!-bp5-003-SEC | 南 ことり (ab#1)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!-bp5-003-AR",
+          "ability_index": 1,
+          "db": "member_db",
+          "card_id": 652,
+          "name": "南 ことり",
+          "trigger": 7
+        },
+        {
+          "card_no": "PL!-bp5-003-R+",
+          "ability_index": 1,
+          "db": "member_db",
+          "card_id": 4748,
+          "name": "南 ことり",
+          "trigger": 7
+        },
+        {
+          "card_no": "PL!-bp5-003-P",
+          "ability_index": 1,
+          "db": "member_db",
+          "card_id": 8844,
+          "name": "南 ことり",
+          "trigger": 7
+        },
+        {
+          "card_no": "PL!-bp5-003-SEC",
+          "ability_index": 1,
+          "db": "member_db",
+          "card_id": 12940,
+          "name": "南 ことり",
+          "trigger": 7
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカードが『μ's』のカードの場合、自分のデッキの上からカードを4枚見る。その中からカードを2枚手札に加える。残りを控え室に置く。『μ's』のカード以外の場合、自分の控え室からライブカードを1枚手札に加える。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカードが『μ's』のカードの場合、自分のデッキの上からカードを4枚見る。その中からカードを2枚手札に加える。残りを控え室に置く。『μ's』のカード以外の場合、自分の控え室からライブカードを1枚手札に加える。",
+          "en": "",
+          "card_examples": [
+            "PL!-bp5-003-AR | 南 ことり (ab#1)",
+            "PL!-bp5-003-R+ | 南 ことり (ab#1)",
+            "PL!-bp5-003-P | 南 ことり (ab#1)",
+            "PL!-bp5-003-SEC | 南 ことり (ab#1)"
+          ]
+        }
+      ],
+      "source_mode": "frame_authored"
+    },
+    {
       "signature": "T7|9951d685bc4dfab307941997c05bd13d9ec73c39",
       "signature_hash": "9951d685bc4dfab307941997c05bd13d9ec73c39",
       "signature_source": "{\"frames\":[{\"op\":\"IS_CENTER\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"SET_TAPPED\"},{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"SELECT_MEMBER\"},{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"SUM_VALUE\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"RECOVER_MEMBER\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
@@ -46270,143 +46429,127 @@
       "source_mode": "frame_authored"
     },
     {
-      "signature": "T7|fb3e89ee7ec624326268cc03b6955c70e330078f",
-      "signature_hash": "fb3e89ee7ec624326268cc03b6955c70e330078f",
-      "signature_source": "{\"frames\":[{\"op\":\"DISCARDED_CARDS\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"LOOK_AND_CHOOSE\"},{\"op\":\"DISCARDED_CARDS\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"RECOVER_LIVE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
+      "signature": "T7|402db2d07336d935c4505e65611542e5d40b4c66",
+      "signature_hash": "402db2d07336d935c4505e65611542e5d40b4c66",
+      "signature_source": "{\"frames\":[{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"SELECT_CARDS\"},{\"op\":\"PAY_ENERGY_DYNAMIC\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"RECOVER_LIVE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
       "trigger_id": 7,
       "trigger": "ACTIVATED",
-      "frame_count": 7,
+      "frame_count": 6,
       "opcode_sequence": [
-        "DISCARDED_CARDS",
-        "JUMP_IF_FALSE",
-        "LOOK_AND_CHOOSE",
-        "DISCARDED_CARDS",
+        "MOVE_TO_DISCARD",
+        "SELECT_CARDS",
+        "PAY_ENERGY_DYNAMIC",
         "JUMP_IF_FALSE",
         "RECOVER_LIVE",
         "RETURN"
       ],
       "frames": [
         {
-          "op": "DISCARDED_CARDS",
+          "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
           "value": 1,
-          "attr": {
-            "group_enabled": 1
-          },
-          "slot": {
-            "target_slot": 48
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "LOOK_AND_CHOOSE",
-          "frame_index": 2,
-          "value": {
-            "count": 4
-          },
           "attr": {
             "target_player": 1
           },
           "slot": {
             "target_slot": 4,
-            "remainder_zone": "DISCARD",
-            "source_zone": "DECK_TOP"
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
           }
         },
         {
-          "op": "DISCARDED_CARDS",
-          "frame_index": 3,
+          "op": "SELECT_CARDS",
+          "frame_index": 1,
           "value": 1,
           "attr": {
-            "group_enabled": 1
+            "target_player": 1,
+            "card_type": 2,
+            "zone_mask": "ALL"
           },
           "slot": {
-            "target_slot": 48
+            "target_slot": 4,
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "PAY_ENERGY_DYNAMIC",
+          "frame_index": 2,
+          "value": 0,
+          "attr": {
+            "is_optional": 1
+          },
+          "params": {
+            "source": "selected_live_score"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 4,
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "RECOVER_LIVE",
-          "frame_index": 5,
+          "frame_index": 4,
           "value": 1,
           "attr": {
-            "zone_mask": "ALL",
-            "is_optional": 1
+            "target_player": 1,
+            "zone_mask": "ALL"
           },
           "slot": {
-            "target_slot": 6,
+            "target_slot": 4,
             "source_zone": "DISCARD"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 5
         }
       ],
       "cards": [
-        "PL!-bp5-003-AR | 南 ことり [member_db:652] (ab#1 ACTIVATED)",
-        "PL!-bp5-003-R＋ | 南 ことり [member_db:4748] (ab#1 ACTIVATED)",
-        "PL!-bp5-003-P | 南 ことり [member_db:8844] (ab#1 ACTIVATED)",
-        "PL!-bp5-003-SEC | 南 ことり [member_db:12940] (ab#1 ACTIVATED)",
-        "PL!-bp5-003-AR | 南 ことり (ab#1)",
-        "PL!-bp5-003-R+ | 南 ことり (ab#1)",
-        "PL!-bp5-003-P | 南 ことり (ab#1)",
-        "PL!-bp5-003-SEC | 南 ことり (ab#1)"
+        "PL!N-bp5-003-AR | 桜坂しずく [member_db:753] (ab#0 ACTIVATED)",
+        "PL!N-bp5-003-R | 桜坂しずく [member_db:4849] (ab#0 ACTIVATED)",
+        "PL!N-bp5-003-P | 桜坂しずく [member_db:8945] (ab#0 ACTIVATED)",
+        "PL!N-bp5-003-AR | 桜坂しずく (ab#0)",
+        "PL!N-bp5-003-R | 桜坂しずく (ab#0)",
+        "PL!N-bp5-003-P | 桜坂しずく (ab#0)"
       ],
       "card_refs": [
         {
-          "card_no": "PL!-bp5-003-AR",
-          "ability_index": 1,
+          "card_no": "PL!N-bp5-003-AR",
+          "ability_index": 0,
           "db": "member_db",
-          "card_id": 652,
-          "name": "南 ことり",
+          "card_id": 753,
+          "name": "桜坂しずく",
           "trigger": 7
         },
         {
-          "card_no": "PL!-bp5-003-R+",
-          "ability_index": 1,
+          "card_no": "PL!N-bp5-003-R",
+          "ability_index": 0,
           "db": "member_db",
-          "card_id": 4748,
-          "name": "南 ことり",
+          "card_id": 4849,
+          "name": "桜坂しずく",
           "trigger": 7
         },
         {
-          "card_no": "PL!-bp5-003-P",
-          "ability_index": 1,
+          "card_no": "PL!N-bp5-003-P",
+          "ability_index": 0,
           "db": "member_db",
-          "card_id": 8844,
-          "name": "南 ことり",
-          "trigger": 7
-        },
-        {
-          "card_no": "PL!-bp5-003-SEC",
-          "ability_index": 1,
-          "db": "member_db",
-          "card_id": 12940,
-          "name": "南 ことり",
+          "card_id": 8945,
+          "name": "桜坂しずく",
           "trigger": 7
         }
       ],
       "pseudocode": "",
-      "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカードが『μ's』のカードの場合、自分のデッキの上からカードを4枚見る。その中からカードを2枚手札に加える。残りを控え室に置く。『μ's』のカード以外の場合、自分の控え室からライブカードを1枚手札に加える。",
+      "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
       "primary_text_en": "",
       "source_ability_texts": [
         {
-          "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカードが『μ's』のカードの場合、自分のデッキの上からカードを4枚見る。その中からカードを2枚手札に加える。残りを控え室に置く。『μ's』のカード以外の場合、自分の控え室からライブカードを1枚手札に加える。",
+          "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
           "en": "",
           "card_examples": [
-            "PL!-bp5-003-AR | 南 ことり (ab#1)",
-            "PL!-bp5-003-R+ | 南 ことり (ab#1)",
-            "PL!-bp5-003-P | 南 ことり (ab#1)",
-            "PL!-bp5-003-SEC | 南 ことり (ab#1)"
+            "PL!N-bp5-003-AR | 桜坂しずく (ab#0)",
+            "PL!N-bp5-003-R | 桜坂しずく (ab#0)",
+            "PL!N-bp5-003-P | 桜坂しずく (ab#0)"
           ]
         }
       ],
@@ -46614,87 +46757,6 @@
             "PL!N-bp5-008-AR | エマ・ヴェルデ (ab#0)",
             "PL!N-bp5-008-R | エマ・ヴェルデ (ab#0)",
             "PL!N-bp5-008-P | エマ・ヴェルデ (ab#0)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
-      "signature": "T7|be298e3526d72d0e59a0a4f60f2d767a34f37d40",
-      "signature_hash": "be298e3526d72d0e59a0a4f60f2d767a34f37d40",
-      "signature_source": "{\"frames\":[{\"op\":\"RECOVER_LIVE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
-      "trigger_id": 7,
-      "trigger": "ACTIVATED",
-      "frame_count": 2,
-      "opcode_sequence": [
-        "RECOVER_LIVE",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "RECOVER_LIVE",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "target_player": 1,
-            "zone_mask": "ALL",
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": 4,
-            "source_zone": "DISCARD"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 1
-        }
-      ],
-      "cards": [
-        "PL!N-bp5-003-AR | 桜坂しずく [member_db:753] (ab#0 ACTIVATED)",
-        "PL!N-bp5-003-R | 桜坂しずく [member_db:4849] (ab#0 ACTIVATED)",
-        "PL!N-bp5-003-P | 桜坂しずく [member_db:8945] (ab#0 ACTIVATED)",
-        "PL!N-bp5-003-AR | 桜坂しずく (ab#0)",
-        "PL!N-bp5-003-R | 桜坂しずく (ab#0)",
-        "PL!N-bp5-003-P | 桜坂しずく (ab#0)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!N-bp5-003-AR",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 753,
-          "name": "桜坂しずく",
-          "trigger": 7
-        },
-        {
-          "card_no": "PL!N-bp5-003-R",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4849,
-          "name": "桜坂しずく",
-          "trigger": 7
-        },
-        {
-          "card_no": "PL!N-bp5-003-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 8945,
-          "name": "桜坂しずく",
-          "trigger": 7
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
-          "en": "",
-          "card_examples": [
-            "PL!N-bp5-003-AR | 桜坂しずく (ab#0)",
-            "PL!N-bp5-003-R | 桜坂しずく (ab#0)",
-            "PL!N-bp5-003-P | 桜坂しずく (ab#0)"
           ]
         }
       ],

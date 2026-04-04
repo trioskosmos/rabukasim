@@ -74,10 +74,6 @@ pub fn decode_heart_type_from_params(params: Option<&Value>) -> Option<usize> {
 pub fn decode_heart_type_from_text(text: &str) -> Option<usize> {
     let lower = text.to_ascii_lowercase();
 
-    if lower.contains("heart_00") || lower.contains("heart00") || lower.contains("heart0") {
-        return Some(6);
-    }
-
     // 1. Try explicit heart_type markers first.
     if let Some(color) = decode_labeled_heart_type(text) {
         return Some(color);
@@ -107,19 +103,25 @@ pub fn decode_heart_type_from_text(text: &str) -> Option<usize> {
     if lower.contains("purple") || lower.contains("heart_purple") {
         return Some(5);
     }
+
+    if lower.contains("heart_00") || lower.contains("heart00") || lower.contains("heart0") {
+        return Some(6);
+    }
     
     None
 }
 
 pub fn decode_heart_type_from_icons(text: &str) -> Option<usize> {
-    if text.contains("heart_00") || text.contains("heart00") || text.contains("heart0") {
+    let lower = text.to_ascii_lowercase();
+
+    if lower.contains("heart_00") || lower.contains("heart00") {
         return Some(6);
     }
 
     for color in 1..=6 {
         let token = format!("heart_{:02}", color);
-        if text.contains(&token) || text.contains(&format!("heart{:02}", color)) {
-            return Some(color);
+        if lower.contains(&token) || lower.contains(&format!("heart{:02}", color)) {
+            return Some((color - 1) as usize);
         }
     }
     None
@@ -138,7 +140,8 @@ mod tests {
 
     #[test]
     fn decode_heart_type_from_text_falls_back_to_icons() {
-        assert_eq!(decode_heart_type_from_text("Gain heart_03 and continue"), Some(3));
+        assert_eq!(decode_heart_type_from_text("Gain heart_03 and continue"), Some(2));
+        assert_eq!(decode_heart_type_from_text("Reduce by heart_04"), Some(3));
         assert_eq!(decode_heart_type_from_text("Gain heart00"), Some(6));
     }
 }

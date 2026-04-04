@@ -125,9 +125,16 @@ pub fn handle_select_mode(
         }
     }
 
-    if let Some(new_frame) = resolve_option(choice) {
+    if let Some(new_frames) = ability.and_then(|ability| {
+        ability.get_modal_effects(choice).map(|effects| {
+            effects
+                .iter()
+                .map(AbilityFrame::from_effect)
+                .collect::<Vec<_>>()
+        })
+    }) {
         ctx.choice_index = -1;
-        return HandlerResult::BranchToFrames(std::sync::Arc::new(vec![new_frame]));
+        return HandlerResult::BranchToFrames(std::sync::Arc::new(new_frames));
     }
 
     if choice >= v as usize {

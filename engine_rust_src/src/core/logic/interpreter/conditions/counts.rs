@@ -219,12 +219,18 @@ fn resolve_live_zone_count(
 ) -> i32 {
     let p_idx = ctx.player_id as usize;
     let player = &state.players[p_idx];
-    let filter_attr = frame.count_filter_attr();
+    let filter = frame.filter;
 
     if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
-        for &id in player.live_zone.iter().filter(|&&id| id >= 0) {
-            if state.card_matches_filter(db, id, filter_attr) {
+        for (slot_idx, &id) in player.live_zone.iter().enumerate().filter(|(_, &id)| id >= 0) {
+            if state.card_matches_filter_with_struct(
+                db,
+                id,
+                Some((p_idx as u8, slot_idx as i16)),
+                &filter,
+                ctx,
+            ) {
                 if let Some(live) = db.get_live(id) {
                     names.insert(live.name.clone());
                 }
@@ -235,7 +241,17 @@ fn resolve_live_zone_count(
         player
             .live_zone
             .iter()
-            .filter(|&&id| id >= 0 && state.card_matches_filter(db, id, filter_attr))
+            .enumerate()
+            .filter(|(slot_idx, &id)| {
+                id >= 0
+                    && state.card_matches_filter_with_struct(
+                        db,
+                        id,
+                        Some((p_idx as u8, *slot_idx as i16)),
+                        &filter,
+                        ctx,
+                    )
+            })
             .count() as i32
     }
 }

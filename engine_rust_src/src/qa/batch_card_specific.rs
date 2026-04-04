@@ -11,7 +11,7 @@ mod tests {
     use super::*;
     use crate::core::enums::ChoiceType;
     use crate::core::generated_constants::{
-        ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE,
+        ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE, ACTION_BASE_STAGE,
     };
     use std::collections::HashSet;
 
@@ -168,6 +168,19 @@ mod tests {
 
             let chosen_action = if response_actions.contains(&(ACTION_BASE_HAND_SELECT + 0)) {
                 ACTION_BASE_HAND_SELECT + 0
+            } else if state
+                .interaction_stack
+                .last()
+                .is_some_and(|pending| pending.choice_type == ChoiceType::SelectMode)
+                && response_actions
+                    .iter()
+                    .any(|action| *action >= ACTION_BASE_MODE && *action < ACTION_BASE_CHOICE)
+            {
+                *response_actions
+                    .iter()
+                    .filter(|action| **action >= ACTION_BASE_MODE && **action < ACTION_BASE_CHOICE)
+                    .min()
+                    .expect("expected a mode action during response resolution")
             } else if response_actions
                 .iter()
                 .any(|action| *action >= ACTION_BASE_CHOICE)

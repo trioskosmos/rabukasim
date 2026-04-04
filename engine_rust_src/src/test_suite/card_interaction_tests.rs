@@ -1,9 +1,9 @@
 use crate::core::enums::{ChoiceType, TriggerType};
-use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS};
+use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS};
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::{Ability, AbilityContext, MemberCard, O_ADD_BLADES, O_PAY_ENERGY, O_RETURN, O_TAP_MEMBER};
+use crate::core::logic::{Ability, AbilityContext, MemberCard, O_ADD_BLADES, O_DRAW, O_JUMP, O_PAY_ENERGY, O_RETURN, O_SELECT_MODE, O_TAP_MEMBER};
 use crate::test_helpers::{create_test_db, create_test_state, load_real_db, FrameBuilder, TestActionReceiver};
 
 fn add_test_member(db: &mut crate::core::logic::CardDatabase, mut member: MemberCard) {
@@ -639,5 +639,197 @@ fn test_tap_opponent_single_ineligible_target_does_not_auto_tap() {
     state.process_trigger_queue(&db);
 
     assert!(state.interaction_stack.is_empty());
+    assert!(!state.players[1].is_tapped(0));
+}
+
+#[test]
+fn test_legacy_select_mode_wait_branch_prompts_and_uses_descriptive_labels() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9900;
+    let low_cost_left = 9901;
+    let low_cost_right = 9902;
+    let high_cost_middle = 9903;
+    let filter_attr = CardFilter {
+        is_enabled: true,
+        target_player: 2,
+        value_enabled: true,
+        value_threshold: 4,
+        is_le: true,
+        is_cost_type: true,
+        ..Default::default()
+    }
+    .to_attr();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                raw_text: "Choose one: wait an opponent member with cost 4 or less, or draw 1.".to_string(),
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(O_SELECT_MODE)
+                        .v(2)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_JUMP)
+                        .v(2)
+                        .op(O_TAP_MEMBER)
+                        .v(1)
+                        .a(filter_attr as i64)
+                        .target(4)
+                        .op(O_JUMP)
+                        .v(3)
+                        .op(O_DRAW)
+                        .v(1)
+                        .target(4)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(&mut db, MemberCard { card_id: low_cost_left, cost: 4, ..Default::default() });
+    add_test_member(&mut db, MemberCard { card_id: low_cost_right, cost: 3, ..Default::default() });
+    add_test_member(&mut db, MemberCard { card_id: high_cost_middle, cost: 5, ..Default::default() });
+
+    state.players[0].stage[0] = source_id;
+    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+    let ctx = AbilityContext {
+        source_card_id: source_id,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("legacy select mode should suspend for a mode choice");
+    assert_eq!(pending.choice_type, ChoiceType::SelectMode);
+    let labels = pending
+        .options
+        .iter()
+        .map(|option| option["label"].as_str().unwrap_or_default().to_string())
+        .collect::<Vec<_>>();
+    assert!(labels.iter().all(|label| !label.starts_with("Option ")));
+    assert!(labels.iter().any(|label| label.contains("draw")));
+
+    state
+        .step(&db, ACTION_BASE_MODE)
+        .expect("wait branch should select the first legacy mode");
+
+    let pending = state
+        .interaction_stack
+        .last()
+        .expect("wait branch should prompt for a target when multiple legal targets exist");
+    assert!(matches!(pending.choice_type, ChoiceType::TapO | ChoiceType::TapMSelect | ChoiceType::SelectStage));
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+    assert!(actions.actions.contains(&ACTION_BASE_STAGE_SLOTS));
+    assert!(!actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)));
+    assert!(actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)));
+
+    state
+        .step(&db, ACTION_BASE_STAGE_SLOTS + 2)
+        .expect("wait branch target should resolve");
+
+    assert!(!state.players[1].is_tapped(0));
+    assert!(!state.players[1].is_tapped(1));
+    assert!(state.players[1].is_tapped(2));
+    assert_eq!(state.players[0].hand.len(), 0);
+}
+
+#[test]
+fn test_legacy_select_mode_draw_branch_resolves_without_wait_prompt() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9910;
+    let low_cost_target = 9911;
+    let filter_attr = CardFilter {
+        is_enabled: true,
+        target_player: 2,
+        value_enabled: true,
+        value_threshold: 4,
+        is_le: true,
+        is_cost_type: true,
+        ..Default::default()
+    }
+    .to_attr();
+
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                raw_text: "Choose one: wait an opponent member with cost 4 or less, or draw 1.".to_string(),
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(O_SELECT_MODE)
+                        .v(2)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_JUMP)
+                        .v(2)
+                        .op(O_TAP_MEMBER)
+                        .v(1)
+                        .a(filter_attr as i64)
+                        .target(4)
+                        .op(O_JUMP)
+                        .v(3)
+                        .op(O_DRAW)
+                        .v(1)
+                        .target(4)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    add_test_member(&mut db, MemberCard { card_id: low_cost_target, cost: 4, ..Default::default() });
+
+    state.players[0].stage[0] = source_id;
+    state.players[1].stage[0] = low_cost_target;
+
+    let ctx = AbilityContext {
+        source_card_id: source_id,
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnPlay,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
+    state.process_trigger_queue(&db);
+
+    state
+        .step(&db, ACTION_BASE_MODE + 1)
+        .expect("draw branch should select the second legacy mode");
+
+    assert!(state.interaction_stack.is_empty());
+    assert_eq!(state.players[0].hand.len(), 1);
     assert!(!state.players[1].is_tapped(0));
 }

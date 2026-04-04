@@ -53,11 +53,6 @@ pub fn handle_select_ops(
     let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
     let frame_filter_attr = frame_data.filter.to_attr();
-    let structured_filter = {
-        let mut filter = frame_data.filter;
-        filter.is_enabled = true;
-        filter
-    };
     let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
         frame_data.resolved_filter_attr()
     } else {

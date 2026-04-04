@@ -686,7 +686,7 @@ pub fn resolve_semantic_frames(
         let mut advance_effect = true;
         
         // Execute frame directly using handler dispatch
-        match dispatch(state, db, &mut ctx, &frame_data, effect_idx) {
+        match dispatch(state, db, &mut ctx, &frame_data, effect_idx, frames) {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(new_cond) => cond = new_cond,
             HandlerResult::Suspend => return Ok(()),

@@ -979,7 +979,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_01.png|heart01}}を3以上含むライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -7874,7 +7874,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -7976,7 +7976,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -9350,7 +9350,7 @@
           "card_no": "PL!-bp4-007-P"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -9498,7 +9498,7 @@
           "card_no": "PL!-bp4-007-R"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -11471,6 +11471,20 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11490,11 +11504,30 @@
           "frame_program": {
             "frames": [
               {
-                "op": "DISCARDED_CARDS",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
+                "value": 2
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "group_enabled": 1
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "DISCARDED_CARDS",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 0
                 },
                 "slot": {
                   "target_slot": 48
@@ -11502,12 +11535,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
+                "frame_index": 3,
+                "value": 2
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 4
                 },
@@ -11521,24 +11554,13 @@
                 }
               },
               {
-                "op": "DISCARDED_CARDS",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1
-                },
-                "slot": {
-                  "target_slot": 48
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "op": "JUMP",
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
@@ -11551,19 +11573,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
           "conditions": [
-            {
-              "type": 309,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 16
-            },
             {
               "type": 309,
               "value": 1,
@@ -11675,6 +11690,20 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11694,11 +11723,30 @@
           "frame_program": {
             "frames": [
               {
-                "op": "DISCARDED_CARDS",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
+                "value": 2
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "group_enabled": 1
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "DISCARDED_CARDS",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 0
                 },
                 "slot": {
                   "target_slot": 48
@@ -11706,12 +11754,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
+                "frame_index": 3,
+                "value": 2
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 4
                 },
@@ -11725,24 +11773,13 @@
                 }
               },
               {
-                "op": "DISCARDED_CARDS",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1
-                },
-                "slot": {
-                  "target_slot": 48
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "op": "JUMP",
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
@@ -11755,19 +11792,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
           "conditions": [
-            {
-              "type": 309,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 16
-            },
             {
               "type": 309,
               "value": 1,
@@ -11879,6 +11909,20 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11898,11 +11942,30 @@
           "frame_program": {
             "frames": [
               {
-                "op": "DISCARDED_CARDS",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
+                "value": 2
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "group_enabled": 1
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "DISCARDED_CARDS",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 0
                 },
                 "slot": {
                   "target_slot": 48
@@ -11910,12 +11973,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
+                "frame_index": 3,
+                "value": 2
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 4
                 },
@@ -11929,24 +11992,13 @@
                 }
               },
               {
-                "op": "DISCARDED_CARDS",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1
-                },
-                "slot": {
-                  "target_slot": 48
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "op": "JUMP",
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
@@ -11959,19 +12011,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
           "conditions": [
-            {
-              "type": 309,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 16
-            },
             {
               "type": 309,
               "value": 1,
@@ -12083,6 +12128,20 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 64,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -12102,11 +12161,30 @@
           "frame_program": {
             "frames": [
               {
-                "op": "DISCARDED_CARDS",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
+                "value": 2
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "group_enabled": 1
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "DISCARDED_CARDS",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 0
                 },
                 "slot": {
                   "target_slot": 48
@@ -12114,12 +12192,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
+                "frame_index": 3,
+                "value": 2
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 4
                 },
@@ -12133,24 +12211,13 @@
                 }
               },
               {
-                "op": "DISCARDED_CARDS",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1
-                },
-                "slot": {
-                  "target_slot": 48
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "op": "JUMP",
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
@@ -12163,19 +12230,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
           "conditions": [
-            {
-              "type": 309,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 16
-            },
             {
               "type": 309,
               "value": 1,
@@ -14245,7 +14305,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_06.png|heart06}}を3以上含むライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -14347,7 +14407,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_06.png|heart06}}を3以上含むライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -14449,7 +14509,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_06.png|heart06}}を3以上含むライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -17323,7 +17383,7 @@
           "card_no": "PL!-pb1-004-P+"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア}}を持つ『μ's』のカードが1枚ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。2枚以上ある場合、代わりに「{{jyouji.png|常時}}ライブの合計スコアを+２する。」を得る。（この能力はセンターエリアに登場した場合のみ発動する。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -17521,7 +17581,7 @@
           "card_no": "PL!-pb1-004-R"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア}}を持つ『μ's』のカードが1枚ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。2枚以上ある場合、代わりに「{{jyouji.png|常時}}ライブの合計スコアを+２する。」を得る。（この能力はセンターエリアに登場した場合のみ発動する。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -19434,7 +19494,7 @@
           "card_no": "PL!-pb1-013-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の手札を、相手は見ないで1枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時まで、このメンバーは「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -19579,7 +19639,7 @@
           "card_no": "PL!-pb1-013-R"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の手札を、相手は見ないで1枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時まで、このメンバーは「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -21367,7 +21427,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -21716,7 +21776,7 @@
           "card_no": "PL!-sd1-001-SD"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -22169,7 +22229,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -22271,7 +22331,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -24668,7 +24728,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 2,
           "effects": [
             {
@@ -25835,7 +25895,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -25937,7 +25997,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：エールにより公開された自分のカードの中から、コスト2以下のメンバーカードか、スコア２以下のライブカードを1枚手札に加える。",
+          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る。その中からカードを1枚手札に加える。残りを控え室に置く。",
           "trigger": 3,
           "effects": [
             {
@@ -26711,7 +26771,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -26833,7 +26893,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -26955,7 +27015,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -27077,7 +27137,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -28843,7 +28903,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -28921,7 +28981,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -30975,7 +31035,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -31077,7 +31137,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -32430,7 +32490,7 @@
           "card_no": "PL!HS-bp2-006-P"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -32572,7 +32632,7 @@
           "card_no": "PL!HS-bp2-006-R"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -36143,7 +36203,7 @@
           "card_no": "PL!HS-bp5-003-AR"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る。",
+          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る。",
           "trigger": 2,
           "effects": [
             {
@@ -36283,7 +36343,7 @@
           "card_no": "PL!HS-bp5-003-R+"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る。",
+          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る。",
           "trigger": 2,
           "effects": [
             {
@@ -36423,7 +36483,7 @@
           "card_no": "PL!HS-bp5-003-P"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る。",
+          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る。",
           "trigger": 2,
           "effects": [
             {
@@ -36563,7 +36623,7 @@
           "card_no": "PL!HS-bp5-003-SEC"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る。",
+          "raw_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る。",
           "trigger": 2,
           "effects": [
             {
@@ -37693,7 +37753,7 @@
           "card_no": "PL!HS-bp5-007-AR"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -37834,7 +37894,7 @@
           "card_no": "PL!HS-bp5-007-R"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -37975,7 +38035,7 @@
           "card_no": "PL!HS-bp5-007-P"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -38538,7 +38598,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}カードを1枚引く。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -38659,7 +38719,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -39617,7 +39677,7 @@
           "card_no": "PL!HS-sd1-005-SD"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージに「村野さやか」か「百生吟子」か「安養寺姫芽」がいるかぎり、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}このカードが自分の成功ライブカード置き場にあるかぎり、自分のセンターエリアにいる『μ's』のメンバーは{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -40111,7 +40171,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -41425,7 +41485,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -41527,7 +41587,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -41856,7 +41916,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -41958,7 +42018,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -42185,7 +42245,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -42287,7 +42347,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -42389,7 +42449,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -42491,7 +42551,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージにコストがそれぞれ異なるメンバーが3人以上いるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -42588,7 +42648,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：エールにより公開された自分のカードの中から、コスト2以下のメンバーカードか、スコア２以下のライブカードを1枚手札に加える。",
+          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る。その中からカードを1枚手札に加える。残りを控え室に置く。",
           "trigger": 3,
           "effects": [
             {
@@ -44748,7 +44808,7 @@
           "card_no": "PL!N-bp1-006-P"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -44895,7 +44955,7 @@
           "card_no": "PL!N-bp1-006-R+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -45042,7 +45102,7 @@
           "card_no": "PL!N-bp1-006-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -45189,7 +45249,7 @@
           "card_no": "PL!N-bp1-006-SEC"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。",
           "trigger": 7,
           "effects": [
             {
@@ -46592,7 +46652,7 @@
           "card_no": "PL!N-bp1-012-P"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -46747,7 +46807,7 @@
           "card_no": "PL!N-bp1-012-R+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -46902,7 +46962,7 @@
           "card_no": "PL!N-bp1-012-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -47057,7 +47117,7 @@
           "card_no": "PL!N-bp1-012-SEC"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -51769,7 +51829,7 @@
           "card_no": "PL!N-bp3-009-P"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -52014,7 +52074,7 @@
           "card_no": "PL!N-bp3-009-R+"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -52259,7 +52319,7 @@
           "card_no": "PL!N-bp3-009-P+"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -52504,7 +52564,7 @@
           "card_no": "PL!N-bp3-009-SEC"
         },
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -53612,7 +53672,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}{{heart_02.png|heart02}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
+          "raw_text": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
           "trigger": 2,
           "effects": [
             {
@@ -58900,7 +58960,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -58978,7 +59038,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -60561,7 +60621,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分と相手のステージの中で、このメンバーがほかのすべてのメンバーより多くのハートを持つかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -60639,7 +60699,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分と相手のステージの中で、このメンバーがほかのすべてのメンバーより多くのハートを持つかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -60717,7 +60777,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分と相手のステージの中で、このメンバーがほかのすべてのメンバーより多くのハートを持つかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -60799,6 +60859,27 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 74,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 96,
+              "value": 0,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 15,
               "value": 1,
               "target": 4,
@@ -60809,13 +60890,55 @@
           "frame_program": {
             "frames": [
               {
-                "op": "RECOVER_LIVE",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "SELECT_CARDS",
+                "frame_index": 1,
+                "value": 1,
+                "attr": {
                   "target_player": 1,
-                  "zone_mask": "ALL",
+                  "card_type": 2,
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "PAY_ENERGY_DYNAMIC",
+                "frame_index": 2,
+                "value": 0,
+                "attr": {
                   "is_optional": 1
+                },
+                "params": {
+                  "source": "selected_live_score"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "RECOVER_LIVE",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": 1,
+                  "zone_mask": "ALL"
                 },
                 "slot": {
                   "target_slot": 4,
@@ -60824,7 +60947,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
@@ -60883,6 +61006,27 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 74,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 96,
+              "value": 0,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 15,
               "value": 1,
               "target": 4,
@@ -60893,13 +61037,55 @@
           "frame_program": {
             "frames": [
               {
-                "op": "RECOVER_LIVE",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "SELECT_CARDS",
+                "frame_index": 1,
+                "value": 1,
+                "attr": {
                   "target_player": 1,
-                  "zone_mask": "ALL",
+                  "card_type": 2,
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "PAY_ENERGY_DYNAMIC",
+                "frame_index": 2,
+                "value": 0,
+                "attr": {
                   "is_optional": 1
+                },
+                "params": {
+                  "source": "selected_live_score"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "RECOVER_LIVE",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": 1,
+                  "zone_mask": "ALL"
                 },
                 "slot": {
                   "target_slot": 4,
@@ -60908,7 +61094,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
@@ -60967,6 +61153,27 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 58,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 74,
+              "value": 1,
+              "target": 4,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 96,
+              "value": 0,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 15,
               "value": 1,
               "target": 4,
@@ -60977,13 +61184,55 @@
           "frame_program": {
             "frames": [
               {
-                "op": "RECOVER_LIVE",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
+                  "target_player": 1
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "HAND",
+                  "dest_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "SELECT_CARDS",
+                "frame_index": 1,
+                "value": 1,
+                "attr": {
                   "target_player": 1,
-                  "zone_mask": "ALL",
+                  "card_type": 2,
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": 4,
+                  "source_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "PAY_ENERGY_DYNAMIC",
+                "frame_index": 2,
+                "value": 0,
+                "attr": {
                   "is_optional": 1
+                },
+                "params": {
+                  "source": "selected_live_score"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "RECOVER_LIVE",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": 1,
+                  "zone_mask": "ALL"
                 },
                 "slot": {
                   "target_slot": 4,
@@ -60992,7 +61241,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
@@ -62107,7 +62356,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーは自分のアクティブフェイズにアクティブにしない。",
+          "raw_text": "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。",
           "trigger": 6,
           "effects": [],
           "frame_program": {
@@ -62203,7 +62452,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーは自分のアクティブフェイズにアクティブにしない。",
+          "raw_text": "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。",
           "trigger": 6,
           "effects": [],
           "frame_program": {
@@ -62299,7 +62548,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーは自分のアクティブフェイズにアクティブにしない。",
+          "raw_text": "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。",
           "trigger": 6,
           "effects": [],
           "frame_program": {
@@ -65210,7 +65459,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -66134,7 +66383,7 @@
           "card_no": "PL!N-pb1-001-P+"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -66298,7 +66547,7 @@
           "card_no": "PL!N-pb1-001-R"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -66413,7 +66662,7 @@
           "card_no": "PL!N-pb1-002-P+"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーの下にエネルギーカードが2枚以上置かれているかぎり、ライブの合計スコアを+１する。\n(メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。)",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -66528,7 +66777,7 @@
           "card_no": "PL!N-pb1-002-R"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーの下にエネルギーカードが2枚以上置かれているかぎり、ライブの合計スコアを+１する。\n(メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。)",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -66834,7 +67083,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このターンにこのメンバーが移動していないかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -67035,7 +67284,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このターンにこのメンバーが移動していないかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -67582,7 +67831,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がそれぞれ1以上含まれるかぎり、{{icon_all.png|ハート}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{heart_06.png|heart06}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -67664,7 +67913,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がそれぞれ1以上含まれるかぎり、{{icon_all.png|ハート}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{heart_06.png|heart06}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -68592,7 +68841,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーの下にあるエネルギーカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -68631,7 +68880,7 @@
           "card_no": "PL!N-pb1-011-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n(メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。)",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -68735,7 +68984,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}このメンバーの下にあるエネルギーカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -68774,7 +69023,7 @@
           "card_no": "PL!N-pb1-011-R"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n(メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。)",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -69638,7 +69887,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「桜坂しずく」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -69763,7 +70012,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「桜坂しずく」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -70070,7 +70319,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「宮下愛」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -70195,7 +70444,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「宮下愛」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -70734,7 +70983,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}「エマ・ヴェルデ」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。",
+          "raw_text": "{{toujyou.png|登場}}「優木せつ菜」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -70850,7 +71099,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}「エマ・ヴェルデ」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。",
+          "raw_text": "{{toujyou.png|登場}}「優木せつ菜」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -71386,7 +71635,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「ミア・テイラー」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -71511,7 +71760,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「ミア・テイラー」のメンバーカードを1枚ステージに登場させる。",
+          "raw_text": "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札からコスト4以下の「上原歩夢」のメンバーカードを1枚ステージに登場させる。",
           "trigger": 1,
           "effects": [
             {
@@ -73109,7 +73358,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -73211,7 +73460,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『虹ヶ咲』のメンバーカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -73415,7 +73664,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -73675,7 +73924,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -73926,7 +74175,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -75138,7 +75387,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -75590,7 +75839,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -76152,7 +76401,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -77061,7 +77310,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージにコストがそれぞれ異なるメンバーが3人以上いるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -77236,7 +77485,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカードが1枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -77314,7 +77563,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカードが1枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -80302,7 +80551,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -80404,7 +80653,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -81088,7 +81337,7 @@
           "card_no": "PL!S-bp3-001-P"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -81246,7 +81495,7 @@
           "card_no": "PL!S-bp3-001-R+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -81404,7 +81653,7 @@
           "card_no": "PL!S-bp3-001-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -81562,7 +81811,7 @@
           "card_no": "PL!S-bp3-001-SEC"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -88063,7 +88312,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手の余剰ハートが2つ以上あるかぎり、自分のライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -88141,7 +88390,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手の余剰ハートが2つ以上あるかぎり、自分のライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -88219,7 +88468,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手の余剰ハートが2つ以上あるかぎり、自分のライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -88910,7 +89159,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_04.png|heart04}}の合計が4以上の場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+          "raw_text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -89009,7 +89258,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚デッキの一番下に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -89087,7 +89336,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分のデッキの上からカードを10枚控え室に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -90762,7 +91011,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -90864,7 +91113,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -90966,7 +91215,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手のエネルギーが自分より多い場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -91044,7 +91293,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}相手のエネルギーが自分より多い場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -91774,7 +92023,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分と相手の成功ライブカード置き場にカードが合計3枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -91852,7 +92101,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分と相手の成功ライブカード置き場にカードが合計3枚以上ある場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -92186,7 +92435,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_02.png|heart02}}を2個以上持つメンバーカードか、必要ハートに{{heart_02.png|heart02}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|heart04}}を2個以上持つメンバーカードか、必要ハートに{{heart_04.png|heart04}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -92313,7 +92562,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_05.png|heart05}}を2個以上持つメンバーカードか、必要ハートに{{heart_05.png|heart05}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|heart04}}を2個以上持つメンバーカードか、必要ハートに{{heart_04.png|heart04}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -93309,7 +93558,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：自分の控え室から『Aqours』のライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -93923,7 +94172,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -94068,7 +94317,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚デッキの一番下に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -94146,7 +94395,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚デッキの一番下に置く。",
+          "raw_text": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
           "trigger": 1,
           "effects": [
             {
@@ -95276,7 +95525,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：エールにより公開された自分のカードの中から、コスト2以下のメンバーカードか、スコア２以下のライブカードを1枚手札に加える。",
+          "raw_text": "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る。その中からカードを1枚手札に加える。残りを控え室に置く。",
           "trigger": 3,
           "effects": [
             {
@@ -95535,7 +95784,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにほかのメンバーがいない場合、自分はライブできない。",
+          "raw_text": "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。",
           "trigger": 6,
           "effects": [],
           "frame_program": {
@@ -95597,7 +95846,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにほかのメンバーがいない場合、自分はライブできない。",
+          "raw_text": "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。",
           "trigger": 6,
           "effects": [],
           "frame_program": {
@@ -96195,7 +96444,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)",
           "trigger": 7,
           "effects": [],
           "frame_program": {
@@ -96257,7 +96506,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)",
           "trigger": 7,
           "effects": [],
           "frame_program": {
@@ -96319,7 +96568,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)",
           "trigger": 7,
           "effects": [],
           "frame_program": {
@@ -96381,7 +96630,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+          "raw_text": "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)",
           "trigger": 7,
           "effects": [],
           "frame_program": {
@@ -97693,7 +97942,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：カードを1枚引き、手札を1枚控え室に置く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを1枚引き、手札を1枚控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
           "trigger": 7,
           "effects": [
             {
@@ -97792,7 +98041,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：カードを1枚引き、手札を1枚控え室に置く。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを1枚引き、手札を1枚控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
           "trigger": 7,
           "effects": [
             {
@@ -98107,7 +98356,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -98209,7 +98458,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -99823,7 +100072,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが最も大きいコストを持つ場合、{{heart_03.png|heart03}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -99917,7 +100166,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが最も大きいコストを持つ場合、{{heart_03.png|heart03}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -102726,7 +102975,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分の控え室からカードを1枚までデッキの一番上に置く。",
+          "raw_text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -102823,7 +103072,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分の控え室からカードを1枚までデッキの一番上に置く。",
+          "raw_text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -103111,7 +103360,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分の控え室からカードを1枚までデッキの一番上に置く。",
+          "raw_text": "{{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。",
           "trigger": 1,
           "effects": [
             {
@@ -104160,7 +104409,7 @@
           "card_no": "PL!SP-bp4-003-P"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -104310,7 +104559,7 @@
           "card_no": "PL!SP-bp4-003-R"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -105157,7 +105406,7 @@
           "card_no": "PL!SP-bp4-005-P"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -105292,7 +105541,7 @@
           "card_no": "PL!SP-bp4-005-R+"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -105427,7 +105676,7 @@
           "card_no": "PL!SP-bp4-005-P+"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -105562,7 +105811,7 @@
           "card_no": "PL!SP-bp4-005-SEC"
         },
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -106888,7 +107137,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーのコストの合計が相手より低いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -106966,7 +107215,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のステージにいるメンバーのコストの合計が相手より低いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -108644,7 +108893,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}【右サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（この能力は右サイドエリアにいる場合のみ発動する。）",
+          "raw_text": "{{live_start.png|ライブ開始時}}【左サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（この能力は左サイドエリアにいる場合のみ発動する。）",
           "trigger": 2,
           "effects": [
             {
@@ -108749,7 +108998,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが相手より多いかぎり、{{heart_06.png|heart06}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{heart_06.png|heart06}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -109150,7 +109399,7 @@
           "card_no": "PL!SP-bp5-001-AR"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。",
           "trigger": 7,
           "effects": [
             {
@@ -109444,7 +109693,7 @@
           "card_no": "PL!SP-bp5-001-R+"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。",
           "trigger": 7,
           "effects": [
             {
@@ -109738,7 +109987,7 @@
           "card_no": "PL!SP-bp5-001-P"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。",
           "trigger": 7,
           "effects": [
             {
@@ -110032,7 +110281,7 @@
           "card_no": "PL!SP-bp5-001-SEC"
         },
         {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "raw_text": "{{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。",
           "trigger": 7,
           "effects": [
             {
@@ -115521,7 +115770,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のライブカード置き場に必要ハートの合計が8以上の『Liella!』のライブカードがあるかぎり、{{heart_03.png|heart03}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -115908,7 +116157,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
+          "raw_text": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
           "trigger": 6,
           "effects": [
             {
@@ -116444,7 +116693,7 @@
       "units": [],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -116478,7 +116727,7 @@
           "card_no": "PL!SP-bp5-111-P+"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー2枚をエネルギーデッキに置く：自分の控え室にあるライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -116576,7 +116825,7 @@
       "units": [],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -116610,7 +116859,7 @@
           "card_no": "PL!SP-bp5-111-R"
         },
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー2枚をエネルギーデッキに置く：自分の控え室にあるライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -116708,7 +116957,7 @@
       "units": [],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -116837,7 +117086,7 @@
       "units": [],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -117374,7 +117623,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが12枚以上ある場合、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -117452,7 +117701,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{jyouji.png|常時}}自分のエネルギーが12枚以上ある場合、ライブの合計スコアを+１する。",
+          "raw_text": "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。",
           "trigger": 6,
           "effects": [
             {
@@ -118304,7 +118553,7 @@
           "card_no": "PL!SP-pb1-006-P+"
         },
         {
-          "raw_text": "{{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n(対戦相手のカードの効果でも発動する。)",
+          "raw_text": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 1,
           "effects": [
             {
@@ -118416,7 +118665,7 @@
           "card_no": "PL!SP-pb1-006-R"
         },
         {
-          "raw_text": "{{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n(対戦相手のカードの効果でも発動する。)",
+          "raw_text": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "trigger": 1,
           "effects": [
             {
@@ -119931,7 +120180,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -120699,7 +120948,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -120801,7 +121050,7 @@
       ],
       "abilities": [
         {
-          "raw_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "trigger": 7,
           "effects": [
             {
@@ -123316,7 +123565,7 @@
       "original_text_en": "",
       "abilities": [
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}このターン、自分が余剰ハートを持たない場合、このカードのスコアを+１する。",
+          "raw_text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち合計5種類以上あるか、このターンに自分のステージにいるメンバーがエリアを移動している場合、このカードのスコアを+１する。",
           "trigger": 3,
           "effects": [
             {
@@ -127298,7 +127547,7 @@
       "original_text_en": "",
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす。",
+          "raw_text": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす。",
           "trigger": 2,
           "effects": [
             {
@@ -127526,7 +127775,7 @@
       "original_text_en": "",
       "abilities": [
         {
-          "raw_text": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_01.png|heart01}}減らす。",
+          "raw_text": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす。",
           "trigger": 2,
           "effects": [
             {
@@ -129827,7 +130076,7 @@
       "original_text_en": "",
       "abilities": [
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に{{icon_b_all.png|ALLブレード}}を持つカードが1枚以上ある場合、このカードのスコアを+１する。",
+          "raw_text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち合計5種類以上あるか、このターンに自分のステージにいるメンバーがエリアを移動している場合、このカードのスコアを+１する。",
           "trigger": 3,
           "effects": [
             {
@@ -132741,7 +132990,7 @@
       "original_text_en": "",
       "abilities": [
         {
-          "raw_text": "",
+          "raw_text": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
           "trigger": 2,
           "effects": [
             {
@@ -134443,7 +134692,7 @@
           "card_no": "PL!S-bp5-022-L"
         },
         {
-          "raw_text": "{{live_success.png|ライブ成功時}}エールにより公開されている自分のライブカードの枚数が、エールにより公開されている相手のライブカードの枚数より多い場合、このカードのスコアを+１する。",
+          "raw_text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち合計5種類以上あるか、このターンに自分のステージにいるメンバーがエリアを移動している場合、このカードのスコアを+１する。",
           "trigger": 3,
           "effects": [
             {

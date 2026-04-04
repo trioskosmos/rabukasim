@@ -2479,7 +2479,15 @@ impl Ability {
         }
 
         let target_frame_idx = select_mode_idx + 2 + choice_idx + jump_frame.value().max(0) as usize;
-        frames.get(target_frame_idx).cloned().map(|frame| vec![frame])
+        let mut option_frames = Vec::new();
+        for frame in frames.iter().skip(target_frame_idx) {
+            if matches!(frame.opcode(), O_JUMP | O_RETURN) {
+                break;
+            }
+            option_frames.push(frame.clone());
+        }
+
+        (!option_frames.is_empty()).then_some(option_frames)
     }
 
     /// Get modal option frames, preferring structured modal effects before legacy SELECT_MODE recovery.
@@ -2596,8 +2604,10 @@ mod tests {
                 frames: vec![
                     AbilityFrame::new(O_SELECT_MODE, 2, 0, 0, false),
                     AbilityFrame::new(O_JUMP, 1, 0, 0, false),
-                    AbilityFrame::new(O_JUMP, 1, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 3, 0, 0, false),
                     AbilityFrame::new(O_DRAW, 1, 0, 0, false),
+                    AbilityFrame::new(O_TAP_MEMBER, 1, 0, 0, false),
+                    AbilityFrame::new_return(),
                     AbilityFrame::new(O_ADD_BLADES, 2, 0, 0, false),
                     AbilityFrame::new_return(),
                 ],
@@ -2609,8 +2619,9 @@ mod tests {
         let option0 = ability.get_modal_option_frames(0).expect("option 0 frames");
         let option1 = ability.get_modal_option_frames(1).expect("option 1 frames");
 
-        assert_eq!(option0.len(), 1);
+        assert_eq!(option0.len(), 2);
         assert_eq!(option0[0].opcode(), O_DRAW);
+        assert_eq!(option0[1].opcode(), O_TAP_MEMBER);
         assert_eq!(option1.len(), 1);
         assert_eq!(option1[0].opcode(), O_ADD_BLADES);
     }

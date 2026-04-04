@@ -55,6 +55,7 @@ pub fn dispatch(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
+    frames: &[AbilityFrame],
 ) -> HandlerResult {
     let op = frame_data.opcode;
 
@@ -102,7 +103,7 @@ pub fn dispatch(
         }
 
         // Select Mode, NOP
-        O_SELECT_MODE => select_mode::handle_select_mode(state, db, ctx, frame_data, frame_idx, &[]),
+        O_SELECT_MODE => select_mode::handle_select_mode(state, db, ctx, frame_data, frame_idx, frames),
         O_NOP => choice_prompt::handle_optional_nop(state, db, ctx, frame_data, 0),
 
         // Selection operations

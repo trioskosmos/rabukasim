@@ -194,10 +194,16 @@ impl ResponseGenerator {
         let mut added_dest = false;
         for i in 0..STAGE_SLOT_COUNT {
             let cid = player.stage[i];
-            if source_slot != Some(i)
-                && cid >= 0
-                && (allow_any_occupied_dest
-                    || state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx))
+            if source_slot == Some(i) {
+                continue;
+            }
+            // Allow empty slots as valid destinations, or occupied slots that
+            // match the filter (or any occupied slot when filter is zero).
+            if cid < 0 {
+                receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                added_dest = true;
+            } else if allow_any_occupied_dest
+                || state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx)
             {
                 receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
                 added_dest = true;

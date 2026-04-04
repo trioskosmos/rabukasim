@@ -19,20 +19,39 @@ fn resolve_requirement_color(
         color
     } else if source_heart_requirement_color_hint(db, ctx.source_card_id).is_some() {
         source_heart_requirement_color_hint(db, ctx.source_card_id).unwrap_or(6)
-    } else if matches!(target_slot, 4 | 7) {
-        6
+    } else if matches!(target_slot, 1 | 2 | 3 | 5 | 6) {
+        target_slot
     } else if frame.filter.color_mask != 0 {
         if frame.filter.color_mask == 0x7F {
             6
         } else {
             frame.filter.color_mask.trailing_zeros() as usize
         }
+    } else if matches!(target_slot, 4 | 7) {
+        6
     } else {
         match target_slot {
             0..=6 => target_slot,
             _ => 6,
         }
     }
+}
+
+fn resolved_requirement_amount(
+    state: &GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
+) -> i32 {
+    let base_value = if frame.is_dynamic() {
+        frame.scalar_dynamic_base().max(0)
+    } else {
+        frame.value.max(0)
+    };
+
+    super::state_score_bonus::resolve_dynamic_multiplier(state, db, ctx, frame)
+        .map(|count| base_value * count)
+        .unwrap_or(base_value)
 }
 
 pub fn handle_reduce_heart_req(
@@ -47,9 +66,7 @@ pub fn handle_reduce_heart_req(
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let color = resolve_requirement_color(db, ctx, frame);
-    let final_v = super::state_score_bonus::resolve_dynamic_multiplier(state, db, ctx, frame)
-        .map(|count| frame.value * count)
-        .unwrap_or(frame.value);
+    let final_v = resolved_requirement_amount(state, db, ctx, frame);
 
     if color < 7 && final_v > 0 {
         state.players[p_idx]
@@ -142,21 +159,22 @@ pub fn handle_increase_heart_cost(
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
     let color = resolve_requirement_color(db, ctx, frame);
+    let final_v = resolved_requirement_amount(state, db, ctx, frame);
 
-    if color < 7 {
+    if color < 7 && final_v > 0 {
         state.players[p_idx]
             .heart_req_additions
-            .add_to_color(color, frame.value);
+            .add_to_color(color, final_v);
 
         state.players[p_idx].heart_req_addition_logs.push((
             ctx.source_card_id,
             color as u8,
-            frame.value as u8,
+            final_v as u8,
         ));
 
         if !state.ui.silent {
             if let Some(msg) =
-                logging::get_opcode_log(O_INCREASE_HEART_COST, frame.value, 0, color as i32, 0)
+                logging::get_opcode_log(O_INCREASE_HEART_COST, final_v, 0, color as i32, 0)
             {
                 state.log(msg);
             }
