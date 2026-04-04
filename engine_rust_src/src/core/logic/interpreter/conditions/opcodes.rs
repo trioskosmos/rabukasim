@@ -93,6 +93,151 @@ fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
         .unwrap_or(false)
 }
 
+fn has_known_energy_count_hydration_gap(cid: i32) -> bool {
+    cid == 557
+}
+
+fn count_matching_selected_or_discarded_cards(
+    state: &GameState,
+    db: &CardDatabase,
+    player: &crate::core::logic::player::PlayerState,
+    ctx: &AbilityContext,
+    attr: u64,
+) -> (i32, i32) {
+    if !ctx.selected_cards.is_empty() {
+        let matching_count = ctx
+            .selected_cards
+            .iter()
+            .copied()
+            .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
+            .count() as i32;
+        (matching_count, ctx.selected_cards.len() as i32)
+    } else {
+        let matching_count = player
+            .discard_ids_this_turn
+            .iter()
+            .copied()
+            .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
+            .count() as i32;
+        (matching_count, player.discard_ids_this_turn.len() as i32)
+    }
+}
+
+fn count_distinct_yell_heart_colors(player: &crate::core::logic::player::PlayerState, db: &CardDatabase) -> i32 {
+    let mut seen = 0u8;
+    let mut count = 0i32;
+
+    for &cid in &player.yell_cards {
+        if let Some(member) = db.get_member(cid) {
+            for color_idx in 0..7 {
+                if member.hearts[color_idx] > 0 && (seen & (1 << color_idx)) == 0 {
+                    seen |= 1 << color_idx;
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    count
+}
+
+fn compare_sync_cost(
+    state: &GameState,
+    db: &CardDatabase,
+    player: &crate::core::logic::player::PlayerState,
+    opponent: &crate::core::logic::player::PlayerState,
+    p_idx: usize,
+    ctx: &AbilityContext,
+    attr: u64,
+    val: i32,
+    area_val: u8,
+    slot_info: DecodedSlot,
+    params: Option<&serde_json::Value>,
+) -> bool {
+    let filter = CardFilter::from_attr(attr);
+    let area_override = params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_ascii_uppercase())
+        .and_then(|value| match value.as_str() {
+            "LEFT_SIDE" | "LEFT" => Some(0usize),
+            "CENTER" => Some(1usize),
+            "RIGHT_SIDE" | "RIGHT" => Some(2usize),
+            _ => None,
+        });
+
+    let compare_slot_cost = |cards: &[i32], idx: usize| -> i32 {
+        cards
+            .get(idx)
+            .copied()
+            .filter(|&cid| cid >= 0)
+            .and_then(|cid| db.get_member(cid))
+            .map(|member| member.cost as i32)
+            .unwrap_or(0)
+    };
+
+    let (self_cost, opp_cost) = if let Some(idx) = area_override {
+        (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
+    } else if area_val >= 1 && area_val <= 3 {
+        let idx = (area_val - 1) as usize;
+        (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
+    } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
+        let idx = ctx.area_idx as usize;
+        (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
+    } else {
+        let mut self_cost = 0;
+        for (idx, &id) in player.stage.iter().enumerate() {
+            if id >= 0
+                && state.card_matches_filter_with_struct(
+                    db,
+                    id,
+                    Some((p_idx as u8, idx as i16)),
+                    &filter,
+                    ctx,
+                )
+            {
+                self_cost += db.get_member(id).map_or(0, |member| member.cost as i32);
+            }
+        }
+        let mut opp_cost = 0;
+        for (idx, &id) in opponent.stage.iter().enumerate() {
+            if id >= 0
+                && state.card_matches_filter_with_struct(
+                    db,
+                    id,
+                    Some(((1 - p_idx) as u8, idx as i16)),
+                    &filter,
+                    ctx,
+                )
+            {
+                opp_cost += db.get_member(id).map_or(0, |member| member.cost as i32);
+            }
+        }
+        (self_cost, opp_cost)
+    };
+
+    if state.debug.debug_mode {
+        eprintln!(
+            "[DEBUG_SYNC_COST] area_val={}, area_override={:?}, ctx.area_idx={}, self_cost={}, opp_cost={}, val={}",
+            area_val,
+            area_override,
+            ctx.area_idx,
+            self_cost,
+            opp_cost,
+            val
+        );
+    }
+
+    let comparison_mode = if slot_info.comparison == 0 {
+        1
+    } else {
+        slot_info.comparison
+    };
+
+    compare_i32(self_cost, opp_cost + val, (comparison_mode as i32) << 4)
+}
+
 pub fn check_condition_frame(
     state: &GameState,
     db: &CardDatabase,
@@ -306,9 +451,9 @@ fn check_condition_with_parts(
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_COUNT_ENERGY => {
-            if cid == 557 {
-                // Card 557's bytecode is missing the intended energy-count branch in the sparse data.
-                // Treat its energy gate as satisfied so the OnPlay bonus can resolve.
+            if has_known_energy_count_hydration_gap(cid) {
+                // Card 557 still has a known authored-frame hydration gap for its energy gate.
+                // Keep the compatibility shim localized until the underlying authored data is repaired.
                 return true;
             }
             let count = resolve_count(state, db, op, attr, slot, ctx, depth);
@@ -819,158 +964,28 @@ fn check_condition_with_parts(
         ),
         308 => ctx.area_idx >= 0 && player.is_moved(ctx.area_idx as usize),
         309 => {
-            let matching_count = if !ctx.selected_cards.is_empty() {
-                ctx.selected_cards
-                    .iter()
-                    .copied()
-                    .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
-                    .count() as i32
-            } else {
-                player
-                    .discard_ids_this_turn
-                    .iter()
-                    .copied()
-                    .filter(|&cid| attr == 0 || state.card_matches_filter(db, cid, attr))
-                    .count() as i32
-            };
+            let (matching_count, source_count) =
+                count_matching_selected_or_discarded_cards(state, db, player, ctx, attr);
             if (val & 0x04) != 0 {
-                // "all=true" logic
-                let source_count = if !ctx.selected_cards.is_empty() {
-                    ctx.selected_cards.len() as i32
-                } else {
-                    player.discard_ids_this_turn.len() as i32
-                };
                 source_count > 0 && matching_count == source_count
             } else {
                 compare_i32(matching_count, val, slot)
             }
         }
-        310 => {
-            let mut seen = 0u8;
-            let mut count = 0;
-            for &cid in &player.yell_cards {
-                if let Some(m) = db.get_member(cid) {
-                    for i in 0..7 {
-                        if m.hearts[i] > 0 && (seen & (1 << i)) == 0 {
-                            seen |= 1 << i;
-                            count += 1;
-                        }
-                    }
-                }
-            }
-            compare_i32(count, val, slot)
-        }
-        311 => {
-            let filter = CardFilter::from_attr(attr);
-            let area_override = params
-                .and_then(|value| value.as_object())
-                .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_ascii_uppercase())
-                .and_then(|value| match value.as_str() {
-                    "LEFT_SIDE" | "LEFT" => Some(0usize),
-                    "CENTER" => Some(1usize),
-                    "RIGHT_SIDE" | "RIGHT" => Some(2usize),
-                    _ => None,
-                });
-
-            let (self_cost, opp_cost) = if let Some(idx) = area_override {
-                let s_cid = player.stage[idx];
-                let o_cid = opponent.stage[idx];
-                let s_cost = if s_cid >= 0 {
-                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                let o_cost = if o_cid >= 0 {
-                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                (s_cost, o_cost)
-            } else if area_val >= 1 && area_val <= 3 {
-                let idx = (area_val - 1) as usize;
-                let s_cid = player.stage[idx];
-                let o_cid = opponent.stage[idx];
-                let s_cost = if s_cid >= 0 {
-                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                let o_cost = if o_cid >= 0 {
-                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                (s_cost, o_cost)
-            } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                let idx = ctx.area_idx as usize;
-                let s_cid = player.stage[idx];
-                let o_cid = opponent.stage[idx];
-                let s_cost = if s_cid >= 0 {
-                    db.get_member(s_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                let o_cost = if o_cid >= 0 {
-                    db.get_member(o_cid).map_or(0, |m| m.cost as i32)
-                } else {
-                    0
-                };
-                (s_cost, o_cost)
-            } else {
-                let mut s_cost = 0;
-                for (idx, &id) in player.stage.iter().enumerate() {
-                    if id >= 0
-                        && state.card_matches_filter_with_struct(
-                            db,
-                            id,
-                            Some((p_idx as u8, idx as i16)),
-                            &filter,
-                            ctx,
-                        )
-                    {
-                        s_cost += db.get_member(id).map_or(0, |m| m.cost as i32);
-                    }
-                }
-                let mut o_cost = 0;
-                for (idx, &id) in opponent.stage.iter().enumerate() {
-                    if id >= 0
-                        && state.card_matches_filter_with_struct(
-                            db,
-                            id,
-                            Some(((1 - p_idx) as u8, idx as i16)),
-                            &filter,
-                            ctx,
-                        )
-                    {
-                        o_cost += db.get_member(id).map_or(0, |m| m.cost as i32);
-                    }
-                }
-                (s_cost, o_cost)
-            };
-            
-            if state.debug.debug_mode {
-                eprintln!(
-                    "[DEBUG_SYNC_COST] area_val={}, area_override={:?}, ctx.area_idx={}, self_cost={}, opp_cost={}, val={}",
-                    area_val,
-                    area_override,
-                    ctx.area_idx,
-                    self_cost,
-                    opp_cost,
-                    val
-                );
-            }
-            
-            // SyncCost should use greater-than comparison by default
-            let comparison_mode = if slot_info.comparison == 0 { 1 } else { slot_info.comparison };
-            
-            compare_i32(
-                self_cost,
-                opp_cost + val,
-                (comparison_mode as i32) << 4,
-            )
-        }
+        310 => compare_i32(count_distinct_yell_heart_colors(player, db), val, slot),
+        311 => compare_sync_cost(
+            state,
+            db,
+            player,
+            opponent,
+            p_idx,
+            ctx,
+            attr,
+            val,
+            area_val,
+            slot_info,
+            params,
+        ),
         312 => compare_i32(ctx.v_accumulated as i32, val, slot),
         313 => {
             let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {

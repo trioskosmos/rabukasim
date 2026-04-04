@@ -1,15 +1,28 @@
 use super::*;
 use crate::core::logic::heart_semantics::{
-    decode_heart_type_from_icons, decode_heart_type_from_params,
+    decode_heart_type_from_params, decode_heart_type_from_text,
 };
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
 use crate::core::logic::models::AbilityFrameComponents;
-use crate::core::logic::CardDatabase;
+use crate::core::logic::{Ability, CardDatabase};
 
 #[path = "state_score_slots.rs"]
 mod state_score_slots;
 #[path = "state_score_transforms.rs"]
 mod state_score_transforms;
+
+fn source_ability<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a Ability> {
+    let source_card_id = if ctx.ability_card_id >= 0 {
+        ctx.ability_card_id
+    } else {
+        ctx.source_card_id
+    };
+    let ability_idx = ctx.ability_index.max(0) as usize;
+
+    db.get_member(source_card_id)
+        .and_then(|member| member.abilities.get(ability_idx))
+        .or_else(|| db.get_live(source_card_id).and_then(|live| live.abilities.get(ability_idx)))
+}
 
 fn decode_heart_color(
     db: &CardDatabase,
@@ -34,26 +47,32 @@ fn decode_heart_color(
         raw if raw <= 6 => return raw as usize,
         _ => {}
     }
-    
-    // 4. Try decoded hint text from frame params
+
+    // 4. Try decoded hint text from frame params.
     if let Some(params) = frame.params {
         if let Some(decoded) = params.get("decoded").and_then(|v| v.as_str()) {
-            if let Some(color) = decode_heart_type_from_icons(decoded) {
+            if let Some(color) = decode_heart_type_from_text(decoded) {
+                return color;
+            }
+        }
+        if let Some(raw_cond) = params.get("raw_cond").and_then(|v| v.as_str()) {
+            if let Some(color) = decode_heart_type_from_text(raw_cond) {
                 return color;
             }
         }
     }
-    
-    // 5. Try ability text for color
-    if let Some(member) = db.get_member(ctx.source_card_id) {
-        if let Some(ability) = member.abilities.get(ctx.ability_index.max(0) as usize) {
-            if let Some(color) = decode_heart_type_from_icons(&ability.raw_text) {
-                return color;
-            }
+
+    // 5. Try hydrated ability text and pseudocode for color.
+    if let Some(ability) = source_ability(db, ctx) {
+        if let Some(color) = decode_heart_type_from_text(&ability.raw_text) {
+            return color;
+        }
+        if let Some(color) = decode_heart_type_from_text(&ability.pseudocode) {
+            return color;
         }
     }
-    
-    // 6. Fallback to selected color
+
+    // 6. Fallback to selected color.
     ctx.selected_color as usize
 }
 

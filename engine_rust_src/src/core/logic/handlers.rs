@@ -23,6 +23,37 @@ fn should_precheck_condition(cond: &crate::core::logic::Condition) -> bool {
     )
 }
 
+fn legacy_activation_prefix_text<'a>(
+    card: &'a crate::core::logic::MemberCard,
+    ability: &'a crate::core::logic::Ability,
+) -> Option<&'a str> {
+    if !ability.raw_text.trim().is_empty() {
+        return Some(
+            ability
+                .raw_text
+                .split('：')
+                .next()
+                .unwrap_or(ability.raw_text.as_str()),
+        );
+    }
+
+    let activated_count = card
+        .abilities
+        .iter()
+        .filter(|candidate| candidate.trigger == TriggerType::Activated)
+        .count();
+    if activated_count != 1 {
+        return None;
+    }
+
+    Some(
+        card.original_text
+            .split('：')
+            .next()
+            .unwrap_or(card.original_text.as_str()),
+    )
+}
+
 fn implicit_activated_energy_cost_for_card(
     card: &crate::core::logic::MemberCard,
     ability: &crate::core::logic::Ability,
@@ -32,25 +63,9 @@ fn implicit_activated_energy_cost_for_card(
         return explicit;
     }
 
-    if !ability.raw_text.trim().is_empty() {
-        return 0;
-    }
-
-    let activated_count = card
-        .abilities
-        .iter()
-        .filter(|candidate| candidate.trigger == TriggerType::Activated)
-        .count();
-    if activated_count != 1 {
-        return 0;
-    }
-
-    let prefix = card
-        .original_text
-        .split('：')
-        .next()
-        .unwrap_or(card.original_text.as_str());
-    prefix.matches("{{icon_energy.png|E}}").count()
+    legacy_activation_prefix_text(card, ability)
+        .map(|prefix| prefix.matches("{{icon_energy.png|E}}").count())
+        .unwrap_or(0)
 }
 
 fn has_implicit_stage_discard_self_cost_for_card(
@@ -72,24 +87,8 @@ fn has_implicit_stage_discard_self_cost_for_card(
         return false;
     }
 
-    let raw_text = if !ability.raw_text.trim().is_empty() {
-        ability.raw_text.as_str()
-    } else {
-        let activated_count = card
-            .abilities
-            .iter()
-            .filter(|candidate| candidate.trigger == TriggerType::Activated)
-            .count();
-        if activated_count != 1 {
-            return false;
-        }
-        card.original_text.as_str()
-    };
-
-    raw_text
-        .split('：')
-        .next()
-        .unwrap_or(raw_text)
+    legacy_activation_prefix_text(card, ability)
+        .unwrap_or("")
         .contains("このメンバーをステージから控え室に置く")
 }
 

@@ -4,6 +4,7 @@ use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
 use crate::core::logic::filter::{
     has_structured_filter_constraints, merge_filter_attr_with_params, structured_filter_attr,
+    structured_filter_from_attr,
 };
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
@@ -193,33 +194,82 @@ pub fn evaluate_raw_condition(
                 filter_attr = apply_area_semantics(filter_attr, area);
             }
 
-            let mut value = cond.value;
-            if value == 0 {
-                if let Some(min) =
-                    get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-                {
-                    value = min as i32;
-                } else if let Some(eq) =
-                    get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
-                {
-                    value = eq as i32;
-                } else if let Some(max) =
-                    get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-                {
-                    value = max as i32;
-                }
+            let match_filter_attr = condition_match_filter_attr(filter_attr);
+            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
+            let match_filter = structured_filter_from_attr(match_filter_attr);
+            let target_player = resolved_condition_player(params, ctx);
+
+            let count_for_player = |player_idx: usize| {
+                state.players[player_idx]
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, &cid)| cid >= 0)
+                    .filter(|(slot_idx, &cid)| {
+                        !has_filter_constraints
+                            || state.card_matches_filter_with_struct(
+                                db,
+                                cid,
+                                Some((player_idx as u8, *slot_idx as i16)),
+                                &match_filter,
+                                ctx,
+                            )
+                    })
+                    .count() as i32
+            };
+
+            let count = if (filter_attr & FILTER_ANY_STAGE) != 0 {
+                count_for_player(ctx.player_id as usize)
+                    + count_for_player(1 - ctx.player_id as usize)
+            } else {
+                count_for_player(target_player)
+            };
+
+            compare_count_thresholds(params, count)
+        }
+        "COUNT_MOVED_STAGE" => {
+            let mut filter_attr = resolved_filter_attr(params, cond.attr);
+
+            if let Some(area) = get_param_case_insensitive(params, "AREA")
+                .or_else(|| get_param_case_insensitive(params, "area"))
+                .and_then(|v| v.as_str())
+            {
+                filter_attr = apply_area_semantics(filter_attr, area);
             }
 
-            check_condition_opcode(
-                state,
-                db,
-                203,
-                value,
-                filter_attr,
-                cond.target_slot as i32,
-                ctx,
-                depth + 1,
-            )
+            let match_filter_attr = condition_match_filter_attr(filter_attr);
+            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
+            let match_filter = structured_filter_from_attr(match_filter_attr);
+            let target_player = resolved_condition_player(params, ctx);
+
+            let count_for_player = |player_idx: usize| {
+                state.players[player_idx]
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, &cid)| cid >= 0)
+                    .filter(|(slot_idx, _)| state.players[player_idx].is_moved(*slot_idx))
+                    .filter(|(slot_idx, &cid)| {
+                        !has_filter_constraints
+                            || state.card_matches_filter_with_struct(
+                                db,
+                                cid,
+                                Some((player_idx as u8, *slot_idx as i16)),
+                                &match_filter,
+                                ctx,
+                            )
+                    })
+                    .count() as i32
+            };
+
+            let count = if (filter_attr & FILTER_ANY_STAGE) != 0 {
+                count_for_player(ctx.player_id as usize)
+                    + count_for_player(1 - ctx.player_id as usize)
+            } else {
+                count_for_player(target_player)
+            };
+
+            compare_count_thresholds(params, count)
         }
         "ALL_MEMBERS" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);

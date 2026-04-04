@@ -3,6 +3,7 @@ use crate::test_helpers::create_test_db;
 use crate::core::gpu_conversions::GpuConverter;
 
 #[test]
+#[ignore = "requires a usable GPU backend"]
 fn test_gpu_shader_compiles() {
     let db = create_test_db();
     let (stats, bc) = db.convert_to_gpu();

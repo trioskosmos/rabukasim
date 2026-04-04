@@ -5,8 +5,7 @@ This directory contains the ability handler system with a unified dispatch archi
 ## Architecture
 
 ### Core Dispatch
-- **`mod.rs`** - HandlerRegistry with centralized opcode dispatch
-- **`execution.rs`** - Alternative dispatch entry point (delegates to working handlers)
+- **`mod.rs`** - Centralized opcode dispatch into domain handlers
 
 ### Working Implementation Modules
 The actual working implementations are organized by domain:
@@ -40,8 +39,10 @@ The actual working implementations are organized by domain:
 - **`movement_swap_zone.rs`** - Zone swapping
 
 #### Flow/Control Operations
-- **`flow.rs`** - Main dispatch for flow opcodes
+- **`flow_state_mod.rs`** - State-modifying flow opcodes
 - **`flow_select.rs`** - Selection handling
+- **`flow_select_resolve.rs`** - Selection result resolution
+- **`flow_swap.rs`** - Swap-area and related control flow
 - **`flow_meta_rule.rs`** - Meta rule processing
 - **`flow_effects.rs`** - Effect resolution
 - **`flow_context.rs`** - Context management
@@ -64,7 +65,7 @@ The actual working implementations are organized by domain:
 ## Key Design Principles
 
 ### 1. Clear Dispatch Chain
-- Single dispatch point in `mod.rs` HandlerRegistry
+- Single dispatch point in `mod.rs`
 - Each opcode maps to a domain handler (state, movement, flow, interaction)
 - Domain handlers dispatch to specific implementations
 

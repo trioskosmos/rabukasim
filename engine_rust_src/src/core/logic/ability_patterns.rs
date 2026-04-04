@@ -1,6 +1,69 @@
 use crate::core::enums::*;
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
+
+fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
+    ability
+        .resolved_frames()
+        .iter()
+        .any(|frame| frame.opcode() == opcode)
+}
+
+fn modal_option_has_opcode(ability: &Ability, option_idx: usize, opcode: i32) -> bool {
+    ability
+        .get_modal_option_frames(option_idx)
+        .map(|frames| frames.iter().any(|frame| frame.opcode() == opcode))
+        .unwrap_or(false)
+}
+
+fn structured_optional_live_mode_signature(ability: &Ability) -> bool {
+    ability.trigger == TriggerType::OnLiveSuccess
+        && ability.modal_option_count() >= 2
+        && modal_option_has_opcode(ability, 0, O_ENERGY_CHARGE)
+        && modal_option_has_opcode(ability, 1, O_RECOVER_MEMBER)
+}
+
+fn frame_heart_color(frame: &AbilityFrame) -> Option<u8> {
+    if let Some(color) = decode_heart_type_from_params(frame.components().params) {
+        return Some(color as u8);
+    }
+
+    match frame.components().resolved_filter_attr() {
+        0..=6 => Some(frame.components().resolved_filter_attr() as u8),
+        7 => Some(6),
+        _ => None,
+    }
+}
+
+fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(u64, u8)> {
+    if ability.trigger != TriggerType::OnLiveStart {
+        return None;
+    }
+
+    let frames = ability.resolved_frames();
+    if frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE) {
+        return None;
+    }
+
+    let select_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MEMBER)?;
+    let (heart_idx, heart_frame) = frames
+        .iter()
+        .enumerate()
+        .skip(select_idx + 1)
+        .find(|(_, frame)| frame.opcode() == O_ADD_HEARTS)?;
+
+    if !frames
+        .iter()
+        .skip(heart_idx + 1)
+        .any(|frame| frame.opcode() == O_BOOST_SCORE)
+    {
+        return None;
+    }
+
+    let select_frame = &frames[select_idx];
+    Some((select_frame.attr(), frame_heart_color(heart_frame)?))
+}
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
 
@@ -29,13 +92,6 @@ fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
             pi.ctx.source_card_id
         },
     ]
-}
-
-fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
-    ability
-        .resolved_frames()
-        .iter()
-        .any(|frame| frame.opcode() == opcode)
 }
 
 fn matches_pending_ability(ability: &Ability, pi: &PendingInteraction) -> bool {
@@ -109,6 +165,10 @@ pub fn pending_member_ability<'a>(
 }
 
 pub fn is_distinct_optional_mode_live_ability(ability: &Ability) -> bool {
+    if structured_optional_live_mode_signature(ability) {
+        return true;
+    }
+
     let frames = ability.resolved_frames();
     let has_select_mode = frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE);
     ability.trigger == TriggerType::OnLiveSuccess
@@ -142,10 +202,16 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
         }
     }
 
-    let is_initial_optional_effect = ability
-        .resolved_frames()
-        .iter()
-        .any(|frame| frame.opcode() == pi.effect_opcode);
+    let is_initial_optional_effect = if structured_optional_live_mode_signature(ability) {
+        (0..ability.modal_option_count()).any(|option_idx| {
+            modal_option_has_opcode(ability, option_idx, pi.effect_opcode)
+        })
+    } else {
+        ability
+            .resolved_frames()
+            .iter()
+            .any(|frame| frame.opcode() == pi.effect_opcode)
+    };
     if is_initial_optional_effect {
         Some(optional_mode_mask_for_count(ability.modal_option_count()))
     } else {
@@ -184,31 +250,18 @@ pub fn pending_targeted_live_heart_bonus(
     pi: &PendingInteraction,
 ) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
-    let frames = ability.resolved_frames();
-    let [draw, discard, select_effect, follow_up, boost] = &*frames else {
-        return None;
-    };
-
-    if ability.trigger != TriggerType::OnLiveStart
-        || draw.opcode() != O_DRAW
-        || discard.opcode() != O_MOVE_TO_DISCARD
-        || select_effect.opcode() != O_SELECT_MEMBER
-        || follow_up.opcode() != O_ADD_HEARTS
-        || boost.opcode() != O_BOOST_SCORE
-    {
-        return None;
-    }
+    let (filter_attr, heart_color_idx) = structured_targeted_live_heart_bonus_signature(ability)?;
 
     let is_target_selection_step = pi.effect_opcode == O_SELECT_MEMBER
         || pi.choice_type == ChoiceType::SelectMember
-        || (pi.filter_attr & !0x3) == select_effect.attr();
+        || (pi.filter_attr & !0x3) == filter_attr;
     let is_vacuous_discard_step =
         pi.effect_opcode == O_MOVE_TO_DISCARD && pi.choice_type == ChoiceType::SelectHandDiscard;
     if !is_target_selection_step && !is_vacuous_discard_step {
         return None;
     }
 
-    Some((select_effect.attr(), follow_up.attr() as u8))
+    Some((filter_attr, heart_color_idx))
 }
 
 pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
@@ -230,11 +283,145 @@ pub fn is_optional_live_start_discard_count_ability(ability: &Ability) -> bool {
 }
 
 pub fn should_skip_inline_live_precheck(ability: &Ability) -> bool {
-    if is_distinct_optional_mode_live_ability(ability) {
+    if is_distinct_optional_mode_live_ability(ability)
+        || structured_targeted_live_heart_bonus_signature(ability).is_some()
+        || is_optional_live_start_discard_count_ability(ability)
+    {
         return true;
     }
 
     let condition_blocks = ability.raw_text.matches("CONDITION:").count();
     ability.trigger == TriggerType::OnLiveStart
         && condition_blocks > ability.conditions.len().max(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::logic::{AbilityContext, Effect, PendingInteraction};
+    use serde_json::json;
+
+    #[test]
+    fn distinct_optional_live_mode_detects_structured_modal_options() {
+        let ability = Ability {
+            trigger: TriggerType::OnLiveSuccess,
+            effects: vec![Effect {
+                modal_options: json!([
+                    [{ "effect_type": EffectType::EnergyCharge }],
+                    [{ "effect_type": EffectType::RecoverMember }]
+                ]),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        assert!(is_distinct_optional_mode_live_ability(&ability));
+    }
+
+    #[test]
+    fn pending_optional_mode_mask_uses_structured_modal_option_opcodes() {
+        let ability = Ability {
+            trigger: TriggerType::OnLiveSuccess,
+            effects: vec![Effect {
+                modal_options: json!([
+                    [{ "effect_type": EffectType::EnergyCharge }],
+                    [{ "effect_type": EffectType::RecoverMember }]
+                ]),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let mut db = CardDatabase::default();
+        db.lives.insert(
+            9000,
+            crate::core::logic::LiveCard {
+                card_id: 9000,
+                abilities: vec![ability],
+                ..Default::default()
+            },
+        );
+
+        let pi = PendingInteraction {
+            card_id: 9000,
+            ability_card_id: 9000,
+            ability_index: 0,
+            effect_opcode: O_ENERGY_CHARGE,
+            choice_type: ChoiceType::SelectMode,
+            ctx: AbilityContext {
+                player_id: 0,
+                source_card_id: 9000,
+                ability_card_id: 9000,
+                ability_index: 0,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(pending_optional_mode_mask(&db, &pi), Some(3));
+    }
+
+    #[test]
+    fn pending_targeted_live_heart_bonus_accepts_structured_ordered_frames() {
+        let ability = Ability {
+            trigger: TriggerType::OnLiveStart,
+            frame_program: Some(crate::core::logic::FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_DRAW, 1, 0, 0, false),
+                    AbilityFrame::new(O_SELECT_MEMBER, 1, 0x1234, 0, false),
+                    AbilityFrame::new(O_ADD_HEARTS, 1, 5, 0, false),
+                    AbilityFrame::new(O_BOOST_SCORE, 1, 0, 0, false),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let mut db = CardDatabase::default();
+        db.lives.insert(
+            9010,
+            crate::core::logic::LiveCard {
+                card_id: 9010,
+                abilities: vec![ability],
+                ..Default::default()
+            },
+        );
+
+        let pi = PendingInteraction {
+            card_id: 9010,
+            ability_card_id: 9010,
+            ability_index: 0,
+            effect_opcode: O_SELECT_MEMBER,
+            choice_type: ChoiceType::SelectMember,
+            ctx: AbilityContext {
+                player_id: 0,
+                source_card_id: 9010,
+                ability_card_id: 9010,
+                ability_index: 0,
+                trigger_type: TriggerType::OnLiveStart,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(pending_targeted_live_heart_bonus(&db, &pi), Some((0x1234, 5)));
+    }
+
+    #[test]
+    fn skip_inline_live_precheck_for_structured_targeted_bonus() {
+        let ability = Ability {
+            trigger: TriggerType::OnLiveStart,
+            frame_program: Some(crate::core::logic::FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_SELECT_MEMBER, 1, 0x1234, 0, false),
+                    AbilityFrame::new(O_ADD_HEARTS, 1, 2, 0, false),
+                    AbilityFrame::new(O_BOOST_SCORE, 1, 0, 0, false),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        assert!(should_skip_inline_live_precheck(&ability));
+    }
 }

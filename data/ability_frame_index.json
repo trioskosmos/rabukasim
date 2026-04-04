@@ -52040,11 +52040,84 @@
         "PL!N-pb1-001-R | 上原歩夢 [member_db:4426] (ab#1 CONSTANT)",
         "PL!N-pb1-004-P＋ | 朝香果林 [member_db:333] (ab#0 CONSTANT)",
         "PL!N-pb1-004-R | 朝香果林 [member_db:4429] (ab#0 CONSTANT)",
-        "PL!S-PR-029-PR | 渡辺 曜 [member_db:410] (ab#0 CONSTANT)",
-        "PL!S-PR-030-PR | 津島善子 [member_db:411] (ab#0 CONSTANT)",
-        "PL!S-PR-031-PR | 国木田花丸 [member_db:412] (ab#0 CONSTANT)",
         "PL!SP-bp4-003-P | 嵐 千砂都 [member_db:559] (ab#1 CONSTANT)",
         "PL!SP-bp4-003-R | 嵐 千砂都 [member_db:4655] (ab#1 CONSTANT)"
+      ],
+      "card_refs": [],
+      "pseudocode": ""
+    },
+    {
+      "signature": "T6|c86782178a6f446b87b188e466d231f42e3e4975",
+      "signature_hash": "c86782178a6f446b87b188e466d231f42e3e4975",
+      "signature_source": "{\"frames\":[{\"op\":\"NOP\"},{\"op\":\"ADD_BLADES\"},{\"op\":\"RETURN\"}],\"trigger\":6}",
+      "trigger_id": 6,
+      "trigger": "CONSTANT",
+      "frame_count": 3,
+      "opcode_sequence": [
+        "NOP",
+        "ADD_BLADES",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "opcode_id": 0,
+          "opcode": "NOP",
+          "ability_frame_index": 0,
+          "attr": {
+            "target_player": "BOTH",
+            "value_enabled": 1,
+            "value_threshold": 13,
+            "is_cost_type": 1
+          },
+          "params": {
+            "raw_cond": "COUNT_STAGE",
+            "MIN": 1,
+            "AREA": "ANY_STAGE"
+          }
+        },
+        {
+          "opcode_id": 11,
+          "opcode": "ADD_BLADES",
+          "ability_frame_index": 1,
+          "value": 2,
+          "slot": {
+            "target_slot": 4
+          },
+          "semantic": {
+            "opcode_id": 11,
+            "opcode_name": "ADD_BLADES",
+            "opcode_section": "opcodes",
+            "decoded": "ADD_BLADES                | count=2, filter=[none], slot=[target=Context Card]",
+            "value": 2,
+            "slot": {
+              "target_slot": 4
+            },
+            "metadata_refs": [
+              "opcodes.ADD_BLADES",
+              "slot_indices.CONTEXT"
+            ]
+          }
+        },
+        {
+          "opcode_id": 1,
+          "opcode": "RETURN",
+          "ability_frame_index": 2,
+          "semantic": {
+            "opcode_id": 1,
+            "opcode_name": "RETURN",
+            "opcode_section": "opcodes",
+            "decoded": "RETURN                    | done",
+            "metadata_refs": [
+              "opcodes.RETURN",
+              "slot_indices.STAGE_0"
+            ]
+          }
+        }
+      ],
+      "cards": [
+        "PL!S-PR-029-PR | 渡辺 曜 [member_db:410] (ab#0 CONSTANT)",
+        "PL!S-PR-030-PR | 津島善子 [member_db:411] (ab#0 CONSTANT)",
+        "PL!S-PR-031-PR | 国木田花丸 [member_db:412] (ab#0 CONSTANT)"
       ],
       "card_refs": [],
       "pseudocode": ""
@@ -52436,44 +52509,132 @@
       "pseudocode": ""
     },
     {
-      "signature": "T6|d18860c7a84ad6d414e1122df31061529d9c0944",
-      "signature_hash": "d18860c7a84ad6d414e1122df31061529d9c0944",
-      "signature_source": "{\"frames\":[{\"op\":\"REDUCE_COST\"},{\"op\":\"RETURN\"}],\"trigger\":6}",
+      "signature": "T6|c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_hash": "c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_source": "{\"frames\":[{\"op\":\"NOP\"},{\"op\":\"REDUCE_COST\"},{\"op\":\"RETURN\"}],\"trigger\":6}",
       "trigger_id": 6,
       "trigger": "CONSTANT",
-      "frame_count": 2,
+      "frame_count": 3,
       "opcode_sequence": [
+        "NOP",
         "REDUCE_COST",
         "RETURN"
       ],
       "frames": [
         {
+          "opcode_id": 0,
+          "opcode": "NOP",
+          "ability_frame_index": 0,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": 2,
+            "is_tapped": 1
+          },
+          "params": {
+            "raw_cond": "COUNT_STAGE",
+            "MIN": 1
+          }
+        },
+        {
           "opcode_id": 13,
           "opcode": "REDUCE_COST",
-          "ability_frame_index": 0,
+          "ability_frame_index": 1,
           "value": 2,
           "slot": {
-            "target_slot": 4
+            "target_slot": 4,
+            "source_zone": "HAND"
           },
           "semantic": {
             "opcode_id": 13,
             "opcode_name": "REDUCE_COST",
             "opcode_section": "opcodes",
-            "decoded": "REDUCE_COST               | value=2, filter=[none], slot=[target=Context Card]",
+            "decoded": "REDUCE_COST               | value=2, filter=[none], slot=[target=Context Card, source=Hand]",
             "value": 2,
             "slot": {
-              "target_slot": 4
+              "target_slot": 4,
+              "source_zone": "HAND"
             },
             "metadata_refs": [
-              "opcodes.REDUCE_COST",
-              "slot_indices.CONTEXT"
+              "opcodes.REDUCE_COST"
             ]
           }
         },
         {
           "opcode_id": 1,
           "opcode": "RETURN",
+          "ability_frame_index": 2,
+          "semantic": {
+            "opcode_id": 1,
+            "opcode_name": "RETURN",
+            "opcode_section": "opcodes",
+            "decoded": "RETURN                    | done",
+            "metadata_refs": [
+              "opcodes.RETURN",
+              "slot_indices.STAGE_0"
+            ]
+          }
+        }
+      ],
+      "cards": [
+        "PL!N-pb1-008-P＋ | エマ・ヴェルデ [member_db:337] (ab#0 CONSTANT)",
+        "PL!N-pb1-008-R | エマ・ヴェルデ [member_db:4433] (ab#0 CONSTANT)"
+      ],
+      "card_refs": [],
+      "pseudocode": ""
+    },
+    {
+      "signature": "T6|c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_hash": "c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_source": "{\"frames\":[{\"op\":\"NOP\"},{\"op\":\"REDUCE_COST\"},{\"op\":\"RETURN\"}],\"trigger\":6}",
+      "trigger_id": 6,
+      "trigger": "CONSTANT",
+      "frame_count": 3,
+      "opcode_sequence": [
+        "NOP",
+        "REDUCE_COST",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "opcode_id": 0,
+          "opcode": "NOP",
+          "ability_frame_index": 0,
+          "attr": {
+            "unit_enabled": 1,
+            "unit_id": 1
+          },
+          "params": {
+            "raw_cond": "HAS_SUCCESS_LIVE"
+          }
+        },
+        {
+          "opcode_id": 13,
+          "opcode": "REDUCE_COST",
           "ability_frame_index": 1,
+          "value": 2,
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "HAND"
+          },
+          "semantic": {
+            "opcode_id": 13,
+            "opcode_name": "REDUCE_COST",
+            "opcode_section": "opcodes",
+            "decoded": "REDUCE_COST               | value=2, filter=[none], slot=[target=Context Card, source=Hand]",
+            "value": 2,
+            "slot": {
+              "target_slot": 4,
+              "source_zone": "HAND"
+            },
+            "metadata_refs": [
+              "opcodes.REDUCE_COST"
+            ]
+          }
+        },
+        {
+          "opcode_id": 1,
+          "opcode": "RETURN",
+          "ability_frame_index": 2,
           "semantic": {
             "opcode_id": 1,
             "opcode_name": "RETURN",
@@ -52488,9 +52649,78 @@
       ],
       "cards": [
         "PL!-pb1-014-P＋ | 星空 凛 [member_db:99] (ab#0 CONSTANT)",
-        "PL!-pb1-014-R | 星空 凛 [member_db:4195] (ab#0 CONSTANT)",
-        "PL!N-pb1-008-P＋ | エマ・ヴェルデ [member_db:337] (ab#0 CONSTANT)",
-        "PL!N-pb1-008-R | エマ・ヴェルデ [member_db:4433] (ab#0 CONSTANT)",
+        "PL!-pb1-014-R | 星空 凛 [member_db:4195] (ab#0 CONSTANT)"
+      ],
+      "card_refs": [],
+      "pseudocode": ""
+    },
+    {
+      "signature": "T6|c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_hash": "c7e6e7242b04e74204a6401adab8f94b82344053",
+      "signature_source": "{\"frames\":[{\"op\":\"NOP\"},{\"op\":\"REDUCE_COST\"},{\"op\":\"RETURN\"}],\"trigger\":6}",
+      "trigger_id": 6,
+      "trigger": "CONSTANT",
+      "frame_count": 3,
+      "opcode_sequence": [
+        "NOP",
+        "REDUCE_COST",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "opcode_id": 0,
+          "opcode": "NOP",
+          "ability_frame_index": 0,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": 3
+          },
+          "params": {
+            "raw_cond": "COUNT_MOVED_STAGE",
+            "MIN": 1
+          }
+        },
+        {
+          "opcode_id": 13,
+          "opcode": "REDUCE_COST",
+          "ability_frame_index": 1,
+          "value": 2,
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "HAND"
+          },
+          "semantic": {
+            "opcode_id": 13,
+            "opcode_name": "REDUCE_COST",
+            "opcode_section": "opcodes",
+            "decoded": "REDUCE_COST               | value=2, filter=[none], slot=[target=Context Card, source=Hand]",
+            "value": 2,
+            "slot": {
+              "target_slot": 4,
+              "source_zone": "HAND"
+            },
+            "metadata_refs": [
+              "opcodes.REDUCE_COST"
+            ]
+          }
+        },
+        {
+          "opcode_id": 1,
+          "opcode": "RETURN",
+          "ability_frame_index": 2,
+          "semantic": {
+            "opcode_id": 1,
+            "opcode_name": "RETURN",
+            "opcode_section": "opcodes",
+            "decoded": "RETURN                    | done",
+            "metadata_refs": [
+              "opcodes.RETURN",
+              "slot_indices.STAGE_0"
+            ]
+          }
+        }
+      ],
+      "cards": [
         "PL!SP-bp5-017-N | 桜小路きな子 [member_db:870] (ab#0 CONSTANT)"
       ],
       "card_refs": [],
@@ -53893,6 +54123,8 @@
             "compare_accumulated": 1
           },
           "slot": {
+            "target_slot": 4,
+            "source_zone": "HAND",
             "remainder_zone": 204,
             "is_dynamic": 1
           },
@@ -53900,7 +54132,7 @@
             "opcode_id": 13,
             "opcode_name": "REDUCE_COST",
             "opcode_section": "opcodes",
-            "decoded": "REDUCE_COST               | value=1, filter=[target=self, special=Not Self, compare_accumulated], slot=[multiplier_source=HAND, dynamic]",
+            "decoded": "REDUCE_COST               | value=1, filter=[target=self, special=Not Self, compare_accumulated], slot=[target=Context Card, source=Hand, multiplier_source=HAND, dynamic]",
             "value": 1,
             "attr": {
               "target_player": 1,
@@ -53908,6 +54140,8 @@
               "compare_accumulated": 1
             },
             "slot": {
+              "target_slot": 4,
+              "source_zone": "HAND",
               "remainder_zone": 204,
               "is_dynamic": 1
             },

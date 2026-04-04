@@ -124,7 +124,7 @@
             {
               "effect_type": 13,
               "value": 1,
-              "target": 0,
+              "target": 4,
               "params": {},
               "is_optional": false
             }

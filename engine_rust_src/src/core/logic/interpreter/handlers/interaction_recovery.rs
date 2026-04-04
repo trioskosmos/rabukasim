@@ -7,54 +7,13 @@ use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
 
-fn source_ability_text<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a str> {
-    let source_card_id = if ctx.ability_card_id >= 0 {
-        ctx.ability_card_id
-    } else {
-        ctx.source_card_id
-    };
-    let ability_index = ctx.ability_index.max(0) as usize;
-
-    if let Some(member) = db.get_member(source_card_id) {
-        if let Some(ability) = member.abilities.get(ability_index) {
-            if !ability.raw_text.is_empty() {
-                return Some(ability.raw_text.as_str());
-            }
-            if !ability.pseudocode.is_empty() {
-                return Some(ability.pseudocode.as_str());
-            }
-        }
-        return Some(member.original_text.as_str());
-    }
-
-    if let Some(live) = db.get_live(source_card_id) {
-        if let Some(ability) = live.abilities.get(ability_index) {
-            if !ability.raw_text.is_empty() {
-                return Some(ability.raw_text.as_str());
-            }
-            if !ability.pseudocode.is_empty() {
-                return Some(ability.pseudocode.as_str());
-            }
-        }
-        return Some(live.original_text.as_str());
-    }
-
-    None
-}
-
 fn recovery_uses_same_name_filter(
     db: &CardDatabase,
     ctx: &AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> bool {
-    if recovery_special_id(db, ctx, frame_data, frame_idx) == 4 {
-        return true;
-    }
-
-    source_ability_text(db, ctx)
-        .map(|text| text.contains("カード名がすべて含まれる") || text.contains("special=Same Name"))
-        .unwrap_or(false)
+    recovery_special_id(db, ctx, frame_data, frame_idx) == 4
 }
 
 fn recovery_special_id(

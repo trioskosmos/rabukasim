@@ -4,9 +4,9 @@
 // use crate::core::enums::*;
 use serde_json::Value;
 
-const METADATA_JSON: &str = include_str!("../../data/metadata.json");
-const GENERATED_CONSTANTS_RS: &str = include_str!("core/generated_constants.rs");
-const GENERATED_ENUMS_RS: &str = include_str!("core/enums.rs");
+const METADATA_JSON: &str = include_str!("../../../data/metadata.json");
+const GENERATED_CONSTANTS_RS: &str = include_str!("../core/generated_constants.rs");
+const GENERATED_ENUMS_RS: &str = include_str!("../core/enums.rs");
 
 // DELETED: test_database_integrity - fails due to empty frame program in sparse index, fixing breaks other tests
 // DELETED: test_ability_manifest_covers_production_database - outdated, checking old compiler format

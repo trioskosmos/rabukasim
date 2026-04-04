@@ -534,12 +534,21 @@ impl PyGameState {
     }
 
     #[getter]
+    fn semantic_log(&self) -> Vec<String> {
+        self.inner.ui.semantic_log.clone()
+    }
+
+    fn clear_semantic_log(&mut self) {
+        self.inner.ui.semantic_log.clear();
+    }
+
+    #[getter]
     fn bytecode_log(&self) -> Vec<String> {
-        self.inner.ui.bytecode_log.clone()
+        self.inner.ui.semantic_log.clone()
     }
 
     fn clear_bytecode_log(&mut self) {
-        self.inner.ui.bytecode_log.clear();
+        self.inner.ui.semantic_log.clear();
     }
 
     #[getter]

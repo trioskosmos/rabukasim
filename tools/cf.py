@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 if __name__ == "__main__":
     sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tools.archive.verify.bytecode_decoder import decode_bytecode
+from tools.verify.bytecode_decoder import decode_bytecode
 
 
 def load_json(path):

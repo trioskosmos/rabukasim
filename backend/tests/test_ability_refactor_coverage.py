@@ -7,7 +7,6 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from compiler.parser import parse_ability_text as legacy_parse_ability_text
-from compiler.parser_compat import parse_ability_text as compat_parse_ability_text
 from compiler.parser_v2 import parse_ability_text as v2_parse_ability_text
 from engine.compiler.semantic_processor import populate_semantic_from_frames
 from engine.models.ability import Ability, Effect, EffectType, TriggerType
@@ -20,19 +19,15 @@ class AbilityRefactorCoverageTests(unittest.TestCase):
         text = "TRIGGER: ON_PLAY\nEFFECT: DRAW(1)"
 
         legacy_abilities = legacy_parse_ability_text(text)
-        compat_abilities = compat_parse_ability_text(text)
         v2_abilities = v2_parse_ability_text(text)
 
         self.assertEqual(len(legacy_abilities), 1)
-        self.assertEqual(len(compat_abilities), 1)
         self.assertEqual(len(v2_abilities), 1)
 
         self.assertEqual(legacy_abilities[0].trigger, TriggerType.ON_PLAY)
-        self.assertEqual(compat_abilities[0].trigger, TriggerType.ON_PLAY)
         self.assertEqual(v2_abilities[0].trigger, TriggerType.ON_PLAY)
 
         self.assertEqual(len(legacy_abilities[0].effects), 1)
-        self.assertEqual(len(compat_abilities[0].effects), 1)
         self.assertEqual(len(v2_abilities[0].effects), 1)
 
     def test_japanese_description_strings_remain_intact(self) -> None:

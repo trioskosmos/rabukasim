@@ -768,25 +768,3 @@ mod tests {
     }
 }
 
-/// DEPRECATED: BytecodeInstruction is deprecated. Use AbilityFrame directly.
-#[deprecated(since = "0.1.0", note = "Use AbilityFrame directly instead of bytecode")]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BytecodeInstruction {
-    pub op: i32,
-    pub v: i32,
-    pub a: i64,
-    pub raw_s: i32,
-}
-
-#[allow(deprecated)]
-impl BytecodeInstruction {
-    pub fn decode(words: &[i32], ip: usize) -> Self {
-        let op = words[ip];
-        let v = if ip + 1 < words.len() { words[ip + 1] } else { 0 };
-        let a_low = if ip + 2 < words.len() { words[ip + 2] } else { 0 } as u32;
-        let a_high = if ip + 3 < words.len() { words[ip + 3] } else { 0 } as u32;
-        let raw_s = if ip + 4 < words.len() { words[ip + 4] } else { 0 };
-        let a = ((a_high as i64) << 32) | (a_low as i64);
-        Self { op, v, a, raw_s }
-    }
-}

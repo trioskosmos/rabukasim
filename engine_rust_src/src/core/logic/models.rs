@@ -3,8 +3,6 @@ use crate::core::enums::*;
 use crate::core::generated_layout::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
-#[allow(deprecated)]
-use crate::core::logic::interpreter::instruction::BytecodeInstruction;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -1589,9 +1587,14 @@ impl AbilityFrame {
         }
     }
 
-    #[allow(deprecated)]
-    pub fn from_instruction(instr: &BytecodeInstruction) -> Self {
-        Self::with_raw_parts(instr.op, instr.v, instr.a as u64, instr.raw_s, false, Value::Null)
+    pub fn from_instruction_words(words: &[i32], ip: usize) -> Self {
+        let opcode = words.get(ip).copied().unwrap_or_default();
+        let value = words.get(ip + 1).copied().unwrap_or_default();
+        let attr_low = words.get(ip + 2).copied().unwrap_or_default() as u32 as u64;
+        let attr_high = words.get(ip + 3).copied().unwrap_or_default() as u32 as u64;
+        let slot = words.get(ip + 4).copied().unwrap_or_default();
+        let attr = (attr_high << 32) | attr_low;
+        Self::with_raw_parts(opcode, value, attr, slot, false, Value::Null)
     }
 
     pub fn new(opcode: i32, value: i32, attr: i64, raw_s: i32, is_cost: bool) -> Self {
@@ -1837,16 +1840,12 @@ impl AbilityFrame {
         DecodedSlot::decode(self.slot)
     }
 
-    #[allow(deprecated)]
-    pub fn to_instruction(
-        &self,
-    ) -> crate::core::logic::interpreter::instruction::BytecodeInstruction {
-        crate::core::logic::interpreter::instruction::BytecodeInstruction {
-            op: self.opcode,
-            v: self.value,
-            a: self.attr as i64,
-            raw_s: self.slot,
-        }
+    pub fn append_instruction_words(&self, words: &mut Vec<i32>) {
+        words.push(self.opcode);
+        words.push(self.value);
+        words.push(self.attr as u32 as i32);
+        words.push((self.attr >> 32) as u32 as i32);
+        words.push(self.slot);
     }
 }
 
@@ -1941,15 +1940,13 @@ impl Hash for FrameProgram {
 }
 
 impl FrameProgram {
-    #[allow(deprecated)]
     pub fn from_instruction_words(words: &[i32]) -> Self {
         let mut frames = Vec::with_capacity(
             words.len() / crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
         );
         let mut ip = 0;
         while ip < words.len() {
-            let instr = BytecodeInstruction::decode(words, ip);
-            frames.push(AbilityFrame::from_instruction(&instr));
+            frames.push(AbilityFrame::from_instruction_words(words, ip));
             ip += crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION;
         }
 
@@ -1962,7 +1959,6 @@ impl FrameProgram {
         }
     }
 
-    #[allow(deprecated)]
     pub fn to_words(&self) -> Vec<i32> {
         if let Some(raw_program) = &self.raw_program {
             if let Some(words) = raw_program.get("instruction_words").and_then(|v| v.as_array()) {
@@ -1982,12 +1978,7 @@ impl FrameProgram {
             self.frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
         );
         for frame in &self.frames {
-            let instr = frame.to_instruction();
-            words.push(instr.op);
-            words.push(instr.v);
-            words.push(instr.a as i32);
-            words.push((instr.a >> 32) as i32);
-            words.push(instr.raw_s);
+            frame.append_instruction_words(&mut words);
         }
         words
     }
@@ -2414,59 +2405,15 @@ impl Ability {
         prefix.matches("{{icon_energy.png|E}}").count()
     }
 
-    fn effect_opcode(effect: &Effect) -> i32 {
-        if effect.runtime_opcode != 0 {
-            effect.runtime_opcode
-        } else {
-            AbilityFrame::opcode_from_effect_type(effect.effect_type)
-        }
-    }
-
-    fn is_runtime_effect_frame(frame: &AbilityFrame) -> bool {
-        let opcode = frame.opcode();
-        opcode != O_RETURN
-            && opcode != O_JUMP
-            && opcode != O_JUMP_IF_FALSE
-            && crate::core::logic::interpreter::conditions::common::parse_condition_type(opcode)
-                == ConditionType::None
-    }
-
-    fn frame_program_matches_effects(&self) -> bool {
-        let Some(frame_program) = self.frame_program.as_ref() else {
-            return false;
-        };
-
-        if self.effects.is_empty() {
-            return !frame_program.frames.is_empty();
-        }
-
-        let expected_opcodes: Vec<i32> = self
-            .effects
-            .iter()
-            .map(Self::effect_opcode)
-            .filter(|opcode| *opcode != O_NOP && *opcode != O_RETURN)
-            .collect();
-        if expected_opcodes.is_empty() {
-            return !frame_program.frames.is_empty();
-        }
-
-        let actual_opcodes: Vec<i32> = frame_program
-            .frames
-            .iter()
-            .filter(|frame| Self::is_runtime_effect_frame(frame))
-            .map(AbilityFrame::opcode)
-            .collect();
-        if actual_opcodes.is_empty() {
-            return false;
-        }
-
-        expected_opcodes
-            .iter()
-            .any(|opcode| actual_opcodes.contains(opcode))
+    fn has_authored_frame_program(&self) -> bool {
+        self.frame_program
+            .as_ref()
+            .map(|program| !program.frames.is_empty())
+            .unwrap_or(false)
     }
 
     pub fn resolved_frame_source(&self) -> &'static str {
-        if self.frame_program.is_some() && self.frame_program_matches_effects() {
+        if self.has_authored_frame_program() {
             "frame_program"
         } else if !self.effects.is_empty() {
             "effects"
@@ -2530,7 +2477,7 @@ impl Ability {
 
     pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
         if let Some(ref frame_program) = self.frame_program {
-            if self.frame_program_matches_effects() {
+            if !frame_program.frames.is_empty() {
                 return Cow::Borrowed(&frame_program.frames);
             }
         }
@@ -2555,7 +2502,6 @@ impl Ability {
         !self.resolved_frames().is_empty()
     }
 
-    #[allow(deprecated)]
     pub fn words(&self) -> Vec<i32> {
         if let Some(ref frame_program) = self.frame_program {
             return frame_program.to_words();
@@ -2567,12 +2513,7 @@ impl Ability {
                 frames.len() * crate::core::logic::interpreter::instruction::WORDS_PER_INSTRUCTION,
             );
             for frame in frames.iter() {
-                let instr = frame.to_instruction();
-                words.push(instr.op);
-                words.push(instr.v);
-                words.push(instr.a as i32);
-                words.push((instr.a >> 32) as i32);
-                words.push(instr.raw_s);
+                frame.append_instruction_words(&mut words);
             }
             return words;
         }
@@ -2694,9 +2635,9 @@ mod tests {
         };
 
         let frames = ability.resolved_frames();
-        assert_eq!(ability.resolved_frame_source(), "effects");
-        assert_eq!(frames.len(), 1);
-        assert_eq!(frames[0].opcode(), O_ADD_BLADES);
+        assert_eq!(ability.resolved_frame_source(), "frame_program");
+        assert_eq!(frames.len(), 2);
+        assert_eq!(frames[0].opcode(), O_RECOVER_LIVE);
     }
 
     #[test]

@@ -55,12 +55,32 @@ pub fn clear_discard_play_buffer(state: &mut GameState, target_p_idx: usize) {
     state.players[target_p_idx].looked_cards.clear();
 }
 
+fn play_from_discard_frame_enters_tapped(ability: &crate::core::logic::Ability) -> bool {
+    ability.resolved_frames().iter().any(|frame| {
+        if frame.opcode() != O_PLAY_MEMBER_FROM_DISCARD {
+            return false;
+        }
+
+        let components = frame.components();
+        components.filter.is_tapped
+            || components
+                .params
+                .and_then(|value| value.as_object())
+                .and_then(|params| params.get("is_tapped").or_else(|| params.get("enter_tapped")))
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false)
+    })
+}
+
 fn discard_play_enters_tapped(
     db: &CardDatabase,
     ctx: &AbilityContext,
     frame_data: Option<&AbilityFrameComponents<'_>>,
 ) -> bool {
     if let Some(frame_data) = frame_data {
+        if frame_data.filter.is_tapped {
+            return true;
+        }
         if let Some(is_tapped) = frame_data
             .params
             .and_then(|value| value.as_object())
@@ -81,22 +101,23 @@ fn discard_play_enters_tapped(
         return false;
     };
 
-    let ability_text = source_member
+    source_member
         .abilities
         .get(ctx.ability_index.max(0) as usize)
         .map(|ability| {
-            if !ability.raw_text.is_empty() {
-                ability.raw_text.as_str()
-            } else if !ability.pseudocode.is_empty() {
-                ability.pseudocode.as_str()
-            } else {
-                source_member.original_text.as_str()
+            if play_from_discard_frame_enters_tapped(ability) {
+                return true;
             }
-        })
-        .unwrap_or(source_member.original_text.as_str());
 
-    ability_text.contains("ウェイト状態で登場")
-        || source_member.original_text.contains("ウェイト状態で登場")
+            if !ability.raw_text.is_empty() {
+                return ability.raw_text.contains("ウェイト状態で登場");
+            } else if !ability.pseudocode.is_empty() {
+                return ability.pseudocode.contains("ウェイト状態で登場");
+            }
+
+            source_member.original_text.contains("ウェイト状態で登場")
+        })
+        .unwrap_or_else(|| source_member.original_text.contains("ウェイト状態で登場"))
 }
 
 #[allow(clippy::too_many_arguments)]

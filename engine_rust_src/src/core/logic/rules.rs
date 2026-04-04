@@ -44,53 +44,30 @@ fn iter_stage_cards(state: &GameState, player_idx: usize) -> impl Iterator<Item 
     (0..3).map(move |slot_idx| (slot_idx, stage_card_id(state, player_idx, slot_idx)))
 }
 
-fn stage_has_cost_13_or_more(state: &GameState, db: &CardDatabase) -> bool {
-    (0..2).any(|player_idx| {
-        state.players[player_idx]
-            .stage
-            .iter()
-            .copied()
-            .any(|cid| cid >= 0 && db.get_member(cid).map(|m| m.cost >= 13).unwrap_or(false))
-    })
-}
-
-fn source_text_requires_cost_13_stage_gate(text: &str) -> bool {
-    text.contains("コスト13以上") && text.contains("ステージ") && text.contains("ブレード")
-}
-
 fn frame_uses_count_multiplier(
     frame_data: &AbilityFrameComponents<'_>,
     has_per_card: bool,
 ) -> bool {
-    frame_data.uses_count_multiplier() || has_per_card
+    if has_per_card
+        || frame_data.slot.is_dynamic
+        || frame_data.filter.compare_accumulated
+        || frame_data.filter.special_id == 3
+    {
+        return true;
+    }
+
+    match frame_data.scale_source() {
+        SemanticScaleSource::SuccessPile => true,
+        SemanticScaleSource::CountZone(_) => frame_data.slot.source_zone == Zone::Default,
+        SemanticScaleSource::None => false,
+    }
 }
 
 fn cost_scope_frames<'a>(ab: &'a Ability) -> Cow<'a, [AbilityFrame]> {
     ab.resolved_frames()
 }
 
-fn ability_text<'a>(ab: &'a Ability, fallback: &'a str) -> &'a str {
-    if !ab.raw_text.is_empty() {
-        ab.raw_text.as_str()
-    } else if !ab.pseudocode.is_empty() {
-        ab.pseudocode.as_str()
-    } else {
-        fallback
-    }
-}
-
-fn self_cost_zone_text_hint(text: &str) -> Option<Zone> {
-    if text.contains("手札にあるこのメンバー") && text.contains("コスト") {
-        Some(Zone::Hand)
-    } else if text.contains("ステージにいるこのメンバー") && text.contains("コスト") {
-        Some(Zone::Stage)
-    } else {
-        None
-    }
-}
-
 fn is_hand_only_self_cost_modifier(
-    source_text: &str,
     frame_data: &AbilityFrameComponents<'_>,
     op: i32,
 ) -> bool {
@@ -98,9 +75,9 @@ fn is_hand_only_self_cost_modifier(
         return false;
     }
 
-    match self_cost_zone_text_hint(source_text) {
-        Some(Zone::Hand) => return true,
-        Some(Zone::Stage) => return false,
+    match frame_data.slot.source_zone {
+        Zone::Hand => return true,
+        Zone::Stage => return false,
         _ => {}
     }
 
@@ -135,45 +112,6 @@ fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
     matches!((raw_slot as u32) & 0xFF, 0 | 1 | 4)
 }
 
-fn inferred_tapped_group_requirement(ab: &Ability) -> Option<u8> {
-    if !ab.conditions.is_empty() {
-        return None;
-    }
-
-    if !ab.resolved_frames().iter().any(|frame| frame.opcode() == O_REDUCE_COST) {
-        return None;
-    }
-
-    let text = if !ab.raw_text.is_empty() {
-        ab.raw_text.as_str()
-    } else {
-        ab.pseudocode.as_str()
-    };
-
-    if text.contains("ウェイト状態")
-        && (text.contains("虹ヶ咲") || text.contains("Nijigasaki"))
-    {
-        Some(GROUP_NIJIGASAKI as u8)
-    } else {
-        None
-    }
-}
-
-fn stage_has_tapped_group_member(
-    state: &GameState,
-    db: &CardDatabase,
-    player_idx: usize,
-    group_id: u8,
-) -> bool {
-    iter_stage_cards(state, player_idx).any(|(slot_idx, cid)| {
-        cid >= 0
-            && state.players[player_idx].is_tapped(slot_idx)
-            && db.get_member(cid)
-                .map(|member| member.groups.contains(&group_id))
-                .unwrap_or(false)
-    })
-}
-
 fn ability_conditions_met(
     state: &GameState,
     db: &CardDatabase,
@@ -181,12 +119,6 @@ fn ability_conditions_met(
     ab: &Ability,
     ctx: &AbilityContext,
 ) -> bool {
-    if let Some(group_id) = inferred_tapped_group_requirement(ab) {
-        if !stage_has_tapped_group_member(state, db, player_idx, group_id) {
-            return false;
-        }
-    }
-
     if !ab.conditions.is_empty()
         && !ab
             .conditions
@@ -692,14 +624,9 @@ pub fn get_member_cost(
                     println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
                 }
                 if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart) {
-                    let source_text = ability_text(ab, target_m.original_text.as_str());
                     let applies_while_in_hand = cost_scope_frames(ab).iter().any(|frame| {
                         let frame_data = frame.components();
-                        is_hand_only_self_cost_modifier(
-                            source_text,
-                            &frame_data,
-                            frame_data.opcode,
-                        )
+                        is_hand_only_self_cost_modifier(&frame_data, frame_data.opcode)
                     });
                     if !applies_while_in_hand {
                         continue;
@@ -1048,7 +975,6 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
 
             let frames = cost_scope_frames(ab);
             let has_filters = !frames.is_empty();
-            let source_text = ability_text(ab, m.original_text.as_str());
 
             for frame in frames.iter() {
                 let frame_data = frame.components();
@@ -1061,7 +987,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                    if is_hand_only_self_cost_modifier(source_text, &frame_data, op) {
+                    if is_hand_only_self_cost_modifier(&frame_data, op) {
                         continue;
                     }
                     aura.cost_modifiers.push(CachedCostModifier {
@@ -1140,7 +1066,6 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             }
 
             let frames = cost_scope_frames(ab);
-            let source_text = ability_text(ab, src_m.original_text.as_str());
             let target_mask = if slot_idx < 3 {
                 if let Some(first_frame) = frames.first() {
                     let first_frame_data = first_frame.components();
@@ -1162,7 +1087,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let s = frame_data.raw_slot;
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                    if is_hand_only_self_cost_modifier(source_text, &frame_data, op) {
+                    if is_hand_only_self_cost_modifier(&frame_data, op) {
                         continue;
                     }
                     aura.cost_modifiers.push(CachedCostModifier {
@@ -1212,10 +1137,6 @@ fn apply_aura_modifier(
     target_slot: usize,
 ) {
     let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
-    let source_text = db
-        .get_member(ctx.source_card_id)
-        .map(|member| member.original_text.as_str())
-        .unwrap_or("");
 
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;
@@ -1247,12 +1168,6 @@ fn apply_aura_modifier(
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
-            if op == O_ADD_BLADES
-                && source_text_requires_cost_13_stage_gate(source_text)
-                && !stage_has_cost_13_or_more(state, db)
-            {
-                return;
-            }
             if semantic.scale_source() == SemanticScaleSource::SuccessPile {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             }
