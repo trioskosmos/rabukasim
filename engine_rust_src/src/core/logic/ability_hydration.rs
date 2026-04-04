@@ -105,7 +105,25 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
 
                     compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
 
-                    if let Some(cards) = ability_data.get("cards").and_then(|v| v.as_array()) {
+                    if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+                        for card_ref in card_refs {
+                            if let Some(card_obj) = card_ref.as_object() {
+                                if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
+                                    if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                        let mut keyed_entry = compact_entry.clone();
+                                        if let Some(trigger) = ability_data.get("trigger") {
+                                            keyed_entry.insert("trigger".to_string(), trigger.clone());
+                                        }
+                                        if let Some(trigger_id) = ability_data.get("trigger_id") {
+                                            keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
+                                        }
+                                        let key = format!("{}#{}", card_no, ability_index);
+                                        index.insert(key, Value::Object(keyed_entry));
+                                    }
+                                }
+                            }
+                        }
+                    } else if let Some(cards) = ability_data.get("cards").and_then(|v| v.as_array()) {
                         for card in cards {
                             let Some(card_entry) = card.as_str() else {
                                 continue;
@@ -185,19 +203,25 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
 pub(crate) fn load_sparse_text_index() -> HashMap<String, String> {
     let mut text_index = HashMap::new();
 
-    for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
-        if let Ok(json) = fs::read_to_string(path) {
-            if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
-                if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
-                    for ability_data in abilities {
-                        if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
-                            if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
-                                for card_ref in card_refs {
-                                    if let Some(card_obj) = card_ref.as_object() {
-                                        if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
-                                            if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
-                                                let key = format!("{}#{}", card_no, ability_index);
-                                                text_index.insert(key, source_text.to_string());
+    for candidates in [
+        ["data/ability_runtime_index.json", "../data/ability_runtime_index.json"],
+        ["data/ability_frame_index.json", "../data/ability_frame_index.json"],
+    ] {
+        let mut loaded_group = false;
+        for path in candidates {
+            if let Ok(json) = fs::read_to_string(path) {
+                if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
+                    if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
+                        for ability_data in abilities {
+                            if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
+                                if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+                                    for card_ref in card_refs {
+                                        if let Some(card_obj) = card_ref.as_object() {
+                                            if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
+                                                if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                                    let key = format!("{}#{}", card_no, ability_index);
+                                                    text_index.insert(key, source_text.to_string());
+                                                }
                                             }
                                         }
                                     }
@@ -206,10 +230,14 @@ pub(crate) fn load_sparse_text_index() -> HashMap<String, String> {
                         }
                     }
                 }
+                if !text_index.is_empty() {
+                    loaded_group = true;
+                    break;
+                }
             }
         }
 
-        if !text_index.is_empty() {
+        if loaded_group {
             break;
         }
     }

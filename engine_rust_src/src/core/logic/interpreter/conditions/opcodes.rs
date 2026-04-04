@@ -93,10 +93,6 @@ fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
         .unwrap_or(false)
 }
 
-fn has_known_energy_count_hydration_gap(cid: i32) -> bool {
-    cid == 557
-}
-
 fn count_matching_selected_or_discarded_cards(
     state: &GameState,
     db: &CardDatabase,
@@ -451,11 +447,6 @@ fn check_condition_with_parts(
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_COUNT_ENERGY => {
-            if has_known_energy_count_hydration_gap(cid) {
-                // Card 557 still has a known authored-frame hydration gap for its energy gate.
-                // Keep the compatibility shim localized until the underlying authored data is repaired.
-                return true;
-            }
             let count = resolve_count(state, db, op, attr, slot, ctx, depth);
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }

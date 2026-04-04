@@ -3,8 +3,8 @@
 DATA FLOW:
 ---------
 1. INPUT: data/cards.json (raw card data)
-2. INPUT: data/ability_frame_index.json (shared sparse frame-program index)
-3. PROCESS: compile_cards() parses each card, resolves abilities from the shared sparse source
+2. INPUT: data/ability_frame_source.json (authored sparse frame-program source)
+3. PROCESS: compile_cards() parses each card, resolves abilities from the authored sparse source
 4. OUTPUT: data/cards_compiled.json (compiled card database)
 """
 
@@ -76,9 +76,9 @@ def _dict_or_empty(v: Any) -> dict:
 def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
     """Convert card to the compact runtime export.
 
-    The runtime payload keeps semantic `effects`/`conditions`/`costs` and omits
-    `frame_program`. The Rust loader can rehydrate executable frames from the
-    sparse authored index and from semantic effects when needed.
+    The runtime payload keeps authored `frame_program` plus semantic
+    `effects`/`conditions`/`costs` so Rust can execute frames directly while
+    still using derived semantic metadata.
     """
     if not isinstance(card_dump, dict):
         return card_dump
@@ -104,25 +104,21 @@ def _init_worker(sparse_mapping: dict, manual_translations: dict):
 
 
 def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
-    # For semantic migration, we include effects, conditions, costs in output
-    # These are now the primary data source instead of frame_program
+    # Runtime exports retain authored frame_program and raw_text while also
+    # carrying derived effects, conditions, and costs.
     exclude_ability_fields = {
         "bytecode": True,
-        "raw_text": True,
         "pseudocode": True,
         "filters": True,
         "option_names": True,
         "semantic_form": True,  # Exclude from default export
         "_semantic_source": True,  # Internal tracking field
-        # Note: effects, conditions, costs are now INCLUDED for semantic migration
     }
     exclude_card_fields = {"faq": True, "abilities": {"__all__": exclude_ability_fields}}
 
     if export_profile == "runtime":
-        # Semantic-only format: exclude frame_program, keep effects/conditions/costs
         exclude_ability_fields.update(
             {
-                "frame_program": True,  # Exclude frame_program for semantic-only format
                 "modal_options": True,
             }
         )
@@ -535,6 +531,12 @@ class SparseSourceManager:
                     next_mapping[(card_no, ab_idx)] = {
                         "trigger_id": trigger_id,
                         "frames": frames,
+                        "raw_text": str(
+                            entry.get("raw_text", "")
+                            or entry.get("primary_text_jp", "")
+                            or entry.get("primary_text_en", "")
+                            or ""
+                        ),
                         "is_once_per_turn": _coerce_bool(entry.get("is_once_per_turn", False)),
                         "requires_selection": _coerce_bool(entry.get("requires_selection", False)),
                         "choice_flags": _coerce_int(entry.get("choice_flags", 0)),
@@ -557,10 +559,13 @@ class SparseSourceManager:
         return self.mapping.get((self._normalize_card_no(card_no), ab_idx))
 
 
-# Global sparse manager. The compiler and runtime share one editable JSON
-# source for authored frame programs.
-ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_index.json"
-SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
+# Global sparse manager for the editable authored frame source.
+ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_source.json"
+SPARSE_INDEX_PATH = (
+    ABILITY_FRAME_SOURCE_PATH
+    if os.path.exists(ABILITY_FRAME_SOURCE_PATH)
+    else "data/ability_frame_index.json"
+)
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
@@ -590,7 +595,7 @@ def _build_ability_from_sparse_entry(
     """
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
     frames = list(entry.get("frames", []) or [])
-    ability_raw_text = _select_ability_raw_text(raw_text, ability_index, entry)
+    ability_raw_text = str(entry.get("raw_text", "") or "").strip() or _select_ability_raw_text(raw_text, ability_index, entry)
     payload = dict(legacy_payload or {})
     payload["trigger"] = trigger_id
     payload["is_once_per_turn"] = entry.get(

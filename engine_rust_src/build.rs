@@ -15,7 +15,9 @@ fn main() {
     println!("cargo:rerun-if-env-changed=UV_PYTHON_INSTALL_DIR");
     for rel in [
         "data/cards.json",
+        "data/ability_frame_source.json",
         "data/ability_frame_index.json",
+        "data/ability_runtime_index.json",
         "data/cards_compiled.json",
         "data/metadata.json",
         "engine/compiler/runtime_cards.py",

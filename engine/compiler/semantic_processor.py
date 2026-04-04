@@ -276,6 +276,30 @@ def _infer_look_and_choose_count(ability_text: str) -> int:
     return 0
 
 
+def _sync_look_and_choose_frame(frame: dict, choose_count: int) -> None:
+    """Persist inferred choose_count into the authored frame payload."""
+    if not isinstance(frame, dict) or choose_count <= 0:
+        return
+
+    params = frame.get("params")
+    if not isinstance(params, dict):
+        params = {}
+        frame["params"] = params
+    params.setdefault("choose_count", choose_count)
+
+    value = frame.get("value")
+    if isinstance(value, dict):
+        value.setdefault("choose_count", choose_count)
+
+    semantic = frame.get("semantic")
+    if isinstance(semantic, dict):
+        semantic_params = semantic.get("params")
+        if not isinstance(semantic_params, dict):
+            semantic_params = {}
+            semantic["params"] = semantic_params
+        semantic_params.setdefault("choose_count", choose_count)
+
+
 def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
     """Populate effects/conditions/costs from frame_program data."""
     for ab in abilities:
@@ -364,6 +388,7 @@ def populate_semantic_from_frames(abilities: list, card_no: str = "") -> None:
                     inferred_choose_count = _infer_look_and_choose_count(ability_text)
                     if inferred_choose_count > 0:
                         params["choose_count"] = inferred_choose_count
+                        _sync_look_and_choose_frame(frame, inferred_choose_count)
 
                 ab.effects.append(Effect(
                     effect_type=eff_type, value=data["value"],

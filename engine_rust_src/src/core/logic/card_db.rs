@@ -67,10 +67,10 @@ impl CardRef {
     }
 }
 
-// The runtime and compiler share the per-ability frame index as the active
-// sparse frame-program source.
+// Runtime can fall back to the generated runtime index when compiled cards are
+// missing authored frame programs or raw ability text.
 const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
-    include_str!("../../../../data/ability_frame_index.json");
+    include_str!("../../../../data/ability_runtime_index.json");
 const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
     include_str!("../../../../data/card_122_overlay.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
@@ -216,15 +216,26 @@ impl CardDatabase {
         let mut merged_index = HashMap::new();
         let mut loaded_any = false;
 
-        for path in ["data/ability_frame_index.json", "../data/ability_frame_index.json"] {
-            if let Ok(json) = fs::read_to_string(path) {
-                let index = ability_hydration::load_sparse_ability_index_from_json(&json);
-                eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
-                if index.is_empty() {
-                    continue;
+        for candidates in [
+            ["data/ability_runtime_index.json", "../data/ability_runtime_index.json"],
+            ["data/ability_frame_index.json", "../data/ability_frame_index.json"],
+        ] {
+            let mut loaded_group = false;
+            for path in candidates {
+                if let Ok(json) = fs::read_to_string(path) {
+                    let index = ability_hydration::load_sparse_ability_index_from_json(&json);
+                    eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
+                    if index.is_empty() {
+                        continue;
+                    }
+                    merged_index.extend(index);
+                    loaded_any = true;
+                    loaded_group = true;
+                    break;
                 }
-                merged_index.extend(index);
-                loaded_any = true;
+            }
+            if loaded_group {
+                break;
             }
         }
 
@@ -370,6 +381,19 @@ impl Default for CardDatabase {
             cached_vanilla: None,
         }
     }
+}
+
+fn ability_requires_sparse_hydration(ability: &Ability) -> bool {
+    ability.raw_text.is_empty()
+        || ability
+            .frame_program
+            .as_ref()
+            .map(|program| program.frames.is_empty())
+            .unwrap_or(true)
+}
+
+fn card_requires_sparse_hydration(abilities: &[Ability]) -> bool {
+    abilities.iter().any(ability_requires_sparse_hydration)
 }
 
 impl CardDatabase {
@@ -913,8 +937,9 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
-        let text_index = ability_hydration::load_sparse_text_index();
-        
+        let mut text_index = HashMap::new();
+        let mut sparse_loaded = false;
+
         let mut db = Self {
             members: HashMap::new(),
             lives: HashMap::new(),
@@ -922,7 +947,7 @@ impl CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
-            sparse_ability_index: Self::load_sparse_ability_index(),
+            sparse_ability_index: HashMap::new(),
             legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
@@ -932,12 +957,19 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        ability_hydration::attach_sparse_ability_index(
-                            &card.card_no,
-                            &mut card.abilities,
-                            &db.sparse_ability_index,
-                            &text_index,
-                        )?;
+                        if card_requires_sparse_hydration(&card.abilities) {
+                            if !sparse_loaded {
+                                text_index = ability_hydration::load_sparse_text_index();
+                                db.sparse_ability_index = Self::load_sparse_ability_index();
+                                sparse_loaded = true;
+                            }
+                            ability_hydration::attach_sparse_ability_index(
+                                &card.card_no,
+                                &mut card.abilities,
+                                &db.sparse_ability_index,
+                                &text_index,
+                            )?;
+                        }
                         Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
@@ -970,12 +1002,19 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        ability_hydration::attach_sparse_ability_index(
-                            &card.card_no,
-                            &mut card.abilities,
-                            &db.sparse_ability_index,
-                            &text_index,
-                        )?;
+                        if card_requires_sparse_hydration(&card.abilities) {
+                            if !sparse_loaded {
+                                text_index = ability_hydration::load_sparse_text_index();
+                                db.sparse_ability_index = Self::load_sparse_ability_index();
+                                sparse_loaded = true;
+                            }
+                            ability_hydration::attach_sparse_ability_index(
+                                &card.card_no,
+                                &mut card.abilities,
+                                &db.sparse_ability_index,
+                                &text_index,
+                            )?;
+                        }
                         Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());

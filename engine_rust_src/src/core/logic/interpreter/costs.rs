@@ -40,6 +40,37 @@ fn matches_filter_attr(state: &GameState, db: &CardDatabase, cid: i32, attr: u64
     attr & FILTER_TYPE_MASK == 0 || state.card_matches_filter(db, cid, attr)
 }
 
+fn dynamic_energy_cost_from_frame(
+    state: &GameState,
+    db: &CardDatabase,
+    p_idx: usize,
+    frame: &AbilityFrame,
+    ctx: &AbilityContext,
+) -> Option<i32> {
+    let comp = frame.components();
+    if comp.opcode != O_PAY_ENERGY_DYNAMIC {
+        return None;
+    }
+
+    let params = comp.params?;
+    let source = params
+        .get("source")
+        .and_then(|value| value.as_str())
+        .unwrap_or("");
+
+    if source.eq_ignore_ascii_case("selected_live_score") {
+        let selected_live_score = ctx
+            .selected_cards
+            .iter()
+            .rev()
+            .find_map(|&cid| db.get_live(cid).map(|live| live.score as i32))
+            .unwrap_or(0);
+        return Some(selected_live_score + comp.value);
+    }
+
+    Some(state.players[p_idx].score as i32 + comp.value)
+}
+
 fn count_matching_cards<I>(state: &GameState, db: &CardDatabase, cards: I, attr: u64) -> usize
 where
     I: IntoIterator<Item = i32>,
@@ -313,6 +344,15 @@ pub fn check_frame_cost(
     match comp.opcode {
         O_PAY_ENERGY | O_ACTIVATE_ENERGY => {
             untapped_energy_count(state, p_idx) as i32 >= comp.value
+        }
+        O_PAY_ENERGY_DYNAMIC => {
+            if comp.filter.is_optional {
+                true
+            } else {
+                dynamic_energy_cost_from_frame(state, db, p_idx, frame, ctx)
+                    .map(|resolved| untapped_energy_count(state, p_idx) as i32 >= resolved.max(0))
+                    .unwrap_or(true)
+            }
         }
         O_MOVE_TO_DISCARD | O_MOVE_TO_DECK | O_MOVE_MEMBER => {
             let source_zone = comp.slot.source_zone;

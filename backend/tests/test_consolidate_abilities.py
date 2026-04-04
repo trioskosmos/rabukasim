@@ -76,7 +76,7 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
 
         payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
-        self.assertEqual(payload["schema"], "ability_frames.flat.v2")
+        self.assertEqual(payload["schema"], "ability_frame_source.flat.v2")
         self.assertTrue(all("op" in frame for frame in entry["frames"]))
         self.assertEqual(entry["frames"][0]["op"], "DRAW")
         self.assertEqual(entry["frames"][0]["options"]["value"], 1)
@@ -86,9 +86,46 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
         )
         self.assertEqual(entry["frames"][1]["op"], "RETURN")
 
+    def test_compact_index_backfills_structured_card_refs(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        authored_data = {
+            "summary": {"card_count": 1, "ability_count": 1},
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [{"op": "DRAW", "value": 1}, {"op": "RETURN"}],
+                    "cards": ["TST-200 | Test Card [member_db:200] (ab#0 ON_LIVE_START)"],
+                }
+            ],
+        }
+        card_db = {
+            "member_db": {
+                "200": {
+                    "card_id": 200,
+                    "card_no": "TST-200",
+                    "name": "Test Card",
+                    "abilities": [{"trigger": trigger_id}],
+                }
+            }
+        }
+
+        payload = codec.build_compact_ability_index(authored_data, metadata, card_db)
+        entry = payload["abilities"][0]
+
+        self.assertEqual(len(entry["card_refs"]), 1)
+        self.assertEqual(entry["card_refs"][0]["card_no"], "TST-200")
+        self.assertEqual(entry["card_refs"][0]["ability_index"], 0)
+        self.assertEqual(entry["card_refs"][0]["card_id"], 200)
+        self.assertEqual(entry["card_refs"][0]["db"], "member_db")
+
     def test_real_compact_index_preserves_opcode_sequences(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
-        authored_data = codec.load_authored_payload(ROOT / "data" / "ability_frame_index.json")
+        source_path = ROOT / "data" / "ability_frame_source.json"
+        if not source_path.exists():
+            source_path = ROOT / "data" / "ability_frame_index.json"
+        authored_data = codec.load_authored_payload(source_path)
 
         payload = codec.build_compact_ability_index(authored_data, metadata)
 

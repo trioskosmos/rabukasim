@@ -143,7 +143,18 @@ pub fn handle_recovery(
     // Populate looked_cards from candidate_cards if not already handled
     if !handled_same_name {
         state.players[p_idx].looked_cards.clear();
-        for cid in &candidate_cards {
+        let prioritized_candidates: Vec<i32> = ctx
+            .selected_cards
+            .iter()
+            .copied()
+            .filter(|cid| candidate_cards.contains(cid))
+            .collect();
+        let candidate_iter: Vec<i32> = if prioritized_candidates.is_empty() {
+            candidate_cards.clone()
+        } else {
+            prioritized_candidates
+        };
+        for cid in &candidate_iter {
             if type_matches(db, *cid, real_op)
                 && (a == 0 || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
             {

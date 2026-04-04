@@ -29,6 +29,9 @@ class DataStore:
         self.manual_pseudo = {}
         self.consolidated_pseudo = {}
         self.no_to_compiled = {} # card_no -> compiled_data
+        self.metadata = {}
+        self.opcode_names = {}
+        self.trigger_names = {}
         
         # Group/Unit mappings (Internal)
         self.GROUP_MAP = {
@@ -83,9 +86,33 @@ class DataStore:
         except Exception as e:
             print(f"Warning: Failed to load qa_data.json: {e}")
 
-        # Load authored ability index
+        # Load metadata for canonical opcode/trigger naming.
         try:
-            with open(os.path.join(self.base_path, "data", "ability_frame_index.json"), "r", encoding="utf-8") as f:
+            with open(os.path.join(self.base_path, "data", "metadata.json"), "r", encoding="utf-8") as f:
+                self.metadata = json.load(f)
+                self.opcode_names = {
+                    int(value): f"O_{name}"
+                    for name, value in self.metadata.get("opcodes", {}).items()
+                }
+                self.opcode_names.update(
+                    {
+                        int(value): f"C_{name}"
+                        for name, value in self.metadata.get("conditions", {}).items()
+                    }
+                )
+                self.trigger_names = {
+                    int(value): name
+                    for name, value in self.metadata.get("triggers", {}).items()
+                }
+        except Exception as e:
+            print(f"Warning: Failed to load metadata.json: {e}")
+
+        # Load generated ability index used for inspection.
+        try:
+            runtime_index_path = os.path.join(self.base_path, "data", "ability_runtime_index.json")
+            review_index_path = os.path.join(self.base_path, "data", "ability_frame_index.json")
+            source_path = runtime_index_path if os.path.exists(runtime_index_path) else review_index_path
+            with open(source_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # Create a card_no mapping for faster lookup
                 self.consolidated_pseudo = {}
@@ -101,7 +128,7 @@ class DataStore:
         except Exception as e:
             self.consolidated_pseudo = {}
             self.consolidated_pseudo_by_no = {}
-            print(f"Warning: Failed to load ability_frame_index.json: {e}")
+            print(f"Warning: Failed to load ability index JSON: {e}")
 
         self.loaded = True
         print(f"Sources loaded in {time.time() - t0:.2f}s")
@@ -445,10 +472,10 @@ class CardReporter:
     }
 
     def _opname(self, op):
-        return self.OPCODE_NAMES.get(op, f"op={op}")
+        return self.ds.opcode_names.get(op) or self.OPCODE_NAMES.get(op, f"op={op}")
 
     def _trigname(self, t):
-        return self.TRIGGER_NAMES.get(t, f"trigger={t}")
+        return self.ds.trigger_names.get(t) or self.TRIGGER_NAMES.get(t, f"trigger={t}")
 
     def _describe_filter(self, f: dict) -> str:
         if not f:

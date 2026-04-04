@@ -63,7 +63,7 @@ class FrameCodecTests(unittest.TestCase):
         }
 
         runtime_payload = codec.build_runtime_ability_index(payload, metadata)
-        self.assertEqual(runtime_payload["schema"], "ability_frame_index.flat.v2")
+        self.assertEqual(runtime_payload["schema"], "ability_runtime_index.flat.v2")
         self.assertIn("signature_source", runtime_payload["abilities"][0])
         self.assertIn('"frames"', runtime_payload["abilities"][0]["signature_source"])
         self.assertEqual(runtime_payload["abilities"][0]["frames"][0]["source_words"], [2, 1, 0, 0, 0])
@@ -88,7 +88,7 @@ class FrameCodecTests(unittest.TestCase):
 
         payload = codec.build_compact_ability_index(authored_data, metadata)
         entry = payload["abilities"][0]
-        self.assertEqual(payload["schema"], "ability_frames.flat.v2")
+        self.assertEqual(payload["schema"], "ability_frame_source.flat.v2")
         self.assertEqual(entry["source_mode"], "frame_authored")
         self.assertEqual([frame["op"] for frame in entry["frames"]], ["DRAW", "RETURN"])
         self.assertEqual(entry["frames"][0]["options"]["value"], 1)
@@ -155,6 +155,117 @@ class FrameCodecTests(unittest.TestCase):
         self.assertEqual(frame["opcode"], "SELECT_MEMBER")
         self.assertEqual(frame["opcode_id"], 65)
         self.assertIn("decoded", frame)
+
+    def test_runtime_index_adds_authored_text_and_opcode_catalog(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        payload = {
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [
+                        {"op": "DRAW", "value": 1},
+                        {"op": "SUM_VALUE"},
+                        {"op": "RETURN"},
+                    ],
+                    "cards": ["TST-001 | Test Card [member_db:1] (ab#0 ON_LIVE_START)"],
+                }
+            ],
+            "summary": {"card_count": 1, "ability_count": 1},
+        }
+        card_db = {
+            "member_db": {
+                "1": {
+                    "card_id": 1,
+                    "card_no": "TST-001",
+                    "name": "Test Card",
+                    "original_text": "{{live_start.png|ライブ開始時}}カードを1枚引く。",
+                    "original_text_en": "{{live_start.png|On live start}} Draw 1 card.",
+                    "abilities": [{"trigger": trigger_id}],
+                }
+            }
+        }
+
+        runtime_payload = codec.build_runtime_ability_index(payload, metadata, card_db)
+        entry = runtime_payload["abilities"][0]
+
+        self.assertEqual(entry["primary_text_jp"], "{{live_start.png|ライブ開始時}}カードを1枚引く。")
+        self.assertEqual(entry["primary_text_en"], "{{live_start.png|On live start}} Draw 1 card.")
+        self.assertEqual(entry["source_ability_texts"][0]["card_examples"], ["TST-001 | Test Card [member_db:1] (ab#0 ON_LIVE_START)"])
+        self.assertEqual(runtime_payload["summary"]["text_covered_ability_count"], 1)
+        self.assertEqual(runtime_payload["summary"]["text_missing_ability_count"], 0)
+
+        opcode_catalog = runtime_payload["opcode_catalog"]
+        self.assertEqual(opcode_catalog["unknown_count"], 0)
+        used_names = {(item["name"], item["section"], item["opcode_id"]) for item in opcode_catalog["used_entries"]}
+        self.assertIn(("DRAW", "opcodes", 10), used_names)
+        self.assertIn(("SUM_VALUE", "conditions", 312), used_names)
+
+    def test_runtime_index_adds_readable_frame_overlay(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        payload = {
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [
+                        {
+                            "opcode_id": 45,
+                            "opcode": "COLOR_SELECT",
+                            "value": 1,
+                            "attr": {"target_player": 1, "color_mask": 74},
+                            "slot": {"target_slot": 4},
+                            "semantic": {
+                                "opcode_id": 45,
+                                "opcode_name": "COLOR_SELECT",
+                                "opcode_section": "opcodes",
+                                "decoded": "COLOR_SELECT | value=1, filter=[target=self, colors=red/green/any], slot=[target=Context Card]",
+                                "metadata_refs": ["opcodes.COLOR_SELECT", "slot_indices.CONTEXT"],
+                            },
+                        },
+                        {
+                            "opcode_id": 12,
+                            "opcode": "ADD_HEARTS",
+                            "value": 65537,
+                            "attr": {"target_player": 1, "compare_accumulated": 1},
+                            "slot": {
+                                "remainder_zone": int(metadata["multiplier_count_sources"]["SUCCESS_PILE_COUNT"]),
+                                "is_dynamic": 1,
+                            },
+                            "semantic": {
+                                "opcode_id": 12,
+                                "opcode_name": "ADD_HEARTS",
+                                "opcode_section": "opcodes",
+                                "decoded": "ADD_HEARTS | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+                                "metadata_refs": ["opcodes.ADD_HEARTS"],
+                            },
+                        },
+                        {"op": "RETURN"},
+                    ],
+                    "cards": ["TST-002 | Readable Card [member_db:2] (ab#0 ON_LIVE_START)"],
+                }
+            ],
+            "summary": {"card_count": 1, "ability_count": 1},
+        }
+
+        runtime_payload = codec.build_runtime_ability_index(payload, metadata)
+        color_frame = runtime_payload["abilities"][0]["frames"][0]
+        heart_frame = runtime_payload["abilities"][0]["frames"][1]
+
+        self.assertEqual(color_frame["readable"]["attr"]["target_player"], "SELF")
+        self.assertEqual(color_frame["readable"]["attr"]["color_mask"], ["RED", "GREEN", "ANY"])
+        self.assertEqual(color_frame["readable"]["slot"]["target_slot"], "CONTEXT")
+        self.assertNotIn("metadata_refs", color_frame["semantic"])
+
+        self.assertEqual(heart_frame["readable"]["value"]["base_value"], 1)
+        self.assertEqual(heart_frame["readable"]["value"]["divisor"], 1)
+        self.assertEqual(heart_frame["readable"]["value"]["resolved"], "1 x SUCCESS_PILE_COUNT")
+        self.assertEqual(heart_frame["readable"]["slot"]["multiplier_source"], "SUCCESS_PILE_COUNT")
+        self.assertEqual(heart_frame["semantic"]["display"]["attr"]["target_player"], "SELF")
+        self.assertIn("count=1 x SUCCESS_PILE_COUNT", heart_frame["semantic"]["decoded"])
+        self.assertNotIn("metadata_refs", heart_frame["semantic"])
 
     def test_ability_to_frame_program_prefers_existing_frames(self) -> None:
         ability = Ability(

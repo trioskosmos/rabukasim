@@ -8,28 +8,66 @@ fn source_heart_requirement_color_hint(db: &CardDatabase, source_cid: i32) -> Op
         .and_then(crate::core::logic::heart_semantics::decode_heart_type_from_text)
 }
 
+fn resolve_requirement_color(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
+) -> usize {
+    let target_slot = frame.slot.target_slot as usize;
+    if let Some(color) = crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
+    {
+        color
+    } else if source_heart_requirement_color_hint(db, ctx.source_card_id).is_some() {
+        source_heart_requirement_color_hint(db, ctx.source_card_id).unwrap_or(6)
+    } else if matches!(target_slot, 4 | 7) {
+        6
+    } else if frame.filter.color_mask != 0 {
+        if frame.filter.color_mask == 0x7F {
+            6
+        } else {
+            frame.filter.color_mask.trailing_zeros() as usize
+        }
+    } else {
+        match target_slot {
+            0..=6 => target_slot,
+            _ => 6,
+        }
+    }
+}
+
 pub fn handle_reduce_heart_req(
     state: &mut GameState,
+
+    db: &CardDatabase,
 
     ctx: &AbilityContext,
 
     p_idx: usize,
 
-    s: i32,
-
-    v: i32,
+    frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    if (s as usize) < 7 {
+    let color = resolve_requirement_color(db, ctx, frame);
+    let final_v = super::state_score_bonus::resolve_dynamic_multiplier(state, db, ctx, frame)
+        .map(|count| frame.value * count)
+        .unwrap_or(frame.value);
+
+    if color < 7 && final_v > 0 {
         state.players[p_idx]
             .heart_req_reductions
-            .add_to_color(s as usize, v);
+            .add_to_color(color, final_v);
 
         state.players[p_idx]
             .heart_req_reduction_logs
-            .push((ctx.source_card_id, s as u8, v as u8));
+            .push((ctx.source_card_id, color as u8, final_v as u8));
 
         if !state.ui.silent {
-            if let Some(msg) = logging::get_opcode_log(O_REDUCE_HEART_REQ, v, 0, s, 0) {
+            if let Some(msg) = logging::get_opcode_log(
+                O_REDUCE_HEART_REQ,
+                final_v,
+                0,
+                color as i32,
+                0,
+            ) {
                 state.log(msg);
             }
         }
@@ -103,27 +141,7 @@ pub fn handle_increase_heart_cost(
 
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let target_slot = frame.slot.target_slot as usize;
-    let color = if let Some(color) =
-        crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
-    {
-        color
-    } else if source_heart_requirement_color_hint(db, ctx.source_card_id).is_some() {
-        6
-    } else if matches!(target_slot, 4 | 7) {
-        6
-    } else if frame.filter.color_mask != 0 {
-        if frame.filter.color_mask == 0x7F {
-            6
-        } else {
-            frame.filter.color_mask.trailing_zeros() as usize
-        }
-    } else {
-        match target_slot {
-            0..=6 => target_slot,
-            _ => 6,
-        }
-    };
+    let color = resolve_requirement_color(db, ctx, frame);
 
     if color < 7 {
         state.players[p_idx]

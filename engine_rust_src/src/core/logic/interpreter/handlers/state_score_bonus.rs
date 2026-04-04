@@ -4,13 +4,49 @@ use crate::core::logic::interpreter::handlers::state_helpers::{
     inline_value_ge_threshold, update_live_score_snapshot,
 };
 
-fn resolve_dynamic_multiplier(
+fn source_original_text<'a>(db: &'a CardDatabase, source_card_id: i32) -> Option<&'a str> {
+    db.get_member(source_card_id)
+        .map(|member| member.original_text.as_str())
+        .or_else(|| db.get_live(source_card_id).map(|live| live.original_text.as_str()))
+}
+
+fn resolve_multiplier_count_opcode(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
+) -> Option<i32> {
+    if frame_data.slot.is_dynamic
+        && frame_data.slot.source_zone == Zone::Default
+        && frame_data.slot.remainder_zone
+            == crate::core::generated_constants::COUNT_SOURCE_LIVE_AREA as u8
+    {
+        if let Some(text) = source_original_text(db, ctx.source_card_id) {
+            if text.contains("成功ライブカード置き場") {
+                return Some(C_COUNT_SUCCESS_LIVE);
+            }
+            if text.contains("ライブカード置き場") || text.contains("ライブ中") {
+                return Some(C_COUNT_LIVE_ZONE);
+            }
+        }
+        return Some(C_COUNT_SUCCESS_LIVE);
+    }
+
+    frame_data.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)
+}
+
+pub(super) fn resolve_dynamic_multiplier(
     state: &GameState,
     db: &CardDatabase,
     ctx: &AbilityContext,
     frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> Option<i32> {
-    let count_opcode = frame_data.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)?;
+    let uses_explicit_count_source = frame_data.slot.is_dynamic
+        || frame_data.scale_source() != crate::core::logic::models::SemanticScaleSource::None;
+    if !uses_explicit_count_source {
+        return None;
+    }
+
+    let count_opcode = resolve_multiplier_count_opcode(db, ctx, frame_data)?;
 
     let filter_attr = frame_data.filter.to_attr();
     let mut count = resolve_count(
@@ -27,41 +63,46 @@ fn resolve_dynamic_multiplier(
     if frame_data.opcode == O_REDUCE_COST && count > 0 {
         let p_idx = ctx.player_id as usize;
         let source_card_id = ctx.source_card_id;
-        let source_is_counted = match frame_data.inferred_count_zone() {
-            Some(crate::core::logic::models::SemanticCountZone::Hand) | None => state.players[p_idx]
+        let source_is_counted = match count_opcode {
+            C_COUNT_HAND => state.players[p_idx]
                 .hand
                 .iter()
                 .any(|&id| id == source_card_id),
-            Some(crate::core::logic::models::SemanticCountZone::Discard) => state.players[p_idx]
+            C_COUNT_DISCARD => state.players[p_idx]
                 .discard
                 .iter()
                 .any(|&id| id == source_card_id),
-            Some(crate::core::logic::models::SemanticCountZone::Stage) => state.players[p_idx]
+            C_COUNT_STAGE | C_COUNT_GROUP => state.players[p_idx]
                 .stage
                 .iter()
                 .any(|&id| id == source_card_id),
-            Some(crate::core::logic::models::SemanticCountZone::SuccessPile) => state.players[p_idx]
+            C_COUNT_SUCCESS_LIVE | C_SUCCESS_PILE_COUNT => state.players[p_idx]
                 .success_lives
                 .iter()
                 .any(|&id| id == source_card_id),
+            C_COUNT_LIVE_ZONE => state.players[p_idx]
+                .live_zone
+                .iter()
+                .any(|&id| id == source_card_id),
+            _ => false,
         };
-        let source_checked_slot = match frame_data.inferred_count_zone() {
-            Some(crate::core::logic::models::SemanticCountZone::Hand) => state.players[p_idx]
+        let source_checked_slot = match count_opcode {
+            C_COUNT_HAND => state.players[p_idx]
                 .hand
                 .iter()
                 .position(|&id| id == source_card_id)
                 .map(|idx| (p_idx as u8, 200 + idx as i16)),
-            Some(crate::core::logic::models::SemanticCountZone::Discard) => state.players[p_idx]
+            C_COUNT_DISCARD => state.players[p_idx]
                 .discard
                 .iter()
                 .position(|&id| id == source_card_id)
                 .map(|idx| (p_idx as u8, 100 + idx as i16)),
-            Some(crate::core::logic::models::SemanticCountZone::Stage) => state.players[p_idx]
+            C_COUNT_STAGE | C_COUNT_GROUP => state.players[p_idx]
                 .stage
                 .iter()
                 .position(|&id| id == source_card_id)
                 .map(|idx| (p_idx as u8, idx as i16)),
-            Some(crate::core::logic::models::SemanticCountZone::SuccessPile) | None => None,
+            _ => None,
         };
         let source_matches_filter = if filter_attr == 0 {
             true
@@ -139,14 +180,13 @@ pub fn handle_boost_score(
     }
 
     let mut final_v = v;
-    if frame_data.is_dynamic() {
+    if let Some(count) = resolve_dynamic_multiplier(state, db, ctx, &frame_data) {
+        final_v = v * count;
+    } else if frame_data.is_dynamic() {
         let divisor = frame_data.scalar_dynamic_divisor().max(1);
         let base = frame_data.scalar_dynamic_base();
         let paid = ctx.v_accumulated as i32;
         final_v = base * (paid / divisor);
-    } else if frame_data.uses_count_multiplier() {
-        let count = resolve_dynamic_multiplier(state, db, ctx, &frame_data).unwrap_or(0);
-        final_v = v * count;
     }
     state.players[target_p].live_score_bonus += final_v;
     state.players[target_p]

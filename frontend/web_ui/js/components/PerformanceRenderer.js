@@ -235,6 +235,26 @@ function renderSuccessEquation(have, need) {
     `;
 }
 
+function formatRequirementAdjustment(adjustment) {
+    const source = adjustment?.source || 'Effect';
+    const colorLabel = HEART_LABELS[adjustment?.color ?? 6] || 'heart';
+
+    if (adjustment?.type === 'transform' || adjustment?.type === 'override') {
+        return `${source}: ${adjustment?.desc || 'Requirement changed'}`;
+    }
+
+    if (adjustment?.type === 'reduction') {
+        return `${source}: -${Math.abs(adjustment?.value || 0)} ${colorLabel}`;
+    }
+
+    if (adjustment?.type === 'addition') {
+        return `${source}: +${Math.abs(adjustment?.value || 0)} ${colorLabel}`;
+    }
+
+    const raw = adjustment?.desc || `${adjustment?.value > 0 ? '+' : ''}${adjustment?.value || 0} ${colorLabel}`;
+    return `${source}: ${raw}`;
+}
+
 function renderTurnNavigation() {
     if (!State.performanceHistoryTurns || State.performanceHistoryTurns.length <= 1) {
         return '';
@@ -423,13 +443,13 @@ function renderLiveCards(result) {
                                 <div class="perf-status-pill ${live?.passed ? 'success' : 'failure'}">${live?.passed ? 'PASS' : 'FAIL'}</div>
                             </div>
                             <div class="perf-live-grid-rows" style="gap: 4px;">
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <div class="perf-mini-heading" style="margin-bottom: 0;">Goal:</div>
-                                    <div class="perf-hearts-grid">${renderHeartsGrid(live?.required || [])}</div>
+                                <div class="perf-live-row-inline">
+                                    <div class="perf-mini-heading perf-inline-label">Goal</div>
+                                    ${renderHeartsGrid(live?.required || [])}
                                 </div>
-                                <div style="display: flex; gap: 8px; align-items: center;">
-                                    <div class="perf-mini-heading" style="margin-bottom: 0;">Hit:</div>
-                                    <div class="perf-hearts-grid">${renderHeartsGrid(live?.filled || [])}</div>
+                                <div class="perf-live-row-inline">
+                                    <div class="perf-mini-heading perf-inline-label">Hit</div>
+                                    ${renderHeartsGrid(live?.filled || [])}
                                 </div>
                             </div>
                             ${renderSuccessEquation(live?.filled || [], live?.required || [])}
@@ -442,8 +462,7 @@ function renderLiveCards(result) {
                                 <div class="perf-pill-list">
                                     ${adjustments.map((adjustment) => {
                                         const isTransform = adjustment?.type === 'transform' || adjustment?.type === 'override';
-                                        const value = adjustment?.desc || `${adjustment?.value > 0 ? '+' : ''}${adjustment?.value || 0} ${HEART_LABELS[adjustment?.color ?? 6] || 'heart'}`;
-                                        return `<div class="perf-adjustment-pill ${isTransform ? 'transform' : 'requirement'}">${escapeHtml(adjustment?.source || 'Effect')}: ${escapeHtml(value)}</div>`;
+                                        return `<div class="perf-adjustment-pill ${isTransform ? 'transform' : 'requirement'}">${escapeHtml(formatRequirementAdjustment(adjustment))}</div>`;
                                     }).join('')}
                                 </div>
                             ` : ''}

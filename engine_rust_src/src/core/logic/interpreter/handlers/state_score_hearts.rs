@@ -106,7 +106,13 @@ pub fn handle_score_hearts(
             );
         }
         O_REDUCE_HEART_REQ => {
-            return state_score_requirements::handle_reduce_heart_req(state, ctx, p_idx, s, v);
+            return state_score_requirements::handle_reduce_heart_req(
+                state,
+                db,
+                ctx,
+                p_idx,
+                &frame_data,
+            );
         }
         O_TRANSFORM_HEART => {
             return state_score_requirements::handle_transform_heart(state, p_idx, a, s, v);

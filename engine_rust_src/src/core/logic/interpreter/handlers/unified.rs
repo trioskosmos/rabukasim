@@ -375,14 +375,63 @@ pub fn handle_activate_energy(
 
 pub fn handle_pay_energy_dynamic(
     state: &mut GameState,
-    _db: &CardDatabase,
+    db: &CardDatabase,
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
-    let base_score = state.players[p_idx].score as i32;
-    let total_cost = (base_score + v) as usize;
+    let total_cost = {
+        let params = frame_data.params;
+        let source = params
+            .and_then(|value| value.get("source"))
+            .and_then(|value| value.as_str())
+            .unwrap_or("");
+        if source.eq_ignore_ascii_case("selected_live_score") {
+            ctx.selected_cards
+                .iter()
+                .rev()
+                .find_map(|&cid| db.get_live(cid).map(|live| live.score as i32))
+                .unwrap_or(0)
+                .saturating_add(frame_data.value)
+                .max(0) as usize
+        } else {
+            (state.players[p_idx].score as i32 + frame_data.value).max(0) as usize
+        }
+    };
+
+    if frame_data.filter.is_optional {
+        use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO};
+        use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+
+        if ctx.choice_index == -1 {
+            if total_cost == 0 {
+                return HandlerResult::SetCond(true);
+            }
+            let available = (0..state.players[p_idx].energy_zone.len())
+                .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
+                .count();
+            if available < total_cost {
+                return HandlerResult::SetCond(false);
+            }
+            return suspend_choice(
+                state,
+                db,
+                ctx,
+                ctx,
+                ctx.program_counter as usize,
+                O_PAY_ENERGY_DYNAMIC,
+                0,
+                ChoiceType::Optional,
+                frame_data.resolved_filter_attr(),
+                -1,
+            );
+        }
+
+        if ctx.choice_index == CHOICE_NO || ctx.choice_index == CHOICE_DONE {
+            ctx.choice_index = -1;
+            return HandlerResult::SetCond(false);
+        }
+    }
     
     let available = (0..state.players[p_idx].energy_zone.len())
         .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
@@ -402,6 +451,7 @@ pub fn handle_pay_energy_dynamic(
             paid += 1;
         }
     }
+    ctx.choice_index = -1;
     HandlerResult::SetCond(true)
 }
 

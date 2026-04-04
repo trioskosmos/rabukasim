@@ -225,6 +225,51 @@ fn test_card_163_can_trigger_again_after_turn_cleanup() {
 }
 
 #[test]
+fn test_card_710_live_start_reduces_heart_requirement_from_other_hasunosora_lives() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+    state.phase = crate::core::enums::Phase::PerformanceP1;
+    state.current_player = 0;
+
+    let source_live_id = 710;
+    let support_lives = db
+        .lives
+        .values()
+        .filter(|live| live.card_id != source_live_id && live.groups.contains(&4))
+        .take(2)
+        .map(|live| live.card_id)
+        .collect::<Vec<_>>();
+    assert_eq!(support_lives.len(), 2, "expected two other Hasunosora live cards in the real DB");
+
+    state.players[0].live_zone = [source_live_id, support_lives[0], support_lives[1]];
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        source_card_id: source_live_id,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+
+    assert!(state.interaction_stack.is_empty(), "card 710 reduction is automatic and should not prompt");
+    assert_eq!(state.players[0].heart_req_reductions.get_color_count(3), 4);
+    assert!(state.players[0]
+        .heart_req_reduction_logs
+        .iter()
+        .any(|&(src_id, color, amount)| src_id == source_live_id && color == 3 && amount == 4));
+
+    let live_card = db.get_live(source_live_id).expect("card 710 should exist in the real DB");
+    let (req_board, _) = crate::core::logic::performance::get_live_requirements(&state, &db, 0, live_card);
+
+    assert_eq!(req_board.get_color_count(3), 5, "green requirement should drop from 9 to 5");
+    assert_eq!(req_board.get_color_count(6), 5, "generic requirement should stay unchanged");
+}
+
+#[test]
 fn test_tap_m_select_uses_opponent_cost_filter_for_wait_targets() {
     let mut db = create_test_db();
     let mut state = create_test_state();

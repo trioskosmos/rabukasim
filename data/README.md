@@ -1,18 +1,22 @@
 # Ability Data Flow
 
-`data/ability_frame_index.json` is the single authored ability index.
+The ability pipeline now uses three files with different roles.
 
-- The compiler reads `data/ability_frame_index.json` as the authored sparse ability source.
+- The compiler reads `data/ability_frame_source.json` as the authored sparse ability source.
+- `data/ability_runtime_index.json` is the machine-facing runtime frame index used by Rust and code generation.
+- `data/ability_frame_index.json` is the human-facing review index.
 - `data/cards_compiled.json` is the compiled runtime card database.
-- The build pipeline validates the frame index and mirrors compiled runtime artifacts.
+- The build pipeline refreshes all three ability-index artifacts and mirrors compiled runtime artifacts.
 
-Current caveat:
+Current behavior:
 
-- Rust still reopens `data/ability_frame_index.json` at load time to reattach executable frames onto the semantic card export. That is an active compatibility design, not the desired end state.
+- Rust reopens `data/ability_runtime_index.json` at load time to reattach executable frames onto the semantic card export.
 
 Related files:
 
-- `data/ability_frame_index.json` for authored sparse ability data
+- `data/ability_frame_source.json` for authored sparse ability data
+- `data/ability_runtime_index.json` for machine-facing runtime hydration
+- `data/ability_frame_index.json` for review-friendly inspection
 - `data/cards_compiled.json` for compiled runtime output
 - `data/metadata.json` for opcode ids and packed layout schema
 - `engine/data/cards_compiled.json` for the engine-side live mirror

@@ -226,39 +226,7 @@ pub fn handle_select_ops(
                         cards
                     );
                 }
-                if cards.is_empty() {
-                    let fallback_cards = state.players[select_member_target_player]
-                        .stage
-                        .iter()
-                        .enumerate()
-                        .filter_map(|(slot_idx, &cid)| {
-                            if cid >= 0
-                                && state.card_matches_filter_with_struct(
-                                    db,
-                                    cid,
-                                    Some((select_member_target_player as u8, slot_idx as i16)),
-                                    &structured_filter,
-                                    ctx,
-                                )
-                            {
-                                Some(cid)
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<i32>>();
-                    if state.debug.debug_mode {
-                        eprintln!(
-                            "[SELECT_DBG] structured_fallback source={} target_player={} cards={:?}",
-                            ctx.source_card_id,
-                            select_member_target_player,
-                            fallback_cards
-                        );
-                    }
-                    fallback_cards
-                } else {
-                    cards
-                }
+                cards
             };
             let looked_cards = looked_cards;
             if looked_cards.is_empty() {
