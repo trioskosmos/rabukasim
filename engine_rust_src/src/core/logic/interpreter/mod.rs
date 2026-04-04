@@ -69,6 +69,60 @@ fn should_defer_ability_condition_precheck(
 
     false
 }
+
+pub(crate) fn uses_paired_keyword_effect_conditions(ability: &Ability) -> bool {
+    ability.effects.len() > 1
+        && ability.effects.len() == ability.conditions.len()
+        && ability
+            .conditions
+            .iter()
+            .all(|cond| cond.condition_type == ConditionType::HasKeyword)
+}
+
+fn paired_effect_indices(
+    state: &GameState,
+    db: &CardDatabase,
+    player_idx: usize,
+    ability: &Ability,
+    ctx: &AbilityContext,
+) -> Vec<usize> {
+    if !uses_paired_keyword_effect_conditions(ability) {
+        return Vec::new();
+    }
+
+    ability
+        .conditions
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, cond)| {
+            check_condition(state, db, player_idx, cond, ctx, 0).then_some(idx)
+        })
+        .collect()
+}
+
+fn resolve_effects_without_frames(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ability: &Ability,
+    ctx: &AbilityContext,
+) -> Result<(), InterpreterError> {
+    let p_idx = ctx.player_id as usize;
+    let paired_effects = paired_effect_indices(state, db, p_idx, ability, ctx);
+    if !paired_effects.is_empty() {
+        for idx in paired_effects {
+            if let Some(effect) = ability.effects.get(idx) {
+                apply_effect_directly(state, db, ctx, effect)?;
+            }
+        }
+        return Ok(());
+    }
+
+    if let Some(effect) = ability.effects.first() {
+        return apply_effect_directly(state, db, ctx, effect);
+    }
+
+    Ok(())
+}
 use std::fmt;
 use std::sync::{Mutex, OnceLock};
 
@@ -356,15 +410,6 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    let is_ability_0 = ctx_in.ability_index == 0 || ctx_in.ability_index == -1;
-    if ctx_in.source_card_id == 579
-        && is_ability_0
-        && ability.trigger == TriggerType::OnLiveStart
-        && !check_card_579_cost_gate(state, db, ctx_in)
-    {
-        return Ok(());
-    }
-
     if ctx_in.source_card_id == 4849 && ability.trigger == TriggerType::Activated {
         let p_idx = ctx_in.player_id as usize;
         if let Some(cid) = state.players[p_idx].hand.pop() {
@@ -400,34 +445,26 @@ pub fn resolve_ability(
     }
 
     let frames = ability.resolved_frames();
-    if ctx_in.source_card_id == 4331 {
-        if state.debug.debug_mode && !state.ui.silent {
-            eprintln!(
-                "[ABILITY_DBG] source_card_id={} frames_len={} first_opcode={:?}",
-                ctx_in.source_card_id,
-                frames.len(),
-                frames.first().map(|f| f.opcode())
-            );
-        }
+    if state.debug.debug_mode && !state.ui.silent {
+        eprintln!(
+            "[ABILITY_DBG] source_card_id={} frames_len={} first_opcode={:?}",
+            ctx_in.source_card_id,
+            frames.len(),
+            frames.first().map(|f| f.opcode())
+        );
     }
     if frames.is_empty() {
-        if let Some(effect) = ability.effects.first() {
-            return apply_effect_directly(state, db, ctx_in, effect);
-        }
-        return Ok(());
+        return resolve_effects_without_frames(state, db, ability, ctx_in);
     }
 
-    if ctx_in.source_card_id == 579
-        && ability.trigger == TriggerType::OnLiveStart
-        && ctx_in.ability_index == 1
-    {
-        return resolve_semantic_frames(state, db, &frames, ctx_in);
-    }
-    
     // Check ability.conditions before executing frames.
     // Gate this on whether the ability resolves to executable frames rather than
     // whether the legacy frame_program wrapper happens to be populated.
-    if !ability.conditions.is_empty() && ability.has_resolved_frames() {
+    if uses_paired_keyword_effect_conditions(ability) {
+        if paired_effect_indices(state, db, ctx_in.player_id as usize, ability, ctx_in).is_empty() {
+            return Ok(());
+        }
+    } else if !ability.conditions.is_empty() && ability.has_resolved_frames() {
         let mut all_conditions_pass = true;
         for (i, cond) in ability.conditions.iter().enumerate() {
             if !should_precheck_ability_condition(cond)
@@ -476,37 +513,12 @@ fn check_nonfiction_prerequisite(
     has_kanon && has_keke
 }
 
-fn check_card_579_cost_gate(state: &GameState, db: &CardDatabase, ctx: &AbilityContext) -> bool {
-    let p_idx = ctx.player_id as usize;
-    let opp_idx = 1 - (p_idx.min(1));
-    let center_cost = |player_idx: usize| -> u32 {
-        state.players[player_idx]
-            .stage
-            .get(1)
-            .copied()
-            .filter(|&cid| cid >= 0)
-            .and_then(|cid| db.get_member(cid))
-            .map(|m| m.cost)
-            .unwrap_or(0)
-    };
-    center_cost(p_idx) > center_cost(opp_idx)
-}
-
 pub fn resolve_semantic_frames(
     state: &mut GameState,
     db: &CardDatabase,
     frames: &[AbilityFrame],
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
-    // Debug for Q203
-    if ctx_in.source_card_id == 358 {
-        eprintln!("[DEBUG_Q203] resolve_semantic_frames called with {} frames", frames.len());
-        for (i, frame) in frames.iter().enumerate() {
-            eprintln!("[DEBUG_Q203] Frame {}: opcode={}, value={}, attr={:#x}", 
-                i, frame.opcode(), frame.value(), frame.attr());
-        }
-    }
-    
     if db.is_vanilla {
         return Ok(());
     }
@@ -531,26 +543,7 @@ pub fn resolve_semantic_frames(
         if let Some(live) = db.get_live(ctx.source_card_id) {
             if ctx.ability_index >= 0 && ctx.ability_index < live.abilities.len() as i16 {
                 let ability = &live.abilities[ctx.ability_index as usize];
-                if !ability.effects.is_empty() {
-                    if ctx.source_card_id == 358 && ability.effects.len() >= 2 {
-                        let p_idx = ctx.player_id as usize;
-                        let energy_activated =
-                            (state.players[p_idx].activated_energy_group_mask & (1 << 2)) != 0;
-                        let member_activated =
-                            (state.players[p_idx].activated_member_group_mask & (1 << 2)) != 0;
-
-                        if energy_activated && !member_activated {
-                            let effect = &ability.effects[0];
-                            return apply_effect_directly(state, db, &ctx, effect);
-                        } else if member_activated {
-                            let effect = &ability.effects[1];
-                            return apply_effect_directly(state, db, &ctx, effect);
-                        }
-                    }
-
-                    let effect = &ability.effects[0];
-                    return apply_effect_directly(state, db, &ctx, effect);
-                }
+                return resolve_effects_without_frames(state, db, ability, &ctx);
             }
         }
     }
@@ -572,18 +565,16 @@ pub fn resolve_semantic_frames(
         let frame = &frames[effect_idx];
         let frame_data = frame.components();
         let ip = effect_idx;
-        if ctx_in.source_card_id == 4331 {
-            if state.debug.debug_mode && !state.ui.silent {
-                eprintln!(
-                    "[FRAME_DBG] ip={} opcode={} value={} optional={} filter_attr={:#x} slot={}",
-                    ip,
-                    frame_data.opcode,
-                    frame_data.value,
-                    frame_data.filter.is_optional,
-                    frame_data.resolved_filter_attr(),
-                    frame_data.slot.to_raw()
-                );
-            }
+        if state.debug.debug_mode && !state.ui.silent {
+            eprintln!(
+                "[FRAME_DBG] ip={} opcode={} value={} optional={} filter_attr={:#x} slot={}",
+                ip,
+                frame_data.opcode,
+                frame_data.value,
+                frame_data.filter.is_optional,
+                frame_data.resolved_filter_attr(),
+                frame_data.slot.to_raw()
+            );
         }
 
         ctx.program_counter = ip as u16;

@@ -38,8 +38,7 @@ pub fn handle_select_mode(
                     || frame_data.filter.target_player == 2
                     || slot.is_opponent
                     || slot.target_slot == 2
-                    || filter.target_player == 2
-                    || ctx.source_card_id == 461;
+                    || filter.target_player == 2;
             let choice_type = if is_opponent {
                 ChoiceType::OpponentChoose
             } else {

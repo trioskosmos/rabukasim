@@ -73,6 +73,7 @@ pub fn handle_discard_placement(
     }
     
     if slot_idx < 3 {
+        let enters_tapped = super::discard_play_enters_tapped(db, ctx, None);
         let _ = state_member_play_resolve::finalize_play_member_from_discard(
             state,
             db,
@@ -82,6 +83,7 @@ pub fn handle_discard_placement(
             slot_idx,
             empty_slot_only,
             is_total_cost,
+            enters_tapped,
         );
     }
 

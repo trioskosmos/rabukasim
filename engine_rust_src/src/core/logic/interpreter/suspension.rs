@@ -147,7 +147,7 @@ pub fn suspend_interaction(
         state.phase = saved_phase;
         state.current_player = saved_current_player;
     }
-    if choice_type == ChoiceType::Optional || choice_type == ChoiceType::PayEnergy || ctx.source_card_id == 4331 {
+    if state.debug.debug_mode {
         eprintln!(
             "[SUSP_DBG] choice_type={:?} actions={:?} final_actions={:?} has_only_pass={} phase={:?} cp={} choice_text={}",
             choice_type,
@@ -159,12 +159,7 @@ pub fn suspend_interaction(
             choice_text
         );
     }
-    if final_actions.is_empty()
-        && matches!(
-            choice_type,
-            ChoiceType::SelectMember | ChoiceType::SelectStage
-        )
-    {
+    if final_actions.is_empty() && matches!(choice_type, ChoiceType::SelectStage) {
         for i in 0..3 {
             if state.players[chooser_p_idx as usize].stage[i] >= 0 {
                 final_actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + i as i32) as i32);
@@ -185,18 +180,17 @@ pub fn suspend_interaction(
         }
     }
 
-    let is_optional = choice_type == ChoiceType::Optional
-        || (filter_attr & crate::core::logic::filter::FILTER_IS_OPTIONAL) != 0;
     let has_only_pass = final_actions.is_empty() || final_actions.iter().all(|action| *action == 0);
-    if choice_type == ChoiceType::SelectMember
-        && has_only_pass
-        && (is_optional || ctx.source_card_id == 448)
-    {
+    let decoded_slot = DecodedSlot::decode(target_slot);
+    let is_stage_member_prompt = matches!(
+        decoded_slot.source_zone,
+        crate::core::enums::Zone::Default | crate::core::enums::Zone::Stage
+    );
+    if choice_type == ChoiceType::SelectMember && is_stage_member_prompt && has_only_pass {
         state.interaction_stack.pop();
         return false;
     }
     if choice_type == ChoiceType::Optional && has_only_pass {
-        let decoded_slot = DecodedSlot::decode(target_slot);
         let is_hand_discard_prompt =
             effect_opcode == crate::core::logic::constants::O_MOVE_TO_DISCARD
                 && decoded_slot.source_zone == crate::core::enums::Zone::Hand;

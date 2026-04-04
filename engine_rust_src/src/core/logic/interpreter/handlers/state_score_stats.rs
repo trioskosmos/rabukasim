@@ -133,17 +133,17 @@ pub fn handle_add_hearts(
     } else {
         resolved_slot
     };
-    if state.debug.debug_mode || ctx.source_card_id == 4853 {
+    if state.debug.debug_mode {
         println!("[DEBUG handle_add_hearts] color={}, resolved_slot={}, target_slot={}, p_idx={}, value={}", color, resolved_slot, target_slot, p_idx, frame.value);
     }
     if color < 7 {
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
-            if state.debug.debug_mode || ctx.source_card_id == 4853 {
+            if state.debug.debug_mode {
                 let before = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
                 println!("[DEBUG handle_add_hearts] Applying heart buff to slot_idx={}, color={}, before={}", slot_idx, color, before);
             }
             state.players[p_idx].heart_buffs[slot_idx].add_to_color(color, frame.value as i32);
-            if state.debug.debug_mode || ctx.source_card_id == 4853 {
+            if state.debug.debug_mode {
                 let after = state.players[p_idx].heart_buffs[slot_idx].get_color_count(color);
                 println!("[DEBUG handle_add_hearts] After adding: color={} count={}", color, after);
                 println!("[DEBUG handle_add_hearts] Now checking get_effective_hearts...");

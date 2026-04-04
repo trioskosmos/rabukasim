@@ -19,8 +19,24 @@ use crate::test_helpers::load_real_db;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::logic::action_factory::DecodedAction;
+    use crate::core::logic::card_db::LOGIC_ID_MASK;
     use crate::core::generated_constants::ACTION_BASE_HAND;
     use crate::test_helpers::TestActionReceiver;
+
+    fn insert_test_member(db: &mut CardDatabase, card_id: i32, cost: u32) {
+        let member = MemberCard {
+            card_id,
+            cost,
+            ..Default::default()
+        };
+        db.members.insert(card_id, member.clone());
+        let logic_id = (card_id & LOGIC_ID_MASK) as usize;
+        if logic_id >= db.members_vec.len() {
+            db.members_vec.resize(logic_id + 1, None);
+        }
+        db.members_vec[logic_id] = Some(member);
+    }
 
     #[test]
     fn test_card_10_playability_uses_effective_hand_cost() {
@@ -203,6 +219,76 @@ mod tests {
         assert_ne!(
             card_10_cost, card_121_cost,
             "Cards should have different base costs"
+        );
+    }
+
+    #[test]
+    fn test_card_10_baton_cost_does_not_double_count_hand_reduction() {
+        let mut db = load_real_db().clone();
+        insert_test_member(&mut db, 90001, 2);
+        insert_test_member(&mut db, 90002, 1);
+        insert_test_member(&mut db, 90003, 1);
+        insert_test_member(&mut db, 90004, 1);
+        insert_test_member(&mut db, 90005, 1);
+        insert_test_member(&mut db, 90006, 1);
+        insert_test_member(&mut db, 90007, 1);
+
+        let mut state = GameState::default();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].stage[0] = 90001;
+        state.players[0].hand = vec![10, 90002, 90003, 90004, 90005, 90006, 90007].into();
+        state.players[0].energy_zone = (1..=6).collect::<Vec<i32>>().into();
+
+        let cost = state.get_member_cost(0, 10, 0, -1, &db, 0);
+        assert_eq!(cost, 12, "card 10 baton cost should be 20 - 6 hand cards - 2 replaced cost = 12");
+
+        let mut receiver = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut receiver);
+
+        let illegal_baton_play_present = receiver.actions.iter().any(|action| {
+            matches!(
+                DecodedAction::decode(*action),
+                DecodedAction::PlayMember {
+                    hand_idx: 0,
+                    slot_idx: 0,
+                    other_slot: None,
+                    ..
+                }
+            )
+        });
+        assert!(
+            !illegal_baton_play_present,
+            "card 10 should not be playable with only 6 energy when baton cost is 12; actions={:?}",
+            receiver.actions
+        );
+
+        let result = state.play_member(&db, 0, 0);
+        assert!(result.is_err(), "direct baton play should fail with only 6 energy, got {result:?}");
+    }
+
+    #[test]
+    fn test_card_10_baton_cost_ignores_stage_copy_hand_reduction_leak() {
+        let mut db = load_real_db().clone();
+        insert_test_member(&mut db, 90101, 2);
+        insert_test_member(&mut db, 90102, 1);
+        insert_test_member(&mut db, 90103, 1);
+        insert_test_member(&mut db, 90104, 1);
+        insert_test_member(&mut db, 90105, 1);
+        insert_test_member(&mut db, 90106, 1);
+        insert_test_member(&mut db, 90107, 1);
+
+        let mut state = GameState::default();
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].stage[0] = 90101;
+        state.players[0].stage[1] = 10;
+        state.players[0].hand = vec![10, 90102, 90103, 90104, 90105, 90106, 90107].into();
+
+        let cost = state.get_member_cost(0, 10, 0, -1, &db, 0);
+        assert_eq!(
+            cost, 12,
+            "a stage copy of card 10 must not add another hand-based reduction during baton cost evaluation"
         );
     }
 

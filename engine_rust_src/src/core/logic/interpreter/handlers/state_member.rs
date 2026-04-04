@@ -132,7 +132,7 @@ pub fn handle_member_state(
                 a as u64
             };
             let filter_target = (filter_attr & 0x3) as u8;
-            if state.debug.debug_mode && ctx.source_card_id == 4196 {
+            if state.debug.debug_mode {
                 eprintln!(
                     "[STATE_TAP] filter_target={} resolved_slot={} {}",
                     filter_target,
@@ -160,7 +160,7 @@ pub fn handle_member_state(
                 }
             }
 
-            if state.debug.debug_mode && ctx.source_card_id == 4196 {
+            if state.debug.debug_mode {
                 eprintln!(
                     "[STATE_TAP] target_p_idx={} stage={:?} tapped={:?} {}",
                     target_p_idx,

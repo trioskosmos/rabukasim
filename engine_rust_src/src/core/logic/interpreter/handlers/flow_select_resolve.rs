@@ -184,7 +184,7 @@ pub fn resolve_select_choice(
         && choice < 3
         && (is_targeted_select_member_cost || is_tap_member_selection || is_optional_set_tapped)
     {
-        if state.debug.debug_mode && ctx.source_card_id == 4196 {
+        if state.debug.debug_mode {
             eprintln!(
                 "[SELECT_RESOLVE_TAP] target_player={} choice={} selected_cid={} before_tapped={}",
                 target_player,

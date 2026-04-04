@@ -449,7 +449,7 @@ impl CardFilter {
                 .map(|card| card.char_mask)
                 .or_else(|| live.map(|card| card.char_mask))
                 .unwrap_or_default();
-            if (card_char_mask & requested_char_mask) == 0 {
+            if card_char_mask != 0 && (card_char_mask & requested_char_mask) == 0 {
                 return false;
             }
         }
@@ -547,10 +547,7 @@ impl CardFilter {
                         return false;
                     }
                 } else {
-                    // Fallback - check for KANON
-                    if !name.to_uppercase().contains("KANON") {
-                        return false;
-                    }
+                    return false;
                 }
             } else {
                 return false;
@@ -766,8 +763,10 @@ impl CardFilter {
     pub fn with_char(mut self, char_id: u8) -> Self {
         if self.char_id_1 == 0 {
             self.char_id_1 = char_id;
-        } else {
+        } else if self.char_id_2 == 0 {
             self.char_id_2 = char_id;
+        } else {
+            self.char_id_3 = char_id;
         }
         self
     }
@@ -1185,23 +1184,14 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         .and_then(Value::as_str)
     {
         let normalized = filter_str.trim();
-        if normalized.eq_ignore_ascii_case("Umi/Yoshiko/Rina")
-            || normalized.eq_ignore_ascii_case("Umi / Yoshiko / Rina")
-        {
-            return Some((
-                CardFilter {
-                    is_enabled: true,
-                    char_id_1: 4,
-                    char_id_2: 16,
-                    is_optional: obj
-                        .get("is_optional")
-                        .or_else(|| obj.get("IS_OPTIONAL"))
-                        .map(as_bool_robust)
-                        .unwrap_or(true),
-                    ..CardFilter::default()
-                },
-                0,
-            ));
+        let mut character_filter = CardFilter::default();
+        if apply_character_name_tokens(&mut character_filter, normalized) {
+            character_filter.is_optional = obj
+                .get("is_optional")
+                .or_else(|| obj.get("IS_OPTIONAL"))
+                .map(as_bool_robust)
+                .unwrap_or(true);
+            return Some((character_filter, 0));
         }
 
         let (parsed, parsed_extras) = filter_from_semantic_string(filter_str);
@@ -1346,6 +1336,87 @@ fn unit_id_from_name(name: &str) -> Option<u8> {
     }
 }
 
+fn normalize_character_token(token: &str) -> String {
+    token
+        .chars()
+        .filter(|ch| {
+            ch.is_alphanumeric()
+                || ('\u{3040}'..='\u{30ff}').contains(ch)
+                || ('\u{4e00}'..='\u{9faf}').contains(ch)
+        })
+        .flat_map(|ch| ch.to_uppercase())
+        .collect()
+}
+
+fn character_id_from_name(name: &str) -> Option<u8> {
+    match normalize_character_token(name).as_str() {
+        "HONOKA" => Some(1),
+        "ELI" | "ERI" => Some(2),
+        "KOTORI" => Some(3),
+        "UMI" => Some(4),
+        "RIN" => Some(5),
+        "MAKI" => Some(6),
+        "NOZOMI" => Some(7),
+        "HANAYO" => Some(8),
+        "NICO" => Some(9),
+        "CHIKA" => Some(11),
+        "RIKO" => Some(12),
+        "KANAN" => Some(13),
+        "DIA" => Some(14),
+        "YOU" => Some(15),
+        "YOSHIKO" => Some(16),
+        "HANAMARU" => Some(17),
+        "MARI" => Some(18),
+        "RUBY" => Some(19),
+        "AYUMU" => Some(21),
+        "KASUMI" => Some(22),
+        "SHIZUKU" => Some(23),
+        "KARIN" => Some(24),
+        "AI" => Some(25),
+        "KANATA" => Some(26),
+        "SETSUNA" => Some(27),
+        "EMMA" => Some(28),
+        "RINA" => Some(29),
+        "SHIORIKO" => Some(30),
+        "MIA" => Some(31),
+        "LANZHU" => Some(32),
+        "YU" => Some(33),
+        "KANON" => Some(41),
+        "KEKE" => Some(42),
+        "CHISATO" => Some(43),
+        "SUMIRE" => Some(44),
+        "REN" => Some(45),
+        "KINAKO" => Some(46),
+        "MEI" => Some(47),
+        "SHIKI" => Some(48),
+        "NATSUMI" => Some(49),
+        _ => None,
+    }
+}
+
+fn add_character_id(filter: &mut CardFilter, char_id: u8) {
+    filter.is_enabled = true;
+    if filter.char_id_1 == 0 {
+        filter.char_id_1 = char_id;
+    } else if filter.char_id_2 == 0 {
+        filter.char_id_2 = char_id;
+    } else {
+        filter.char_id_3 = char_id;
+    }
+}
+
+fn apply_character_name_tokens(filter: &mut CardFilter, filter_str: &str) -> bool {
+    let mut matched = false;
+    for token in filter_str.split('/') {
+        let Some(char_id) = character_id_from_name(token) else {
+            return false;
+        };
+        add_character_id(filter, char_id);
+        matched = true;
+    }
+    matched
+}
+
 fn parse_semantic_heart_filter(part: &str) -> Option<(u8, u8)> {
     let upper = part.trim().to_ascii_uppercase();
     let token = upper.strip_prefix("HAS_").unwrap_or(upper.as_str());
@@ -1485,7 +1556,11 @@ fn apply_string_token(filter: &mut CardFilter, extras: &mut u64, part: &str) {
         filter.is_enabled = true;
         filter.special_id = 1;
         if let Some(eq_pos) = trimmed.find('=') {
-            if let Some(first_char) = trimmed[eq_pos + 1..].trim().chars().next() {
+            let token = trimmed[eq_pos + 1..].trim();
+            if let Some(char_id) = character_id_from_name(token) {
+                add_character_id(filter, char_id);
+            }
+            if let Some(first_char) = token.chars().next() {
                 filter.color_mask = (first_char as u8) & 0x7F;
             }
         }
@@ -1676,6 +1751,20 @@ mod tests {
         assert!(merged_filter.group_enabled);
         assert_eq!(merged_filter.group_id, 3);
         assert_ne!(merged & FILTER_REVEALED_CONTEXT, 0);
+    }
+
+    #[test]
+    fn filter_parts_from_params_support_character_name_lists() {
+        let params = json!({
+            "filter": "Umi/Yoshiko/Rina"
+        });
+
+        let (filter, extras) = filter_parts_from_params(Some(&params)).unwrap();
+
+        assert_eq!(extras, 0);
+        assert_eq!(filter.char_id_1, 4);
+        assert_eq!(filter.char_id_2, 16);
+        assert_eq!(filter.char_id_3, 29);
     }
 
     #[test]

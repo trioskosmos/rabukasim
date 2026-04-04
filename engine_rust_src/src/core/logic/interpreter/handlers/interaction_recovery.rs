@@ -7,6 +7,116 @@ use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
 
+fn source_ability_text<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a str> {
+    let source_card_id = if ctx.ability_card_id >= 0 {
+        ctx.ability_card_id
+    } else {
+        ctx.source_card_id
+    };
+    let ability_index = ctx.ability_index.max(0) as usize;
+
+    if let Some(member) = db.get_member(source_card_id) {
+        if let Some(ability) = member.abilities.get(ability_index) {
+            if !ability.raw_text.is_empty() {
+                return Some(ability.raw_text.as_str());
+            }
+            if !ability.pseudocode.is_empty() {
+                return Some(ability.pseudocode.as_str());
+            }
+        }
+        return Some(member.original_text.as_str());
+    }
+
+    if let Some(live) = db.get_live(source_card_id) {
+        if let Some(ability) = live.abilities.get(ability_index) {
+            if !ability.raw_text.is_empty() {
+                return Some(ability.raw_text.as_str());
+            }
+            if !ability.pseudocode.is_empty() {
+                return Some(ability.pseudocode.as_str());
+            }
+        }
+        return Some(live.original_text.as_str());
+    }
+
+    None
+}
+
+fn recovery_uses_same_name_filter(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> bool {
+    if recovery_special_id(db, ctx, frame_data, frame_idx) == 4 {
+        return true;
+    }
+
+    source_ability_text(db, ctx)
+        .map(|text| text.contains("カード名がすべて含まれる") || text.contains("special=Same Name"))
+        .unwrap_or(false)
+}
+
+fn recovery_special_id(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    frame_idx: usize,
+) -> u8 {
+    if frame_data.filter.special_id != 0 {
+        return frame_data.filter.special_id;
+    }
+
+    let source_card_id = if ctx.ability_card_id >= 0 {
+        ctx.ability_card_id
+    } else {
+        ctx.source_card_id
+    };
+    let ability_index = ctx.ability_index.max(0) as usize;
+    let ability = db
+        .get_member(source_card_id)
+        .and_then(|member| member.abilities.get(ability_index))
+        .or_else(|| db.get_live(source_card_id).and_then(|live| live.abilities.get(ability_index)));
+    let Some(ability) = ability else {
+        return 0;
+    };
+    if cfg!(debug_assertions) && ctx.player_id >= 0 {
+        let _ = (ability.frame_program.is_some(), ability.resolved_frame_source());
+    }
+    let Some(frame_program) = ability.frame_program.as_ref() else {
+        return 0;
+    };
+
+    if let Some(frame) = frame_program.frames.get(frame_idx) {
+        let program_frame = frame.components();
+        if program_frame.opcode == frame_data.opcode {
+            return program_frame.filter.special_id;
+        }
+    }
+
+    frame_program
+        .frames
+        .iter()
+        .map(|frame| frame.components())
+        .find(|program_frame| {
+            program_frame.opcode == frame_data.opcode
+                && program_frame.value == frame_data.value
+                && program_frame.raw_slot == frame_data.raw_slot
+        })
+        .or_else(|| {
+            frame_program
+                .frames
+                .iter()
+                .map(|frame| frame.components())
+                .find(|program_frame| {
+                    program_frame.opcode == frame_data.opcode
+                        && program_frame.filter.special_id != 0
+                })
+        })
+        .map(|program_frame| program_frame.filter.special_id)
+        .unwrap_or(0)
+}
+
 /// Recovery handler - consolidated from interaction_recovery_resolve.rs
 pub fn handle_recovery(
     state: &mut GameState,
@@ -32,7 +142,7 @@ pub fn handle_recovery(
     } else {
         frame_data.opcode
     };
-    let use_name_filter = frame_data.filter.special_id == 4;
+    let use_name_filter = recovery_uses_same_name_filter(db, ctx, frame_data, frame_idx);
 
     // Handle "same name" style recovery when the frame has no explicit filter.
     let mut handled_same_name = false;
@@ -269,6 +379,16 @@ fn get_source_cards_for_name_recovery(
     ctx: &AbilityContext,
     p_idx: usize,
 ) -> Vec<i32> {
+    let revealed: Vec<i32> = state.players[p_idx]
+        .revealed_cards
+        .iter()
+        .copied()
+        .filter(|cid| db.get_live(*cid).is_some() || db.get_member(*cid).is_some())
+        .collect();
+    if !revealed.is_empty() {
+        return revealed;
+    }
+
     let selected: Vec<i32> = ctx
         .selected_cards
         .iter()
@@ -289,5 +409,5 @@ fn get_source_cards_for_name_recovery(
         return hand;
     }
 
-    state.players[p_idx].revealed_cards.iter().copied().collect()
+    Vec::new()
 }

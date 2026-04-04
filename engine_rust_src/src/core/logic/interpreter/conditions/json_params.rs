@@ -2,7 +2,9 @@ use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
 use super::opcodes::check_condition_opcode;
 use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
-use crate::core::logic::filter::{has_structured_filter_constraints, merge_filter_attr_with_params};
+use crate::core::logic::filter::{
+    has_structured_filter_constraints, merge_filter_attr_with_params, structured_filter_attr,
+};
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
@@ -70,6 +72,10 @@ fn resolved_filter_attr(
 ) -> u64 {
     let params_value = serde_json::Value::Object(params.clone());
     merge_filter_attr_with_params(fallback_attr, Some(&params_value))
+}
+
+fn condition_match_filter_attr(filter_attr: u64) -> u64 {
+    structured_filter_attr(filter_attr)
 }
 
 fn apply_area_semantics(attr: u64, area: &str) -> u64 {
@@ -160,7 +166,8 @@ pub fn evaluate_raw_condition(
         }
         "COUNT_MEMBER" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
-            let has_filter_constraints = has_structured_filter_constraints(filter_attr);
+            let match_filter_attr = condition_match_filter_attr(filter_attr);
+            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
             let target_player = resolved_condition_player(params, ctx);
 
             let count = state.players[target_player]
@@ -170,7 +177,7 @@ pub fn evaluate_raw_condition(
                 .filter(|&cid| cid >= 0)
                 .filter(|&cid| {
                     !has_filter_constraints
-                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                        || state.card_matches_filter_with_ctx(db, cid, match_filter_attr, ctx)
                 })
                 .count() as i32;
 
@@ -216,7 +223,8 @@ pub fn evaluate_raw_condition(
         }
         "ALL_MEMBERS" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
-            let has_filter_constraints = has_structured_filter_constraints(filter_attr);
+            let match_filter_attr = condition_match_filter_attr(filter_attr);
+            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
             let target_player = resolved_condition_player(params, ctx);
 
             let stage = &state.players[target_player].stage;
@@ -227,7 +235,7 @@ pub fn evaluate_raw_condition(
                 .filter(|&cid| cid >= 0)
                 .filter(|&cid| {
                     !has_filter_constraints
-                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                        || state.card_matches_filter_with_ctx(db, cid, match_filter_attr, ctx)
                 })
                 .count() as i32;
 

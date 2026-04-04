@@ -1,5 +1,6 @@
 use tiny_http::Server;
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -17,7 +18,7 @@ fn snapshot_is_valid(db: &CardDatabase) -> bool {
     !db.members.is_empty() && !db.lives.is_empty()
 }
 
-fn binary_snapshot_is_stale(bin_path: &str, json_path: &str) -> bool {
+fn binary_snapshot_is_stale(bin_path: &Path, json_path: &Path) -> bool {
     let bin_meta = match std::fs::metadata(bin_path) {
         Ok(meta) => meta,
         Err(_) => return true,
@@ -31,6 +32,31 @@ fn binary_snapshot_is_stale(bin_path: &str, json_path: &str) -> bool {
         (Ok(bin_time), Ok(json_time)) => bin_time < json_time,
         _ => false,
     }
+}
+
+fn candidate_runtime_db_paths() -> &'static [&'static str] {
+    &[
+        "data/cards_compiled.json",
+        "../data/cards_compiled.json",
+        "../../data/cards_compiled.json",
+        "../../../data/cards_compiled.json",
+        "static_content/data/cards_compiled.json",
+        "../static_content/data/cards_compiled.json",
+    ]
+}
+
+fn find_runtime_db_json_path() -> Option<PathBuf> {
+    candidate_runtime_db_paths()
+        .iter()
+        .map(PathBuf::from)
+        .find(|path| path.exists())
+}
+
+fn snapshot_cache_path(json_path: Option<&Path>) -> PathBuf {
+    json_path
+        .and_then(Path::parent)
+        .map(|parent| parent.join("cards_compiled.bin"))
+        .unwrap_or_else(|| PathBuf::from("data/cards_compiled.bin"))
 }
 
 
@@ -50,14 +76,21 @@ fn main() {
     }
 
     println!("Loading card database...");
-    let bin_path = "../data/cards_compiled.bin";
-    let json_path = "../data/cards_compiled.json";
-    println!("[DB] Canonical runtime JSON mirror: {}", json_path);
-    println!("[DB] Canonical binary snapshot cache: {}", bin_path);
-    let stale_binary = binary_snapshot_is_stale(bin_path, json_path);
+    let runtime_json_path = find_runtime_db_json_path();
+    let bin_path = snapshot_cache_path(runtime_json_path.as_deref());
+    let json_label = runtime_json_path
+        .as_ref()
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|| "<embedded launcher asset>".to_string());
+    println!("[DB] Canonical runtime JSON mirror: {}", json_label);
+    println!("[DB] Canonical binary snapshot cache: {}", bin_path.display());
+    let stale_binary = runtime_json_path
+        .as_deref()
+        .map(|json_path| binary_snapshot_is_stale(&bin_path, json_path))
+        .unwrap_or(true);
 
     let mut need_new_snapshot = false;
-    let card_db = match std::fs::read(bin_path) {
+    let card_db = match std::fs::read(&bin_path) {
         Ok(bin_data) => {
             match CardDatabase::from_binary(&bin_data) {
                 Ok(db) => {
@@ -91,7 +124,7 @@ fn main() {
     // Regenerate binary snapshot when missing or stale
     if need_new_snapshot {
         if let Ok(bin_data) = card_db.to_binary() {
-            let _ = std::fs::write(bin_path, bin_data);
+            let _ = std::fs::write(&bin_path, bin_data);
             println!("[DB] Produced binary snapshot for next run.");
         }
     }
@@ -189,16 +222,12 @@ fn main() {
 }
 
 fn load_db_from_json() -> CardDatabase {
-    let disk_paths = [
-        "../data/cards_compiled.json",
-        "static_content/data/cards_compiled.json",
-    ];
-
-    for path in disk_paths {
-        if let Ok(db_json) = std::fs::read_to_string(path) {
-            println!("[DB] Loading live JSON file: {}", path);
+    if let Some(path) = find_runtime_db_json_path() {
+        let path_label = path.display().to_string();
+        if let Ok(db_json) = std::fs::read_to_string(&path) {
+            println!("[DB] Loading live JSON file: {}", path_label);
             return CardDatabase::from_json(&db_json)
-                .unwrap_or_else(|err| panic!("Failed to parse CardDatabase from {}: {}", path, err));
+                .unwrap_or_else(|err| panic!("Failed to parse CardDatabase from {}: {}", path_label, err));
         }
     }
 

@@ -1,6 +1,13 @@
 
 use super::*;
 
+fn source_heart_requirement_color_hint(db: &CardDatabase, source_cid: i32) -> Option<usize> {
+    db.get_member(source_cid)
+        .map(|member| member.original_text.as_str())
+        .or_else(|| db.get_live(source_cid).map(|live| live.original_text.as_str()))
+        .and_then(crate::core::logic::heart_semantics::decode_heart_type_from_text)
+}
+
 pub fn handle_reduce_heart_req(
     state: &mut GameState,
 
@@ -88,6 +95,8 @@ pub fn handle_transform_heart(
 pub fn handle_increase_heart_cost(
     state: &mut GameState,
 
+    db: &CardDatabase,
+
     ctx: &AbilityContext,
 
     p_idx: usize,
@@ -99,7 +108,7 @@ pub fn handle_increase_heart_cost(
         crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
     {
         color
-    } else if ctx.source_card_id == 4632 {
+    } else if source_heart_requirement_color_hint(db, ctx.source_card_id).is_some() {
         6
     } else if matches!(target_slot, 4 | 7) {
         6

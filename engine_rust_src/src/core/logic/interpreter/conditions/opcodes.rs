@@ -951,9 +951,17 @@ fn check_condition_with_parts(
                 (s_cost, o_cost)
             };
             
-            // Debug output for SyncCost
-            eprintln!("[DEBUG_SYNC_COST] area_val={}, area_override={:?}, ctx.area_idx={}, self_cost={}, opp_cost={}, val={}", 
-                     area_val, area_override, ctx.area_idx, self_cost, opp_cost, val);
+            if state.debug.debug_mode {
+                eprintln!(
+                    "[DEBUG_SYNC_COST] area_val={}, area_override={:?}, ctx.area_idx={}, self_cost={}, opp_cost={}, val={}",
+                    area_val,
+                    area_override,
+                    ctx.area_idx,
+                    self_cost,
+                    opp_cost,
+                    val
+                );
+            }
             
             // SyncCost should use greater-than comparison by default
             let comparison_mode = if slot_info.comparison == 0 { 1 } else { slot_info.comparison };

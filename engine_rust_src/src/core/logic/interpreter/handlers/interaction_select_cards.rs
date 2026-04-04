@@ -1,4 +1,5 @@
 use crate::core::enums::ChoiceType;
+use crate::core::enums::Zone;
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -12,6 +13,21 @@ use crate::core::O_SELECT_CARDS;
 mod interaction_select_cards_resolve;
 
 const VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT: i16 = -32000;
+
+fn resolved_select_cards_zone(slot_info: crate::core::logic::interpreter::instruction::DecodedSlot) -> u8 {
+    let source_zone = slot_info.source_zone as u8;
+    if source_zone != 0 {
+        return source_zone;
+    }
+
+    match slot_info.target_slot as u8 {
+        zone if zone == Zone::Hand as u8 => Zone::Hand as u8,
+        zone if zone == Zone::Discard as u8 => Zone::Discard as u8,
+        zone if zone == Zone::Deck as u8 => Zone::Deck as u8,
+        zone if zone == Zone::Yell as u8 => Zone::Yell as u8,
+        _ => Zone::Discard as u8,
+    }
+}
 
 fn cancel_optional_selection(state: &mut GameState) {
     let p_idx = state.current_player as usize;
@@ -43,24 +59,12 @@ pub fn handle_select_cards(
     let is_variable_selection = v < 0;
 
     let slot_info = frame_data.slot;
-    let source_zone = slot_info.source_zone as u8;
-    let ts = slot_info.target_slot;
-    let effective_zone = if source_zone != 0 {
-        source_zone
-    } else if ts != 0 {
-        ts
-    } else {
-        7
-    };
-    let effective_zone = if ctx.source_card_id == 537 { 7 } else { effective_zone };
-
-    let is_victorious_road = ctx.source_card_id == 10;
+    let effective_zone = resolved_select_cards_zone(slot_info);
 
     if is_optional
         && is_variable_selection
         && ctx.choice_index == -1
         && ctx.v_remaining == -1
-        && !is_victorious_road
     {
         if matches!(
             suspend_choice(
@@ -151,24 +155,6 @@ pub fn handle_select_cards(
 
         if state.players[p_idx].looked_cards.is_empty() && !is_optional {
             return HandlerResult::Continue;
-        }
-
-        if is_victorious_road && is_optional && is_variable_selection {
-            ctx.choice_index = 0;
-            return interaction_select_cards_resolve::resolve_select_cards(
-                state,
-                db,
-                ctx,
-                frame_data,
-                instr_ip,
-                p_idx,
-                s,
-                v,
-                a,
-                slot_info,
-                effective_zone,
-                is_optional,
-            );
         }
 
         let choice_type = match effective_zone {

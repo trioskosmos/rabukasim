@@ -36,6 +36,10 @@ pub fn decode_heart_type_from_params(params: Option<&Value>) -> Option<usize> {
 
 pub fn decode_heart_type_from_text(text: &str) -> Option<usize> {
     let lower = text.to_ascii_lowercase();
+
+    if lower.contains("heart_00") || lower.contains("heart00") || lower.contains("heart0") {
+        return Some(6);
+    }
     
     // 1. Try explicit heart_type= pattern first
     if let Some(idx) = lower.find("heart_type=") {
@@ -91,6 +95,10 @@ pub fn decode_heart_type_from_text(text: &str) -> Option<usize> {
 }
 
 pub fn decode_heart_type_from_icons(text: &str) -> Option<usize> {
+    if text.contains("heart_00") || text.contains("heart00") || text.contains("heart0") {
+        return Some(6);
+    }
+
     for color in 1..=6 {
         let token = format!("heart_{:02}", color);
         if text.contains(&token) || text.contains(&format!("heart{:02}", color)) {

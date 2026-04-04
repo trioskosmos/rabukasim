@@ -1111,6 +1111,9 @@ impl ResponseController for GameState {
                         let stage_slot =
                             self.resolve_pending_stage_slot(&pending, choice_idx, p_idx);
                         let mut play_ctx = pending.ctx.clone();
+                        if play_ctx.ability_card_id < 0 {
+                            play_ctx.ability_card_id = pending.ability_card_id;
+                        }
                         play_ctx.choice_index = stage_slot as i16;
                         let p_idx = play_ctx.player_id as usize;
                         if play_ctx.target_card_id < 0 {

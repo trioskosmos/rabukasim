@@ -126,6 +126,7 @@ pub fn finalize_play_member_from_discard(
     slot_idx: usize,
     empty_slot_only: bool,
     is_total_cost: bool,
+    enters_tapped: bool,
 ) -> HandlerResult {
     if slot_idx >= 3 {
         return HandlerResult::Continue;
@@ -157,5 +158,5 @@ pub fn finalize_play_member_from_discard(
     let mask = state.players[target_p_idx].prevent_play_to_slot_mask();
     state.players[target_p_idx].set_prevent_play_to_slot_mask(mask | (1 << slot_idx) as u8);
 
-    finish_member_play(state, db, ctx, target_p_idx, card_id, slot_idx, true)
+    finish_member_play(state, db, ctx, target_p_idx, card_id, slot_idx, enters_tapped)
 }

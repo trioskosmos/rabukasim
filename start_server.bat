@@ -21,6 +21,20 @@ for %%a in (%*) do (
 
 echo [build] Cargo will run metadata sync and card compilation through uv.
 
+echo [build] Repairing consolidated ability card references if needed.
+uv run --no-sync --python 3.12 python tools\repair_consolidated_card_ref_names.py --quiet
+if errorlevel 1 goto CMD_FAIL
+
+echo [build] Syncing metadata.
+uv run --no-sync --python 3.12 python tools\sync_metadata.py
+if errorlevel 1 goto CMD_FAIL
+
+echo [build] Building compiled card artifacts.
+uv run --no-sync --python 3.12 python tools\build_cards.py --quiet
+if errorlevel 1 goto CMD_FAIL
+
+set "LOVECA_SKIP_ABILITY_PIPELINE=1"
+
 :RUN_SERVER
 echo [run] Starting launcher through Cargo...
 if "%BUILD_PROFILE%"=="--release" (

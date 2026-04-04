@@ -6,6 +6,7 @@ import { State } from './state.js';
 import { CardRenderer } from './components/CardRenderer.js';
 import { BoardRenderer } from './components/BoardRenderer.js';
 import { ActionMenu } from './components/ActionMenu.js';
+import { Highlighter } from './components/Highlighter.js';
 
 import { Phase, fixImg } from './constants.js';
 import * as i18n from './i18n/index.js';
@@ -345,6 +346,19 @@ window.highlightActionBtn = (actionId, active) => {
         if (active) el.classList.add('hover-highlight');
         else el.classList.remove('hover-highlight');
     });
+
+    // 3. Use Highlighter to properly highlight based on action metadata (source/target zones)
+    if (active) {
+        const state = State.data;
+        if (state && state.legal_actions) {
+            const action = state.legal_actions.find(a => a.id === actionId);
+            if (action) {
+                Highlighter.highlightAction(action);
+            }
+        }
+    } else {
+        Highlighter.clearHighlights();
+    }
 };
 
 window.highlightActionTarget = window.highlightActionBtn;

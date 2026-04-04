@@ -54,6 +54,10 @@ fn stage_has_cost_13_or_more(state: &GameState, db: &CardDatabase) -> bool {
     })
 }
 
+fn source_text_requires_cost_13_stage_gate(text: &str) -> bool {
+    text.contains("コスト13以上") && text.contains("ステージ") && text.contains("ブレード")
+}
+
 fn frame_uses_count_multiplier(
     frame_data: &AbilityFrameComponents<'_>,
     has_per_card: bool,
@@ -62,16 +66,42 @@ fn frame_uses_count_multiplier(
 }
 
 fn cost_scope_frames<'a>(ab: &'a Ability) -> Cow<'a, [AbilityFrame]> {
-    if let Some(frame_program) = ab.frame_program.as_ref() {
-        return Cow::Borrowed(&frame_program.frames);
-    }
-
     ab.resolved_frames()
 }
 
-fn is_hand_only_self_cost_modifier(frame_data: &AbilityFrameComponents<'_>, op: i32) -> bool {
+fn ability_text<'a>(ab: &'a Ability, fallback: &'a str) -> &'a str {
+    if !ab.raw_text.is_empty() {
+        ab.raw_text.as_str()
+    } else if !ab.pseudocode.is_empty() {
+        ab.pseudocode.as_str()
+    } else {
+        fallback
+    }
+}
+
+fn self_cost_zone_text_hint(text: &str) -> Option<Zone> {
+    if text.contains("手札にあるこのメンバー") && text.contains("コスト") {
+        Some(Zone::Hand)
+    } else if text.contains("ステージにいるこのメンバー") && text.contains("コスト") {
+        Some(Zone::Stage)
+    } else {
+        None
+    }
+}
+
+fn is_hand_only_self_cost_modifier(
+    source_text: &str,
+    frame_data: &AbilityFrameComponents<'_>,
+    op: i32,
+) -> bool {
     if op != O_REDUCE_COST && op != O_INCREASE_COST {
         return false;
+    }
+
+    match self_cost_zone_text_hint(source_text) {
+        Some(Zone::Hand) => return true,
+        Some(Zone::Stage) => return false,
+        _ => {}
     }
 
     let has_per_card = frame_data
@@ -626,24 +656,12 @@ pub fn get_member_cost(
     });
     let cost_state = projected_state.as_ref().unwrap_or(state);
     let mut cost = m.cost as i32;
-    let trace_cost = state.debug.debug_mode && (card_id == 10 || card_id == 4433);
     if state.debug.debug_mode && !state.ui.silent {
         println!(
             "[DEBUG] get_member_cost: card_id={}, base_cost={}",
             card_id, cost
         );
     }
-    if trace_cost {
-        eprintln!(
-            "[COST_DBG] start card={} base_cost={} global_cost_reduction={} slot_idx={} secondary_slot_idx={}",
-            card_id,
-            cost,
-            state.players[p_idx].cost_reduction,
-            slot_idx,
-            secondary_slot_idx
-        );
-    }
-
     let query_aura = get_query_aura(cost_state, p_idx, db, depth);
     let mut fallback_aura: Option<BoardAura> = None;
     if state.debug.debug_mode && !state.ui.silent {
@@ -657,15 +675,6 @@ pub fn get_member_cost(
 
     // 1. Global reduction
     cost -= cost_state.players[p_idx].cost_reduction as i32;
-    if trace_cost {
-        eprintln!(
-            "[COST_DBG] after_global card={} cost={} applied_global={}",
-            card_id,
-            cost,
-            cost_state.players[p_idx].cost_reduction
-        );
-    }
-
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
     if let Some(hand_idx) = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id) {
@@ -683,20 +692,15 @@ pub fn get_member_cost(
                     println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
                 }
                 if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart) {
+                    let source_text = ability_text(ab, target_m.original_text.as_str());
                     let applies_while_in_hand = cost_scope_frames(ab).iter().any(|frame| {
                         let frame_data = frame.components();
-                        is_hand_only_self_cost_modifier(&frame_data, frame_data.opcode)
+                        is_hand_only_self_cost_modifier(
+                            source_text,
+                            &frame_data,
+                            frame_data.opcode,
+                        )
                     });
-                    if trace_cost {
-                        eprintln!(
-                            "[COST_DBG] self_constant_probe card={} ab_idx={} source={} frame_program_present={} applies_while_in_hand={}",
-                            card_id,
-                            idx,
-                            ab.resolved_frame_source(),
-                            ab.frame_program.is_some(),
-                            applies_while_in_hand
-                        );
-                    }
                     if !applies_while_in_hand {
                         continue;
                     }
@@ -708,16 +712,6 @@ pub fn get_member_cost(
                     // present here so card-specific reductions can see it before the slot
                     // replacement is applied.
                     apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
-                    if trace_cost {
-                        eprintln!(
-                            "[COST_DBG] after_self_constant card={} ab_idx={} trigger={:?} cost={} frames={}",
-                            card_id,
-                            idx,
-                            ab.trigger,
-                            cost,
-                            cost_scope_frames(ab).len()
-                        );
-                    }
                 }
             }
         }
@@ -755,16 +749,6 @@ pub fn get_member_cost(
                 }
                 if apply {
                     cost -= modif.amount as i32;
-                    if trace_cost {
-                        eprintln!(
-                            "[COST_DBG] after_slot_aura card={} source_cid={} amount={} target_mask={:03b} cost={}",
-                            card_id,
-                            modif.source_cid,
-                            modif.amount,
-                            modif.target_mask,
-                            cost
-                        );
-                    }
                 }
             }
         }
@@ -805,16 +789,6 @@ pub fn get_member_cost(
             }
             if apply {
                 cost -= modif.amount as i32;
-                if trace_cost {
-                    eprintln!(
-                        "[COST_DBG] after_global_aura card={} source_cid={} amount={} target_mask={:03b} cost={}",
-                        card_id,
-                        modif.source_cid,
-                        modif.amount,
-                        modif.target_mask,
-                        cost
-                    );
-                }
             }
         }
     }
@@ -878,15 +852,6 @@ pub fn get_member_cost(
         if state.debug.debug_mode && !state.ui.silent {
             println!("[DEBUG] get_member_cost: after granted ability, cost={}", cost);
         }
-        if trace_cost {
-            eprintln!(
-                "[COST_DBG] after_granted card={} source_cid={} ab_idx={} cost={}",
-                card_id,
-                source_cid,
-                ab_idx,
-                cost
-            );
-        }
     }
 
     // 5. Temporary cost modifiers (From Action Phase triggers)
@@ -901,19 +866,7 @@ pub fn get_member_cost(
         };
         if check_condition(cost_state, db, p_idx, cond, &ctx, depth + 1) {
             cost += *amount;
-            if trace_cost {
-                eprintln!(
-                    "[COST_DBG] after_temp_modifier card={} amount={} cost={}",
-                    card_id,
-                    amount,
-                    cost
-                );
-            }
         }
-    }
-
-    if trace_cost {
-        eprintln!("[COST_DBG] final card={} cost={}", card_id, cost.max(0));
     }
 
     cost.max(0)
@@ -1095,6 +1048,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
 
             let frames = cost_scope_frames(ab);
             let has_filters = !frames.is_empty();
+            let source_text = ability_text(ab, m.original_text.as_str());
 
             for frame in frames.iter() {
                 let frame_data = frame.components();
@@ -1107,7 +1061,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let target_mask = aura_target_mask(source_slot, target_area, a, has_filters);
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                    if is_hand_only_self_cost_modifier(&frame_data, op) {
+                    if is_hand_only_self_cost_modifier(source_text, &frame_data, op) {
                         continue;
                     }
                     aura.cost_modifiers.push(CachedCostModifier {
@@ -1186,6 +1140,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
             }
 
             let frames = cost_scope_frames(ab);
+            let source_text = ability_text(ab, src_m.original_text.as_str());
             let target_mask = if slot_idx < 3 {
                 if let Some(first_frame) = frames.first() {
                     let first_frame_data = first_frame.components();
@@ -1207,7 +1162,7 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
                 let s = frame_data.raw_slot;
 
                 if op == O_REDUCE_COST || op == O_INCREASE_COST {
-                    if is_hand_only_self_cost_modifier(&frame_data, op) {
+                    if is_hand_only_self_cost_modifier(source_text, &frame_data, op) {
                         continue;
                     }
                     aura.cost_modifiers.push(CachedCostModifier {
@@ -1257,6 +1212,10 @@ fn apply_aura_modifier(
     target_slot: usize,
 ) {
     let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
+    let source_text = db
+        .get_member(ctx.source_card_id)
+        .map(|member| member.original_text.as_str())
+        .unwrap_or("");
 
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;
@@ -1288,7 +1247,9 @@ fn apply_aura_modifier(
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
-            if ctx.source_card_id == 410 && op == O_ADD_BLADES && !stage_has_cost_13_or_more(state, db)
+            if op == O_ADD_BLADES
+                && source_text_requires_cost_13_stage_gate(source_text)
+                && !stage_has_cost_13_or_more(state, db)
             {
                 return;
             }

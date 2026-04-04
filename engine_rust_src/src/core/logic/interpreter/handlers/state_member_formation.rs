@@ -46,12 +46,18 @@ pub fn handle_formation_change(
                 }
             }
         }
-    } else if ctx.choice_index == -1 {
-        // Special case for Mei (590) - automatically select rotation permutation
-        if ctx.source_card_id == 590 {
-            // Mei rotates: [0,1,2] -> [2,0,1] (Right->Left, Left->Center, Center->Right)
-            ctx.choice_index = 4;
+    } else {
+        let perm_idx = if ctx.choice_index >= 0 {
+            let perm_idx = ctx.choice_index as usize;
+            ctx.choice_index = -1;
+            Some(perm_idx)
+        } else if (0..6).contains(&s) {
+            Some(s as usize)
         } else {
+            None
+        };
+
+        let Some(perm_idx) = perm_idx else {
             if matches!(
                 suspend_choice(
                     state,
@@ -69,10 +75,8 @@ pub fn handle_formation_change(
             ) {
                 return HandlerResult::Suspend;
             }
-        }
-    } else {
-        let perm_idx = ctx.choice_index as usize;
-        ctx.choice_index = -1;
+            return HandlerResult::Continue;
+        };
 
         if !state.ui.silent {
             state.log("Rule 11.10, Rule 11.10.1, Rule 11.10.2: Performing [フォーメーションチェンジ] (Formation Change).".to_string());

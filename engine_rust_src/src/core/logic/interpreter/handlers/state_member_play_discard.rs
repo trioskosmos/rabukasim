@@ -55,6 +55,50 @@ pub fn clear_discard_play_buffer(state: &mut GameState, target_p_idx: usize) {
     state.players[target_p_idx].looked_cards.clear();
 }
 
+fn discard_play_enters_tapped(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: Option<&AbilityFrameComponents<'_>>,
+) -> bool {
+    if let Some(frame_data) = frame_data {
+        if let Some(is_tapped) = frame_data
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("is_tapped").or_else(|| params.get("enter_tapped")))
+            .and_then(|value| value.as_bool())
+        {
+            return is_tapped;
+        }
+    }
+
+    let source_card_id = if ctx.ability_card_id >= 0 {
+        ctx.ability_card_id
+    } else {
+        ctx.source_card_id
+    };
+
+    let Some(source_member) = db.get_member(source_card_id) else {
+        return false;
+    };
+
+    let ability_text = source_member
+        .abilities
+        .get(ctx.ability_index.max(0) as usize)
+        .map(|ability| {
+            if !ability.raw_text.is_empty() {
+                ability.raw_text.as_str()
+            } else if !ability.pseudocode.is_empty() {
+                ability.pseudocode.as_str()
+            } else {
+                source_member.original_text.as_str()
+            }
+        })
+        .unwrap_or(source_member.original_text.as_str());
+
+    ability_text.contains("ウェイト状態で登場")
+        || source_member.original_text.contains("ウェイト状態で登場")
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn handle_play_member_from_discard(
     state: &mut GameState,
@@ -91,7 +135,6 @@ pub fn handle_play_member_from_discard(
 
     let baton_slot_only = frame_data.is_baton_slot_only();
     let requires_empty_stage_slot = true;
-
     let uses_total_cost_budget = frame_data.uses_total_cost_budget();
 
     let remaining = if ctx.v_remaining == -1 {

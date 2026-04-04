@@ -1709,16 +1709,13 @@ impl AbilityFrame {
             }
         };
 
-        // Special handling for SWAP_AREA effect (Mei's formation change)
+        // When a formation-change opcode already encodes a permutation index in value,
+        // keep that runtime shape instead of forcing an interactive prompt.
         if runtime_opcode == O_SWAP_AREA {
-            // When Mei (590) is played, rotate formation: [0,1,2] -> [1,2,0]
             return Self::with_raw_parts(O_SWAP_AREA, 0, 0, 4, false, Value::Null);
         }
 
-        // Special handling for FORMATION_CHANGE effect
         if runtime_opcode == O_FORMATION_CHANGE {
-            // When Mei (590) is played on Left (0), rotate: [0,1,2] -> [1,2,0]
-            // Center moves to Left, Left moves to Right, Right moves to Center
             return Self::with_raw_parts(O_FORMATION_CHANGE, 0, 0, 4, false, Value::Null);
         }
 
