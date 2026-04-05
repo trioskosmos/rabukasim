@@ -43,6 +43,47 @@ class FrameCodecTests(unittest.TestCase):
         self.assertEqual(payload_a["abilities"][0]["signature"], payload_b["abilities"][0]["signature"])
         self.assertEqual(payload_a["abilities"][0]["signature_hash"], payload_b["abilities"][0]["signature_hash"])
 
+    def test_authored_frames_signature_changes_when_frame_semantics_change(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        base_entry = {
+            "trigger_id": trigger_id,
+            "frames": [
+                {
+                    "op": "SELECT_MEMBER",
+                    "value": 1,
+                    "attr": {"target_player": 1, "special_id": 3},
+                    "slot": {"target_slot": 4, "source_zone": "STAGE"},
+                    "source_words": [1, 2, 3, 4, 5],
+                },
+                {"op": "ADD_HEARTS", "value": 1, "slot": {"target_slot": 4}},
+                {"op": "RETURN", "source_words": [0, 0, 0, 0, 0]},
+            ],
+            "cards": ["TST-001 | Test Card [member_db:1] (ab#0 ON_LIVE_START)"],
+            "card_refs": [{"card_no": "TST-001", "ability_index": 0, "db": "member_db", "card_id": 1, "name": "Test Card", "trigger": "ON_LIVE_START"}],
+        }
+        changed_semantics_entry = {
+            **base_entry,
+            "frames": [
+                {
+                    "op": "SELECT_MEMBER",
+                    "value": 1,
+                    "attr": {"target_player": 1, "special_id": 7},
+                    "slot": {"target_slot": 4, "source_zone": "STAGE"},
+                    "source_words": [999, 2, 3, 4, 5],
+                },
+                {"op": "ADD_HEARTS", "value": 1, "slot": {"target_slot": 4}},
+                {"op": "RETURN", "source_words": [111, 0, 0, 0, 0]},
+            ],
+        }
+
+        payload_a = codec.normalize_authored_ability_index({"abilities": [base_entry], "summary": {}}, metadata)
+        payload_b = codec.normalize_authored_ability_index({"abilities": [changed_semantics_entry], "summary": {}}, metadata)
+
+        self.assertNotEqual(payload_a["abilities"][0]["signature"], payload_b["abilities"][0]["signature"])
+        self.assertNotEqual(payload_a["abilities"][0]["signature_hash"], payload_b["abilities"][0]["signature_hash"])
+
     def test_runtime_index_strips_source_words(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         trigger_id = int(metadata["triggers"]["ACTIVATED"])
@@ -228,17 +269,23 @@ class FrameCodecTests(unittest.TestCase):
                         {
                             "opcode_id": 12,
                             "opcode": "ADD_HEARTS",
-                            "value": 65537,
+                            "value": 1,
                             "attr": {"target_player": 1, "compare_accumulated": 1},
                             "slot": {
                                 "remainder_zone": int(metadata["multiplier_count_sources"]["SUCCESS_PILE_COUNT"]),
                                 "is_dynamic": 1,
                             },
+                            "params": {
+                                "scalar_dynamic": {
+                                    "base_value": 1,
+                                    "divisor": 1,
+                                }
+                            },
                             "semantic": {
                                 "opcode_id": 12,
                                 "opcode_name": "ADD_HEARTS",
                                 "opcode_section": "opcodes",
-                                "decoded": "ADD_HEARTS | count=65537, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
+                                "decoded": "ADD_HEARTS | count=1, filter=[target=self, compare_accumulated], slot=[multiplier_source=SUCCESS_PILE_COUNT, dynamic]",
                                 "metadata_refs": ["opcodes.ADD_HEARTS"],
                             },
                         },

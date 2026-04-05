@@ -388,6 +388,31 @@ fn trace_zone(zone: Zone) -> Option<Zone> {
     }
 }
 
+fn scalar_dynamic_param_parts(params: Option<&Value>, fallback_value: i32) -> Option<(i32, i32)> {
+    let params_obj = params?.as_object()?;
+    let source = params_obj
+        .get("scalar_dynamic")
+        .and_then(Value::as_object)
+        .unwrap_or(params_obj);
+
+    let parse_i32 = |key: &str| {
+        source
+            .get(key)
+            .or_else(|| source.get(&key.to_ascii_uppercase()))
+            .and_then(|value| value.as_i64())
+            .map(|value| value as i32)
+    };
+
+    let base_value = parse_i32("base_value").or_else(|| parse_i32("base"));
+    let divisor = parse_i32("divisor");
+
+    if base_value.is_none() && divisor.is_none() {
+        None
+    } else {
+        Some((base_value.unwrap_or(fallback_value), divisor.unwrap_or(1)))
+    }
+}
+
 impl<'a> AbilityFrameComponents<'a> {
     pub fn from_raw_parts(
         raw_opcode: i32,
@@ -945,12 +970,18 @@ impl<'a> AbilityFrameComponents<'a> {
 
     /// Get the divisor for dynamic value calculation
     pub fn scalar_dynamic_divisor(&self) -> i32 {
+        if let Some((_, divisor)) = scalar_dynamic_param_parts(self.params, self.value) {
+            return divisor;
+        }
         use crate::core::generated_layout::{V_SCALAR_DYNAMIC_DIVISOR_MASK, V_SCALAR_DYNAMIC_DIVISOR_SHIFT};
         ((self.value as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK) as i32
     }
 
     /// Get the base for dynamic value calculation
     pub fn scalar_dynamic_base(&self) -> i32 {
+        if let Some((base_value, _)) = scalar_dynamic_param_parts(self.params, self.value) {
+            return base_value;
+        }
         use crate::core::generated_layout::{V_SCALAR_DYNAMIC_BASE_VALUE_MASK, V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT};
         ((self.value as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT) & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
     }
@@ -1998,10 +2029,16 @@ impl AbilityFrame {
             != 0
     }
     pub fn scalar_dynamic_base(&self) -> i32 {
+        if let Some((base_value, _)) = scalar_dynamic_param_parts(Some(&self.params), self.value()) {
+            return base_value;
+        }
         ((self.value() as u32 >> V_SCALAR_DYNAMIC_BASE_VALUE_SHIFT)
             & V_SCALAR_DYNAMIC_BASE_VALUE_MASK) as i32
     }
     pub fn scalar_dynamic_divisor(&self) -> i32 {
+        if let Some((_, divisor)) = scalar_dynamic_param_parts(Some(&self.params), self.value()) {
+            return divisor;
+        }
         ((self.value() as u32 >> V_SCALAR_DYNAMIC_DIVISOR_SHIFT) & V_SCALAR_DYNAMIC_DIVISOR_MASK)
             as i32
     }
@@ -3010,6 +3047,34 @@ mod tests {
         assert!(frame_data.filter.compare_accumulated);
         assert!(frame_data.slot.is_dynamic);
         assert_eq!(frame_data.slot.remainder_zone, 204);
+    }
+
+    #[test]
+    fn scalar_dynamic_helpers_prefer_explicit_params_over_packed_value() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "ADD_HEARTS",
+            "value": 1,
+            "attr": {
+                "target_player": 1,
+                "compare_accumulated": 1
+            },
+            "slot": {
+                "remainder_zone": 203,
+                "is_dynamic": 1
+            },
+            "params": {
+                "scalar_dynamic": {
+                    "base_value": 1,
+                    "divisor": 4
+                }
+            }
+        }));
+
+        let frame_data = frame.components();
+        assert_eq!(frame.scalar_dynamic_base(), 1);
+        assert_eq!(frame.scalar_dynamic_divisor(), 4);
+        assert_eq!(frame_data.scalar_dynamic_base(), 1);
+        assert_eq!(frame_data.scalar_dynamic_divisor(), 4);
     }
 
     #[test]

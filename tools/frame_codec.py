@@ -123,10 +123,20 @@ def _normalize_frame(frame: Any, idx: int) -> dict[str, Any]:
 
 def _signature_hash(trigger_id: int, frames: list[dict]) -> dict[str, str]:
     """Generate a signature hash for an ability."""
-    # Build minimal signature payload
+    def _canonicalize_signature_frame(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {
+                key: _canonicalize_signature_frame(nested)
+                for key, nested in sorted(value.items())
+                if key not in {"frame_index", "source_words", "semantic", "readable", "decoded"}
+            }
+        if isinstance(value, list):
+            return [_canonicalize_signature_frame(item) for item in value]
+        return value
+
     sig_payload = {
         "trigger": trigger_id,
-        "frames": [{"op": frame["op"]} for frame in frames],
+        "frames": [_canonicalize_signature_frame(frame) for frame in frames],
     }
     sig_source = json.dumps(sig_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     sig_hash = sha1(sig_source.encode("utf-8")).hexdigest()
@@ -669,11 +679,31 @@ def _decode_value_display(frame: dict[str, Any], metadata: dict[str, Any], slot_
     except (TypeError, ValueError):
         return display
 
+    params = frame.get("params")
+    scalar_dynamic = params.get("scalar_dynamic") if isinstance(params, dict) else None
+    scalar_dynamic = scalar_dynamic if isinstance(scalar_dynamic, dict) else params if isinstance(params, dict) else None
+
+    def _read_int(payload: dict[str, Any] | None, key: str) -> int | None:
+        if not isinstance(payload, dict):
+            return None
+        raw = payload.get(key, payload.get(key.upper()))
+        if raw is None:
+            return None
+        try:
+            return int(raw)
+        except (TypeError, ValueError):
+            return None
+
+    explicit_base = _read_int(scalar_dynamic, "base_value")
+    if explicit_base is None:
+        explicit_base = _read_int(scalar_dynamic, "base")
+    explicit_divisor = _read_int(scalar_dynamic, "divisor")
+
     overrides = metadata.get("packed_layout", {}).get("overrides", {}) if isinstance(metadata, dict) else {}
     override = overrides.get(opcode, {}) if isinstance(overrides, dict) else {}
-    if isinstance(override, dict) and override.get("V") == "scalar_dynamic":
-        base_value = numeric_value & 0xFFFF
-        divisor = (numeric_value >> 16) & 0xFFFF
+    if explicit_base is not None or explicit_divisor is not None or (isinstance(override, dict) and override.get("V") == "scalar_dynamic"):
+        base_value = explicit_base if explicit_base is not None else numeric_value & 0xFFFF
+        divisor = explicit_divisor if explicit_divisor is not None else (numeric_value >> 16) & 0xFFFF
         display["kind"] = "scalar_dynamic"
         display["base_value"] = base_value
         display["divisor"] = divisor

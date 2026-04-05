@@ -253,6 +253,19 @@ impl CardFilter {
             .collect()
     }
 
+    fn selected_group_sources(db: &CardDatabase, ctx: &AbilityContext) -> Vec<u8> {
+        ctx.selected_cards
+            .iter()
+            .copied()
+            .filter_map(|source_cid| {
+                db.get_live(source_cid)
+                    .map(|card| card.groups.clone())
+                    .or_else(|| db.get_member(source_cid).map(|card| card.groups.clone()))
+            })
+            .flatten()
+            .collect()
+    }
+
     /// Extract group information with validation
     fn get_group_info(&self) -> (bool, u8) {
         (self.group_enabled, self.group_id)
@@ -597,6 +610,21 @@ impl CardFilter {
 
         if self.special_id == 6 && !ctx.selected_cards.contains(&cid) {
             return false;
+        }
+
+        if self.special_id == 7 {
+            let candidate_groups = live
+                .map(|card| card.groups.as_slice())
+                .or_else(|| member.map(|card| card.groups.as_slice()))
+                .unwrap_or(&[]);
+            let source_groups = Self::selected_group_sources(db, ctx);
+            if source_groups.is_empty()
+                || !candidate_groups
+                    .iter()
+                    .any(|candidate_group| source_groups.contains(candidate_group))
+            {
+                return false;
+            }
         }
 
         true
@@ -1273,6 +1301,7 @@ pub(crate) fn parse_special_id_value(value: &Value) -> Option<u8> {
                 {
                     "BASE COST" => 5,
                     "SELECTED DISCARD" => 6,
+                    "SELECTED DISCARD GROUP" | "SAME GROUP AS SELECTED DISCARD" => 7,
                     "SAME NAME" | "SAMENAME" => 4,
                     "NOT MY" | "NOTMY" => 2,
                     "NOT SELF" | "NOTSELF" => 3,
@@ -1828,6 +1857,14 @@ mod tests {
         };
         assert!(blade_filter.matches(&state, &db, 200, None, false, None, &ctx));
         assert!(!blade_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
+
+        let selected_group_filter = CardFilter {
+            is_enabled: true,
+            special_id: 7,
+            ..CardFilter::default()
+        };
+        assert!(selected_group_filter.matches(&state, &db, 200, None, false, None, &ctx));
+        assert!(!selected_group_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
     }
 
     #[test]
@@ -1863,14 +1900,14 @@ mod tests {
     #[test]
     fn filter_parts_from_params_parse_string_special_and_zone_masks() {
         let params = json!({
-            "special_id": "Base Cost",
+            "special_id": "Selected Discard Group",
             "zone_mask": "DISCARD",
             "player": "OPPONENT"
         });
 
         let (filter, _) = filter_parts_from_params(Some(&params)).unwrap();
 
-        assert_eq!(filter.special_id, 5);
+        assert_eq!(filter.special_id, 7);
         assert_eq!(filter.zone_mask, ZONE_DISCARD as u8);
         assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
     }
