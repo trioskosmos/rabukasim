@@ -407,16 +407,6 @@ pub fn resolve_ability(
         return Ok(());
     }
 
-    if db
-        .get_live(ctx_in.source_card_id)
-        .map(|live| live.card_no.as_str() == "PL!SP-bp1-024-L")
-        .unwrap_or(false)
-        && ability.trigger == TriggerType::OnLiveSuccess
-        && !check_nonfiction_prerequisite(state, db, ctx_in)
-    {
-        return Ok(());
-    }
-
     let frames = ability.resolved_frames();
     if state.debug.debug_mode && !state.ui.silent {
         eprintln!(
@@ -467,23 +457,6 @@ pub fn resolve_ability(
     }
     
     resolve_semantic_frames(state, db, &frames, ctx_in)
-}
-
-fn check_nonfiction_prerequisite(
-    state: &GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-) -> bool {
-    let p_idx = ctx.player_id as usize;
-    let has_kanon = db
-        .id_by_no("PL!SP-PR-003-PR")
-        .map(|id| state.players[p_idx].stage.iter().any(|&cid| cid == id))
-        .unwrap_or(false);
-    let has_keke = db
-        .id_by_no("PL!SP-PR-004-PR")
-        .map(|id| state.players[p_idx].stage.iter().any(|&cid| cid == id))
-        .unwrap_or(false);
-    has_kanon && has_keke
 }
 
 pub fn resolve_semantic_frames(

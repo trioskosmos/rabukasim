@@ -11551,7 +11551,12 @@
                   "target_slot": 4,
                   "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
-                }
+                },
+                "params": {
+                  "count": 4,
+                  "choose_count": 2
+                },
+                "choice_count": 2
               },
               {
                 "op": "JUMP",
@@ -11770,7 +11775,12 @@
                   "target_slot": 4,
                   "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
-                }
+                },
+                "params": {
+                  "count": 4,
+                  "choose_count": 2
+                },
+                "choice_count": 2
               },
               {
                 "op": "JUMP",
@@ -11989,7 +11999,12 @@
                   "target_slot": 4,
                   "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
-                }
+                },
+                "params": {
+                  "count": 4,
+                  "choose_count": 2
+                },
+                "choice_count": 2
               },
               {
                 "op": "JUMP",
@@ -12208,7 +12223,12 @@
                   "target_slot": 4,
                   "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
-                }
+                },
+                "params": {
+                  "count": 4,
+                  "choose_count": 2
+                },
+                "choice_count": 2
               },
               {
                 "op": "JUMP",
@@ -135147,8 +135167,11 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "NOT_HAS_EXCESS_HEART",
                 "frame_index": 1,
+                "attr": {
+                  "target_player": 2
+                },
                 "slot": {
                   "target_slot": 48
                 }
@@ -138506,8 +138529,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "META_RULE",
+                "op": "COUNT_ENERGY_EXACT",
                 "frame_index": 0,
+                "value": 0,
+                "slot": {
+                  "target_slot": 0
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "META_RULE",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "card_type": 2
@@ -138518,7 +138554,7 @@
               },
               {
                 "op": "BOOST_SCORE",
-                "frame_index": 1,
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
                   "target_slot": 4
@@ -138526,7 +138562,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 4
               }
             ]
           },

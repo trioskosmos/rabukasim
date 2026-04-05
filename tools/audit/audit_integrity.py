@@ -5,7 +5,7 @@ import os
 def audit_integrity():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     compiled_path = os.path.join(base_dir, "data", "cards_compiled.json")
-    output_path = os.path.join(base_dir, "tools", "integrity_report.json")
+    output_path = os.path.join(base_dir, "reports", "ability_diagnostics", "integrity.json")
 
     print(f"Loading {compiled_path}...")
     with open(compiled_path, "r", encoding="utf-8") as f:
@@ -89,6 +89,7 @@ def audit_integrity():
     print(f"Found {len(report['SCORE_MISMATCH'])} Score mismatches.")
     print(f"Found {len(report['TRIGGER_MISMATCH'])} Trigger mismatches.")
 
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 

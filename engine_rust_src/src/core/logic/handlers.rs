@@ -23,73 +23,23 @@ fn should_precheck_condition(cond: &crate::core::logic::Condition) -> bool {
     )
 }
 
-fn legacy_activation_prefix_text<'a>(
-    card: &'a crate::core::logic::MemberCard,
-    ability: &'a crate::core::logic::Ability,
-) -> Option<&'a str> {
-    if !ability.raw_text.trim().is_empty() {
-        return Some(
-            ability
-                .raw_text
-                .split('：')
-                .next()
-                .unwrap_or(ability.raw_text.as_str()),
-        );
-    }
-
-    let activated_count = card
-        .abilities
-        .iter()
-        .filter(|candidate| candidate.trigger == TriggerType::Activated)
-        .count();
-    if activated_count != 1 {
-        return None;
-    }
-
-    Some(
-        card.original_text
-            .split('：')
-            .next()
-            .unwrap_or(card.original_text.as_str()),
-    )
-}
-
 fn implicit_activated_energy_cost_for_card(
-    card: &crate::core::logic::MemberCard,
+    _card: &crate::core::logic::MemberCard,
     ability: &crate::core::logic::Ability,
 ) -> usize {
-    let explicit = ability.implicit_activated_energy_cost();
-    if explicit > 0 || ability.trigger != TriggerType::Activated {
-        return explicit;
+    if ability.trigger != TriggerType::Activated {
+        return 0;
     }
 
-    legacy_activation_prefix_text(card, ability)
-        .map(|prefix| prefix.matches("{{icon_energy.png|E}}").count())
-        .unwrap_or(0)
+    0
 }
 
 fn has_implicit_stage_discard_self_cost_for_card(
-    card: &crate::core::logic::MemberCard,
+    _card: &crate::core::logic::MemberCard,
     ability: &crate::core::logic::Ability,
 ) -> bool {
-    if ability.trigger != TriggerType::Activated {
-        return false;
-    }
-
-    let has_explicit_self_discard = !ability.costs.is_empty()
-        || ability.resolved_frames().iter().any(|frame| {
-            let components = frame.components();
-            frame.is_cost()
-                && components.opcode == O_MOVE_TO_DISCARD
-                && components.slot.source_zone == Zone::Stage
-        });
-    if has_explicit_self_discard {
-        return false;
-    }
-
-    legacy_activation_prefix_text(card, ability)
-        .unwrap_or("")
-        .contains("このメンバーをステージから控え室に置く")
+    let _ = ability;
+    false
 }
 
 pub trait TurnController {
@@ -390,7 +340,7 @@ impl MainPhaseController for GameState {
                 choice_idx,
             } => {
                 let choice = choice_idx.unwrap_or(-1);
-                self.activate_ability_with_choice(db, slot_idx, ab_idx, choice, 0)?;
+                self.activate_ability_with_choice(db, slot_idx, ab_idx, choice, -1)?;
             }
             DecodedAction::ActivateFromDiscard {
                 discard_idx,

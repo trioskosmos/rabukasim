@@ -123,8 +123,6 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
     def test_real_compact_index_preserves_opcode_sequences(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         source_path = ROOT / "data" / "ability_frame_source.json"
-        if not source_path.exists():
-            source_path = ROOT / "data" / "ability_frame_index.json"
         authored_data = codec.load_authored_payload(source_path)
 
         payload = codec.build_compact_ability_index(authored_data, metadata)

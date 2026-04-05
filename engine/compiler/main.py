@@ -561,11 +561,7 @@ class SparseSourceManager:
 
 # Global sparse manager for the editable authored frame source.
 ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_source.json"
-SPARSE_INDEX_PATH = (
-    ABILITY_FRAME_SOURCE_PATH
-    if os.path.exists(ABILITY_FRAME_SOURCE_PATH)
-    else "data/ability_frame_index.json"
-)
+SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
@@ -807,8 +803,8 @@ def _compute_ability_flags(ab: Ability) -> dict[str, int]:
     """Calculate flags for a single ability based on its effects - simplified version."""
     # Simple flag calculation based on effects and conditions
     ability_flags = 0
-    choice_flags = 0
-    choice_count = 0
+    choice_flags = int(getattr(ab, "choice_flags", 0) or 0)
+    choice_count = int(getattr(ab, "choice_count", 0) or 0)
     
     # Map effect types to flags
     for eff in ab.effects:
@@ -839,16 +835,16 @@ def _compute_ability_flags(ab: Ability) -> dict[str, int]:
         # Choice detection
         if et == EffectType.LOOK_AND_CHOOSE:
             choice_flags |= CHOICE_FLAG_LOOK
-            choice_count = eff.params.get("choose_count", 0)
+            choice_count = max(choice_count, int(eff.params.get("choose_count", 0) or 0))
         elif et == EffectType.SELECT_MODE:
             choice_flags |= CHOICE_FLAG_MODE
-            choice_count = eff.params.get("num_options", 2)
+            choice_count = max(choice_count, int(eff.params.get("num_options", 2) or 0))
         elif et == EffectType.COLOR_SELECT:
             choice_flags |= CHOICE_FLAG_COLOR
-            choice_count = len(eff.params.get("choices", [])) or 6
+            choice_count = max(choice_count, len(eff.params.get("choices", [])) or 6)
         elif et == EffectType.ORDER_DECK:
             choice_flags |= CHOICE_FLAG_ORDER
-            choice_count = 3
+            choice_count = max(choice_count, 3)
     
     res = {
         "ability_flags": ability_flags,

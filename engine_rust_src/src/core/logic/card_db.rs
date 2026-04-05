@@ -67,10 +67,9 @@ impl CardRef {
     }
 }
 
-// Runtime can fall back to the generated runtime index when compiled cards are
-// missing authored frame programs or raw ability text.
-const EMBEDDED_ABILITY_FRAME_INDEX_JSON: &str =
-    include_str!("../../../../data/ability_runtime_index.json");
+// Runtime reloads authored sparse data from the canonical frame source.
+const EMBEDDED_ABILITY_FRAME_SOURCE_JSON: &str =
+    include_str!("../../../../data/ability_frame_source.json");
 const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
     include_str!("../../../../data/card_122_overlay.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
@@ -216,33 +215,26 @@ impl CardDatabase {
         let mut merged_index = HashMap::new();
         let mut loaded_any = false;
 
-        for candidates in [
-            ["data/ability_runtime_index.json", "../data/ability_runtime_index.json"],
-            ["data/ability_frame_index.json", "../data/ability_frame_index.json"],
+        for path in [
+            "data/ability_frame_source.json",
+            "../data/ability_frame_source.json",
         ] {
-            let mut loaded_group = false;
-            for path in candidates {
-                if let Ok(json) = fs::read_to_string(path) {
-                    let index = ability_hydration::load_sparse_ability_index_from_json(&json);
-                    eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
-                    if index.is_empty() {
-                        continue;
-                    }
-                    merged_index.extend(index);
-                    loaded_any = true;
-                    loaded_group = true;
-                    break;
+            if let Ok(json) = fs::read_to_string(path) {
+                let index = ability_hydration::load_sparse_ability_index_from_json(&json);
+                eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
+                if index.is_empty() {
+                    continue;
                 }
-            }
-            if loaded_group {
+                merged_index.extend(index);
+                loaded_any = true;
                 break;
             }
         }
 
-        for json in [EMBEDDED_ABILITY_FRAME_INDEX_JSON, EMBEDDED_CARD_122_OVERLAY_JSON] {
+        for json in [EMBEDDED_ABILITY_FRAME_SOURCE_JSON, EMBEDDED_CARD_122_OVERLAY_JSON] {
             let index = ability_hydration::load_sparse_ability_index_from_json(json);
-            let label = if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_INDEX_JSON) {
-                "embedded_frame_index"
+            let label = if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_SOURCE_JSON) {
+                "embedded_frame_source"
             } else {
                 "embedded_card_122_overlay"
             };
@@ -383,19 +375,6 @@ impl Default for CardDatabase {
     }
 }
 
-fn ability_requires_sparse_hydration(ability: &Ability) -> bool {
-    ability.raw_text.is_empty()
-        || ability
-            .frame_program
-            .as_ref()
-            .map(|program| program.frames.is_empty())
-            .unwrap_or(true)
-}
-
-fn card_requires_sparse_hydration(abilities: &[Ability]) -> bool {
-    abilities.iter().any(ability_requires_sparse_hydration)
-}
-
 impl CardDatabase {
     pub fn enrich_member(&self, card: &mut MemberCard) {
         Self::enrich_member_runtime_metadata(card)
@@ -459,7 +438,6 @@ impl CardDatabase {
 
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
-            let resolved_frame_source = ab.resolved_frame_source();
             let resolved_frames = ab.resolved_frames().into_owned();
 
             if !resolved_frames.is_empty() {
@@ -489,31 +467,33 @@ impl CardDatabase {
                     match op {
                         O_LOOK_AND_CHOOSE => {
                             ab.choice_flags |= CHOICE_FLAG_LOOK;
+                            let v = frame.value();
+                            let pick = (v >> 8) & 0xFF;
+                            let inferred_choice_count = if pick > 0 {
+                                pick as u8
+                            } else {
+                                let effect_pick = ab
+                                    .effects
+                                    .iter()
+                                    .find(|effect| {
+                                        effect.runtime_opcode == O_LOOK_AND_CHOOSE
+                                            || effect.effect_type == EffectType::LookAndChoose
+                                            || effect.params.get("choose_count").is_some()
+                                            || effect.params.get("CHOOSE_COUNT").is_some()
+                                    })
+                                    .and_then(|effect| effect.params.get("choose_count"))
+                                    .or_else(|| {
+                                        ab.effects.iter().find_map(|effect| {
+                                            effect.params.get("CHOOSE_COUNT")
+                                        })
+                                    })
+                                    .and_then(ability_hydration::parse_u8_value)
+                                    .unwrap_or(1);
+                                effect_pick.max(1)
+                            };
+                            ab.choice_count = ab.choice_count.max(inferred_choice_count);
                             if ab.choice_count == 0 {
-                                let v = frame.value();
-                                let pick = (v >> 8) & 0xFF;
-                                if pick > 0 {
-                                    ab.choice_count = pick as u8;
-                                } else {
-                                    let effect_pick = ab
-                                        .effects
-                                        .iter()
-                                        .find(|effect| {
-                                            effect.runtime_opcode == O_LOOK_AND_CHOOSE
-                                                || effect.effect_type == EffectType::LookAndChoose
-                                                || effect.params.get("choose_count").is_some()
-                                                || effect.params.get("CHOOSE_COUNT").is_some()
-                                        })
-                                        .and_then(|effect| effect.params.get("choose_count"))
-                                        .or_else(|| {
-                                            ab.effects.iter().find_map(|effect| {
-                                                effect.params.get("CHOOSE_COUNT")
-                                            })
-                                        })
-                                        .and_then(ability_hydration::parse_u8_value)
-                                        .unwrap_or(0);
-                                    ab.choice_count = if effect_pick > 0 { effect_pick } else { 1 };
-                                }
+                                ab.choice_count = 1;
                             }
                         }
                         O_RECOVER_MEMBER
@@ -605,12 +585,7 @@ impl CardDatabase {
             }
 
             // Frame program fallback for conditions (if effects/conditions not populated)
-            let semantic_program = if resolved_frame_source == "frame_program" {
-                ab.frame_program.as_ref().cloned()
-            } else {
-                None
-            };
-            if let Some(frame_program) = semantic_program.as_ref() {
+            if let Some(frame_program) = ab.frame_program.as_ref() {
                 let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
                 if !derived_conditions.is_empty() {
                     // Prefer the leading authored condition block from executable frames.
@@ -618,48 +593,6 @@ impl CardDatabase {
                     // `ab.conditions`, which makes trigger prechecks stricter than the
                     // actual frame control flow.
                     ab.conditions = derived_conditions;
-                }
-                // Handle special case for NotHasExcessHeart condition
-                if ab
-                    .raw_text
-                    .contains("相手が余剰のハートを持たず")
-                    || ab
-                        .raw_text
-                        .contains("opponent succeeded a Live without excess Hearts this turn")
-                {
-                    if !ab
-                        .conditions
-                        .iter()
-                        .any(|cond| cond.condition_type == ConditionType::NotHasExcessHeart)
-                    {
-                        ab.conditions.push(Condition {
-                            condition_type: ConditionType::NotHasExcessHeart,
-                            value: 0,
-                            attr: TARGET_PLAYER_OPPONENT as u64,
-                            target_slot: 0,
-                            is_negated: false,
-                            params: serde_json::Value::Null,
-                        });
-                    }
-                }
-                if (ab.raw_text.contains("自分のエネルギーがすべてアクティブ状態の場合")
-                    || ab.raw_text.contains("if all your energy is active"))
-                    && !ab.conditions.iter().any(|cond| {
-                        cond.condition_type == ConditionType::CountEnergyExact && cond.value == 0
-                    })
-                    && resolved_frames.iter().any(|frame| {
-                        let opcode = frame.opcode();
-                        opcode == O_BOOST_SCORE || opcode == O_META_RULE
-                    })
-                {
-                    ab.conditions.push(Condition {
-                        condition_type: ConditionType::CountEnergyExact,
-                        value: 0,
-                        attr: 0,
-                        target_slot: 0,
-                        is_negated: false,
-                        params: serde_json::Value::Null,
-                    });
                 }
             }
 
@@ -858,28 +791,15 @@ impl CardDatabase {
         let mut synergy_flags = 0u32;
 
         for ab in &mut card.abilities {
-            if ab.trigger == TriggerType::OnPlay {
-                s_flags |= 0x01;
+            if let Some(frame_program) = ab.frame_program.as_ref() {
+                let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
+                if !derived_conditions.is_empty() {
+                    ab.conditions = derived_conditions;
+                }
             }
 
-            if (ab.raw_text.contains("自分のエネルギーがすべてアクティブ状態の場合")
-                || ab.raw_text.contains("if all your energy is active"))
-                && !ab.conditions.iter().any(|cond| {
-                    cond.condition_type == ConditionType::CountEnergyExact && cond.value == 0
-                })
-                && ab.resolved_frames().iter().any(|frame| {
-                    let opcode = frame.opcode();
-                    opcode == O_BOOST_SCORE || opcode == O_META_RULE
-                })
-            {
-                ab.conditions.push(Condition {
-                    condition_type: ConditionType::CountEnergyExact,
-                    value: 0,
-                    attr: 0,
-                    target_slot: 0,
-                    is_negated: false,
-                    params: serde_json::Value::Null,
-                });
+            if ab.trigger == TriggerType::OnPlay {
+                s_flags |= 0x01;
             }
 
             for c in &ab.conditions {
@@ -894,6 +814,7 @@ impl CardDatabase {
                     _ => {}
                 }
             }
+
         }
 
         card.semantic_flags = s_flags;
@@ -937,8 +858,8 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
-        let mut text_index = HashMap::new();
-        let mut sparse_loaded = false;
+        let text_index = ability_hydration::load_sparse_text_index();
+        let sparse_ability_index = Self::load_sparse_ability_index();
 
         let mut db = Self {
             members: HashMap::new(),
@@ -947,7 +868,7 @@ impl CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
-            sparse_ability_index: HashMap::new(),
+            sparse_ability_index,
             legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
@@ -957,12 +878,7 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        if card_requires_sparse_hydration(&card.abilities) {
-                            if !sparse_loaded {
-                                text_index = ability_hydration::load_sparse_text_index();
-                                db.sparse_ability_index = Self::load_sparse_ability_index();
-                                sparse_loaded = true;
-                            }
+                        if !db.sparse_ability_index.is_empty() {
                             ability_hydration::attach_sparse_ability_index(
                                 &card.card_no,
                                 &mut card.abilities,
@@ -1002,12 +918,7 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        if card_requires_sparse_hydration(&card.abilities) {
-                            if !sparse_loaded {
-                                text_index = ability_hydration::load_sparse_text_index();
-                                db.sparse_ability_index = Self::load_sparse_ability_index();
-                                sparse_loaded = true;
-                            }
+                        if !db.sparse_ability_index.is_empty() {
                             ability_hydration::attach_sparse_ability_index(
                                 &card.card_no,
                                 &mut card.abilities,
@@ -1056,8 +967,6 @@ impl CardDatabase {
                 }
             }
         }
-
-        db.inject_missing_ability_conditions();
 
         db.legacy_id_aliases = Self::load_legacy_id_aliases(&db.card_no_to_id);
 
@@ -1135,145 +1044,6 @@ impl CardDatabase {
     pub fn id_by_no(&self, card_no: &str) -> Option<i32> {
         let normalized = Self::normalize_card_no(card_no);
         self.card_no_to_id.get(&normalized).copied()
-    }
-
-    fn inject_missing_ability_conditions(&mut self) {
-        let tiny_stars_id = self
-            .id_by_no("PL!SP-bp1-024-L")
-            .or_else(|| {
-                self.lives
-                    .values()
-                    .find(|live| live.name == "Tiny Stars")
-                    .map(|live| live.card_id)
-            });
-        let strawberry_trapper_id = self
-            .id_by_no("PL!S-pb1-021-L")
-            .or_else(|| {
-                self.lives
-                    .values()
-                    .find(|live| live.name == "Strawberry Trapper")
-                    .map(|live| live.card_id)
-            });
-        let kanon_id = self.id_by_no("PL!SP-PR-003-PR");
-        let keke_id = self.id_by_no("PL!SP-PR-004-PR");
-
-        if let (Some(live_id), Some(kanon_id), Some(keke_id)) =
-            (tiny_stars_id, kanon_id, keke_id)
-        {
-            if let Some(live) = self.lives.get_mut(&live_id) {
-                for ab in &mut live.abilities {
-                    if ab.trigger != TriggerType::OnLiveSuccess {
-                        continue;
-                    }
-                    ab.conditions.clear();
-                    ab.conditions.push(Condition {
-                        condition_type: ConditionType::HasMember,
-                        value: kanon_id,
-                        attr: TARGET_PLAYER_SELF as u64,
-                        target_slot: 0,
-                        is_negated: false,
-                        params: serde_json::Value::Null,
-                    });
-                    ab.conditions.push(Condition {
-                        condition_type: ConditionType::HasMember,
-                        value: keke_id,
-                        attr: TARGET_PLAYER_SELF as u64,
-                        target_slot: 0,
-                        is_negated: false,
-                        params: serde_json::Value::Null,
-                    });
-                }
-                let logic_id = Self::to_logic_id(live.card_id);
-                if logic_id < self.lives_vec.len() {
-                    self.lives_vec[logic_id] = Some(live.clone());
-                }
-            }
-        }
-
-        if let Some(live_id) = self.id_by_no("PL!N-bp1-006-P") {
-            if let Some(live) = self.lives.get_mut(&live_id) {
-                for ab in &mut live.abilities {
-                    if ab.trigger != TriggerType::OnLiveStart {
-                        continue;
-                    }
-                    ab.conditions.clear();
-                    ab.conditions.push(Condition {
-                        condition_type: ConditionType::CostCompare,
-                        value: 0,
-                        attr: 0,
-                        target_slot: 1,
-                        is_negated: false,
-                        params: serde_json::Value::Null,
-                    });
-                }
-                let logic_id = Self::to_logic_id(live.card_id);
-                if logic_id < self.lives_vec.len() {
-                    self.lives_vec[logic_id] = Some(live.clone());
-                }
-            }
-        }
-
-        if let Some(live_id) = strawberry_trapper_id {
-            if let Some(live) = self.lives.get_mut(&live_id) {
-                for ab in &mut live.abilities {
-                    if ab.trigger != TriggerType::OnLiveSuccess {
-                        continue;
-                    }
-                    if !ab
-                        .conditions
-                        .iter()
-                        .any(|cond| cond.condition_type == ConditionType::NotHasExcessHeart)
-                    {
-                        ab.conditions.push(Condition {
-                            condition_type: ConditionType::NotHasExcessHeart,
-                            value: 0,
-                            attr: TARGET_PLAYER_OPPONENT as u64,
-                            target_slot: 0,
-                            is_negated: false,
-                            params: serde_json::Value::Null,
-                        });
-                    }
-                }
-                let logic_id = Self::to_logic_id(live.card_id);
-                if logic_id < self.lives_vec.len() {
-                    self.lives_vec[logic_id] = Some(live.clone());
-                }
-            }
-        }
-
-        if let Some(member_id) = self.id_by_no("PL!-bp5-003-P") {
-            if let Some(member) = self.members.get_mut(&member_id) {
-                for ab in &mut member.abilities {
-                    if ab.trigger != TriggerType::Constant {
-                        continue;
-                    }
-                    let has_unique_names_gate = ab.conditions.iter().any(|cond| {
-                        cond.params
-                            .as_object()
-                            .and_then(|params| params.get("raw_cond"))
-                            .and_then(|value| value.as_str())
-                            == Some("UNIQUE_NAMES_COUNT")
-                    });
-                    if !has_unique_names_gate {
-                        ab.conditions.push(Condition {
-                            condition_type: ConditionType::None,
-                            value: 0,
-                            attr: 0,
-                            target_slot: 0,
-                            is_negated: false,
-                            params: serde_json::json!({
-                                "raw_cond": "UNIQUE_NAMES_COUNT",
-                                "MIN": 3
-                            }),
-                        });
-                    }
-                }
-                let logic_id = Self::to_logic_id(member.card_id);
-                if logic_id < self.members_vec.len() {
-                    self.members_vec[logic_id] = Some(member.clone());
-                }
-            }
-        }
     }
 
     pub fn get_name(&self, id: i32) -> Option<String> {

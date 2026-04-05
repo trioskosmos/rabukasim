@@ -300,7 +300,7 @@ fn finalize_look_choice(
     if !revealed.is_empty() {
         let dest = match final_destination {
             Zone::Default => source_zone,
-            _ => final_destination,
+            other => other,
         };
 
         match dest {

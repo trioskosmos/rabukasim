@@ -192,6 +192,26 @@ pub struct AbilityTraceStep {
     pub slot: Option<DecodedSlot>,
     #[serde(default, skip_serializing_if = "Value::is_null")]
     pub params: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub family: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub consumer_paths: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub serialization_fields: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct AbilityDiagnosticsView {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub source_paths: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub action_routes: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub serialization_paths: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub serialization_fields: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -204,6 +224,8 @@ pub struct AbilityTraceView {
     pub choice_count: u8,
     #[serde(default)]
     pub steps: Vec<AbilityTraceStep>,
+    #[serde(default)]
+    pub diagnostics: AbilityDiagnosticsView,
 }
 
 fn trace_opcode_name(opcode: i32) -> String {
@@ -226,6 +248,136 @@ fn trace_opcode_name(opcode: i32) -> String {
         O_NOP => "NOP".to_string(),
         _ => format!("OP_{}", opcode),
     }
+}
+
+fn trace_step_family(opcode: i32) -> Option<&'static str> {
+    match opcode {
+        O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY | O_MOVE_TO_DISCARD => {
+            Some("cost")
+        }
+        O_LOOK_AND_CHOOSE | O_SELECT_MEMBER | O_SELECT_CARDS | O_SELECT_LIVE | O_SELECT_PLAYER
+        | O_SELECT_MODE => Some("selection"),
+        O_DRAW | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_MOVE_TO_DECK
+        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD => Some("movement"),
+        O_BOOST_SCORE | O_ADD_BLADES | O_ADD_HEARTS | O_SET_SCORE | O_REDUCE_SCORE
+        | O_REDUCE_COST | O_INCREASE_COST | O_SET_HEART_COST | O_INCREASE_HEART_COST
+        | O_REDUCE_HEART_REQ | O_TRANSFORM_COLOR | O_TRANSFORM_BLADES | O_TRANSFORM_HEART => {
+            Some("score")
+        }
+        O_JUMP | O_JUMP_IF_FALSE | O_RETURN => Some("control"),
+        O_TRIGGER_REMOTE | O_META_RULE => Some("branch"),
+        O_TAP_MEMBER | O_SET_TAPPED | O_ACTIVATE_MEMBER | O_TAP_OPPONENT => Some("state"),
+        O_SEARCH_DECK | O_LOOK_DECK | O_LOOK_DECK_DYNAMIC | O_ORDER_DECK | O_REVEAL_UNTIL
+        | O_REVEAL_CARDS | O_LOOK_REORDER_DISCARD => Some("search"),
+        _ => None,
+    }
+}
+
+fn trace_consumer_paths_for_opcode(opcode: i32) -> Vec<String> {
+    let mut paths = Vec::new();
+    match opcode {
+        O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY => {
+            paths.push("engine_rust_src/src/core/logic/action_gen/main_phase.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/costs.rs".to_string());
+        }
+        O_LOOK_AND_CHOOSE | O_SELECT_MEMBER | O_SELECT_CARDS | O_SELECT_LIVE | O_SELECT_PLAYER
+        | O_SELECT_MODE => {
+            paths.push("engine_rust_src/src/core/logic/action_gen/response.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/flow_select.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/interaction.rs".to_string());
+        }
+        O_DRAW | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_MOVE_TO_DECK
+        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD | O_MOVE_TO_DISCARD => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_deck.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_discard.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/interaction.rs".to_string());
+        }
+        O_BOOST_SCORE | O_ADD_BLADES | O_ADD_HEARTS | O_SET_SCORE | O_REDUCE_SCORE
+        | O_REDUCE_COST | O_INCREASE_COST | O_SET_HEART_COST | O_INCREASE_HEART_COST
+        | O_REDUCE_HEART_REQ | O_TRANSFORM_COLOR | O_TRANSFORM_BLADES | O_TRANSFORM_HEART => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/state_score_bonus.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/state_score_stats.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/state_score_requirements.rs".to_string());
+        }
+        O_JUMP | O_JUMP_IF_FALSE | O_RETURN => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/mod.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/mod.rs".to_string());
+        }
+        O_TRIGGER_REMOTE | O_META_RULE => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/flow_effects.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/game_trigger.rs".to_string());
+        }
+        O_TAP_MEMBER | O_SET_TAPPED | O_ACTIVATE_MEMBER | O_TAP_OPPONENT => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/state_member_tap.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/state_member.rs".to_string());
+        }
+        O_SEARCH_DECK | O_LOOK_DECK | O_LOOK_DECK_DYNAMIC | O_ORDER_DECK | O_REVEAL_UNTIL
+        | O_REVEAL_CARDS | O_LOOK_REORDER_DISCARD => {
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_deck.rs".to_string());
+        }
+        _ => {}
+    }
+    paths
+}
+
+fn trace_serialization_fields() -> Vec<String> {
+    vec![
+        "Ability.raw_text".to_string(),
+        "Ability.trigger".to_string(),
+        "Ability.effects".to_string(),
+        "Ability.conditions".to_string(),
+        "Ability.costs".to_string(),
+        "Ability.frame_program".to_string(),
+        "Ability.choice_count".to_string(),
+        "Ability.requires_selection".to_string(),
+        "Ability.is_once_per_turn".to_string(),
+        "AbilityFrame.opcode".to_string(),
+        "AbilityFrame.value".to_string(),
+        "AbilityFrame.attr".to_string(),
+        "AbilityFrame.slot".to_string(),
+        "AbilityFrame.is_cost".to_string(),
+        "AbilityFrame.params".to_string(),
+    ]
+}
+
+fn trace_source_paths() -> Vec<String> {
+    vec![
+        "data/cards_compiled.json".to_string(),
+        "data/ability_frame_source.json".to_string(),
+        "data/ability_runtime_index.json".to_string(),
+        "data/ability_runtime_entrypoints.json".to_string(),
+        "engine_rust_src/src/core/logic/card_db.rs".to_string(),
+        "engine_rust_src/src/core/logic/ability_hydration.rs".to_string(),
+        "engine_rust_src/src/export_hydrated_abilities.rs".to_string(),
+    ]
+}
+
+fn trace_warnings_for_ability(ability: &Ability, frames: &[AbilityFrame]) -> Vec<String> {
+    let mut warnings = Vec::new();
+
+    if !ability.has_authored_frame_program() && !ability.effects.is_empty() {
+        warnings.push(
+            "resolved through synthesized semantic effects instead of an authored frame_program"
+                .to_string(),
+        );
+    }
+
+    if ability.frame_program.is_some() && ability.resolved_frame_source() == "frame_program_unmatched"
+    {
+        warnings.push(
+            "frame_program exists but does not match the authored resolution path".to_string(),
+        );
+    }
+
+    if frames.iter().any(|frame| frame.opcode() == O_SELECT_MODE) {
+        warnings.push("modal branching depends on runtime selection legality".to_string());
+    }
+
+    if frames.iter().any(|frame| frame.opcode() == O_LOOK_AND_CHOOSE) {
+        warnings.push("look-and-choose legality depends on current zone contents".to_string());
+    }
+
+    warnings
 }
 
 fn trace_zone(zone: Zone) -> Option<Zone> {
@@ -805,6 +957,8 @@ impl<'a> AbilityFrameComponents<'a> {
 
     pub fn to_trace_step(&self) -> AbilityTraceStep {
         let opcode = trace_opcode_name(self.opcode);
+        let family = trace_step_family(self.opcode).map(|value| value.to_string());
+        let consumer_paths = trace_consumer_paths_for_opcode(self.opcode);
         let mut step = AbilityTraceStep {
             summary: opcode.clone(),
             opcode,
@@ -819,6 +973,16 @@ impl<'a> AbilityFrameComponents<'a> {
             filter: (self.filter != CardFilter::default()).then_some(self.filter),
             slot: (self.slot != DecodedSlot::default()).then_some(self.slot),
             params: self.params.cloned().unwrap_or(Value::Null),
+            family,
+            consumer_paths,
+            serialization_fields: vec![
+                "opcode".to_string(),
+                "value".to_string(),
+                "attr".to_string(),
+                "slot".to_string(),
+                "is_cost".to_string(),
+                "params".to_string(),
+            ],
         };
 
         step.summary = match self.opcode {
@@ -1125,6 +1289,8 @@ impl AbilityFrame {
                 "COUNT_HEARTS" => 223,
                 "COUNT_BLADES" => 224,
                 "HAS_KEYWORD" => 226,
+                    "HAS_EXCESS_HEART" => C_HAS_EXCESS_HEART,
+                    "NOT_HAS_EXCESS_HEART" => C_NOT_HAS_EXCESS_HEART,
                 "MAIN_PHASE" => 305,
                 "SUCCESS_PILE_COUNT" => 307,
                 "IS_SELF_MOVE" => 308,
@@ -2402,25 +2568,7 @@ impl std::hash::Hash for Ability {
 
 impl Ability {
     pub fn implicit_activated_energy_cost(&self) -> usize {
-        if self.trigger != TriggerType::Activated {
-            return 0;
-        }
-
-        if !self.costs.is_empty()
-            || self.resolved_frames().iter().any(|frame| {
-                frame.is_cost()
-                    && matches!(frame.opcode(), O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY)
-            })
-        {
-            return 0;
-        }
-
-        let prefix = self
-            .raw_text
-            .split('：')
-            .next()
-            .unwrap_or(self.raw_text.as_str());
-        prefix.matches("{{icon_energy.png|E}}").count()
+        0
     }
 
     fn has_authored_frame_program(&self) -> bool {
@@ -2556,11 +2704,77 @@ impl Ability {
     }
 
     pub fn trace_view(&self) -> AbilityTraceView {
-        let steps = self
-            .resolved_frames()
+        let frames = self.resolved_frames();
+        let steps = frames
             .iter()
             .map(|frame| frame.components().to_trace_step())
             .collect();
+        let mut action_routes = Vec::new();
+
+        if self.trigger == TriggerType::Activated {
+            action_routes.push(
+                "engine_rust_src/src/core/logic/action_gen/main_phase.rs".to_string(),
+            );
+        }
+        if frames.iter().any(|frame| {
+            matches!(
+                frame.opcode(),
+                O_SELECT_MODE
+                    | O_SELECT_MEMBER
+                    | O_SELECT_CARDS
+                    | O_SELECT_LIVE
+                    | O_SELECT_PLAYER
+                    | O_LOOK_AND_CHOOSE
+            )
+        }) {
+            action_routes.push("engine_rust_src/src/core/logic/action_gen/response.rs".to_string());
+        }
+        if frames.iter().any(|frame| {
+            matches!(
+                frame.opcode(),
+                O_MOVE_TO_DISCARD
+                    | O_MOVE_MEMBER
+                    | O_MOVE_TO_DECK
+                    | O_RECOVER_LIVE
+                    | O_RECOVER_MEMBER
+                    | O_DRAW
+            )
+        }) {
+            action_routes.push(
+                "engine_rust_src/src/core/logic/interpreter/handlers/interaction.rs".to_string(),
+            );
+        }
+        if frames.iter().any(|frame| {
+            matches!(
+                frame.opcode(),
+                O_BOOST_SCORE
+                    | O_ADD_BLADES
+                    | O_ADD_HEARTS
+                    | O_SET_SCORE
+                    | O_REDUCE_SCORE
+                    | O_REDUCE_COST
+                    | O_INCREASE_COST
+                    | O_SET_HEART_COST
+                    | O_INCREASE_HEART_COST
+                    | O_REDUCE_HEART_REQ
+            )
+        }) {
+            action_routes.push(
+                "engine_rust_src/src/core/logic/interpreter/handlers/state_score_bonus.rs"
+                    .to_string(),
+            );
+        }
+        if frames.iter().any(|frame| {
+            matches!(
+                frame.opcode(),
+                O_JUMP | O_JUMP_IF_FALSE | O_RETURN | O_TRIGGER_REMOTE | O_META_RULE
+            )
+        }) {
+            action_routes.push("engine_rust_src/src/core/logic/interpreter/mod.rs".to_string());
+        }
+
+        action_routes.sort();
+        action_routes.dedup();
 
         AbilityTraceView {
             trigger: self.trigger,
@@ -2568,6 +2782,18 @@ impl Ability {
             raw_text: self.raw_text.clone(),
             choice_count: self.choice_count,
             steps,
+            diagnostics: AbilityDiagnosticsView {
+                source_paths: trace_source_paths(),
+                action_routes,
+                serialization_paths: vec![
+                    "engine_rust_src/src/core/logic/models.rs".to_string(),
+                    "engine_rust_src/src/core/logic/card_db.rs".to_string(),
+                    "engine_rust_src/src/core/logic/ability_hydration.rs".to_string(),
+                    "engine_rust_src/src/export_hydrated_abilities.rs".to_string(),
+                ],
+                serialization_fields: trace_serialization_fields(),
+                warnings: trace_warnings_for_ability(self, &frames),
+            },
         }
     }
 }
@@ -2706,6 +2932,13 @@ mod tests {
         assert_eq!(trace.frame_source, "frame_program");
         assert_eq!(trace.steps[0].summary, "draw 1 card(s)");
         assert_eq!(trace.steps[1].summary, "return");
+        assert!(!trace.diagnostics.source_paths.is_empty());
+        assert!(!trace.diagnostics.serialization_fields.is_empty());
+        assert!(trace
+            .diagnostics
+            .serialization_fields
+            .iter()
+            .any(|field| field == "Ability.frame_program"));
     }
 
     #[test]

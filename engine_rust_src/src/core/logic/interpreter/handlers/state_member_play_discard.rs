@@ -105,19 +105,9 @@ fn discard_play_enters_tapped(
         .abilities
         .get(ctx.ability_index.max(0) as usize)
         .map(|ability| {
-            if play_from_discard_frame_enters_tapped(ability) {
-                return true;
-            }
-
-            if !ability.raw_text.is_empty() {
-                return ability.raw_text.contains("ウェイト状態で登場");
-            } else if !ability.pseudocode.is_empty() {
-                return ability.pseudocode.contains("ウェイト状態で登場");
-            }
-
-            source_member.original_text.contains("ウェイト状態で登場")
+            play_from_discard_frame_enters_tapped(ability)
         })
-        .unwrap_or_else(|| source_member.original_text.contains("ウェイト状態で登場"))
+        .unwrap_or(false)
 }
 
 #[allow(clippy::too_many_arguments)]

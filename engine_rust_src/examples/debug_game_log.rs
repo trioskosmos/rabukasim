@@ -3,7 +3,6 @@
 use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use rand::prelude::{StdRng, IndexedRandom, SeedableRng};
 
 fn load_db() -> CardDatabase {
     let candidates = [
@@ -133,7 +132,6 @@ fn log_game_state(state: &GameState, db: &CardDatabase, step: usize) {
 }
 
 fn run_debug_game(state: &mut GameState, db: &CardDatabase, max_steps: usize) {
-    let mut rng = StdRng::seed_from_u64(42);
     let mut step_count = 0;
     
     println!("=== DEBUG GAME START ===");

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-04T14:36:18.178669+00:00",
+  "generated_at": "2026-04-05T02:41:40.379952+00:00",
   "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json",
   "metadata_source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\metadata.json",
   "schema": "ability_frame_source.flat.v2",
@@ -13,7 +13,7 @@
     "text_missing_ability_count": 0
   },
   "opcode_catalog": {
-    "used_count": 97,
+    "used_count": 99,
     "unknown_count": 0,
     "used_entries": [
       {
@@ -171,11 +171,25 @@
         "frame_count": 1
       },
       {
+        "name": "NOT_HAS_EXCESS_HEART",
+        "section": "conditions",
+        "opcode_id": 239,
+        "entry_count": 1,
+        "frame_count": 1
+      },
+      {
         "name": "TOTAL_BLADES",
         "section": "conditions",
         "opcode_id": 240,
         "entry_count": 2,
         "frame_count": 2
+      },
+      {
+        "name": "COUNT_ENERGY_EXACT",
+        "section": "conditions",
+        "opcode_id": 301,
+        "entry_count": 1,
+        "frame_count": 1
       },
       {
         "name": "COUNT_BLADE_HEART_TYPES",
@@ -244,8 +258,8 @@
         "name": "NOP",
         "section": "opcodes",
         "opcode_id": 0,
-        "entry_count": 59,
-        "frame_count": 65
+        "entry_count": 58,
+        "frame_count": 64
       },
       {
         "name": "RETURN",
@@ -265,8 +279,8 @@
         "name": "JUMP_IF_FALSE",
         "section": "opcodes",
         "opcode_id": 3,
-        "entry_count": 339,
-        "frame_count": 428
+        "entry_count": 340,
+        "frame_count": 429
       },
       {
         "name": "DRAW",
@@ -14279,7 +14293,8 @@
             "value_enabled": 1,
             "value_threshold": 2,
             "is_le": 1,
-            "is_cost_type": 1
+            "is_cost_type": 1,
+            "is_tapped": 1
           },
           "slot": {
             "target_slot": 4,
@@ -14304,7 +14319,8 @@
             "value_enabled": 1,
             "value_threshold": 2,
             "is_le": 1,
-            "is_cost_type": 1
+            "is_cost_type": 1,
+            "is_tapped": 1
           },
           "slot": {
             "target_slot": 2,
@@ -29243,71 +29259,6 @@
       "source_mode": "frame_authored"
     },
     {
-      "signature": "T2|8b0c863dacfbe503cd85ae84e12a8739b927d694",
-      "signature_hash": "8b0c863dacfbe503cd85ae84e12a8739b927d694",
-      "signature_source": "{\"frames\":[{\"op\":\"META_RULE\"},{\"op\":\"BOOST_SCORE\"},{\"op\":\"RETURN\"}],\"trigger\":2}",
-      "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
-      "frame_count": 3,
-      "opcode_sequence": [
-        "META_RULE",
-        "BOOST_SCORE",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "META_RULE",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "card_type": 2
-          },
-          "slot": {
-            "target_slot": 4
-          }
-        },
-        {
-          "op": "BOOST_SCORE",
-          "frame_index": 1,
-          "value": 1,
-          "slot": {
-            "target_slot": 4
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 2
-        }
-      ],
-      "cards": [
-        "PL!SP-pb1-023-L | ディストーション [live_db:605] (ab#1 ON_LIVE_START)",
-        "PL!SP-pb1-023-L | ディストーション (ab#1)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!SP-pb1-023-L",
-          "ability_index": 1,
-          "db": "live_db",
-          "card_id": 605,
-          "name": "ディストーション",
-          "trigger": 2
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを+１する。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを+１する。",
-          "en": "",
-          "card_examples": [
-            "PL!SP-pb1-023-L | ディストーション (ab#1)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
       "signature": "T2|8cad4afa511fbc7d9f5dac5ade8522e1f02ac229",
       "signature_hash": "8cad4afa511fbc7d9f5dac5ade8522e1f02ac229",
       "signature_source": "{\"frames\":[{\"op\":\"COUNT_GROUP\"},{\"op\":\"NOP\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"BOOST_SCORE\"},{\"op\":\"RETURN\"}],\"trigger\":2}",
@@ -31267,6 +31218,86 @@
           "en": "",
           "card_examples": [
             "PL!HS-bp2-020-L | Link to the FUTURE (ab#1)"
+          ]
+        }
+      ],
+      "source_mode": "frame_authored"
+    },
+    {
+      "signature": "T2|c3c7f0bb6a0340c4831bd09a29b104d20b295f7b",
+      "signature_hash": "c3c7f0bb6a0340c4831bd09a29b104d20b295f7b",
+      "signature_source": "{\"frames\":[{\"op\":\"COUNT_ENERGY_EXACT\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"META_RULE\"},{\"op\":\"BOOST_SCORE\"},{\"op\":\"RETURN\"}],\"trigger\":2}",
+      "trigger_id": 2,
+      "trigger": "ON_LIVE_START",
+      "frame_count": 5,
+      "opcode_sequence": [
+        "COUNT_ENERGY_EXACT",
+        "JUMP_IF_FALSE",
+        "META_RULE",
+        "BOOST_SCORE",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "op": "COUNT_ENERGY_EXACT",
+          "frame_index": 0,
+          "value": 0,
+          "slot": {
+            "target_slot": 0
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "META_RULE",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "card_type": 2
+          },
+          "slot": {
+            "target_slot": 4
+          }
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": 4
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "cards": [
+        "PL!SP-pb1-023-L | ディストーション [live_db:605] (ab#1 ON_LIVE_START)",
+        "PL!SP-pb1-023-L | ディストーション (ab#1)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!SP-pb1-023-L",
+          "ability_index": 1,
+          "db": "live_db",
+          "card_id": 605,
+          "name": "ディストーション",
+          "trigger": 2
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを+１する。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚までアクティブにする。その後、自分のエネルギーがすべてアクティブ状態の場合、このカードのスコアを+１する。",
+          "en": "",
+          "card_examples": [
+            "PL!SP-pb1-023-L | ディストーション (ab#1)"
           ]
         }
       ],
@@ -37187,86 +37218,6 @@
       "source_mode": "frame_authored"
     },
     {
-      "signature": "T3|88270148247ef07c95d168facac66b3527cd7cf5",
-      "signature_hash": "88270148247ef07c95d168facac66b3527cd7cf5",
-      "signature_source": "{\"frames\":[{\"op\":\"COUNT_HEARTS\"},{\"op\":\"NOP\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"BOOST_SCORE\"},{\"op\":\"RETURN\"}],\"trigger\":3}",
-      "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
-      "frame_count": 5,
-      "opcode_sequence": [
-        "COUNT_HEARTS",
-        "NOP",
-        "JUMP_IF_FALSE",
-        "BOOST_SCORE",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "COUNT_HEARTS",
-          "frame_index": 0,
-          "value": 4,
-          "attr": {
-            "group_enabled": 1,
-            "group_id": 1
-          },
-          "slot": {
-            "target_slot": 48
-          }
-        },
-        {
-          "op": "NOP",
-          "frame_index": 1,
-          "slot": {
-            "target_slot": 48
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
-          "value": 1
-        },
-        {
-          "op": "BOOST_SCORE",
-          "frame_index": 3,
-          "value": 2,
-          "slot": {
-            "target_slot": 4
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 4
-        }
-      ],
-      "cards": [
-        "PL!S-pb1-021-L | Strawberry Trapper [live_db:477] (ab#0 ON_LIVE_SUCCESS)",
-        "PL!S-pb1-021-L | Strawberry Trapper (ab#0)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!S-pb1-021-L",
-          "ability_index": 0,
-          "db": "live_db",
-          "card_id": 477,
-          "name": "Strawberry Trapper",
-          "trigger": 3
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_05.png|heart05}}が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた場合、このカードのスコアを+２する。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_05.png|heart05}}が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた場合、このカードのスコアを+２する。",
-          "en": "",
-          "card_examples": [
-            "PL!S-pb1-021-L | Strawberry Trapper (ab#0)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
       "signature": "T3|8b4cbe9436ec9efb816898a413ec7d634e792ab2",
       "signature_hash": "8b4cbe9436ec9efb816898a413ec7d634e792ab2",
       "signature_source": "{\"frames\":[{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"LOOK_AND_CHOOSE\"},{\"op\":\"RETURN\"}],\"trigger\":3}",
@@ -37338,6 +37289,89 @@
           "en": "",
           "card_examples": [
             "PL!-pb1-031-L | 輝夜の城で踊りたい (ab#0)"
+          ]
+        }
+      ],
+      "source_mode": "frame_authored"
+    },
+    {
+      "signature": "T3|9179e2ad53d5cd0d5341969aca0339a99aa945a7",
+      "signature_hash": "9179e2ad53d5cd0d5341969aca0339a99aa945a7",
+      "signature_source": "{\"frames\":[{\"op\":\"COUNT_HEARTS\"},{\"op\":\"NOT_HAS_EXCESS_HEART\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"BOOST_SCORE\"},{\"op\":\"RETURN\"}],\"trigger\":3}",
+      "trigger_id": 3,
+      "trigger": "ON_LIVE_SUCCESS",
+      "frame_count": 5,
+      "opcode_sequence": [
+        "COUNT_HEARTS",
+        "NOT_HAS_EXCESS_HEART",
+        "JUMP_IF_FALSE",
+        "BOOST_SCORE",
+        "RETURN"
+      ],
+      "frames": [
+        {
+          "op": "COUNT_HEARTS",
+          "frame_index": 0,
+          "value": 4,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": 1
+          },
+          "slot": {
+            "target_slot": 48
+          }
+        },
+        {
+          "op": "NOT_HAS_EXCESS_HEART",
+          "frame_index": 1,
+          "attr": {
+            "target_player": 2
+          },
+          "slot": {
+            "target_slot": 48
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 3,
+          "value": 2,
+          "slot": {
+            "target_slot": 4
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "cards": [
+        "PL!S-pb1-021-L | Strawberry Trapper [live_db:477] (ab#0 ON_LIVE_SUCCESS)",
+        "PL!S-pb1-021-L | Strawberry Trapper (ab#0)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!S-pb1-021-L",
+          "ability_index": 0,
+          "db": "live_db",
+          "card_id": 477,
+          "name": "Strawberry Trapper",
+          "trigger": 3
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_05.png|heart05}}が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた場合、このカードのスコアを+２する。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_05.png|heart05}}が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた場合、このカードのスコアを+２する。",
+          "en": "",
+          "card_examples": [
+            "PL!S-pb1-021-L | Strawberry Trapper (ab#0)"
           ]
         }
       ],
@@ -40061,6 +40095,10 @@
           "op": "NOP",
           "frame_index": 0,
           "value": 3,
+          "params": {
+            "raw_cond": "UNIQUE_NAMES_COUNT",
+            "MIN": 3
+          },
           "slot": {
             "target_slot": 48
           }
@@ -45182,7 +45220,12 @@
             "target_slot": 4,
             "remainder_zone": "DISCARD",
             "source_zone": "DECK_TOP"
-          }
+          },
+          "params": {
+            "count": 4,
+            "choose_count": 2
+          },
+          "choice_count": 2
         },
         {
           "op": "JUMP",
@@ -45266,7 +45309,8 @@
           ]
         }
       ],
-      "source_mode": "frame_authored"
+      "source_mode": "frame_authored",
+      "choice_count": 2
     },
     {
       "signature": "T7|9951d685bc4dfab307941997c05bd13d9ec73c39",
@@ -47921,19 +47965,25 @@
     {
       "signature": "T7|e4808399e9581070f68f19234e84385eca733b74",
       "signature_hash": "e4808399e9581070f68f19234e84385eca733b74",
-      "signature_source": "{\"frames\":[{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"SELECT_CARDS\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
+      "signature_source": "{\"frames\":[{\"op\":\"PAY_ENERGY\"},{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"SELECT_CARDS\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
       "trigger_id": 7,
       "trigger": "ACTIVATED",
-      "frame_count": 3,
+      "frame_count": 4,
       "opcode_sequence": [
+        "PAY_ENERGY",
         "MOVE_TO_DISCARD",
         "SELECT_CARDS",
         "RETURN"
       ],
       "frames": [
         {
-          "op": "MOVE_TO_DISCARD",
+          "op": "PAY_ENERGY",
           "frame_index": 0,
+          "value": 2
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 1,
           "value": 1,
           "attr": {
             "target_player": 1
@@ -47946,7 +47996,7 @@
         },
         {
           "op": "SELECT_CARDS",
-          "frame_index": 1,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": 1,
@@ -47964,7 +48014,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 3
         }
       ],
       "cards": [
@@ -48659,11 +48709,12 @@
     {
       "signature": "T7|963b2fe3181b668d587a8107db704cf686fc566f",
       "signature_hash": "963b2fe3181b668d587a8107db704cf686fc566f",
-      "signature_source": "{\"frames\":[{\"op\":\"COUNT_ENERGY\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"ENERGY_CHARGE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
+      "signature_source": "{\"frames\":[{\"op\":\"MOVE_TO_DISCARD\"},{\"op\":\"COUNT_ENERGY\"},{\"op\":\"JUMP_IF_FALSE\"},{\"op\":\"ENERGY_CHARGE\"},{\"op\":\"RETURN\"}],\"trigger\":7}",
       "trigger_id": 7,
       "trigger": "ACTIVATED",
-      "frame_count": 4,
+      "frame_count": 5,
       "opcode_sequence": [
+        "MOVE_TO_DISCARD",
         "COUNT_ENERGY",
         "JUMP_IF_FALSE",
         "ENERGY_CHARGE",
@@ -48671,8 +48722,21 @@
       ],
       "frames": [
         {
-          "op": "COUNT_ENERGY",
+          "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": 1
+          },
+          "slot": {
+            "target_slot": 4,
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "COUNT_ENERGY",
+          "frame_index": 1,
           "value": 6,
           "slot": {
             "target_slot": 48
@@ -48680,12 +48744,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
+          "frame_index": 2,
           "value": 1
         },
         {
           "op": "ENERGY_CHARGE",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 1,
           "slot": {
             "target_slot": 4,
@@ -48694,7 +48758,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "cards": [

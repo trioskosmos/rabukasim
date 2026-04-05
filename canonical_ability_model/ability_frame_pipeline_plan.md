@@ -4,15 +4,14 @@
 Make the ability frame pipeline much simpler while keeping runtime behavior the same.
 
 ## Current End-to-End Pipeline
-1. `tools/abilities/pipeline.py` loads authored ability data from `data/ability_frame_source.json` when present, otherwise falls back to `data/ability_frame_index.json`.
+1. `tools/abilities/pipeline.py` loads authored ability data from `data/ability_frame_source.json`.
 2. `tools/frame_codec.py` normalizes entries into a canonical flat shape:
    - frame opcodes are normalized
    - signatures are recomputed from opcode sequence
    - card reference labels are rebuilt
    - text coverage and opcode catalog are derived
-3. `tools/frame_codec.py` then emits three projections from the same normalized payload:
+3. `tools/frame_codec.py` then emits two runtime-facing projections from the same normalized payload:
    - compact source payload
-   - review payload
    - runtime payload with `readable` overlays and semantic display text
 4. `engine/compiler/main.py` reads the compact sparse index and builds Python `Ability` objects.
 5. `engine/compiler/semantic_processor.py` converts those frames into semantic `effects`, `conditions`, and `costs`.
@@ -104,7 +103,7 @@ Target shape:
 5. No Rust sparse reattachment in the normal runtime load path.
 
 Desired flow:
-- `ability_frame_index.json`
+- `ability_frame_source.json`
 - normalize and validate frames once
 - export compiled cards with `frame_program` preserved
 - derive semantic metadata for compatibility and inspection

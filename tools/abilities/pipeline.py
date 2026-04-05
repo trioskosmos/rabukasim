@@ -16,7 +16,6 @@ from tools.sync_launcher_assets import sync_assets
 CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
 CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 FRAME_SOURCE_PATH = ROOT_DIR / "data" / "ability_frame_source.json"
-FRAME_REVIEW_PATH = ROOT_DIR / "data" / "ability_frame_index.json"
 FRAME_RUNTIME_PATH = ROOT_DIR / "data" / "ability_runtime_index.json"
 METADATA_PATH = ROOT_DIR / "data" / "metadata.json"
 
@@ -49,19 +48,15 @@ def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
 
 
 def prepare_frame_index(*, quiet: bool = False) -> bool:
-    """Refresh authored source, review index, and runtime index."""
-    _log("Refreshing authored source and generated ability indexes", quiet)
-    input_path = FRAME_SOURCE_PATH if FRAME_SOURCE_PATH.exists() else FRAME_REVIEW_PATH
-    payload = frame_codec.load_authored_payload(input_path)
+    """Refresh authored source and runtime index."""
+    _log("Refreshing authored source and runtime index", quiet)
+    payload = frame_codec.load_authored_payload(FRAME_SOURCE_PATH)
     metadata = frame_codec.load_json(METADATA_PATH)
     card_db = None
     if CARDS_OUTPUT_PATH.exists():
         card_db = frame_codec.load_json(CARDS_OUTPUT_PATH)
     source_payload = frame_codec.strip_duplicate_instruction_entries(
         frame_codec.build_compact_ability_index(payload, metadata, card_db)
-    )
-    review_payload = frame_codec.strip_duplicate_instruction_entries(
-        frame_codec.build_review_ability_index(source_payload, metadata, card_db)
     )
     runtime_payload = frame_codec.strip_duplicate_instruction_entries(
         frame_codec.build_runtime_ability_index(source_payload, metadata, card_db)
@@ -70,7 +65,6 @@ def prepare_frame_index(*, quiet: bool = False) -> bool:
     changed = False
     for path, next_payload in (
         (FRAME_SOURCE_PATH, source_payload),
-        (FRAME_REVIEW_PATH, review_payload),
         (FRAME_RUNTIME_PATH, runtime_payload),
     ):
         current_payload = frame_codec.load_authored_payload(path) if path.exists() else None

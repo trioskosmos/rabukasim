@@ -62,39 +62,8 @@ pub fn update_live_score_snapshot(
 }
 
 pub fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Option<i32> {
-    let abilities = if let Some(card) = db.get_live(ctx.source_card_id) {
-        card.abilities.as_slice()
-    } else {
-        db.get_member(ctx.source_card_id)?.abilities.as_slice()
-    };
-
-    let ability = usize::try_from(ctx.ability_index)
-        .ok()
-        .and_then(|ability_index| abilities.get(ability_index))
-        .or_else(|| {
-            abilities
-                .iter()
-                .find(|ability| ability.raw_text.contains("VALUE_GE("))
-        })?;
-
-    let has_structured_branching = ability.resolved_frames().iter().any(|frame| {
-        let opcode = frame.opcode();
-        opcode == O_JUMP_IF_FALSE
-            || opcode == O_JUMP
-            || crate::core::logic::interpreter::is_condition_opcode(opcode)
-    });
-    if has_structured_branching {
-        return None;
-    }
-
-    let raw_text = ability.raw_text.as_str();
-    let marker = "VALUE_GE(";
-    let start = raw_text.find(marker)? + marker.len();
-    let tail = &raw_text[start..];
-    let comma = tail.find(',')?;
-    let close = tail[comma + 1..].find(')')? + comma + 1;
-
-    tail[comma + 1..close].trim().parse::<i32>().ok()
+    let _ = (db, ctx);
+    None
 }
 
 pub fn source_ability<'a>(

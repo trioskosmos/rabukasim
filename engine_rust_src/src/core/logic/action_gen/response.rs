@@ -915,13 +915,14 @@ impl ResponseGenerator {
                     & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
                 let no_filter = masked_filter == 0;
                 for (i, &cid) in player.looked_cards.iter().enumerate() {
-                    if no_filter
+                    if cid != -1
+                        && (no_filter
                         || state.card_matches_filter_with_ctx(
                             db,
                             cid,
                             masked_filter,
                             &pi.ctx,
-                        )
+                        ))
                     {
                         receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
                     }

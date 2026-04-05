@@ -81,6 +81,10 @@ struct HydratedAbilityEntry {
     cost_count: usize,
     resolved_frames: Vec<SemanticAbilityFrameExport>,
     trace_view: AbilityTraceView,
+    action_routes: Vec<String>,
+    serialization_paths: Vec<String>,
+    serialization_fields: Vec<String>,
+    warnings: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -142,6 +146,7 @@ fn push_member_entries(
                 .collect();
             let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
+            let diagnostics = trace_view.diagnostics.clone();
 
             *summary
                 .source_counts
@@ -170,6 +175,10 @@ fn push_member_entries(
                 cost_count: ability.costs.len(),
                 resolved_frames,
                 trace_view,
+                action_routes: diagnostics.action_routes,
+                serialization_paths: diagnostics.serialization_paths,
+                serialization_fields: diagnostics.serialization_fields,
+                warnings: diagnostics.warnings,
             });
         }
     }
@@ -198,6 +207,7 @@ fn push_live_entries(
                 .collect();
             let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
+            let diagnostics = trace_view.diagnostics.clone();
 
             *summary
                 .source_counts
@@ -226,6 +236,10 @@ fn push_live_entries(
                 cost_count: ability.costs.len(),
                 resolved_frames,
                 trace_view,
+                action_routes: diagnostics.action_routes,
+                serialization_paths: diagnostics.serialization_paths,
+                serialization_fields: diagnostics.serialization_fields,
+                warnings: diagnostics.warnings,
             });
         }
     }

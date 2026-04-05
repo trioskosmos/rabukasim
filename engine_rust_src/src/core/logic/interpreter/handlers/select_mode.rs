@@ -19,13 +19,6 @@ pub fn handle_select_mode(
     frames: &[crate::core::logic::models::AbilityFrame],
 ) -> HandlerResult {
     let v = frame_data.value;
-    println!(
-        "[SELECT_MODE_DBG] src={} choice={} v={} phase={:?}",
-        ctx.source_card_id,
-        ctx.choice_index,
-        ctx.v_remaining,
-        state.phase
-    );
 
     if ctx.choice_index == -1 {
         if ctx.auto_pick && v == 1 {
@@ -167,13 +160,6 @@ pub fn handle_select_mode_simple(
     // For now, delegate to the original implementation by reconstructing frame reference
     // This avoids the complex frames parameter while still working
     let v = frame_data.value;
-    println!(
-        "[SELECT_MODE_DBG] src={} choice={} v={} phase={:?}",
-        ctx.source_card_id,
-        ctx.choice_index,
-        ctx.v_remaining,
-        state.phase
-    );
 
     // Get choice or suspend
     let choice = if ctx.choice_index >= 0 {

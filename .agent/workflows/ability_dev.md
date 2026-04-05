@@ -13,7 +13,7 @@ Use this workflow to implement new cards, fix broken logic, or verify frame prog
 
 ## Phase 2: Logic Refinement
 1. **Update Pseudocode**:
-   - Edit `data/ability_frame_index.json` directly for authored logic.
+   - Edit `data/ability_frame_source.json` directly for authored logic.
 2. **Compile**: `uv run python -m compiler.main`
 3. **Verify Frames**: check the "Ability Frames" section in `card_finder.py`.
 

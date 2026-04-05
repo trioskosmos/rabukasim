@@ -1,8 +1,7 @@
 use super::models::*;
-use crate::core::enums::{ConditionType, EffectType, TriggerType, Zone};
+use crate::core::enums::{ConditionType, EffectType, TriggerType};
 use crate::core::generated_constants::*;
 use crate::core::logic::interpreter::conditions::common::parse_condition_type;
-use crate::core::models::interpreter::instruction::DecodedSlot;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -97,6 +96,11 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
                         "source_text_en",
                         "trigger",
                         "trigger_id",
+                        "raw_text",
+                        "is_once_per_turn",
+                        "requires_selection",
+                        "choice_flags",
+                        "choice_count",
                     ] {
                         if let Some(value) = ability_data.get(key) {
                             compact_entry.insert(key.to_string(), value.clone());
@@ -164,7 +168,18 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
                 if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
                     let mut compact_entry = serde_json::Map::new();
 
-                    for key in ["pseudocode", "source_text", "source_text_en", "trigger", "trigger_id"] {
+                    for key in [
+                        "pseudocode",
+                        "source_text",
+                        "source_text_en",
+                        "trigger",
+                        "trigger_id",
+                        "raw_text",
+                        "is_once_per_turn",
+                        "requires_selection",
+                        "choice_flags",
+                        "choice_count",
+                    ] {
                         if let Some(value) = ability_data.get(key) {
                             compact_entry.insert(key.to_string(), value.clone());
                         }
@@ -203,25 +218,22 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
 pub(crate) fn load_sparse_text_index() -> HashMap<String, String> {
     let mut text_index = HashMap::new();
 
-    for candidates in [
-        ["data/ability_runtime_index.json", "../data/ability_runtime_index.json"],
-        ["data/ability_frame_index.json", "../data/ability_frame_index.json"],
+    for path in [
+        "data/ability_frame_source.json",
+        "../data/ability_frame_source.json",
     ] {
-        let mut loaded_group = false;
-        for path in candidates {
-            if let Ok(json) = fs::read_to_string(path) {
-                if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
-                    if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
-                        for ability_data in abilities {
-                            if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
-                                if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
-                                    for card_ref in card_refs {
-                                        if let Some(card_obj) = card_ref.as_object() {
-                                            if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
-                                                if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
-                                                    let key = format!("{}#{}", card_no, ability_index);
-                                                    text_index.insert(key, source_text.to_string());
-                                                }
+        if let Ok(json) = fs::read_to_string(path) {
+            if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
+                if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
+                    for ability_data in abilities {
+                        if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
+                            if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+                                for card_ref in card_refs {
+                                    if let Some(card_obj) = card_ref.as_object() {
+                                        if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
+                                            if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
+                                                let key = format!("{}#{}", card_no, ability_index);
+                                                text_index.insert(key, source_text.to_string());
                                             }
                                         }
                                     }
@@ -230,15 +242,10 @@ pub(crate) fn load_sparse_text_index() -> HashMap<String, String> {
                         }
                     }
                 }
-                if !text_index.is_empty() {
-                    loaded_group = true;
-                    break;
-                }
             }
-        }
-
-        if loaded_group {
-            break;
+            if !text_index.is_empty() {
+                break;
+            }
         }
     }
 
@@ -338,6 +345,30 @@ pub(crate) fn attach_sparse_ability_index(
         }
 
         if let Some(entry) = matching_entry {
+            if ability.choice_flags == 0 {
+                ability.choice_flags = entry
+                    .get("choice_flags")
+                    .and_then(parse_u8_value)
+                    .unwrap_or(0);
+            }
+            if ability.choice_count == 0 {
+                ability.choice_count = entry
+                    .get("choice_count")
+                    .and_then(parse_u8_value)
+                    .unwrap_or(0);
+            }
+            if !ability.requires_selection {
+                ability.requires_selection = entry
+                    .get("requires_selection")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+            }
+            if !ability.is_once_per_turn {
+                ability.is_once_per_turn = entry
+                    .get("is_once_per_turn")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+            }
             let program = sparse_entry_to_frame_program(entry);
             if !program.frames.is_empty() {
                 ability.frame_program = Some(program);
@@ -435,33 +466,8 @@ pub(crate) fn attach_sparse_ability_index(
                 if effect.runtime_slot == 0 {
                     effect.runtime_slot = components.raw_slot;
                 }
-                if effect.runtime_opcode == O_MOVE_TO_DISCARD && effect.runtime_slot == 0 {
-                    let raw_text = ability.raw_text.to_ascii_lowercase();
-                    if ability.raw_text.contains("手札") || raw_text.contains("hand") {
-                        let mut slot = DecodedSlot::decode(effect.runtime_slot);
-                        slot.source_zone = Zone::Hand;
-                        effect.runtime_slot = slot.to_raw();
-                    }
-                }
                 if !effect.is_optional {
-                    let raw_text = ability.raw_text.to_ascii_lowercase();
-                    effect.is_optional = components.is_optional()
-                        || (
-                            matches!(
-                                effect.runtime_opcode,
-                                O_MOVE_TO_DISCARD
-                                    | O_SELECT_MODE
-                                    | O_SELECT_CARDS
-                                    | O_LOOK_AND_CHOOSE
-                                    | O_SELECT_MEMBER
-                                    | O_SELECT_LIVE
-                                    | O_SELECT_PLAYER
-                                    | O_PAY_ENERGY
-                            )
-                                && (ability.raw_text.contains("もよい")
-                                    || raw_text.contains("may")
-                                    || raw_text.contains("optional"))
-                        );
+                    effect.is_optional = components.is_optional();
                 }
             }
         }

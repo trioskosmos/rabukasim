@@ -58,7 +58,8 @@ def main():
 
     report = []
     report.append(f"## Card {card_id}: {card['card_no']} - {card['name']}")
-    report.append(f"**Japanese Text:** `{card.get('ability_text', 'N/A').replace('\\n', ' ')}`")
+    japanese_text = card.get("ability_text", "N/A").replace("\n", " ")
+    report.append(f"**Japanese Text:** `{japanese_text}`")
 
     any_change = False
 
@@ -127,6 +128,8 @@ def main():
         with open(db_path, "w", encoding="utf-8") as f:
             json.dump(db, f, indent=2, ensure_ascii=False)
         print("\n[SUCCESS] Changes applied to cards_compiled.json")
+
+    print("\n[info] Ability diagnostics live in reports/ability_diagnostics/")
 
 
 if __name__ == "__main__":

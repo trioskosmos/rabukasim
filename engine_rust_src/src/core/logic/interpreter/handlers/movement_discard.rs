@@ -82,7 +82,6 @@ pub fn handle_move_to_discard(
         Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[target_player_idx].deck.len(),
         _ => 0,
     } as i32;
-
     // === Prompt phase: determine if we need player input ===
     if next_ctx.choice_index == -1 {
         // Not enough cards available
@@ -145,7 +144,6 @@ pub fn handle_move_to_discard(
         let idx = next_ctx.choice_index as usize;
         let allow_under_member = discard.allow_under_member_selection;
         let removed_cid = remove_card_at_index(state, target_player_idx, source_zone, idx, allow_under_member).unwrap_or(-1);
-        
         if removed_cid < 0 {
             return HandlerResult::Continue;
         }

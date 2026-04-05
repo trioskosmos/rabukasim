@@ -3150,6 +3150,7 @@ mod tests {
 
         let mut state = create_test_state();
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.phase = Phase::Main;
         state.current_player = 0;
         state.players[0].stage[0] = kotori_id;

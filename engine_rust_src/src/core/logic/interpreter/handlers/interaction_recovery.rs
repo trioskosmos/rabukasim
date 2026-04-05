@@ -143,18 +143,21 @@ pub fn handle_recovery(
     // Populate looked_cards from candidate_cards if not already handled
     if !handled_same_name {
         state.players[p_idx].looked_cards.clear();
-        let prioritized_candidates: Vec<i32> = if real_op == O_RECOVER_LIVE {
-            ctx.selected_cards
-                .iter()
-                .copied()
-                .filter(|cid| candidate_cards.contains(cid))
-                .collect()
+        let candidate_iter: Vec<i32> = if real_op == O_RECOVER_LIVE {
+            let mut prioritized_candidates = candidate_cards.clone();
+            prioritized_candidates.sort_by_key(|cid| db.get_live(*cid).is_none());
+            prioritized_candidates
         } else {
-            Vec::new()
-        };
-        let candidate_iter: Vec<i32> = if prioritized_candidates.is_empty() {
-            candidate_cards.clone()
-        } else {
+            let mut prioritized_candidates = candidate_cards.clone();
+            if source_zone == Zone::Discard
+                && ctx.selected_cards.contains(&ctx.source_card_id)
+                && prioritized_candidates.len() > 1
+            {
+                prioritized_candidates.retain(|&cid| cid != ctx.source_card_id);
+                if prioritized_candidates.is_empty() {
+                    prioritized_candidates.push(ctx.source_card_id);
+                }
+            }
             prioritized_candidates
         };
         for cid in &candidate_iter {

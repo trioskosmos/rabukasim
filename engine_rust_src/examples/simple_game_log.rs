@@ -1,4 +1,3 @@
-use std::time::Instant;
 use engine_rust::core::logic::game::GameState;
 use engine_rust::core::logic::card_db::CardDatabase;
 use engine_rust::core::enums::Phase;
@@ -9,7 +8,7 @@ fn load_db() -> CardDatabase {
     CardDatabase::from_json(&json_content).expect("Failed to parse database")
 }
 
-fn setup_game(state: &mut GameState, db: &CardDatabase) {
+fn setup_game(state: &mut GameState, _db: &CardDatabase) {
     // Simple deck setup
     let deck: Vec<i32> = (1000..1100).collect();
     let lives: Vec<i32> = (4000..4100).collect();
