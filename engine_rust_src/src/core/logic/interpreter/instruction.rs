@@ -35,15 +35,15 @@ enum DecodedSlotRaw {
 
 #[derive(Deserialize, Default)]
 struct DecodedSlotStructuredRaw {
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_target_slot")]
     target_slot: Option<u8>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_comparison")]
     comparison: Option<u8>,
     #[serde(default, deserialize_with = "deserialize_optional_zone")]
     source_zone: Option<Zone>,
     #[serde(default, deserialize_with = "deserialize_optional_zone")]
     dest_zone: Option<Zone>,
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_optional_remainder_zone")]
     remainder_zone: Option<u8>,
     #[serde(default)]
     is_opponent: Option<Value>,
@@ -97,6 +97,97 @@ where
     parsed
         .map(Some)
         .ok_or_else(|| serde::de::Error::custom("invalid zone value"))
+}
+
+fn deserialize_zone_text(text: &str) -> Option<Zone> {
+    match text.trim().to_ascii_uppercase().as_str() {
+        "HAND" | "CARD_HAND" => Some(Zone::Hand),
+        "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
+        "STAGE" => Some(Zone::Stage),
+        "DECK" => Some(Zone::Deck),
+        "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
+        "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
+        "ENERGY" => Some(Zone::Energy),
+        "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
+        "YELL" => Some(Zone::Yell),
+        _ => None,
+    }
+}
+
+pub(crate) fn parse_target_slot_value(value: &Value) -> Option<u8> {
+    value.as_u64().map(|value| value as u8).or_else(|| {
+        value.as_str().and_then(|text| {
+            let normalized = text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_");
+            match normalized.as_str() {
+                "STAGE_0" => Some(0),
+                "STAGE_1" => Some(1),
+                "STAGE_2" => Some(2),
+                "CONTEXT" => Some(4),
+                "HAND" => Some(6),
+                "DISCARD" => Some(7),
+                "CHOICE_TARGET" => Some(10),
+                "LIVE_0" | "LIVE_SET" => Some(13),
+                "LIVE_1" => Some(14),
+                "LIVE_2" => Some(15),
+                "PLAYER_SELECT" => Some(20),
+                _ => normalized.parse::<u8>().ok(),
+            }
+        })
+    })
+}
+
+pub(crate) fn parse_comparison_value(value: &Value) -> Option<u8> {
+    value.as_u64().map(|value| value as u8).or_else(|| {
+        value.as_str().and_then(|text| {
+            match text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_").as_str() {
+                "EQ" => Some(0),
+                "GT" => Some(1),
+                "LT" => Some(2),
+                "GE" => Some(3),
+                "LE" => Some(4),
+                other => other.parse::<u8>().ok(),
+            }
+        })
+    })
+}
+
+pub(crate) fn parse_remainder_zone_value(value: &Value) -> Option<u8> {
+    value.as_u64().map(|value| value as u8).or_else(|| {
+        value.as_str().and_then(|text| {
+            match text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_").as_str() {
+                "STAGE" => Some(203),
+                "HAND" => Some(204),
+                "SUCCESS_PILE" | "SUCCESS_LIVE" | "LIVE_AREA" => Some(218),
+                _ => deserialize_zone_text(text)
+                    .map(|zone| zone as u8)
+                    .or_else(|| text.trim().parse::<u8>().ok()),
+            }
+        })
+    })
+}
+
+fn deserialize_optional_target_slot<'de, D>(deserializer: D) -> Result<Option<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    Ok(value.as_ref().and_then(parse_target_slot_value))
+}
+
+fn deserialize_optional_comparison<'de, D>(deserializer: D) -> Result<Option<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    Ok(value.as_ref().and_then(parse_comparison_value))
+}
+
+fn deserialize_optional_remainder_zone<'de, D>(deserializer: D) -> Result<Option<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let value = Option::<Value>::deserialize(deserializer)?;
+    Ok(value.as_ref().and_then(parse_remainder_zone_value))
 }
 
 impl From<DecodedSlotRaw> for DecodedSlot {
@@ -746,7 +837,8 @@ impl DecodedFilterAttr {
 
 #[cfg(test)]
 mod tests {
-    use super::DecodedFilterAttr;
+    use super::{DecodedFilterAttr, DecodedSlot};
+    use crate::core::enums::Zone;
     use crate::core::{TARGET_PLAYER_OPPONENT, ZONE_DISCARD};
     use serde_json::json;
 
@@ -765,6 +857,22 @@ mod tests {
         assert_eq!(parsed.card_type, 1);
         assert_eq!(parsed.special_id, 5);
         assert_eq!(parsed.zone_mask, ZONE_DISCARD as u8);
+    }
+
+    #[test]
+    fn decoded_slot_parses_named_target_slot_and_remainder_zone() {
+        let parsed: DecodedSlot = serde_json::from_value(json!({
+            "target_slot": "HAND",
+            "comparison": "GE",
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+        }))
+        .expect("slot should deserialize");
+
+        assert_eq!(parsed.target_slot, 6);
+        assert_eq!(parsed.comparison, 3);
+        assert_eq!(parsed.remainder_zone, ZONE_DISCARD as u8);
+        assert_eq!(parsed.source_zone, Zone::DeckTop);
     }
 }
 

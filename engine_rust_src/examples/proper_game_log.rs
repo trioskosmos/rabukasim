@@ -10,11 +10,11 @@ fn load_db() -> CardDatabase {
 
 fn create_proper_decks(db: &CardDatabase) -> (Vec<i32>, Vec<i32>, Vec<i32>, Vec<i32>, Vec<i32>, Vec<i32>) {
     // Get real member cards (1000-3999 range)
-    let mut member_cards: Vec<i32> = db.all_member_ids().iter().cloned().collect();
+    let mut member_cards: Vec<i32> = db.members.keys().copied().collect();
     // Get real live cards (4000-4999 range) 
-    let mut live_cards: Vec<i32> = db.all_live_ids().iter().cloned().collect();
+    let mut live_cards: Vec<i32> = db.lives.keys().copied().collect();
     // Get real energy cards (5000-5999 range)
-    let mut energy_cards: Vec<i32> = db.all_energy_ids().iter().cloned().collect();
+    let mut energy_cards: Vec<i32> = db.energy_db.keys().copied().collect();
     
     // Take exactly 48 member cards and 12 live cards for each player
     member_cards.sort();

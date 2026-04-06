@@ -3,8 +3,6 @@ use crate::core::logic::models::AbilityFrame;
 
 use super::*;
 
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-
 use crate::core::enums::ChoiceType;
 
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -119,12 +117,16 @@ pub fn handle_select_mode(
     }
 
     if let Some(new_frames) = ability.and_then(|ability| {
-        ability.get_modal_effects(choice).map(|effects| {
-            effects
-                .iter()
-                .map(AbilityFrame::from_effect)
-                .collect::<Vec<_>>()
-        })
+        (!ability.has_authored_frame_program())
+            .then(|| {
+                ability.get_modal_effects(choice).map(|effects| {
+                    effects
+                        .iter()
+                        .map(AbilityFrame::from_effect)
+                        .collect::<Vec<_>>()
+                })
+            })
+            .flatten()
     }) {
         ctx.choice_index = -1;
         return HandlerResult::BranchToFrames(std::sync::Arc::new(new_frames));
@@ -147,41 +149,4 @@ pub fn handle_select_mode(
 
     ctx.choice_index = -1;
     HandlerResult::Branch(target_effect_idx)
-}
-
-/// Simplified version that works directly with frame_data
-pub fn handle_select_mode_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
-    frame_idx: usize,
-) -> HandlerResult {
-    // For now, delegate to the original implementation by reconstructing frame reference
-    // This avoids the complex frames parameter while still working
-    let v = frame_data.value;
-
-    // Get choice or suspend
-    let choice = if ctx.choice_index >= 0 {
-        ctx.choice_index as usize
-    } else if ctx.auto_pick {
-        0
-    } else {
-        return suspend_choice(
-            state,
-            db,
-            ctx,
-            ctx,
-            frame_idx,
-            O_SELECT_MODE,
-            v,
-            ChoiceType::SelectMode,
-            0,
-            v as i16,
-        );
-    };
-
-    // Simplified branching logic
-    ctx.choice_index = -1;
-    HandlerResult::Branch(frame_idx + 1 + choice)
 }

@@ -27,8 +27,6 @@ pub use suspension::{
     suspend_interaction,
 };
 
-use std::collections::HashSet;
-
 fn should_precheck_ability_condition(cond: &crate::core::logic::Condition) -> bool {
     !matches!(
         cond.condition_type,
@@ -99,59 +97,7 @@ fn paired_effect_indices(
         })
         .collect()
 }
-
-fn resolve_effects_without_frames(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ability: &Ability,
-    ctx: &AbilityContext,
-) -> Result<(), InterpreterError> {
-    let p_idx = ctx.player_id as usize;
-    let paired_effects = paired_effect_indices(state, db, p_idx, ability, ctx);
-    if !paired_effects.is_empty() {
-        for idx in paired_effects {
-            if let Some(effect) = ability.effects.get(idx) {
-                apply_effect_directly(state, db, ctx, effect)?;
-            }
-        }
-        return Ok(());
-    }
-
-    if let Some(effect) = ability.effects.first() {
-        return apply_effect_directly(state, db, ctx, effect);
-    }
-
-    Ok(())
-}
 use std::fmt;
-use std::sync::{Mutex, OnceLock};
-
-fn apply_effect_directly(
-    state: &mut GameState,
-    _db: &CardDatabase,
-    ctx: &AbilityContext,
-    effect: &crate::core::logic::models::Effect,
-) -> Result<(), InterpreterError> {
-    use crate::core::enums::EffectType;
-
-    match effect.effect_type {
-        EffectType::BoostScore => {
-            if let Some(value) = effect.value.as_i64() {
-                let p_idx = ctx.player_id as usize;
-                state.players[p_idx].live_score_bonus += value as i32;
-            }
-        }
-        _ => {}
-    }
-
-    Ok(())
-}
-
-pub static GLOBAL_OPCODE_TRACKER: OnceLock<Mutex<HashSet<i32>>> = OnceLock::new();
-
-pub fn get_global_opcode_tracker() -> &'static Mutex<HashSet<i32>> {
-    GLOBAL_OPCODE_TRACKER.get_or_init(|| Mutex::new(HashSet::<i32>::new()))
-}
 
 /// The maximum depth of nested semantic-frame execution (e.g. via O_TRIGGER_REMOTE)
 pub const MAX_DEPTH: usize = 8;
@@ -396,28 +342,14 @@ pub fn resolve_ability(
     ability: &Ability,
     ctx_in: &AbilityContext,
 ) -> Result<(), InterpreterError> {
-    // Debug output only in debug mode
-    if state.debug.debug_mode && !state.ui.silent {
-        eprintln!("[DEBUG_RESOLVE_ABILITY] Entering resolve_ability: source_card_id={}, ability.conditions.len={}",
-            ctx_in.source_card_id, ability.conditions.len());
-    }
-    
     // VANILLA MODE: Skip all ability execution
     if db.is_truly_vanilla() {
         return Ok(());
     }
 
     let frames = ability.resolved_frames();
-    if state.debug.debug_mode && !state.ui.silent {
-        eprintln!(
-            "[ABILITY_DBG] source_card_id={} frames_len={} first_opcode={:?}",
-            ctx_in.source_card_id,
-            frames.len(),
-            frames.first().map(|f| f.opcode())
-        );
-    }
     if frames.is_empty() {
-        return resolve_effects_without_frames(state, db, ability, ctx_in);
+        return Ok(());
     }
 
     // Check ability.conditions before executing frames.
@@ -429,7 +361,7 @@ pub fn resolve_ability(
         }
     } else if !ability.conditions.is_empty() && ability.has_resolved_frames() {
         let mut all_conditions_pass = true;
-        for (i, cond) in ability.conditions.iter().enumerate() {
+        for cond in &ability.conditions {
             if !should_precheck_ability_condition(cond)
                 || should_defer_ability_condition_precheck(ability, cond)
             {
@@ -439,22 +371,20 @@ pub fn resolve_ability(
                 state, db, ctx_in.player_id as usize, cond, ctx_in, 0
             );
             let final_passed = if cond.is_negated { !passed } else { passed };
-            if state.debug.debug_mode && !state.ui.silent {
-                eprintln!("[DEBUG_ABILITY_COND] Condition {}: type={:?}, passed={}, final_passed={}", 
-                    i, cond.condition_type, passed, final_passed);
-            }
             if !final_passed {
                 all_conditions_pass = false;
                 break;
             }
         }
-        if state.debug.debug_mode && !state.ui.silent {
-            eprintln!("[DEBUG_ABILITY_COND] All conditions pass: {}", all_conditions_pass);
-        }
         if !all_conditions_pass {
             return Ok(());
         }
     }
+
+    crate::core::logic::test_coverage::record_ability_resolution(
+        ctx_in.source_card_id,
+        ctx_in.ability_index,
+    );
     
     resolve_semantic_frames(state, db, &frames, ctx_in)
 }
@@ -485,15 +415,6 @@ pub fn resolve_semantic_frames(
         state.log("Processing individual frame instruction.".to_string());
     }
 
-    if frames.is_empty() {
-        if let Some(live) = db.get_live(ctx.source_card_id) {
-            if ctx.ability_index >= 0 && ctx.ability_index < live.abilities.len() as i16 {
-                let ability = &live.abilities[ctx.ability_index as usize];
-                return resolve_effects_without_frames(state, db, ability, &ctx);
-            }
-        }
-    }
-    
     let mut effect_idx = start_idx;
     let mut cond = true;
     let mut steps = 0;

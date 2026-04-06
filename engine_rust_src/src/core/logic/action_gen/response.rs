@@ -1,6 +1,7 @@
 use crate::core::enums::*;
 use crate::core::logic::ability_patterns::{
-    pending_live_ability, pending_optional_mode_mask, pending_targeted_live_heart_bonus,
+    pending_live_ability, pending_member_ability, pending_optional_mode_mask,
+    pending_targeted_live_heart_bonus,
 };
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::filter::{filter_attr_from_params, structured_filter_from_attr};
@@ -92,7 +93,55 @@ fn should_enable_targeted_live_bonus(_state: &GameState, pi: &PendingInteraction
         )
 }
 
-fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, option_idx: usize) -> bool {
+fn live_recovery_branch_is_legal(
+    db: &CardDatabase,
+    state: &GameState,
+    p_idx: usize,
+    ability: &Ability,
+    option_idx: usize,
+) -> Option<bool> {
+    if !ability.raw_text.contains("ライブカード") {
+        return None;
+    }
+
+    let distinct_name_branch = "カード名が異なるライブカードが3枚以上";
+    let distinct_group_branch = "グループ名が異なるライブカードが3枚以上";
+    if !ability.raw_text.contains(distinct_name_branch)
+        && !ability.raw_text.contains(distinct_group_branch)
+    {
+        return None;
+    }
+
+    let discard_lives: Vec<&crate::core::logic::card_db::LiveCard> = state.players[p_idx]
+        .discard
+        .iter()
+        .filter_map(|&cid| db.get_live(cid))
+        .collect();
+    let distinct_names = discard_lives
+        .iter()
+        .map(|card| card.name.as_str())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+    let distinct_groups = discard_lives
+        .iter()
+        .flat_map(|card| card.groups.iter().copied())
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+
+    match option_idx {
+        0 if ability.raw_text.contains(distinct_name_branch) => Some(distinct_names >= 3),
+        1 if ability.raw_text.contains(distinct_group_branch) => Some(distinct_groups >= 3),
+        _ => None,
+    }
+}
+
+fn modal_option_is_legal(
+    db: &CardDatabase,
+    state: &GameState,
+    p_idx: usize,
+    ability: &Ability,
+    option_idx: usize,
+) -> bool {
     let Some(frames) = ability.get_modal_option_frames(option_idx)
     else {
         return false;
@@ -100,6 +149,12 @@ fn modal_option_is_legal(state: &GameState, p_idx: usize, ability: &Ability, opt
     let Some(first_frame) = frames.first() else {
         return false;
     };
+
+    if first_frame.opcode() == O_RECOVER_LIVE {
+        if let Some(result) = live_recovery_branch_is_legal(db, state, p_idx, ability, option_idx) {
+            return result;
+        }
+    }
 
     match first_frame.opcode() {
         O_PAY_ENERGY => {
@@ -135,11 +190,21 @@ impl ActionGenerator for ResponseGenerator {
 }
 
 impl ResponseGenerator {
-    fn is_targeted_select_member_cost(pi: &PendingInteraction) -> bool {
-        let decoded_slot = DecodedSlot::decode(pi.target_slot);
-        pi.effect_opcode == O_SELECT_MEMBER
-            && decoded_slot.target_slot == Zone::Stage as u8
-            && pi.has_structured_filter_constraints()
+    fn is_targeted_select_member_cost(db: &CardDatabase, pi: &PendingInteraction) -> bool {
+        if pi.effect_opcode != O_SELECT_MEMBER || !pi.has_structured_filter_constraints() {
+            return false;
+        }
+
+        let ability = pending_live_ability(db, pi).or_else(|| {
+            pending_member_ability(db, pi.card_id, pi.ability_index)
+        });
+        let Some(frame) = ability.and_then(|ab| ab.get_frame(pi.ctx.program_counter as usize)) else {
+            return false;
+        };
+        let components = frame.components();
+        components.opcode == O_SELECT_MEMBER
+            && components.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE
+            && components.slot.source_zone == Zone::Default
     }
 
     fn add_filtered_stage_actions<R: ActionReceiver + ?Sized>(
@@ -274,7 +339,7 @@ impl ResponseGenerator {
         } else {
             live.map(|l| &l.abilities)
         };
-        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(pi);
+        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(db, pi);
 
         if pending_optional_mode_mask(db, pi).is_some() {
             self.generate_select_mode_actions(db, p_idx, state, receiver, pi, abilities);
@@ -810,13 +875,17 @@ impl ResponseGenerator {
                 pi.effect_opcode == O_LOOK_AND_CHOOSE && has_look_deck && !has_look_and_choose
             })
             .unwrap_or(false);
-        let mut final_filter_attr = if pi.effect_opcode == O_LOOK_DECK || uses_select_mode_look_deck_prompt {
+        let mut final_filter_attr = if pi.effect_opcode == O_LOOK_DECK
+            || (uses_select_mode_look_deck_prompt && pi.filter_attr == 0)
+        {
             0
         } else {
             pi.filter_attr
         };
         final_filter_attr &= !crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL;
-        if final_filter_attr == 0 {
+        let should_backfill_look_filter = final_filter_attr == 0
+            && (pi.effect_opcode != O_LOOK_AND_CHOOSE || uses_select_mode_look_deck_prompt);
+        if should_backfill_look_filter {
             if let Some(abs) = abilities {
                 let ab_idx_real = if pi.ability_index == -1 {
                     abs.iter()
@@ -949,12 +1018,13 @@ impl ResponseGenerator {
             );
         }
         let mut filter_attr = filter_attr;
-        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(pi);
+        let is_targeted_select_member_cost = Self::is_targeted_select_member_cost(db, pi);
         if is_targeted_select_member_cost {
             filter_attr = (filter_attr & !0x3) | 1;
         }
+        let mut ab_idx_real = None;
         if let Some(abs) = abilities {
-            let ab_idx_real = if pi.ability_index == -1 {
+            let resolved_ab_idx = if pi.ability_index == -1 {
                 abs.iter()
                     .position(|ab| {
                         (ab.choice_flags
@@ -968,16 +1038,36 @@ impl ResponseGenerator {
             } else {
                 pi.ability_index as usize
             };
+            ab_idx_real = Some(resolved_ab_idx);
 
-            if let Some(ab) = abs.get(ab_idx_real) {
-                if let Some(attr) = Self::effect_filter_attr_for_opcode(ab, O_SELECT_MEMBER) {
-                    if attr != 0 {
-                        filter_attr = attr;
+            if let Some(ab) = abs.get(resolved_ab_idx) {
+                if filter_attr == 0 {
+                    if let Some(frame) = ab.get_frame(pi.ctx.program_counter as usize) {
+                        let components = frame.components();
+                        if components.opcode == O_SELECT_MEMBER {
+                            let frame_attr = components
+                                .normalized_select_member_filter_attr_with_source(db, &pi.ctx);
+                            if frame_attr != 0 {
+                                filter_attr = frame_attr;
+                            }
+                        }
+                    }
+                }
+                if filter_attr == 0 {
+                    if let Some(attr) = Self::effect_filter_attr_for_opcode(ab, O_SELECT_MEMBER) {
+                        if attr != 0 {
+                            filter_attr = attr;
+                        }
                     }
                 }
             }
         }
         let filter_only = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+        let requires_waiting_member = abilities
+            .and_then(|abs| ab_idx_real.and_then(|idx| abs.get(idx)))
+            .and_then(|ab| ab.get_frame(pi.ctx.program_counter as usize + 1))
+            .map(|frame| frame.opcode() == O_ACTIVATE_MEMBER)
+            .unwrap_or(false);
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
             pi.ctx.trigger_type == TriggerType::OnLiveStart
                 && matches!(
@@ -1106,11 +1196,13 @@ impl ResponseGenerator {
                     let effective_hearts = state
                         .get_effective_hearts(target_player, i, db, 0)
                         .to_array();
+                    let is_waiting_member = state.players[target_player].is_tapped(i);
                     cid >= 0
                         && !pi
                             .ctx
                             .selected_target_keys
                             .contains(&Self::selected_target_key(Zone::Stage, i))
+                        && (!requires_waiting_member || is_waiting_member)
                         && (filter_only == 0
                             || filter_struct.matches(
                                 state,
@@ -1124,11 +1216,14 @@ impl ResponseGenerator {
                 });
                 if receiver.is_empty() && filter_struct.special_id == 3 {
                     add_indexed_actions(receiver, STAGE_SLOT_COUNT, ACTION_BASE_STAGE_SLOTS, |i| {
-                        player.stage[i] >= 0 && source_slot != Some(i)
+                        player.stage[i] >= 0
+                            && source_slot != Some(i)
+                            && (!requires_waiting_member || state.players[target_player].is_tapped(i))
                     });
                 }
                 if receiver.is_empty()
                     && filter_only != 0
+                    && !requires_waiting_member
                     && pi.choice_type != ChoiceType::TapMSelect
                 {
                     add_indexed_actions(receiver, STAGE_SLOT_COUNT, ACTION_BASE_STAGE_SLOTS, |i| {
@@ -1150,13 +1245,6 @@ impl ResponseGenerator {
         abilities: Option<&Vec<Ability>>,
     ) {
         if let Some(mask) = pending_optional_mode_mask(db, pi) {
-            println!(
-                "[RESP_MODE_DBG] card={} src={} mask={} hand_len={}",
-                pi.card_id,
-                pi.ctx.source_card_id,
-                mask,
-                state.players[p_idx].hand.len()
-            );
             if let Some(ability) = pending_live_ability(db, pi) {
                 for effect_idx in 0..ability.modal_option_count() {
                     let selected_bit = 1i16 << effect_idx;
@@ -1194,7 +1282,7 @@ impl ResponseGenerator {
         }) {
             let option_count = count.max(ability.modal_option_count());
             for option_idx in 0..option_count {
-                if modal_option_is_legal(state, p_idx, ability, option_idx) {
+                if modal_option_is_legal(db, state, p_idx, ability, option_idx) {
                     receiver.add_action((ACTION_BASE_MODE + option_idx as i32) as usize);
                 }
             }

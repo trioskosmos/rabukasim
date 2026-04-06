@@ -16,6 +16,43 @@ _LOOK_AND_CHOOSE_COUNT_PATTERNS = (
     re.compile(r"choose(?: up to)?\s*([0-9]+)", re.IGNORECASE),
 )
 
+_GROUP_ID_MAP = {
+    "MUSE": 0,
+    "MUS": 0,
+    "Μ'S": 0,
+    "M'S": 0,
+    "U'S": 0,
+    "AQOURS": 1,
+    "AQUOURS": 1,
+    "NIJIGASAKI": 2,
+    "NIJIGAKU": 2,
+    "NIJI": 2,
+    "LIELLA": 3,
+    "HASUNOSORA": 4,
+    "HASU": 4,
+    "ARISE": 10,
+    "SAINT_SNOW": 11,
+    "SUNNY_PASSION": 12,
+    "MUSICAL": 13,
+}
+
+
+def _coerce_group_id(group_id: object) -> int:
+    if isinstance(group_id, bool):
+        return int(group_id)
+    if isinstance(group_id, int):
+        return group_id
+    if isinstance(group_id, float):
+        return int(group_id)
+    if isinstance(group_id, str):
+        normalized = unicodedata.normalize("NFKC", group_id).strip().upper()
+        if not normalized:
+            return 0
+        if normalized.isdigit():
+            return int(normalized)
+        return _GROUP_ID_MAP.get(normalized, 0)
+    return 0
+
 
 def _opcode_to_effect_type(opcode: str) -> EffectType:
     """Map opcode name to EffectType."""
@@ -188,7 +225,7 @@ def _encode_attr_from_frame(attr_data: dict) -> int:
     # Group filter encoding
     if attr_data.get("group_enabled"):
         attr |= 0x10  # Bit 4: Group Enable
-        group_id = attr_data.get("group_id", 0)
+        group_id = _coerce_group_id(attr_data.get("group_id", 0))
         attr |= (group_id & 0x7F) << 5  # Bits 5-11: Group ID
     
     return attr

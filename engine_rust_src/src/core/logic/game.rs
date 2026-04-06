@@ -131,18 +131,6 @@ impl GameState {
         }
     }
 
-    pub fn draw_energy_cards(&mut self, player_idx: usize, count: i32) {
-        if !self.ui.silent && count > 0 {
-            self.log(format!("Rule 5.7.1 (4.1.4, 4.3.1, 4.10): Player {} draws {} energy cards from Energy Deck to Energy Area.", player_idx, count));
-        }
-        let player = &mut self.core.players[player_idx];
-        for _ in 0..count {
-            if let Some(cid) = player.energy_deck.pop() {
-                player.push_energy_card(cid, false);
-            }
-        }
-    }
-
     pub fn pay_energy(&mut self, player_idx: usize, count: i32) {
         let indices = self.core.players[player_idx].get_untapped_energy_indices(count as usize);
         for i in indices {

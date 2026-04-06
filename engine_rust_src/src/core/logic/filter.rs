@@ -1077,11 +1077,11 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     if let Some(group_id) = obj
         .get("group_id")
         .or_else(|| obj.get("GROUP_ID"))
-        .and_then(Value::as_u64)
+        .and_then(parse_group_id_value)
     {
         filter.is_enabled = true;
         filter.group_enabled = true;
-        filter.group_id = (group_id & 0x7F) as u8;
+        filter.group_id = group_id;
     }
     set_flag!(obj.get("is_tapped"), is_tapped);
     set_flag!(obj.get("has_blade_heart"), has_blade_heart);
@@ -1091,11 +1091,11 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     if let Some(unit_id) = obj
         .get("unit_id")
         .or_else(|| obj.get("UNIT_ID"))
-        .and_then(Value::as_u64)
+        .and_then(parse_unit_id_value)
     {
         filter.is_enabled = true;
         filter.unit_enabled = true;
-        filter.unit_id = (unit_id & 0x7F) as u8;
+        filter.unit_id = unit_id;
     }
     set_flag!(obj.get("value_enabled"), value_enabled);
     if let Some(threshold) = obj
@@ -1129,34 +1129,34 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     if let Some(color_mask) = obj
         .get("color_mask")
         .or_else(|| obj.get("COLOR_MASK"))
-        .and_then(Value::as_u64)
+        .and_then(parse_color_mask_value)
     {
         filter.is_enabled = true;
-        filter.color_mask = color_mask as u8;
+        filter.color_mask = color_mask;
     }
     if let Some(char_id) = obj
         .get("char_id_1")
         .or_else(|| obj.get("CHAR_ID_1"))
-        .and_then(Value::as_u64)
+        .and_then(parse_character_id_value)
     {
         filter.is_enabled = true;
-        filter.char_id_1 = (char_id & 0x7F) as u8;
+        filter.char_id_1 = char_id;
     }
     if let Some(char_id) = obj
         .get("char_id_2")
         .or_else(|| obj.get("CHAR_ID_2"))
-        .and_then(Value::as_u64)
+        .and_then(parse_character_id_value)
     {
         filter.is_enabled = true;
-        filter.char_id_2 = (char_id & 0x7F) as u8;
+        filter.char_id_2 = char_id;
     }
     if let Some(char_id) = obj
         .get("char_id_3")
         .or_else(|| obj.get("CHAR_ID_3"))
-        .and_then(Value::as_u64)
+        .and_then(parse_character_id_value)
     {
         filter.is_enabled = true;
-        filter.char_id_3 = (char_id & 0x7F) as u8;
+        filter.char_id_3 = char_id;
     }
     if let Some(zone_mask) = obj
         .get("zone_mask")
@@ -1285,6 +1285,73 @@ pub(crate) fn parse_card_type_value(value: &Value) -> Option<u8> {
                 _ => 0,
             })
         })
+}
+
+pub(crate) fn parse_group_id_value(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x7F) as u8)
+        .or_else(|| {
+            value.as_str().and_then(|value| {
+                let normalized = value
+                    .trim()
+                    .to_ascii_uppercase()
+                    .replace('-', "_")
+                    .replace(' ', "_");
+                normalized
+                    .parse::<u8>()
+                    .ok()
+                    .map(|group_id| group_id & 0x7F)
+                    .or_else(|| group_id_from_name(normalized.as_str()))
+            })
+        })
+}
+
+pub(crate) fn parse_unit_id_value(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x7F) as u8)
+        .or_else(|| {
+            value.as_str().and_then(|value| {
+                let normalized = value
+                    .trim()
+                    .to_ascii_uppercase()
+                    .replace('-', "_")
+                    .replace(' ', "_");
+                normalized
+                    .parse::<u8>()
+                    .ok()
+                    .map(|unit_id| unit_id & 0x7F)
+                    .or_else(|| unit_id_from_name(normalized.as_str()))
+            })
+        })
+}
+
+pub(crate) fn parse_character_id_value(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| (value & 0x7F) as u8)
+        .or_else(|| value.as_str().and_then(character_id_from_name))
+}
+
+pub(crate) fn parse_color_mask_value(value: &Value) -> Option<u8> {
+    value
+        .as_u64()
+        .map(|value| value as u8)
+        .or_else(|| {
+            value.as_str().and_then(|text| {
+                let mut mask = 0u8;
+                for part in text.split(['|', '+', ',']) {
+                    let trimmed = part.trim();
+                    if trimmed.is_empty() {
+                        continue;
+                    }
+                    mask |= semantic_heart_mask_from_value(&Value::String(trimmed.to_string()))?;
+                }
+                Some(mask)
+            })
+        })
+        .or_else(|| semantic_heart_mask_from_value(value))
 }
 
 pub(crate) fn parse_special_id_value(value: &Value) -> Option<u8> {
@@ -1419,6 +1486,24 @@ fn character_id_from_name(name: &str) -> Option<u8> {
         "MEI" => Some(47),
         "SHIKI" => Some(48),
         "NATSUMI" => Some(49),
+        "MARGARETE" => Some(50),
+        "TOMARI" => Some(51),
+        "KAHO" => Some(61),
+        "SAYAKA" => Some(62),
+        "KOZUE" => Some(63),
+        "TSUZURI" => Some(64),
+        "RURINO" => Some(65),
+        "MEGU" => Some(66),
+        "GINKO" => Some(67),
+        "KOSUZU" => Some(68),
+        "HIME" => Some(69),
+        "TSUBASA" => Some(71),
+        "ERENA" => Some(72),
+        "ANJU" => Some(73),
+        "YUNA" => Some(74),
+        "MAO" => Some(75),
+        "SEIRA" => Some(76),
+        "RIA" => Some(77),
         _ => None,
     }
 }
@@ -1910,5 +1995,22 @@ mod tests {
         assert_eq!(filter.special_id, 7);
         assert_eq!(filter.zone_mask, ZONE_DISCARD as u8);
         assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
+    }
+
+    #[test]
+    fn filter_parts_from_params_parse_named_group_unit_character_and_color_values() {
+        let params = json!({
+            "group_id": "HASUNOSORA",
+            "unit_id": "DOLLCHESTRA",
+            "char_id_1": "RURINO",
+            "color_mask": "RED|BLUE|ANY"
+        });
+
+        let (filter, _) = filter_parts_from_params(Some(&params)).unwrap();
+
+        assert_eq!(filter.group_id, 4);
+        assert_eq!(filter.unit_id, 14);
+        assert_eq!(filter.char_id_1, 65);
+        assert_eq!(filter.color_mask, (1 << 1) | (1 << 4) | (1 << 6));
     }
 }

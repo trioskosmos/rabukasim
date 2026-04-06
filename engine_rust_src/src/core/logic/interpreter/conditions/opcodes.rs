@@ -313,7 +313,7 @@ fn check_condition_with_parts(
     if state.debug.debug_ignore_conditions {
         return true;
     }
-    let p_idx = ctx.player_id as usize;
+    let p_idx = ctx.activator_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
     let semantic = AbilityFrameComponents::from_raw_parts(op, val, attr, slot, false, params);
@@ -365,10 +365,7 @@ fn check_condition_with_parts(
                 .stage
                 .iter()
                 .filter(|&&id| id >= 0)
-                .any(|&id| {
-                    (id == val || id == (attr as i32))
-                        || (attr != 0 && state.card_matches_filter(db, id, attr))
-                })
+                .any(|&id| (val != 0 && id == val) || (attr != 0 && state.card_matches_filter(db, id, attr)))
         }
         C_HAS_COLOR => {
             let color_mask = filter.color_mask as u64;

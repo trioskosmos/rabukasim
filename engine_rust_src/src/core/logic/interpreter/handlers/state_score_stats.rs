@@ -146,6 +146,28 @@ pub fn handle_add_hearts(
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
+    if frame.value == 99 {
+        if let Some(ability) = source_ability(db, ctx) {
+            if ability.raw_text.contains("持つ色のハートを1つずつ得る") {
+                if let Some(selected_card) = ctx
+                    .selected_cards
+                    .first()
+                    .and_then(|cid| db.get_member(*cid))
+                {
+                    state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
+                        for (color_idx, printed_count) in selected_card.hearts.iter().copied().enumerate() {
+                            if printed_count > 0 {
+                                state.players[p_idx].heart_buffs[slot_idx].add_to_color(color_idx, 1);
+                            }
+                        }
+                    });
+                    state.needs_stat_sync = true;
+                    return HandlerResult::Continue;
+                }
+            }
+        }
+    }
+
     let color = decode_heart_color(db, frame, ctx);
     let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
         ctx.area_idx as i32

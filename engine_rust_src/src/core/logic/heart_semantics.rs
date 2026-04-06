@@ -144,4 +144,5 @@ mod tests {
         assert_eq!(decode_heart_type_from_text("Reduce by heart_04"), Some(3));
         assert_eq!(decode_heart_type_from_text("Gain heart00"), Some(6));
     }
+
 }

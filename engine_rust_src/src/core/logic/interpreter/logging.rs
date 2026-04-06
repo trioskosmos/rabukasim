@@ -485,10 +485,6 @@ fn describe_card_texts(db: &CardDatabase, card_id: i32) -> String {
     join_parts(parts)
 }
 
-pub fn describe_filter_attr(filter: CardFilter) -> String {
-    describe_filter_attr_with_bits(filter, filter.to_attr())
-}
-
 pub fn describe_filter_bits(attr: u64) -> String {
     describe_filter_attr_with_bits(structured_filter_from_attr(attr), attr)
 }

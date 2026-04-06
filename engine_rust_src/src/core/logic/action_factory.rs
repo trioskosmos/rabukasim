@@ -230,10 +230,6 @@ impl DecodedAction {
 pub struct ActionFactory;
 
 impl ActionFactory {
-    pub fn parse_action(action_id: i32) -> DecodedAction {
-        DecodedAction::decode(action_id)
-    }
-
     pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
         let ability_text = |abilities: &[crate::core::logic::Ability]| {
             usize::try_from(ctx.ability_index)

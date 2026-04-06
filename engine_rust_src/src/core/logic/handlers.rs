@@ -8,39 +8,13 @@ use crate::core::logic::{
     },
     action_factory::DecodedAction,
     interpreter::costs,
-    AbilityContext, ActionFactory, CardDatabase, GameState, PendingInteraction, Phase,
+    AbilityContext, CardDatabase, GameState, PendingInteraction, Phase,
 };
 // use crate::core::hearts::*;
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 use smallvec::SmallVec;
-
-fn should_precheck_condition(cond: &crate::core::logic::Condition) -> bool {
-    !matches!(
-        cond.condition_type,
-        ConditionType::SumValue | ConditionType::DiscardedCards
-    )
-}
-
-fn implicit_activated_energy_cost_for_card(
-    _card: &crate::core::logic::MemberCard,
-    ability: &crate::core::logic::Ability,
-) -> usize {
-    if ability.trigger != TriggerType::Activated {
-        return 0;
-    }
-
-    0
-}
-
-fn has_implicit_stage_discard_self_cost_for_card(
-    _card: &crate::core::logic::MemberCard,
-    ability: &crate::core::logic::Ability,
-) -> bool {
-    let _ = ability;
-    false
-}
 
 pub trait TurnController {
     fn handle_rps(&mut self, action: i32) -> Result<(), String>;
@@ -301,7 +275,7 @@ impl MulliganController for GameState {
 
 impl MainPhaseController for GameState {
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
-        let decoded = ActionFactory::parse_action(action);
+        let decoded = DecodedAction::decode(action);
 
         if db.is_vanilla {
             match decoded {
@@ -429,10 +403,8 @@ impl MainPhaseController for GameState {
             let cid = self.core.players[p_idx].live_zone[slot_idx];
             if cid >= 0 {
                 let is_prevented = if let Some(card) = db.get_live(cid) {
-                    card.abilities.iter().any(|a| {
-                        a.effects
-                            .iter()
-                            .any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)
+                    card.abilities.iter().any(|ability| {
+                        CardDatabase::has_opcode_static_fast(ability, O_PREVENT_SET_TO_SUCCESS_PILE)
                     })
                 } else {
                     false
@@ -521,7 +493,7 @@ impl MainPhaseController for GameState {
 }
 impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
-        let decoded_action = ActionFactory::parse_action(action);
+        let decoded_action = DecodedAction::decode(action);
         let response_origin = crate::core::logic::interpreter::suspension::capture_response_origin(self);
         
         // ANTI-SOFTLOCK: Detect Response phase loops and break them
@@ -1000,13 +972,19 @@ impl ResponseController for GameState {
                 let mut c = pending.ctx.clone();
                 c.choice_index = choice_idx as i16;
                 c.original_phase = Some(restored_phase);
+                c.player_id = if pending.choice_type == ChoiceType::OpponentChoose {
+                    pending.ctx.player_id
+                } else {
+                    pending.original_current_player
+                };
                 if pending.choice_type == ChoiceType::SelectMember {
-                    let selected_card_id = self.core.players[p_idx]
+                    let prompt_player_idx = pending.ctx.player_id as usize;
+                    let selected_card_id = self.core.players[prompt_player_idx]
                         .looked_cards
                         .get(choice_idx.max(0) as usize)
                         .copied()
                         .or_else(|| {
-                            self.core.players[p_idx]
+                            self.core.players[prompt_player_idx]
                                 .hand
                                 .get(choice_idx.max(0) as usize)
                                 .copied()
@@ -1425,7 +1403,10 @@ impl ResponseController for GameState {
             }
 
             for cond in &ab.conditions {
-                if !should_precheck_condition(cond) {
+                if matches!(
+                    cond.condition_type,
+                    ConditionType::SumValue | ConditionType::DiscardedCards
+                ) {
                     continue;
                 }
                 if !self.check_condition_opcode(
@@ -1450,39 +1431,6 @@ impl ResponseController for GameState {
             }
             if !costs::pay_costs_transactional(self, db, &ab.costs, &mut ctx) {
                 return Err("Cannot afford costs".to_string());
-            }
-
-            let implicit_energy_cost = implicit_activated_energy_cost_for_card(card, ab);
-            if implicit_energy_cost > 0 {
-                let mut tapped = 0usize;
-                for energy_idx in 0..self.core.players[p_idx].energy_zone.len() {
-                    if tapped >= implicit_energy_cost {
-                        break;
-                    }
-                    if !self.core.players[p_idx].is_energy_tapped(energy_idx) {
-                        self.core.players[p_idx].set_energy_tapped(energy_idx, true);
-                        tapped += 1;
-                    }
-                }
-                if tapped < implicit_energy_cost {
-                    return Err("Cannot afford costs".to_string());
-                }
-            }
-
-            if has_implicit_stage_discard_self_cost_for_card(card, ab) {
-                let slot = ctx.area_idx as usize;
-                if ctx.area_idx < 0 || slot >= STAGE_SLOT_COUNT {
-                    return Err("Cannot afford costs".to_string());
-                }
-
-                let Some(discarded) = self.handle_member_leaves_stage(p_idx, slot, db, &ctx) else {
-                    return Err("Cannot afford costs".to_string());
-                };
-
-                self.core.players[p_idx].push_discard_card(discarded);
-                if !ctx.selected_cards.contains(&discarded) {
-                    ctx.selected_cards.push(discarded);
-                }
             }
 
             if ab.is_once_per_turn {
@@ -1699,7 +1647,7 @@ impl GameState {
             .actions
             .get(choice_idx.max(0) as usize)
             .copied()
-            .and_then(|action| match ActionFactory::parse_action(action) {
+            .and_then(|action| match DecodedAction::decode(action) {
                 DecodedAction::SelectStageSlot { slot_idx } => Some(slot_idx),
                 DecodedAction::SelectChoice { choice_idx } => Some(choice_idx.max(0) as usize),
                 _ => None,

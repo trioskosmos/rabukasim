@@ -140,8 +140,14 @@ pub fn handle_recovery(
         }
     }
 
-    // Populate looked_cards from candidate_cards if not already handled
-    if !handled_same_name {
+    let can_reuse_existing_looked_cards = !handled_same_name
+        && ctx.choice_index >= 0
+        && state.players[p_idx].looked_cards.iter().any(|&cid| cid >= 0);
+
+    // Populate looked_cards from candidate_cards if not already handled.
+    // For resumed multi-pick recovery prompts, preserve the existing looked_cards
+    // buffer so the pending choice index still refers to the same visible option.
+    if !handled_same_name && !can_reuse_existing_looked_cards {
         state.players[p_idx].looked_cards.clear();
         let candidate_iter: Vec<i32> = if real_op == O_RECOVER_LIVE {
             let mut prioritized_candidates = candidate_cards.clone();

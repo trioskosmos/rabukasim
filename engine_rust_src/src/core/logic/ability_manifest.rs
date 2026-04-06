@@ -148,7 +148,7 @@ impl AbilityManifest {
 
             for (ability_index, ability) in abilities.iter().enumerate() {
                 let trigger_id = ability.get("trigger").and_then(Value::as_i64).unwrap_or(0) as i32;
-                let trigger = trigger_name(metadata, trigger_id);
+                let trigger = metadata_lookup(metadata, "triggers", trigger_id);
                 let frames = ability
                     .get("frame_program")
                     .and_then(|program| program.get("frames"))
@@ -240,71 +240,6 @@ impl AbilityManifest {
     pub fn card_by_no(&self, card_no: &str) -> Option<&AbilityManifestCard> {
         self.cards.iter().find(|card| card.card_no == card_no)
     }
-
-    pub fn card_by_id(&self, card_id: i32) -> Option<&AbilityManifestCard> {
-        self.cards.iter().find(|card| card.card_id == card_id)
-    }
-
-    pub fn render_markdown(&self) -> String {
-        let mut out = String::new();
-        out.push_str("# Ability System Manifest\n\n");
-        out.push_str(&format!(
-            "Generated: {}  Cards with abilities: {}  Total abilities: {}\n\n",
-            self.generated_at, self.summary.card_count, self.summary.ability_count
-        ));
-        out.push_str("## Summary\n\n");
-        out.push_str("| Metric | Value |\n");
-        out.push_str("| :-- | --: |\n");
-        out.push_str(&format!("| Cards | {} |\n", self.summary.card_count));
-        out.push_str(&format!("| Abilities | {} |\n", self.summary.ability_count));
-
-        out.push_str("\n### Trigger Counts\n");
-        for (name, count) in &self.summary.trigger_counts {
-            out.push_str(&format!("- `{}`: {}\n", name, count));
-        }
-
-        out.push_str("\n### Flow Counts\n");
-        for (name, count) in &self.summary.flow_counts {
-            out.push_str(&format!("- `{}`: {}\n", name, count));
-        }
-
-        out.push_str("\n## Cards\n");
-        for card in &self.cards {
-            out.push_str(&format!("\n### {} - {}\n\n", card.card_no, card.name));
-            out.push_str(&format!("- `card_id`: {}\n", card.card_id));
-            out.push_str(&format!("- `db`: `{}`\n", card.db));
-
-            if !card.source_text.is_empty() {
-                out.push_str(&format!("\n```text\n{}\n```\n", card.source_text));
-            }
-
-            for ability in &card.abilities {
-                let opcode_sequence = ability.opcode_sequence.join(", ");
-                out.push_str(&format!("\n#### Ability {}\n\n", ability.ability_index + 1));
-                out.push_str(&format!("- `trigger`: `{}`\n", ability.trigger));
-                out.push_str(&format!("- `flow_pattern`: `{}`\n", ability.flow_pattern));
-                out.push_str(&format!("- `summary`: {}\n", ability.summary));
-                out.push_str(&format!("- `opcode_sequence`: `{}`\n", opcode_sequence));
-                if !ability.source_text_en.is_empty() {
-                    out.push_str(&format!("- `source_text_en`: {}\n", ability.source_text_en));
-                }
-
-                out.push_str("\n| # | Role | Opcode | Summary |\n");
-                out.push_str("| :-- | :-- | :-- | :-- |\n");
-                for frame in &ability.frames {
-                    out.push_str(&format!(
-                        "| {} | {} | `{}` | {} |\n",
-                        frame.index,
-                        frame.role,
-                        frame.opcode,
-                        frame.summary.replace('|', "\\|")
-                    ));
-                }
-            }
-        }
-
-        out
-    }
 }
 
 fn metadata_lookup(map: &Value, section: &str, id: i32) -> String {
@@ -317,10 +252,6 @@ fn metadata_lookup(map: &Value, section: &str, id: i32) -> String {
             })
         })
         .unwrap_or_else(|| format!("{}_{}", section.to_uppercase(), id))
-}
-
-fn trigger_name(metadata: &Value, id: i32) -> String {
-    metadata_lookup(metadata, "triggers", id)
 }
 
 fn opcode_name(metadata: &Value, frame: &Value) -> String {

@@ -496,10 +496,10 @@ class SparseSourceManager:
             self._log(f"Loading sparse ability index from {self.yaml_path}")
             if str(self.yaml_path).endswith(".yaml"):
                 import yaml
-                with open(self.yaml_path, "r", encoding="utf-8") as f:
+                with open(self.yaml_path, "r", encoding="utf-8-sig") as f:
                     data = yaml.safe_load(f)
             else:
-                with open(self.yaml_path, "r", encoding="utf-8") as f:
+                with open(self.yaml_path, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
             if not data:
                 self.mapping = {}

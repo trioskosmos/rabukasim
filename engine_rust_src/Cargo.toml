@@ -132,23 +132,8 @@ path = "examples/export_hydrated_abilities.rs"
 test = false
 
 [[bench]]
-name = "game_simulation"
-path = "benches/game_simulation.rs"
-harness = false
-
-[[bench]]
-name = "engine_components"
-path = "benches/engine_components.rs"
-harness = false
-
-[[bench]]
-name = "turn_sequencer"
-path = "benches/turn_sequencer.rs"
-harness = false
-
-[[bench]]
-name = "micro_benchmarks"
-path = "benches/micro_benchmarks.rs"
+name = "ultimate_benchmark"
+path = "benches/ultimate_benchmark.rs"
 harness = false
 
 [[test]]

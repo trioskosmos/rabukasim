@@ -341,21 +341,6 @@ impl CardDatabase {
         }
         mask
     }
-
-    /// Get all member card IDs
-    pub fn all_member_ids(&self) -> Vec<i32> {
-        self.members.keys().copied().collect()
-    }
-
-    /// Get all live card IDs  
-    pub fn all_live_ids(&self) -> Vec<i32> {
-        self.lives.keys().copied().collect()
-    }
-
-    /// Get all energy card IDs
-    pub fn all_energy_ids(&self) -> Vec<i32> {
-        self.energy_db.keys().copied().collect()
-    }
 }
 
 impl Default for CardDatabase {
@@ -378,10 +363,6 @@ impl Default for CardDatabase {
 impl CardDatabase {
     pub fn enrich_member(&self, card: &mut MemberCard) {
         Self::enrich_member_runtime_metadata(card)
-    }
-
-    pub fn enrich_live(&self, card: &mut LiveCard) {
-        Self::enrich_live_runtime_metadata(card)
     }
 
     pub fn enrich_member_runtime_metadata(card: &mut MemberCard) {
@@ -587,13 +568,12 @@ impl CardDatabase {
             // Frame program fallback for conditions (if effects/conditions not populated)
             if let Some(frame_program) = ab.frame_program.as_ref() {
                 let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
-                if !derived_conditions.is_empty() {
-                    // Prefer the leading authored condition block from executable frames.
-                    // Compiled semantic exports may flatten later branch conditions into
-                    // `ab.conditions`, which makes trigger prechecks stricter than the
-                    // actual frame control flow.
-                    ab.conditions = derived_conditions;
-                }
+                // Prefer the leading authored condition block from executable frames.
+                // Compiled semantic exports may flatten later branch conditions into
+                // `ab.conditions`, which makes trigger prechecks stricter than the
+                // actual frame control flow. When the authored program has no leading
+                // condition block, the correct precheck set is empty.
+                ab.conditions = derived_conditions;
             }
 
             if ab.choice_count > 0 {
@@ -793,9 +773,7 @@ impl CardDatabase {
         for ab in &mut card.abilities {
             if let Some(frame_program) = ab.frame_program.as_ref() {
                 let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
-                if !derived_conditions.is_empty() {
-                    ab.conditions = derived_conditions;
-                }
+                ab.conditions = derived_conditions;
             }
 
             if ab.trigger == TriggerType::OnPlay {
@@ -1098,13 +1076,6 @@ impl CardDatabase {
         false
     }
 
-    pub fn to_binary(&self) -> bincode::Result<Vec<u8>> {
-        bincode::serialize(self)
-    }
-
-    pub fn from_binary(data: &[u8]) -> bincode::Result<Self> {
-        bincode::deserialize(data)
-    }
 }
 
 pub const CHARACTER_NAMES: [&str; 78] = [
@@ -1188,26 +1159,3 @@ pub const CHARACTER_NAMES: [&str; 78] = [
     "鹿角理亞", // 71-77
 ];
 
-pub fn get_character_name(id: u8) -> &'static str {
-    CHARACTER_NAMES.get(id as usize).copied().unwrap_or("")
-}
-
-pub fn get_trigger_label(trigger: TriggerType) -> &'static str {
-    match trigger {
-        TriggerType::OnPlay => "【登場】",
-        TriggerType::OnLiveStart => "【開始】",
-        TriggerType::OnLiveSuccess => "【成功】",
-        TriggerType::TurnStart => "【ターン開始】",
-        TriggerType::TurnEnd => "【ターン終了】",
-        TriggerType::Constant => "【常時】",
-        TriggerType::Activated => "【起動】",
-        TriggerType::OnLeaves => "【退場】",
-        TriggerType::OnReveal => "【公開】",
-        TriggerType::OnPositionChange => "【移動】",
-        TriggerType::OnAbilityResolve => "【解決】",
-        TriggerType::OnAbilitySuccess => "【成功】",
-        TriggerType::OnMoveToDiscard => "【控え室】",
-        TriggerType::OnMemberTap => "【タップ】",
-        TriggerType::None => "",
-    }
-}

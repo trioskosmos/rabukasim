@@ -5,7 +5,7 @@ use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PlayerState, TriggerType};
 use crate::core::models::interpreter::{check_condition_opcode, resolve_target_slot, HandlerResult};
-use crate::core::{O_LOOK_DECK, O_ORDER_DECK, O_LOOK_REORDER_DISCARD, O_REVEAL_CARDS, O_REVEAL_UNTIL, O_SEARCH_DECK, O_MOVE_TO_DECK, O_SWAP_CARDS, O_MOVE_TO_DISCARD, O_LOOK_AND_CHOOSE, O_RECOVER_LIVE, O_RECOVER_MEMBER, O_PLAY_LIVE_FROM_DISCARD, O_SELECT_CARDS, O_SWAP_ZONE, O_LOOK_DECK_DYNAMIC, O_CHEER_REVEAL};
+use crate::core::{O_ADD_HEARTS, O_LOOK_DECK, O_ORDER_DECK, O_LOOK_REORDER_DISCARD, O_REVEAL_CARDS, O_REVEAL_UNTIL, O_SEARCH_DECK, O_MOVE_TO_DECK, O_SWAP_CARDS, O_MOVE_TO_DISCARD, O_LOOK_AND_CHOOSE, O_RECOVER_LIVE, O_RECOVER_MEMBER, O_PLAY_LIVE_FROM_DISCARD, O_SELECT_CARDS, O_SWAP_ZONE, O_LOOK_DECK_DYNAMIC, O_CHEER_REVEAL};
 use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
@@ -545,9 +545,22 @@ fn handle_look_cards(
     let count = v as usize;
     let filter_attr = filter_attr_from_params(frame_data.params).unwrap_or(a as u64);
     let source_zone = frame_data.slot.source_zone;
-    let legacy_choose_to_hand = op == O_LOOK_DECK
+    let legacy_choose_to_hand = (op == O_LOOK_DECK || op == O_LOOK_AND_CHOOSE)
         && source_zone != crate::core::enums::Zone::Hand
         && frame_data.slot.target_slot == Zone::Hand as u8;
+    let sparse_choose_filter = state
+        .interaction_stack
+        .last()
+        .filter(|interaction| {
+            interaction.choice_type == ChoiceType::LookAndChoose
+                && interaction.effect_opcode == O_LOOK_AND_CHOOSE
+                && interaction.ctx.source_card_id == ctx.source_card_id
+                && interaction.ctx.ability_index == ctx.ability_index
+                && interaction.ctx.program_counter as usize == frame_idx
+                && interaction.filter_attr != 0
+        })
+        .map(|interaction| interaction.filter_attr)
+        .or_else(|| sparse_look_deck_choice_filter(db, ctx, frame_idx, op));
 
     if source_zone == crate::core::enums::Zone::Hand {
         // Reveal from hand
@@ -593,6 +606,7 @@ fn handle_look_cards(
     } else {
         // Look at top of deck
         if state.players[p_idx].looked_cards.is_empty() {
+            state.players[p_idx].revealed_cards.clear();
             if state.players[p_idx].deck.len() < count {
                 state.players[p_idx].set_flag(PlayerState::FLAG_DECK_REFRESHED, true);
                 state.resolve_deck_refresh(p_idx);
@@ -602,6 +616,7 @@ fn handle_look_cards(
             for _ in 0..count.min(deck_len) {
                 if let Some(cid) = state.players[p_idx].pop_deck_card() {
                     state.players[p_idx].looked_cards.push(cid);
+                    state.players[p_idx].revealed_cards.push(cid);
                     revealed_cids.push(cid);
                 }
             }
@@ -653,9 +668,101 @@ fn handle_look_cards(
             ctx.v_remaining = -1;
             return HandlerResult::Continue;
         }
+
+        if let Some(choice_filter) = sparse_choose_filter {
+            if ctx.choice_index == -1 {
+                if matches!(
+                    suspend_choice(
+                        state,
+                        db,
+                        ctx,
+                        ctx,
+                        frame_idx,
+                        O_LOOK_AND_CHOOSE,
+                        frame_data.slot.to_raw(),
+                        ChoiceType::LookAndChoose,
+                        choice_filter,
+                        1,
+                    ),
+                    HandlerResult::Suspend
+                ) {
+                    return HandlerResult::Suspend;
+                }
+            }
+
+            let choice = ctx.choice_index as usize;
+            let reveal_pool = if state.players[p_idx].looked_cards.is_empty() {
+                &state.players[p_idx].revealed_cards
+            } else {
+                &state.players[p_idx].looked_cards
+            };
+            if choice < reveal_pool.len() {
+                let chosen = reveal_pool[choice];
+                if chosen >= 0 && !ctx.selected_cards.contains(&chosen) {
+                    ctx.selected_cards.push(chosen);
+                }
+            }
+
+            let remainder: Vec<i32> = if state.players[p_idx].looked_cards.is_empty() {
+                state.players[p_idx].revealed_cards.drain(..).collect()
+            } else {
+                state.players[p_idx].revealed_cards.clear();
+                state.players[p_idx].looked_cards.drain(..).collect()
+            };
+            for cid in remainder {
+                state.players[p_idx].push_discard_card(cid);
+            }
+            ctx.choice_index = -1;
+            ctx.v_remaining = -1;
+            return HandlerResult::Continue;
+        }
     }
 
     HandlerResult::Continue
+}
+
+fn sparse_look_deck_choice_filter(
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_idx: usize,
+    op: i32,
+) -> Option<u64> {
+    if op != O_LOOK_DECK {
+        return None;
+    }
+
+    let source_card_id = if ctx.ability_card_id >= 0 {
+        ctx.ability_card_id
+    } else {
+        ctx.source_card_id
+    };
+    let ability_index = ctx.ability_index.max(0) as usize;
+    let ability = db
+        .get_member(source_card_id)
+        .and_then(|member| member.abilities.get(ability_index))
+        .or_else(|| db.get_live(source_card_id).and_then(|live| live.abilities.get(ability_index)))?;
+    let frames = ability.resolved_frames();
+
+    let mut tail = frames.iter().skip(frame_idx + 1);
+    let has_color_copy_bonus = tail.clone().any(|frame| {
+        let components = frame.components();
+        components.opcode == O_ADD_HEARTS && components.value == 99
+    });
+    let has_stage_target = tail.clone().any(|frame| frame.opcode() == crate::core::O_SELECT_MEMBER);
+    if !has_color_copy_bonus || !has_stage_target {
+        return None;
+    }
+
+    tail.find_map(|frame| {
+        let components = frame.components();
+        let filter = components.filter;
+        let has_character_filter = filter.char_id_1 != 0 || filter.char_id_2 != 0 || filter.char_id_3 != 0;
+        if has_character_filter {
+            Some(components.resolved_filter_attr())
+        } else {
+            None
+        }
+    })
 }
 
 // Dynamic look count based on performance score

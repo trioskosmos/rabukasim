@@ -45,13 +45,13 @@ def iter_authored_entries(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def load_yaml(path: Path | str) -> dict[str, Any]:
     """Load YAML file with UTF-8 encoding."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return yaml.safe_load(f)
 
 
 def load_json(path: Path | str) -> dict[str, Any]:
     """Load JSON file with UTF-8 encoding."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
@@ -869,7 +869,11 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
         normalized["primary_text_en"] = source_ability_texts[0]["en"] if source_ability_texts else ""
         normalized["source_ability_texts"] = source_ability_texts
 
-        # Copy flags if present
+        # Copy authored-only metadata before sorting so it stays aligned.
+        if "choice_flags" in entry:
+            normalized["choice_flags"] = int(entry.get("choice_flags", 0) or 0)
+        if "choice_count" in entry:
+            normalized["choice_count"] = int(entry.get("choice_count", 0) or 0)
         if "is_once_per_turn" in entry:
             normalized["is_once_per_turn"] = bool(entry.get("is_once_per_turn"))
         if "requires_selection" in entry:
@@ -967,20 +971,10 @@ def build_compact_ability_index(payload: dict[str, Any], metadata: dict[str, Any
     compact["schema"] = "ability_frame_source.flat.v2"
     compact["_comment"] = "Authored sparse ability source. Edit this file directly."
     entries = compact.get("abilities", [])
-    source_entries = iter_authored_entries(payload)
 
-    for idx, entry in enumerate(entries):
-        source_entry = source_entries[idx] if idx < len(source_entries) and isinstance(source_entries[idx], dict) else {}
+    for entry in entries:
         entry["source_mode"] = "frame_authored"
         entry["frames"] = [_normalize_frame(frame, frame_idx) for frame_idx, frame in enumerate(entry.get("frames", []))]
-        if "choice_flags" in source_entry:
-            entry["choice_flags"] = int(source_entry.get("choice_flags", 0) or 0)
-        if "choice_count" in source_entry:
-            entry["choice_count"] = int(source_entry.get("choice_count", 0) or 0)
-        if "is_once_per_turn" in source_entry:
-            entry["is_once_per_turn"] = bool(source_entry.get("is_once_per_turn"))
-        if "requires_selection" in source_entry:
-            entry["requires_selection"] = bool(source_entry.get("requires_selection"))
 
     return compact
 

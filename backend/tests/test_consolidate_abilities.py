@@ -1,5 +1,6 @@
 import os
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,9 +11,25 @@ if project_root not in sys.path:
 from tools import frame_codec as codec
 
 ROOT = Path(project_root)
+AUTHORED_SOURCE_PATH = ROOT / "data" / "ability_frame_source.json"
+
+
+def _load_authored_entries() -> list[dict]:
+    payload = codec.load_authored_payload(AUTHORED_SOURCE_PATH)
+    return payload["abilities"]
 
 
 class ConsolidateAbilitiesTests(unittest.TestCase):
+    def test_load_authored_payload_accepts_utf8_bom_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            source_path = Path(tmp_dir) / "bom_authored.json"
+            source_path.write_text('{"abilities": [{"trigger_id": 1, "frames": [{"op": "RETURN"}]}]}', encoding="utf-8-sig")
+
+            payload = codec.load_authored_payload(source_path)
+
+            self.assertEqual(len(payload["abilities"]), 1)
+            self.assertEqual(payload["abilities"][0]["trigger_id"], 1)
+
     def test_normalizes_authored_frames_and_preserves_card_refs(self) -> None:
         metadata = codec.load_json(ROOT / "data" / "metadata.json")
         trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
@@ -138,6 +155,89 @@ class ConsolidateAbilitiesTests(unittest.TestCase):
                 msg=f"opcode sequence mismatch in {entry.get('signature')}",
             )
             self.assertEqual(entry["frame_count"], len(frames))
+
+    def test_compact_index_keeps_source_only_fields_with_sorted_entries(self) -> None:
+        metadata = codec.load_json(ROOT / "data" / "metadata.json")
+        trigger_id = int(metadata["triggers"]["ON_LIVE_START"])
+
+        authored_data = {
+            "summary": {"card_count": 2, "ability_count": 2},
+            "abilities": [
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [{"op": "RETURN"}],
+                    "cards": ["B-001 | Sort Later (ab#0)"],
+                },
+                {
+                    "trigger_id": trigger_id,
+                    "frames": [{"op": "DRAW", "value": 1}, {"op": "RETURN"}],
+                    "cards": ["A-001 | Sort First (ab#0)", "A-002 | Sort First Too (ab#0)"],
+                    "choice_flags": 7,
+                    "choice_count": 2,
+                    "is_once_per_turn": True,
+                    "requires_selection": True,
+                },
+            ],
+        }
+
+        payload = codec.build_compact_ability_index(authored_data, metadata)
+        entry = next(item for item in payload["abilities"] if item["opcode_sequence"] == ["DRAW", "RETURN"])
+
+        self.assertEqual(entry["choice_flags"], 7)
+        self.assertEqual(entry["choice_count"], 2)
+        self.assertTrue(entry["is_once_per_turn"])
+        self.assertTrue(entry["requires_selection"])
+
+    def test_authored_source_uses_named_categorical_identifiers(self) -> None:
+        authored_entries = _load_authored_entries()
+        slot_keys = {"target_slot", "comparison", "source_zone", "dest_zone", "remainder_zone"}
+        attr_keys = {
+            "target_player",
+            "card_type",
+            "group_id",
+            "unit_id",
+            "char_id_1",
+            "char_id_2",
+            "char_id_3",
+            "color_mask",
+            "zone_mask",
+            "special_id",
+            "keyword",
+        }
+
+        bad_fields: list[str] = []
+        for entry in authored_entries:
+            signature = entry.get("signature", "<missing-signature>")
+            for frame in entry.get("frames", []):
+                for key in slot_keys:
+                    value = frame.get("slot", {}).get(key)
+                    if value is not None and not isinstance(value, str):
+                        bad_fields.append(f"{signature}: slot.{key}={value!r}")
+                for key in attr_keys:
+                    value = frame.get("attr", {}).get(key)
+                    if value is not None and not isinstance(value, str):
+                        bad_fields.append(f"{signature}: attr.{key}={value!r}")
+
+        self.assertEqual(bad_fields, [], "\n".join(bad_fields))
+
+    def test_ll_bp1_001_r_plus_uses_ayumu_kanon_kaho_filter(self) -> None:
+        authored_entries = _load_authored_entries()
+
+        target_entry = next(
+            entry
+            for entry in authored_entries
+            if any(
+                ref.get("card_no") == "LL-bp1-001-R+" and ref.get("ability_index") == 1
+                for ref in entry.get("card_refs", [])
+            )
+        )
+
+        move_frame = target_entry["frames"][0]
+        self.assertEqual(move_frame["op"], "MOVE_TO_DISCARD")
+        self.assertEqual(move_frame["attr"].get("char_id_1"), "AYUMU")
+        self.assertEqual(move_frame["attr"].get("char_id_2"), "KANON")
+        self.assertEqual(move_frame["attr"].get("char_id_3"), "KAHO")
+        self.assertNotIn("unit_id", move_frame["attr"])
 
 
 if __name__ == "__main__":

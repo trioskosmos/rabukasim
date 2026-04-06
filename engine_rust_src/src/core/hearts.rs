@@ -51,14 +51,6 @@ impl HeartBoard {
         Self(val)
     }
 
-    pub fn from_array_u32(arr: &[u32; 7]) -> Self {
-        let mut val = 0u64;
-        for i in 0..7 {
-            val |= (arr[i].min(255) as u64) << (i * 8);
-        }
-        Self(val)
-    }
-
     pub fn to_array(&self) -> [u8; 7] {
         let mut arr = [0u8; 7];
         for i in 0..7 {

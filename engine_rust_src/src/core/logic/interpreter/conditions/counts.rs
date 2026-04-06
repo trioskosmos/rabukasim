@@ -8,6 +8,12 @@ fn decode_count_filter(attr: u64) -> CardFilter {
     if (attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0 && filter.target_player == 0 {
         filter.target_player = TARGET_PLAYER_BOTH as u8;
     }
+    if filter.value_enabled {
+        filter.value_enabled = false;
+        filter.value_threshold = 0;
+        filter.is_le = false;
+        filter.is_cost_type = false;
+    }
     filter
 }
 
@@ -83,9 +89,11 @@ fn resolve_structured_zone_count(
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
 ) -> i32 {
-    let p_idx = ctx.player_id as usize;
+    let p_idx = ctx.activator_id as usize;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
+    let mut count_ctx = ctx.clone();
+    count_ctx.player_id = ctx.activator_id;
 
     let mut filter = frame.filter;
     if frame.opcode == C_COUNT_GROUP {
@@ -189,7 +197,7 @@ fn resolve_structured_zone_count(
     if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
         for (id, slot) in ids {
-            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
+            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, &count_ctx);
             if matched {
                 if let Some(m) = db.get_member(id) {
                     names.insert(m.name.clone());
@@ -202,7 +210,7 @@ fn resolve_structured_zone_count(
     } else {
         let mut res = 0;
         for (id, slot) in ids {
-            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, ctx);
+            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, &count_ctx);
             if matched {
                 res += 1;
             }
@@ -217,7 +225,7 @@ fn resolve_live_zone_count(
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
 ) -> i32 {
-    let p_idx = ctx.player_id as usize;
+    let p_idx = ctx.activator_id as usize;
     let player = &state.players[p_idx];
     let filter = frame.filter;
 
@@ -263,7 +271,7 @@ fn resolve_count_components(
     ctx: &AbilityContext,
     depth: u32,
 ) -> i32 {
-    let p_idx = ctx.player_id as usize;
+    let p_idx = ctx.activator_id as usize;
 
     if frame.opcode == C_COUNT_LIVE_ZONE {
         resolve_live_zone_count(state, db, frame, ctx)
@@ -271,6 +279,75 @@ fn resolve_count_components(
         resolve_structured_zone_count(state, db, frame, ctx)
     } else {
         match frame.opcode {
+            C_COUNT_STAGE => {
+                let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
+                let count_zone = |cards: &[i32]| {
+                    cards
+                        .iter()
+                        .filter(|&&id| {
+                            id >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    id,
+                                    None,
+                                    &frame.filter,
+                                    ctx,
+                                )
+                        })
+                        .count() as i32
+                };
+                let mut total = count_zone(&state.players[primary_player].stage);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].stage);
+                }
+                total
+            }
+            C_COUNT_HAND => {
+                let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
+                let count_zone = |cards: &[i32]| {
+                    cards
+                        .iter()
+                        .filter(|&&id| {
+                            id >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    id,
+                                    None,
+                                    &frame.filter,
+                                    ctx,
+                                )
+                        })
+                        .count() as i32
+                };
+                let mut total = count_zone(&state.players[primary_player].hand);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].hand);
+                }
+                total
+            }
+            C_COUNT_DISCARD => {
+                let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
+                let count_zone = |cards: &[i32]| {
+                    cards
+                        .iter()
+                        .filter(|&&id| {
+                            id >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    id,
+                                    None,
+                                    &frame.filter,
+                                    ctx,
+                                )
+                        })
+                        .count() as i32
+                };
+                let mut total = count_zone(&state.players[primary_player].discard);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].discard);
+                }
+                total
+            }
             C_COUNT_ENERGY => {
                 let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
                 let mut total = state.players[primary_player].energy_zone.len() as i32;
@@ -387,7 +464,9 @@ pub fn get_condition_count(
     attr: u64,
     ctx: &AbilityContext,
 ) -> i32 {
-    let p_idx = ctx.player_id as usize;
+    let p_idx = ctx.activator_id as usize;
+    let mut count_ctx = ctx.clone();
+    count_ctx.player_id = ctx.activator_id;
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
 
@@ -397,7 +476,7 @@ pub fn get_condition_count(
     let count_zone = |cards: &[i32]| -> i32 {
         cards
             .iter()
-            .filter(|&&id| id >= 0 && state.card_matches_filter_with_struct(db, id, None, &filter, ctx))
+            .filter(|&&id| id >= 0 && state.card_matches_filter_with_struct(db, id, None, &filter, &count_ctx))
             .count() as i32
     };
 

@@ -23,14 +23,14 @@ fn test_opcode_draw_discard() {
     assert_eq!(state.players[0].deck.len(), 3);
     assert!(state.players[0].hand.contains(&121) || state.players[0].hand.contains(&124));
 
-    // O_MOVE_TO_DISCARD 1 (attr 2 = Hand)
+    // O_MOVE_TO_DISCARD 1 from Hand (target slot 6 = Hand)
     // Pre-seed choice_index so it doesn't suspend, since inline bytecode can't be resumed
     let discard_ctx = AbilityContext {
         player_id: 0,
         choice_index: 0,
         ..Default::default()
     };
-    let bc = vec![O_MOVE_TO_DISCARD, 1, 2, 0, 6, O_RETURN, 0, 0, 0, 0];
+    let bc = vec![O_MOVE_TO_DISCARD, 1, 0, 0, 6, O_RETURN, 0, 0, 0, 0];
     state.resolve_frames(&db, &bc, &discard_ctx);
 
     assert_eq!(state.players[0].hand.len(), 1);

@@ -11,7 +11,6 @@ pub mod ai_encoding;
 pub mod card_db;
 pub mod constants;
 pub mod diagnostics;
-pub mod effects;
 pub mod execution;
 pub mod filter;
 pub mod game;
@@ -31,6 +30,7 @@ pub mod player;
 pub mod rules;
 pub mod standard_state;
 pub mod state;
+pub mod test_coverage;
 pub mod turn_sequencer;
 
 // Constants

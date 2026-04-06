@@ -1,8 +1,11 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
+use crate::core::logic::CardDatabase;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::DecodedSlot;
+use crate::core::logic::interpreter::instruction::{
+    parse_comparison_value, parse_remainder_zone_value, parse_target_slot_value, DecodedSlot,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -540,10 +543,6 @@ impl<'a> AbilityFrameComponents<'a> {
         crate::core::logic::filter::structured_filter_from_attr(self.count_filter_attr())
     }
 
-    pub fn has_count_filter_constraints(&self) -> bool {
-        crate::core::logic::filter::has_structured_filter_constraints(self.count_filter_attr())
-    }
-
     pub fn dynamic_count_filter_attr(&self) -> u64 {
         self.count_filter_attr()
     }
@@ -718,12 +717,6 @@ impl<'a> AbilityFrameComponents<'a> {
         }
     }
 
-    pub fn uses_count_multiplier(&self) -> bool {
-        self.slot.is_dynamic
-            || self.filter.compare_accumulated
-            || self.scale_source() != SemanticScaleSource::None
-    }
-
     pub fn resolved_color_index(&self, selected_color: usize, any_fallback: usize) -> usize {
         if let Some(color) = crate::core::logic::heart_semantics::decode_heart_type_from_params(self.params) {
             return color;
@@ -768,19 +761,12 @@ impl<'a> AbilityFrameComponents<'a> {
             && self.comparison_mode() == SemanticComparisonMode::GreaterEqual
             && !filter.is_cost_type
             && filter.value_threshold == self.value as u8
-            && filter.card_type == 0
-            && !filter.group_enabled
-            && !filter.unit_enabled
             && filter.color_mask == 0
-            && filter.char_id_1 == 0
-            && filter.char_id_2 == 0
-            && filter.char_id_3 == 0
             && filter.zone_mask == 0
             && filter.special_id == 0
             && !filter.is_tapped
             && !filter.has_blade_heart
             && !filter.not_has_blade_heart
-            && !filter.unique_names
             && !filter.is_setsuna
             && !filter.compare_accumulated
             && !filter.keyword_energy
@@ -797,8 +783,62 @@ impl<'a> AbilityFrameComponents<'a> {
         filter.to_attr()
     }
 
+    pub fn normalized_select_member_filter_attr_with_source(
+        &self,
+        db: &CardDatabase,
+        ctx: &AbilityContext,
+    ) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr();
+        if filter_attr == 0 {
+            return filter_attr;
+        }
+
+        let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
+        if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
+            return filter_attr;
+        }
+
+        let source_card_id = if ctx.ability_card_id >= 0 {
+            ctx.ability_card_id
+        } else {
+            ctx.source_card_id
+        };
+        let source_groups = db
+            .get_live(source_card_id)
+            .map(|card| card.groups.as_slice())
+            .or_else(|| db.get_member(source_card_id).map(|card| card.groups.as_slice()));
+        let Some(source_groups) = source_groups else {
+            return filter_attr;
+        };
+        if source_groups.len() != 1 {
+            return filter_attr;
+        }
+
+        let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+        filter.group_id = source_groups[0];
+        filter.to_attr() | passthrough
+    }
+
     pub fn targeted_select_member_filter_attr(&self) -> u64 {
         let filter_attr = self.normalized_select_member_filter_attr();
+        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
+            && filter_attr != 0
+        {
+            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
+            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+            filter.target_player = TARGET_PLAYER_SELF as u8;
+            filter.to_attr() | passthrough
+        } else {
+            filter_attr
+        }
+    }
+
+    pub fn targeted_select_member_filter_attr_with_source(
+        &self,
+        db: &CardDatabase,
+        ctx: &AbilityContext,
+    ) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr_with_source(db, ctx);
         if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
             && filter_attr != 0
         {
@@ -1277,8 +1317,8 @@ impl AbilityFrame {
             "RETURN" => O_RETURN,
             "DRAW" => O_DRAW,
             "NOP" => O_NOP,
-                "JUMP" => O_JUMP,
-                "JUMP_IF_FALSE" => O_JUMP_IF_FALSE,
+            "JUMP" => O_JUMP,
+            "JUMP_IF_FALSE" => O_JUMP_IF_FALSE,
             "PAY_ENERGY" => O_PAY_ENERGY,
             "PAY_ENERGY_DYNAMIC" => O_PAY_ENERGY_DYNAMIC,
             "ENERGY_CHARGE" => O_ENERGY_CHARGE,
@@ -1286,12 +1326,15 @@ impl AbilityFrame {
             "PLACE_ENERGY_UNDER_MEMBER" => O_PLACE_ENERGY_UNDER_MEMBER,
             "RECOVER_LIVE" => O_RECOVER_LIVE,
             "RECOVER_MEMBER" => O_RECOVER_MEMBER,
+            "ACTIVATE_MEMBER" => O_ACTIVATE_MEMBER,
+            "NEGATE_EFFECT" => O_NEGATE_EFFECT,
             "LOOK_AND_CHOOSE" => O_LOOK_AND_CHOOSE,
             "SELECT_MEMBER" => O_SELECT_MEMBER,
             "SELECT_LIVE" => O_SELECT_LIVE,
             "SELECT_PLAYER" => O_SELECT_PLAYER,
             "SELECT_CARDS" => O_SELECT_CARDS,
             "SELECT_MODE" => O_SELECT_MODE,
+            "OPPONENT_CHOOSE" => O_OPPONENT_CHOOSE,
             "MOVE_MEMBER" => O_MOVE_MEMBER,
             "MOVE_TO_DECK" => O_MOVE_TO_DECK,
             "MOVE_TO_DISCARD" => O_MOVE_TO_DISCARD,
@@ -1312,26 +1355,43 @@ impl AbilityFrame {
             "LOOK_REORDER_DISCARD" => O_LOOK_REORDER_DISCARD,
             "ORDER_DECK" => O_ORDER_DECK,
             "SEARCH_DECK" => O_SEARCH_DECK,
-                "COUNT_STAGE" => 203,
-                "COUNT_HAND" => 204,
-                "COUNT_GROUP" => 208,
-                "COUNT_ENERGY" => 213,
-                "SCORE_COMPARE" => 220,
-                "COUNT_HEARTS" => 223,
-                "COUNT_BLADES" => 224,
-                "HAS_KEYWORD" => 226,
-                    "HAS_EXCESS_HEART" => C_HAS_EXCESS_HEART,
-                    "NOT_HAS_EXCESS_HEART" => C_NOT_HAS_EXCESS_HEART,
-                "MAIN_PHASE" => 305,
-                "SUCCESS_PILE_COUNT" => 307,
-                "IS_SELF_MOVE" => 308,
-                "DISCARDED_CARDS" => 309,
-                "YELL_REVEALED_UNIQUE_COLORS" => 310,
-                "SYNC_COST" => 311,
-                "SUM_VALUE" => 312,
-                "IS_WAIT" => 313,
-                "ON_ABILITY_RESOLVE" => 314,
-                "TARGET_MEMBER_HAS_NO_HEARTS" => 315,
+            "HAS_MEMBER" => C_HAS_MEMBER,
+            "HAS_COLOR" => C_HAS_COLOR,
+            "COUNT_STAGE" => C_COUNT_STAGE,
+            "COUNT_HAND" => C_COUNT_HAND,
+            "COUNT_DISCARD" => C_COUNT_DISCARD,
+            "IS_CENTER" => C_IS_CENTER,
+            "COUNT_GROUP" => C_COUNT_GROUP,
+            "COUNT_ENERGY" => C_COUNT_ENERGY,
+            "HAS_LIVE_CARD" => C_HAS_LIVE_CARD,
+            "COUNT_SUCCESS_LIVE" => C_COUNT_SUCCESS_LIVE,
+            "SCORE_COMPARE" => C_SCORE_COMPARE,
+            "COUNT_HEARTS" => C_COUNT_HEARTS,
+            "COUNT_BLADES" => C_COUNT_BLADES,
+            "OPPONENT_ENERGY_DIFF" => C_OPPONENT_ENERGY_DIFF,
+            "HAS_KEYWORD" => C_HAS_KEYWORD,
+            "DECK_REFRESHED" => C_DECK_REFRESHED,
+            "COUNT_LIVE_ZONE" => C_COUNT_LIVE_ZONE,
+            "BATON" => C_BATON,
+            "TYPE_CHECK" => C_TYPE_CHECK,
+            "AREA_CHECK" => C_AREA_CHECK,
+            "HEART_LEAD" => C_HEART_LEAD,
+            "HAS_EXCESS_HEART" => C_HAS_EXCESS_HEART,
+            "NOT_HAS_EXCESS_HEART" => C_NOT_HAS_EXCESS_HEART,
+            "TOTAL_BLADES" => C_TOTAL_BLADES,
+            "COUNT_ENERGY_EXACT" => C_COUNT_ENERGY_EXACT,
+            "COUNT_BLADE_HEART_TYPES" => C_COUNT_BLADE_HEART_TYPES,
+            "SCORE_TOTAL_CHECK" => C_SCORE_TOTAL_CHECK,
+            "MAIN_PHASE" => C_MAIN_PHASE,
+            "SUCCESS_PILE_COUNT" => C_SUCCESS_PILE_COUNT,
+            "IS_SELF_MOVE" => C_IS_SELF_MOVE,
+            "DISCARDED_CARDS" => C_DISCARDED_CARDS,
+            "YELL_REVEALED_UNIQUE_COLORS" => C_YELL_REVEALED_UNIQUE_COLORS,
+            "SYNC_COST" => C_SYNC_COST,
+            "SUM_VALUE" => C_SUM_VALUE,
+            "IS_WAIT" => C_IS_WAIT,
+            "ON_ABILITY_RESOLVE" => C_ON_ABILITY_RESOLVE,
+            "TARGET_MEMBER_HAS_NO_HEARTS" => C_TARGET_MEMBER_HAS_NO_HEARTS,
             "BOOST_SCORE" => O_BOOST_SCORE,
             "SET_SCORE" => O_SET_SCORE,
             "REDUCE_SCORE" => O_REDUCE_SCORE,
@@ -1540,11 +1600,11 @@ impl AbilityFrame {
         let recover_params = params.clone();
         let mut slot = slot;
         if let Some(slot_obj) = slot_value.as_ref().and_then(Value::as_object) {
-            if let Some(target_slot) = slot_obj.get("target_slot").and_then(Value::as_u64) {
-                slot.target_slot = target_slot as u8;
+            if let Some(target_slot) = slot_obj.get("target_slot").and_then(parse_target_slot_value) {
+                slot.target_slot = target_slot;
             }
-            if let Some(comparison) = slot_obj.get("comparison").and_then(Value::as_u64) {
-                slot.comparison = comparison as u8;
+            if let Some(comparison) = slot_obj.get("comparison").and_then(parse_comparison_value) {
+                slot.comparison = comparison;
             }
             if let Some(source_zone) = slot_obj
                 .get("source_zone")
@@ -1560,8 +1620,11 @@ impl AbilityFrame {
             {
                 slot.dest_zone = dest_zone;
             }
-            if let Some(remainder_zone) = slot_obj.get("remainder_zone").and_then(Value::as_u64) {
-                slot.remainder_zone = remainder_zone as u8;
+            if let Some(remainder_zone) = slot_obj
+                .get("remainder_zone")
+                .and_then(parse_remainder_zone_value)
+            {
+                slot.remainder_zone = remainder_zone;
             }
             if let Some(area_idx) = slot_obj.get("area_idx").and_then(Value::as_u64) {
                 slot.area_idx = area_idx as u8;
@@ -2261,20 +2324,6 @@ pub struct Effect {
 }
 
 impl Effect {
-    /// Get the value as i32 (handles both integer and object values)
-    pub fn value_as_i32(&self) -> i32 {
-        match &self.value {
-            serde_json::Value::Number(n) => n.as_i64().unwrap_or(0) as i32,
-            serde_json::Value::Object(obj) => {
-                // Try to extract from common object patterns like {"count": N}
-                obj.get("count")
-                    .and_then(|v| v.as_i64())
-                    .or_else(|| obj.get("value").and_then(|v| v.as_i64()))
-                    .unwrap_or(0) as i32
-            }
-            _ => 0,
-        }
-    }
 }
 
 impl std::hash::Hash for Effect {
@@ -2408,22 +2457,6 @@ impl Default for AbilityContext {
 }
 
 impl AbilityContext {
-    pub fn static_context(&self) -> StaticAbilityContext {
-        StaticAbilityContext {
-            player_id: self.player_id,
-            activator_id: self.activator_id,
-            area_idx: self.area_idx,
-            source_card_id: self.source_card_id,
-            ability_card_id: self.ability_card_id,
-            target_card_id: self.target_card_id,
-            target_slot: self.target_slot,
-            ability_index: self.ability_index,
-            trigger_type: self.trigger_type,
-            original_phase: self.original_phase,
-            original_current_player: self.original_current_player,
-        }
-    }
-
     pub fn capture_state_raw(&mut self, phase: crate::core::enums::Phase, current_player: u8) {
         self.original_phase = Some(phase);
         self.original_current_player = Some(current_player);
@@ -2441,23 +2474,6 @@ impl AbilityContext {
             selected_color: self.selected_color,
             auto_pick: self.auto_pick,
         }
-    }
-
-    pub fn apply_execution_state(&mut self, execution_state: &AbilityExecutionState) {
-        self.choice_index = execution_state.choice_index;
-        self.v_accumulated = execution_state.v_accumulated;
-        self.program_counter = execution_state.program_counter;
-        self.v_remaining = execution_state.v_remaining;
-        self.repeat_count = execution_state.repeat_count;
-        self.selected_cards = execution_state.selected_cards.clone();
-        self.selected_target_keys = execution_state.selected_target_keys.clone();
-        self.selected_color = execution_state.selected_color;
-        self.auto_pick = execution_state.auto_pick;
-    }
-
-    pub fn clear_step_state(&mut self) {
-        self.choice_index = -1;
-        self.v_remaining = -1;
     }
 }
 
@@ -2604,11 +2620,7 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
-    pub fn implicit_activated_energy_cost(&self) -> usize {
-        0
-    }
-
-    fn has_authored_frame_program(&self) -> bool {
+    pub(crate) fn has_authored_frame_program(&self) -> bool {
         self.frame_program
             .as_ref()
             .map(|program| !program.frames.is_empty())
@@ -2618,10 +2630,10 @@ impl Ability {
     pub fn resolved_frame_source(&self) -> &'static str {
         if self.has_authored_frame_program() {
             "frame_program"
-        } else if !self.effects.is_empty() {
-            "effects"
         } else if self.frame_program.is_some() {
             "frame_program_unmatched"
+        } else if !self.effects.is_empty() {
+            "effects"
         } else {
             "none"
         }
@@ -2632,8 +2644,24 @@ impl Ability {
         !self.effects.is_empty()
     }
 
-    /// Get the number of modal options from effects
+    /// Get the number of modal options from the canonical authored frame program when present.
     pub fn modal_option_count(&self) -> usize {
+        if self.has_authored_frame_program() {
+            let frames = self.resolved_frames();
+            return frames
+                .iter()
+                .position(|frame| frame.opcode() == O_SELECT_MODE)
+                .and_then(|select_mode_idx| {
+                    let jump_count = frames
+                        .iter()
+                        .skip(select_mode_idx + 1)
+                        .take_while(|frame| frame.opcode() == O_JUMP)
+                        .count();
+                    (jump_count > 0).then_some(jump_count)
+                })
+                .unwrap_or(0);
+        }
+
         self.effects
             .first()
             .and_then(|e| e.modal_options.as_array())
@@ -2654,9 +2682,41 @@ impl Ability {
             })
     }
 
-    fn legacy_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
+    fn authored_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
         let frames = self.resolved_frames();
         let select_mode_idx = frames.iter().position(|frame| frame.opcode() == O_SELECT_MODE)?;
+        let option_count = frames[select_mode_idx].value().max(0) as usize;
+        let branch_table_len = frames
+            .iter()
+            .skip(select_mode_idx + 1)
+            .take_while(|frame| frame.opcode() == O_JUMP)
+            .count();
+        if branch_table_len == 0 {
+            return None;
+        }
+
+        let mut cursor = select_mode_idx + 1 + branch_table_len;
+        for option_idx in 0..option_count.max(branch_table_len) {
+            let start = cursor;
+            while cursor < frames.len() && !matches!(frames[cursor].opcode(), O_JUMP | O_RETURN) {
+                cursor += 1;
+            }
+
+            let option_frames = frames[start..cursor].to_vec();
+            if option_idx == choice_idx {
+                if !option_frames.is_empty() {
+                    return Some(option_frames);
+                }
+
+                break;
+            }
+
+            if cursor >= frames.len() {
+                break;
+            }
+            cursor += 1;
+        }
+
         let jump_frame_idx = select_mode_idx + 1 + choice_idx;
         let jump_frame = frames.get(jump_frame_idx)?;
         if jump_frame.opcode() != O_JUMP {
@@ -2675,15 +2735,17 @@ impl Ability {
         (!option_frames.is_empty()).then_some(option_frames)
     }
 
-    /// Get modal option frames, preferring structured modal effects before legacy SELECT_MODE recovery.
+    /// Get modal option frames from the canonical authored frame program when present.
     pub fn get_modal_option_frames(&self, choice_idx: usize) -> Option<Vec<AbilityFrame>> {
-        self.get_modal_effects(choice_idx)
-            .map(|effects| {
-                effects.iter()
-                    .map(|e| AbilityFrame::from_effect(e))
-                    .collect()
-            })
-            .or_else(|| self.legacy_modal_option_frames(choice_idx))
+        if self.has_authored_frame_program() {
+            return self.authored_modal_option_frames(choice_idx);
+        }
+
+        self.get_modal_effects(choice_idx).map(|effects| {
+            effects.iter()
+                .map(|e| AbilityFrame::from_effect(e))
+                .collect()
+        })
     }
 
     pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
@@ -2691,6 +2753,8 @@ impl Ability {
             if !frame_program.frames.is_empty() {
                 return Cow::Borrowed(&frame_program.frames);
             }
+
+            return Cow::Borrowed(&frame_program.frames);
         }
 
         if !self.effects.is_empty() {
@@ -2861,13 +2925,13 @@ mod tests {
     }
 
     #[test]
-    fn get_modal_option_frames_falls_back_to_legacy_select_mode_frames() {
+    fn get_modal_option_frames_extracts_authored_select_mode_frames() {
         let ability = Ability {
             frame_program: Some(FrameProgram {
                 frames: vec![
                     AbilityFrame::new(O_SELECT_MODE, 2, 0, 0, false),
-                    AbilityFrame::new(O_JUMP, 1, 0, 0, false),
-                    AbilityFrame::new(O_JUMP, 3, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 0, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 2, 0, 0, false),
                     AbilityFrame::new(O_DRAW, 1, 0, 0, false),
                     AbilityFrame::new(O_TAP_MEMBER, 1, 0, 0, false),
                     AbilityFrame::new_return(),
@@ -2890,6 +2954,40 @@ mod tests {
     }
 
     #[test]
+    fn get_modal_option_frames_prefers_authored_frame_program_over_effect_modal_options() {
+        let ability = Ability {
+            effects: vec![Effect {
+                modal_options: json!([
+                    [{ "effect_type": EffectType::Draw, "value": 9 }],
+                    [{ "effect_type": EffectType::AddBlades, "value": 9 }]
+                ]),
+                ..Default::default()
+            }],
+            frame_program: Some(FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_SELECT_MODE, 2, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 0, 0, 0, false),
+                    AbilityFrame::new(O_JUMP, 2, 0, 0, false),
+                    AbilityFrame::new(O_DRAW, 1, 0, 0, false),
+                    AbilityFrame::new_return(),
+                    AbilityFrame::new(O_ADD_BLADES, 2, 0, 0, false),
+                    AbilityFrame::new_return(),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let option0 = ability.get_modal_option_frames(0).expect("option 0 frames");
+        let option1 = ability.get_modal_option_frames(1).expect("option 1 frames");
+
+        assert_eq!(option0[0].opcode(), O_DRAW);
+        assert_eq!(option0[0].value(), 1);
+        assert_eq!(option1[0].opcode(), O_ADD_BLADES);
+        assert_eq!(option1[0].value(), 2);
+    }
+
+    #[test]
     fn ability_resolved_frames_fall_back_to_effects() {
         let ability = Ability {
             trigger: TriggerType::OnPlay,
@@ -2908,7 +3006,7 @@ mod tests {
     }
 
     #[test]
-    fn resolved_frames_prefer_effects_when_frame_program_has_no_effect_overlap() {
+    fn resolved_frames_prefer_frame_program_when_present() {
         let ability = Ability {
             trigger: TriggerType::Constant,
             effects: vec![Effect {
@@ -2930,6 +3028,27 @@ mod tests {
         assert_eq!(ability.resolved_frame_source(), "frame_program");
         assert_eq!(frames.len(), 2);
         assert_eq!(frames[0].opcode(), O_RECOVER_LIVE);
+    }
+
+    #[test]
+    fn unmatched_frame_program_does_not_fall_back_to_effects() {
+        let ability = Ability {
+            trigger: TriggerType::OnPlay,
+            effects: vec![Effect {
+                effect_type: EffectType::Draw,
+                value: Value::from(1),
+                ..Default::default()
+            }],
+            frame_program: Some(FrameProgram {
+                frames: vec![],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let frames = ability.resolved_frames();
+        assert_eq!(ability.resolved_frame_source(), "frame_program_unmatched");
+        assert!(frames.is_empty());
     }
 
     #[test]
@@ -3047,6 +3166,26 @@ mod tests {
         assert!(frame_data.filter.compare_accumulated);
         assert!(frame_data.slot.is_dynamic);
         assert_eq!(frame_data.slot.remainder_zone, 204);
+    }
+
+    #[test]
+    fn structured_frame_parses_named_slot_identifiers() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_MEMBER",
+            "value": 1,
+            "slot": {
+                "target_slot": "HAND",
+                "comparison": "GE",
+                "source_zone": "DECK_TOP",
+                "remainder_zone": "DISCARD"
+            }
+        }));
+
+        let frame_data = frame.components();
+        assert_eq!(frame_data.slot.target_slot, 54);
+        assert_eq!(frame_data.slot.comparison, 3);
+        assert_eq!(frame_data.slot.source_zone, Zone::DeckTop);
+        assert_eq!(frame_data.slot.remainder_zone, crate::core::generated_constants::ZONE_DISCARD as u8);
     }
 
     #[test]

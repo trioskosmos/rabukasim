@@ -1717,11 +1717,11 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     if state.players[p].prevent_success_pile_set() != 0 {
                         continue;
                     }
-                    if card.abilities.iter().any(|a| {
-                        a.effects
-                            .iter()
-                            .any(|e| e.effect_type == EffectType::PreventSetToSuccessPile)
-                    }) {
+                    if card
+                        .abilities
+                        .iter()
+                        .any(|ability| CardDatabase::has_opcode_static_fast(ability, O_PREVENT_SET_TO_SUCCESS_PILE))
+                    {
                         continue;
                     }
 

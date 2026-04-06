@@ -142,13 +142,3 @@ pub fn suspend_choice_with_options(
         HandlerResult::Continue
     }
 }
-
-/// Simplified version that works directly with frame_data
-pub fn handle_optional_nop_simple(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &mut AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
-) -> HandlerResult {
-    handle_optional_nop(state, db, ctx, frame_data, 0)
-}

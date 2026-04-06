@@ -65,6 +65,23 @@ pub fn handle_move_member(
         resolved_slot as usize
     };
 
+    if state.debug.debug_mode {
+        eprintln!(
+            "[MOVE_MEMBER_DBG] p_idx={} ctx_player={} target_p_idx={} selected_cards={:?} resolved_slot={} src_slot={} raw_target_slot={} is_optional={} filter_attr={} target_slot_ctx={} area_idx={}",
+            p_idx,
+            ctx.player_id,
+            target_p_idx,
+            ctx.selected_cards,
+            resolved_slot,
+            src_slot,
+            slot_info.target_slot,
+            is_optional,
+            filter_attr,
+            ctx.target_slot,
+            ctx.area_idx
+        );
+    }
+
     let needs_choice = a == 99 || (a < 0 || a > 2);
     let legacy_tap_selection =
         is_optional && needs_choice && s == TARGET_SLOT_STAGE as i32 && !slot_info.is_opponent;
@@ -216,6 +233,14 @@ pub fn handle_move_member(
         }
     } else if src_slot < 3 && dst_slot == src_slot {
         if state.players[target_p_idx].stage[src_slot] >= 0 {
+            if state.debug.debug_mode {
+                eprintln!(
+                    "[MOVE_MEMBER_DBG] tapping target_p_idx={} slot={} cid={}",
+                    target_p_idx,
+                    src_slot,
+                    state.players[target_p_idx].stage[src_slot]
+                );
+            }
             state.players[target_p_idx].set_tapped(src_slot, true);
         }
     }

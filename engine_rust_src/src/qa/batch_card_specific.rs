@@ -12,6 +12,7 @@ mod tests {
     use crate::core::enums::ChoiceType;
     use crate::core::generated_constants::{
         ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE, ACTION_BASE_STAGE,
+        ACTION_BASE_STAGE_SLOTS, C_HAS_MEMBER,
     };
     use std::collections::HashSet;
 
@@ -117,6 +118,88 @@ mod tests {
             .expect("expected a member inside the requested group in the real DB")
     }
 
+    fn first_member_named(db: &CardDatabase, name: &str, excluded: &[i32]) -> i32 {
+        db.members
+            .values()
+            .find(|card| card.name == name && !excluded.contains(&card.card_id))
+            .map(|card| card.card_id)
+            .expect("expected a member with the requested name in the real DB")
+    }
+
+    fn inject_member_with_groups(
+        db: &mut CardDatabase,
+        template_id: i32,
+        injected_id: i32,
+        groups: &[u8],
+        blades: u32,
+    ) -> i32 {
+        let mut member = db
+            .get_member(template_id)
+            .cloned()
+            .expect("expected template member to exist in the real DB");
+        member.card_id = injected_id;
+        member.card_no = format!("TEST-{injected_id}");
+        member.name = format!("Injected Test Member {injected_id}");
+        member.groups = groups.to_vec();
+        member.units.clear();
+        member.blades = blades;
+        member.abilities.clear();
+
+        let logic_id = (injected_id & LOGIC_ID_MASK) as usize;
+        if db.members_vec.len() <= logic_id {
+            db.members_vec.resize(logic_id + 1, None);
+        }
+        db.members_vec[logic_id] = Some(member.clone());
+        db.members.insert(injected_id, member.clone());
+        db.card_no_to_id.insert(member.card_no.clone(), injected_id);
+        injected_id
+    }
+
+    fn inject_live_with_groups_and_name(
+        db: &mut CardDatabase,
+        template_id: i32,
+        injected_id: i32,
+        card_no: &str,
+        name: &str,
+        groups: &[u8],
+    ) -> i32 {
+        let mut live = db
+            .get_live(template_id)
+            .cloned()
+            .expect("expected template live to exist in the real DB");
+        live.card_id = injected_id;
+        live.card_no = card_no.to_string();
+        live.name = name.to_string();
+        live.groups = groups.to_vec();
+        live.abilities.clear();
+
+        let logic_id = (injected_id & LOGIC_ID_MASK) as usize;
+        if db.lives_vec.len() <= logic_id {
+            db.lives_vec.resize(logic_id + 1, None);
+        }
+        db.lives_vec[logic_id] = Some(live.clone());
+        db.lives.insert(injected_id, live.clone());
+        db.card_no_to_id.insert(live.card_no.clone(), injected_id);
+        injected_id
+    }
+
+    fn first_member_at_least_cost_without_trigger(
+        db: &CardDatabase,
+        min_cost: u32,
+        trigger: TriggerType,
+        excluded: &[i32],
+    ) -> i32 {
+        db.members
+            .values()
+            .find(|card| {
+                !excluded.contains(&card.card_id)
+                    && card.cost >= min_cost
+                    && !card.abilities.iter().any(|ability| ability.trigger == trigger)
+            })
+            .map(|card| card.card_id)
+            .expect("expected a member with the requested minimum cost and no excluded trigger")
+    }
+
     fn first_live_without_group(db: &CardDatabase, group_id: u8, excluded: &[i32]) -> i32 {
         db.lives
             .values()
@@ -164,10 +247,21 @@ mod tests {
             }
 
             let mut response_actions = Vec::new();
-            state.generate_legal_actions(db, 0, &mut response_actions);
+            state.generate_legal_actions(db, state.current_player as usize, &mut response_actions);
 
             let chosen_action = if response_actions.contains(&(ACTION_BASE_HAND_SELECT + 0)) {
                 ACTION_BASE_HAND_SELECT + 0
+            } else if response_actions
+                .iter()
+                .any(|action| *action >= ACTION_BASE_STAGE_SLOTS && *action < ACTION_BASE_CHOICE)
+            {
+                *response_actions
+                    .iter()
+                    .filter(|action| {
+                        **action >= ACTION_BASE_STAGE_SLOTS && **action < ACTION_BASE_CHOICE
+                    })
+                    .min()
+                    .expect("expected a stage-slot action during response resolution")
             } else if state
                 .interaction_stack
                 .last()
@@ -1621,7 +1715,8 @@ mod tests {
         // Card: LL-bp1-001-R+ (Ayumu & Kanon & Kaho)
         let db = load_real_db();
         let mut state = create_test_state();
-        state.ui.silent = true;
+        state.ui.silent = false;
+        state.debug.debug_mode = true;
         let p1 = 0;
         let triple_id = 9;
 
@@ -1671,7 +1766,8 @@ mod tests {
         // Card: PL!SP-bp2-010-R+ (Vienna)
         let db = load_real_db();
         let mut state = create_test_state();
-        state.ui.silent = true;
+        state.ui.silent = false;
+        state.debug.debug_mode = true;
         let p_me = 0;
         let p_opp = 1;
         let vienna_id = 4632;
@@ -3107,6 +3203,7 @@ mod tests {
 
     #[test]
     fn test_card_8844_constant_grants_heart_only_with_three_distinct_names() {
+        // Coverage target: PL!-bp5-003-P ab#0
         let db = load_real_db();
         let kotori_id = db
             .id_by_no("PL!-bp5-003-P")
@@ -3141,6 +3238,7 @@ mod tests {
 
     #[test]
     fn test_card_8844_activate_draw_branch_requires_discard_tracking() {
+        // Coverage target: PL!-bp5-003-P ab#1
         let db = load_real_db();
         let kotori_id = db
             .id_by_no("PL!-bp5-003-P")
@@ -3185,6 +3283,7 @@ mod tests {
 
     #[test]
     fn test_card_8844_activate_recover_branch_uses_non_muse_discard() {
+        // Coverage target: PL!-bp5-003-P ab#1
         let db = load_real_db();
         let kotori_id = db
             .id_by_no("PL!-bp5-003-P")
@@ -3226,4 +3325,744 @@ mod tests {
             "8844: at least one live card should be recovered into hand"
         );
     }
+
+    #[test]
+    fn test_card_693_on_play_mills_four_and_gains_blades_when_a_live_is_milled() {
+        // Coverage target: PL!HS-bp5-001-AR ab#0
+        let db = load_real_db();
+        let source_id = db
+            .id_by_no("PL!HS-bp5-001-AR")
+            .expect("expected PL!HS-bp5-001-AR in the real DB");
+        let base_blades = db
+            .get_member(source_id)
+            .expect("693: source member should resolve from real DB")
+            .blades;
+        let live_id = first_live_without_trigger(&db, TriggerType::OnPlay, -1);
+        let filler_members = first_unique_member_ids(&db, 4, &[source_id, live_id]);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].hand = vec![source_id].into();
+        state.players[0].energy_zone = vec![3001; 20].into();
+        state.players[0].deck = vec![
+            filler_members[3],
+            live_id,
+            filler_members[0],
+            filler_members[1],
+            filler_members[2],
+        ]
+        .into();
+
+        state
+            .play_member(&db, 0, 0)
+            .expect("693: the source member should play successfully");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].discard.len(),
+            4,
+            "693: the on-play ability should mill exactly the top four cards"
+        );
+        assert_eq!(
+            state.players[0].deck.len(),
+            1,
+            "693: one spare card should remain in deck so the self-mill does not auto-refresh"
+        );
+        assert!(
+            state.players[0].discard.contains(&live_id),
+            "693: the milled live card should end up in discard"
+        );
+        assert!(
+            state.interaction_stack.is_empty(),
+            "693: the self-mill blade gain should resolve without a response prompt"
+        );
+        assert_eq!(
+            get_effective_blades(&state, 0, 0, &db, 0),
+            base_blades + 2,
+            "693: milling at least one live card should add exactly two blades over the printed base"
+        );
+    }
+
+    #[test]
+    fn test_card_693_on_play_mills_four_without_blade_bonus_when_no_live_is_milled() {
+        // Coverage target: PL!HS-bp5-001-AR ab#0
+        let db = load_real_db();
+        let source_id = db
+            .id_by_no("PL!HS-bp5-001-AR")
+            .expect("expected PL!HS-bp5-001-AR in the real DB");
+        let base_blades = db
+            .get_member(source_id)
+            .expect("693: source member should resolve from real DB")
+            .blades;
+        let filler_members = first_unique_member_ids(&db, 5, &[source_id]);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].hand = vec![source_id].into();
+        state.players[0].energy_zone = vec![3001; 20].into();
+        state.players[0].deck = filler_members.into();
+
+        state
+            .play_member(&db, 0, 0)
+            .expect("693: the source member should play successfully");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].discard.len(),
+            4,
+            "693: the on-play ability should still mill four non-live cards"
+        );
+        assert_eq!(
+            state.players[0].deck.len(),
+            1,
+            "693: one spare non-live card should remain in deck so the self-mill does not auto-refresh"
+        );
+        assert!(
+            state.interaction_stack.is_empty(),
+            "693: the self-mill check should not create a response prompt"
+        );
+        assert_eq!(
+            get_effective_blades(&state, 0, 0, &db, 0),
+            base_blades,
+            "693: milling no live cards should leave the member at its printed blade count"
+        );
+    }
+
+    #[test]
+    fn test_card_854_live_start_declining_energy_skips_mode_resolution() {
+        // Coverage target: PL!SP-bp5-001-AR ab#0
+        let db = load_real_db();
+        let kanon_id = db
+            .id_by_no("PL!SP-bp5-001-AR")
+            .expect("expected PL!SP-bp5-001-AR in the real DB");
+        let low_cost_target = first_vanilla_member_below_cost(&db, 5, kanon_id);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].stage[0] = kanon_id;
+        state.players[0].energy_zone = vec![3001].into();
+        state.players[1].stage[0] = low_cost_target;
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.phase,
+            Phase::Response,
+            "854: the live-start ability should first prompt for the optional energy payment"
+        );
+
+        let energy_before = state.players[0].energy_zone.len();
+        state
+            .handle_response(&db, 0)
+            .expect("854: declining the optional payment should resolve cleanly");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].energy_zone.len(),
+            energy_before,
+            "854: declining the cost should not spend energy"
+        );
+        assert_eq!(
+            state.phase,
+            Phase::Main,
+            "854: declining the cost should skip the later select-mode prompt"
+        );
+        assert!(
+            state.interaction_stack.is_empty(),
+            "854: declining the cost should leave no pending interaction"
+        );
+        assert_eq!(
+            state.players[0].hand.len(),
+            0,
+            "854: declining the cost should not draw cards"
+        );
+        assert!(
+            !state.players[1].is_tapped(0),
+            "854: declining the cost should not wait an opponent member"
+        );
+    }
+
+    #[test]
+    fn test_card_854_live_start_wait_branch_only_targets_cost_4_or_less() {
+        // Coverage target: PL!SP-bp5-001-AR ab#0
+        let db = load_real_db();
+        let kanon_id = db
+            .id_by_no("PL!SP-bp5-001-AR")
+            .expect("expected PL!SP-bp5-001-AR in the real DB");
+        let low_cost_left = first_vanilla_member_below_cost(&db, 5, kanon_id);
+        let low_cost_right = first_vanilla_member_below_cost(&db, 5, low_cost_left);
+        let high_cost_middle = first_member_at_least_cost_without_trigger(
+            &db,
+            5,
+            TriggerType::OnLiveStart,
+            &[kanon_id, low_cost_left, low_cost_right],
+        );
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].stage[0] = kanon_id;
+        state.players[0].energy_zone = vec![3001].into();
+        state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
+
+        assert!(
+            db.get_member(high_cost_middle)
+                .map(|card| card.cost > 4)
+                .unwrap_or(false),
+            "854: the middle opponent target should be cost 5 or more"
+        );
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+        state
+            .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            .expect("854: accepting the optional energy payment should resolve");
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("854: expected a select-mode prompt after paying energy");
+        assert_eq!(pending.choice_type, ChoiceType::SelectMode);
+
+        state
+            .handle_response(&db, ACTION_BASE_MODE)
+            .expect("854: the first mode should select the wait branch");
+        state.process_trigger_queue(&db);
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        assert!(
+            actions.contains(&ACTION_BASE_STAGE_SLOTS),
+            "854: the left cost-4-or-less target should be legal for the wait branch"
+        );
+        assert!(
+            actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)),
+            "854: the right cost-4-or-less target should be legal for the wait branch"
+        );
+        assert!(
+            !actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+            "854: the wait branch must exclude opponent members above cost 4"
+        );
+
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 2)
+            .expect("854: choosing the right legal target should resolve the wait branch");
+        state.process_trigger_queue(&db);
+
+        assert!(!state.players[1].is_tapped(0));
+        assert!(!state.players[1].is_tapped(1));
+        assert!(state.players[1].is_tapped(2));
+        assert_eq!(
+            state.players[0].hand.len(),
+            0,
+            "854: the wait branch should not draw a card"
+        );
+    }
+
+    #[test]
+    fn test_card_854_live_start_draw_branch_draws_without_waiting_opponent() {
+        // Coverage target: PL!SP-bp5-001-AR ab#0
+        let db = load_real_db();
+        let kanon_id = db
+            .id_by_no("PL!SP-bp5-001-AR")
+            .expect("expected PL!SP-bp5-001-AR in the real DB");
+        let low_cost_target = first_vanilla_member_below_cost(&db, 5, kanon_id);
+        let deck_card = first_live_without_trigger(&db, TriggerType::OnLiveStart, -1);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].stage[0] = kanon_id;
+        state.players[0].energy_zone = vec![3001].into();
+        state.players[0].deck = vec![deck_card].into();
+        state.players[1].stage[0] = low_cost_target;
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+        state
+            .handle_response(&db, ACTION_BASE_CHOICE + 0)
+            .expect("854: accepting the optional energy payment should resolve");
+        state.process_trigger_queue(&db);
+        state
+            .handle_response(&db, ACTION_BASE_MODE + 1)
+            .expect("854: the second mode should select the draw branch");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].hand.len(),
+            1,
+            "854: the draw branch should add exactly one card to hand"
+        );
+        assert_eq!(
+            state.players[0].hand[0],
+            deck_card,
+            "854: the drawn card should come from the top of the deck"
+        );
+        assert!(
+            !state.players[1].is_tapped(0),
+            "854: the draw branch should not wait the opponent member"
+        );
+    }
+
+    #[test]
+    fn test_card_672_private_wars_without_arise_member_does_not_trigger() {
+        // Coverage target: PL!-bp5-024-L ab#0
+        let mut db = load_real_db().clone();
+        let live_id = db
+            .id_by_no("PL!-bp5-024-L")
+            .expect("expected PL!-bp5-024-L in the real DB");
+        let template_member = first_member_without_group(&db, 10, &[]);
+        let non_arise_member = inject_member_with_groups(&mut db, template_member, 336, &[], 0);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = non_arise_member;
+
+        assert!(
+            db.get_member(non_arise_member)
+                .expect("672: injected member should exist in the cloned DB")
+                .groups
+                .is_empty(),
+            "672: the negative control should not carry an A-RISE group"
+        );
+        assert!(
+            !state.check_condition_opcode(
+                &db,
+                C_HAS_MEMBER,
+                0,
+                336,
+                0,
+                &AbilityContext {
+                    player_id: 0,
+                    ..Default::default()
+                },
+                0,
+            ),
+            "672: HAS_MEMBER should reject a stage without an A-RISE member"
+        );
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.phase,
+            Phase::Main,
+            "672: Private Wars should not trigger without an A-RISE member on stage"
+        );
+        assert!(
+            state.interaction_stack.is_empty(),
+            "672: no modal prompt should appear when the A-RISE condition is unmet"
+        );
+    }
+
+    #[test]
+    fn test_card_672_private_wars_first_mode_activates_waiting_member_and_adds_blade() {
+        // Coverage target: PL!-bp5-024-L ab#0
+        let mut db = load_real_db().clone();
+        let live_id = db
+            .id_by_no("PL!-bp5-024-L")
+            .expect("expected PL!-bp5-024-L in the real DB");
+        let template_member = first_member_without_group(&db, 10, &[]);
+        let waiting_target = first_member_without_group(&db, 10, &[template_member]);
+        let arise_member = inject_member_with_groups(&mut db, template_member, 4336, &[10], 0);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = arise_member;
+        state.players[0].stage[1] = waiting_target;
+        state.players[0].set_tapped(1, true);
+        let printed_blades = db
+            .get_member(waiting_target)
+            .expect("672: waiting ally should exist in the cloned DB")
+            .blades;
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("672: expected a select-mode prompt for Private Wars");
+        assert_eq!(pending.choice_type, ChoiceType::SelectMode);
+
+        state
+            .handle_response(&db, ACTION_BASE_MODE)
+            .expect("672: the first mode should select the activate-and-buff branch");
+        state.process_trigger_queue(&db);
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        assert!(
+            actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+            "672: the waiting ally should be targetable for the first mode"
+        );
+        assert!(
+            !actions.contains(&ACTION_BASE_STAGE_SLOTS),
+            "672: active members should not be offered for the activate branch"
+        );
+
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS + 1)
+            .expect("672: choosing the waiting ally should resolve the first mode");
+        state.process_trigger_queue(&db);
+
+        assert!(
+            !state.players[0].is_tapped(1),
+            "672: the selected waiting ally should become active"
+        );
+        assert_eq!(
+            get_effective_blades(&state, 0, 1, &db, 0),
+            printed_blades + 1,
+            "672: the activated ally should contribute its printed blades plus one granted blade"
+        );
+    }
+
+    #[test]
+    fn test_card_672_private_wars_second_mode_only_targets_opponent_with_three_or_less_blades() {
+        // Coverage target: PL!-bp5-024-L ab#0
+        let mut db = load_real_db().clone();
+        let live_id = db
+            .id_by_no("PL!-bp5-024-L")
+            .expect("expected PL!-bp5-024-L in the real DB");
+        let template_member = first_member_without_group(&db, 10, &[]);
+        let arise_member = inject_member_with_groups(&mut db, template_member, 4337, &[10], 0);
+        let low_blade_target = inject_member_with_groups(&mut db, template_member, 5337, &[], 3);
+        let high_blade_target = inject_member_with_groups(&mut db, template_member, 6337, &[], 4);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.debug.debug_mode = true;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = arise_member;
+        state.players[1].stage[0] = low_blade_target;
+        state.players[1].stage[1] = high_blade_target;
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+        state
+            .handle_response(&db, ACTION_BASE_MODE + 1)
+            .expect("672: the second mode should select the opponent-wait branch");
+        state.process_trigger_queue(&db);
+        println!(
+            "672_AFTER_MODE phase={:?} current_player={} pending={:?}",
+            state.phase,
+            state.current_player,
+            state.interaction_stack.last().map(|pending| (
+                pending.choice_type,
+                pending.ctx.player_id,
+                pending.ctx.activator_id,
+                pending.effect_opcode,
+                pending.target_slot,
+                pending.filter_attr,
+            ))
+        );
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, state.current_player as usize, &mut actions);
+        println!("672_ACTIONS {:?}", actions);
+        assert!(
+            actions.contains(&ACTION_BASE_STAGE_SLOTS),
+            "672: the low-blade opponent should be targetable for the second mode"
+        );
+        assert!(
+            !actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+            "672: the second mode must exclude opponents with more than three printed blades"
+        );
+
+        state
+            .handle_response(&db, ACTION_BASE_STAGE_SLOTS)
+            .expect("672: choosing the legal opponent should resolve the second mode");
+        state.process_trigger_queue(&db);
+
+        assert!(
+            state.players[1].is_tapped(0),
+            "672: the chosen low-blade opponent should become waiting"
+        );
+        assert!(
+            !state.players[1].is_tapped(1),
+            "672: the high-blade opponent should remain untouched"
+        );
+    }
+
+    #[test]
+    fn test_card_761_on_play_distinct_live_names_only_enables_single_recovery_mode() {
+        // Coverage target: PL!N-bp5-011-AR ab#0
+        let mut db = load_real_db().clone();
+        let mia_id = db
+            .id_by_no("PL!N-bp5-011-AR")
+            .expect("expected PL!N-bp5-011-AR in the real DB");
+        let live_template = first_live_id(&db);
+        let recover_a = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17610,
+            "TEST-MIA-NAME-A",
+            "Distinct Test Live A",
+            &[2],
+        );
+        let recover_b = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17611,
+            "TEST-MIA-NAME-B",
+            "Distinct Test Live B",
+            &[2],
+        );
+        let recover_c = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17612,
+            "TEST-MIA-NAME-C",
+            "Distinct Test Live C",
+            &[2],
+        );
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].stage[0] = mia_id;
+        state.players[0].discard = vec![recover_a, recover_b, recover_c].into();
+
+        state.trigger_event(&db, TriggerType::OnPlay, 0, mia_id, 0, 0, -1);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("761: expected a select-mode prompt for Mia's modal recovery ability");
+        assert_eq!(pending.choice_type, ChoiceType::SelectMode);
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        assert!(
+            actions.contains(&ACTION_BASE_MODE),
+            "761: the one-live recovery mode should be legal with three distinct live names"
+        );
+        assert!(
+            !actions.contains(&(ACTION_BASE_MODE + 1)),
+            "761: the two-live recovery mode must stay illegal when the discard only satisfies the distinct-name branch"
+        );
+
+        state
+            .handle_response(&db, ACTION_BASE_MODE)
+            .expect("761: choosing the single-recovery mode should resolve cleanly");
+        state.process_trigger_queue(&db);
+
+        state
+            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_b))
+            .expect("761: the chosen distinct live should be recoverable");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].hand.len(),
+            1,
+            "761: the distinct-name branch should recover exactly one live"
+        );
+        assert_eq!(
+            state.players[0].hand[0], recover_b,
+            "761: the selected discard live should move to hand"
+        );
+        assert_eq!(
+            state.players[0].discard.len(),
+            2,
+            "761: only the selected live should leave discard on the single-recovery branch"
+        );
+    }
+
+    #[test]
+    fn test_card_761_on_play_distinct_live_groups_only_enables_double_recovery_mode() {
+        // Coverage target: PL!N-bp5-011-AR ab#0
+        let mut db = load_real_db().clone();
+        let mia_id = db
+            .id_by_no("PL!N-bp5-011-AR")
+            .expect("expected PL!N-bp5-011-AR in the real DB");
+        let live_template = first_live_id(&db);
+        let recover_a = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17620,
+            "TEST-MIA-GROUP-A",
+            "Shared Group Test Live",
+            &[0],
+        );
+        let recover_b = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17621,
+            "TEST-MIA-GROUP-B",
+            "Shared Group Test Live",
+            &[1],
+        );
+        let recover_c = inject_live_with_groups_and_name(
+            &mut db,
+            live_template,
+            17622,
+            "TEST-MIA-GROUP-C",
+            "Shared Group Test Live",
+            &[2],
+        );
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].stage[0] = mia_id;
+        state.players[0].discard = vec![recover_a, recover_b, recover_c].into();
+
+        state.trigger_event(&db, TriggerType::OnPlay, 0, mia_id, 0, 0, -1);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("761: expected a select-mode prompt for Mia's modal recovery ability");
+        assert_eq!(pending.choice_type, ChoiceType::SelectMode);
+
+        let mut actions = Vec::new();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        assert!(
+            !actions.contains(&ACTION_BASE_MODE),
+            "761: the one-live recovery mode must stay illegal when the discard only satisfies the distinct-group branch"
+        );
+        assert!(
+            actions.contains(&(ACTION_BASE_MODE + 1)),
+            "761: the two-live recovery mode should be legal with three distinct live groups"
+        );
+
+        state
+            .handle_response(&db, ACTION_BASE_MODE + 1)
+            .expect("761: choosing the double-recovery mode should resolve cleanly");
+        state.process_trigger_queue(&db);
+
+        state
+            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_a))
+            .expect("761: the first selected live should be recoverable");
+        state.process_trigger_queue(&db);
+        state
+            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_c))
+            .expect("761: the second selected live should be recoverable");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].hand.len(),
+            2,
+            "761: the distinct-group branch should recover exactly two lives"
+        );
+        assert!(
+            state.players[0].hand.contains(&recover_a) && state.players[0].hand.contains(&recover_c),
+            "761: both selected discard lives should move to hand on the double-recovery branch"
+        );
+        assert_eq!(
+            state.players[0].discard.len(),
+            1,
+            "761: exactly one live should remain in discard after recovering two"
+        );
+    }
+
+    #[test]
+    fn test_card_669_live_start_two_member_branch_only_targets_self_for_heart_grant() {
+        // Coverage target: PL!-bp5-021-L ab#0
+        let db = load_real_db();
+        let live_id = db
+            .id_by_no("PL!-bp5-021-L")
+            .expect("expected PL!-bp5-021-L in the real DB");
+        let self_left = first_member_with_group(&db, 0, &[]);
+        let self_right = first_member_without_group(&db, 0, &[self_left]);
+        let opponent_stage = first_member_with_group(&db, 0, &[self_left, self_right]);
+        let self_draw = first_live_without_trigger(&db, TriggerType::OnLiveStart, live_id);
+        let opponent_draw = first_live_without_trigger(&db, TriggerType::OnLiveStart, self_draw);
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = self_left;
+        state.players[0].stage[1] = self_right;
+        state.players[0].hand.clear();
+        state.players[0].deck = vec![self_draw].into();
+        state.players[1].stage[0] = opponent_stage;
+        state.players[1].hand.clear();
+        state.players[1].deck = vec![opponent_draw].into();
+
+        let self_heart03_before = get_effective_hearts(&state, 0, 0, &db, 0).get_color_count(2);
+        let opponent_heart03_before = get_effective_hearts(&state, 1, 0, &db, 0).get_color_count(2);
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, live_id, 0, 0, -1);
+        state.process_trigger_queue(&db);
+        resolve_response_loop(&mut state, &db, 8);
+
+        assert!(
+            state.interaction_stack.is_empty(),
+            "669: the heart-grant branch should finish without prompting for an opponent member"
+        );
+        assert_eq!(
+            get_effective_hearts(&state, 0, 0, &db, 0).get_color_count(2),
+            self_heart03_before + 1,
+            "669: the lone legal self target should gain one heart_03 bonus until end of live"
+        );
+        assert_eq!(
+            get_effective_hearts(&state, 1, 0, &db, 0).get_color_count(2),
+            opponent_heart03_before,
+            "669: the opponent stage member must not gain the heart_03 bonus from SUNNY DAY SONG"
+        );
+    }
+
+    #[test]
+    fn test_card_777_live_start_selected_kasumi_colors_grant_matching_hearts() {
+        // Coverage target: PL!N-bp5-029-L ab#0
+        let db = load_real_db();
+        let live_id = db
+            .id_by_no("PL!N-bp5-029-L")
+            .expect("expected PL!N-bp5-029-L in the real DB");
+        let stage_kasumi = first_member_named(&db, "中須かすみ", &[]);
+        let deck_kasumi = first_member_named(&db, "中須かすみ", &[stage_kasumi]);
+        let deck_kasumi_alt = first_member_named(&db, "中須かすみ", &[stage_kasumi, deck_kasumi]);
+        let filler_a = first_member_without_group(&db, 2, &[stage_kasumi, deck_kasumi, deck_kasumi_alt]);
+        let filler_b = first_member_without_group(&db, 2, &[stage_kasumi, deck_kasumi, deck_kasumi_alt, filler_a]);
+
+        let selected_hearts = db
+            .get_member(deck_kasumi)
+            .expect("777: selected Kasumi card should exist in the real DB")
+            .hearts;
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = stage_kasumi;
+        state.players[0].deck = vec![filler_a, deck_kasumi, filler_b, deck_kasumi_alt].into();
+
+        let before = get_effective_hearts(&state, 0, 0, &db, 0);
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, live_id, 0, 0, -1);
+        state.process_trigger_queue(&db);
+
+        state
+            .handle_response(&db, find_choice_action_for_looked_card(&state, deck_kasumi))
+            .expect("777: the selected revealed Kasumi should be choosable from the look-deck prompt");
+        state.process_trigger_queue(&db);
+        resolve_response_loop(&mut state, &db, 8);
+
+        let after = get_effective_hearts(&state, 0, 0, &db, 0);
+        for (color_idx, printed_count) in selected_hearts.iter().copied().enumerate() {
+            let expected_delta = if printed_count > 0 { 1 } else { 0 };
+            assert_eq!(
+                after.get_color_count(color_idx),
+                before.get_color_count(color_idx) + expected_delta,
+                "777: the staged Kasumi should gain one heart of each color present on the selected revealed Kasumi"
+            );
+        }
+        let revealed_ids = [deck_kasumi, filler_a, filler_b, deck_kasumi_alt];
+        assert!(
+            revealed_ids.iter().all(|cid| {
+                !state.players[0].looked_cards.contains(cid)
+                    && !state.players[0].revealed_cards.contains(cid)
+                    && (state.players[0].discard.contains(cid)
+                        || state.players[0].deck.contains(cid))
+            }),
+            "777: all four revealed cards should leave the reveal buffers and persist in discard or deck after rule processing"
+        );
+    }
 }
+

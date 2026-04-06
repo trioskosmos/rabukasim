@@ -2,26 +2,10 @@ use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
 use crate::core::logic::interpreter::costs::check_frame_cost;
-use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState, MemberCard};
+use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState};
 use crate::core::types::{MAX_HAND_SIZE, STAGE_SLOT_COUNT};
 
 pub struct MainPhaseGenerator;
-
-fn has_on_play_choice(card: &MemberCard) -> bool {
-    card.has_on_play_choice
-}
-
-fn has_multi_baton(card: &MemberCard) -> bool {
-    card.has_multi_baton
-}
-
-fn has_activated_stage(card: &MemberCard) -> bool {
-    card.has_activated_stage
-}
-
-fn has_activated_hand(card: &MemberCard) -> bool {
-    card.has_activated_hand
-}
 
 fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
     ab.resolved_frames()
@@ -29,62 +13,17 @@ fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
         .any(|frame| frame.dslot().source_zone == Zone::DeckTop)
 }
 
-fn implicit_activated_energy_cost_for_card(
-    _card: &MemberCard,
-    ability: &crate::core::logic::Ability,
-) -> usize {
-    if ability.trigger != TriggerType::Activated {
-        return 0;
-    }
-
-    0
-}
-
-fn has_implicit_stage_discard_self_cost_for_card(
-    _card: &MemberCard,
-    ability: &crate::core::logic::Ability,
-) -> bool {
-    let _ = ability;
-    false
-}
-
-fn should_precheck_activation_condition(condition: &crate::core::logic::Condition) -> bool {
-    !matches!(
-        condition.condition_type,
-        ConditionType::SumValue | ConditionType::DiscardedCards
-    )
-}
-
 fn ability_costs_payable(
     state: &GameState,
     db: &CardDatabase,
     p_idx: usize,
     ctx: &AbilityContext,
-    card: &MemberCard,
     ab: &crate::core::logic::Ability,
 ) -> bool {
-    // 1. Check legacy costs if any
-    if !ab.costs.is_empty() {
-        if !ab.costs.iter().all(|c| state.check_cost(db, p_idx, c, ctx)) {
-            return false;
-        }
-    }
-
-    let implicit_energy_cost = implicit_activated_energy_cost_for_card(card, ab);
-    let untapped_energy = state.players[p_idx].energy_zone.len()
-        - state.players[p_idx].tapped_energy_count() as usize;
-    if implicit_energy_cost > 0 && untapped_energy < implicit_energy_cost {
+    if !ab.costs.iter().all(|c| state.check_cost(db, p_idx, c, ctx)) {
         return false;
     }
 
-    if has_implicit_stage_discard_self_cost_for_card(card, ab) {
-        let slot = ctx.area_idx as usize;
-        if ctx.area_idx < 0 || slot >= STAGE_SLOT_COUNT || state.players[p_idx].stage[slot] < 0 {
-            return false;
-        }
-    }
-
-    // 2. Check frame-based costs
     let frames = ab.resolved_frames();
 
     for frame in frames.iter() {
@@ -103,7 +42,6 @@ fn ability_costs_payable(
         }
     }
 
-    // 3. Check frame-based choice preconditions that must be available before activation.
     for frame in frames.iter() {
         if frame.opcode() == crate::core::generated_constants::O_LOOK_AND_CHOOSE {
             let is_cost = frame.is_cost();
@@ -222,7 +160,7 @@ impl ActionGenerator for MainPhaseGenerator {
                     if cost <= available_energy {
                         // Check for OnPlay choices (Limit to first 10 cards to stay within Action ID space)
                         let mut has_choice_on_play = false;
-                        if abilities_enabled && hand_idx < 10 && has_on_play_choice(card) {
+                        if abilities_enabled && hand_idx < 10 && card.has_on_play_choice {
                             for ab in &card.abilities {
                                 if ab.trigger == TriggerType::OnPlay && ab.choice_flags != 0 {
                                     // OPTIMIZATION: Use pre-computed flags
@@ -266,7 +204,7 @@ impl ActionGenerator for MainPhaseGenerator {
                     // Double Baton Touch (Card 560 etc.)
                     // Move OUTSIDE single-slot affordability check
                     // Note: multi-baton abilities won't exist in vanilla mode cards (empty abilities list)
-                    if has_multi_baton(card) && hand_idx < 10 && player.stage[slot_idx] >= 0 {
+                    if card.has_multi_baton && hand_idx < 10 && player.stage[slot_idx] >= 0 {
                         // Check baton touch prevention for this primary slot
                         if player.prevent_baton_touch() > 0 {
                             continue;
@@ -319,7 +257,7 @@ impl ActionGenerator for MainPhaseGenerator {
                 let cid = player.stage[slot_idx];
                 if cid >= 0 {
                     if let Some(card) = stage_data[slot_idx] {
-                        if has_activated_stage(card) {
+                        if card.has_activated_stage {
                             for (ab_idx, ab) in card.abilities.iter().enumerate() {
                                 if ab.trigger == TriggerType::Activated {
                                     let ctx = AbilityContext {
@@ -331,10 +269,14 @@ impl ActionGenerator for MainPhaseGenerator {
 
                                     let cond_ok = ab.conditions
                                         .iter()
-                                        .filter(|condition| should_precheck_activation_condition(condition))
+                                        .filter(|condition| {
+                                            !matches!(
+                                                condition.condition_type,
+                                                ConditionType::SumValue | ConditionType::DiscardedCards
+                                            )
+                                        })
                                         .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
-                                    let cost_ok =
-                                        ability_costs_payable(state, db, p_idx, &ctx, card, ab);
+                                    let cost_ok = ability_costs_payable(state, db, p_idx, &ctx, ab);
 
                                     if cond_ok
                                         && cost_ok
@@ -373,7 +315,7 @@ impl ActionGenerator for MainPhaseGenerator {
                 }
 
                 if let Some(card) = db.get_member(cid) {
-                    if has_activated_hand(card) {
+                    if card.has_activated_hand {
                         for (ab_idx, ab) in card.abilities.iter().enumerate() {
                             if ab.trigger == TriggerType::Activated {
                                 let ctx = AbilityContext {
@@ -385,10 +327,14 @@ impl ActionGenerator for MainPhaseGenerator {
                                 let cond_ok = ab
                                     .conditions
                                     .iter()
-                                    .filter(|condition| should_precheck_activation_condition(condition))
+                                    .filter(|condition| {
+                                        !matches!(
+                                            condition.condition_type,
+                                            ConditionType::SumValue | ConditionType::DiscardedCards
+                                        )
+                                    })
                                     .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
-                                let cost_ok =
-                                    ability_costs_payable(state, db, p_idx, &ctx, card, ab);
+                                let cost_ok = ability_costs_payable(state, db, p_idx, &ctx, ab);
                                 if cond_ok
                                     && cost_ok
                                     && state.check_once_per_turn(

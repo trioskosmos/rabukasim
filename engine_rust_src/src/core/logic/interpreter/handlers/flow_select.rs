@@ -59,7 +59,7 @@ pub fn handle_select_ops(
         a as u64
     };
     let resolved_filter_attr = if op == O_SELECT_MEMBER {
-        frame_data.normalized_select_member_filter_attr()
+        frame_data.normalized_select_member_filter_attr_with_source(db, ctx)
     } else {
         raw_filter_attr
     };
@@ -116,9 +116,11 @@ pub fn handle_select_ops(
         ctx.v_remaining = -1;
     }
 
-    let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE && resolved_filter_attr != 0;
+    let is_targeted_select_member_cost = slot_info.target_slot == TARGET_SLOT_STAGE
+        && effective_slot_info.source_zone == crate::core::enums::Zone::Default
+        && resolved_filter_attr != 0;
     let filter_attr = if is_targeted_select_member_cost {
-        frame_data.targeted_select_member_filter_attr()
+        frame_data.targeted_select_member_filter_attr_with_source(db, ctx)
     } else {
         resolved_filter_attr
     };

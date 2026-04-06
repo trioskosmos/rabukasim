@@ -104,83 +104,96 @@ mod tests {
     }
     #[test]
     fn test_kimi_no_kokoro_prevention() {
-        let (mut state, mut db) = setup_test_state();
-        let p_idx = 0;
+        use crate::test_helpers::load_real_db;
 
-        // 1. Create a mock Kimi no Kokoro Card
-        let k_id = 60091;
-        let mut live_card = LiveCard::default();
-        live_card.card_id = k_id;
-        live_card.name = "Kimi Mock".to_string();
-        live_card.score = 1;
-        live_card.required_hearts = [9, 0, 0, 0, 0, 0, 0]; // Free
+        let db = load_real_db();
+        let kimi_no_kokoro_id = 431;
+        let mut state = GameState::default();
 
-        // Add PreventSetToSuccessPile effect (Constant, Opcode 80)
-        // EffectType::PreventSetToSuccessPile = 80
-        let mut ab = Ability::default();
-        ab.trigger = TriggerType::Constant;
-        ab.effects.push(Effect {
-            effect_type: EffectType::PreventSetToSuccessPile,
-            target: TargetType::Self_,
-            value: serde_json::json!(0),
-            params: serde_json::Value::Null,
-            ..Default::default()
-        });
-        // Bytecode needed? logic.rs checks effect_type directly from effects list for this specific case?
-        // logic.rs:792: `card.abilities.iter().any(|a| a.effects.iter().any(|e| e.effect_type == EffectType::PreventSetToSuccessPile))`
-        // It checks `effects` list, NOT bytecode. So we don't need bytecode here.
-        live_card.abilities.push(ab);
+        state.initialize_game(
+            vec![101; 48],
+            vec![101; 48],
+            vec![1, 2, 3, 4, 5, 6],
+            vec![1, 2, 3, 4, 5, 6],
+            vec![],
+            vec![],
+        );
+        state.ui.silent = true;
+        state.players[0].live_zone[0] = kimi_no_kokoro_id;
+        state.players[0].set_revealed(0, true);
+        state.players[0].hand.push(1);
+        state.players[0].hand.push(2);
 
-        // Add OnLiveSuccess trigger for the Draw 2 part (Optional but good for completeness)
-        let mut ab2 = Ability::default();
-        ab2.trigger = TriggerType::OnLiveSuccess;
-        // We won't test the draw logic here, just the prevention logic.
-        live_card.abilities.push(ab2);
-
-        db.lives.insert(k_id, live_card.clone());
-        if db.lives_vec.len() <= k_id as usize {
-            db.lives_vec.resize(k_id as usize + 1, None);
+        for color_idx in 0..7 {
+            state.players[0].heart_buffs[0].set_color_count(color_idx, 1);
+            state.players[0].heart_buffs[1].set_color_count(color_idx, 1);
+            state.players[0].heart_buffs[2].set_color_count(color_idx, 1);
         }
-        db.lives_vec[(k_id as usize) & LOGIC_ID_MASK as usize] = Some(live_card);
 
-        // 2. Put in Live Zone
-        state.players[p_idx].live_zone[0] = k_id;
-        state.players[p_idx].set_revealed(0, true);
-
-        // 3. Force Success
-        // Requirements are 0, so it should succeed automatically.
-        // But we need performance results to say "success" so `do_live_result` proceeds.
         state.ui.performance_results.insert(
-            p_idx as u8,
+            0,
             serde_json::json!({
                 "success": true,
-                "lives": [ { "score": 1 } ]
+                "lives": [
+                    {
+                        "score": 10,
+                        "passed": true,
+                        "slot_idx": 0
+                    }
+                ]
             }),
         );
-
         state.phase = Phase::LiveResult;
         state.current_player = 0;
 
-        // 4. Run Live Result
-        crate::core::logic::performance::do_live_result(&mut state, &db);
+        state.step(&db, 0).unwrap();
 
-        // 5. Verify Prevention
-        // Should NOT be in success_lives
-        assert!(
-            !state.players[p_idx].success_lives.contains(&(k_id)),
-            "Should not be in success lives"
-        );
-
-        // Should be in DISCARD
-        assert!(
-            state.players[p_idx].discard.contains(&(k_id)),
-            "Should be moved to discard"
-        );
-
-        // Live zone should be empty
+        assert_eq!(state.phase, Phase::Response, "Should pause for the on-live-success discard choice");
         assert_eq!(
-            state.players[p_idx].live_zone[0], -1,
-            "Live zone should be cleared"
+            state.interaction_stack.last().map(|i| i.choice_type).unwrap_or(ChoiceType::None),
+            ChoiceType::SelectHandDiscard
+        );
+        assert_eq!(
+            state.interaction_stack.last().map(|i| i.card_id).unwrap_or(0),
+            kimi_no_kokoro_id
+        );
+
+        for _ in 0..4 {
+            if state.phase != Phase::Response {
+                break;
+            }
+
+            let mut actions = Vec::new();
+            state.generate_legal_actions(&db, 0, &mut actions);
+            let action = if actions.contains(&(crate::core::logic::ACTION_BASE_HAND_SELECT as usize)) {
+                crate::core::logic::ACTION_BASE_HAND_SELECT as i32
+            } else {
+                *actions
+                    .iter()
+                    .filter(|action| **action >= crate::core::logic::ACTION_BASE_CHOICE as usize)
+                    .min()
+                    .expect("expected a follow-up response action for Kimi no Kokoro") as i32
+            };
+
+            state.step(&db, action).unwrap();
+        }
+
+        for _ in 0..3 {
+            if state.phase == Phase::LiveResult {
+                state.step(&db, 0).unwrap();
+            } else {
+                break;
+            }
+        }
+
+        assert_eq!(state.players[0].live_zone[0], -1, "Live card should be removed from the live zone");
+        assert!(
+            state.players[0].discard.contains(&(kimi_no_kokoro_id as i32)),
+            "Live card should end in discard after prevention"
+        );
+        assert!(
+            !state.players[0].success_lives.contains(&(kimi_no_kokoro_id as i32)),
+            "PreventSetToSuccessPile should keep Kimi no Kokoro out of the success pile"
         );
     }
 

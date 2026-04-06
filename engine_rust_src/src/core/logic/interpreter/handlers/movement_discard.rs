@@ -32,7 +32,13 @@ pub fn handle_move_to_discard(
     let mut source_zone = discard.source_zone;
     
     // Determine target player from slot
-    let target_player_idx = if slot.is_opponent { 1 - base_p } else { base_p };
+    let target_filter = CardFilter::from_attr(discard.filter_attr);
+    let target_player_idx = match target_filter.target_player {
+        x if x == crate::core::generated_constants::TARGET_PLAYER_OPPONENT as u8 => 1 - base_p,
+        x if x == crate::core::generated_constants::TARGET_PLAYER_BOTH as u8 => base_p,
+        _ if slot.is_opponent => 1 - base_p,
+        _ => base_p,
+    };
 
     // Handle UNTIL_SIZE operation (discard down to N cards) - inlined
     let count = if (v as u32 & (1 << 31)) != 0 {

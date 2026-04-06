@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::heart_semantics::decode_heart_type_from_params;
+use crate::core::logic::heart_semantics::{decode_heart_type_from_params, decode_heart_type_from_text};
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
 
@@ -15,25 +15,6 @@ fn modal_option_has_opcode(ability: &Ability, option_idx: usize, opcode: i32) ->
         .get_modal_option_frames(option_idx)
         .map(|frames| frames.iter().any(|frame| frame.opcode() == opcode))
         .unwrap_or(false)
-}
-
-fn structured_optional_live_mode_signature(ability: &Ability) -> bool {
-    ability.trigger == TriggerType::OnLiveSuccess
-        && ability.modal_option_count() >= 2
-        && modal_option_has_opcode(ability, 0, O_ENERGY_CHARGE)
-        && modal_option_has_opcode(ability, 1, O_RECOVER_MEMBER)
-}
-
-fn frame_heart_color(frame: &AbilityFrame) -> Option<u8> {
-    if let Some(color) = decode_heart_type_from_params(frame.components().params) {
-        return Some(color as u8);
-    }
-
-    match frame.components().resolved_filter_attr() {
-        0..=6 => Some(frame.components().resolved_filter_attr() as u8),
-        7 => Some(6),
-        _ => None,
-    }
 }
 
 fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(u64, u8)> {
@@ -62,7 +43,41 @@ fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(
     }
 
     let select_frame = &frames[select_idx];
-    Some((select_frame.attr(), frame_heart_color(heart_frame)?))
+    let heart_color = decode_heart_type_from_params(heart_frame.components().params)
+        .map(|color| color as u8)
+        .or_else(|| match heart_frame.components().resolved_filter_attr() {
+            0..=6 => Some(heart_frame.components().resolved_filter_attr() as u8),
+            7 => Some(6),
+            _ => decode_heart_type_from_text(&ability.raw_text).map(|color| color as u8),
+        })?;
+
+    Some((select_frame.attr(), heart_color))
+}
+
+fn source_group_backfilled_filter_attr(
+    db: &CardDatabase,
+    live_card_id: i32,
+    filter_attr: u64,
+) -> u64 {
+    if filter_attr == 0 {
+        return filter_attr;
+    }
+
+    let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
+    if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
+        return filter_attr;
+    }
+
+    let Some(live) = db.get_live(live_card_id) else {
+        return filter_attr;
+    };
+    if live.groups.len() != 1 {
+        return filter_attr;
+    }
+
+    let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+    filter.group_id = live.groups[0];
+    filter.to_attr() | passthrough
 }
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
@@ -79,33 +94,6 @@ pub fn decode_optional_mode_mask(value: i16) -> Option<i16> {
     }
 }
 
-fn pending_live_card_ids(pi: &PendingInteraction) -> [i32; 2] {
-    [
-        if pi.ability_card_id >= 0 {
-            pi.ability_card_id
-        } else {
-            pi.card_id
-        },
-        if pi.ctx.ability_card_id >= 0 {
-            pi.ctx.ability_card_id
-        } else {
-            pi.ctx.source_card_id
-        },
-    ]
-}
-
-fn matches_pending_ability(ability: &Ability, pi: &PendingInteraction) -> bool {
-    if pi.choice_type == ChoiceType::SelectMode && is_distinct_optional_mode_live_ability(ability) {
-        return true;
-    }
-
-    ability_uses_opcode(ability, pi.effect_opcode)
-        || (pi.choice_type == ChoiceType::SelectMember
-            && ability_uses_opcode(ability, O_SELECT_MEMBER))
-        || (pi.choice_type == ChoiceType::SelectMode
-            && ability_uses_opcode(ability, O_SELECT_MODE))
-}
-
 fn find_matching_live_ability<'a, F>(
     db: &'a CardDatabase,
     pi: &PendingInteraction,
@@ -116,7 +104,18 @@ where
 {
     let preferred_index = usize::try_from(pi.ability_index).ok();
 
-    for live_card_id in pending_live_card_ids(pi) {
+    for live_card_id in [
+        if pi.ability_card_id >= 0 {
+            pi.ability_card_id
+        } else {
+            pi.card_id
+        },
+        if pi.ctx.ability_card_id >= 0 {
+            pi.ctx.ability_card_id
+        } else {
+            pi.ctx.source_card_id
+        },
+    ] {
         let Some(card) = db.get_live(live_card_id) else {
             continue;
         };
@@ -141,18 +140,62 @@ pub fn pending_live_ability<'a>(
     db: &'a CardDatabase,
     pi: &PendingInteraction,
 ) -> Option<&'a Ability> {
+    let preferred_index = usize::try_from(pi.ability_index).ok()?;
+    for live_card_id in [
+        if pi.ability_card_id >= 0 {
+            pi.ability_card_id
+        } else {
+            pi.card_id
+        },
+        if pi.ctx.ability_card_id >= 0 {
+            pi.ctx.ability_card_id
+        } else {
+            pi.ctx.source_card_id
+        },
+    ] {
+        let Some(card) = db.get_live(live_card_id) else {
+            continue;
+        };
+
+        if let Some(ability) = card.abilities.get(preferred_index) {
+            if matches!(
+                pi.choice_type,
+                ChoiceType::SelectMode | ChoiceType::RecovM | ChoiceType::RecovL | ChoiceType::Optional
+            ) && is_distinct_optional_mode_live_ability(ability)
+            {
+                return Some(ability);
+            }
+
+            if ability_uses_opcode(ability, pi.effect_opcode)
+                || (pi.choice_type == ChoiceType::SelectMember
+                    && ability_uses_opcode(ability, O_SELECT_MEMBER))
+                || (pi.choice_type == ChoiceType::SelectMode
+                    && ability_uses_opcode(ability, O_SELECT_MODE))
+            {
+                return Some(ability);
+            }
+        }
+    }
+
     if matches!(
         pi.choice_type,
         ChoiceType::SelectMode | ChoiceType::RecovM | ChoiceType::RecovL | ChoiceType::Optional
     ) {
-        if let Some(ability) =
-            find_matching_live_ability(db, pi, is_distinct_optional_mode_live_ability)
-        {
+        if let Some(ability) = find_matching_live_ability(db, pi, |ability| {
+            is_distinct_optional_mode_live_ability(ability)
+                && ability_uses_opcode(ability, pi.effect_opcode)
+        }) {
             return Some(ability);
         }
     }
 
-    find_matching_live_ability(db, pi, |ability| matches_pending_ability(ability, pi))
+    find_matching_live_ability(db, pi, |ability| {
+        ability_uses_opcode(ability, pi.effect_opcode)
+            || (pi.choice_type == ChoiceType::SelectMember
+                && ability_uses_opcode(ability, O_SELECT_MEMBER))
+            || (pi.choice_type == ChoiceType::SelectMode
+                && ability_uses_opcode(ability, O_SELECT_MODE))
+    })
 }
 
 pub fn pending_member_ability<'a>(
@@ -165,7 +208,11 @@ pub fn pending_member_ability<'a>(
 }
 
 pub fn is_distinct_optional_mode_live_ability(ability: &Ability) -> bool {
-    if structured_optional_live_mode_signature(ability) {
+    if ability.trigger == TriggerType::OnLiveSuccess
+        && ability.modal_option_count() >= 2
+        && modal_option_has_opcode(ability, 0, O_ENERGY_CHARGE)
+        && modal_option_has_opcode(ability, 1, O_RECOVER_MEMBER)
+    {
         return true;
     }
 
@@ -191,7 +238,11 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
 
     if pi.choice_type == ChoiceType::SelectMode && !pi.ctx.selected_cards.is_empty() {
         let option_count = ability.modal_option_count();
-        let mut mask = optional_mode_mask_for_count(option_count);
+        let mut mask = if option_count >= i16::BITS as usize {
+            i16::MAX
+        } else {
+            (1i16 << option_count) - 1
+        };
         for &selected in &pi.ctx.selected_cards {
             if selected >= 0 && (selected as usize) < option_count {
                 mask &= !(1i16 << selected);
@@ -202,7 +253,11 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
         }
     }
 
-    let is_initial_optional_effect = if structured_optional_live_mode_signature(ability) {
+    let is_initial_optional_effect = if ability.trigger == TriggerType::OnLiveSuccess
+        && ability.modal_option_count() >= 2
+        && modal_option_has_opcode(ability, 0, O_ENERGY_CHARGE)
+        && modal_option_has_opcode(ability, 1, O_RECOVER_MEMBER)
+    {
         (0..ability.modal_option_count()).any(|option_idx| {
             modal_option_has_opcode(ability, option_idx, pi.effect_opcode)
         })
@@ -213,17 +268,13 @@ pub fn pending_optional_mode_mask(db: &CardDatabase, pi: &PendingInteraction) ->
             .any(|frame| frame.opcode() == pi.effect_opcode)
     };
     if is_initial_optional_effect {
-        Some(optional_mode_mask_for_count(ability.modal_option_count()))
+        Some(if ability.modal_option_count() >= i16::BITS as usize {
+            i16::MAX
+        } else {
+            (1i16 << ability.modal_option_count()) - 1
+        })
     } else {
         None
-    }
-}
-
-fn optional_mode_mask_for_count(option_count: usize) -> i16 {
-    if option_count >= i16::BITS as usize {
-        i16::MAX
-    } else {
-        (1i16 << option_count) - 1
     }
 }
 
@@ -251,13 +302,46 @@ pub fn pending_targeted_live_heart_bonus(
 ) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
     let (filter_attr, heart_color_idx) = structured_targeted_live_heart_bonus_signature(ability)?;
+    let live_card_id = [
+        if pi.ability_card_id >= 0 {
+            pi.ability_card_id
+        } else {
+            pi.card_id
+        },
+        if pi.ctx.ability_card_id >= 0 {
+            pi.ctx.ability_card_id
+        } else {
+            pi.ctx.source_card_id
+        },
+    ]
+    .into_iter()
+        .find(|cid| db.get_live(*cid).is_some())
+        .unwrap_or(pi.card_id);
+    let filter_attr = source_group_backfilled_filter_attr(db, live_card_id, filter_attr);
 
-    let is_target_selection_step = pi.effect_opcode == O_SELECT_MEMBER
-        || pi.choice_type == ChoiceType::SelectMember
-        || (pi.filter_attr & !0x3) == filter_attr;
-    let is_vacuous_discard_step =
-        pi.effect_opcode == O_MOVE_TO_DISCARD && pi.choice_type == ChoiceType::SelectHandDiscard;
-    if !is_target_selection_step && !is_vacuous_discard_step {
+    let current_frame_matches = ability
+        .get_frame(pi.ctx.program_counter as usize)
+        .map(|frame| {
+            frame.opcode() == O_SELECT_MEMBER
+                && (frame
+                    .components()
+                    .normalized_select_member_filter_attr_with_source(db, &pi.ctx)
+                    & !0x3)
+                    == (filter_attr & !0x3)
+        })
+        .unwrap_or(false)
+        || ability.resolved_frames().iter().any(|frame| {
+            frame.opcode() == O_SELECT_MEMBER
+                && (frame
+                    .components()
+                    .normalized_select_member_filter_attr_with_source(db, &pi.ctx)
+                    & !0x3)
+                    == (filter_attr & !0x3)
+        });
+    if !(matches!(pi.choice_type, ChoiceType::SelectMember)
+        && pi.effect_opcode == O_SELECT_MEMBER
+        && current_frame_matches)
+    {
         return None;
     }
 
@@ -359,6 +443,66 @@ mod tests {
         };
 
         assert_eq!(pending_optional_mode_mask(&db, &pi), Some(3));
+    }
+
+    #[test]
+    fn pending_optional_mode_mask_does_not_hijack_sibling_select_mode_ability() {
+        let structured_optional = Ability {
+            trigger: TriggerType::OnLiveSuccess,
+            effects: vec![Effect {
+                modal_options: json!([
+                    [{ "effect_type": EffectType::EnergyCharge }],
+                    [{ "effect_type": EffectType::RecoverMember }]
+                ]),
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+
+        let explicit_select_mode = Ability {
+            trigger: TriggerType::OnLiveSuccess,
+            frame_program: Some(crate::core::logic::FrameProgram {
+                frames: vec![
+                    AbilityFrame::new(O_SELECT_MODE, 2, 0, 0, false),
+                    AbilityFrame::new(O_RETURN, 0, 0, 0, false),
+                ],
+                raw_program: None,
+            }),
+            ..Default::default()
+        };
+
+        let mut db = CardDatabase::default();
+        db.lives.insert(
+            9001,
+            crate::core::logic::LiveCard {
+                card_id: 9001,
+                abilities: vec![structured_optional, explicit_select_mode],
+                ..Default::default()
+            },
+        );
+
+        let pi = PendingInteraction {
+            card_id: 9001,
+            ability_card_id: 9001,
+            ability_index: 1,
+            effect_opcode: O_SELECT_MODE,
+            choice_type: ChoiceType::SelectMode,
+            ctx: AbilityContext {
+                player_id: 0,
+                source_card_id: 9001,
+                ability_card_id: 9001,
+                ability_index: 1,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(pending_optional_mode_mask(&db, &pi), None);
+        assert!(
+            pending_live_ability(&db, &pi)
+                .map(|ability| ability_uses_opcode(ability, O_SELECT_MODE))
+                .unwrap_or(false)
+        );
     }
 
     #[test]
