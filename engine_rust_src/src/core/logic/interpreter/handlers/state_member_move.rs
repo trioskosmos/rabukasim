@@ -188,9 +188,9 @@ pub fn handle_move_member(
             state.log("Rule 11.9, Rule 11.9.1, Rule 11.9.2: Performing [ポジションチェンジ] (Position Change).".to_string());
         }
         let src_cid = state.players[target_p_idx].stage[src_slot];
-        if src_cid >= 0 {
-            let dst_cid = state.players[target_p_idx].stage[dst_slot];
-            if dst_cid == -1 {
+            if src_cid >= 0 {
+                let dst_cid = state.players[target_p_idx].stage[dst_slot];
+                if dst_cid == -1 {
                 let src_tapped = state.players[target_p_idx].is_tapped(src_slot);
                 let src_energy =
                     std::mem::take(&mut state.players[target_p_idx].stage_energy[src_slot]);
@@ -207,7 +207,7 @@ pub fn handle_move_member(
                 state.players[target_p_idx].blade_overrides[dst_slot] = src_blade_override;
                 state.players[target_p_idx].heart_buffs[dst_slot] = src_heart_buffs;
 
-                state.players[target_p_idx].stage[src_slot] = -1;
+                state.players[target_p_idx].clear_stage_card(src_slot);
                 state.players[target_p_idx].set_tapped(src_slot, false);
                 state.players[target_p_idx].stage_energy[src_slot].clear();
                 state.players[target_p_idx].stage_energy_count[src_slot] = 0;
@@ -220,6 +220,8 @@ pub fn handle_move_member(
             } else {
                 state.players[target_p_idx].swap_slot_data(src_slot, dst_slot);
             }
+
+            state.sync_player_stats(db, target_p_idx);
 
             for &slot in &[src_slot, dst_slot] {
                 let cid = state.players[target_p_idx].stage[slot];

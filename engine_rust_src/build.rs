@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 fn main() {
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
+    let manifest_dir =
+        PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("missing CARGO_MANIFEST_DIR"));
     let workspace_root = manifest_dir
         .parent()
         .expect("engine_rust_src should live under the workspace root")
@@ -24,7 +25,10 @@ fn main() {
         "tools/abilities/pipeline.py",
         "tools/frame_codec.py",
     ] {
-        println!("cargo:rerun-if-changed={}", workspace_root.join(rel).display());
+        println!(
+            "cargo:rerun-if-changed={}",
+            workspace_root.join(rel).display()
+        );
     }
 
     if env::var_os("LOVECA_SKIP_ABILITY_PIPELINE").is_some() {
@@ -35,7 +39,9 @@ fn main() {
         if let Err(message) = run_uv_pipeline(&workspace_root, &uv, &["tools/sync_metadata.py"]) {
             panic!("Metadata sync failed: {}", message);
         }
-        if let Err(message) = run_uv_pipeline(&workspace_root, &uv, &["tools/build_cards.py", "--quiet"]) {
+        if let Err(message) =
+            run_uv_pipeline(&workspace_root, &uv, &["tools/build_cards.py", "--quiet"])
+        {
             panic!("Ability pipeline failed: {}", message);
         }
         return;
@@ -43,7 +49,11 @@ fn main() {
 
     match find_python(&workspace_root) {
         Some(python) => {
-            if let Err(message) = run_pipeline(&workspace_root, python.as_path(), &["tools/sync_metadata.py"]) {
+            if let Err(message) = run_pipeline(
+                &workspace_root,
+                python.as_path(),
+                &["tools/sync_metadata.py"],
+            ) {
                 panic!("Metadata sync failed: {}", message);
             }
             if let Err(message) = run_pipeline(

@@ -15,14 +15,46 @@
 //! heap allocations, which is critical for MCTS performance.
 
 use super::models::*;
+use super::state::CardLocation;
 use super::rules::BoardAura;
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 
 fn default_baton_touch_limit() -> u8 {
     3
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CardLocationIndex(pub HashMap<i32, CardLocation>);
+
+impl std::ops::Deref for CardLocationIndex {
+    type Target = HashMap<i32, CardLocation>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for CardLocationIndex {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Hash for CardLocationIndex {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let mut entries: Vec<_> = self.0.iter().collect();
+        entries.sort_by_key(|(cid, _)| **cid);
+        entries.len().hash(state);
+        for (cid, location) in entries {
+            cid.hash(state);
+            location.hash(state);
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -175,6 +207,8 @@ pub struct PlayerState {
     pub yell_heart_bonus: [HeartBoard; 3],
     #[serde(default)]
     pub yell_blade_bonus: [u32; 3],
+    #[serde(skip, default)]
+    pub card_locations: CardLocationIndex,
 }
 
 impl Default for PlayerState {
@@ -245,6 +279,7 @@ impl Default for PlayerState {
             yell_heart_bonus: [HeartBoard::default(); 3],
             yell_blade_bonus: [0; 3],
             discard_ids_this_turn: SmallVec::new(),
+            card_locations: CardLocationIndex::default(),
         }
     }
 }
@@ -391,28 +426,132 @@ impl PlayerState {
         }
     }
 
+    fn record_card_location(&mut self, card_id: i32, zone: Zone, slot: i16) {
+        if card_id >= 0 {
+            self.card_locations.insert(
+                card_id,
+                CardLocation {
+                    owner: self.player_id,
+                    zone,
+                    slot,
+                },
+            );
+        }
+    }
+
+    fn remove_card_location(&mut self, card_id: i32) {
+        if card_id >= 0 {
+            self.card_locations.remove(&card_id);
+        }
+    }
+
+    pub fn set_stage_card(&mut self, slot: usize, card_id: i32) -> Option<i32> {
+        if slot >= 3 {
+            return None;
+        }
+        let old = self.stage[slot];
+        if old >= 0 {
+            self.remove_card_location(old);
+        }
+        self.stage[slot] = card_id;
+        if card_id >= 0 {
+            self.record_card_location(card_id, Zone::Stage, slot as i16);
+        }
+        Some(old)
+    }
+
+    pub fn clear_stage_card(&mut self, slot: usize) -> Option<i32> {
+        if slot >= 3 {
+            return None;
+        }
+        let old = self.stage[slot];
+        if old >= 0 {
+            self.stage[slot] = -1;
+            self.remove_card_location(old);
+            return Some(old);
+        }
+        None
+    }
+
+    pub fn set_live_card(&mut self, slot: usize, card_id: i32) -> Option<i32> {
+        if slot >= self.live_zone.len() {
+            return None;
+        }
+        let old = self.live_zone[slot];
+        if old >= 0 {
+            self.remove_card_location(old);
+        }
+        self.live_zone[slot] = card_id;
+        if card_id >= 0 {
+            self.record_card_location(card_id, Zone::LiveSet, slot as i16);
+        }
+        Some(old)
+    }
+
+    pub fn clear_live_card(&mut self, slot: usize) -> Option<i32> {
+        if slot >= self.live_zone.len() {
+            return None;
+        }
+        let old = self.live_zone[slot];
+        if old >= 0 {
+            self.live_zone[slot] = -1;
+            self.remove_card_location(old);
+            return Some(old);
+        }
+        None
+    }
+
+    pub fn push_success_live_card(&mut self, card_id: i32) {
+        self.success_lives.push(card_id);
+        self.record_card_location(card_id, Zone::SuccessPile, -1);
+    }
+
+    pub fn set_success_live_card(&mut self, idx: usize, card_id: i32) -> Option<i32> {
+        if idx >= self.success_lives.len() {
+            return None;
+        }
+
+        let old = self.success_lives[idx];
+        if old >= 0 {
+            self.remove_card_location(old);
+        }
+        self.success_lives[idx] = card_id;
+        if card_id >= 0 {
+            self.record_card_location(card_id, Zone::SuccessPile, idx as i16);
+        }
+        Some(old)
+    }
+
     pub fn push_hand_card(&mut self, card_id: i32) {
         self.hand.push(card_id);
+        self.record_card_location(card_id, Zone::Hand, -1);
     }
 
     pub fn draw_hand_card(&mut self, card_id: i32, turn: i32) {
         self.hand.push(card_id);
         self.hand_added_turn.push(turn);
+        self.record_card_location(card_id, Zone::Hand, -1);
     }
 
     pub fn gain_hand_card(&mut self, card_id: i32) {
         self.hand.push(card_id);
         self.hand_increased_this_turn = self.hand_increased_this_turn.saturating_add(1);
+        self.record_card_location(card_id, Zone::Hand, -1);
     }
 
     pub fn push_discard_card(&mut self, card_id: i32) {
         self.discard.push(card_id);
         self.discarded_this_turn += 1;
         self.discard_ids_this_turn.push(card_id);
+        self.record_card_location(card_id, Zone::Discard, -1);
     }
 
     pub fn pop_discard_card(&mut self) -> Option<i32> {
-        self.discard.pop()
+        let card_id = self.discard.pop();
+        if let Some(card_id) = card_id {
+            self.remove_card_location(card_id);
+        }
+        card_id
     }
 
     pub fn remove_discard_card(&mut self, idx: usize) -> Option<i32> {
@@ -420,17 +559,24 @@ impl PlayerState {
             return None;
         }
 
-        Some(self.discard.remove(idx))
+        let card_id = self.discard.remove(idx);
+        self.remove_card_location(card_id);
+        Some(card_id)
     }
 
     pub fn push_deck_card(&mut self, card_id: i32) {
         self.cached_deck_stats = DeckStats::default();
         self.deck.push(card_id);
+        self.record_card_location(card_id, Zone::Deck, -1);
     }
 
     pub fn pop_deck_card(&mut self) -> Option<i32> {
         self.cached_deck_stats = DeckStats::default();
-        self.deck.pop()
+        let card_id = self.deck.pop();
+        if let Some(card_id) = card_id {
+            self.remove_card_location(card_id);
+        }
+        card_id
     }
 
     pub fn remove_deck_card(&mut self, idx: usize) -> Option<i32> {
@@ -439,19 +585,25 @@ impl PlayerState {
         }
 
         self.cached_deck_stats = DeckStats::default();
-        Some(self.deck.remove(idx))
+        let card_id = self.deck.remove(idx);
+        self.remove_card_location(card_id);
+        Some(card_id)
     }
 
     pub fn push_energy_card(&mut self, card_id: i32, tapped: bool) {
         let idx = self.energy_zone.len();
         self.energy_zone.push(card_id);
         self.set_energy_tapped(idx, tapped);
+        self.record_card_location(card_id, Zone::Energy, -1);
     }
 
     pub fn pop_energy_card(&mut self) -> Option<i32> {
         let idx = self.energy_zone.len().checked_sub(1)?;
         let card_id = self.energy_zone.pop();
         self.set_energy_tapped(idx, false);
+        if let Some(card_id) = card_id {
+            self.remove_card_location(card_id);
+        }
         card_id
     }
 
@@ -468,6 +620,7 @@ impl PlayerState {
         };
         let upper_mask = self.tapped_energy_mask >> (idx + 1);
         self.tapped_energy_mask = lower_mask | (upper_mask << idx);
+        self.remove_card_location(card_id);
         Some(card_id)
     }
 
@@ -480,6 +633,7 @@ impl PlayerState {
         if idx < self.hand_added_turn.len() {
             self.hand_added_turn.remove(idx);
         }
+        self.remove_card_location(card_id);
         Some(card_id)
     }
 
@@ -487,6 +641,9 @@ impl PlayerState {
         let card_id = self.hand.pop();
         if card_id.is_some() && self.hand_added_turn.len() > self.hand.len() {
             self.hand_added_turn.pop();
+        }
+        if let Some(card_id) = card_id {
+            self.remove_card_location(card_id);
         }
         card_id
     }
@@ -708,6 +865,7 @@ impl PlayerState {
         self.cached_deck_stats = other.cached_deck_stats;
         self.yell_heart_bonus = other.yell_heart_bonus;
         self.yell_blade_bonus = other.yell_blade_bonus;
+        self.card_locations = other.card_locations.clone();
     }
     pub fn is_energy_tapped(&self, idx: usize) -> bool {
         if idx >= 64 {

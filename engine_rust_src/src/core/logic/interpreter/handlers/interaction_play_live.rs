@@ -136,7 +136,7 @@ pub fn handle_play_live_from_discard(
                 if old >= 0 {
                     state.players[target_p_idx].push_discard_card(old);
                 }
-                state.players[target_p_idx].live_zone[slot_idx] = card_id;
+                state.players[target_p_idx].set_live_card(slot_idx, card_id);
                 state.players[target_p_idx].set_revealed(slot_idx, true);
             }
         }

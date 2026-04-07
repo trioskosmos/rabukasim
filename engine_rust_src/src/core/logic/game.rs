@@ -67,6 +67,19 @@ impl GameState {
         id
     }
 
+    pub fn mark_stats_dirty(&mut self, p_idx: usize) {
+        self.needs_stat_sync_mask |= 1 << p_idx;
+        self.needs_stat_sync = true;
+    }
+
+    pub fn sync_player_stats(&mut self, db: &CardDatabase, p_idx: usize) {
+        self.sync_cached_stats(db, p_idx);
+        self.needs_stat_sync_mask &= !(1 << p_idx);
+        if self.needs_stat_sync_mask == 0 {
+            self.needs_stat_sync = false;
+        }
+    }
+
     pub fn sync_cached_stats(&mut self, db: &CardDatabase, p_idx: usize) {
         use crate::core::logic::rules::{calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura};
 
@@ -100,9 +113,22 @@ impl GameState {
     }
 
     pub fn sync_all_stats(&mut self, db: &CardDatabase) {
-        if self.needs_stat_sync {
-            self.sync_cached_stats(db, 0);
-            self.sync_cached_stats(db, 1);
+        let dirty_mask = if self.needs_stat_sync_mask != 0 {
+            self.needs_stat_sync_mask
+        } else if self.needs_stat_sync {
+            0b11
+        } else {
+            0
+        };
+
+        if dirty_mask != 0 {
+            if (dirty_mask & 0b01) != 0 {
+                self.sync_cached_stats(db, 0);
+            }
+            if (dirty_mask & 0b10) != 0 {
+                self.sync_cached_stats(db, 1);
+            }
+            self.needs_stat_sync_mask = 0;
             self.needs_stat_sync = false;
         }
     }
@@ -416,7 +442,7 @@ impl GameState {
             let mut placed = false;
             for i in 0..3 {
                 if self.core.players[player_idx].live_zone[i] == -1 {
-                    self.core.players[player_idx].live_zone[i] = cid as i32;
+                    self.core.players[player_idx].set_live_card(i, cid as i32);
                     self.core.players[player_idx].set_revealed(i, false);
                     self.draw_cards(player_idx, 1);
                     placed = true;

@@ -225,7 +225,7 @@ fn apply_look_choice(
                 state.players[p_idx].gain_hand_card(chosen);
             }
         }
-        Zone::SuccessPile => state.players[p_idx].success_lives.push(chosen),
+        Zone::SuccessPile => state.players[p_idx].push_success_live_card(chosen),
         _ => state.players[p_idx].push_hand_card(chosen),
     }
 

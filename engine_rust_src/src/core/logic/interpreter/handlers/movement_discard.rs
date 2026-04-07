@@ -342,7 +342,8 @@ fn pop_card_from_zone(
             let slot = if area_idx >= 0 && area_idx < 3 { area_idx as usize } else { 0 };
             let cid = state.players[player_idx].stage[slot];
             if cid >= 0 {
-                state.players[player_idx].stage[slot] = -1;
+                state.players[player_idx].clear_stage_card(slot);
+                state.mark_stats_dirty(player_idx);
                 Some(cid)
             } else {
                 None
@@ -366,14 +367,14 @@ fn remove_card_at_index(
     match zone {
         Zone::Hand => {
             if idx < state.players[player_idx].hand.len() {
-                Some(state.players[player_idx].hand.remove(idx))
+                state.players[player_idx].remove_hand_card(idx)
             } else {
                 None
             }
         }
         Zone::Discard => {
             if idx < state.players[player_idx].discard.len() {
-                Some(state.players[player_idx].discard.remove(idx))
+                state.players[player_idx].remove_discard_card(idx)
             } else {
                 None
             }
@@ -383,7 +384,8 @@ fn remove_card_at_index(
             if idx < cards.len() {
                 let cid = cards[idx];
                 if let Some(pos) = state.players[player_idx].stage.iter().position(|&c| c == cid) {
-                    state.players[player_idx].stage[pos] = -1;
+                    state.players[player_idx].clear_stage_card(pos);
+                    state.mark_stats_dirty(player_idx);
                 }
                 Some(cid)
             } else {

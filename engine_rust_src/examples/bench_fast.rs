@@ -1,7 +1,7 @@
-use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
-use rand::prelude::{StdRng, Rng, SeedableRng};
+use rand::prelude::{Rng, SeedableRng, StdRng};
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum SubPhase {
@@ -43,9 +43,12 @@ impl GranularTimer {
 
     fn print_stats(&self) {
         println!("\n=== Granular Phase Timing ===");
-        println!("{:<15} {:<6} {:<12} {:<10} {:<10}", "Phase", "Count", "Total(ns)", "Avg(μs)", "Max(μs)");
+        println!(
+            "{:<15} {:<6} {:<12} {:<10} {:<10}",
+            "Phase", "Count", "Total(ns)", "Avg(μs)", "Max(μs)"
+        );
         println!("{}", "-".repeat(65));
-        
+
         for (phase, timings) in &self.timers {
             if timings.is_empty() {
                 continue;
@@ -54,7 +57,7 @@ impl GranularTimer {
             let total: u64 = timings.iter().sum();
             let avg = total / count as u64;
             let max = timings.iter().max().unwrap();
-            
+
             let phase_name = match phase {
                 SubPhase::Draw => "Draw",
                 SubPhase::HandleLivesetP1 => "HandleLivesetP1",
@@ -63,13 +66,22 @@ impl GranularTimer {
                 SubPhase::Other => "Other",
                 SubPhase::StepCall => "StepCall",
             };
-            
-            println!("{:<15} {:<6} {:<12} {:<10} {:<10}", 
-                phase_name, count, total, avg / 1000, max / 1000);
+
+            println!(
+                "{:<15} {:<6} {:<12} {:<10} {:<10}",
+                phase_name,
+                count,
+                total,
+                avg / 1000,
+                max / 1000
+            );
         }
         println!("{}", "-".repeat(65));
         let total: u64 = self.timers.iter().flat_map(|(_, t)| t).sum();
-        println!("TOTAL                              {:.2}μs", total as f64 / 1000.0);
+        println!(
+            "TOTAL                              {:.2}μs",
+            total as f64 / 1000.0
+        );
     }
 }
 
@@ -149,10 +161,10 @@ fn run_fast_game_benchmark(
     while !state.is_terminal() && main_turns_played < (max_turns * 2) && step_count < 5000 {
         step_count += 1;
         let phase_before = state.phase;
-        
+
         // Get legal actions
         let legal = state.get_legal_action_ids(db);
-        
+
         // Fast random selection
         let chosen_action = if legal.is_empty() {
             ACTION_BASE_PASS
@@ -183,22 +195,22 @@ fn run_fast_game_benchmark(
 
 fn main() {
     use std::time::Instant;
-    
+
     let db = load_db();
     let deck_path = resolve_deck_path("muse_cup");
     let p0_deck = load_deck(&deck_path, &db);
     let p1_deck = load_deck(&deck_path, &db);
-    
+
     const MAX_TURNS: usize = 5;
     let mut timer = GranularTimer::new();
     let mut total_times = Vec::new();
-    
+
     let benchmark_start = Instant::now();
     let mut games_completed = 0;
-    
+
     // Use a single RNG for better performance
     let mut rng = StdRng::seed_from_u64(42);
-    
+
     // Run for 10 seconds
     while benchmark_start.elapsed().as_secs() < 10 {
         let mut state = GameState::default();
@@ -211,28 +223,31 @@ fn main() {
             p0_deck.1.clone(),
             p1_deck.1.clone(),
         );
-        
+
         state.ui.silent = true;
-        
+
         let total_ns = run_fast_game_benchmark(&mut state, &db, &mut timer, MAX_TURNS, &mut rng);
         total_times.push(total_ns);
         games_completed += 1;
     }
-    
+
     let total_runtime = benchmark_start.elapsed();
-    
+
     // Only show final summary
     println!("=== FAST GAME BENCHMARK ===");
     println!("Benchmark duration: {:?}", total_runtime);
     println!("Games completed: {}", games_completed);
-    println!("Games per second: {:.1}", games_completed as f64 / total_runtime.as_secs_f64());
+    println!(
+        "Games per second: {:.1}",
+        games_completed as f64 / total_runtime.as_secs_f64()
+    );
     timer.print_stats();
-    
+
     total_times.sort();
     let min = total_times[0];
     let max = total_times[games_completed - 1];
     let avg = total_times.iter().sum::<u64>() / games_completed as u64;
-    
+
     println!("\n=== Fast Game Performance Summary ===");
     println!("Runs:    {}", games_completed);
     println!("Turns:   {} max per game", MAX_TURNS);
@@ -240,7 +255,7 @@ fn main() {
     println!("Max:     {}μs", max / 1000);
     println!("Avg:     {}μs", avg / 1000);
     println!("Total:   {}μs", total_times.iter().sum::<u64>() / 1000);
-    
+
     println!("\n=== Performance Analysis ===");
     println!("This benchmark uses:");
     println!("✓ Random actions (no AI overhead)");

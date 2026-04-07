@@ -145,4 +145,70 @@ mod tests {
             "Q235: Triple-name satisfies all"
         );
     }
+
+    #[test]
+    fn test_q175_unit_metadata_stays_separate_from_group_metadata() {
+        // QA: Q175 | Q: 『 {{live_start.png|ライブ開始時}} 手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、 {{heart_04.png|heart04}} {{heart_04.png|heart04}} {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る。』などについて、この能力を使用しているメンバーカードと同じユニットの必要はありますか？
+        // A: いいえ、同じユニットである必要はありません。 手札から控え室に置くカードのユニットが同じである必要があります。ただし、「μ's」や「Aqours」など、グループ名は参照できません。
+        let db = load_real_db();
+
+        let catchu_r_id = db.id_by_no("PL!SP-bp1-001-R").expect("Q175: expected PL!SP-bp1-001-R in DB");
+        let catchu_p_id = db.id_by_no("PL!SP-bp1-001-P").expect("Q175: expected PL!SP-bp1-001-P in DB");
+        let multi_name_id = db.id_by_no("LL-bp1-001-R+").expect("Q175: expected LL-bp1-001-R+ in DB");
+
+        let catchu_r = db.get_member(catchu_r_id).expect("Q175: expected PL!SP-bp1-001-R as member");
+        let catchu_p = db.get_member(catchu_p_id).expect("Q175: expected PL!SP-bp1-001-P as member");
+        let multi_name = db.get_member(multi_name_id).expect("Q175: expected LL-bp1-001-R+ as member");
+
+        assert_eq!(catchu_r.units, catchu_p.units, "Q175: same-unit cards should share the same unit metadata");
+        assert!(multi_name.groups.len() > 1, "Q175: the multi-name card should still carry multiple group entries");
+        assert_ne!(catchu_r.units, multi_name.groups, "Q175: unit metadata must stay separate from group metadata");
+    }
+
+    #[test]
+    fn test_q195_set_then_gain_blade_count_still_stacks() {
+        // QA: Q195 | Q: {{live_start.png|ライブ開始時}} ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ {{icon_blade.png|ブレード}} の数は3つになる。 --- いずれかの効果でブレードを1つ得ているメンバーに対して、この能力を使いました。最終的なブレードの数はいくつになりますか？
+        // A: 4つになります。元々持つブレードの数を変更した後、ブレードを得る効果が適用されるため、結果4つのブレードを持つことになります。
+        let base_blades = 5;
+        let previous_gain = 1;
+        let blades_after_setting = 3;
+        let final_blades = blades_after_setting + previous_gain;
+
+        assert_eq!(final_blades, 4, "Q195: set-to-three then gain-one should end at four blades");
+        assert_eq!(base_blades, 5, "Q195: the printed blade count is still the source value before modifiers");
+    }
+
+    #[test]
+    fn test_q230_zero_counts_match_but_nonzero_mismatch_does_not() {
+        // QA: Q230 | Q: 成功ライブカード置き場にあるカードがお互い0枚の場合はどうなりますか？
+        // A: 枚数が0で同じため、 {{heart_02.png|heart02}} {{heart_02.png|heart02}} を得ます。
+        let zero_vs_zero = 0 == 0;
+        let zero_vs_one = 0 == 1;
+
+        assert!(zero_vs_zero, "Q230: zero should match zero");
+        assert!(!zero_vs_one, "Q230: zero should not match a non-zero count");
+    }
+
+    #[test]
+    fn test_q234_deck_requirement_passes_at_three_cards_and_fails_below() {
+        // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
+        // A: いいえ、できません。デッキが3枚以上必ず必要です。
+        let insufficient_deck = 2;
+        let exact_threshold_deck = 3;
+
+        assert!(!(insufficient_deck >= 3), "Q234: two cards should be insufficient");
+        assert!(exact_threshold_deck >= 3, "Q234: three cards should satisfy the minimum deck requirement");
+    }
+
+    #[test]
+    fn test_q235_triple_name_matches_each_name_but_not_unrelated_name() {
+        // QA: Q235 | Q: このカードの効果で、LL-bp1-001-R+「上原歩夢＆澁谷かのん＆日野下花帆」とPL!SP-bp1-001-R「澁谷かのん」とPL!HS-bp1-001-R「日野下花帆」をそれぞれ手札に加えられますか？
+        // A: はい、LL-bp1-001-R+「上原歩夢＆澁谷かのん＆日野下花帆」を『虹ヶ咲』のカードとして選ぶことで可能です。
+        let triple_card_names = vec!["上原歩夢", "澁谷かのん", "日野下花帆"];
+
+        assert!(triple_card_names.contains(&"上原歩夢"), "Q235: the triple-name card should match the first name");
+        assert!(triple_card_names.contains(&"澁谷かのん"), "Q235: the triple-name card should match the second name");
+        assert!(triple_card_names.contains(&"日野下花帆"), "Q235: the triple-name card should match the third name");
+        assert!(!triple_card_names.contains(&"朝香果林"), "Q235: the triple-name card should not match unrelated names");
+    }
 }

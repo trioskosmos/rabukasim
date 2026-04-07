@@ -179,7 +179,12 @@ impl BenchmarkTimer {
             );
         }
         println!("{}", "-".repeat(70));
-        println!("{:<12} {:>8} {:>11.2}ms", "TOTAL", "", total_ns as f64 / 1_000_000.0);
+        println!(
+            "{:<12} {:>8} {:>11.2}ms",
+            "TOTAL",
+            "",
+            total_ns as f64 / 1_000_000.0
+        );
     }
 }
 
@@ -455,12 +460,7 @@ fn run_one_game(
 
     let mut state = GameState::default();
     state.initialize_game(
-        p0_members,
-        p1_members,
-        p0_energy,
-        p1_energy,
-        p0_lives,
-        p1_lives,
+        p0_members, p1_members, p0_energy, p1_energy, p0_lives, p1_lives,
     );
     state.ui.silent = true;
     force_starting_player(&mut state, rng.random_range(0..=1));
@@ -511,7 +511,8 @@ fn run_one_game(
             }
             Phase::LiveSet => {
                 let t0 = Instant::now();
-                let (sequence, nodes, live_ev) = TurnSequencer::find_best_liveset_selection(&state, db);
+                let (sequence, nodes, live_ev) =
+                    TurnSequencer::find_best_liveset_selection(&state, db);
                 let elapsed_ns = t0.elapsed().as_nanos() as u64;
                 timer.record(Operation::LiveSetPlan, elapsed_ns);
                 record_slow(
@@ -552,7 +553,11 @@ fn run_one_game(
                 );
                 total_steps += 1;
             }
-            Phase::Active | Phase::Draw | Phase::Energy | Phase::PerformanceP1 | Phase::PerformanceP2 => {
+            Phase::Active
+            | Phase::Draw
+            | Phase::Energy
+            | Phase::PerformanceP1
+            | Phase::PerformanceP2 => {
                 let t0 = Instant::now();
                 state.auto_step(db);
                 let elapsed_ns = t0.elapsed().as_nanos() as u64;
@@ -583,7 +588,11 @@ fn run_one_game(
                     Operation::FallbackStep,
                     elapsed_ns,
                     config.slow_us,
-                    format!("phase={:?}|action={action}|legal={}", state.phase, legal.len()),
+                    format!(
+                        "phase={:?}|action={action}|legal={}",
+                        state.phase,
+                        legal.len()
+                    ),
                 );
                 total_steps += 1;
             }
@@ -612,7 +621,10 @@ fn print_slow_moments(slow_moments: &[SlowMoment], threshold_us: u64) {
     println!("{}", "-".repeat(104));
 
     for moment in slow_moments.iter().take(TOP_SLOW_MOMENTS) {
-        let grants = format!("{}:{}", moment.snapshot.p0_granted, moment.snapshot.p1_granted);
+        let grants = format!(
+            "{}:{}",
+            moment.snapshot.p0_granted, moment.snapshot.p1_granted
+        );
         let hand = format!("{}:{}", moment.snapshot.p0_hand, moment.snapshot.p1_hand);
         println!(
             "{:<12?} {:>8} {:>5} {:>4} {:>14?} {:>14?} {:>7} {:>7} {:>4}",
@@ -656,9 +668,17 @@ fn print_patterns(patterns: &HashMap<String, PatternStats>) {
             println!(
                 "  sample: score={}{} vs {}{}, live={:?} vs {:?}",
                 sample.p0_score,
-                if sample.p0_success > 0 { format!("/{}S", sample.p0_success) } else { String::new() },
+                if sample.p0_success > 0 {
+                    format!("/{}S", sample.p0_success)
+                } else {
+                    String::new()
+                },
                 sample.p1_score,
-                if sample.p1_success > 0 { format!("/{}S", sample.p1_success) } else { String::new() },
+                if sample.p1_success > 0 {
+                    format!("/{}S", sample.p1_success)
+                } else {
+                    String::new()
+                },
                 sample.p0_live,
                 sample.p1_live,
             );
@@ -671,10 +691,7 @@ fn main() {
     println!("=== bench_granular_v2 ===");
     println!(
         "time_budget={}s max_main_turns={} max_total_steps={} slow_threshold={}μs",
-        config.bench_secs,
-        config.max_main_turns,
-        config.max_total_steps,
-        config.slow_us,
+        config.bench_secs, config.max_main_turns, config.max_total_steps, config.slow_us,
     );
 
     let db = load_db();
@@ -725,7 +742,10 @@ fn main() {
         .filter(|result| result.reached_terminal)
         .count();
 
-    let mut game_times: Vec<u64> = game_results.iter().map(|result| result.duration_ns).collect();
+    let mut game_times: Vec<u64> = game_results
+        .iter()
+        .map(|result| result.duration_ns)
+        .collect();
     game_times.sort_unstable();
     let n = game_times.len();
     let avg_game_us = game_times.iter().sum::<u64>() / n as u64 / 1000;
@@ -735,7 +755,12 @@ fn main() {
     let max_game_us = game_times[n - 1] / 1000;
 
     println!("\n=== Game Summary ===");
-    println!("games={} terminal={} capped={}", game_results.len(), terminal_games, game_results.len() - terminal_games);
+    println!(
+        "games={} terminal={} capped={}",
+        game_results.len(),
+        terminal_games,
+        game_results.len() - terminal_games
+    );
     println!(
         "steps={} avg_steps_per_game={:.1} main_turns={} avg_main_turns_per_game={:.1}",
         total_steps,
@@ -745,11 +770,7 @@ fn main() {
     );
     println!(
         "per_game_us: min={} median={} avg={} p95={} max={}",
-        min_game_us,
-        median_game_us,
-        avg_game_us,
-        p95_game_us,
-        max_game_us,
+        min_game_us, median_game_us, avg_game_us, p95_game_us, max_game_us,
     );
     println!(
         "wall_clock={:.2}s throughput={:.2} games/s",

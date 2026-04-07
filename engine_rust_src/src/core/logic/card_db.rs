@@ -865,7 +865,7 @@ impl CardDatabase {
 
         card.semantic_flags = s_flags;
         card.synergy_flags = synergy_flags;
-    card.trigger_mask = trigger_mask;
+        card.trigger_mask = trigger_mask;
         card.has_monitor_conditions = has_monitor_conditions;
 
         if card.hearts_board.0 == 0 {

@@ -51,9 +51,10 @@ fn finish_member_play(
     }
     
     // Update stage state
-    state.players[p_idx].stage[slot_idx] = card_id;
+    state.players[p_idx].set_stage_card(slot_idx, card_id);
     state.players[p_idx].set_tapped(slot_idx, tapped);
     state.players[p_idx].set_moved(slot_idx, true);
+    state.sync_player_stats(db, p_idx);
     state.register_played_member(p_idx, card_id, db);
     
     // Create context for OnPlay triggers
@@ -87,7 +88,7 @@ pub fn finalize_play_member_from_hand(
     db: &CardDatabase,
     ctx: &mut AbilityContext,
     p_idx: usize,
-    _h_idx: usize,
+    h_idx: usize,
     slot_idx: usize,
 ) -> HandlerResult {
     if slot_idx >= 3 || state.players[p_idx].is_moved(slot_idx) {
@@ -98,11 +99,23 @@ pub fn finalize_play_member_from_hand(
         return HandlerResult::Continue;
     }
 
-    let Some(hand_idx) = state.players[p_idx]
-        .hand
-        .iter()
-        .position(|&card_id| card_id == ctx.target_card_id)
-    else {
+    let resolved_idx = if let Some(&card_id) = state.players[p_idx].hand.get(h_idx) {
+        if card_id == ctx.target_card_id {
+            Some(h_idx)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+    .or_else(|| {
+        state.players[p_idx]
+            .hand
+            .iter()
+            .position(|&card_id| card_id == ctx.target_card_id)
+    });
+
+    let Some(hand_idx) = resolved_idx else {
         return HandlerResult::Continue;
     };
 

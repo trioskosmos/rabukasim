@@ -1,8 +1,8 @@
 //! Debug Game Log - Shows exactly what actions are being taken
 
-use std::time::Instant;
 use engine_rust::core::enums::Phase;
 use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
+use std::time::Instant;
 
 fn load_db() -> CardDatabase {
     let candidates = [
@@ -83,7 +83,10 @@ fn resolve_deck_path(spec: &str) -> String {
         return spec.to_string();
     }
 
-    for base in [std::path::Path::new("ai/decks"), std::path::Path::new("../ai/decks")] {
+    for base in [
+        std::path::Path::new("ai/decks"),
+        std::path::Path::new("../ai/decks"),
+    ] {
         let candidate = base.join(format!("{}.txt", spec));
         if candidate.exists() {
             return candidate.to_string_lossy().into_owned();
@@ -114,18 +117,30 @@ fn log_game_state(state: &GameState, db: &CardDatabase, step: usize) {
     println!("Phase: {:?}", state.phase);
     println!("Current Player: {}", state.current_player);
     println!("Turn: {}", state.turn);
-    
+
     for p in 0..2 {
         let hand = &state.core.players[p].hand;
         let live_zone = &state.core.players[p].live_zone;
         let stage = &state.core.players[p].stage;
-        
+
         // Count card types
-        let live_in_hand = hand.iter().filter(|&&cid| db.get_live(cid).is_some()).count();
-        let member_in_hand = hand.iter().filter(|&&cid| db.get_member(cid).is_some()).count();
-        
-        println!("P{} Hand: {} cards ({} live, {} member) {:?}", 
-            p, hand.len(), live_in_hand, member_in_hand, hand);
+        let live_in_hand = hand
+            .iter()
+            .filter(|&&cid| db.get_live(cid).is_some())
+            .count();
+        let member_in_hand = hand
+            .iter()
+            .filter(|&&cid| db.get_member(cid).is_some())
+            .count();
+
+        println!(
+            "P{} Hand: {} cards ({} live, {} member) {:?}",
+            p,
+            hand.len(),
+            live_in_hand,
+            member_in_hand,
+            hand
+        );
         println!("P{} Live: {:?}", p, live_zone);
         println!("P{} Stage: {:?}", p, stage);
     }
@@ -133,59 +148,62 @@ fn log_game_state(state: &GameState, db: &CardDatabase, step: usize) {
 
 fn run_debug_game(state: &mut GameState, db: &CardDatabase, max_steps: usize) {
     let mut step_count = 0;
-    
+
     println!("=== DEBUG GAME START ===");
     log_game_state(state, db, 0);
-    
+
     while !state.is_terminal() && step_count < max_steps {
         step_count += 1;
-        
+
         let phase_before = state.phase;
         let player_before = state.current_player;
-        
+
         // Get legal actions
         let legal = state.get_legal_action_ids(db);
         println!("\n--- LEGAL ACTIONS ({} available) ---", legal.len());
         for (i, &action) in legal.iter().enumerate() {
             println!("  {}: {}", i, format_action(action));
         }
-        
+
         // Choose first legal action (deterministic for debugging)
         let chosen_action = if legal.is_empty() {
             ACTION_BASE_PASS
         } else {
             legal[0] // Always pick first for consistency
         };
-        
+
         println!("CHOSEN: {}", format_action(chosen_action));
-        
+
         // Execute action
         let t = Instant::now();
         let result = state.step(db, chosen_action);
         let elapsed = t.elapsed().as_micros();
-        
+
         println!("RESULT: {:?} (took {}μs)", result, elapsed);
-        
+
         // Show what changed
         if phase_before != state.phase {
             println!("PHASE CHANGE: {:?} -> {:?}", phase_before, state.phase);
         }
         if player_before != state.current_player {
-            println!("PLAYER CHANGE: {} -> {}", player_before, state.current_player);
+            println!(
+                "PLAYER CHANGE: {} -> {}",
+                player_before, state.current_player
+            );
         }
-        
+
         // Log state after key phases
         if matches!(phase_before, Phase::LiveSet) || matches!(phase_before, Phase::Main) {
             log_game_state(state, db, step_count);
         }
-        
+
         // Break if we get stuck
         if elapsed > 1000 {
             println!("SLOW OPERATION DETECTED: {}μs - breaking", elapsed);
             break;
         }
     }
-    
+
     println!("\n=== GAME END ===");
     println!("Final Phase: {:?}", state.phase);
     println!("Total Steps: {}", step_count);
@@ -194,30 +212,44 @@ fn run_debug_game(state: &mut GameState, db: &CardDatabase, max_steps: usize) {
 
 fn main() {
     println!("=== DEBUG GAME LOG ===\n");
-    
+
     let db = load_db();
     let deck_path = resolve_deck_path("muse_cup");
     let p0_deck = load_deck(&deck_path, &db);
     let p1_deck = load_deck(&deck_path, &db);
-    
+
     println!("Loaded deck: {}", deck_path);
-    println!("P0: {} members + {} lives", p0_deck.0.len(), p0_deck.1.len());
-    println!("P1: {} members + {} lives", p1_deck.0.len(), p1_deck.1.len());
-    
+    println!(
+        "P0: {} members + {} lives",
+        p0_deck.0.len(),
+        p0_deck.1.len()
+    );
+    println!(
+        "P1: {} members + {} lives",
+        p1_deck.0.len(),
+        p1_deck.1.len()
+    );
+
     // Debug: Show some card IDs
     if !p0_deck.0.is_empty() {
-        println!("P0 member samples: {:?}", &p0_deck.0[..5.min(p0_deck.0.len())]);
+        println!(
+            "P0 member samples: {:?}",
+            &p0_deck.0[..5.min(p0_deck.0.len())]
+        );
     }
     if !p0_deck.1.is_empty() {
-        println!("P0 live samples: {:?}", &p0_deck.1[..5.min(p0_deck.1.len())]);
+        println!(
+            "P0 live samples: {:?}",
+            &p0_deck.1[..5.min(p0_deck.1.len())]
+        );
     }
-    
+
     // Run 3 debug games
     for game_id in 0..3 {
         println!("\n{}", "=".repeat(60));
         println!("GAME {}", game_id + 1);
         println!("{}", "=".repeat(60));
-        
+
         let mut state = GameState::default();
         let energy: Vec<i32> = db.energy_db.keys().take(12).cloned().collect();
 
@@ -229,9 +261,9 @@ fn main() {
             p0_deck.1.clone(),
             p1_deck.1.clone(),
         );
-        
+
         state.ui.silent = true;
-        
+
         run_debug_game(&mut state, &db, 20); // Max 20 steps
     }
 }

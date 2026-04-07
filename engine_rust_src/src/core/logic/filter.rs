@@ -37,8 +37,8 @@ use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
-// use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
+use crate::core::models::Zone;
 
 /// Conversion error types for better error handling
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -438,30 +438,10 @@ impl CardFilter {
                 _ => ctx.player_id,
             };
             if target_p != 255 {
-                let inferred_owner = state.players
-                    .iter()
-                    .enumerate()
-                    .find_map(|(p_idx, player)| {
-                        let owns_card = player.stage.iter().any(|&card_id| card_id == cid)
-                            || player.hand.iter().any(|&card_id| card_id == cid)
-                            || player.discard.iter().any(|&card_id| card_id == cid)
-                            || player.deck.iter().any(|&card_id| card_id == cid)
-                            || player.energy_zone.iter().any(|&card_id| card_id == cid)
-                            || player.success_lives.iter().any(|&card_id| card_id == cid)
-                            || player.live_zone.iter().any(|&card_id| card_id == cid)
-                            || player.yell_cards.iter().any(|&card_id| card_id == cid)
-                            || player.looked_cards.iter().any(|&card_id| card_id == cid);
-                        if owns_card {
-                            Some(p_idx as u8)
-                        } else {
-                            None
-                        }
-                    });
-
                 let matches_owner = if let Some((p_idx, _)) = checked_slot {
                     Some(p_idx == target_p)
                 } else {
-                    inferred_owner.map(|owner| owner == target_p)
+                    state.card_owner(cid).map(|owner| owner == target_p)
                 };
 
                 if matches_owner == Some(false) {
@@ -1024,6 +1004,21 @@ fn card_matches_zone_mask(
     zone_mask: u8,
     checked_slot: Option<(u8, i16)>,
 ) -> bool {
+    if let Some(location) = state.card_location(cid) {
+        if let Some((checked_player, _)) = checked_slot {
+            if location.owner != checked_player {
+                return false;
+            }
+        }
+
+        match zone_mask as i32 {
+            ZONE_MASK_STAGE => return matches!(location.zone, Zone::Stage),
+            ZONE_MASK_HAND => return matches!(location.zone, Zone::Hand),
+            ZONE_MASK_DISCARD => return matches!(location.zone, Zone::Discard),
+            _ => {}
+        }
+    }
+
     if let Some((_, slot_idx)) = checked_slot {
         let slot_zone = match slot_idx {
             0..=99 => Some(ZONE_MASK_STAGE),

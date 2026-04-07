@@ -90,6 +90,136 @@ pub struct AbilityFrameComponents<'a> {
     pub params: Option<&'a Value>,
 }
 
+impl<'a> AbilityFrameComponents<'a> {
+    pub fn resolved_filter_attr(&self) -> u64 {
+        if self.raw_attr != 0 {
+            self.raw_attr
+        } else {
+            self.filter.to_attr()
+        }
+    }
+
+    pub fn normalized_select_member_filter_attr(&self) -> u64 {
+        self.normalized_select_member_filter()
+            .map(|(_, filter_attr)| filter_attr)
+            .unwrap_or_else(|| self.resolved_filter_attr())
+    }
+
+    fn normalized_select_member_filter(&self) -> Option<(CardFilter, u64)> {
+        let filter_attr = self.resolved_filter_attr();
+        if filter_attr == 0 || self.value <= 0 {
+            return None;
+        }
+
+        let mut filter = self.filter;
+        let looks_like_packed_count = filter.value_enabled
+            && self.comparison_mode() == SemanticComparisonMode::GreaterEqual
+            && !filter.is_cost_type
+            && filter.value_threshold == self.value as u8
+            && filter.color_mask == 0
+            && filter.zone_mask == 0
+            && filter.special_id == 0
+            && !filter.is_tapped
+            && !filter.has_blade_heart
+            && !filter.not_has_blade_heart
+            && !filter.is_setsuna
+            && !filter.compare_accumulated
+            && !filter.keyword_energy
+            && !filter.keyword_member;
+
+        if !looks_like_packed_count {
+            return None;
+        }
+
+        filter.value_enabled = false;
+        filter.value_threshold = 0;
+        filter.is_le = false;
+        filter.is_cost_type = false;
+        Some((filter, filter.to_attr()))
+    }
+
+    pub fn normalized_select_member_filter_attr_with_source(
+        &self,
+        db: &CardDatabase,
+        ctx: &AbilityContext,
+    ) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr();
+        if filter_attr == 0 {
+            return filter_attr;
+        }
+
+        let Some((mut filter, normalized_attr)) = self.normalized_select_member_filter() else {
+            return filter_attr;
+        };
+        if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
+            return filter_attr;
+        }
+
+        let source_card_id = if ctx.ability_card_id >= 0 {
+            ctx.ability_card_id
+        } else {
+            ctx.source_card_id
+        };
+        let source_groups = db
+            .get_live(source_card_id)
+            .map(|card| card.groups.as_slice())
+            .or_else(|| db.get_member(source_card_id).map(|card| card.groups.as_slice()));
+        let Some(source_groups) = source_groups else {
+            return filter_attr;
+        };
+        if source_groups.len() != 1 {
+            return filter_attr;
+        }
+
+        let passthrough = crate::core::logic::filter::passthrough_filter_attr(normalized_attr);
+        filter.group_id = source_groups[0];
+        filter.to_attr() | passthrough
+    }
+
+    pub fn targeted_select_member_filter_attr(&self) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr();
+        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
+            && filter_attr != 0
+        {
+            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
+            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+            filter.target_player = TARGET_PLAYER_SELF as u8;
+            filter.to_attr() | passthrough
+        } else {
+            filter_attr
+        }
+    }
+
+    pub fn targeted_select_member_filter_attr_with_source(
+        &self,
+        db: &CardDatabase,
+        ctx: &AbilityContext,
+    ) -> u64 {
+        let filter_attr = self.normalized_select_member_filter_attr_with_source(db, ctx);
+        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
+            && filter_attr != 0
+        {
+            let mut filter = self
+                .normalized_select_member_filter()
+                .map(|(filter, _)| filter)
+                .unwrap_or_else(|| crate::core::logic::filter::structured_filter_from_attr(filter_attr));
+            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
+            filter.target_player = TARGET_PLAYER_SELF as u8;
+            filter.to_attr() | passthrough
+        } else {
+            filter_attr
+        }
+    }
+
+    pub fn comparison_mode(&self) -> SemanticComparisonMode {
+        if self.filter.is_le {
+            SemanticComparisonMode::LessEqual
+        } else {
+            SemanticComparisonMode::GreaterEqual
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SemanticCountZone {
     Hand,
@@ -483,14 +613,6 @@ impl<'a> AbilityFrameComponents<'a> {
         }
     }
 
-    pub fn resolved_filter_attr(&self) -> u64 {
-        if self.raw_attr != 0 {
-            self.raw_attr
-        } else {
-            self.filter.to_attr()
-        }
-    }
-
     pub fn filter_attr_without_state_flags(&self) -> u64 {
         self.resolved_filter_attr() & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
     }
@@ -560,14 +682,6 @@ impl<'a> AbilityFrameComponents<'a> {
             filter_attr as i32
         } else {
             fallback_value
-        }
-    }
-
-    pub fn comparison_mode(&self) -> SemanticComparisonMode {
-        if self.filter.is_le {
-            SemanticComparisonMode::LessEqual
-        } else {
-            SemanticComparisonMode::GreaterEqual
         }
     }
 
@@ -746,107 +860,6 @@ impl<'a> AbilityFrameComponents<'a> {
             FILTER_GROUP_ENABLE | (attr << FILTER_GROUP_ID_SHIFT)
         } else {
             attr
-        }
-    }
-
-    pub fn normalized_select_member_filter_attr(&self) -> u64 {
-        let filter_attr = self.resolved_filter_attr();
-        if filter_attr == 0 || self.value <= 0 {
-            return filter_attr;
-        }
-
-        let mut filter = CardFilter::from_attr(filter_attr);
-        let looks_like_packed_count = filter.value_enabled
-            && self.comparison_mode() == SemanticComparisonMode::GreaterEqual
-            && !filter.is_cost_type
-            && filter.value_threshold == self.value as u8
-            && filter.color_mask == 0
-            && filter.zone_mask == 0
-            && filter.special_id == 0
-            && !filter.is_tapped
-            && !filter.has_blade_heart
-            && !filter.not_has_blade_heart
-            && !filter.is_setsuna
-            && !filter.compare_accumulated
-            && !filter.keyword_energy
-            && !filter.keyword_member;
-
-        if !looks_like_packed_count {
-            return filter_attr;
-        }
-
-        filter.value_enabled = false;
-        filter.value_threshold = 0;
-        filter.is_le = false;
-        filter.is_cost_type = false;
-        filter.to_attr()
-    }
-
-    pub fn normalized_select_member_filter_attr_with_source(
-        &self,
-        db: &CardDatabase,
-        ctx: &AbilityContext,
-    ) -> u64 {
-        let filter_attr = self.normalized_select_member_filter_attr();
-        if filter_attr == 0 {
-            return filter_attr;
-        }
-
-        let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-        if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
-            return filter_attr;
-        }
-
-        let source_card_id = if ctx.ability_card_id >= 0 {
-            ctx.ability_card_id
-        } else {
-            ctx.source_card_id
-        };
-        let source_groups = db
-            .get_live(source_card_id)
-            .map(|card| card.groups.as_slice())
-            .or_else(|| db.get_member(source_card_id).map(|card| card.groups.as_slice()));
-        let Some(source_groups) = source_groups else {
-            return filter_attr;
-        };
-        if source_groups.len() != 1 {
-            return filter_attr;
-        }
-
-        let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
-        filter.group_id = source_groups[0];
-        filter.to_attr() | passthrough
-    }
-
-    pub fn targeted_select_member_filter_attr(&self) -> u64 {
-        let filter_attr = self.normalized_select_member_filter_attr();
-        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
-            && filter_attr != 0
-        {
-            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
-            filter.target_player = TARGET_PLAYER_SELF as u8;
-            filter.to_attr() | passthrough
-        } else {
-            filter_attr
-        }
-    }
-
-    pub fn targeted_select_member_filter_attr_with_source(
-        &self,
-        db: &CardDatabase,
-        ctx: &AbilityContext,
-    ) -> u64 {
-        let filter_attr = self.normalized_select_member_filter_attr_with_source(db, ctx);
-        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
-            && filter_attr != 0
-        {
-            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
-            filter.target_player = TARGET_PLAYER_SELF as u8;
-            filter.to_attr() | passthrough
-        } else {
-            filter_attr
         }
     }
 

@@ -344,216 +344,220 @@ impl GameState {
         let mut queue = SmallVec::<[(i32, i32, u16, AbilityContext, bool); 8]>::new();
         let p_idx = ctx.player_id as usize;
 
-        // 1. Stage Members
-        for slot_idx in 0..3 {
-            let cid = self.core.players[p_idx].stage[slot_idx];
-            self.collect_triggers_for_card(
-                db,
-                cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                false,
-                &mut queue,
-                slot_idx as i16,
-            );
-        }
-
-        // 2. Performance/Live Cards
-        for slot_idx in 0..3 {
-            let cid = self.core.players[p_idx].live_zone[slot_idx];
-            self.collect_triggers_for_card(
-                db,
-                cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                true,
-                &mut queue,
-                slot_idx as i16,
-            );
-        }
-
-        // 3. Source Card (if not on stage/live)
-        let source_cid = ctx.source_card_id;
-        let on_stage = self.core.players[p_idx].get_slot_of(source_cid).is_some();
-        let on_live = self.core.players[p_idx].live_zone.iter().any(|&c| c == source_cid);
-        if !on_stage && !on_live && source_cid >= 0 {
-            self.collect_triggers_for_card(
-                db,
-                source_cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                false,
-                &mut queue,
-                -1,
-            );
-            self.collect_triggers_for_card(
-                db,
-                source_cid,
-                trigger,
-                ctx,
-                start_ab_idx,
-                true,
-                &mut queue,
-                -1,
-            );
-        }
-
-        for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
-            ab_ctx.source_card_id = cid;
-            ab_ctx.ability_card_id = def_cid;
-            ab_ctx.ability_index = ab_idx as i16;
-
-            let Some(ability) = ability_from_db(db, def_cid, is_live, ab_idx as usize) else {
-                continue;
-            };
-            let conditions = &ability.conditions;
-            // Unified logging: TRIGGER events now go to both turn_history and rule_log
-            let card_name = card_name_from_db(db, cid, is_live).unwrap_or("Unknown");
-            let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
-            self.log_event(
-                "TRIGGER",
-                &format!(
-                    "Rule 9.7.1 (Q221): [{}] Trigger condition met for {}. (Ability is queued for resolution even if source leaves zone later).",
-                    trigger_str, card_name
-                ),
-                cid,
-                ab_idx as i16,
-                p_idx as u8,
-                None,
-                true,
-            );
-
-            let costs = &ability.costs;
-
-            let skip_precheck_for_compensation =
-                is_live && should_skip_inline_live_precheck(ability);
-
-            // Trigger enqueueing only prechecks top-level authored conditions.
-            // Inline frame conditions are branch/control-flow logic and must be
-            // evaluated by the interpreter in sequence rather than flattened here.
-            let mut all_met = true;
-            let mut failed_cond_idx = 0;
-            if !skip_precheck_for_compensation {
-                if uses_paired_keyword_effect_conditions(ability) {
-                    // For OR logic, check if any condition passes
-                    let mut any_passed = false;
-                    for (i, cond) in conditions.iter().enumerate() {
-                        let passed = super::interpreter::conditions::check_condition(
-                            self, db, p_idx, cond, &ab_ctx, 1,
-                        );
-                        if self.debug.debug_mode {
-                            eprintln!(
-                                "[DEBUG_TRIGGER_COND] idx={}, type={:?}, passed={}",
-                                i,
-                                cond.condition_type,
-                                passed
-                            );
-                        }
-                        if passed {
-                            any_passed = true;
-                            break;
-                        }
-                    }
-                    if !any_passed {
-                        all_met = false;
-                        failed_cond_idx = 0;
-                    }
-                } else {
-                    // Normal AND logic
-                    for (i, cond) in conditions.iter().enumerate() {
-                        if !should_precheck_trigger_condition(cond)
-                            || should_defer_trigger_condition_precheck(ability, cond)
-                        {
-                            continue;
-                        }
-                        let passed = super::interpreter::conditions::check_condition(
-                            self, db, p_idx, cond, &ab_ctx, 1,
-                        );
-                        if self.debug.debug_mode {
-                            eprintln!(
-                                "[DEBUG_TRIGGER_COND] idx={}, type={:?}, passed={}",
-                                i,
-                                cond.condition_type,
-                                passed
-                            );
-                        }
-                        if !passed {
-                            all_met = false;
-                            failed_cond_idx = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            if self.debug.debug_mode {
-                eprintln!(
-                    "[DEBUG_TRIGGER] After condition checks: all_met={}, failed_cond_idx={}",
-                    all_met,
-                    failed_cond_idx
+            // 1. Stage Members
+            for slot_idx in 0..3 {
+                let cid = self.core.players[p_idx].stage[slot_idx];
+                self.collect_triggers_for_card(
+                    db,
+                    cid,
+                    trigger,
+                    ctx,
+                    start_ab_idx,
+                    false,
+                    &mut queue,
+                    slot_idx as i16,
                 );
             }
 
-            if all_met {
-                // Check costs as well before enqueueing
-                for cost in costs {
-                    if cost.is_optional {
-                        continue;
-                    } // Skip optional costs for trigger check
-                    if !super::interpreter::costs::check_cost(self, db, p_idx, cost, &ab_ctx) {
-                        all_met = false;
-                        break;
-                    }
-                }
+            // 2. Performance/Live Cards
+            for slot_idx in 0..3 {
+                let cid = self.core.players[p_idx].live_zone[slot_idx];
+                self.collect_triggers_for_card(
+                    db,
+                    cid,
+                    trigger,
+                    ctx,
+                    start_ab_idx,
+                    true,
+                    &mut queue,
+                    slot_idx as i16,
+                );
             }
 
-            if all_met {
-                // PHASE 3: Queue instead of immediate resolve to decouple mutations
-                if self.debug.debug_mode {
-                    eprintln!(
-                        "[DEBUG_TRIGGER] Enqueuing ability: cid={}, ab_idx={}, trigger={:?}, conditions={}",
-                        cid,
-                        ab_idx,
-                        trigger,
-                        conditions.len()
-                    );
-                }
-                self.enqueue_trigger(cid, def_cid, ab_idx as u16, ab_ctx, is_live, trigger);
-            } else {
-                if self.debug.debug_mode {
-                    eprintln!(
-                        "[DEBUG_TRIGGER] NOT enqueuing ability: cid={}, ab_idx={}, all_met={}, conditions={}",
-                        cid,
-                        ab_idx,
-                        all_met,
-                        conditions.len()
-                    );
-                }
-                if !self.ui.silent {
-                    // Log which condition failed
-                    for cond in conditions {
-                        if !super::interpreter::conditions::check_condition(
-                            self, db, p_idx, cond, &ab_ctx, 1,
-                        ) {
-                            let cond_desc = super::interpreter::logging::describe_condition(
-                                cond.condition_type as i32,
-                                cond.value,
-                                cond.attr,
+            // 3. Source Card (if not on stage/live)
+            let source_cid = ctx.source_card_id;
+            let on_stage = self
+                .card_location(source_cid)
+                .is_some_and(|location| location.owner == ctx.player_id && matches!(location.zone, crate::core::enums::Zone::Stage));
+            let on_live = self
+                .card_location(source_cid)
+                .is_some_and(|location| location.owner == ctx.player_id && matches!(location.zone, crate::core::enums::Zone::LiveSet));
+            if !on_stage && !on_live && source_cid >= 0 {
+                self.collect_triggers_for_card(
+                    db,
+                    source_cid,
+                    trigger,
+                    ctx,
+                    start_ab_idx,
+                    false,
+                    &mut queue,
+                    -1,
+                );
+                self.collect_triggers_for_card(
+                    db,
+                    source_cid,
+                    trigger,
+                    ctx,
+                    start_ab_idx,
+                    true,
+                    &mut queue,
+                    -1,
+                );
+            }
+
+            for (cid, def_cid, ab_idx, mut ab_ctx, is_live) in queue {
+                ab_ctx.source_card_id = cid;
+                ab_ctx.ability_card_id = def_cid;
+                ab_ctx.ability_index = ab_idx as i16;
+
+                let Some(ability) = ability_from_db(db, def_cid, is_live, ab_idx as usize) else {
+                    continue;
+                };
+                let conditions = &ability.conditions;
+                // Unified logging: TRIGGER events now go to both turn_history and rule_log
+                let card_name = card_name_from_db(db, cid, is_live).unwrap_or("Unknown");
+                let trigger_str = super::interpreter::logging::trigger_as_str(trigger);
+                self.log_event(
+                    "TRIGGER",
+                    &format!(
+                        "Rule 9.7.1 (Q221): [{}] Trigger condition met for {}. (Ability is queued for resolution even if source leaves zone later).",
+                        trigger_str, card_name
+                    ),
+                    cid,
+                    ab_idx as i16,
+                    p_idx as u8,
+                    None,
+                    true,
+                );
+
+                let costs = &ability.costs;
+
+                let skip_precheck_for_compensation =
+                    is_live && should_skip_inline_live_precheck(ability);
+
+                // Trigger enqueueing only prechecks top-level authored conditions.
+                // Inline frame conditions are branch/control-flow logic and must be
+                // evaluated by the interpreter in sequence rather than flattened here.
+                let mut all_met = true;
+                let mut failed_cond_idx = 0;
+                if !skip_precheck_for_compensation {
+                    if uses_paired_keyword_effect_conditions(ability) {
+                        // For OR logic, check if any condition passes
+                        let mut any_passed = false;
+                        for (i, cond) in conditions.iter().enumerate() {
+                            let passed = super::interpreter::conditions::check_condition(
+                                self, db, p_idx, cond, &ab_ctx, 1,
                             );
-                            let card_name = if is_live {
-                                db.get_live(cid).unwrap().name.clone()
-                            } else {
-                                db.get_member(cid).unwrap().name.clone()
-                            };
-                            self.log(format!("{}'s ability did not activate because target condition was not met: {}.", card_name, cond_desc));
+                            if self.debug.debug_mode {
+                                eprintln!(
+                                    "[DEBUG_TRIGGER_COND] idx={}, type={:?}, passed={}",
+                                    i,
+                                    cond.condition_type,
+                                    passed
+                                );
+                            }
+                            if passed {
+                                any_passed = true;
+                                break;
+                            }
+                        }
+                        if !any_passed {
+                            all_met = false;
+                            failed_cond_idx = 0;
+                        }
+                    } else {
+                        // Normal AND logic
+                        for (i, cond) in conditions.iter().enumerate() {
+                            if !should_precheck_trigger_condition(cond)
+                                || should_defer_trigger_condition_precheck(ability, cond)
+                            {
+                                continue;
+                            }
+                            let passed = super::interpreter::conditions::check_condition(
+                                self, db, p_idx, cond, &ab_ctx, 1,
+                            );
+                            if self.debug.debug_mode {
+                                eprintln!(
+                                    "[DEBUG_TRIGGER_COND] idx={}, type={:?}, passed={}",
+                                    i,
+                                    cond.condition_type,
+                                    passed
+                                );
+                            }
+                            if !passed {
+                                all_met = false;
+                                failed_cond_idx = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if self.debug.debug_mode {
+                    eprintln!(
+                        "[DEBUG_TRIGGER] After condition checks: all_met={}, failed_cond_idx={}",
+                        all_met,
+                        failed_cond_idx
+                    );
+                }
+
+                if all_met {
+                    // Check costs as well before enqueueing
+                    for cost in costs {
+                        if cost.is_optional {
+                            continue;
+                        } // Skip optional costs for trigger check
+                        if !super::interpreter::costs::check_cost(self, db, p_idx, cost, &ab_ctx) {
+                            all_met = false;
                             break;
                         }
                     }
                 }
+
+                if all_met {
+                    // PHASE 3: Queue instead of immediate resolve to decouple mutations
+                    if self.debug.debug_mode {
+                        eprintln!(
+                            "[DEBUG_TRIGGER] Enqueuing ability: cid={}, ab_idx={}, trigger={:?}, conditions={}",
+                            cid,
+                            ab_idx,
+                            trigger,
+                            conditions.len()
+                        );
+                    }
+                    self.enqueue_trigger(cid, def_cid, ab_idx as u16, ab_ctx, is_live, trigger);
+                } else {
+                    if self.debug.debug_mode {
+                        eprintln!(
+                            "[DEBUG_TRIGGER] NOT enqueuing ability: cid={}, ab_idx={}, all_met={}, conditions={}",
+                            cid,
+                            ab_idx,
+                            all_met,
+                            conditions.len()
+                        );
+                    }
+                    if !self.ui.silent {
+                        // Log which condition failed
+                        for cond in conditions {
+                            if !super::interpreter::conditions::check_condition(
+                                self, db, p_idx, cond, &ab_ctx, 1,
+                            ) {
+                                let cond_desc = super::interpreter::logging::describe_condition(
+                                    cond.condition_type as i32,
+                                    cond.value,
+                                    cond.attr,
+                                );
+                                let card_name = if is_live {
+                                    db.get_live(cid).unwrap().name.clone()
+                                } else {
+                                    db.get_member(cid).unwrap().name.clone()
+                                };
+                                self.log(format!("{}'s ability did not activate because target condition was not met: {}.", card_name, cond_desc));
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-        }
 
         self.process_trigger_queue(db);
 

@@ -247,7 +247,7 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 ));
             }
             state.players[p_idx].push_discard_card(cid);
-            state.players[p_idx].live_zone[i] = -1;
+            state.players[p_idx].clear_live_card(i);
         }
     }
 
@@ -263,7 +263,7 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
             let cid = state.players[p_idx].live_zone[i];
             if cid >= 0 {
                 state.players[p_idx].push_discard_card(cid);
-                state.players[p_idx].live_zone[i] = -1;
+                state.players[p_idx].clear_live_card(i);
             }
         }
         state.live_start_triggers_done = true; // Mark as done to prevent future triggers
@@ -976,7 +976,7 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
             if state.players[p_idx].live_zone[i] >= 0 {
                 let cid = state.players[p_idx].live_zone[i];
                 state.players[p_idx].push_discard_card(cid);
-                state.players[p_idx].live_zone[i] = -1;
+                state.players[p_idx].clear_live_card(i);
                 passed_flags[i] = false; // Ensure UI reflects failure
             }
         }
@@ -1370,7 +1370,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     if state.players[p].live_zone[i] >= 0 {
                         let cid = state.players[p].live_zone[i];
                         state.players[p].push_discard_card(cid);
-                        state.players[p].live_zone[i] = -1;
+                        state.players[p].clear_live_card(i);
                     }
                 }
             }
@@ -1802,12 +1802,12 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 let target_idx = valid_candidates[0];
                 let cid = state.players[p].live_zone[target_idx];
 
-                state.players[p].success_lives.push(cid as i32);
+                state.players[p].push_success_live_card(cid as i32);
                 if cid == 111 {
                     state.players[p].push_discard_card(cid);
                 }
                 state.check_win_condition(); // NEW: Immediate win check
-                state.players[p].live_zone[target_idx] = -1;
+                state.players[p].clear_live_card(target_idx);
                 if !state.ui.silent {
                     state.log(format!(
                         "Rule 8.4.7: P{} obtained Success Live: Card ID {}",
@@ -1930,7 +1930,7 @@ pub fn finalize_live_result(state: &mut GameState) {
                     println!("DEBUG: Moving card {} from live_zone[{}] to discard", cid, i);
                 }
                 state.players[p].push_discard_card(cid);
-                state.players[p].live_zone[i] = -1;
+                state.players[p].clear_live_card(i);
             }
         }
 

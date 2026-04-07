@@ -1,4 +1,7 @@
-use super::common::compare_i32;
+use super::common::{
+    compare_i32, condition_eval_cache_key, condition_eval_cache_lookup,
+    condition_eval_cache_store,
+};
 use super::counts::resolve_count;
 use crate::core::enums::*;
 use crate::core::hearts::HeartBoard;
@@ -314,6 +317,10 @@ fn check_condition_with_parts(
         return true;
     }
     let p_idx = ctx.activator_id as usize;
+    let cache_key = condition_eval_cache_key(op, val, attr, slot, p_idx, params, ctx, depth);
+    if let Some(hit) = condition_eval_cache_lookup(&cache_key) {
+        return hit;
+    }
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
     let semantic = AbilityFrameComponents::from_raw_parts(op, val, attr, slot, false, params);
@@ -1050,5 +1057,6 @@ fn check_condition_with_parts(
         }
         return true;
     }
+    condition_eval_cache_store(cache_key, result);
     result
 }

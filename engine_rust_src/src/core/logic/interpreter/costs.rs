@@ -505,7 +505,7 @@ pub fn pay_cost(
                     state.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
                     let player = &mut state.players[p_idx];
-                    player.stage[slot] = -1;
+                    player.clear_stage_card(slot);
                     player.push_discard_card(cid as i32);
                     let under_cards = std::mem::take(&mut player.stage_energy[slot]);
                     player.discard.extend(under_cards);
@@ -582,7 +582,7 @@ pub fn pay_cost(
                     state.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
 
                     let player = &mut state.players[p_idx];
-                    player.stage[slot] = -1;
+                    player.clear_stage_card(slot);
                     prepend_single_card_to_deck(&mut player.deck, cid as i32);
                     true
                 } else {

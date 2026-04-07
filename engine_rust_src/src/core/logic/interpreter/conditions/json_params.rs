@@ -1,4 +1,7 @@
-use super::common::{parse_condition_type, CONDITION_CHECK_MAX_DEPTH};
+use super::common::{
+    condition_eval_cache_key, condition_eval_cache_lookup, condition_eval_cache_store,
+    parse_condition_type, CONDITION_CHECK_MAX_DEPTH,
+};
 use super::opcodes::check_condition_opcode;
 use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
@@ -916,7 +919,7 @@ pub fn check_condition(
     if depth > CONDITION_CHECK_MAX_DEPTH {
         return false;
     }
-    
+
     // FAST PATH 3: Simple condition with no params and default type
     // This avoids expensive JSON processing for the majority of simple conditions
     if cond.params.is_null() 
@@ -929,6 +932,20 @@ pub fn check_condition(
         return check_condition_opcode(
             state, db, cond.condition_type as i32, 0, 0, 0, ctx, depth + 1
         );
+    }
+
+    let cache_key = condition_eval_cache_key(
+        cond.condition_type as i32,
+        cond.value,
+        cond.attr,
+        cond.target_slot as i32,
+        p_idx,
+        Some(&cond.params),
+        ctx,
+        depth,
+    );
+    if let Some(hit) = condition_eval_cache_lookup(&cache_key) {
+        return hit;
     }
     
     let mut val = cond.value;
@@ -1010,5 +1027,6 @@ pub fn check_condition(
         }
         return true;
     }
+    condition_eval_cache_store(cache_key, result);
     result
 }

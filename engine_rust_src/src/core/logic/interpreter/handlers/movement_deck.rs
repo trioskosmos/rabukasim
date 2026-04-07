@@ -136,7 +136,7 @@ fn handle_search_deck(
                 state.players[p_idx].gain_hand_card(cid);
             }
         }
-        13 => state.players[p_idx].success_lives.push(cid),
+        13 => state.players[p_idx].push_success_live_card(cid),
         _ => state.players[p_idx].gain_hand_card(cid),
     }
 

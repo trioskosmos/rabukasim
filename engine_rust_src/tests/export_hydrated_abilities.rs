@@ -26,7 +26,10 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
         .and_then(|value| value.as_u64())
         .expect("export should include summary.ability_count");
 
-    assert!(ability_count > 0, "export should contain hydrated abilities");
+    assert!(
+        ability_count > 0,
+        "export should contain hydrated abilities"
+    );
 
     let first_attr = export
         .get("abilities")

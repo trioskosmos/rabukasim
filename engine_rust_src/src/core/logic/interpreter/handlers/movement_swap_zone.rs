@@ -80,7 +80,7 @@ pub fn handle_swap_zone(
                 .iter()
                 .position(|&x| x == success_cid)
             {
-                state.players[p_idx].success_lives[pos] = hand_cid;
+                state.players[p_idx].set_success_live_card(pos, hand_cid);
                 state.players[p_idx].gain_hand_card(success_cid);
             }
         }

@@ -40,7 +40,9 @@ pub fn handle_optional_nop(
             ChoiceType::SelectStage
         } else if frame_data.opcode == O_SELECT_CARDS {
             ChoiceType::SelectCards
-        } else if frame_data.opcode == O_SELECT_MEMBER {
+        } else if frame_data.opcode == O_SELECT_MEMBER
+            && frame_data.slot.source_zone == crate::core::enums::Zone::Stage
+        {
             ChoiceType::SelectMember
         } else if frame_data.opcode == O_LOOK_AND_CHOOSE {
             ChoiceType::LookAndChoose

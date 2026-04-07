@@ -141,6 +141,7 @@ pub fn handle_add_blades(
             slot_idx as u8,
         ));
     });
+    state.needs_stat_sync_mask |= 1 << target_p;
     state.needs_stat_sync = true;
     state.log_event(
         "EFFECT",
@@ -163,6 +164,7 @@ pub fn handle_set_blades(
 ) -> HandlerResult {
     if resolved_slot < 3 {
         state.players[p_idx].blade_buffs[resolved_slot as usize] = v as i16;
+        state.needs_stat_sync_mask |= 1 << p_idx;
         state.needs_stat_sync = true;
     }
     HandlerResult::Continue
@@ -193,6 +195,7 @@ pub fn handle_add_hearts(
                             }
                         }
                     });
+                    state.needs_stat_sync_mask |= 1 << p_idx;
                     state.needs_stat_sync = true;
                     return HandlerResult::Continue;
                 }
@@ -236,6 +239,7 @@ pub fn handle_add_hearts(
             println!("[DEBUG handle_add_hearts] Color {} >= 7, skipping", color);
         }
     }
+    state.needs_stat_sync_mask |= 1 << p_idx;
     state.needs_stat_sync = true;
     if !state.ui.silent {
         if let Some(msg) = logging::get_opcode_log(
@@ -280,6 +284,7 @@ pub fn handle_set_hearts(
         state_score_slots::apply_to_target_slots(target_slot, resolved_slot, |slot_idx| {
             state.players[p_idx].heart_buffs[slot_idx].set_color_count(color, frame.value as u8);
         });
+        state.needs_stat_sync_mask |= 1 << p_idx;
         state.needs_stat_sync = true;
     }
     HandlerResult::Continue

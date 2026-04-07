@@ -174,13 +174,14 @@ impl GameState {
             .granted_abilities
             .retain(|(target_cid, _, _)| *target_cid != cid);
 
-        self.core.players[p_idx].stage[slot] = -1;
+        self.core.players[p_idx].clear_stage_card(slot);
         self.core.players[p_idx].blade_buffs[slot] = 0;
         self.core.players[p_idx].blade_overrides[slot] = -1;
         self.core.players[p_idx].heart_buffs[slot] = crate::core::hearts::HeartBoard::default();
 
         self.core.players[p_idx].set_tapped(slot, false);
         self.core.players[p_idx].set_moved(slot, false);
+        self.mark_stats_dirty(p_idx);
         let mutate_us = t_mutate
             .map(|t| t.elapsed().as_nanos() as u64 / 1000)
             .unwrap_or(0);
@@ -246,6 +247,8 @@ impl GameState {
         p_idx: usize,
         receiver: &mut R,
     ) {
+        let _condition_cache_scope =
+            crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         crate::core::logic::action_gen::ActionGeneratorFactory::generate_actions(
             self, db, p_idx, receiver,
         );

@@ -1,7 +1,98 @@
+use crate::core::logic::AbilityContext;
 use crate::core::logic::constants::*;
 use crate::core::logic::ConditionType;
+use serde_json::Value;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 pub const CONDITION_CHECK_MAX_DEPTH: u32 = 8;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ConditionEvalCacheKey {
+    opcode: i32,
+    value: i32,
+    raw_attr: u64,
+    raw_slot: i32,
+    p_idx: usize,
+    depth: u32,
+    ctx_hash: u64,
+    params_hash: u64,
+}
+
+thread_local! {
+    static ACTIVE_CONDITION_EVAL_CACHE: RefCell<Option<HashMap<ConditionEvalCacheKey, bool>>> =
+        const { RefCell::new(None) };
+}
+
+pub struct ConditionEvalCacheScope;
+
+impl ConditionEvalCacheScope {
+    pub fn activate() -> Self {
+        ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
+            *cache.borrow_mut() = Some(HashMap::new());
+        });
+        Self
+    }
+}
+
+impl Drop for ConditionEvalCacheScope {
+    fn drop(&mut self) {
+        ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
+            *cache.borrow_mut() = None;
+        });
+    }
+}
+
+fn hash_value<T: Hash>(value: &T) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    value.hash(&mut hasher);
+    hasher.finish()
+}
+
+fn hash_params(params: Option<&Value>) -> u64 {
+    params.map(hash_value).unwrap_or_default()
+}
+
+pub fn condition_eval_cache_key(
+    opcode: i32,
+    value: i32,
+    raw_attr: u64,
+    raw_slot: i32,
+    p_idx: usize,
+    params: Option<&Value>,
+    ctx: &AbilityContext,
+    depth: u32,
+) -> ConditionEvalCacheKey {
+    ConditionEvalCacheKey {
+        opcode,
+        value,
+        raw_attr,
+        raw_slot,
+        p_idx,
+        depth,
+        ctx_hash: hash_value(ctx),
+        params_hash: hash_params(params),
+    }
+}
+
+pub fn condition_eval_cache_lookup(key: &ConditionEvalCacheKey) -> Option<bool> {
+    ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
+        cache
+            .borrow()
+            .as_ref()
+            .and_then(|active| active.get(key).copied())
+    })
+}
+
+pub fn condition_eval_cache_store(key: ConditionEvalCacheKey, value: bool) {
+    ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
+        if let Some(active) = cache.borrow_mut().as_mut() {
+            active.insert(key, value);
+        }
+    });
+}
 
 /// Compare an i32 value against a target with optional comparison mode from slot.
 /// Slot encoding: 0 = equal, 1 = greater, 2 = less, 3 = greater-or-equal, 4 = less-or-equal

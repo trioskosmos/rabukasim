@@ -183,6 +183,8 @@ pub struct CoreGameState {
     pub turn_history: Option<Vec<TurnEvent>>,
     #[serde(default)]
     pub obtained_success_live: [bool; 2],
+    #[serde(default)]
+    pub needs_stat_sync_mask: u8,
     #[serde(default = "true_fn")]
     pub needs_stat_sync: bool,
 }
@@ -220,6 +222,7 @@ impl Default for CoreGameState {
             score_req_player: 0,
             turn_history: None,
             obtained_success_live: [false; 2],
+            needs_stat_sync_mask: 0,
             needs_stat_sync: true,
         }
     }
@@ -291,7 +294,130 @@ pub struct GameState {
     pub debug: DebugState,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct CardLocation {
+    pub owner: u8,
+    pub zone: Zone,
+    pub slot: i16,
+}
+
 impl GameState {
+    fn card_location_from_player_maps(&self, cid: i32) -> Option<CardLocation> {
+        if cid < 0 {
+            return None;
+        }
+        for (owner, player) in self.core.players.iter().enumerate() {
+            if let Some(location) = player.card_locations.get(&cid).copied() {
+                if location.owner == owner as u8 {
+                    return Some(location);
+                }
+            }
+        }
+
+        None
+    }
+
+    fn card_location_slow(&self, cid: i32) -> Option<CardLocation> {
+        if cid < 0 {
+            return None;
+        }
+
+        for (owner, player) in self.core.players.iter().enumerate() {
+            let owner = owner as u8;
+            if let Some(slot) = player.stage.iter().position(|&stage_card_id| stage_card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Stage,
+                    slot: slot as i16,
+                });
+            }
+            if player.live_zone.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::LiveSet,
+                    slot: -1,
+                });
+            }
+            if player.hand.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Hand,
+                    slot: -1,
+                });
+            }
+            if player.deck.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Deck,
+                    slot: -1,
+                });
+            }
+            if player.discard.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Discard,
+                    slot: -1,
+                });
+            }
+            if player.energy_zone.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Energy,
+                    slot: -1,
+                });
+            }
+            if player.success_lives.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::SuccessPile,
+                    slot: -1,
+                });
+            }
+            if player.yell_cards.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Yell,
+                    slot: -1,
+                });
+            }
+            if player.looked_cards.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Default,
+                    slot: -1,
+                });
+            }
+            if player.revealed_cards.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::Default,
+                    slot: -1,
+                });
+            }
+            if player.live_deck.iter().any(|&card_id| card_id == cid) {
+                return Some(CardLocation {
+                    owner,
+                    zone: Zone::LiveSet,
+                    slot: -1,
+                });
+            }
+        }
+
+        None
+    }
+
+    pub fn card_location(&self, cid: i32) -> Option<CardLocation> {
+        self.card_location_from_player_maps(cid)
+            .or_else(|| self.card_location_slow(cid))
+    }
+
+    pub fn card_owner(&self, cid: i32) -> Option<u8> {
+        self.card_location(cid).map(|location| location.owner)
+    }
+
+    pub fn card_zone(&self, cid: i32) -> Option<Zone> {
+        self.card_location(cid).map(|location| location.zone)
+    }
     pub fn resolve_frames<B: AsRef<[i32]>>(
         &mut self,
         db: &CardDatabase,
@@ -376,6 +502,26 @@ impl GameState {
         cid: i32,
         mask: u8,
     ) -> bool {
+        if let Some(location) = self.card_location(cid) {
+            let matches_owner = match target_player {
+                1 => location.owner == ctx_player_id,
+                2 => location.owner == 1 - ctx_player_id,
+                3 | 0 => true,
+                _ => location.owner == ctx_player_id,
+            };
+            if !matches_owner {
+                return false;
+            }
+
+            return match mask {
+                4 => matches!(location.zone, Zone::Stage),
+                6 => matches!(location.zone, Zone::Hand),
+                7 => matches!(location.zone, Zone::Discard),
+                3 => matches!(location.zone, Zone::Energy),
+                _ => false,
+            };
+        }
+
         // target_player: 1=Self, 2=Opponent, 3=Both, 0=Any
         let (players_to_check, p_count) = match target_player {
             1 => ([ctx_player_id as usize, 0], 1),

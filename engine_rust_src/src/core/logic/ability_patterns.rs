@@ -43,10 +43,11 @@ fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(
     }
 
     let select_frame = &frames[select_idx];
-    let heart_color = decode_heart_type_from_params(heart_frame.components().params)
+    let heart_components = heart_frame.components();
+    let heart_color = decode_heart_type_from_params(heart_components.params)
         .map(|color| color as u8)
-        .or_else(|| match heart_frame.components().resolved_filter_attr() {
-            0..=6 => Some(heart_frame.components().resolved_filter_attr() as u8),
+        .or_else(|| match heart_components.resolved_filter_attr() {
+            0..=6 => Some(heart_components.resolved_filter_attr() as u8),
             7 => Some(6),
             _ => decode_heart_type_from_text(&ability.raw_text).map(|color| color as u8),
         })?;

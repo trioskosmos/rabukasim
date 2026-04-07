@@ -251,15 +251,17 @@ impl GameState {
             energy_reclaim_us += t_energy
                 .map(|t| t.elapsed().as_nanos() as u64 / 1000)
                 .unwrap_or(0);
-
-            // 3. Eagerly synchronize constant modifiers
-            let t_sync = profile_enabled.then(Instant::now);
-            self.sync_stat_caches(i, db);
-            sync_us += t_sync
-                .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-                .unwrap_or(0);
         }
-        self.needs_stat_sync = false;
+
+        // Only resync players that actually changed. The dirty mask is already
+        // maintained by the effect handlers, so there is no reason to rebuild
+        // both board auras after every state-based check.
+        let t_sync = profile_enabled.then(Instant::now);
+        self.sync_all_stats(db);
+        sync_us += t_sync
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+
         let t_win = profile_enabled.then(Instant::now);
         self.check_win_condition();
         win_check_us = t_win
@@ -445,6 +447,40 @@ impl GameState {
         });
 
         let needs_dynamic_hearts = filter.color_mask != 0;
+        if let Some((p_idx, s_idx)) = provided_slot {
+            let p_idx = p_idx as usize;
+            let s_idx = s_idx as usize;
+            if p_idx < 2 && s_idx < 3 && self.core.players[p_idx].stage[s_idx] == cid {
+                let tapped = self.core.players[p_idx].is_tapped(s_idx);
+                let h_arr = if needs_dynamic_hearts {
+                    self.get_effective_hearts(p_idx, s_idx, db, 0).to_array()
+                } else {
+                    [0u8; 7]
+                };
+
+                return if debug {
+                    filter.matches_with_logs(
+                        db,
+                        self,
+                        cid,
+                        ctx,
+                        Some((p_idx as u8, s_idx as i16)),
+                        tapped,
+                        Some(&h_arr),
+                    )
+                } else {
+                    filter.matches(
+                        self,
+                        db,
+                        cid,
+                        Some((p_idx as u8, s_idx as i16)),
+                        tapped,
+                        Some(&h_arr),
+                        ctx,
+                    )
+                };
+            }
+        }
 
         // Fast Path: If the filter only checks static attributes (ID, Type, Group, Unit, Char)
         // and doesn't require stage-specific state (tapped, hearts, ownership, or NOT_SELF),

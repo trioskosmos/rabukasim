@@ -11,7 +11,7 @@ fn place_chosen_card(state: &mut GameState, p_idx: usize, chosen: i32, dest_zone
         6 => state.players[p_idx].gain_hand_card(chosen),
         7 => state.players[p_idx].push_discard_card(chosen),
         8 | 0 => state.players[p_idx].push_deck_card(chosen),
-        13 => state.players[p_idx].success_lives.push(chosen),
+        13 => state.players[p_idx].push_success_live_card(chosen),
         _ => state.players[p_idx].push_hand_card(chosen),
     }
 }

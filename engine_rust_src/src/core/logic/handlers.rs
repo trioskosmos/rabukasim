@@ -471,7 +471,7 @@ impl MainPhaseController for GameState {
                 self.core.players[p_idx].remove_hand_card(hand_idx);
                 for i in 0..3 {
                     if self.core.players[p_idx].live_zone[i] == -1 {
-                        self.core.players[p_idx].live_zone[i] = cid;
+                        self.core.players[p_idx].set_live_card(i, cid);
                         self.core.players[p_idx].set_revealed(i, false);
                         self.live_set_pending_draws[p_idx] += 1;
                         if !self.ui.silent {
@@ -504,7 +504,7 @@ impl MainPhaseController for GameState {
                     false
                 };
 
-                self.core.players[p_idx].live_zone[slot_idx] = -1;
+                self.core.players[p_idx].clear_live_card(slot_idx);
 
                 if is_prevented || self.core.players[p_idx].success_lives.len() >= 3 {
                     if !self.ui.silent {
@@ -520,7 +520,7 @@ impl MainPhaseController for GameState {
                     }
                     self.core.players[p_idx].push_discard_card(cid);
                 } else {
-                    self.core.players[p_idx].success_lives.push(cid);
+                    self.core.players[p_idx].push_success_live_card(cid);
                     self.obtained_success_live[p_idx] = true;
                     if !self.ui.silent {
                         self.log(format!(
@@ -646,6 +646,10 @@ impl ResponseController for GameState {
             };
             if is_optional_skip {
                 let current_execution_id = self.ui.current_execution_id;
+                let is_pure_hand_discard_skip =
+                    pi.choice_type == ChoiceType::SelectHandDiscard
+                        && pi.effect_opcode
+                            == crate::core::generated_constants::O_MOVE_TO_DISCARD;
                 crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
                 if let Some(exec_id) = current_execution_id {
                     while self
@@ -656,6 +660,9 @@ impl ResponseController for GameState {
                     {
                         self.interaction_stack.pop();
                     }
+                }
+                if is_pure_hand_discard_skip {
+                    return Ok(());
                 }
                 self.process_rule_checks(db);
                 if self.interaction_stack.is_empty() {
@@ -1492,9 +1499,13 @@ impl ResponseController for GameState {
                     .players
                     .get(p_idx)
                     .and_then(|player| player.looked_cards.get(pick_idx).copied())
+                    .or_else(|| pending_ctx.selected_cards.last().copied())
+                    .or_else(|| (pending_ctx.target_card_id >= 0).then_some(pending_ctx.target_card_id))
                     .unwrap_or(-1);
                 if selected_card_id < 0 {
-                    return Err("No selected discard card".to_string());
+                    self.core.players[p_idx].looked_cards.clear();
+                    crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+                    return Ok(());
                 }
 
                 let mut play_ctx = pending_ctx.clone();
@@ -2205,8 +2216,8 @@ impl GameState {
             if !self.ui.silent {
                 self.log("Rule 11.6, Rule 11.6.4 (Q24, Q27): Performing [バトンタッチ] (Baton Touch) replacing 1 member.".to_string());
             }
-            self.core.players[p_idx]
-                .set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
+        self.core.players[p_idx]
+            .set_baton_touch_count(self.core.players[p_idx].baton_touch_count() + 1);
             self.core.players[p_idx].baton_source_ids.push(old_card_id);
             self.core.players[p_idx].baton_source_slots.push(slot_idx);
         }
@@ -2283,9 +2294,10 @@ impl GameState {
         }
 
         self.prev_card_id = old_card_id;
-        self.core.players[p_idx].stage[slot_idx] = card_id;
+        self.core.players[p_idx].set_stage_card(slot_idx, card_id);
         self.core.players[p_idx].set_tapped(slot_idx, false);
         self.core.players[p_idx].set_moved(slot_idx, true);
+        self.sync_player_stats(db, p_idx);
 
         let t_register = if profile_enabled {
             Some(Instant::now())

@@ -1,55 +1,63 @@
 # LOVECA Engine Benchmarks
 
-This directory contains the canonical performance benchmark for the LOVECA card game engine.
+This directory documents the benchmark files that still exist in the workspace and marks which one should be used for raw engine throughput.
 
-## Canonical Benchmark
+## Current Benchmark
 
-### `ultimate_benchmark.rs`
-Headless full-game stress benchmark that:
+### `../examples/bench_throughput.rs`
+This is the current raw speed benchmark for the engine. It:
 
-- uses `cards_compiled.json` with abilities enabled
-- initializes games through the normal engine path with seeded shuffles
-- plays only by choosing random legal actions
-- runs in silent/headless mode so timing is engine-heavy, not log-heavy
-- samples many random deck combinations like the frontend init path
-- records slow action/phase timings and repeated-state soft-lock fingerprints
+- runs headless and silent
+- starts real games through the normal engine initialization path
+- plays only random legal actions or auto-step transitions
+- can run multiple independent games across worker threads
+- can optionally trace one game so you can verify it is really playing
+- reports terminal vs capped games, wall-clock games/sec, and wall-clock steps/sec
 
-This is intentionally the only active bench target. Older split bench files remain in the repo as reference material, but Cargo now points to the unified benchmark harness.
+On the 12-core machine used for the latest sweep, 8 workers was the best measured setting for this harness. 12 workers still scaled, but it was slower than 8, so treat 8 as the practical default sweet spot unless you remeasure on different hardware.
 
-## What It Reports
+Use this benchmark when you want raw engine throughput, step rate, or thread-scaling data.
 
-- total games, terminal games, capped games, and stalled games
-- games per second and actions per second
-- time spent in legal-action generation, chosen-action execution, and auto-step fallback
-- the slowest board states seen during the run
-- repeated-state fingerprints that look like soft locks or non-progress loops
+Example runs:
 
-## Running The Benchmark
-
-### Default run
 ```bash
-cargo bench --bench ultimate_benchmark
+cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
+BENCH_GAMES=4000 BENCH_WORKERS=12 BENCH_MAX_STEPS=10000 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
+BENCH_TRACE_FIRST_GAME=1 BENCH_GAMES=1 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
 ```
 
-### Common tuning knobs
-```bash
-BENCH_SECS=20 BENCH_MAX_STEPS=8000 BENCH_SLOW_US=500 cargo bench --bench ultimate_benchmark
-```
+By default the benchmark now uses up to 8 workers, capped by the machine's available parallelism.
 
 Supported environment variables:
 
-- `BENCH_SECS`: wall-clock benchmark duration
-- `BENCH_WARMUP_GAMES`: number of untimed warmup games
-- `BENCH_MAX_STEPS`: per-game hard cap before declaring a cap
-- `BENCH_SLOW_US`: threshold for printing a slow event
-- `BENCH_REPEAT_LIMIT`: repeated-state visit threshold for declaring a stall
-- `BENCH_SAME_STATE_LIMIT`: consecutive identical-state threshold for declaring a stall
+- `BENCH_GAMES`: number of games to run
+- `BENCH_WARMUP_GAMES`: untimed warmup games
+- `BENCH_WORKERS`: number of worker threads used for independent games
+- `BENCH_MAX_STEPS`: hard step cap per game, default `10000`
 - `BENCH_SEED`: base RNG seed
+- `BENCH_TRACE_FIRST_GAME`: print a trace for the first game when set to `1`, `true`, `yes`, or `on`
+- `BENCH_TRACE_STEP_LIMIT`: number of trace steps printed for the traced game
+
+## Deprecated Or Diagnostic Benchmarks
+
+These files still exist, but they are not the raw throughput benchmark.
+
+| File | Status | What it does | Typical use |
+| --- | --- | --- | --- |
+| `ultimate_benchmark.rs` | Diagnostic | Full-game random-legal-action stress benchmark with detailed slow-state, residual, and fingerprint reporting | Use when you need forensic timing data for a pathological state |
+| `bench_granular_v2.rs` | Diagnostic | Granular full-game benchmark that breaks time into planning, execution, auto-step, and state patterns | Use for phase attribution and slow-state clustering |
+| `bench_granular_real.rs` | Diagnostic | Similar granular benchmark that follows a more frontend-like turn planning path | Use when comparing planner-heavy real-game flow |
+| `bench_diagnostic.rs` | Diagnostic | Ultra-granular timing and board-state tracer for a focused call path | Use for card/opcode or board-shape debugging |
+| `bench_deterministic.rs` | Diagnostic | Records and replays exact action sequences for repeatability checks | Use when verifying determinism or replay stability |
+| `bench_fast.rs` | Legacy | Older fast throughput demo with simplified deck loading and hard-coded limits | Use only as a historical reference |
+
+If you are measuring raw engine speed, prefer `bench_throughput.rs`. If you are chasing a specific slow fingerprint, use `ultimate_benchmark.rs` or `bench_granular_v2.rs`.
 
 ## Notes
 
-- This harness uses random legal actions only. It does not call TurnSequencer or MCTS.
-- Because the workspace rulebook text file is not currently present under `docs/rules/rules.txt`, setup fidelity is taken from the real engine initialization path and the frontend WASM init flow.
+- The raw throughput benchmark uses random legal actions only. It does not call TurnSequencer or MCTS.
+- The game is real: the benchmark stops only when `state.is_terminal()` becomes true or the step cap is hit.
+- A terminal game means one player reached 3 cards in `success_lives`.
 - For the slow-state investigation workflow, see [`docs/plans/ultimate_benchmark_slow_state_workflow.md`](../../docs/plans/ultimate_benchmark_slow_state_workflow.md).
 
-Prefer changing this harness rather than adding another standalone benchmark target.
+Prefer changing the raw throughput benchmark before adding another standalone speed test.

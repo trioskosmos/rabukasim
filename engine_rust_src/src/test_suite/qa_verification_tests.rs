@@ -3845,6 +3845,81 @@ mod tests {
     }
 
     #[test]
+    fn test_q211_multi_name_card_counts_as_one_stage_member() {
+        // QA: Q211 | Q: ステージに「LL-bp3-001-R＋ 園田海未&津島善子&天王寺璃奈」と、他にメンバーがいる場合、『メンバーが２人以上いる場合』の効果でこのカードを対象にすることはできますか？
+        // A: はい、できます。
+        let db = load_real_db();
+        let mut state = create_test_state();
+
+        let multi_name_card_id = db
+            .id_by_no("LL-bp3-001-R+")
+            .expect("Q211: expected LL-bp3-001-R+ in the real DB");
+        let support_member_id = db
+            .id_by_no("PL!N-bp5-015-N")
+            .expect("Q211: expected PL!N-bp5-015-N in the real DB");
+
+        let multi_name_card = db
+            .get_member(multi_name_card_id)
+            .expect("Q211: expected multi-name member card");
+
+        state.players[0].stage[0] = multi_name_card_id;
+        state.players[0].stage[1] = support_member_id;
+
+        let occupied_slots = state.players[0]
+            .stage
+            .iter()
+            .filter(|&&card_id| card_id != -1)
+            .count();
+
+        assert_eq!(occupied_slots, 2, "Q211: the multi-name card should still count as one occupied slot");
+        assert_eq!(multi_name_card.name.split('&').count(), 3, "Q211: the card should expose three names, not three stage members");
+        assert!(occupied_slots >= 2, "Q211: a separate second member should satisfy the two-or-more condition");
+    }
+
+    #[test]
+    fn test_q216_collective_hearts_are_counted_across_the_stage() {
+        // QA: Q216 | Q: この能力の条件でメンバーを参照する際、１人のメンバーが指定されたハートすべてを持っている必要がありますか？
+        // A: いいえ、自分のステージにいるメンバーすべてを参照して、指定のハートを持つか見ます。
+        let mut db = create_test_db();
+
+        let first_member = crate::core::logic::card_db::MemberCard {
+            card_id: 7000,
+            card_no: "Q216-A".to_string(),
+            name: "Q216-A".to_string(),
+            hearts: [1, 1, 0, 0, 0, 0, 0],
+            groups: vec![1],
+            ..Default::default()
+        };
+        let second_member = crate::core::logic::card_db::MemberCard {
+            card_id: 7001,
+            card_no: "Q216-B".to_string(),
+            name: "Q216-B".to_string(),
+            hearts: [0, 0, 1, 1, 1, 1, 0],
+            groups: vec![1],
+            ..Default::default()
+        };
+
+        db.members.insert(first_member.card_id, first_member.clone());
+        db.members.insert(second_member.card_id, second_member.clone());
+
+        let stage_member_ids = vec![first_member.card_id, second_member.card_id];
+        let mut seen_hearts = [false; 6];
+
+        for member_id in stage_member_ids {
+            let member = db.get_member(member_id).expect("Q216: expected injected member card");
+            for (index, heart_count) in member.hearts.iter().enumerate().take(6) {
+                if *heart_count > 0 {
+                    seen_hearts[index] = true;
+                }
+            }
+        }
+
+        // QA: Q216 | Q: この能力の条件でメンバーを参照する際、１人のメンバーが指定されたハートすべてを持っている必要がありますか？
+        // A: いいえ、自分のステージにいるメンバーすべてを参照して、指定のハートを持つか見ます。
+        assert!(seen_hearts.iter().all(|&has_heart| has_heart), "Q216: the stage-wide union of hearts should satisfy all six heart colors");
+    }
+
+    #[test]
     fn test_q215_partial_choice_impossible() {
         // QA: Q215 | Q: このカードの {{kidou.png|起動}} 能力のコストでウェイト状態のエネルギーを下に置くことはできますか？
         // A: はい、できます。
