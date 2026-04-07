@@ -35,6 +35,8 @@ pub use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
+use std::cell::RefCell;
+use std::collections::HashMap;
 // use crate::core::enums::Zone;
 use crate::core::models::{AbilityContext, GameState};
 
@@ -122,6 +124,47 @@ pub fn structured_filter_attr(attr: u64) -> u64 {
 
 pub fn structured_filter_from_attr(attr: u64) -> CardFilter {
     CardFilter::from_attr(structured_filter_attr(attr))
+}
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct FilterMatchCacheKey {
+    cid: i32,
+    filter_attr: u64,
+    checked_player: u8,
+    checked_area: i16,
+    player_id: u8,
+    activator_id: u8,
+    source_card_id: i32,
+    area_idx: i16,
+    trigger_type: i32,
+    choice_index: i16,
+    program_counter: u16,
+    is_static_eval: bool,
+    auto_pick: bool,
+}
+
+thread_local! {
+    static ACTIVE_FILTER_MATCH_CACHE: RefCell<Option<HashMap<FilterMatchCacheKey, bool>>> =
+        const { RefCell::new(None) };
+}
+
+pub struct FilterMatchCacheScope;
+
+impl FilterMatchCacheScope {
+    pub fn activate() -> Self {
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            *cache.borrow_mut() = Some(HashMap::new());
+        });
+        Self
+    }
+}
+
+impl Drop for FilterMatchCacheScope {
+    fn drop(&mut self) {
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            *cache.borrow_mut() = None;
+        });
+    }
 }
 
 pub fn has_structured_filter_constraints(attr: u64) -> bool {
@@ -500,7 +543,9 @@ impl CardFilter {
             }
         }
 
-        if self.zone_mask != 0 && !card_matches_zone_mask(state, cid, self.zone_mask) {
+        if self.zone_mask != 0
+            && !card_matches_zone_mask(state, cid, self.zone_mask, checked_slot)
+        {
             return false;
         }
 
@@ -973,8 +1018,31 @@ fn sum_matching_hearts(hearts: &[u8; 7], color_mask: u8) -> u8 {
     }
 }
 
-fn card_matches_zone_mask(state: &GameState, cid: i32, zone_mask: u8) -> bool {
-    let in_stage = state.players.iter().any(|player| player.stage.iter().any(|&card_id| card_id == cid));
+fn card_matches_zone_mask(
+    state: &GameState,
+    cid: i32,
+    zone_mask: u8,
+    checked_slot: Option<(u8, i16)>,
+) -> bool {
+    if let Some((_, slot_idx)) = checked_slot {
+        let slot_zone = match slot_idx {
+            0..=99 => Some(ZONE_MASK_STAGE),
+            100..=199 => Some(ZONE_MASK_DISCARD),
+            200..=299 => Some(ZONE_MASK_HAND),
+            _ => None,
+        };
+
+        if let Some(slot_zone) = slot_zone {
+            return match zone_mask as i32 {
+                ZONE_MASK_STAGE => slot_zone == ZONE_MASK_STAGE,
+                ZONE_MASK_HAND => slot_zone == ZONE_MASK_HAND,
+                ZONE_MASK_DISCARD => slot_zone == ZONE_MASK_DISCARD,
+                _ => true,
+            };
+        }
+    }
+
+    let in_stage = state.players.iter().any(|player| player.get_slot_of(cid).is_some());
     let in_hand = state.players.iter().any(|player| player.hand.iter().any(|&card_id| card_id == cid));
     let in_discard = state.players.iter().any(|player| player.discard.iter().any(|&card_id| card_id == cid));
 

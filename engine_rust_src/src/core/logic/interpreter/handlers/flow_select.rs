@@ -1,28 +1,18 @@
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::models::AbilityContext;
-use crate::core::enums::Zone;
 
 use super::*;
 
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::interaction_zone::{
+    cards_for_source_zone, selected_target_key,
+};
 
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, TARGET_SLOT_STAGE};
 
 #[path = "flow_select_resolve.rs"]
 mod flow_select_resolve;
-
-fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: Zone) -> &[i32] {
-    match source_zone {
-        Zone::Hand => state.players[target_player].hand.as_slice(),
-        Zone::Discard => state.players[target_player].discard.as_slice(),
-        _ => state.players[target_player].stage.as_slice(),
-    }
-}
-
-fn selected_target_key(source_zone: Zone, slot_idx: usize) -> i32 {
-    ((source_zone as i32) << 8) | slot_idx as i32
-}
 
 fn resolve_select_member_target_player(
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,

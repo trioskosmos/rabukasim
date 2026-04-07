@@ -350,7 +350,7 @@ fn check_condition_with_parts(
         0 => {
             let my_lives = player.success_lives.len() as i32;
             let opp_lives = opponent.success_lives.len() as i32;
-            compare_i32(my_lives, opp_lives, slot)
+            compare_i32(my_lives, opp_lives, real_slot)
         }
         C_TURN_1 => state.turn == 1,
         C_HAS_MEMBER => {
@@ -364,30 +364,50 @@ fn check_condition_with_parts(
             target_player
                 .stage
                 .iter()
-                .filter(|&&id| id >= 0)
-                .any(|&id| (val != 0 && id == val) || (attr != 0 && state.card_matches_filter(db, id, attr)))
+                .enumerate()
+                .filter(|(_, &id)| id >= 0)
+                .any(|(slot_idx, &id)| {
+                    (val != 0 && id == val)
+                        || (attr != 0
+                            && state.card_matches_filter_with_ctx_at_slot(
+                                db,
+                                id,
+                                attr,
+                                (p_target as u8, slot_idx as i16),
+                                ctx,
+                            ))
+                })
         }
         C_HAS_COLOR => {
             let color_mask = filter.color_mask as u64;
             if color_mask != 0 {
-                player.stage.iter().filter(|&&cid| cid >= 0).any(|&cid| {
-                    if let Some(_m) = db.get_member(cid) {
+                player
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, &cid)| cid >= 0)
+                    .any(|(slot_idx, &cid)| {
+                        if let Some(_m) = db.get_member(cid) {
                         let eff_h = state.get_effective_hearts(
                             p_idx,
-                            player.get_slot_of(cid).unwrap_or(0),
+                            slot_idx,
                             db,
                             depth + 1,
                         );
                         return (eff_h.get_color_mask() as u64 & color_mask) != 0;
                     }
-                    false
-                })
+                        false
+                    })
             } else {
                 let color_idx = semantic.resolved_filter_value(val) as usize;
                 if color_idx < 7 {
-                    player.stage.iter().filter(|&&c| c >= 0).any(|&c| {
-                        if let Some(m) = db.get_member(c) {
+                    player.stage.iter().any(|&c| {
+                        if c >= 0 {
+                            if let Some(m) = db.get_member(c) {
                             m.hearts[color_idx] > 0
+                            } else {
+                                false
+                            }
                         } else {
                             false
                         }
@@ -491,8 +511,19 @@ fn check_condition_with_parts(
             state.players[p_opp]
                 .stage
                 .iter()
-                .filter(|&&id| id >= 0)
-                .any(|&cid| cid == val || (attr != 0 && state.card_matches_filter(db, cid, attr)))
+                .enumerate()
+                .filter(|(_, &id)| id >= 0)
+                .any(|(slot_idx, &cid)| {
+                    cid == val
+                        || (attr != 0
+                            && state.card_matches_filter_with_ctx_at_slot(
+                                db,
+                                cid,
+                                attr,
+                                (p_opp as u8, slot_idx as i16),
+                                ctx,
+                            ))
+                })
         }
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
@@ -974,7 +1005,13 @@ fn check_condition_with_parts(
             slot_info,
             params,
         ),
-        312 => compare_i32(ctx.v_accumulated as i32, val, slot),
+        312 => {
+            if val == 0 && slot == 0 {
+                ctx.v_accumulated as i32 > 0
+            } else {
+                compare_i32(ctx.v_accumulated as i32, val, slot)
+            }
+        }
         313 => {
             let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
                 ctx.area_idx as usize

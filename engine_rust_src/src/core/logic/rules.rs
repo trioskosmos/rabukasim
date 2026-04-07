@@ -40,8 +40,19 @@ fn stage_card_id(state: &GameState, player_idx: usize, slot_idx: usize) -> i32 {
     state.players[player_idx].stage[slot_idx]
 }
 
-fn iter_stage_cards(state: &GameState, player_idx: usize) -> impl Iterator<Item = (usize, i32)> + '_ {
-    (0..3).map(move |slot_idx| (slot_idx, stage_card_id(state, player_idx, slot_idx)))
+fn iter_stage_cards_excluding(
+    state: &GameState,
+    player_idx: usize,
+    excluded_slots: [bool; 3],
+) -> impl Iterator<Item = (usize, i32)> + '_ {
+    (0..3).map(move |slot_idx| {
+        let cid = if excluded_slots[slot_idx] {
+            -1
+        } else {
+            stage_card_id(state, player_idx, slot_idx)
+        };
+        (slot_idx, cid)
+    })
 }
 
 fn frame_uses_count_multiplier(
@@ -106,6 +117,12 @@ fn is_hand_only_self_cost_modifier(
     matches!(count_zone, Some(SemanticCountZone::Hand))
         && frame_data.filter.target_player == TARGET_PLAYER_SELF as u8
         && (frame_data.filter.special_id == 3 || frame_data.compare_accumulated())
+}
+
+pub fn ability_has_hand_only_self_cost_modifier(ab: &Ability) -> bool {
+    cost_scope_frames(ab)
+        .iter()
+        .any(|frame| is_hand_only_self_cost_modifier(&frame.components(), frame.opcode()))
 }
 
 fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
@@ -554,7 +571,7 @@ pub fn calculate_cost_delta(
     }
 }
 
-pub fn get_member_cost(
+fn get_member_cost_impl(
     state: &GameState,
     p_idx: usize,
     card_id: i32,
@@ -562,6 +579,8 @@ pub fn get_member_cost(
     secondary_slot_idx: i16,
     db: &CardDatabase,
     depth: u32,
+    hand_idx_hint: Option<usize>,
+    projected_aura_override: Option<&BoardAura>,
 ) -> i32 {
     if depth > MAX_BLADE_CALC_DEPTH {
         return 0;
@@ -577,16 +596,7 @@ pub fn get_member_cost(
             && candidate_slot < STAGE_SLOT_COUNT as i16
             && state.players[p_idx].stage[candidate_slot as usize] >= 0
     });
-    let projected_state = has_baton_source.then(|| {
-        let mut projected = state.clone();
-        for candidate_slot in [slot_idx, secondary_slot_idx] {
-            if candidate_slot >= 0 && candidate_slot < STAGE_SLOT_COUNT as i16 {
-                projected.players[p_idx].stage[candidate_slot as usize] = -1;
-            }
-        }
-        projected
-    });
-    let cost_state = projected_state.as_ref().unwrap_or(state);
+    let cost_state = state;
     let mut cost = m.cost as i32;
     if state.debug.debug_mode && !state.ui.silent {
         println!(
@@ -594,13 +604,22 @@ pub fn get_member_cost(
             card_id, cost
         );
     }
-    let query_aura = get_query_aura(cost_state, p_idx, db, depth);
-    let mut fallback_aura: Option<BoardAura> = None;
+    let projected_aura_owned = if projected_aura_override.is_none() && has_baton_source {
+        Some(calculate_projected_board_aura(
+            state,
+            p_idx,
+            db,
+            slot_idx,
+            secondary_slot_idx,
+        ))
+    } else {
+        None
+    };
     if state.debug.debug_mode && !state.ui.silent {
         println!(
-            "[DEBUG] get_member_cost aura query: slot_idx={}, query_aura_present={}, cached_modifiers={}",
+            "[DEBUG] get_member_cost aura query: slot_idx={}, projected_aura={}, cached_modifiers={}",
             slot_idx,
-            query_aura.is_some(),
+            projected_aura_override.is_some() || projected_aura_owned.is_some(),
             state.players[p_idx].board_aura.cost_modifiers.len()
         );
     }
@@ -609,7 +628,13 @@ pub fn get_member_cost(
     cost -= cost_state.players[p_idx].cost_reduction as i32;
     // 1b. Target card's own constant cost modifiers while it is in hand.
     // These are not part of the board aura because the source card is not on stage yet.
-    if let Some(hand_idx) = cost_state.players[p_idx].hand.iter().position(|&id| id == card_id) {
+    let resolved_hand_idx = hand_idx_hint.or_else(|| {
+        cost_state.players[p_idx]
+            .hand
+            .iter()
+            .position(|&id| id == card_id)
+    });
+    if let Some(hand_idx) = resolved_hand_idx {
         if let Some(target_m) = db.get_member(card_id) {
             let ctx = AbilityContext {
                 source_card_id: card_id,
@@ -634,10 +659,6 @@ pub fn get_member_cost(
                     if state.debug.debug_mode && !state.ui.silent {
                         println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
                     }
-                    // Evaluate the source card's own constant cost modifiers against the
-                    // real board state. Baton Touch still needs the tapped source member
-                    // present here so card-specific reductions can see it before the slot
-                    // replacement is applied.
                     apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
                 }
             }
@@ -646,14 +667,13 @@ pub fn get_member_cost(
 
     // 2. Baton Touch & Cached Position Modifiers (Rule 12 & Auras)
     if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
-        let aura_ref = query_aura
-            .as_ref()
+        let aura_ref = projected_aura_override
+            .or(projected_aura_owned.as_ref())
             .unwrap_or(&cost_state.players[p_idx].board_aura);
         cost += aura_ref.slot_cost_modifiers[slot_idx as usize] as i32;
 
         for modif in &aura_ref.cost_modifiers {
             if (modif.target_mask & (1 << slot_idx)) != 0 {
-                // Check filters if any
                 let mut apply = true;
                 if modif.filter_mask != 0 {
                     let src_ctx = AbilityContext {
@@ -664,13 +684,11 @@ pub fn get_member_cost(
                         is_static_eval: true,
                         ..Default::default()
                     };
-                    if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx)
-                    {
+                    if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
                         apply = false;
                     }
                 } else if let Some(src_m) = db.get_member(modif.source_cid) {
                     if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
-                        // Filters are now in frame_program, skip filter check for now
                         let _ = ab;
                     }
                 }
@@ -686,13 +704,10 @@ pub fn get_member_cost(
                 cost -= old_m.cost as i32;
             }
         }
-
     } else {
-        let aura_ref = if let Some(aura) = query_aura.as_ref() {
-            aura
-        } else {
-            fallback_aura.get_or_insert_with(|| calculate_board_aura(cost_state, p_idx, db))
-        };
+        let aura_ref = projected_aura_override
+            .or(projected_aura_owned.as_ref())
+            .unwrap_or(&cost_state.players[p_idx].board_aura);
 
         for modif in &aura_ref.cost_modifiers {
             let mut apply = true;
@@ -710,7 +725,6 @@ pub fn get_member_cost(
                 }
             } else if let Some(src_m) = db.get_member(modif.source_cid) {
                 if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
-                    // Filters are now in frame_program, skip filter check for now
                     let _ = ab;
                 }
             }
@@ -729,13 +743,9 @@ pub fn get_member_cost(
         }
     }
 
-    // VANILLA MODE: Skip constant ability cost reductions in abilityless mode
     if db.is_truly_vanilla() {
         return cost.max(0);
     }
-
-    // Phase 2 Optimization: Constant ability cost reductions are now pre-calculated in BoardAura.
-    // We no longer need to iterate over source slots or granted abilities here.
 
     for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
         if state.debug.debug_mode && !state.ui.silent {
@@ -781,7 +791,6 @@ pub fn get_member_cost(
         }
     }
 
-    // 5. Temporary cost modifiers (From Action Phase triggers)
     for (cond, amount) in &state.players[p_idx].cost_modifiers {
         let ctx = AbilityContext {
             source_card_id: card_id,
@@ -797,6 +806,321 @@ pub fn get_member_cost(
     }
 
     cost.max(0)
+}
+
+pub fn get_member_hand_base_cost(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    db: &CardDatabase,
+    depth: u32,
+    hand_idx: usize,
+) -> i32 {
+    if depth > MAX_BLADE_CALC_DEPTH {
+        return 0;
+    }
+    let cost_state = state;
+    let Some(m) = db.get_member(card_id) else {
+        return 0;
+    };
+
+    let mut cost = m.cost as i32;
+    cost -= cost_state.players[p_idx].cost_reduction as i32;
+
+    if !m.has_hand_self_cost_modifiers {
+        return cost;
+    }
+
+    let ctx = AbilityContext {
+        source_card_id: card_id,
+        player_id: p_idx as u8,
+        activator_id: p_idx as u8,
+        area_idx: 200 + hand_idx as i16,
+        is_static_eval: true,
+        ..Default::default()
+    };
+    for (idx, ab) in m.abilities.iter().enumerate() {
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: Checking ab#{}, trigger={:?}", idx, ab.trigger);
+        }
+        if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart) {
+            if !ability_has_hand_only_self_cost_modifier(ab) {
+                continue;
+            }
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: Applying cost modifier ab#{}", idx);
+            }
+            apply_reduce_cost_modifiers(&mut cost, ab, state, db, p_idx, &ctx, depth + 1);
+        }
+    }
+
+    cost
+}
+
+pub fn get_member_cost_from_hand_base_and_aura(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+    db: &CardDatabase,
+    depth: u32,
+    hand_base_cost: i32,
+    projected_aura_override: Option<&BoardAura>,
+) -> i32 {
+    if depth > MAX_BLADE_CALC_DEPTH {
+        return 0;
+    }
+    let Some(_m) = db.get_member(card_id) else {
+        return 0;
+    };
+    let has_baton_source = [slot_idx, secondary_slot_idx].into_iter().any(|candidate_slot| {
+        candidate_slot >= 0
+            && candidate_slot < STAGE_SLOT_COUNT as i16
+            && state.players[p_idx].stage[candidate_slot as usize] >= 0
+    });
+    let cost_state = state;
+    let mut cost = hand_base_cost;
+
+    let projected_aura_owned = if projected_aura_override.is_none() && has_baton_source {
+        Some(calculate_projected_board_aura(
+            state,
+            p_idx,
+            db,
+            slot_idx,
+            secondary_slot_idx,
+        ))
+    } else {
+        None
+    };
+    if state.debug.debug_mode && !state.ui.silent {
+        println!(
+            "[DEBUG] get_member_cost aura query: slot_idx={}, projected_aura={}, cached_modifiers={}",
+            slot_idx,
+            projected_aura_override.is_some() || projected_aura_owned.is_some(),
+            state.players[p_idx].board_aura.cost_modifiers.len()
+        );
+    }
+
+    if slot_idx >= 0 && slot_idx < STAGE_SLOT_COUNT as i16 {
+        let aura_ref = projected_aura_override
+            .or(projected_aura_owned.as_ref())
+            .unwrap_or(&cost_state.players[p_idx].board_aura);
+        cost += aura_ref.slot_cost_modifiers[slot_idx as usize] as i32;
+
+        for modif in &aura_ref.cost_modifiers {
+            if (modif.target_mask & (1 << slot_idx)) != 0 {
+                let mut apply = true;
+                if modif.filter_mask != 0 {
+                    let src_ctx = AbilityContext {
+                        source_card_id: modif.source_cid,
+                        player_id: p_idx as u8,
+                        activator_id: p_idx as u8,
+                        area_idx: -1,
+                        is_static_eval: true,
+                        ..Default::default()
+                    };
+                    if !cost_state.card_matches_filter_with_ctx(
+                        db,
+                        card_id,
+                        modif.filter_mask,
+                        &src_ctx,
+                    ) {
+                        apply = false;
+                    }
+                } else if let Some(src_m) = db.get_member(modif.source_cid) {
+                    if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
+                        let _ = ab;
+                    }
+                }
+                if apply {
+                    cost -= modif.amount as i32;
+                }
+            }
+        }
+
+        let old_cid = state.players[p_idx].stage[slot_idx as usize];
+        if old_cid >= 0 {
+            if let Some(old_m) = db.get_member(old_cid) {
+                cost -= old_m.cost as i32;
+            }
+        }
+    } else {
+        let aura_ref = projected_aura_override
+            .or(projected_aura_owned.as_ref())
+            .unwrap_or(&cost_state.players[p_idx].board_aura);
+
+        for modif in &aura_ref.cost_modifiers {
+            let mut apply = true;
+            if modif.filter_mask != 0 {
+                let src_ctx = AbilityContext {
+                    source_card_id: modif.source_cid,
+                    player_id: p_idx as u8,
+                    activator_id: p_idx as u8,
+                    area_idx: -1,
+                    is_static_eval: true,
+                    ..Default::default()
+                };
+                if !cost_state.card_matches_filter_with_ctx(
+                    db,
+                    card_id,
+                    modif.filter_mask,
+                    &src_ctx,
+                ) {
+                    apply = false;
+                }
+            } else if let Some(src_m) = db.get_member(modif.source_cid) {
+                if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
+                    let _ = ab;
+                }
+            }
+            if apply {
+                cost -= modif.amount as i32;
+            }
+        }
+    }
+
+    if secondary_slot_idx >= 0 && secondary_slot_idx < STAGE_SLOT_COUNT as i16 {
+        let old_cid = state.players[p_idx].stage[secondary_slot_idx as usize];
+        if old_cid >= 0 {
+            if let Some(old_m) = db.get_member(old_cid) {
+                cost -= old_m.cost as i32;
+            }
+        }
+    }
+
+    if db.is_truly_vanilla() {
+        return cost.max(0);
+    }
+
+    for &(target_cid, source_cid, ab_idx) in &state.players[p_idx].granted_abilities {
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: checking granted ability target={} source={} ab_idx={} for card_id={}", target_cid, source_cid, ab_idx, card_id);
+        }
+        if target_cid != card_id {
+            continue;
+        }
+
+        let Some(src_m) = db.get_member(source_cid) else {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: source card {} not found", source_cid);
+            }
+            continue;
+        };
+        let Some(ab) = src_m.abilities.get(ab_idx as usize) else {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: ability {} not found on source {}", ab_idx, source_cid);
+            }
+            continue;
+        };
+        if ab.trigger != TriggerType::Constant {
+            if state.debug.debug_mode && !state.ui.silent {
+                println!("[DEBUG] get_member_cost: ability trigger is {:?}, not Constant", ab.trigger);
+            }
+            continue;
+        }
+
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: applying granted ability from {} ab#{}", source_cid, ab_idx);
+        }
+        let ctx = AbilityContext {
+            source_card_id: card_id,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: slot_idx,
+            is_static_eval: true,
+            ..Default::default()
+        };
+        apply_reduce_cost_modifiers(&mut cost, ab, cost_state, db, p_idx, &ctx, depth + 1);
+        if state.debug.debug_mode && !state.ui.silent {
+            println!("[DEBUG] get_member_cost: after granted ability, cost={}", cost);
+        }
+    }
+
+    for (cond, amount) in &state.players[p_idx].cost_modifiers {
+        let ctx = AbilityContext {
+            source_card_id: card_id,
+            player_id: p_idx as u8,
+            activator_id: p_idx as u8,
+            area_idx: slot_idx as i16,
+            is_static_eval: true,
+            ..Default::default()
+        };
+        if check_condition(cost_state, db, p_idx, cond, &ctx, depth + 1) {
+            cost += *amount;
+        }
+    }
+
+    cost.max(0)
+}
+
+pub fn get_member_cost(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+    db: &CardDatabase,
+    depth: u32,
+) -> i32 {
+    get_member_cost_impl(
+        state,
+        p_idx,
+        card_id,
+        slot_idx,
+        secondary_slot_idx,
+        db,
+        depth,
+        None,
+        None,
+    )
+}
+
+pub fn get_member_cost_with_hand_index(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+    db: &CardDatabase,
+    depth: u32,
+    hand_idx: usize,
+) -> i32 {
+    get_member_cost_impl(
+        state,
+        p_idx,
+        card_id,
+        slot_idx,
+        secondary_slot_idx,
+        db,
+        depth,
+        Some(hand_idx),
+        None,
+    )
+}
+
+pub fn get_member_cost_with_hand_index_and_aura(
+    state: &GameState,
+    p_idx: usize,
+    card_id: i32,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+    db: &CardDatabase,
+    depth: u32,
+    hand_idx: usize,
+    projected_aura: Option<&BoardAura>,
+) -> i32 {
+    get_member_cost_impl(
+        state,
+        p_idx,
+        card_id,
+        slot_idx,
+        secondary_slot_idx,
+        db,
+        depth,
+        Some(hand_idx),
+        projected_aura,
+    )
 }
 
 pub fn has_restriction(
@@ -929,13 +1253,22 @@ pub fn has_restriction(
 }
 
 pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatabase) -> BoardAura {
+    calculate_board_aura_with_exclusions(state, player_idx, db, [false; 3])
+}
+
+fn calculate_board_aura_with_exclusions(
+    state: &GameState,
+    player_idx: usize,
+    db: &CardDatabase,
+    excluded_slots: [bool; 3],
+) -> BoardAura {
     let mut aura = BoardAura::default();
     if db.is_truly_vanilla() {
         return aura;
     }
 
     // 1. Constant abilities from members on stage
-    for (source_slot, cid) in iter_stage_cards(state, player_idx) {
+    for (source_slot, cid) in iter_stage_cards_excluding(state, player_idx, excluded_slots) {
         if cid < 0 {
             continue;
         }
@@ -1121,6 +1454,22 @@ pub fn calculate_board_aura(state: &GameState, player_idx: usize, db: &CardDatab
     }
 
     aura
+}
+
+pub fn calculate_projected_board_aura(
+    state: &GameState,
+    player_idx: usize,
+    db: &CardDatabase,
+    slot_idx: i16,
+    secondary_slot_idx: i16,
+) -> BoardAura {
+    let mut excluded = [false; 3];
+    for candidate_slot in [slot_idx, secondary_slot_idx] {
+        if candidate_slot >= 0 && candidate_slot < STAGE_SLOT_COUNT as i16 {
+            excluded[candidate_slot as usize] = true;
+        }
+    }
+    calculate_board_aura_with_exclusions(state, player_idx, db, excluded)
 }
 
 fn apply_aura_modifier(

@@ -63,7 +63,7 @@ fn test_repro_card_560_double_baton() {
     eprintln!("Double baton cost (replace both): {}", double_cost);
 
     // Verify Action Generation
-    let mut actions = Vec::new();
+    let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, 0, &mut actions);
     eprintln!("Generated actions: {:?}", actions);
 

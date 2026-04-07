@@ -9,6 +9,12 @@ use crate::core::enums::ChoiceType;
 use crate::core::{O_MOVE_TO_DISCARD, O_NOP};
 use super::super::HandlerResult;
 
+fn prompt_ctx_for_target(ctx: &AbilityContext, target_player_idx: usize) -> AbilityContext {
+    let mut prompt_ctx = ctx.clone();
+    prompt_ctx.player_id = target_player_idx as u8;
+    prompt_ctx
+}
+
 pub fn handle_move_to_discard(
     state: &mut GameState,
     db: &CardDatabase,
@@ -99,16 +105,18 @@ pub fn handle_move_to_discard(
         if !is_optional && count == 1 && available_count == 1 {
             next_ctx.choice_index = 0;
         } else if is_optional && is_deck_zone(source_zone) {
+            let prompt_ctx = prompt_ctx_for_target(&next_ctx, target_player_idx);
             // Optional deck discard - ask yes/no
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, ChoiceType::Optional, filter_attr, count as i16),
+                suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, ChoiceType::Optional, filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
             }
         } else if count > 0 && !is_deck_zone(source_zone) {
+            let prompt_ctx = prompt_ctx_for_target(&next_ctx, target_player_idx);
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, v as i16),
+                suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -136,8 +144,9 @@ pub fn handle_move_to_discard(
         if next_ctx.choice_index == CHOICE_DONE {
             if next_ctx.v_remaining > 0 || (next_ctx.v_remaining == -1 && count > 0) {
                 let remaining = if next_ctx.v_remaining > 0 { next_ctx.v_remaining } else { count as i16 };
+                let prompt_ctx = prompt_ctx_for_target(&next_ctx, target_player_idx);
                 if matches!(
-                    suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, filter_attr, remaining),
+                    suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, remaining),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;
@@ -169,7 +178,14 @@ pub fn handle_move_to_discard(
 
         // Check if more cards needed
         if next_ctx.v_remaining > 0 {
-            let still_available = has_available_filtered(state, db, target_player_idx, source_zone, filter_attr, &next_ctx);
+            let still_available = has_available_filtered(
+                state,
+                db,
+                target_player_idx,
+                source_zone,
+                discard.prompt_filter_attr,
+                &next_ctx,
+            );
 
             if !still_available {
                 finish_pending_interaction(state);
@@ -194,8 +210,9 @@ pub fn handle_move_to_discard(
             }
 
             let v_remaining = next_ctx.v_remaining;
+            let prompt_ctx = prompt_ctx_for_target(&next_ctx, target_player_idx);
             if matches!(
-                suspend_choice(state, db, ctx, &mut next_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, filter_attr, v_remaining),
+                suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, v_remaining),
                 HandlerResult::Suspend
             ) {
                 return HandlerResult::Suspend;
@@ -219,6 +236,7 @@ pub fn handle_move_to_discard(
     if !next_ctx.selected_cards.is_empty() {
         ctx.selected_cards = next_ctx.selected_cards.clone();
     }
+    ctx.v_accumulated = next_ctx.selected_cards.len() as i16;
     ctx.choice_index = -1;
     ctx.v_remaining = -1;
 
@@ -261,14 +279,53 @@ fn has_available_filtered(
     filter_attr: u64,
     ctx: &AbilityContext,
 ) -> bool {
+    let filter = CardFilter::from_attr(filter_attr);
     match zone {
-        Zone::Hand => state.players[player_idx].hand.iter().any(|&c| {
-            CardFilter::from_attr(filter_attr).matches(state, db, c, None, false, None, ctx)
-        }),
-        Zone::Stage => state.players[player_idx].stage.iter().any(|&c| {
-            if c < 0 { return false; }
-            CardFilter::from_attr(filter_attr).matches(state, db, c, None, false, None, ctx)
-        }),
+        Zone::Hand => {
+            let hand_filter_attr = filter_attr
+                & !0x3
+                & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+            if hand_filter_attr == 0 {
+                state.players[player_idx].hand.iter().any(|&card_id| card_id >= 0)
+            } else {
+                let hand_filter = CardFilter::from_attr(hand_filter_attr);
+                let mut filter_ctx = ctx.clone();
+                filter_ctx.player_id = ctx.activator_id;
+                state.players[player_idx]
+                    .hand
+                    .iter()
+                    .enumerate()
+                    .any(|(idx, &card_id)| {
+                        hand_filter.matches(
+                            state,
+                            db,
+                            card_id,
+                            Some((player_idx as u8, 200 + idx as i16)),
+                            false,
+                            None,
+                            &filter_ctx,
+                        )
+                    })
+            }
+        }
+        Zone::Stage => state.players[player_idx]
+            .stage
+            .iter()
+            .enumerate()
+            .any(|(idx, &card_id)| {
+                if card_id < 0 {
+                    return false;
+                }
+                filter.matches(
+                    state,
+                    db,
+                    card_id,
+                    Some((player_idx as u8, idx as i16)),
+                    false,
+                    None,
+                    ctx,
+                )
+            }),
         _ => true,
     }
 }

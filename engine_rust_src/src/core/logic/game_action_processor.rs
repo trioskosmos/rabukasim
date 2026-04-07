@@ -10,6 +10,24 @@ use super::handlers::{
 };
 use crate::core::heuristics::OriginalHeuristic;
 use crate::core::mcts::{SearchHorizon, MCTS};
+use std::time::Instant;
+
+fn play_member_profile_enabled() -> bool {
+    std::env::var("BENCH_PROFILE_PLAY_MEMBER")
+        .ok()
+        .map(|value| {
+            let value = value.trim();
+            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
+        })
+        .unwrap_or(false)
+}
+
+fn play_member_profile_threshold_us() -> u64 {
+    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(2000)
+}
 
 impl GameState {
     pub fn step(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
@@ -115,6 +133,12 @@ impl GameState {
         db: &CardDatabase,
         ctx: &AbilityContext,
     ) -> Option<i32> {
+        let profile_enabled = play_member_profile_enabled();
+        let profile_start = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
         if slot >= 3 {
             return None;
         }
@@ -131,8 +155,21 @@ impl GameState {
         leave_ctx.source_card_id = cid;
         leave_ctx.area_idx = slot as i16;
 
+        let t_trigger = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
         self.trigger_abilities(db, TriggerType::OnLeaves, &leave_ctx);
+        let trigger_us = t_trigger
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
 
+        let t_mutate = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
         self.core.players[p_idx]
             .granted_abilities
             .retain(|(target_cid, _, _)| *target_cid != cid);
@@ -144,6 +181,24 @@ impl GameState {
 
         self.core.players[p_idx].set_tapped(slot, false);
         self.core.players[p_idx].set_moved(slot, false);
+        let mutate_us = t_mutate
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+
+        if let Some(profile_start) = profile_start {
+            let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
+            if total_us >= play_member_profile_threshold_us() {
+                println!(
+                    "[PROFILE] MemberLeaves total_us={} trigger_us={} mutate_us={} p={} slot={} cid={}",
+                    total_us,
+                    trigger_us,
+                    mutate_us,
+                    p_idx,
+                    slot,
+                    cid
+                );
+            }
+        }
 
         Some(cid as i32)
     }

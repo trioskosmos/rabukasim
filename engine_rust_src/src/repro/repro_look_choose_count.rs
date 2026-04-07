@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::generated_constants::ACTION_BASE_HAND_SELECT;
+    use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT};
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
@@ -219,8 +219,8 @@ mod tests {
             .actions
             .iter()
             .copied()
-            .find(|action| *action > 0)
-            .expect("expected the deck-peek prompt to expose a resolving action");
+            .find(|action| *action >= ACTION_BASE_CHOICE)
+            .expect("expected the deck-peek prompt to expose a looked-card selection action");
 
         state
             .step(&db, resolve_action)

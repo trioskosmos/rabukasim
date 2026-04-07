@@ -109,10 +109,8 @@ class DataStore:
 
         # Load generated ability index used for inspection.
         try:
-            runtime_index_path = os.path.join(self.base_path, "data", "ability_runtime_index.json")
             source_index_path = os.path.join(self.base_path, "data", "ability_frame_source.json")
-            source_path = runtime_index_path if os.path.exists(runtime_index_path) else source_index_path
-            with open(source_path, "r", encoding="utf-8") as f:
+            with open(source_index_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # Create a card_no mapping for faster lookup
                 self.consolidated_pseudo = {}

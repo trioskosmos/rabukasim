@@ -627,8 +627,7 @@ impl PlayerState {
         self.set_baton_touch_limit(other.baton_touch_limit());
         self.score = other.score;
         self.current_turn_notes = other.current_turn_notes;
-        self.used_abilities.clear();
-        self.used_abilities.extend_from_slice(&other.used_abilities);
+        self.used_abilities = other.used_abilities.clone();
         self.live_score_bonus = other.live_score_bonus;
         self.live_score_bonus_logs.clear();
         self.live_score_bonus_logs

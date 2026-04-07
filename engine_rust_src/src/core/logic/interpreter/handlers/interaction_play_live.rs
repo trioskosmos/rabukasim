@@ -2,6 +2,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::*;
 use crate::core::logic::constants::{CHOICE_DONE, STAGE_SLOT_COUNT};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::interaction_zone::collect_live_discard_selection_cards;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -36,22 +37,22 @@ pub fn handle_play_live_from_discard(
         if ctx.choice_index == -1 {
             state.players[target_p_idx].looked_cards.clear();
             let filter_attr = a as u64;
-            let matched_ids: Vec<i32> = state.players[target_p_idx]
-                .discard
-                .iter()
-                .filter(|&&cid| {
-                    db.get_live(cid).is_some()
-                        && (filter_attr == 0
-                            || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx))
-                })
-                .cloned()
-                .collect();
+            let matched_ids = collect_live_discard_selection_cards(
+                state,
+                db,
+                ctx,
+                target_p_idx,
+                filter_attr,
+            );
             state.players[target_p_idx].looked_cards.extend(matched_ids);
             if state.players[target_p_idx].looked_cards.is_empty() {
                 return HandlerResult::Continue;
             }
             let mut target_ctx = ctx.clone();
             target_ctx.player_id = target_p_idx as u8;
+            target_ctx.v_remaining = remaining;
+            target_ctx.v_accumulated = ctx.v_accumulated;
+            target_ctx.choice_index = -1;
             if matches!(
                 suspend_choice(
                     state,

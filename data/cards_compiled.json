@@ -267,7 +267,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -2495,7 +2500,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -2681,7 +2691,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -4068,7 +4083,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -4232,7 +4252,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -6212,7 +6237,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -6320,7 +6350,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -6428,7 +6463,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -6536,7 +6576,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -6644,7 +6689,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -11596,7 +11646,10 @@
                 "count": 4
               },
               "target": 0,
-              "params": {},
+              "params": {
+                "count": 4,
+                "choose_count": 2
+              },
               "is_optional": false
             },
             {
@@ -11826,7 +11879,10 @@
                 "count": 4
               },
               "target": 0,
-              "params": {},
+              "params": {
+                "count": 4,
+                "choose_count": 2
+              },
               "is_optional": false
             },
             {
@@ -12056,7 +12112,10 @@
                 "count": 4
               },
               "target": 0,
-              "params": {},
+              "params": {
+                "count": 4,
+                "choose_count": 2
+              },
               "is_optional": false
             },
             {
@@ -12286,7 +12345,10 @@
                 "count": 4
               },
               "target": 0,
-              "params": {},
+              "params": {
+                "count": 4,
+                "choose_count": 2
+              },
               "is_optional": false
             },
             {
@@ -15470,7 +15532,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -15644,7 +15711,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -16862,7 +16934,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -17155,7 +17232,12 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -21996,7 +22078,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -27542,7 +27629,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -27725,7 +27817,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -27908,7 +28005,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -28091,7 +28193,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -32796,7 +32903,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -32944,7 +33056,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -37294,6 +37411,16 @@
               "is_optional": false
             },
             {
+              "effect_type": 29,
+              "value": 0,
+              "target": 0,
+              "params": {
+                "offset": 1,
+                "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+              },
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 0,
@@ -37319,7 +37446,7 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 4
+                "value": 5
               },
               {
                 "op": "SELECT_MEMBER",
@@ -37336,22 +37463,29 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "META_RULE",
                 "frame_index": 3,
+                "params": {
+                  "offset": 1,
+                  "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+                }
+              },
+              {
+                "op": "NOP",
+                "frame_index": 4,
                 "value": 10,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                "params": {
+                  "raw_cond": "SOURCE_MEMBER_COST_GE"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
@@ -37363,7 +37497,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
@@ -37436,6 +37570,16 @@
               "is_optional": false
             },
             {
+              "effect_type": 29,
+              "value": 0,
+              "target": 0,
+              "params": {
+                "offset": 1,
+                "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+              },
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 0,
@@ -37461,7 +37605,7 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 4
+                "value": 5
               },
               {
                 "op": "SELECT_MEMBER",
@@ -37478,22 +37622,29 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "META_RULE",
                 "frame_index": 3,
+                "params": {
+                  "offset": 1,
+                  "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+                }
+              },
+              {
+                "op": "NOP",
+                "frame_index": 4,
                 "value": 10,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                "params": {
+                  "raw_cond": "SOURCE_MEMBER_COST_GE"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
@@ -37505,7 +37656,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
@@ -37578,6 +37729,16 @@
               "is_optional": false
             },
             {
+              "effect_type": 29,
+              "value": 0,
+              "target": 0,
+              "params": {
+                "offset": 1,
+                "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+              },
+              "is_optional": false
+            },
+            {
               "effect_type": 12,
               "value": 1,
               "target": 0,
@@ -37603,7 +37764,7 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 4
+                "value": 5
               },
               {
                 "op": "SELECT_MEMBER",
@@ -37620,22 +37781,29 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "META_RULE",
                 "frame_index": 3,
+                "params": {
+                  "offset": 1,
+                  "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+                }
+              },
+              {
+                "op": "NOP",
+                "frame_index": 4,
                 "value": 10,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                "params": {
+                  "raw_cond": "SOURCE_MEMBER_COST_GE"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 5,
                 "value": 1
               },
               {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 6,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
@@ -37647,7 +37815,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 7
               }
             ]
           },
@@ -61282,7 +61450,9 @@
               "effect_type": 96,
               "value": 0,
               "target": 0,
-              "params": {},
+              "params": {
+                "source": "selected_live_score"
+              },
               "is_optional": false
             },
             {
@@ -61429,7 +61599,9 @@
               "effect_type": 96,
               "value": 0,
               "target": 0,
-              "params": {},
+              "params": {
+                "source": "selected_live_score"
+              },
               "is_optional": false
             },
             {
@@ -61576,7 +61748,9 @@
               "effect_type": 96,
               "value": 0,
               "target": 0,
-              "params": {},
+              "params": {
+                "source": "selected_live_score"
+              },
               "is_optional": false
             },
             {
@@ -62220,7 +62394,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 10,
                   "is_cost_type": 1
@@ -62245,7 +62419,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 15,
                   "is_cost_type": 1
@@ -62362,7 +62536,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 10,
                   "is_cost_type": 1
@@ -62387,7 +62561,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 15,
                   "is_cost_type": 1
@@ -62504,7 +62678,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 10,
                   "is_cost_type": 1
@@ -62529,7 +62703,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 15,
                   "is_cost_type": 1
@@ -62646,7 +62820,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 10,
                   "is_cost_type": 1
@@ -62671,7 +62845,7 @@
                 "attr": {
                   "group_enabled": 1,
                   "group_id": "NIJIGASAKI",
-                  "has_blade_heart": 1,
+                  "not_has_blade_heart": 1,
                   "value_enabled": 1,
                   "value_threshold": 15,
                   "is_cost_type": 1
@@ -63060,15 +63234,20 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "YELLOW"
+              },
               "is_optional": false
             }
           ],
           "frame_program": {
             "frames": [
               {
-                "op": "SCORE_COMPARE",
-                "frame_index": 0
+                "op": "NOP",
+                "frame_index": 0,
+                "params": {
+                  "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+                }
               },
               {
                 "op": "JUMP_IF_FALSE",
@@ -63080,10 +63259,13 @@
                 "frame_index": 2,
                 "value": 2,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "YELLOW"
                 }
               },
               {
@@ -63093,15 +63275,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 220,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp5-007-AR"
@@ -63235,15 +63409,20 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "YELLOW"
+              },
               "is_optional": false
             }
           ],
           "frame_program": {
             "frames": [
               {
-                "op": "SCORE_COMPARE",
-                "frame_index": 0
+                "op": "NOP",
+                "frame_index": 0,
+                "params": {
+                  "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+                }
               },
               {
                 "op": "JUMP_IF_FALSE",
@@ -63255,10 +63434,13 @@
                 "frame_index": 2,
                 "value": 2,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "YELLOW"
                 }
               },
               {
@@ -63268,15 +63450,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 220,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp5-007-R+"
@@ -63410,15 +63584,20 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "YELLOW"
+              },
               "is_optional": false
             }
           ],
           "frame_program": {
             "frames": [
               {
-                "op": "SCORE_COMPARE",
-                "frame_index": 0
+                "op": "NOP",
+                "frame_index": 0,
+                "params": {
+                  "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+                }
               },
               {
                 "op": "JUMP_IF_FALSE",
@@ -63430,10 +63609,13 @@
                 "frame_index": 2,
                 "value": 2,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "YELLOW"
                 }
               },
               {
@@ -63443,15 +63625,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 220,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp5-007-P"
@@ -63585,15 +63759,20 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "YELLOW"
+              },
               "is_optional": false
             }
           ],
           "frame_program": {
             "frames": [
               {
-                "op": "SCORE_COMPARE",
-                "frame_index": 0
+                "op": "NOP",
+                "frame_index": 0,
+                "params": {
+                  "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+                }
               },
               {
                 "op": "JUMP_IF_FALSE",
@@ -63605,10 +63784,13 @@
                 "frame_index": 2,
                 "value": 2,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "YELLOW"
                 }
               },
               {
@@ -63618,15 +63800,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 220,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp5-007-SEC"
@@ -69281,7 +69455,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -69430,7 +69609,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -82633,7 +82817,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -82780,7 +82969,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -82927,7 +83121,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -83074,7 +83273,12 @@
               "effect_type": 11,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -85662,7 +85866,12 @@
               "effect_type": 70,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -109711,7 +109920,12 @@
               "effect_type": 11,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -123768,7 +123982,12 @@
               "effect_type": 16,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -125657,7 +125876,12 @@
               "effect_type": 16,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -125741,7 +125965,12 @@
               "effect_type": 48,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -127961,7 +128190,12 @@
               "effect_type": 16,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -128977,7 +129211,12 @@
               "effect_type": 48,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -130031,7 +130270,12 @@
               "effect_type": 16,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -130347,7 +130591,12 @@
               "effect_type": 12,
               "value": 3,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 3,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -130912,7 +131161,12 @@
               "effect_type": 16,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -131343,7 +131597,12 @@
               "effect_type": 16,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             },
             {
@@ -136466,14 +136725,24 @@
               "effect_type": 10,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             },
             {
               "effect_type": 58,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
               "is_optional": false
             }
           ],
@@ -138986,7 +139255,12 @@
               "effect_type": 16,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 4
+                }
+              },
               "is_optional": false
             }
           ],

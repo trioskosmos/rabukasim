@@ -1,7 +1,47 @@
 use crate::core::logic::constants::*;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::models::{AbilityFrameComponents, SemanticCountZone};
+use crate::core::enums::TriggerType;
+use crate::core::models::Zone;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+
+fn needs_card_scan(filter: &CardFilter) -> bool {
+    filter.card_type != 0
+        || filter.group_enabled
+        || filter.unit_enabled
+        || filter.is_tapped
+        || filter.has_blade_heart
+        || filter.not_has_blade_heart
+        || filter.value_enabled
+        || filter.color_mask != 0
+        || filter.char_id_1 != 0
+        || filter.char_id_2 != 0
+        || filter.char_id_3 != 0
+        || filter.special_id != 0
+        || filter.is_setsuna
+        || filter.compare_accumulated
+        || filter.is_optional
+        || filter.keyword_energy
+        || filter.keyword_member
+}
+
+fn count_zone_len(cards: &[i32]) -> i32 {
+    cards.iter().filter(|&&id| id >= 0).count() as i32
+}
+
+fn count_dense_zone_len(cards: &[i32]) -> i32 {
+    cards.len() as i32
+}
+
+fn zone_mask_blocks_simple_count(filter: &CardFilter, expected_mask: u8) -> bool {
+    match filter.zone_mask as i32 {
+        0 => false,
+        ZONE_MASK_STAGE => expected_mask != Zone::Stage as u8,
+        ZONE_MASK_HAND => expected_mask != Zone::Hand as u8,
+        ZONE_MASK_DISCARD => expected_mask != Zone::Discard as u8,
+        _ => false,
+    }
+}
 
 fn decode_count_filter(attr: u64) -> CardFilter {
     let mut filter = CardFilter::from_attr(attr);
@@ -151,6 +191,47 @@ fn resolve_structured_zone_count(
     };
     let check_success =
         is_explicit_success_count || inferred_zone == Some(SemanticCountZone::SuccessPile);
+    let can_use_simple_len = !frame.counts_unique_names() && !needs_card_scan(&filter);
+
+    if can_use_simple_len {
+        if check_stage {
+            if zone_mask_blocks_simple_count(&filter, Zone::Stage as u8) {
+                return 0;
+            }
+            let mut total = count_zone_len(&state.players[stage_primary_player].stage);
+            if let Some(other_player) = stage_secondary_player {
+                total += count_zone_len(&state.players[other_player].stage);
+            }
+            return total;
+        }
+        if check_discard {
+            if zone_mask_blocks_simple_count(&filter, Zone::Discard as u8) {
+                return 0;
+            }
+            let mut total = count_dense_zone_len(&state.players[p_idx].discard);
+            if include_opponent {
+                total += count_dense_zone_len(&state.players[1 - p_idx].discard);
+            }
+            return total;
+        }
+        if check_hand {
+            if zone_mask_blocks_simple_count(&filter, Zone::Hand as u8) {
+                return 0;
+            }
+            let mut total = count_dense_zone_len(&state.players[p_idx].hand);
+            if include_opponent {
+                total += count_dense_zone_len(&state.players[1 - p_idx].hand);
+            }
+            return total;
+        }
+        if check_success {
+            let mut total = state.players[p_idx].success_lives.len() as i32;
+            if include_opponent {
+                total += state.players[1 - p_idx].success_lives.len() as i32;
+            }
+            return total;
+        }
+    }
 
     let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
 
@@ -228,6 +309,10 @@ fn resolve_live_zone_count(
     let p_idx = ctx.activator_id as usize;
     let player = &state.players[p_idx];
     let filter = frame.filter;
+
+    if !frame.counts_unique_names() && !needs_card_scan(&filter) {
+        return count_zone_len(&player.live_zone);
+    }
 
     if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();
@@ -350,9 +435,18 @@ fn resolve_count_components(
             }
             C_COUNT_ENERGY => {
                 let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
-                let mut total = state.players[primary_player].energy_zone.len() as i32;
+                let count_energy = |player_idx: usize| -> i32 {
+                    if ctx.trigger_type == TriggerType::OnPlay {
+                        state.players[player_idx].energy_zone.len() as i32
+                    } else {
+                        (state.players[player_idx].energy_zone.len()
+                            - state.players[player_idx].tapped_energy_count() as usize)
+                            as i32
+                    }
+                };
+                let mut total = count_energy(primary_player);
                 if let Some(other_player) = secondary_player {
-                    total += state.players[other_player].energy_zone.len() as i32;
+                    total += count_energy(other_player);
                 }
                 total
             }
@@ -482,30 +576,68 @@ pub fn get_condition_count(
 
     match cond_id {
         C_COUNT_STAGE => {
-            let mut total = count_zone(&state.players[primary_player].stage);
-            if let Some(other_player) = secondary_player {
-                total += count_zone(&state.players[other_player].stage);
+            if !filter.unique_names && !needs_card_scan(&filter) {
+                if zone_mask_blocks_simple_count(&filter, Zone::Stage as u8) {
+                    0
+                } else {
+                    let mut total = count_dense_zone_len(&state.players[primary_player].stage);
+                    if let Some(other_player) = secondary_player {
+                        total += count_dense_zone_len(&state.players[other_player].stage);
+                    }
+                    total
+                }
+            } else {
+                let mut total = count_zone(&state.players[primary_player].stage);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].stage);
+                }
+                total
             }
-            total
         }
         C_COUNT_HAND => {
-            let mut total = count_zone(&state.players[primary_player].hand);
-            if let Some(other_player) = secondary_player {
-                total += count_zone(&state.players[other_player].hand);
+            if !filter.unique_names && !needs_card_scan(&filter) {
+                if zone_mask_blocks_simple_count(&filter, Zone::Hand as u8) {
+                    0
+                } else {
+                    let mut total = count_dense_zone_len(&state.players[primary_player].hand);
+                    if let Some(other_player) = secondary_player {
+                        total += count_dense_zone_len(&state.players[other_player].hand);
+                    }
+                    total
+                }
+            } else {
+                let mut total = count_zone(&state.players[primary_player].hand);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].hand);
+                }
+                total
             }
-            total
         }
         C_COUNT_DISCARD => {
-            let mut total = count_zone(&state.players[primary_player].discard);
-            if let Some(other_player) = secondary_player {
-                total += count_zone(&state.players[other_player].discard);
+            if !filter.unique_names && !needs_card_scan(&filter) {
+                if zone_mask_blocks_simple_count(&filter, Zone::Discard as u8) {
+                    0
+                } else {
+                    let mut total = count_dense_zone_len(&state.players[primary_player].discard);
+                    if let Some(other_player) = secondary_player {
+                        total += count_dense_zone_len(&state.players[other_player].discard);
+                    }
+                    total
+                }
+            } else {
+                let mut total = count_zone(&state.players[primary_player].discard);
+                if let Some(other_player) = secondary_player {
+                    total += count_zone(&state.players[other_player].discard);
+                }
+                total
             }
-            total
         }
         C_COUNT_ENERGY => {
-            let mut total = state.players[primary_player].energy_zone.len() as i32;
+            let mut total = (state.players[primary_player].energy_zone.len()
+                - state.players[primary_player].tapped_energy_count() as usize) as i32;
             if let Some(other_player) = secondary_player {
-                total += state.players[other_player].energy_zone.len() as i32;
+                total += (state.players[other_player].energy_zone.len()
+                    - state.players[other_player].tapped_energy_count() as usize) as i32;
             }
             total
         }

@@ -1,4 +1,5 @@
 use engine_rust::core::enums::Phase;
+use engine_rust::core::logic::action_factory::DecodedAction;
 use engine_rust::core::logic::{CardDatabase, GameState, PendingInteraction};
 use rand::rngs::SmallRng;
 use rand::seq::{IndexedRandom, SliceRandom};
@@ -13,22 +14,56 @@ const DEFAULT_BENCH_SECS: u64 = 10;
 const DEFAULT_WARMUP_GAMES: usize = 4;
 const DEFAULT_MAX_STEPS: usize = 6000;
 const DEFAULT_SLOW_US: u64 = 2_000;
-const DEFAULT_REPEAT_LIMIT: u32 = 14;
-const DEFAULT_SAME_STATE_LIMIT: u32 = 6;
+const DEFAULT_REPEAT_LIMIT: u32 = 24;
+const DEFAULT_SAME_STATE_LIMIT: u32 = 10;
 const TOP_SLOW_EVENTS: usize = 20;
 const TOP_STEP_ERRORS: usize = 20;
 const TOP_STALLS: usize = 12;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum TimedOp {
-    LegalActions,
-    Step,
-    AutoStepFallback,
+    LegalActionsMain,
+    LegalActionsLiveSet,
+    LegalActionsResponse,
+    LegalActionsOther,
+    StepInternalMain,
+    StepInternalLiveSet,
+    StepInternalResponse,
+    StepInternalLiveResult,
+    StepInternalOther,
+    AutoStepAfterMain,
+    AutoStepAfterLiveSet,
+    AutoStepAfterResponse,
+    AutoStepAfterLiveResult,
+    AutoStepAfterOther,
+    SyncStatsAfterStep,
+    StepResidualMain,
+    StepResidualLiveSet,
+    StepResidualResponse,
+    StepResidualLiveResult,
+    StepResidualOther,
+    StepMain,
+    StepLiveSet,
+    StepResponse,
+    StepLiveResult,
+    StepActive,
+    StepDraw,
+    StepRps,
+    StepTurnChoice,
+    StepEnergy,
+    StepPerformance,
+    StepTerminal,
+    StepOther,
+    AutoStepFallbackMain,
+    AutoStepFallbackLiveSet,
+    AutoStepFallbackResponse,
+    AutoStepFallbackOther,
 }
 
 #[derive(Debug, Default, Clone)]
 struct OpStats {
     calls: u64,
     total_ns: u64,
+    total_sq_ns: f64,
     max_ns: u64,
 }
 
@@ -67,10 +102,19 @@ struct Snapshot {
 struct SlowEvent {
     op: TimedOp,
     phase: Phase,
+    end_phase: Phase,
     duration_us: u64,
     action: Option<i32>,
     legal_count: usize,
     snapshot: Snapshot,
+}
+
+#[derive(Debug, Clone)]
+struct StateCostRecord {
+    count: u64,
+    total_ns: u64,
+    max_ns: u64,
+    sample: Snapshot,
 }
 
 #[derive(Debug, Clone)]
@@ -92,9 +136,11 @@ struct StallRecord {
 #[derive(Debug, Default)]
 struct Telemetry {
     by_op: HashMap<TimedOp, OpStats>,
+    state_costs: HashMap<(TimedOp, u64), StateCostRecord>,
     slow_events: Vec<SlowEvent>,
     stalls: HashMap<u64, StallRecord>,
-    ignored_pass_loops: u64,
+    benign_pass_loops: u64,
+    real_no_progress_events: u64,
     step_errors: u64,
     step_error_records: HashMap<String, StepErrorRecord>,
 }
@@ -218,6 +264,64 @@ impl Snapshot {
             self.p1_state_hash,
         )
     }
+
+    fn detailed_zones(&self, db: &CardDatabase) -> String {
+        format!(
+            "stage0={} | stage1={} | live0={} | live1={}",
+            format_card_list(db, &self.p0_stage),
+            format_card_list(db, &self.p1_stage),
+            format_card_list(db, &self.p0_live),
+            format_card_list(db, &self.p1_live),
+        )
+    }
+}
+
+fn card_label(db: &CardDatabase, cid: i32) -> String {
+    if cid < 0 {
+        return "-".to_string();
+    }
+
+    if let Some(card) = db.get_member(cid) {
+        return format!("{}:{}", cid, card.name);
+    }
+
+    if let Some(card) = db.get_live(cid) {
+        return format!("{}:{}", cid, card.name);
+    }
+
+    cid.to_string()
+}
+
+fn format_card_list<const N: usize>(db: &CardDatabase, cards: &[i32; N]) -> String {
+    let labels: Vec<_> = cards.iter().map(|&cid| card_label(db, cid)).collect();
+    format!("[{}]", labels.join(", "))
+}
+
+fn describe_action(snapshot: &Snapshot, action: Option<i32>, db: &CardDatabase) -> String {
+    let Some(action) = action else {
+        return "action=<none>".to_string();
+    };
+
+    let decoded = DecodedAction::decode(action);
+    let actor = match decoded {
+        DecodedAction::ActivateMember { slot_idx, .. } => {
+            let cid = if snapshot.current_player == 0 {
+                snapshot.p0_stage.get(slot_idx).copied().unwrap_or(-1)
+            } else {
+                snapshot.p1_stage.get(slot_idx).copied().unwrap_or(-1)
+            };
+            format!(" source={}", card_label(db, cid))
+        }
+        DecodedAction::SelectStageSlot { slot_idx } => {
+            format!(" slot={}", slot_idx)
+        }
+        DecodedAction::SelectMode { mode_idx } => {
+            format!(" mode={}", mode_idx)
+        }
+        _ => String::new(),
+    };
+
+    format!("action={:?}{}", decoded, actor)
 }
 
 impl Telemetry {
@@ -225,6 +329,7 @@ impl Telemetry {
         &mut self,
         op: TimedOp,
         phase: Phase,
+        end_phase: Phase,
         elapsed_ns: u64,
         action: Option<i32>,
         legal_count: usize,
@@ -234,13 +339,26 @@ impl Telemetry {
         let entry = self.by_op.entry(op).or_default();
         entry.calls += 1;
         entry.total_ns += elapsed_ns;
+        entry.total_sq_ns += (elapsed_ns as f64) * (elapsed_ns as f64);
         entry.max_ns = entry.max_ns.max(elapsed_ns);
+
+        let state_key = (op, snapshot.fingerprint());
+        let state_entry = self.state_costs.entry(state_key).or_insert_with(|| StateCostRecord {
+            count: 0,
+            total_ns: 0,
+            max_ns: 0,
+            sample: snapshot.clone(),
+        });
+        state_entry.count += 1;
+        state_entry.total_ns += elapsed_ns;
+        state_entry.max_ns = state_entry.max_ns.max(elapsed_ns);
 
         let elapsed_us = elapsed_ns / 1000;
         if elapsed_us >= slow_us || self.slow_events.len() < TOP_SLOW_EVENTS {
             self.slow_events.push(SlowEvent {
                 op,
                 phase,
+                end_phase,
                 duration_us: elapsed_us,
                 action,
                 legal_count,
@@ -254,6 +372,7 @@ impl Telemetry {
                 self.slow_events.push(SlowEvent {
                     op,
                     phase,
+                    end_phase,
                     duration_us: elapsed_us,
                     action,
                     legal_count,
@@ -350,6 +469,71 @@ fn env_usize(key: &str, default: usize) -> usize {
         .unwrap_or(default)
 }
 
+fn timed_op_for_legal(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::LegalActionsMain,
+        Phase::LiveSet => TimedOp::LegalActionsLiveSet,
+        Phase::Response => TimedOp::LegalActionsResponse,
+        _ => TimedOp::LegalActionsOther,
+    }
+}
+
+fn timed_op_for_step(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::StepMain,
+        Phase::LiveSet => TimedOp::StepLiveSet,
+        Phase::Response => TimedOp::StepResponse,
+        Phase::LiveResult => TimedOp::StepLiveResult,
+        Phase::Active => TimedOp::StepActive,
+        Phase::Draw => TimedOp::StepDraw,
+        Phase::Rps => TimedOp::StepRps,
+        Phase::TurnChoice => TimedOp::StepTurnChoice,
+        Phase::Energy => TimedOp::StepEnergy,
+        Phase::PerformanceP1 | Phase::PerformanceP2 => TimedOp::StepPerformance,
+        Phase::Terminal => TimedOp::StepTerminal,
+        _ => TimedOp::StepOther,
+    }
+}
+
+fn timed_op_for_step_internal(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::StepInternalMain,
+        Phase::LiveSet => TimedOp::StepInternalLiveSet,
+        Phase::Response => TimedOp::StepInternalResponse,
+        Phase::LiveResult => TimedOp::StepInternalLiveResult,
+        _ => TimedOp::StepInternalOther,
+    }
+}
+
+fn timed_op_for_post_autostep(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::AutoStepAfterMain,
+        Phase::LiveSet => TimedOp::AutoStepAfterLiveSet,
+        Phase::Response => TimedOp::AutoStepAfterResponse,
+        Phase::LiveResult => TimedOp::AutoStepAfterLiveResult,
+        _ => TimedOp::AutoStepAfterOther,
+    }
+}
+
+fn timed_op_for_step_residual(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::StepResidualMain,
+        Phase::LiveSet => TimedOp::StepResidualLiveSet,
+        Phase::Response => TimedOp::StepResidualResponse,
+        Phase::LiveResult => TimedOp::StepResidualLiveResult,
+        _ => TimedOp::StepResidualOther,
+    }
+}
+
+fn timed_op_for_autostep(phase: Phase) -> TimedOp {
+    match phase {
+        Phase::Main => TimedOp::AutoStepFallbackMain,
+        Phase::LiveSet => TimedOp::AutoStepFallbackLiveSet,
+        Phase::Response => TimedOp::AutoStepFallbackResponse,
+        _ => TimedOp::AutoStepFallbackOther,
+    }
+}
+
 fn load_db() -> CardDatabase {
     for path in [
         "data/cards_compiled.json",
@@ -413,7 +597,8 @@ fn choose_random_action(state: &GameState, db: &CardDatabase, telemetry: &mut Te
     let legal = state.get_legal_action_ids(db);
     let elapsed_ns = t0.elapsed().as_nanos() as u64;
     telemetry.record_timing(
-        TimedOp::LegalActions,
+        timed_op_for_legal(state.phase),
+        state.phase,
         state.phase,
         elapsed_ns,
         None,
@@ -451,15 +636,18 @@ fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry
     while !state.is_terminal() && steps < config.max_steps {
         let legal = choose_random_action(&state, db, telemetry, config);
         let before = Snapshot::capture(&state);
+        let before_key = previous_key;
         let mut chosen_action = None;
+        let mut step_error = false;
 
         if legal.is_empty() {
             let t0 = Instant::now();
             state.auto_step(db);
             let elapsed_ns = t0.elapsed().as_nanos() as u64;
             telemetry.record_timing(
-                TimedOp::AutoStepFallback,
+                timed_op_for_autostep(before.phase),
                 before.phase,
+                state.phase,
                 elapsed_ns,
                 None,
                 0,
@@ -469,14 +657,80 @@ fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry
         } else {
             let action = *legal.choose(rng).expect("non-empty legal list should have a random action");
             chosen_action = Some(action);
-            let t0 = Instant::now();
-            if let Err(err) = state.step(db, action) {
-                telemetry.record_step_error(before.phase, action, &err, &before);
-            }
-            let elapsed_ns = t0.elapsed().as_nanos() as u64;
+            let total_start = Instant::now();
+            let internal_start = Instant::now();
+            let mut auto_elapsed_ns = 0u64;
+            let mut sync_elapsed_ns = 0u64;
+            let internal_result = state.step_internal(db, action);
+            let internal_elapsed_ns = internal_start.elapsed().as_nanos() as u64;
+            let after_internal_phase = state.phase;
             telemetry.record_timing(
-                TimedOp::Step,
+                timed_op_for_step_internal(before.phase),
                 before.phase,
+                after_internal_phase,
+                internal_elapsed_ns,
+                Some(action),
+                legal.len(),
+                &before,
+                config.slow_us,
+            );
+
+            if let Err(err) = internal_result {
+                telemetry.record_step_error(before.phase, action, &err, &before);
+                step_error = true;
+            } else {
+                let auto_start = Instant::now();
+                state.auto_step(db);
+                auto_elapsed_ns = auto_start.elapsed().as_nanos() as u64;
+                let after_auto_phase = state.phase;
+                telemetry.record_timing(
+                    timed_op_for_post_autostep(before.phase),
+                    before.phase,
+                    after_auto_phase,
+                    auto_elapsed_ns,
+                    Some(action),
+                    legal.len(),
+                    &before,
+                    config.slow_us,
+                );
+
+                if !matches!(state.phase, Phase::LiveSet) {
+                    let sync_start = Instant::now();
+                    state.sync_all_stats(db);
+                    sync_elapsed_ns = sync_start.elapsed().as_nanos() as u64;
+                    telemetry.record_timing(
+                        TimedOp::SyncStatsAfterStep,
+                        before.phase,
+                        state.phase,
+                        sync_elapsed_ns,
+                        Some(action),
+                        legal.len(),
+                        &before,
+                        config.slow_us,
+                    );
+                }
+            }
+            let elapsed_ns = total_start.elapsed().as_nanos() as u64;
+            let explained_ns = internal_elapsed_ns
+                .saturating_add(auto_elapsed_ns)
+                .saturating_add(sync_elapsed_ns);
+            let residual_ns = elapsed_ns.saturating_sub(explained_ns);
+            if residual_ns > 0 {
+                telemetry.record_timing(
+                    timed_op_for_step_residual(before.phase),
+                    before.phase,
+                    state.phase,
+                    residual_ns,
+                    Some(action),
+                    legal.len(),
+                    &before,
+                    config.slow_us,
+                );
+            }
+            telemetry.record_timing(
+                timed_op_for_step(before.phase),
+                before.phase,
+                state.phase,
                 elapsed_ns,
                 Some(action),
                 legal.len(),
@@ -488,13 +742,15 @@ fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry
         steps += 1;
         let after = Snapshot::capture(&state);
         let key = after.fingerprint();
-        let repeated_noop_zero_action = matches!(chosen_action, Some(0))
-            && legal.len() > 1
-            && key == previous_key;
+        let benign_pass_loop = matches!(chosen_action, Some(0)) && !step_error && key == before_key;
 
-        if repeated_noop_zero_action {
-            telemetry.ignored_pass_loops += 1;
+        if benign_pass_loop {
+            telemetry.benign_pass_loops += 1;
             continue;
+        }
+
+        if step_error && key == before_key {
+            telemetry.real_no_progress_events += 1;
         }
 
         let visit_count = seen.entry(key).or_insert(0);
@@ -530,8 +786,16 @@ fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry
 
 fn print_op_stats(telemetry: &Telemetry) {
     println!("\n=== Timing By Operation ===");
-    println!("{:<18} {:>10} {:>12} {:>12} {:>12}", "Operation", "Calls", "Total(ms)", "Avg(us)", "Max(us)");
-    println!("{}", "-".repeat(72));
+    println!(
+        "{:<22} {:>10} {:>12} {:>12} {:>12} {:>12}",
+        "Operation",
+        "Calls",
+        "Total_ms",
+        "Avg_us",
+        "StdDev_us",
+        "Max_us"
+    );
+    println!("{}", "-".repeat(88));
 
     let mut rows: Vec<_> = telemetry.by_op.iter().collect();
     rows.sort_by(|a, b| b.1.total_ns.cmp(&a.1.total_ns));
@@ -541,18 +805,83 @@ fn print_op_stats(telemetry: &Telemetry) {
         } else {
             stats.total_ns as f64 / stats.calls as f64 / 1000.0
         };
+        let stddev_us = if stats.calls <= 1 {
+            0.0
+        } else {
+            let mean_ns = stats.total_ns as f64 / stats.calls as f64;
+            let variance_ns = (stats.total_sq_ns / stats.calls as f64) - (mean_ns * mean_ns);
+            variance_ns.max(0.0).sqrt() / 1000.0
+        };
         println!(
-            "{:<18?} {:>10} {:>12.2} {:>12.1} {:>12.1}",
+            "{:<22?} {:>10} {:>12.2} {:>12.1} {:>12.1} {:>12.1}",
             op,
             stats.calls,
             stats.total_ns as f64 / 1_000_000.0,
             avg_us,
+            stddev_us,
             stats.max_ns as f64 / 1000.0,
         );
     }
 }
 
-fn print_slow_events(telemetry: &mut Telemetry, slow_us: u64) {
+fn print_state_costs(telemetry: &Telemetry, db: &CardDatabase) {
+    println!("\n=== Slow Board States ===");
+    if telemetry.state_costs.is_empty() {
+        println!("No board-state timing samples were recorded.");
+        return;
+    }
+
+    let mut rows: Vec<_> = telemetry.state_costs.iter().collect();
+    rows.sort_by(|a, b| {
+        b.1.total_ns
+            .cmp(&a.1.total_ns)
+            .then_with(|| b.1.max_ns.cmp(&a.1.max_ns))
+    });
+
+    for ((op, fingerprint), record) in rows.into_iter().take(TOP_SLOW_EVENTS) {
+        let avg_us = record.total_ns as f64 / record.count as f64 / 1000.0;
+        println!(
+            "op={:<18?} fingerprint={:016x} calls={} total_ms={:.2} avg_us={:.1} max_us={:.1} {}",
+            op,
+            fingerprint,
+            record.count,
+            record.total_ns as f64 / 1_000_000.0,
+            avg_us,
+            record.max_ns as f64 / 1000.0,
+            record.sample.short_label(),
+        );
+        println!("  zones={}", record.sample.detailed_zones(db));
+    }
+}
+
+fn print_top_games(outcomes: &[GameOutcome]) {
+    println!("\n=== Longest Games By Steps ===");
+    if outcomes.is_empty() {
+        println!("No games were recorded.");
+        return;
+    }
+
+    let mut rows: Vec<(usize, &GameOutcome)> = outcomes.iter().enumerate().collect();
+    rows.sort_by(|a, b| {
+        b.1.steps
+            .cmp(&a.1.steps)
+            .then_with(|| b.1.duration_ns.cmp(&a.1.duration_ns))
+    });
+
+    for (game_id, outcome) in rows.into_iter().take(TOP_STALLS) {
+        println!(
+            "game={} steps={} duration_ms={:.2} terminal={} stalled={} capped={}",
+            game_id,
+            outcome.steps,
+            outcome.duration_ns as f64 / 1_000_000.0,
+            outcome.terminal,
+            outcome.stalled,
+            outcome.capped,
+        );
+    }
+}
+
+fn print_slow_events(telemetry: &mut Telemetry, slow_us: u64, db: &CardDatabase) {
     telemetry
         .slow_events
         .sort_by(|a, b| b.duration_us.cmp(&a.duration_us));
@@ -565,13 +894,19 @@ fn print_slow_events(telemetry: &mut Telemetry, slow_us: u64) {
 
     for event in telemetry.slow_events.iter().take(TOP_SLOW_EVENTS) {
         println!(
-            "{:>8}us {:<18?} phase={:?} action={:?} legal={} {}",
+            "{:>8}us {:<22?} phase={:?}->{:?} action={:?} legal={} {}",
             event.duration_us,
             event.op,
             event.phase,
+            event.end_phase,
             event.action,
             event.legal_count,
             event.snapshot.short_label(),
+        );
+        println!(
+            "  {} | zones={}",
+            describe_action(&event.snapshot, event.action, db),
+            event.snapshot.detailed_zones(db),
         );
     }
 }
@@ -640,6 +975,7 @@ fn main() {
         config.same_state_limit,
         config.seed,
     );
+    println!("timings: game_summary=ms op_and_state_tables=us raw_storage=ns");
 
     let db = load_db();
     println!(
@@ -689,10 +1025,10 @@ fn main() {
     let mut durations: Vec<u64> = outcomes.iter().map(|outcome| outcome.duration_ns).collect();
     durations.sort_unstable();
     let len = durations.len();
-    let avg_game_us = durations.iter().sum::<u64>() / len as u64 / 1000;
-    let median_game_us = durations[len / 2] / 1000;
-    let p95_game_us = durations[(len * 95 / 100).min(len - 1)] / 1000;
-    let max_game_us = durations[len - 1] / 1000;
+    let avg_game_ms = durations.iter().sum::<u64>() / len as u64 / 1_000_000;
+    let median_game_ms = durations[len / 2] / 1_000_000;
+    let p95_game_ms = durations[(len * 95 / 100).min(len - 1)] / 1_000_000;
+    let max_game_ms = durations[len - 1] / 1_000_000;
 
     println!("\n=== Game Summary ===");
     println!(
@@ -708,22 +1044,25 @@ fn main() {
         total_steps as f64 / outcomes.len() as f64,
     );
     println!(
-        "per_game_us median={} avg={} p95={} max={}",
-        median_game_us,
-        avg_game_us,
-        p95_game_us,
-        max_game_us,
+        "per_game_ms median={} avg={} p95={} max={}",
+        median_game_ms,
+        avg_game_ms,
+        p95_game_ms,
+        max_game_ms,
     );
     println!(
         "throughput {:.2} games/s {:.2} actions/s",
         outcomes.len() as f64 / wall_start.elapsed().as_secs_f64().max(0.001),
         total_steps as f64 / wall_start.elapsed().as_secs_f64().max(0.001),
     );
-    println!("ignored_optional_pass_loops={}", telemetry.ignored_pass_loops);
+    println!("benign_pass_loops={}", telemetry.benign_pass_loops);
+    println!("real_no_progress_events={}", telemetry.real_no_progress_events);
     println!("step_errors={}", telemetry.step_errors);
 
+    print_top_games(&outcomes);
     print_op_stats(&telemetry);
-    print_slow_events(&mut telemetry, config.slow_us);
+    print_state_costs(&telemetry, &db);
+    print_slow_events(&mut telemetry, config.slow_us, &db);
     print_step_errors(&telemetry);
     print_stalls(&telemetry);
 }

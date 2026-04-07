@@ -71,7 +71,36 @@ fn resolved_filter_attr(
     params: &serde_json::Map<String, serde_json::Value>,
     fallback_attr: u64,
 ) -> u64 {
-    let params_value = serde_json::Value::Object(params.clone());
+    let mut filter_params = params.clone();
+    if filter_params.contains_key("raw_cond") || filter_params.contains_key("RAW_COND") {
+        for key in [
+            "raw_cond",
+            "RAW_COND",
+            "MIN",
+            "min",
+            "MAX",
+            "max",
+            "EQ",
+            "eq",
+            "GE",
+            "ge",
+            "LE",
+            "le",
+            "count",
+            "COUNT",
+            "threshold",
+            "THRESHOLD",
+            "value",
+            "VALUE",
+            "heart_count",
+            "HEART_COUNT",
+            "min_count",
+            "MIN_COUNT",
+        ] {
+            filter_params.remove(key);
+        }
+    }
+    let params_value = serde_json::Value::Object(filter_params);
     merge_filter_attr_with_params(fallback_attr, Some(&params_value))
 }
 
@@ -120,6 +149,47 @@ fn compare_count_thresholds(
     }
 }
 
+fn filtered_stage_cards(
+    state: &GameState,
+    db: &CardDatabase,
+    cond: &Condition,
+    ctx: &AbilityContext,
+    params: &serde_json::Map<String, serde_json::Value>,
+) -> Vec<i32> {
+    let filter_attr = if params.contains_key("raw_cond") || params.contains_key("RAW_COND") {
+        cond.attr
+    } else {
+        resolved_filter_attr(params, cond.attr)
+    };
+    let match_filter_attr = condition_match_filter_attr(filter_attr);
+    let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
+    let match_filter = structured_filter_from_attr(match_filter_attr);
+    let target_player = resolved_condition_player(params, ctx);
+
+    state.players[target_player]
+        .stage
+        .iter()
+        .enumerate()
+        .filter_map(|(slot_idx, &cid)| {
+            if cid < 0 {
+                return None;
+            }
+            if has_filter_constraints
+                && !state.card_matches_filter_with_struct(
+                    db,
+                    cid,
+                    Some((target_player as u8, slot_idx as i16)),
+                    &match_filter,
+                    ctx,
+                )
+            {
+                return None;
+            }
+            Some(cid)
+        })
+        .collect()
+}
+
 pub fn evaluate_raw_condition(
     state: &GameState,
     db: &CardDatabase,
@@ -136,6 +206,32 @@ pub fn evaluate_raw_condition(
         return true;
     };
     match raw_cond {
+        "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT" => {
+            state.players[ctx.player_id as usize].success_lives.len()
+                == state.players[1 - ctx.player_id as usize].success_lives.len()
+        }
+        "SOURCE_CARD_ID_EQUALS" => {
+            let expected = get_param_case_insensitive(params, "card_id")
+                .or_else(|| get_param_case_insensitive(params, "CARD_ID"))
+                .and_then(|value| value.as_i64())
+                .unwrap_or(cond.value as i64) as i32;
+            ctx.source_card_id == expected
+        }
+        "SOURCE_MEMBER_COST_GE" => {
+            let threshold = get_param_case_insensitive(params, "min")
+                .or_else(|| get_param_case_insensitive(params, "MIN"))
+                .and_then(|value| value.as_i64())
+                .unwrap_or(cond.value as i64) as i32;
+            let cost = state.get_member_cost(
+                ctx.player_id as usize,
+                ctx.source_card_id,
+                -1,
+                -1,
+                db,
+                depth + 1,
+            );
+            cost >= threshold
+        }
         "PLAYER_CENTER_COST_GT_OPPONENT_CENTER_COST" => {
             let player_center = state.players[ctx.player_id as usize]
                 .stage
@@ -638,8 +734,9 @@ pub fn evaluate_raw_condition(
             }
         }
         "UNIQUE_NAMES_COUNT" => {
+            let target_player = resolved_condition_player(params, ctx);
             let mut names = std::collections::HashSet::<String>::new();
-            for &cid in &state.players[ctx.player_id as usize].stage {
+            for &cid in &state.players[target_player].stage {
                 if cid < 0 {
                     continue;
                 }
@@ -669,6 +766,45 @@ pub fn evaluate_raw_condition(
             } else {
                 count > 0
             }
+        }
+        "UNIQUE_UNIT_NAMES_COUNT" => {
+            let mut units = std::collections::HashSet::<u8>::new();
+            for cid in filtered_stage_cards(state, db, cond, ctx, params) {
+                if let Some(unit_id) = db
+                    .get_member(cid)
+                    .and_then(|member| member.units.first().copied())
+                    .or_else(|| db.get_live(cid).and_then(|live| live.units.first().copied()))
+                {
+                    units.insert(unit_id);
+                }
+            }
+            compare_count_thresholds(params, units.len() as i32)
+        }
+        "UNIQUE_CARD_NAMES_COUNT" => {
+            let mut names = std::collections::HashSet::<String>::new();
+            for cid in filtered_stage_cards(state, db, cond, ctx, params) {
+                if let Some(name) = db
+                    .get_member(cid)
+                    .map(|member| member.name.clone())
+                    .or_else(|| db.get_live(cid).map(|live| live.name.clone()))
+                {
+                    names.insert(name);
+                }
+            }
+            compare_count_thresholds(params, names.len() as i32)
+        }
+        "UNIQUE_MEMBER_COSTS_COUNT" => {
+            let mut costs = std::collections::HashSet::<i32>::new();
+            for cid in filtered_stage_cards(state, db, cond, ctx, params) {
+                if let Some(cost) = db
+                    .get_member(cid)
+                    .map(|member| member.cost as i32)
+                    .or_else(|| db.get_live(cid).map(|live| live.score as i32))
+                {
+                    costs.insert(cost);
+                }
+            }
+            compare_count_thresholds(params, costs.len() as i32)
         }
         "UNIQUE_HEART_TYPES" => {
             let mut color_mask: u8 = 0;

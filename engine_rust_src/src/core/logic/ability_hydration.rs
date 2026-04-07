@@ -1,5 +1,6 @@
 use super::models::*;
 use crate::core::enums::{ConditionType, EffectType, TriggerType};
+use crate::core::generated_constants::O_NOP;
 use crate::core::generated_constants::*;
 use crate::core::logic::interpreter::conditions::common::parse_condition_type;
 use serde_json::Value;
@@ -7,12 +8,19 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::fs;
 
-/// Runtime hydration for authored ability frames.
-///
-/// This module is the boundary between the authored sparse frame index and the
-/// normalized runtime `Ability` shape that the interpreter consumes. It keeps
-/// card loading focused on database construction while gathering the repair and
-/// attachment logic in one place.
+const EMBEDDED_ABILITY_FRAME_SOURCE_JSON: &str =
+    include_str!("../../../../data/ability_frame_source.json");
+const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
+    include_str!("../../../../data/card_122_overlay.json");
+
+pub(crate) struct SparseAbilityAssets {
+    pub ability_index: HashMap<String, Value>,
+    pub text_index: HashMap<String, String>,
+}
+
+fn raw_text_implies_once_per_turn(text: &str) -> bool {
+    text.contains("{{turn1.png") || text.contains("ターン1回")
+}
 
 fn sanitize_sparse_json_text(json: &str) -> String {
     let mut sanitized = String::with_capacity(json.len());
@@ -60,7 +68,114 @@ fn normalize_card_no(card_no: &str) -> String {
     card_no.replace('＋', "+")
 }
 
-pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String, Value> {
+fn sparse_entry_card_refs<'a>(
+    ability_data: &'a Value,
+) -> Box<dyn Iterator<Item = (&'a str, i64)> + 'a> {
+    if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
+        Box::new(card_refs.iter().filter_map(|card_ref| {
+            let card_obj = card_ref.as_object()?;
+            let card_no = card_obj.get("card_no").and_then(|v| v.as_str())?;
+            let ability_index = card_obj.get("ability_index").and_then(|v| v.as_i64())?;
+            Some((card_no, ability_index))
+        }))
+    } else if let Some(cards) = ability_data.get("cards").and_then(|v| v.as_array()) {
+        Box::new(cards.iter().filter_map(|card| {
+            let card_entry = card.as_str()?;
+            let card_no = card_entry.split(" | ").next()?;
+            let ability_index_part = card_entry.split("(ab#").nth(1)?;
+            let ability_index = ability_index_part
+                .split_whitespace()
+                .next()?
+                .trim_end_matches(')')
+                .parse::<i64>()
+                .ok()?;
+            Some((card_no, ability_index))
+        }))
+    } else {
+        Box::new(std::iter::empty())
+    }
+}
+
+fn process_sparse_ability_data(
+    ability_data: &Value,
+    index: &mut HashMap<String, Value>,
+    text_index: &mut HashMap<String, String>,
+) {
+    let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) else {
+        return;
+    };
+
+    let mut compact_entry = serde_json::Map::new();
+    for key in [
+        "pseudocode",
+        "source_text",
+        "source_text_en",
+        "trigger",
+        "trigger_id",
+        "raw_text",
+        "is_once_per_turn",
+        "requires_selection",
+        "choice_flags",
+        "choice_count",
+    ] {
+        if let Some(value) = ability_data.get(key) {
+            compact_entry.insert(key.to_string(), value.clone());
+        }
+    }
+    compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
+
+    if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
+        for (card_no, ability_index) in sparse_entry_card_refs(ability_data) {
+            let key = format!("{}#{}", card_no, ability_index);
+            text_index.insert(key, source_text.to_string());
+        }
+    }
+
+    for (card_no, ability_index) in sparse_entry_card_refs(ability_data) {
+        let mut keyed_entry = compact_entry.clone();
+        if let Some(trigger) = ability_data.get("trigger") {
+            keyed_entry.insert("trigger".to_string(), trigger.clone());
+        }
+        if let Some(trigger_id) = ability_data.get("trigger_id") {
+            keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
+        }
+        let key = format!("{}#{}", card_no, ability_index);
+        index.insert(key, Value::Object(keyed_entry));
+    }
+}
+
+pub(crate) fn derive_conditions_from_frame_program(program: &FrameProgram) -> Vec<Condition> {
+    let mut conditions = Vec::new();
+    for frame in &program.frames {
+        let components = frame.components();
+        let opcode = components.opcode;
+        let is_raw_condition = components
+            .params
+            .and_then(|params| params.as_object())
+            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+            .unwrap_or(false);
+        let is_condition_opcode = is_raw_condition
+            || (opcode >= crate::core::logic::constants::CONDITION_START_1
+                && opcode <= crate::core::logic::constants::CONDITION_END_1)
+            || (opcode >= crate::core::logic::constants::CONDITION_START_2
+                && opcode <= crate::core::logic::constants::CONDITION_END_2);
+        if !is_condition_opcode {
+            continue;
+        }
+
+        conditions.push(Condition {
+            condition_type: parse_condition_type(opcode),
+            value: components.value,
+            attr: components.raw_attr,
+            target_slot: components.raw_slot as u8,
+            is_negated: components.is_negated,
+            params: components.params.cloned().unwrap_or_default(),
+        });
+    }
+    conditions
+}
+
+pub(crate) fn load_sparse_assets_from_json(json: &str) -> SparseAbilityAssets {
     let json = sanitize_sparse_json_text(json);
     let json = json.trim_start_matches(|c: char| c.is_whitespace() || c == '\u{feff}' || c == '\0');
     let json = if let Some(start) = json.find('{') {
@@ -84,206 +199,59 @@ pub(crate) fn load_sparse_ability_index_from_json(json: &str) -> HashMap<String,
     };
     if let Some(root) = parsed_root {
         let mut index = HashMap::new();
-
+        let mut text_index = HashMap::new();
         if let Some(abilities_arr) = root.get("abilities").and_then(|v| v.as_array()) {
             for ability_data in abilities_arr {
-                if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
-                    let mut compact_entry = serde_json::Map::new();
-
-                    for key in [
-                        "pseudocode",
-                        "source_text",
-                        "source_text_en",
-                        "trigger",
-                        "trigger_id",
-                        "raw_text",
-                        "is_once_per_turn",
-                        "requires_selection",
-                        "choice_flags",
-                        "choice_count",
-                    ] {
-                        if let Some(value) = ability_data.get(key) {
-                            compact_entry.insert(key.to_string(), value.clone());
-                        }
-                    }
-
-                    compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
-
-                    if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
-                        for card_ref in card_refs {
-                            if let Some(card_obj) = card_ref.as_object() {
-                                if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
-                                    if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
-                                        let mut keyed_entry = compact_entry.clone();
-                                        if let Some(trigger) = ability_data.get("trigger") {
-                                            keyed_entry.insert("trigger".to_string(), trigger.clone());
-                                        }
-                                        if let Some(trigger_id) = ability_data.get("trigger_id") {
-                                            keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
-                                        }
-                                        let key = format!("{}#{}", card_no, ability_index);
-                                        index.insert(key, Value::Object(keyed_entry));
-                                    }
-                                }
-                            }
-                        }
-                    } else if let Some(cards) = ability_data.get("cards").and_then(|v| v.as_array()) {
-                        for card in cards {
-                            let Some(card_entry) = card.as_str() else {
-                                continue;
-                            };
-                            let Some(card_no) = card_entry.split(" | ").next() else {
-                                continue;
-                            };
-                            let Some(ability_index_part) = card_entry.split("(ab#").nth(1) else {
-                                continue;
-                            };
-                            let ability_index = ability_index_part
-                                .split_whitespace()
-                                .next()
-                                .and_then(|value| value.trim_end_matches(')').parse::<i64>().ok());
-                            let Some(ability_index) = ability_index else {
-                                continue;
-                            };
-
-                            let mut keyed_entry = compact_entry.clone();
-                            if let Some(trigger) = ability_data.get("trigger") {
-                                keyed_entry.insert("trigger".to_string(), trigger.clone());
-                            }
-                            if let Some(trigger_id) = ability_data.get("trigger_id") {
-                                keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
-                            }
-                            let key = format!("{}#{}", card_no, ability_index);
-                            index.insert(key, Value::Object(keyed_entry));
-                        }
-                    }
-                }
+                process_sparse_ability_data(ability_data, &mut index, &mut text_index);
             }
-
-            return index;
-        }
-
-        if let Some(abilities_obj) = root.as_object() {
-            for (_ability_key, ability_data) in abilities_obj {
-                if let Some(frames) = ability_data.get("frames").and_then(|v| v.as_array()) {
-                    let mut compact_entry = serde_json::Map::new();
-
-                    for key in [
-                        "pseudocode",
-                        "source_text",
-                        "source_text_en",
-                        "trigger",
-                        "trigger_id",
-                        "raw_text",
-                        "is_once_per_turn",
-                        "requires_selection",
-                        "choice_flags",
-                        "choice_count",
-                    ] {
-                        if let Some(value) = ability_data.get(key) {
-                            compact_entry.insert(key.to_string(), value.clone());
-                        }
-                    }
-
-                    compact_entry.insert("frames".to_string(), Value::Array(frames.clone()));
-
-                    if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
-                        for card_ref in card_refs {
-                            if let Some(card_obj) = card_ref.as_object() {
-                                if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
-                                    if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
-                                        let mut keyed_entry = compact_entry.clone();
-                                        if let Some(trigger) = card_obj.get("trigger") {
-                                            keyed_entry.insert("trigger".to_string(), trigger.clone());
-                                        }
-                                        if let Some(trigger_id) = card_obj.get("trigger_id") {
-                                            keyed_entry.insert("trigger_id".to_string(), trigger_id.clone());
-                                        }
-                                        let key = format!("{}#{}", card_no, ability_index);
-                                        index.insert(key, Value::Object(keyed_entry));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        } else if let Some(abilities_obj) = root.as_object() {
+            for ability_data in abilities_obj.values() {
+                process_sparse_ability_data(ability_data, &mut index, &mut text_index);
             }
         }
 
-        return index;
+        return SparseAbilityAssets {
+            ability_index: index,
+            text_index,
+        };
     }
-    HashMap::new()
+    SparseAbilityAssets {
+        ability_index: HashMap::new(),
+        text_index: HashMap::new(),
+    }
 }
 
-pub(crate) fn load_sparse_text_index() -> HashMap<String, String> {
-    let mut text_index = HashMap::new();
+pub(crate) fn load_sparse_assets() -> SparseAbilityAssets {
+    fn load_first_nonempty<'a, I>(sources: I) -> SparseAbilityAssets
+    where
+        I: IntoIterator<Item = &'a str>,
+    {
+        for json in sources {
+            let assets = load_sparse_assets_from_json(json);
+            if !assets.ability_index.is_empty() || !assets.text_index.is_empty() {
+                return assets;
+            }
+        }
+
+        SparseAbilityAssets {
+            ability_index: HashMap::new(),
+            text_index: HashMap::new(),
+        }
+    }
 
     for path in [
         "data/ability_frame_source.json",
         "../data/ability_frame_source.json",
     ] {
         if let Ok(json) = fs::read_to_string(path) {
-            if let Ok(parsed_root) = serde_json::from_str::<Value>(&json) {
-                if let Some(abilities) = parsed_root.get("abilities").and_then(|v| v.as_array()) {
-                    for ability_data in abilities {
-                        if let Some(source_text) = ability_data.get("source_text").and_then(|v| v.as_str()) {
-                            if let Some(card_refs) = ability_data.get("card_refs").and_then(|v| v.as_array()) {
-                                for card_ref in card_refs {
-                                    if let Some(card_obj) = card_ref.as_object() {
-                                        if let Some(card_no) = card_obj.get("card_no").and_then(|v| v.as_str()) {
-                                            if let Some(ability_index) = card_obj.get("ability_index").and_then(|v| v.as_i64()) {
-                                                let key = format!("{}#{}", card_no, ability_index);
-                                                text_index.insert(key, source_text.to_string());
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if !text_index.is_empty() {
-                break;
+            let assets = load_sparse_assets_from_json(&json);
+            if !assets.ability_index.is_empty() || !assets.text_index.is_empty() {
+                return assets;
             }
         }
     }
 
-    text_index
-}
-
-pub(crate) fn derive_conditions_from_frame_program(program: &FrameProgram) -> Vec<Condition> {
-    let mut conditions = Vec::new();
-    for frame in &program.frames {
-        let components = frame.components();
-        let opcode = components.opcode;
-        let is_raw_condition = components
-            .params
-            .and_then(|params| params.as_object())
-            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
-            .unwrap_or(false);
-        let is_condition_opcode = is_raw_condition
-            || (opcode >= crate::core::logic::constants::CONDITION_START_1
-                && opcode <= crate::core::logic::constants::CONDITION_END_1)
-            || (opcode >= crate::core::logic::constants::CONDITION_START_2
-                && opcode <= crate::core::logic::constants::CONDITION_END_2);
-        if !is_condition_opcode {
-            if !conditions.is_empty() {
-                break;
-            }
-            continue;
-        }
-
-        conditions.push(Condition {
-            condition_type: parse_condition_type(opcode),
-            value: components.value,
-            attr: components.raw_attr,
-            target_slot: components.raw_slot as u8,
-            is_negated: components.is_negated,
-            params: components.params.cloned().unwrap_or_default(),
-        });
-    }
-    conditions
+    load_first_nonempty([EMBEDDED_ABILITY_FRAME_SOURCE_JSON, EMBEDDED_CARD_122_OVERLAY_JSON])
 }
 
 pub(crate) fn attach_sparse_ability_index(
@@ -373,6 +341,9 @@ pub(crate) fn attach_sparse_ability_index(
             if !program.frames.is_empty() {
                 ability.frame_program = Some(program);
             }
+        }
+        if !ability.is_once_per_turn && raw_text_implies_once_per_turn(&ability.raw_text) {
+            ability.is_once_per_turn = true;
         }
         if let Some(choose_count) = ability
             .effects
@@ -471,6 +442,9 @@ pub(crate) fn attach_sparse_ability_index(
                 }
             }
         }
+        if let Some(frame_program) = ability.frame_program.as_ref() {
+            ability.conditions = derive_conditions_from_frame_program(frame_program);
+        }
         if ability.pseudocode.is_empty() {
             if let Some(pseudo) = matching_entry
                 .and_then(|value| value.get("pseudocode"))
@@ -526,6 +500,76 @@ pub(crate) fn frame_matches_effect_metadata(frame: &AbilityFrame) -> bool {
         && parse_condition_type(opcode) == ConditionType::None
 }
 
+fn authored_source_text(entry: &Value) -> Option<&str> {
+    entry.get("source_text")
+        .and_then(|value| value.as_str())
+        .or_else(|| entry.get("primary_text_jp").and_then(|value| value.as_str()))
+        .or_else(|| {
+            entry.get("source_ability_texts")
+                .and_then(|value| value.as_array())
+                .and_then(|texts| texts.first())
+                .and_then(|text| text.get("jp"))
+                .and_then(|value| value.as_str())
+        })
+}
+
+fn authored_nop_raw_conditions(source_text: &str) -> &'static [&'static str] {
+    if source_text.contains("ユニット名がそれぞれ異なる") {
+        &["UNIQUE_UNIT_NAMES_COUNT"]
+    } else if source_text.contains("名前が異なるメンバーが3人以上") {
+        &["UNIQUE_NAMES_COUNT"]
+    } else if source_text.contains("名前とコストが両方ともそれぞれ異なる") {
+        &[
+            "UNIQUE_CARD_NAMES_COUNT",
+            "UNIQUE_MEMBER_COSTS_COUNT",
+        ]
+    } else {
+        &[]
+    }
+}
+
+pub(crate) fn annotate_distinctness_nops_from_text(source_text: &str, frames: &mut [AbilityFrame]) {
+    let expected_raw_conditions = authored_nop_raw_conditions(source_text);
+    if expected_raw_conditions.is_empty() {
+        return;
+    }
+
+    let mut raw_condition_idx = 0usize;
+    for frame in frames.iter_mut() {
+        if raw_condition_idx >= expected_raw_conditions.len() {
+            break;
+        }
+
+        let frame_data = frame.components();
+        let has_raw_condition = frame_data
+            .params
+            .and_then(|value| value.as_object())
+            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+            .unwrap_or(false);
+
+        if frame_data.opcode != O_NOP
+            || has_raw_condition
+            || frame_data.value <= 0
+        {
+            continue;
+        }
+
+        frame.params = serde_json::json!({
+            "raw_cond": expected_raw_conditions[raw_condition_idx],
+            "GE": frame_data.value,
+        });
+        frame.attr = 0;
+        raw_condition_idx += 1;
+    }
+}
+
+fn annotate_distinctness_nops(entry: &Value, frames: &mut [AbilityFrame]) {
+    let Some(source_text) = authored_source_text(entry) else {
+        return;
+    };
+    annotate_distinctness_nops_from_text(source_text, frames);
+}
+
 pub(crate) fn sparse_entry_to_frame_program(entry: &Value) -> FrameProgram {
     let mut program_frames = Vec::new();
     if let Some(frames) = entry.get("frames").and_then(|v| v.as_array()) {
@@ -533,6 +577,7 @@ pub(crate) fn sparse_entry_to_frame_program(entry: &Value) -> FrameProgram {
             program_frames.push(parse_semantic_frame(frame));
         }
     }
+    annotate_distinctness_nops(entry, &mut program_frames);
     FrameProgram {
         frames: program_frames,
         raw_program: Some(entry.clone()),

@@ -31,9 +31,7 @@ pub fn handle_optional_nop(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let prompt_like = frame_data.filter.is_optional;
-
-    if !prompt_like || ctx.choice_index != -1 || ctx.v_remaining != -1 {
+    if !frame_data.filter.is_optional || ctx.choice_index != -1 || ctx.v_remaining != -1 {
         return HandlerResult::Continue;
     }
 
@@ -49,8 +47,6 @@ pub fn handle_optional_nop(
         } else {
             ChoiceType::Optional
         }
-    } else if frame_data.filter.is_optional {
-        ChoiceType::Optional
     } else {
         ChoiceType::Optional
     };
@@ -115,7 +111,11 @@ pub fn suspend_choice_with_options(
     options: Vec<serde_json::Value>,
     actions: Vec<i32>,
 ) -> HandlerResult {
-    let choice_text = get_choice_text(db, choice_ctx);
+    let choice_text = if state.ui.silent && state.ui.headless {
+        String::new()
+    } else {
+        get_choice_text(db, choice_ctx)
+    };
     if !state.ui.silent {
         let rule_msg = match choice_type {
             ChoiceType::Optional => "Rule 12.2, Rule 12.2.1: Presenting voluntary (optional) choice to player.",

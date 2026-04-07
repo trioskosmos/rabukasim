@@ -1,41 +1,5 @@
 use super::*;
-use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-
-fn suspend_discard_prompt(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-    frame_idx: usize,
-    target_p_idx: usize,
-    filter_attr: u64,
-    remaining: i16,
-    s: i32,
-) -> HandlerResult {
-    let mut target_ctx = ctx.clone();
-    target_ctx.player_id = target_p_idx as u8;
-    target_ctx.v_remaining = remaining;
-    target_ctx.v_accumulated = ctx.v_accumulated;
-    target_ctx.choice_index = -1;
-    if matches!(
-        suspend_choice(
-            state,
-            db,
-            &target_ctx,
-            &target_ctx,
-            frame_idx,
-            O_PLAY_MEMBER_FROM_DISCARD,
-            s,
-            ChoiceType::SelectDiscardPlay,
-            filter_attr,
-            remaining,
-        ),
-        HandlerResult::Suspend
-    ) {
-        HandlerResult::Suspend
-    } else {
-        HandlerResult::Continue
-    }
-}
+use crate::core::logic::interpreter::handlers::interaction_zone::collect_discard_selection_cards;
 
 #[allow(clippy::too_many_arguments)]
 pub fn handle_discard_selection(
@@ -76,47 +40,42 @@ pub fn handle_discard_selection(
         filter_ctx.player_id = target_p_idx as u8;
         filter_ctx.v_remaining = remaining;
         filter_ctx.v_accumulated = ctx.v_accumulated;
-        let matched_ids: Vec<i32> = state.players[target_p_idx]
-            .discard
-            .iter()
-            .filter_map(|&cid| {
-                let member = db.get_member(cid)?;
-                let cost_ok = if is_total_cost {
-                    member.cost as i16 <= remaining
-                } else {
-                    // For count-based play, each card uses 2 steps (select card + select slot).
-                    // We only need to know that a candidate exists here; the state machine
-                    // handles the exact step accounting in the placement phase.
-                    true
-                };
-
-                if cost_ok
-                    && !ctx.selected_cards.contains(&cid)
-                    && (filter_attr == 0
-                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, &filter_ctx))
-                {
-                    Some(cid)
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let matched_ids = collect_discard_selection_cards(
+            state,
+            db,
+            &filter_ctx,
+            target_p_idx,
+            filter_attr,
+            if is_total_cost { Some(remaining) } else { None },
+            |card| matches!(card, crate::core::logic::card_db::CardRef::Member(_)),
+        )
+        .into_iter()
+        .filter(|cid| !ctx.selected_cards.contains(cid))
+        .collect::<Vec<_>>();
         state.players[target_p_idx].looked_cards.extend(matched_ids);
         if state.players[target_p_idx].looked_cards.is_empty() {
             super::clear_discard_play_buffer(state, target_p_idx);
             return HandlerResult::Continue;
         }
 
-        return suspend_discard_prompt(
-            state,
-            db,
-            &filter_ctx,
-            frame_idx,
-            target_p_idx,
-            filter_attr,
-            remaining,
-            s,
-        );
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                &filter_ctx,
+                &filter_ctx,
+                frame_idx,
+                O_PLAY_MEMBER_FROM_DISCARD,
+                s,
+                ChoiceType::SelectDiscardPlay,
+                filter_attr,
+                remaining,
+            ),
+            HandlerResult::Suspend
+        ) {
+            return HandlerResult::Suspend;
+        }
+        return HandlerResult::Continue;
     }
 
     if ctx.choice_index == -1 {
@@ -124,16 +83,29 @@ pub fn handle_discard_selection(
         if is_total_cost {
             filter_attr |= 1u64 << 60;
         }
-        return suspend_discard_prompt(
-            state,
-            db,
-            ctx,
-            frame_idx,
-            target_p_idx,
-            filter_attr,
-            remaining,
-            s,
-        );
+        let mut target_ctx = ctx.clone();
+        target_ctx.player_id = target_p_idx as u8;
+        target_ctx.v_remaining = remaining;
+        target_ctx.v_accumulated = ctx.v_accumulated;
+        target_ctx.choice_index = -1;
+        if matches!(
+            suspend_choice(
+                state,
+                db,
+                &target_ctx,
+                &target_ctx,
+                frame_idx,
+                O_PLAY_MEMBER_FROM_DISCARD,
+                s,
+                ChoiceType::SelectDiscardPlay,
+                filter_attr,
+                remaining,
+            ),
+            HandlerResult::Suspend
+        ) {
+            return HandlerResult::Suspend;
+        }
+        return HandlerResult::Continue;
     }
 
     let idx = ctx.choice_index as usize;

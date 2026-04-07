@@ -9,8 +9,126 @@ use rand::seq::SliceRandom;
 // use rand::SeedableRng;
 use super::models::DeckStats;
 use rand_pcg::Pcg64;
+use std::time::Instant;
+use std::cell::RefCell;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+struct FilterCacheKey {
+    cid: i32,
+    filter_attr: u64,
+    checked_player: u8,
+    checked_area: i16,
+    player_id: u8,
+    activator_id: u8,
+    source_card_id: i32,
+    area_idx: i16,
+    trigger_type: i32,
+    choice_index: i16,
+    program_counter: u16,
+    is_static_eval: bool,
+    auto_pick: bool,
+}
+
+thread_local! {
+    static ACTIVE_FILTER_MATCH_CACHE: RefCell<Option<HashMap<FilterCacheKey, bool>>> =
+        const { RefCell::new(None) };
+}
+
+pub struct FilterMatchCacheScope;
+
+impl FilterMatchCacheScope {
+    pub fn activate() -> Self {
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            *cache.borrow_mut() = Some(HashMap::new());
+        });
+        Self
+    }
+}
+
+impl Drop for FilterMatchCacheScope {
+    fn drop(&mut self) {
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            *cache.borrow_mut() = None;
+        });
+    }
+}
 
 impl GameState {
+    fn filter_cache_lookup(
+        &self,
+        cid: i32,
+        filter_attr: u64,
+        checked_slot: Option<(u8, i16)>,
+        ctx: &AbilityContext,
+    ) -> Option<bool> {
+        let (checked_player, checked_area) = checked_slot.unwrap_or((u8::MAX, i16::MIN));
+        let key = FilterCacheKey {
+            cid,
+            filter_attr,
+            checked_player,
+            checked_area,
+            player_id: ctx.player_id,
+            activator_id: ctx.activator_id,
+            source_card_id: ctx.source_card_id,
+            area_idx: ctx.area_idx,
+            trigger_type: ctx.trigger_type as i32,
+            choice_index: ctx.choice_index,
+            program_counter: ctx.program_counter,
+            is_static_eval: ctx.is_static_eval,
+            auto_pick: ctx.auto_pick,
+        };
+
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            cache
+                .borrow()
+                .as_ref()
+                .and_then(|map| map.get(&key).copied())
+        })
+    }
+
+    fn filter_cache_store(
+        &self,
+        cid: i32,
+        filter_attr: u64,
+        checked_slot: Option<(u8, i16)>,
+        ctx: &AbilityContext,
+        value: bool,
+    ) {
+        let (checked_player, checked_area) = checked_slot.unwrap_or((u8::MAX, i16::MIN));
+        let key = FilterCacheKey {
+            cid,
+            filter_attr,
+            checked_player,
+            checked_area,
+            player_id: ctx.player_id,
+            activator_id: ctx.activator_id,
+            source_card_id: ctx.source_card_id,
+            area_idx: ctx.area_idx,
+            trigger_type: ctx.trigger_type as i32,
+            choice_index: ctx.choice_index,
+            program_counter: ctx.program_counter,
+            is_static_eval: ctx.is_static_eval,
+            auto_pick: ctx.auto_pick,
+        };
+
+        ACTIVE_FILTER_MATCH_CACHE.with(|cache| {
+            if let Some(map) = cache.borrow_mut().as_mut() {
+                map.insert(key, value);
+            }
+        });
+    }
+
+    fn rule_profile_enabled() -> bool {
+        std::env::var("BENCH_PROFILE_RULE_CHECKS")
+            .ok()
+            .map(|value| {
+                let value = value.trim();
+                !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
+            })
+            .unwrap_or(false)
+    }
+
     pub fn resolve_deck_refresh(&mut self, player_idx: usize) {
         if !self.ui.silent {
             self.log(format!(
@@ -29,11 +147,12 @@ impl GameState {
         let mut rng = Pcg64::seed_from_u64(self.core.turn as u64 * 1000 + player_idx as u64);
         discard_cards.shuffle(&mut rng);
 
-        // Main deck's new cards go AFTER any remaining cards (Rule 10.2.3)
-        // Insert at bottom (index 0) to preserve top cards
-        for cid in discard_cards {
-            player.deck.insert(0, cid);
-        }
+        // Main deck's new cards go AFTER any remaining cards (Rule 10.2.3).
+        // Deck top is the vector end, so refreshed cards belong at the front.
+        let mut refreshed = smallvec::SmallVec::<[i32; 60]>::new();
+        refreshed.extend(discard_cards.into_iter().rev());
+        refreshed.extend(player.deck.drain(..));
+        player.deck = refreshed;
 
         // Safety cap: Never exceed 60 cards in total deck (prevents unintended growth)
         if player.deck.len() > 60 {
@@ -73,6 +192,17 @@ impl GameState {
         if !self.ui.silent {
             self.log("Rule 10.1, Rule 10.1.2: Performing check timing (State-Based Actions).".to_string());
         }
+        let profile_enabled = Self::rule_profile_enabled();
+        let profile_start = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
+        let mut deck_refresh_us = 0u64;
+        let mut energy_reclaim_us = 0u64;
+        let mut sync_us = 0u64;
+        let win_check_us;
+        let trigger_queue_us;
         for i in 0..2 {
             // 1. Deck Refresh (Rule 4.4.2)
             if self.core.players[i].deck.is_empty() && !self.core.players[i].discard.is_empty() {
@@ -84,11 +214,16 @@ impl GameState {
                         false,
                     );
                 } else {
+                    let t = profile_enabled.then(Instant::now);
                     self.resolve_deck_refresh(i);
+                    deck_refresh_us += t
+                        .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+                        .unwrap_or(0);
                 }
             }
 
             // 2. Energy in empty member area -> Energy Deck (Rule 10.5.3)
+            let t_energy = profile_enabled.then(Instant::now);
             for slot_idx in 0..3 {
                 if self.core.players[i].stage[slot_idx] < 0
                     && self.core.players[i].stage_energy_count[slot_idx] > 0
@@ -113,12 +248,43 @@ impl GameState {
                     self.core.players[i].energy_deck.shuffle(&mut rng);
                 }
             }
+            energy_reclaim_us += t_energy
+                .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+                .unwrap_or(0);
 
             // 3. Eagerly synchronize constant modifiers
+            let t_sync = profile_enabled.then(Instant::now);
             self.sync_stat_caches(i, db);
+            sync_us += t_sync
+                .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+                .unwrap_or(0);
         }
+        self.needs_stat_sync = false;
+        let t_win = profile_enabled.then(Instant::now);
         self.check_win_condition();
+        win_check_us = t_win
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+        let t_trigger_queue = profile_enabled.then(Instant::now);
         self.process_trigger_queue(db);
+        trigger_queue_us = t_trigger_queue
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+
+        if let Some(profile_start) = profile_start {
+            let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
+            if total_us >= 1000 {
+                println!(
+                    "[PROFILE] RuleChecks total_us={} deck_refresh_us={} energy_reclaim_us={} sync_us={} win_check_us={} trigger_queue_us={}",
+                    total_us,
+                    deck_refresh_us,
+                    energy_reclaim_us,
+                    sync_us,
+                    win_check_us,
+                    trigger_queue_us
+                );
+            }
+        }
     }
 
     pub fn sync_stat_caches(&mut self, p_idx: usize, db: &CardDatabase) {
@@ -179,7 +345,13 @@ impl GameState {
         filter_attr: u64,
         ctx: &AbilityContext,
     ) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false, None)
+        if let Some(hit) = self.filter_cache_lookup(cid, filter_attr, None, ctx) {
+            return hit;
+        }
+        let result =
+            self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, false, None);
+        self.filter_cache_store(cid, filter_attr, None, ctx, result);
+        result
     }
 
     pub fn card_matches_filter_with_ctx_logs(
@@ -192,6 +364,30 @@ impl GameState {
         self.card_matches_filter_with_ctx_internal(db, cid, filter_attr, None, ctx, true, None)
     }
 
+    pub fn card_matches_filter_with_ctx_at_slot(
+        &self,
+        db: &CardDatabase,
+        cid: i32,
+        filter_attr: u64,
+        checked_slot: (u8, i16),
+        ctx: &AbilityContext,
+    ) -> bool {
+        if let Some(hit) = self.filter_cache_lookup(cid, filter_attr, Some(checked_slot), ctx) {
+            return hit;
+        }
+        let result = self.card_matches_filter_with_ctx_internal(
+            db,
+            cid,
+            filter_attr,
+            None,
+            ctx,
+            false,
+            Some(checked_slot),
+        );
+        self.filter_cache_store(cid, filter_attr, Some(checked_slot), ctx, result);
+        result
+    }
+
     pub fn card_matches_filter_with_struct(
         &self,
         db: &CardDatabase,
@@ -200,7 +396,20 @@ impl GameState {
         filter: &CardFilter,
         ctx: &AbilityContext,
     ) -> bool {
-        self.card_matches_filter_with_ctx_internal(db, cid, 0, Some(filter), ctx, false, checked_slot)
+        if let Some(hit) = self.filter_cache_lookup(cid, 0, checked_slot, ctx) {
+            return hit;
+        }
+        let result = self.card_matches_filter_with_ctx_internal(
+            db,
+            cid,
+            0,
+            Some(filter),
+            ctx,
+            false,
+            checked_slot,
+        );
+        self.filter_cache_store(cid, 0, checked_slot, ctx, result);
+        result
     }
 
     fn card_matches_filter_with_ctx_internal(
@@ -227,6 +436,13 @@ impl GameState {
             filter_storage = CardFilter::from_attr(filter_attr);
             &filter_storage
         };
+        let provided_slot = provided_slot.or_else(|| {
+            if ctx.source_card_id == cid && ctx.area_idx >= 0 && ctx.area_idx < 3 {
+                Some((ctx.player_id, ctx.area_idx))
+            } else {
+                None
+            }
+        });
 
         let needs_dynamic_hearts = filter.color_mask != 0;
 

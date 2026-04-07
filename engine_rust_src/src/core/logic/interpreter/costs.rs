@@ -71,6 +71,13 @@ fn dynamic_energy_cost_from_frame(
     Some(state.players[p_idx].score as i32 + comp.value)
 }
 
+fn prepend_single_card_to_deck(deck: &mut smallvec::SmallVec<[i32; 60]>, card_id: i32) {
+    let mut new_deck = smallvec::SmallVec::<[i32; 60]>::new();
+    new_deck.push(card_id);
+    new_deck.extend(deck.drain(..));
+    *deck = new_deck;
+}
+
 fn count_matching_cards<I>(state: &GameState, db: &CardDatabase, cards: I, attr: u64) -> usize
 where
     I: IntoIterator<Item = i32>,
@@ -576,7 +583,7 @@ pub fn pay_cost(
 
                     let player = &mut state.players[p_idx];
                     player.stage[slot] = -1;
-                    player.deck.insert(0, cid as i32);
+                    prepend_single_card_to_deck(&mut player.deck, cid as i32);
                     true
                 } else {
                     false

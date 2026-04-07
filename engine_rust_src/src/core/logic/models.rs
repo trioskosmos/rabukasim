@@ -347,7 +347,6 @@ fn trace_source_paths() -> Vec<String> {
     vec![
         "data/cards_compiled.json".to_string(),
         "data/ability_frame_source.json".to_string(),
-        "data/ability_runtime_index.json".to_string(),
         "data/ability_runtime_entrypoints.json".to_string(),
         "engine_rust_src/src/core/logic/card_db.rs".to_string(),
         "engine_rust_src/src/core/logic/ability_hydration.rs".to_string(),
@@ -891,9 +890,14 @@ impl<'a> AbilityFrameComponents<'a> {
     }
 
     pub fn semantic_discard_spec(&self) -> SemanticDiscardSpec {
+        let mut source_zone = self.discard_source_zone();
+        if source_zone == Zone::Stage && self.is_until_size_operation() {
+            source_zone = Zone::Hand;
+        }
+
         let filter_attr = self.filter_attr_without_state_flags();
         let mut prompt_filter = CardFilter::default();
-        match self.discard_source_zone() {
+        match source_zone {
             Zone::Stage => prompt_filter.zone_mask = Zone::Stage as u8,
             Zone::Hand => prompt_filter.zone_mask = Zone::Hand as u8,
             Zone::Discard => prompt_filter.zone_mask = Zone::Discard as u8,
@@ -902,7 +906,7 @@ impl<'a> AbilityFrameComponents<'a> {
 
         SemanticDiscardSpec {
             requested_count: self.value,
-            source_zone: self.discard_source_zone(),
+            source_zone,
             filter_attr,
             prompt_filter_attr: prompt_filter.to_attr() | self.raw_attr.max(self.filter.to_attr()),
             suspend_slot: self.raw_slot,
@@ -999,10 +1003,19 @@ impl<'a> AbilityFrameComponents<'a> {
             reveal: look.reveal,
             remainder_to_discard: look.dest_discard,
             selection_filter,
-            selection_filter_attr: if self.raw_attr != 0 {
-                self.raw_attr
-            } else {
-                selection_filter.to_attr()
+            selection_filter_attr: {
+                let attr = if self.raw_attr != 0 {
+                    self.raw_attr
+                } else {
+                    selection_filter.to_attr()
+                };
+                if matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom)
+                    && look.choose_count.max(fallback_choose_count as u8) > 1
+                {
+                    0
+                } else {
+                    attr
+                }
             },
             suspend_slot: self.raw_slot,
         }
@@ -2397,6 +2410,8 @@ pub struct AbilityContext {
     pub auto_pick: bool, // If true, mandatory single-choice steps (like O_SELECT_MODE) will resolve automatically
     #[serde(default)]
     pub is_static_eval: bool, // If true, skip phase restoration in finish_execution
+    #[serde(default)]
+    pub skip_initial_condition_precheck: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -2452,6 +2467,7 @@ impl Default for AbilityContext {
             selected_target_keys: smallvec::SmallVec::new(),
             auto_pick: false,
             is_static_eval: false,
+            skip_initial_condition_precheck: false,
         }
     }
 }
@@ -2530,6 +2546,23 @@ impl PendingInteraction {
         self.filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
     }
 
+    pub fn is_move_to_discard_prompt(&self) -> bool {
+        self.effect_opcode == crate::core::generated_constants::O_MOVE_TO_DISCARD
+    }
+
+    pub fn is_hand_discard_prompt(&self) -> bool {
+        self.is_move_to_discard_prompt() && self.choice_type == ChoiceType::SelectHandDiscard
+    }
+
+    pub fn discard_selection_filter_attr(&self) -> u64 {
+        let masked = self.filter_attr_without_state_flags();
+        if self.choice_type == ChoiceType::SelectHandDiscard {
+            masked & !0x3
+        } else {
+            masked
+        }
+    }
+
     pub fn has_structured_filter_constraints(&self) -> bool {
         crate::core::logic::filter::has_structured_filter_constraints(self.filter_attr)
     }
@@ -2597,6 +2630,26 @@ pub struct Ability {
     pub preparsed_modifiers: Vec<PreparsedModifier>,
     #[serde(default)]
     pub filters: Vec<crate::core::logic::filter::CardFilter>,
+    #[serde(default, skip_serializing)]
+    pub runtime_metadata_ready: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_deck_top_window: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_frame_cost_checks: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_optional_frame: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_optional_cost: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_activation_conditions: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_look_choose_checks: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_has_interactive_prompt: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_prompt_before_count_blades: bool,
+    #[serde(default, skip_serializing)]
+    pub runtime_prompt_before_count_hearts: bool,
 }
 
 impl std::hash::Hash for Ability {
@@ -2615,6 +2668,16 @@ impl std::hash::Hash for Ability {
         self.pseudocode.hash(state);
         self.preparsed_modifiers.hash(state);
         self.filters.hash(state);
+        self.runtime_metadata_ready.hash(state);
+        self.runtime_has_deck_top_window.hash(state);
+        self.runtime_has_frame_cost_checks.hash(state);
+        self.runtime_has_optional_frame.hash(state);
+        self.runtime_has_optional_cost.hash(state);
+        self.runtime_has_activation_conditions.hash(state);
+        self.runtime_has_look_choose_checks.hash(state);
+        self.runtime_has_interactive_prompt.hash(state);
+        self.runtime_prompt_before_count_blades.hash(state);
+        self.runtime_prompt_before_count_hearts.hash(state);
         // modal_options skipped
     }
 }
@@ -2775,6 +2838,90 @@ impl Ability {
 
     pub fn has_resolved_frames(&self) -> bool {
         !self.resolved_frames().is_empty()
+    }
+
+    pub fn runtime_has_deck_top_window(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_deck_top_window;
+        }
+        self.resolved_frames()
+            .iter()
+            .any(|frame| frame.dslot().source_zone == Zone::DeckTop)
+    }
+
+    pub fn runtime_has_frame_cost_checks(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_frame_cost_checks;
+        }
+        self.resolved_frames().iter().any(|frame| {
+            let data = frame.components();
+            let implicit_deck_cost = matches!(
+                data.opcode,
+                O_MOVE_MEMBER | O_MOVE_TO_DISCARD | O_MOVE_TO_DECK
+            ) && matches!(
+                data.slot.source_zone,
+                Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
+            );
+            frame.is_cost() || implicit_deck_cost
+        })
+    }
+
+    pub fn runtime_has_optional_frame(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_optional_frame;
+        }
+        self.resolved_frames()
+            .iter()
+            .any(|frame| frame.components().filter.is_optional)
+    }
+
+    pub fn runtime_has_optional_cost(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_optional_cost;
+        }
+        self.costs.iter().any(|cost| cost.is_optional)
+    }
+
+    pub fn runtime_has_activation_conditions(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_activation_conditions;
+        }
+        self.conditions.iter().any(|condition| {
+            !matches!(
+                condition.condition_type,
+                ConditionType::SumValue | ConditionType::DiscardedCards
+            )
+        })
+    }
+
+    pub fn runtime_has_look_choose_checks(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_look_choose_checks;
+        }
+        self.resolved_frames()
+            .iter()
+            .any(|frame| frame.opcode() == O_LOOK_AND_CHOOSE && !frame.is_cost())
+    }
+
+    pub fn runtime_has_interactive_prompt(&self) -> bool {
+        if self.runtime_metadata_ready {
+            return self.runtime_has_interactive_prompt;
+        }
+        self.resolved_frames().iter().any(|frame| {
+            matches!(
+                frame.opcode(),
+                O_SELECT_MEMBER
+                    | O_SELECT_LIVE
+                    | O_SELECT_PLAYER
+                    | O_SELECT_MODE
+                    | O_SELECT_CARDS
+                    | O_LOOK_AND_CHOOSE
+                    | O_COLOR_SELECT
+                    | O_TAP_MEMBER
+                    | O_TAP_OPPONENT
+                    | O_TRIGGER_REMOTE
+            )
+        })
     }
 
     pub fn words(&self) -> Vec<i32> {

@@ -39,7 +39,7 @@ fn test_repro_pb1_001_r_softlock_fix() {
     assert_eq!(state.phase, Phase::Response);
 
     // Generate the actions available to the player at this pause
-    let mut actions = Vec::new();
+    let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, 0, &mut actions);
 
     // Based on validation logic, only Mode 0 (Pay Energy) should be available. Mode 1 (Discard Hand) is skipped.
@@ -83,7 +83,7 @@ fn test_repro_pb1_001_r_all_combinations() {
         let target_id = 4684;
         state.resolve_ability(&db, &db.get_member(target_id).unwrap().abilities[0], &ctx);
 
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
         let has_0 = actions.contains(&(ACTION_BASE_MODE as i32 + 0));

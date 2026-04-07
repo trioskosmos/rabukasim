@@ -1,6 +1,9 @@
 use crate::core::enums::{TriggerType, Zone};
-use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE, TARGET_SLOT_STAGE};
+use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::interaction_zone::{
+    draw_zone_cards, target_slot_destination,
+};
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::{AbilityFrameComponents, SemanticLookAndChooseSpec};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -51,47 +54,8 @@ fn populate_looked_cards(
     source_zone: Zone,
     reveal_count: usize,
 ) {
-    match source_zone {
-        Zone::Hand => {
-            for _ in 0..reveal_count {
-                if let Some(cid) = state.players[p_idx].pop_hand_card() {
-                    state.players[p_idx].looked_cards.push(cid);
-                }
-            }
-        }
-        Zone::Discard => {
-            for _ in 0..reveal_count {
-                if let Some(cid) = state.players[p_idx].pop_discard_card() {
-                    state.players[p_idx].looked_cards.push(cid);
-                }
-            }
-        }
-        Zone::Yell => {
-            let y = std::mem::take(&mut state.players[p_idx].yell_cards);
-            state.players[p_idx].looked_cards.extend(y);
-        }
-        _ => {
-            if state.players[p_idx].deck.len() < reveal_count {
-                state.resolve_deck_refresh(p_idx);
-            }
-            for _ in 0..reveal_count.min(state.players[p_idx].deck.len()) {
-                if let Some(cid) = state.players[p_idx].pop_deck_card() {
-                    state.players[p_idx].looked_cards.push(cid);
-                }
-            }
-        }
-    }
-}
-
-fn target_slot_destination(target_slot: u8) -> Zone {
-    match target_slot {
-        TARGET_SLOT_STAGE => Zone::Stage,
-        x if x == Zone::Discard as u8 => Zone::Discard,
-        x if x == Zone::Deck as u8 => Zone::Deck,
-        x if x == Zone::SuccessPile as u8 => Zone::SuccessPile,
-        x if x == Zone::Hand as u8 || x == 0 => Zone::Hand,
-        _ => Zone::Hand,
-    }
+    let drawn = draw_zone_cards(state, p_idx, source_zone, reveal_count);
+    state.players[p_idx].looked_cards.extend(drawn);
 }
 
 fn resolved_finalize_destination(spec: &SemanticLookAndChooseSpec, ctx: &AbilityContext) -> Zone {

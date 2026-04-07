@@ -163,14 +163,14 @@ mod tests {
                 break;
             }
 
-            let mut actions = Vec::new();
+            let mut actions: Vec<i32> = Vec::new();
             state.generate_legal_actions(&db, 0, &mut actions);
-            let action = if actions.contains(&(crate::core::logic::ACTION_BASE_HAND_SELECT as usize)) {
+            let action = if actions.contains(&crate::core::logic::ACTION_BASE_HAND_SELECT) {
                 crate::core::logic::ACTION_BASE_HAND_SELECT as i32
             } else {
                 *actions
                     .iter()
-                    .filter(|action| **action >= crate::core::logic::ACTION_BASE_CHOICE as usize)
+                    .filter(|action| **action >= crate::core::logic::ACTION_BASE_CHOICE)
                     .min()
                     .expect("expected a follow-up response action for Kimi no Kokoro") as i32
             };

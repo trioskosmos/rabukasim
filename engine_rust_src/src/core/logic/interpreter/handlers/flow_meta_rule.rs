@@ -99,6 +99,45 @@ pub fn handle_meta_rule(
         if let Some(slot_idx) = slot_idx.filter(|&slot| slot < 3) {
             state.players[p_idx].set_tapped(slot_idx, true);
         }
+    } else if matches!(raw_effect, Some("SET_SOURCE_COST_FROM_SELECTED_MINUS")) {
+        let delta = frame_data
+            .params
+            .and_then(|params| params.get("offset").or_else(|| params.get("OFFSET")))
+            .and_then(|value| value.as_i64())
+            .unwrap_or(1) as i32;
+        let Some(selected_cid) = ctx.selected_cards.last().copied() else {
+            return HandlerResult::Continue;
+        };
+        let Some(selected_member) = db.get_member(selected_cid) else {
+            return HandlerResult::Continue;
+        };
+        let Some(source_member) = db.get_member(ctx.source_card_id) else {
+            return HandlerResult::Continue;
+        };
+
+        let amount = (selected_member.cost as i32 - delta) - source_member.cost as i32;
+        let condition = crate::core::logic::Condition {
+            condition_type: crate::core::enums::ConditionType::None,
+            value: ctx.source_card_id,
+            attr: 0,
+            target_slot: 0,
+            is_negated: false,
+            params: serde_json::json!({
+                "raw_cond": "SOURCE_CARD_ID_EQUALS",
+                "card_id": ctx.source_card_id,
+            }),
+        };
+        state.players[p_idx].cost_modifiers.push((condition, amount));
+        if let Some(source_slot) = state.players[p_idx]
+            .stage
+            .iter()
+            .position(|&cid| cid == ctx.source_card_id)
+            .filter(|&slot| slot < 3)
+        {
+            ctx.area_idx = source_slot as i16;
+            ctx.target_slot = source_slot as i16;
+        }
+        ctx.v_accumulated = (selected_member.cost as i32 - delta) as i16;
     } else if matches!(rule_name.as_deref(), Some("ALL_ENERGY_ACTIVE"))
         || (v == 1 && matches!(rule_type.as_deref(), Some("SCORE_RULE")))
     {

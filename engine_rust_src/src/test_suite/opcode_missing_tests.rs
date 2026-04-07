@@ -1,6 +1,6 @@
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::*;
-use crate::test_helpers::{create_test_db, create_test_state};
+use crate::test_helpers::{create_test_db, create_test_state, FrameBuilder, TestActionReceiver};
 // use std::collections::HashMap;
 
 #[test]
@@ -34,6 +34,295 @@ fn test_opcode_select_member() {
             .unwrap_or(ChoiceType::None),
         ChoiceType::SelectMember,
         "Pending choice type mismatch"
+    );
+}
+
+fn add_member(db: &mut CardDatabase, mut member: MemberCard) {
+    member.hearts_board = HeartBoard::from_array(&member.hearts);
+    member.blade_hearts_board = HeartBoard::from_array(&member.blade_hearts);
+    let logic_id = (member.card_id as usize) % LOGIC_ID_MASK as usize;
+    if db.members_vec.len() <= logic_id {
+        db.members_vec.resize(logic_id + 1, None);
+    }
+    db.members_vec[logic_id] = Some(member.clone());
+    db.members.insert(member.card_id, member);
+}
+
+#[test]
+fn test_prompt_before_count_blades_defers_trigger_precheck_until_selection() {
+    let mut db = create_test_db();
+
+    let mut source = MemberCard::default();
+    source.card_id = 9001;
+    source.card_no = "TEST-9001".to_string();
+    source.name = "Prompt First Blades Source".to_string();
+    source.abilities.push(Ability {
+        trigger: TriggerType::OnLiveStart,
+        frame_program: Some(
+            FrameBuilder::new()
+                .op(O_SELECT_MEMBER)
+                .v(1)
+                .op(C_COUNT_BLADES)
+                .v(2)
+                .target(10)
+                .op(O_ADD_BLADES)
+                .v(1)
+                .target(10)
+                .op(O_RETURN)
+                .build_prog(),
+        ),
+        ..Default::default()
+    });
+    CardDatabase::enrich_member_runtime_metadata(&mut source);
+    add_member(&mut db, source);
+
+    let mut selected = MemberCard::default();
+    selected.card_id = 9002;
+    selected.card_no = "TEST-9002".to_string();
+    selected.name = "Prompt First Blades Target".to_string();
+    selected.blades = 2;
+    selected.blade_hearts = [0; 7];
+    selected.hearts = [0; 7];
+    CardDatabase::enrich_member_runtime_metadata(&mut selected);
+    add_member(&mut db, selected);
+
+    let mut state = create_test_state();
+    state.phase = Phase::PerformanceP1;
+    state.current_player = 0;
+    state.players[0].stage[0] = 9001;
+    state.players[0].stage[1] = 9002;
+
+    let before_blades = get_effective_blades(&state, 0, 1, &db, 0);
+    let ability = db
+        .get_member(9001)
+        .expect("9001 should be present in the test DB")
+        .abilities
+        .first()
+        .expect("9001 should have one ability");
+    assert!(ability.runtime_metadata_ready);
+    assert!(ability.runtime_prompt_before_count_blades);
+    assert!(!ability.runtime_prompt_before_count_hearts);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        source_card_id: 9001,
+        area_idx: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+
+    assert_eq!(
+        state.phase,
+        Phase::Response,
+        "prompt-first CountBlades should suspend for slot selection instead of being prechecked away"
+    );
+    assert_eq!(
+        state.interaction_stack.last().map(|pending| pending.choice_type),
+        Some(ChoiceType::SelectMember),
+        "prompt-first CountBlades should expose a member selection prompt"
+    );
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+    assert!(
+        actions
+            .actions
+            .contains(&(crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)),
+        "prompt-first CountBlades should allow selecting the 2-blade member"
+    );
+
+    state
+        .handle_response(&db, crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)
+        .expect("selecting the CountBlades target should resolve cleanly");
+    state.process_trigger_queue(&db);
+
+    assert!(state.interaction_stack.is_empty());
+    assert_eq!(
+        get_effective_blades(&state, 0, 1, &db, 0),
+        before_blades + 1,
+        "prompt-first CountBlades should resolve the selected member and apply the follow-up effect"
+    );
+}
+
+#[test]
+fn test_count_blades_before_prompt_still_prechecks_and_blocks_activation() {
+    let mut db = create_test_db();
+
+    let mut source = MemberCard::default();
+    source.card_id = 9011;
+    source.card_no = "TEST-9011".to_string();
+    source.name = "Count First Blades Source".to_string();
+    source.abilities.push(Ability {
+        trigger: TriggerType::OnLiveStart,
+        frame_program: Some(
+            FrameBuilder::new()
+                .op(C_COUNT_BLADES)
+                .v(2)
+                .target(10)
+                .op(O_SELECT_MEMBER)
+                .v(1)
+                .op(O_ADD_BLADES)
+                .v(1)
+                .target(10)
+                .op(O_RETURN)
+                .build_prog(),
+        ),
+        ..Default::default()
+    });
+    CardDatabase::enrich_member_runtime_metadata(&mut source);
+    add_member(&mut db, source);
+
+    let mut selected = MemberCard::default();
+    selected.card_id = 9012;
+    selected.card_no = "TEST-9012".to_string();
+    selected.name = "Count First Blades Target".to_string();
+    selected.blades = 2;
+    selected.blade_hearts = [0; 7];
+    selected.hearts = [0; 7];
+    CardDatabase::enrich_member_runtime_metadata(&mut selected);
+    add_member(&mut db, selected);
+
+    let mut state = create_test_state();
+    state.phase = Phase::PerformanceP1;
+    state.current_player = 0;
+    state.players[0].stage[0] = 9011;
+    state.players[0].stage[1] = 9012;
+
+    let ability = db
+        .get_member(9011)
+        .expect("9011 should be present in the test DB")
+        .abilities
+        .first()
+        .expect("9011 should have one ability");
+    assert!(ability.runtime_metadata_ready);
+    assert!(!ability.runtime_prompt_before_count_blades);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        source_card_id: 9011,
+        area_idx: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+
+    assert_eq!(
+        state.phase,
+        Phase::PerformanceP1,
+        "CountBlades before the prompt should be prechecked and block activation"
+    );
+    assert!(
+        state.interaction_stack.is_empty(),
+        "CountBlades before the prompt should never suspend for selection when the precheck fails"
+    );
+    assert_eq!(
+        get_effective_blades(&state, 0, 1, &db, 0),
+        2,
+        "blocked CountBlades should not apply the follow-up blade gain"
+    );
+}
+
+#[test]
+fn test_prompt_before_count_hearts_defers_trigger_precheck_until_selection() {
+    let mut db = create_test_db();
+
+    let mut source = MemberCard::default();
+    source.card_id = 9021;
+    source.card_no = "TEST-9021".to_string();
+    source.name = "Prompt First Hearts Source".to_string();
+    source.abilities.push(Ability {
+        trigger: TriggerType::OnLiveStart,
+        frame_program: Some(
+            FrameBuilder::new()
+                .op(O_SELECT_MEMBER)
+                .v(1)
+                .op(C_COUNT_HEARTS)
+                .v(2)
+                .target(10)
+                .op(O_ADD_HEARTS)
+                .v(1)
+                .a(1)
+                .target(10)
+                .op(O_RETURN)
+                .build_prog(),
+        ),
+        ..Default::default()
+    });
+    CardDatabase::enrich_member_runtime_metadata(&mut source);
+    add_member(&mut db, source);
+
+    let mut selected = MemberCard::default();
+    selected.card_id = 9022;
+    selected.card_no = "TEST-9022".to_string();
+    selected.name = "Prompt First Hearts Target".to_string();
+    selected.hearts = [1, 1, 0, 0, 0, 0, 0];
+    selected.blade_hearts = [0; 7];
+    CardDatabase::enrich_member_runtime_metadata(&mut selected);
+    add_member(&mut db, selected);
+
+    let mut state = create_test_state();
+    state.phase = Phase::PerformanceP1;
+    state.current_player = 0;
+    state.players[0].stage[0] = 9021;
+    state.players[0].stage[1] = 9022;
+
+    let before_hearts = state.get_effective_hearts(0, 1, &db, 0).get_total_count();
+    let ability = db
+        .get_member(9021)
+        .expect("9021 should be present in the test DB")
+        .abilities
+        .first()
+        .expect("9021 should have one ability");
+    assert!(ability.runtime_metadata_ready);
+    assert!(ability.runtime_prompt_before_count_hearts);
+    assert!(!ability.runtime_prompt_before_count_blades);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        activator_id: 0,
+        source_card_id: 9021,
+        area_idx: 0,
+        trigger_type: TriggerType::OnLiveStart,
+        ..Default::default()
+    };
+
+    state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+
+    assert_eq!(
+        state.phase,
+        Phase::Response,
+        "prompt-first CountHearts should suspend for slot selection instead of being prechecked away"
+    );
+    assert_eq!(
+        state.interaction_stack.last().map(|pending| pending.choice_type),
+        Some(ChoiceType::SelectMember),
+        "prompt-first CountHearts should expose a member selection prompt"
+    );
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+    assert!(
+        actions
+            .actions
+            .contains(&(crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)),
+        "prompt-first CountHearts should allow selecting the 2-heart member"
+    );
+
+    state
+        .handle_response(&db, crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)
+        .expect("selecting the CountHearts target should resolve cleanly");
+    state.process_trigger_queue(&db);
+
+    assert!(state.interaction_stack.is_empty());
+    assert_eq!(
+        state.get_effective_hearts(0, 1, &db, 0).get_total_count(),
+        before_hearts + 1,
+        "prompt-first CountHearts should resolve the selected member and apply the follow-up heart gain"
     );
 }
 

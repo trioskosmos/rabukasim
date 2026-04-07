@@ -50,5 +50,6 @@ Supported environment variables:
 
 - This harness uses random legal actions only. It does not call TurnSequencer or MCTS.
 - Because the workspace rulebook text file is not currently present under `docs/rules/rules.txt`, setup fidelity is taken from the real engine initialization path and the frontend WASM init flow.
+- For the slow-state investigation workflow, see [`docs/plans/ultimate_benchmark_slow_state_workflow.md`](../../docs/plans/ultimate_benchmark_slow_state_workflow.md).
 
 Prefer changing this harness rather than adding another standalone benchmark target.

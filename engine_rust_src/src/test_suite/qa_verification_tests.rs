@@ -817,7 +817,7 @@ mod tests {
         assert_eq!(state.phase, Phase::Main);
 
         // Check legal actions. Action 0 (Pass) should be available in Main Phase.
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
         assert!(
             actions.contains(&0),
@@ -2060,7 +2060,7 @@ mod tests {
         });
 
         // Verify Pass action (Action 0)
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, p_idx, &mut actions);
         assert!(
             actions.contains(&0),
@@ -2595,7 +2595,7 @@ mod tests {
         state.phase = Phase::Main;
 
         // 2. Generation: Check available actions.
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
         // Activation action ID: ACTION_BASE_STAGE (8300) + Slot (0)*100 + Ability (0)*10

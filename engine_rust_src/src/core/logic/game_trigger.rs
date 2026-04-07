@@ -3,18 +3,33 @@ use super::models::AbilityContext;
 use super::state::GameState;
 use crate::core::enums::{ConditionType, TriggerType};
 use crate::core::generated_constants::{
-    C_COUNT_BLADES, C_COUNT_HEARTS, O_COLOR_SELECT, O_LOOK_AND_CHOOSE, O_SELECT_CARDS,
-    O_SELECT_LIVE, O_SELECT_MEMBER, O_SELECT_MODE, O_SELECT_PLAYER, O_TAP_MEMBER,
-    O_TAP_OPPONENT, O_TRIGGER_REMOTE,
+    O_ACTIVATE_ENERGY, O_COLOR_SELECT, O_LOOK_AND_CHOOSE, O_PAY_ENERGY,
+    O_PAY_ENERGY_DYNAMIC, O_SELECT_CARDS, O_SELECT_LIVE, O_SELECT_MEMBER, O_SELECT_MODE,
+    O_SELECT_PLAYER, O_TAP_MEMBER, O_TAP_OPPONENT, O_TRIGGER_REMOTE,
 };
 use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
 use crate::core::logic::Ability;
 use crate::core::logic::interpreter::uses_paired_keyword_effect_conditions;
+use std::time::Instant;
+
+fn trigger_profile_enabled() -> bool {
+    std::env::var("BENCH_PROFILE_TRIGGERS")
+        .ok()
+        .map(|value| {
+            let value = value.trim();
+            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
+        })
+        .unwrap_or(false)
+}
 
 fn should_precheck_trigger_condition(cond: &crate::core::logic::Condition) -> bool {
     !matches!(
         cond.condition_type,
-        ConditionType::SumValue | ConditionType::DiscardedCards
+        ConditionType::None
+            | ConditionType::SumValue
+            | ConditionType::DiscardedCards
+            | ConditionType::CountBladeHeartTypes
+            | ConditionType::Baton
     )
 }
 
@@ -22,30 +37,41 @@ fn should_defer_trigger_condition_precheck(
     ability: &Ability,
     cond: &crate::core::logic::Condition,
 ) -> bool {
-    let condition_opcode = match cond.condition_type {
-        ConditionType::CountBlades => C_COUNT_BLADES,
-        ConditionType::CountHearts => C_COUNT_HEARTS,
-        _ => return false,
-    };
-
-    let mut saw_interactive_prompt = false;
-    for frame in ability.resolved_frames().iter() {
-        match frame.opcode() {
-            O_SELECT_MEMBER
-            | O_SELECT_LIVE
-            | O_SELECT_PLAYER
-            | O_SELECT_MODE
-            | O_SELECT_CARDS
-            | O_LOOK_AND_CHOOSE
-            | O_COLOR_SELECT
-            | O_TAP_MEMBER
-            | O_TAP_OPPONENT
-            | O_TRIGGER_REMOTE => saw_interactive_prompt = true,
+    if ability.runtime_metadata_ready {
+        match cond.condition_type {
+            ConditionType::CountBlades => return ability.runtime_prompt_before_count_blades,
+            ConditionType::CountHearts => return ability.runtime_prompt_before_count_hearts,
             _ => {}
+        }
+    }
+
+    let condition_opcode = cond.condition_type as i32;
+    let mut saw_blocking_frame = false;
+    for frame in ability.resolved_frames().iter() {
+        if frame.is_cost()
+            || matches!(
+                frame.opcode(),
+                O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY
+            )
+            || matches!(
+                frame.opcode(),
+                O_SELECT_MEMBER
+                    | O_SELECT_LIVE
+                    | O_SELECT_PLAYER
+                    | O_SELECT_MODE
+                    | O_SELECT_CARDS
+                    | O_LOOK_AND_CHOOSE
+                    | O_COLOR_SELECT
+                    | O_TAP_MEMBER
+                    | O_TAP_OPPONENT
+                    | O_TRIGGER_REMOTE
+            )
+        {
+            saw_blocking_frame = true;
         }
 
         if frame.opcode() == condition_opcode {
-            return saw_interactive_prompt;
+            return saw_blocking_frame;
         }
     }
 
@@ -127,11 +153,24 @@ impl GameState {
             return;
         }
 
+        let profile_enabled = trigger_profile_enabled();
+        let profile_start = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
         self.core.trigger_depth += 1;
 
         super::interpreter::process_trigger_queue(self, db);
 
         self.core.trigger_depth -= 1;
+
+        if let Some(profile_start) = profile_start {
+            let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
+            if total_us >= 1000 {
+                println!("[PROFILE] TriggerQueue total_us={}", total_us);
+            }
+        }
     }
 
     pub fn check_once_per_turn(
@@ -273,6 +312,12 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
+        let profile_enabled = trigger_profile_enabled();
+        let profile_start = if profile_enabled {
+            Some(Instant::now())
+        } else {
+            None
+        };
         // Fast path: vanilla mode or empty board - skip trigger processing
         if db.is_vanilla {
             return;
@@ -331,14 +376,8 @@ impl GameState {
 
         // 3. Source Card (if not on stage/live)
         let source_cid = ctx.source_card_id;
-        let on_stage = self.core.players[p_idx]
-            .stage
-            .iter()
-            .any(|&c| c == source_cid);
-        let on_live = self.core.players[p_idx]
-            .live_zone
-            .iter()
-            .any(|&c| c == source_cid);
+        let on_stage = self.core.players[p_idx].get_slot_of(source_cid).is_some();
+        let on_live = self.core.players[p_idx].live_zone.iter().any(|&c| c == source_cid);
         if !on_stage && !on_live && source_cid >= 0 {
             self.collect_triggers_for_card(
                 db,
@@ -517,6 +556,20 @@ impl GameState {
         }
 
         self.process_trigger_queue(db);
+
+        if let Some(profile_start) = profile_start {
+            let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
+            if total_us >= 1000 {
+                println!(
+                    "[PROFILE] TriggerFanout total_us={} trigger={:?} player={} source_cid={} start_ab_idx={}",
+                    total_us,
+                    trigger,
+                    ctx.player_id,
+                    ctx.source_card_id,
+                    start_ab_idx
+                );
+            }
+        }
     }
 
     fn collect_triggers_for_card(
@@ -534,10 +587,50 @@ impl GameState {
             return;
         }
 
+        let trigger_bit = 1u32 << (trigger as u32 % 32);
+        let is_same_slot_instance =
+            slot_idx >= 0 && ctx.area_idx >= 0 && slot_idx == ctx.area_idx;
+        let is_explicit_source_card = slot_idx < 0 && cid == ctx.source_card_id;
+        let is_same_card_different_slot = slot_idx >= 0
+            && ctx.area_idx >= 0
+            && cid == ctx.source_card_id
+            && slot_idx != ctx.area_idx;
+
+        if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves)
+            && !is_same_slot_instance
+            && !is_explicit_source_card
+            && !is_same_card_different_slot
+        {
+            let has_monitor_conditions = if is_live {
+                db.get_live(cid)
+                    .map(|card| card.has_monitor_conditions)
+                    .unwrap_or(false)
+            } else {
+                db.get_member(cid)
+                    .map(|card| card.has_monitor_conditions)
+                    .unwrap_or(false)
+            };
+            if !has_monitor_conditions {
+                return;
+            }
+        }
+
         let abilities = if is_live {
-            db.get_live(cid).map(|l| &l.abilities)
+            db.get_live(cid).and_then(|live| {
+                if live.trigger_mask != 0 && (live.trigger_mask & trigger_bit) == 0 {
+                    None
+                } else {
+                    Some(&live.abilities)
+                }
+            })
         } else {
-            db.get_member(cid).map(|m| &m.abilities)
+            db.get_member(cid).and_then(|member| {
+                if member.trigger_mask != 0 && (member.trigger_mask & trigger_bit) == 0 {
+                    None
+                } else {
+                    Some(&member.abilities)
+                }
+            })
         };
 
         let p_idx = ctx.player_id as usize;
@@ -563,13 +656,6 @@ impl GameState {
 
                     // Filter OnPlay/OnLeaves to only the specific card being moved
                     // UNLESS it is a monitoring ability (has a GroupFilter/Score/etc condition)
-                    let is_same_slot_instance =
-                        slot_idx >= 0 && ctx.area_idx >= 0 && slot_idx == ctx.area_idx;
-                    let is_explicit_source_card = slot_idx < 0 && cid == ctx.source_card_id;
-                    let is_same_card_different_slot = slot_idx >= 0
-                        && ctx.area_idx >= 0
-                        && cid == ctx.source_card_id
-                        && slot_idx != ctx.area_idx;
                     if (trigger == TriggerType::OnPlay || trigger == TriggerType::OnLeaves)
                         && !is_same_slot_instance
                         && !is_explicit_source_card

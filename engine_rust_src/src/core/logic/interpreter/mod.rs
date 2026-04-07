@@ -30,7 +30,7 @@ pub use suspension::{
 fn should_precheck_ability_condition(cond: &crate::core::logic::Condition) -> bool {
     !matches!(
         cond.condition_type,
-        ConditionType::SumValue | ConditionType::DiscardedCards
+        ConditionType::None | ConditionType::SumValue | ConditionType::DiscardedCards | ConditionType::Baton
     )
 }
 
@@ -38,34 +38,48 @@ fn should_defer_ability_condition_precheck(
     ability: &Ability,
     cond: &crate::core::logic::Condition,
 ) -> bool {
-    let condition_opcode = match cond.condition_type {
-        ConditionType::CountBlades => crate::core::generated_constants::C_COUNT_BLADES,
-        ConditionType::CountHearts => crate::core::generated_constants::C_COUNT_HEARTS,
-        _ => return false,
-    };
-
-    let mut saw_interactive_prompt = false;
-    for frame in ability.resolved_frames().iter() {
-        match frame.opcode() {
-            O_SELECT_MEMBER
-            | O_SELECT_LIVE
-            | O_SELECT_PLAYER
-            | O_SELECT_MODE
-            | O_SELECT_CARDS
-            | O_LOOK_AND_CHOOSE
-            | O_COLOR_SELECT
-            | O_TAP_MEMBER
-            | O_TAP_OPPONENT
-            | O_TRIGGER_REMOTE => saw_interactive_prompt = true,
-            _ => {}
+    match cond.condition_type {
+        ConditionType::CountBlades if ability.runtime_metadata_ready => {
+            ability.runtime_prompt_before_count_blades
         }
+        ConditionType::CountHearts if ability.runtime_metadata_ready => {
+            ability.runtime_prompt_before_count_hearts
+        }
+        _ => {
+            let condition_opcode = cond.condition_type as i32;
+            let mut saw_blocking_frame = false;
 
-        if frame.opcode() == condition_opcode {
-            return saw_interactive_prompt;
+            for frame in ability.resolved_frames().iter() {
+                if frame.is_cost()
+                    || matches!(
+                        frame.opcode(),
+                        O_PAY_ENERGY | O_PAY_ENERGY_DYNAMIC | O_ACTIVATE_ENERGY
+                    )
+                    || matches!(
+                        frame.opcode(),
+                        O_SELECT_MEMBER
+                            | O_SELECT_LIVE
+                            | O_SELECT_PLAYER
+                            | O_SELECT_MODE
+                            | O_SELECT_CARDS
+                            | O_LOOK_AND_CHOOSE
+                            | O_COLOR_SELECT
+                            | O_TAP_MEMBER
+                            | O_TAP_OPPONENT
+                            | O_TRIGGER_REMOTE
+                    )
+                {
+                    saw_blocking_frame = true;
+                }
+
+                if frame.opcode() == condition_opcode {
+                    return saw_blocking_frame;
+                }
+            }
+
+            false
         }
     }
-
-    false
 }
 
 pub(crate) fn uses_paired_keyword_effect_conditions(ability: &Ability) -> bool {
@@ -96,6 +110,26 @@ fn paired_effect_indices(
             check_condition(state, db, player_idx, cond, ctx, 0).then_some(idx)
         })
         .collect()
+}
+
+fn leading_condition_frame_count(frames: &[AbilityFrame]) -> usize {
+    let mut count = 0usize;
+    let mut saw_condition_block = false;
+
+    for frame in frames {
+        let frame_data = frame.components();
+        if is_condition_frame(&frame_data) {
+            saw_condition_block = true;
+            count += 1;
+            continue;
+        }
+
+        if saw_condition_block {
+            break;
+        }
+    }
+
+    count
 }
 use std::fmt;
 
@@ -359,9 +393,15 @@ pub fn resolve_ability(
         if paired_effect_indices(state, db, ctx_in.player_id as usize, ability, ctx_in).is_empty() {
             return Ok(());
         }
-    } else if !ability.conditions.is_empty() && ability.has_resolved_frames() {
+    } else if ctx_in.program_counter == 0
+        && ctx_in.choice_index == -1
+        && !ctx_in.skip_initial_condition_precheck
+        && !ability.conditions.is_empty()
+        && ability.has_resolved_frames()
+    {
+        let leading_condition_count = leading_condition_frame_count(&frames);
         let mut all_conditions_pass = true;
-        for cond in &ability.conditions {
+        for cond in ability.conditions.iter().take(leading_condition_count) {
             if !should_precheck_ability_condition(cond)
                 || should_defer_ability_condition_precheck(ability, cond)
             {
@@ -402,6 +442,8 @@ pub fn resolve_semantic_frames(
     if !state.ui.silent && ctx_in.program_counter == 0 {
         state.log("Starting sequential resolution of effect frames.".to_string());
     }
+
+    let _filter_cache_scope = crate::core::logic::game_rules_ext::FilterMatchCacheScope::activate();
 
     let execution_started = begin_execution(state, ctx_in);
 
@@ -662,11 +704,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             state.log("Rule 9.2.1.2, Rule 9.3.4.1, Rule 9.6.2.2: Making required choices and validating target legality.".to_string());
         }
 
-        let has_optional_frame = ability
-            .resolved_frames()
-            .iter()
-            .any(|frame| frame.components().filter.is_optional);
-        let has_optional_cost = ability.costs.iter().any(|cost| cost.is_optional);
+        let has_optional_frame = ability.runtime_has_optional_frame();
+        let has_optional_cost = ability.runtime_has_optional_cost();
         let should_pay_legacy_costs = !has_optional_frame && !has_optional_cost;
 
         if !state.ui.silent && (has_optional_frame || has_optional_cost) && !costs.is_empty() {
@@ -800,7 +839,10 @@ pub fn check_once_per_turn(
     ab_idx: usize,
 ) -> bool {
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
-    !state.players[p_idx].used_abilities.contains(&uid)
+    state.players[p_idx]
+        .used_abilities
+        .binary_search(&uid)
+        .is_err()
 }
 
 pub fn consume_once_per_turn(
@@ -818,5 +860,8 @@ pub fn consume_once_per_turn(
             uid
         ));
     }
-    state.players[p_idx].used_abilities.push(uid);
+    match state.players[p_idx].used_abilities.binary_search(&uid) {
+        Ok(_) => {}
+        Err(pos) => state.players[p_idx].used_abilities.insert(pos, uid),
+    }
 }

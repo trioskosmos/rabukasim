@@ -24,6 +24,26 @@ fn source_ability<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a 
         .or_else(|| db.get_live(source_card_id).and_then(|live| live.abilities.get(ability_idx)))
 }
 
+fn text_mentions_multiple_heart_types(text: &str) -> bool {
+    let mut distinct = 0;
+    for marker in [
+        "heart_01",
+        "heart_02",
+        "heart_03",
+        "heart_04",
+        "heart_05",
+        "heart_06",
+    ] {
+        if text.contains(marker) {
+            distinct += 1;
+            if distinct > 1 {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 fn decode_heart_color(
     db: &CardDatabase,
     frame: &AbilityFrameComponents<'_>,
@@ -40,15 +60,7 @@ fn decode_heart_color(
         return color_mask.trailing_zeros() as usize;
     }
 
-    // 3. Use the resolved filter attr if it's a valid color (1-6, with 7 mapping to 6)
-    match frame.resolved_filter_attr() {
-        0 => {} // Fall through to text parsing
-        7 => return 6,
-        raw if raw <= 6 => return raw as usize,
-        _ => {}
-    }
-
-    // 4. Try decoded hint text from frame params.
+    // 3. Try decoded hint text from frame params.
     if let Some(params) = frame.params {
         if let Some(decoded) = params.get("decoded").and_then(|v| v.as_str()) {
             if let Some(color) = decode_heart_type_from_text(decoded) {
@@ -62,8 +74,21 @@ fn decode_heart_color(
         }
     }
 
-    // 5. Try hydrated ability text and pseudocode for color.
+    // 4. For modal multi-heart text, prefer the branch-local encoded color if present.
     if let Some(ability) = source_ability(db, ctx) {
+        if ability.resolved_frames().iter().any(|resolved| resolved.opcode() == O_SELECT_MODE)
+            && (text_mentions_multiple_heart_types(&ability.raw_text)
+                || text_mentions_multiple_heart_types(&ability.pseudocode))
+        {
+            match frame.resolved_filter_attr() {
+                0 => {}
+                7 => return 6,
+                raw if raw <= 6 => return raw as usize,
+                _ => {}
+            }
+        }
+
+        // 5. Try hydrated ability text and pseudocode for color.
         if let Some(color) = decode_heart_type_from_text(&ability.raw_text) {
             return color;
         }
@@ -72,7 +97,14 @@ fn decode_heart_color(
         }
     }
 
-    // 6. Fallback to selected color.
+    // 6. For direct bytecode/legacy authored frames, the raw attr encodes the heart color.
+    match frame.resolved_filter_attr() {
+        7 => return 6,
+        raw if raw <= 6 => return raw as usize,
+        _ => {}
+    }
+
+    // 7. Fallback to selected color.
     ctx.selected_color as usize
 }
 

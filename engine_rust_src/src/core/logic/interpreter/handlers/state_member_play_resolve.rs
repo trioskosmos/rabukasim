@@ -87,25 +87,22 @@ pub fn finalize_play_member_from_hand(
     db: &CardDatabase,
     ctx: &mut AbilityContext,
     p_idx: usize,
-    h_idx: usize,
+    _h_idx: usize,
     slot_idx: usize,
 ) -> HandlerResult {
     if slot_idx >= 3 || state.players[p_idx].is_moved(slot_idx) {
         return HandlerResult::Continue;
     }
 
-    let resolved_hand_idx = if ctx.target_card_id >= 0 {
-        state.players[p_idx]
-            .hand
-            .iter()
-            .position(|&card_id| card_id == ctx.target_card_id)
-    } else if h_idx < state.players[p_idx].hand.len() {
-        Some(h_idx)
-    } else {
-        None
-    };
+    if ctx.target_card_id < 0 {
+        return HandlerResult::Continue;
+    }
 
-    let Some(hand_idx) = resolved_hand_idx else {
+    let Some(hand_idx) = state.players[p_idx]
+        .hand
+        .iter()
+        .position(|&card_id| card_id == ctx.target_card_id)
+    else {
         return HandlerResult::Continue;
     };
 

@@ -16,7 +16,6 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Prepare compiled card data and optionally sync the launcher/engine live mirrors"
     )
-    parser.add_argument("--force", action="store_true", help="Force rebuild of compiled artifacts")
     parser.add_argument("--quiet", action="store_true", help="Reduce build output")
     parser.add_argument(
         "--sync-launcher-assets",
@@ -37,14 +36,13 @@ def main():
     args = parse_args()
 
     result = prepare_runtime(
-        force=args.force,
         quiet=args.quiet,
         sync_assets=args.sync_launcher_assets,
     )
     if args.quiet:
         return
 
-    if result.cards_changed or result.frame_index_changed:
+    if result.cards_changed or result.ability_source_changed:
         print_status("Build complete.", is_done=True)
     else:
         print_status("Card and ability artifacts are up to date.", is_done=True)

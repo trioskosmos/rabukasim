@@ -16,8 +16,6 @@ fn main() {
     for rel in [
         "data/cards.json",
         "data/ability_frame_source.json",
-        "data/ability_runtime_index.json",
-        "data/cards_compiled.json",
         "data/metadata.json",
         "engine/compiler/runtime_cards.py",
         "engine/compiler/main.py",

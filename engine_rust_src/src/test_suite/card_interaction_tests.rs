@@ -1,9 +1,9 @@
-use crate::core::enums::{ChoiceType, TriggerType};
+use crate::core::enums::{ChoiceType, Phase, TriggerType};
 use crate::core::generated_constants::{ACTION_BASE_CHOICE, ACTION_BASE_HAND_SELECT, ACTION_BASE_MODE, ACTION_BASE_STAGE, ACTION_BASE_STAGE_SLOTS};
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::LOGIC_ID_MASK;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::{Ability, AbilityContext, MemberCard, O_ADD_BLADES, O_DRAW, O_JUMP, O_PAY_ENERGY, O_RETURN, O_SELECT_MODE, O_TAP_MEMBER};
+use crate::core::logic::{Ability, AbilityContext, MemberCard, O_ADD_BLADES, O_DRAW, O_JUMP, O_PAY_ENERGY, O_RETURN, O_SELECT_MODE, PendingInteraction, O_TAP_MEMBER};
 use crate::test_helpers::{create_test_db, create_test_state, load_real_db, FrameBuilder, TestActionReceiver};
 
 fn add_test_member(db: &mut crate::core::logic::CardDatabase, mut member: MemberCard) {
@@ -832,4 +832,64 @@ fn test_legacy_select_mode_draw_branch_resolves_without_wait_prompt() {
     assert!(state.interaction_stack.is_empty());
     assert_eq!(state.players[0].hand.len(), 1);
     assert!(!state.players[1].is_tapped(0));
+}
+
+#[test]
+fn test_branch_only_select_mode_generates_mode_actions_instead_of_pass_fallback() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let source_id = 9920;
+    add_test_member(
+        &mut db,
+        MemberCard {
+            card_id: source_id,
+            abilities: vec![Ability {
+                trigger: TriggerType::OnPlay,
+                raw_text: "Choose yourself or your opponent.".to_string(),
+                frame_program: Some(
+                    FrameBuilder::new()
+                        .op(O_SELECT_MODE)
+                        .v(2)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_JUMP)
+                        .v(1)
+                        .op(O_RETURN)
+                        .build_prog(),
+                ),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+
+    state.players[0].stage[0] = source_id;
+    state.phase = Phase::Response;
+    state.interaction_stack.push(PendingInteraction {
+        ctx: AbilityContext {
+            source_card_id: source_id,
+            player_id: 0,
+            activator_id: 0,
+            ability_index: 0,
+            trigger_type: TriggerType::OnPlay,
+            area_idx: 0,
+            v_remaining: 2,
+            ..Default::default()
+        },
+        card_id: source_id,
+        ability_index: 0,
+        effect_opcode: O_SELECT_MODE,
+        choice_type: ChoiceType::SelectMode,
+        v_remaining: 2,
+        ..Default::default()
+    });
+
+    let mut actions = TestActionReceiver::default();
+    state.generate_legal_actions(&db, 0, &mut actions);
+
+    assert!(actions.actions.contains(&ACTION_BASE_MODE));
+    assert!(actions.actions.contains(&(ACTION_BASE_MODE + 1)));
+    assert!(!actions.actions.contains(&0));
 }

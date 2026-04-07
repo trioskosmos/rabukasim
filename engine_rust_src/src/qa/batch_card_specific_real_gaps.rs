@@ -545,7 +545,7 @@ mod tests {
         state.players[0].hand = vec![cost4_member_id].into();
 
         let play_to_empty_slot = ACTION_BASE_HAND + 1;
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
         assert_eq!(
@@ -585,7 +585,7 @@ mod tests {
     fn test_q193_double_baton_can_land_in_either_source_slot() {
         let db = load_real_db();
         let state = setup_sumire_double_baton_state(&db);
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
         let land_in_slot_0 = ACTION_BASE_HAND + 4;
@@ -632,7 +632,7 @@ mod tests {
     fn test_q194_double_baton_rejects_member_that_entered_this_turn() {
         let db = load_real_db();
         let mut state = setup_sumire_double_baton_state(&db);
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
 
         state.players[0].set_moved(1, true);
         state.generate_legal_actions(&db, 0, &mut actions);

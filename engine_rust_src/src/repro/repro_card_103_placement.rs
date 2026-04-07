@@ -39,7 +39,7 @@ fn test_repro_card_103_placement() {
     state.resolve_semantic_frames(&db, &bytecode_frames, &ctx);
 
     // Generate actions
-    let mut actions = Vec::new();
+    let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, p_idx, &mut actions);
 
     // If all slots are full and FLAG_EMPTY_SLOT_ONLY is set,

@@ -20,9 +20,9 @@ use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::fs;
 use super::ability_hydration;
 use super::models::*;
+use super::rules::ability_has_hand_only_self_cost_modifier;
 
 // Custom deserializer to handle both arrays and objects for groups/units fields
 fn deserialize_u8_array<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
@@ -67,13 +67,7 @@ impl CardRef {
     }
 }
 
-// Runtime reloads authored sparse data from the canonical frame source.
-const EMBEDDED_ABILITY_FRAME_SOURCE_JSON: &str =
-    include_str!("../../../../data/ability_frame_source.json");
-const EMBEDDED_CARD_122_OVERLAY_JSON: &str =
-    include_str!("../../../../data/card_122_overlay.json");
 const LEGACY_CARD_ID_MAPPING_JSON: &str = include_str!("../../../../data/card_id_mapping.json");
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MemberCard {
     pub card_id: i32,
@@ -132,6 +126,10 @@ pub struct MemberCard {
     #[serde(default)]
     pub has_activated_stage: bool,
     #[serde(default)]
+    pub has_hand_self_cost_modifiers: bool,
+    #[serde(default)]
+    pub has_monitor_conditions: bool,
+    #[serde(default)]
     pub normalized_name: String,
     #[serde(default)]
     pub base_potential: f32,
@@ -173,9 +171,13 @@ pub struct LiveCard {
     #[serde(default)]
     pub effect_mask: u64,
     #[serde(default)]
+    pub trigger_mask: u32,
+    #[serde(default)]
     pub char_mask: u128,
     #[serde(default)]
     pub normalized_name: String,
+    #[serde(default)]
+    pub has_monitor_conditions: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,48 +211,6 @@ pub const LOGIC_ID_MASK: i32 = 0x0FFF;
 impl CardDatabase {
     fn normalize_card_no(card_no: &str) -> String {
         card_no.replace('＋', "+")
-    }
-
-    fn load_sparse_ability_index() -> HashMap<String, Value> {
-        let mut merged_index = HashMap::new();
-        let mut loaded_any = false;
-
-        for path in [
-            "data/ability_frame_source.json",
-            "../data/ability_frame_source.json",
-        ] {
-            if let Ok(json) = fs::read_to_string(path) {
-                let index = ability_hydration::load_sparse_ability_index_from_json(&json);
-                eprintln!("[SPARSE_DBG] path={} entries={}", path, index.len());
-                if index.is_empty() {
-                    continue;
-                }
-                merged_index.extend(index);
-                loaded_any = true;
-                break;
-            }
-        }
-
-        for json in [EMBEDDED_ABILITY_FRAME_SOURCE_JSON, EMBEDDED_CARD_122_OVERLAY_JSON] {
-            let index = ability_hydration::load_sparse_ability_index_from_json(json);
-            let label = if std::ptr::eq(json, EMBEDDED_ABILITY_FRAME_SOURCE_JSON) {
-                "embedded_frame_source"
-            } else {
-                "embedded_card_122_overlay"
-            };
-            eprintln!("[SPARSE_DBG] source={} entries={}", label, index.len());
-            if index.is_empty() {
-                continue;
-            }
-            merged_index.extend(index);
-            loaded_any = true;
-        }
-
-        if loaded_any {
-            return merged_index;
-        }
-
-        HashMap::new()
     }
 
     fn load_legacy_id_aliases(card_no_to_id: &HashMap<String, i32>) -> HashMap<i32, i32> {
@@ -376,6 +336,8 @@ impl CardDatabase {
         let mut has_multi_baton = false;
         let mut has_activated_hand = false;
         let mut has_activated_stage = false;
+        let mut has_hand_self_cost_modifiers = false;
+        let mut has_monitor_conditions = false;
 
         let flagged_ops = [
             O_DRAW,
@@ -401,6 +363,22 @@ impl CardDatabase {
         ];
 
         for ab in &mut card.abilities {
+            if let Some(frame_program) = ab.frame_program.as_mut() {
+                if !ab.raw_text.is_empty() {
+                    ability_hydration::annotate_distinctness_nops_from_text(
+                        &ab.raw_text,
+                        &mut frame_program.frames,
+                    );
+                }
+            }
+            let mut runtime_has_deck_top_window = false;
+            let mut runtime_has_frame_cost_checks = false;
+            let mut runtime_has_optional_frame = false;
+            let mut runtime_has_look_choose_checks = false;
+            let mut runtime_has_interactive_prompt = false;
+            let mut runtime_prompt_before_count_blades = false;
+            let mut runtime_prompt_before_count_hearts = false;
+
             if ab.trigger == TriggerType::OnPlay {
                 s_flags |= 0x01;
             }
@@ -420,10 +398,58 @@ impl CardDatabase {
             let mut ability_flags_for_ab = 0u64;
             let mut unflagged_logic_present = false;
             let resolved_frames = ab.resolved_frames().into_owned();
+            let mut saw_interactive_prompt = false;
 
             if !resolved_frames.is_empty() {
                 for frame in &resolved_frames {
                     let op = frame.opcode();
+
+                    if frame.components().filter.is_optional {
+                        runtime_has_optional_frame = true;
+                    }
+                    if frame.dslot().source_zone == Zone::DeckTop {
+                        runtime_has_deck_top_window = true;
+                    }
+                    if frame.is_cost()
+                        || matches!(
+                            op,
+                            O_MOVE_MEMBER | O_MOVE_TO_DISCARD | O_MOVE_TO_DECK
+                        ) && matches!(
+                            frame.dslot().source_zone,
+                            Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default
+                        )
+                    {
+                        runtime_has_frame_cost_checks = true;
+                    }
+                    if op == O_LOOK_AND_CHOOSE && !frame.is_cost() {
+                        runtime_has_look_choose_checks = true;
+                    }
+                    if matches!(
+                        op,
+                        O_SELECT_MEMBER
+                            | O_SELECT_LIVE
+                            | O_SELECT_PLAYER
+                            | O_SELECT_MODE
+                            | O_SELECT_CARDS
+                            | O_LOOK_AND_CHOOSE
+                            | O_COLOR_SELECT
+                            | O_TAP_MEMBER
+                            | O_TAP_OPPONENT
+                            | O_TRIGGER_REMOTE
+                    ) {
+                        runtime_has_interactive_prompt = true;
+                        saw_interactive_prompt = true;
+                    }
+                    if op == crate::core::generated_constants::C_COUNT_BLADES
+                        && saw_interactive_prompt
+                    {
+                        runtime_prompt_before_count_blades = true;
+                    }
+                    if op == crate::core::generated_constants::C_COUNT_HEARTS
+                        && saw_interactive_prompt
+                    {
+                        runtime_prompt_before_count_hearts = true;
+                    }
 
                     match op {
                         O_RETURN | O_LOOK_AND_CHOOSE => ability_flags_for_ab |= FLAG_DRAW as u64,
@@ -565,16 +591,20 @@ impl CardDatabase {
                 }
             }
 
-            // Frame program fallback for conditions (if effects/conditions not populated)
+            let runtime_has_optional_cost = ab.costs.iter().any(|cost| cost.is_optional);
+
             if let Some(frame_program) = ab.frame_program.as_ref() {
-                let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
-                // Prefer the leading authored condition block from executable frames.
-                // Compiled semantic exports may flatten later branch conditions into
-                // `ab.conditions`, which makes trigger prechecks stricter than the
-                // actual frame control flow. When the authored program has no leading
-                // condition block, the correct precheck set is empty.
+                let derived_conditions =
+                    ability_hydration::derive_conditions_from_frame_program(frame_program);
                 ab.conditions = derived_conditions;
             }
+
+            let runtime_has_activation_conditions = ab.conditions.iter().any(|condition| {
+                !matches!(
+                    condition.condition_type,
+                    ConditionType::SumValue | ConditionType::DiscardedCards
+                )
+            });
 
             if ab.choice_count > 0 {
                 if let Some(frame_program) = ab.frame_program.as_mut() {
@@ -609,6 +639,12 @@ impl CardDatabase {
                 has_on_play_choice = true;
             }
 
+            if matches!(ab.trigger, TriggerType::Constant | TriggerType::TurnStart)
+                && ability_has_hand_only_self_cost_modifier(ab)
+            {
+                has_hand_self_cost_modifiers = true;
+            }
+
             if ab.trigger == TriggerType::Activated {
                 let mut area_hand = false;
                 let mut area_stage = false;
@@ -638,6 +674,17 @@ impl CardDatabase {
                 }
             }
 
+            ab.runtime_metadata_ready = true;
+            ab.runtime_has_deck_top_window = runtime_has_deck_top_window;
+            ab.runtime_has_frame_cost_checks = runtime_has_frame_cost_checks;
+            ab.runtime_has_optional_frame = runtime_has_optional_frame;
+            ab.runtime_has_optional_cost = runtime_has_optional_cost;
+            ab.runtime_has_activation_conditions = runtime_has_activation_conditions;
+            ab.runtime_has_look_choose_checks = runtime_has_look_choose_checks;
+            ab.runtime_has_interactive_prompt = runtime_has_interactive_prompt;
+            ab.runtime_prompt_before_count_blades = runtime_prompt_before_count_blades;
+            ab.runtime_prompt_before_count_hearts = runtime_prompt_before_count_hearts;
+
             flags |= ability_flags_for_ab;
             if unflagged_logic_present {
                 s_flags |= 0x10;
@@ -645,6 +692,9 @@ impl CardDatabase {
 
             for c in &ab.conditions {
                 match c.condition_type {
+                    ConditionType::GroupFilter | ConditionType::ScoreTotalCheck => {
+                        has_monitor_conditions = true
+                    }
                     ConditionType::CountGroup | ConditionType::SelfIsGroup => {
                         synergy_flags |= SYN_FLAG_GROUP
                     }
@@ -679,6 +729,8 @@ impl CardDatabase {
         card.has_multi_baton = has_multi_baton;
         card.has_activated_hand = has_activated_hand;
         card.has_activated_stage = has_activated_stage;
+        card.has_hand_self_cost_modifiers = has_hand_self_cost_modifiers;
+        card.has_monitor_conditions = has_monitor_conditions;
 
         if card.hearts_board.0 == 0 {
             card.hearts_board = HeartBoard::from_array(&card.hearts);
@@ -769,10 +821,23 @@ impl CardDatabase {
     pub fn enrich_live_runtime_metadata(card: &mut LiveCard) {
         let mut s_flags = 0u32;
         let mut synergy_flags = 0u32;
+        let mut trigger_mask = 0u32;
+        let mut has_monitor_conditions = false;
 
         for ab in &mut card.abilities {
+            trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
+
+            if let Some(frame_program) = ab.frame_program.as_mut() {
+                if !ab.raw_text.is_empty() {
+                    ability_hydration::annotate_distinctness_nops_from_text(
+                        &ab.raw_text,
+                        &mut frame_program.frames,
+                    );
+                }
+            }
             if let Some(frame_program) = ab.frame_program.as_ref() {
-                let derived_conditions = ability_hydration::derive_conditions_from_frame_program(frame_program);
+                let derived_conditions =
+                    ability_hydration::derive_conditions_from_frame_program(frame_program);
                 ab.conditions = derived_conditions;
             }
 
@@ -782,6 +847,9 @@ impl CardDatabase {
 
             for c in &ab.conditions {
                 match c.condition_type {
+                    ConditionType::GroupFilter | ConditionType::ScoreTotalCheck => {
+                        has_monitor_conditions = true
+                    }
                     ConditionType::CountGroup | ConditionType::SelfIsGroup => {
                         synergy_flags |= SYN_FLAG_GROUP
                     }
@@ -797,6 +865,8 @@ impl CardDatabase {
 
         card.semantic_flags = s_flags;
         card.synergy_flags = synergy_flags;
+    card.trigger_mask = trigger_mask;
+        card.has_monitor_conditions = has_monitor_conditions;
 
         if card.hearts_board.0 == 0 {
             card.hearts_board = HeartBoard::from_array(&card.required_hearts);
@@ -836,8 +906,9 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
-        let text_index = ability_hydration::load_sparse_text_index();
-        let sparse_ability_index = Self::load_sparse_ability_index();
+        let sparse_assets = ability_hydration::load_sparse_assets();
+        let text_index = sparse_assets.text_index;
+        let sparse_ability_index = sparse_assets.ability_index;
 
         let mut db = Self {
             members: HashMap::new(),

@@ -186,18 +186,18 @@ fn test_repro_card_420_second_pick_can_be_skipped() {
         "Discard-play placement should only target empty stage slots"
     );
 
-    let mut actions = Vec::new();
+    let mut actions: Vec<i32> = Vec::new();
     state.generate_legal_actions(&db, p_idx, &mut actions);
     assert!(
-        !actions.contains(&(ACTION_BASE_STAGE_SLOTS as usize)),
+        !actions.contains(&ACTION_BASE_STAGE_SLOTS),
         "Occupied stage slot 0 should not be offered"
     );
     assert!(
-        actions.contains(&((ACTION_BASE_STAGE_SLOTS + 1) as usize)),
+        actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
         "Empty stage slot 1 should be offered"
     );
     assert!(
-        actions.contains(&((ACTION_BASE_STAGE_SLOTS + 2) as usize)),
+        actions.contains(&(ACTION_BASE_STAGE_SLOTS + 2)),
         "Empty stage slot 2 should be offered"
     );
 

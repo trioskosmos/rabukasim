@@ -46,8 +46,11 @@ pub fn handle_play_member_from_hand(
         }
         let h_idx = ctx.choice_index as usize;
         if h_idx < state.players[p_idx].hand.len() {
+            let chosen_card_id = state.players[p_idx].hand[h_idx];
             ctx.selected_hand_idx = h_idx as i16;
             ctx.target_slot = h_idx as i16;
+            ctx.target_card_id = chosen_card_id;
+            ctx.selected_cards = smallvec::smallvec![chosen_card_id];
             ctx.v_remaining = 1;
             ctx.choice_index = -1;
             return handle_play_member_from_hand(state, db, ctx, _frame_data, frame_idx, p_idx, v, a, s);
@@ -62,14 +65,13 @@ pub fn handle_play_member_from_hand(
                     .get(ctx.selected_hand_idx as usize)
                     .copied()
                     .unwrap_or(-1);
+                if chosen_card_id < 0 {
+                    return HandlerResult::Continue;
+                }
                 next_ctx.target_card_id = chosen_card_id;
-                if chosen_card_id >= 0 {
-                    next_ctx.selected_cards = smallvec::smallvec![chosen_card_id];
-                }
+                next_ctx.selected_cards = smallvec::smallvec![chosen_card_id];
             } else if next_ctx.target_card_id < 0 {
-                if let Some(&chosen_card_id) = ctx.selected_cards.last() {
-                    next_ctx.target_card_id = chosen_card_id;
-                }
+                return HandlerResult::Continue;
             }
             if matches!(
                 suspend_choice(

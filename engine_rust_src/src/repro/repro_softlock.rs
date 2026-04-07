@@ -53,7 +53,7 @@ mod tests {
         );
 
         // Generate legal actions
-        let mut actions = Vec::new();
+        let mut actions: Vec<i32> = Vec::new();
         state.generate_legal_actions(&db, 0, &mut actions);
 
         // The engine went directly to COLOR_SELECT, skipping OPTIONAL
@@ -68,7 +68,7 @@ mod tests {
         } else {
             // OPTIONAL case - verify YES action exists
             assert!(
-                actions.contains(&(ACTION_BASE_CHOICE as usize)),
+                actions.contains(&ACTION_BASE_CHOICE),
                 "Missing Action {} (YES) in first suspension! Found: {:?}",
                 ACTION_BASE_CHOICE,
                 actions
@@ -84,10 +84,10 @@ mod tests {
         actions.clear();
         state.generate_legal_actions(&db, 0, &mut actions);
         assert!(
-            actions.contains(&(ACTION_BASE_COLOR as usize)),
+            actions.contains(&ACTION_BASE_COLOR),
             "Should have COLOR selection starting at 580. Found: {:?}",
             actions
         );
-        assert!(actions.contains(&(ACTION_BASE_COLOR as usize + 5)));
+        assert!(actions.contains(&(ACTION_BASE_COLOR + 5)));
     }
 }

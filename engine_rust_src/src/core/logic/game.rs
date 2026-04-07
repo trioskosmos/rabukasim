@@ -213,6 +213,52 @@ impl GameState {
         )
     }
 
+    pub fn get_member_cost_with_hand_index(
+        &self,
+        p_idx: usize,
+        card_id: i32,
+        slot_idx: i16,
+        secondary_slot_idx: i16,
+        db: &CardDatabase,
+        depth: u32,
+        hand_idx: usize,
+    ) -> i32 {
+        super::rules::get_member_cost_with_hand_index(
+            self,
+            p_idx,
+            card_id,
+            slot_idx,
+            secondary_slot_idx,
+            db,
+            depth,
+            hand_idx,
+        )
+    }
+
+    pub fn get_member_cost_with_hand_index_and_aura(
+        &self,
+        p_idx: usize,
+        card_id: i32,
+        slot_idx: i16,
+        secondary_slot_idx: i16,
+        db: &CardDatabase,
+        depth: u32,
+        hand_idx: usize,
+        projected_aura: Option<&super::rules::BoardAura>,
+    ) -> i32 {
+        super::rules::get_member_cost_with_hand_index_and_aura(
+            self,
+            p_idx,
+            card_id,
+            slot_idx,
+            secondary_slot_idx,
+            db,
+            depth,
+            hand_idx,
+            projected_aura,
+        )
+    }
+
     pub fn has_restriction(
         &self,
         p_idx: usize,

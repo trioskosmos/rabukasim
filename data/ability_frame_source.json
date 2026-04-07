@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-04-06T05:38:04.349371+00:00",
+  "generated_at": "2026-04-07T05:07:38.648244+00:00",
   "source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\cards_compiled.json",
   "metadata_source": "C:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\metadata.json",
   "schema": "ability_frame_source.flat.v2",
@@ -90,8 +90,8 @@
         "name": "SCORE_COMPARE",
         "section": "conditions",
         "opcode_id": 220,
-        "entry_count": 12,
-        "frame_count": 12
+        "entry_count": 11,
+        "frame_count": 11
       },
       {
         "name": "COUNT_HEARTS",
@@ -258,8 +258,8 @@
         "name": "NOP",
         "section": "opcodes",
         "opcode_id": 0,
-        "entry_count": 58,
-        "frame_count": 64
+        "entry_count": 59,
+        "frame_count": 65
       },
       {
         "name": "RETURN",
@@ -377,8 +377,8 @@
         "name": "META_RULE",
         "section": "opcodes",
         "opcode_id": 29,
-        "entry_count": 5,
-        "frame_count": 5
+        "entry_count": 6,
+        "frame_count": 6
       },
       {
         "name": "SELECT_MODE",
@@ -774,8 +774,7 @@
             "PL!S-bp2-004-R | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|acd3e7fe410be4be1d86e43e0d2f47e7aa7084e4",
@@ -1013,8 +1012,7 @@
             "PL!S-bp5-013-N | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d3472e250dc408ac3557c28147de5009f1a409ce",
@@ -1220,8 +1218,7 @@
             "PL!N-sd1-003-SD | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6eab94976ce3fea5f3acc7dbeeda0d41ef24be2b",
@@ -1402,8 +1399,7 @@
             "PL!S-bp5-015-N | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|16bcbba718a462921f928645013cd58d37633857",
@@ -1586,8 +1582,7 @@
             "PL!N-pb1-023-R | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a71ca3f9f06c9e38ed1b86c5afd923e00bd0a6e8",
@@ -1724,8 +1719,7 @@
             "PL!SP-bp2-018-N | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ee0c3d44137fdad5c5c274d28c411027f97f6199",
@@ -1861,8 +1855,7 @@
             "PL!S-PR-033-PR | 黒澤ルビィ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|255bdda1da80527541b4c0d7bfa502b22813277e",
@@ -1984,8 +1977,7 @@
             "PL!N-sd1-010-SD | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d8713add0a0d9a2429f861ab378076ce33d58d42",
@@ -2127,8 +2119,7 @@
             "PL!S-bp3-017-N | 小原鞠莉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|dabce69e220164fd33c727a6d243185d33a23185",
@@ -2264,8 +2255,7 @@
             "PL!SP-sd1-016-SD | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|105f2fe54d37467b758f3106e08f8dc7282f9d0f",
@@ -2403,8 +2393,7 @@
             "PL!S-PR-019-PR | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|25a8dfc5323abf0aa291f8905d5d33481976c647",
@@ -2515,8 +2504,7 @@
             "PL!S-bp2-010-N | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4015499bdbb2fc9ba6b450709552189352ec9b63",
@@ -2630,8 +2618,7 @@
             "PL!N-bp4-016-N | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|01e6bf045f169df379433720fef2d4ccd0c4087e",
@@ -2742,8 +2729,7 @@
             "PL!HS-bp2-007-SEC | 百生 吟子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|051de2a4e4fc6bb070c96987f624561c0073943e",
@@ -2868,8 +2854,7 @@
             "PL!SP-bp1-002-SEC | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|25a8759b6c0123d2514dc46c600f8e415c8e7ae0",
@@ -2965,8 +2950,7 @@
             "PL!S-bp5-001-SEC | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2a6040441970a725ac5cabbde288467fb0154619",
@@ -3065,8 +3049,7 @@
             "PL!N-bp4-010-SEC | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4aaf1afec2f57b8884a75fc83a1614cddfb683f1",
@@ -3174,8 +3157,7 @@
             "PL!N-bp1-003-SEC | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|545f1e99b3fe77b7b0b0cd2b2afe3e618702a6c3",
@@ -3290,8 +3272,7 @@
             "PL!-bp3-004-SEC | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|5600f7e5d31eeda7c481ebc3a9eef733b67af878",
@@ -3396,8 +3377,7 @@
             "PL!SP-bp1-007-SEC | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6042afc2f629a0f4fa9c5006d7e744faa4d539a7",
@@ -3490,8 +3470,7 @@
             "PL!-bp4-005-SEC | 星空凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6ab6e639948f832c36996f6388f588a7e36482f4",
@@ -3611,8 +3590,7 @@
             "PL!SP-bp2-001-SEC | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6b3d982e5e058d8642e43e6a451193f2e4620340",
@@ -3730,8 +3708,7 @@
             "PL!HS-bp5-001-SEC | 日野下花帆 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6fed87f112b93809d23d13798409dea1d9e8cb97",
@@ -3837,8 +3814,7 @@
             "PL!-bp3-009-SEC | 矢澤にこ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|730f4d02ba45fd8071aa2e3fc3963862ad2de76c",
@@ -3941,8 +3917,7 @@
             "PL!N-bp4-007-SEC | 優木せつ菜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|75dc8f4de8fe6e45fe2c8f05e94f2a078db2dd15",
@@ -4044,8 +4019,7 @@
             "PL!SP-bp4-005-SEC | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|83f39bfcb14c53ad04841a5eda5367e261523067",
@@ -4130,8 +4104,7 @@
             "PL!N-sd1-008-SD | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|8792aceb310d1f255d4565f6007b88e1c3d768d3",
@@ -4233,8 +4206,7 @@
             "PL!SP-bp2-006-SEC | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|bb96639efcd7b877a86e82d52349a8074d5cd70b",
@@ -4322,8 +4294,7 @@
             "PL!S-bp3-003-SEC | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ced53ddc7d79c5035f8c857d938f570662fb9f8f",
@@ -4469,8 +4440,7 @@
             "PL!SP-bp5-001-SEC | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d773116af59cb4f689c0fa061e846f61f596788c",
@@ -4569,8 +4539,7 @@
             "PL!SP-bp4-008-SEC | 若菜四季 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e139dc8878e4906085cb5de8c5ec4ce010776b6b",
@@ -4686,8 +4655,7 @@
             "PL!SP-bp4-011-SEC | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e22acd514832236518f4176651beb917c555f27b",
@@ -4781,8 +4749,7 @@
             "PL!HS-bp2-002-SEC | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e49c4d2cdcb2020e758a58b1a0bc50c072dc7158",
@@ -4899,8 +4866,7 @@
             "PL!N-pb1-020-R | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e856e9c1cf02787024a2db2cf4d546310aa89092",
@@ -5014,8 +4980,7 @@
             "PL!SP-bp4-008-SEC | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|eafcd75d5141bff546df955486893c6ca0937680",
@@ -5156,8 +5121,7 @@
             "PL!HS-bp2-005-SEC | 大沢瑠璃乃 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ec8207e9bdc1c4d6e9dcbc9a1642c7786c585d2a",
@@ -5287,8 +5251,7 @@
             "PL!SP-bp4-004-SEC | 平安名すみれ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|f0d320738ca7108d240f57f5a1f1157cb2f0d29c",
@@ -5399,8 +5362,7 @@
             "PL!S-bp2-005-SEC | 渡辺 曜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|f84203845ee38f6c827180bc72dc7d1369acd576",
@@ -5504,8 +5466,7 @@
             "PL!N-bp3-005-SEC | 宮下 愛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|012e966cd6c5ecfc07c6b447c40c9da79bbb5047",
@@ -5597,8 +5558,7 @@
             "PL!SP-bp5-007-P | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0eddbc18f736f6a9d70fc82e9b1db473e551a190",
@@ -5693,8 +5653,7 @@
             "PL!N-bp5-004-P | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|28ae21261e2450b434deb548bc9657c55b30846e",
@@ -5813,8 +5772,7 @@
             "PL!S-bp5-009-P | 黒澤ルビィ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|297468b9fd0a281357151b29b24c6ba774f1859c",
@@ -5912,8 +5870,7 @@
             "PL!HS-bp5-007-P | セラス 柳田 リリエンフェルト (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2c3ab6f878e9010510ae0ce0c2e4fe4d4cb8d9d1",
@@ -6045,8 +6002,7 @@
             "PL!-bp5-007-P | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|30b9e17a99fc4ce6658d809882f4655974bc31a4",
@@ -6145,8 +6101,7 @@
             "PL!N-bp4-005-R | 宮下 愛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|33c8155294426ef65e21f0a8d9c04740d5cf4312",
@@ -6246,8 +6201,7 @@
             "PL!S-bp5-003-P | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|3aadee34b60ab809120835206a2fb5c3de21c02a",
@@ -6392,8 +6346,7 @@
             "PL!-PR-008-PR | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|60d808a8d1b6e63966cd36d3f29a1f123fcffca0",
@@ -6509,8 +6462,7 @@
             "PL!SP-bp5-008-P | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|72d49d9c7ff0fd0f3d0473345b9f6f4bf81ca6dc",
@@ -6632,8 +6584,7 @@
             "PL!S-bp5-004-P | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|8451c55211625745f255ab8b69c0ffcaa5be8316",
@@ -6707,8 +6658,7 @@
             "PL!S-PR-021-PR | 黒澤ルビィ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a07dcf0abc6dcfd436bf4c5b1b086f7b71e527f4",
@@ -6816,8 +6766,7 @@
             "PL!N-bp5-011-P | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a0a76468439243c6b07cc488d5d5cf510a361190",
@@ -6933,8 +6882,7 @@
             "PL!S-bp5-006-P | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a6e10ee68fb50073fe52bbbb32c7ec2d963b421d",
@@ -7025,8 +6973,7 @@
             "PL!-bp5-005-P | 星空凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|b1885357989fd60b7f7a7c034ebd42ce115b2dcf",
@@ -7141,8 +7088,7 @@
             "PL!-bp5-002-P | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c30df5643aeae339b5c47aae9189dbba50b0782a",
@@ -7258,8 +7204,7 @@
             "PL!HS-bp5-008-P | 桂城 泉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c51987aaaf46f8f2cf138c44069bef2a8d886e53",
@@ -7363,8 +7308,7 @@
             "PL!SP-sd1-017-SD | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|da8d6346d43ab7a7c0d6ce5e3ccd59a0994b61fe",
@@ -7454,8 +7398,7 @@
             "PL!SP-PR-010-PR | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|de5b56f0d2a7c30e55ee6513cc122f635dec49f1",
@@ -7535,8 +7478,7 @@
             "PL!SP-pb1-006-R | 桜小路きな子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e03751dc6af3e556772b190827ad2eb06c0e5634",
@@ -7652,8 +7594,7 @@
             "PL!N-bp5-009-P | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e4a31760717cc9c45e72b706c560715f97e1199f",
@@ -7772,8 +7713,7 @@
             "PL!SP-bp5-010-P | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|fcdb4734ffc7d57e34d3f32f9d8c7c6b69c51345",
@@ -7895,8 +7835,7 @@
             "PL!S-pb1-015-N | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|01082c2a014aa430759560ca756df865b9514f1f",
@@ -8013,8 +7952,7 @@
             "PL!N-bp4-006-R | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|03c0361a0b43f7ce6c1d97b90975407594415d65",
@@ -8116,8 +8054,7 @@
             "PL!SP-bp1-005-R | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0402c602109176975d996a7b66647e3d40a0ecea",
@@ -8256,8 +8193,7 @@
             "PL!N-bp3-011-R | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|062e8d1a120fc41a267c8db6d976b46e372175c2",
@@ -8336,8 +8272,7 @@
             "PL!-bp4-004-R | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|07a607f4c49e41c76645a99b2edbfc71ab099bf3",
@@ -8403,8 +8338,7 @@
             "PL!-pb1-012-R | 南ことり (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0828620d0afd744b17f22735f5f0b73916be1f58",
@@ -8505,8 +8439,7 @@
             "PL!-pb1-015-R | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0aee3af91c24f9244a2ceed933b7ca5b3a0c7d61",
@@ -8572,8 +8505,7 @@
             "PL!-bp4-009-R | 矢澤にこ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0b47df56ef770ea3bd19aae82d68c64a44a78fe0",
@@ -8662,8 +8594,7 @@
             "PL!N-pb1-014-R | 中須かすみ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0cf6b221a3c0617b139b40e8e9fc924b9ccc9990",
@@ -8763,8 +8694,7 @@
             "PL!HS-PR-019-RM | 百生 吟子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0d17e48860869834cc5a74308e303c3242f56f98",
@@ -8851,8 +8781,7 @@
             "PL!S-bp2-006-R | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|14d8ed9777a5cbf28e646f9a23879098f25e0e94",
@@ -8924,8 +8853,7 @@
             "PL!N-pb1-018-R | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1759b849960006f513ff605de924d570d1895cca",
@@ -9017,8 +8945,7 @@
             "PL!N-pb1-022-R | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1952dd1def8b50bf486360ed295b39183fb22d21",
@@ -9092,8 +9019,7 @@
             "PL!N-pb1-005-R | 宮下 愛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1b092f7458a5332f8e4441f4ae8e7300b66c2a38",
@@ -9184,8 +9110,7 @@
             "PL!S-bp3-009-R | 黒澤ルビィ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1c88beed5584e7b0cd5be776c8e4d5760b9f47ec",
@@ -9262,8 +9187,7 @@
             "PL!-bp3-005-R | 星空 凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1db8cff6dc0f5a4df12f5c3ca3a4c9e2af133716",
@@ -9345,8 +9269,7 @@
             "PL!SP-pb1-003-R | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|1ebf541b04528bfdc7f39832cda95112acb5720a",
@@ -9434,8 +9357,7 @@
             "PL!-bp5-333-R | 統堂英玲奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|20f36388d5c79d659dc575af3b366736d17cc0ed",
@@ -9518,8 +9440,7 @@
             "PL!S-pb1-001-R | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2193a21ec667410c7510090132377bc8cbb4f1dd",
@@ -9629,8 +9550,7 @@
             "PL!N-bp1-009-R | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|233306bbea60e483e1363a20321d7952795bddc2",
@@ -9719,8 +9639,7 @@
             "PL!HS-bp1-011-N | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|27af5e32ade7880be6857e77c15813ce4564f4dd",
@@ -9840,8 +9759,7 @@
             "PL!N-bp1-011-R | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2c421379ea06a967b6a73ea67484d3796cfff1a1",
@@ -9913,8 +9831,7 @@
             "PL!N-pb1-024-R | 鐘 嵐珠 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|34b92504cf5730fc20674aa8aea60de3fd40b50a",
@@ -9982,8 +9899,7 @@
             "PL!HS-bp2-011-PR | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|34f62fee5737420f80dcc601930fc0b9964af5ec",
@@ -10082,8 +9998,7 @@
             "PL!-pb1-006-R | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|371f6031b2b2d161a996c3dae6eee191f6f2ed95",
@@ -10170,8 +10085,7 @@
             "PL!SP-bp2-011-R | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|484a9d6aad0d5d345c9e99cc4f95019c774d3e4c",
@@ -10250,8 +10164,7 @@
             "PL!-bp5-015-N | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4879decb828d3b4dcb55059271176a66818ba235",
@@ -10342,8 +10255,7 @@
             "PL!HS-bp1-008-R | 徒町 小鈴 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4a39c3c69ff4145a34d13c5e74cb2feaba47c9a8",
@@ -10445,8 +10357,7 @@
             "PL!N-pb1-008-R | エマ・ヴェルデ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4a6e716497509e916f09217febcd9a8090b82107",
@@ -10517,8 +10428,7 @@
             "PL!SP-pb1-008-R | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|570dd9cc06df3b2e310588ab53ae2d4e3ed466c7",
@@ -10618,8 +10528,7 @@
             "PL!HS-bp2-010-N | 日野下花帆 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|5dc17881427610f19e6ff89e014f0694fe550590",
@@ -10703,8 +10612,7 @@
             "PL!-bp3-003-R | 南ことり (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|5f83fa8a0217746031e2207585b15bc821ae3d91",
@@ -10799,8 +10707,7 @@
             "PL!SP-bp4-002-R | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|63ec64a621919a87b37b628445edda29f3701704",
@@ -10864,8 +10771,7 @@
             "PL!SP-pb1-005-R | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|68d1f8d9b3ab39ab64151d16bd7e06630997aeb8",
@@ -10937,8 +10843,7 @@
             "PL!N-pb1-016-R | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6d0dac82ddfbf68552582fc18f9ce47967a3d091",
@@ -11027,8 +10932,7 @@
             "PL!SP-bp4-003-R | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|775ba13c4cd6338122b662ffed6e5d192fce8924",
@@ -11139,8 +11043,7 @@
             "PL!-pb1-017-R | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|7787352de4322c5edd4819d0372a2753f34e2f61",
@@ -11229,8 +11132,7 @@
             "PL!S-bp3-004-R | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|77d959d9c693794a3927725b85269879ed50c4c7",
@@ -11324,8 +11226,7 @@
             "PL!SP-bp4-001-R | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|7814af2f21c6b760dd626bbf9e9d26799bfbcff5",
@@ -11406,8 +11307,7 @@
             "PL!-bp5-222-R | 優木あんじゅ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|791e789eb7724199a96733ed3fdbae48d8b339e7",
@@ -11506,8 +11406,7 @@
             "PL!-pb1-003-R | 南ことり (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|79eb8e296ccb67161f48d18f771f77dcb1c9acc6",
@@ -11596,8 +11495,7 @@
             "PL!-bp4-007-R | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|7e40151c94dd26611741e40f7f3f10a21baee768",
@@ -11706,8 +11604,7 @@
             "PL!-bp3-002-R | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|81ea90c1824723d2cb867c6a907c0b5055c5fe2b",
@@ -11812,8 +11709,7 @@
             "PL!N-pb1-001-R | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|88079ec9ee59a78b81eaa544e714f693c4d9bf40",
@@ -11895,8 +11791,7 @@
             "PL!HS-bp2-006-R | 藤島 慈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|890eb54275490c68123def323fd754901c14bdf9",
@@ -11994,8 +11889,7 @@
             "PL!SP-bp2-005-R | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|91f1e41f4fb97a065b6015f3178a6f875de3fea1",
@@ -12085,8 +11979,7 @@
             "PL!N-bp3-012-R | 鐘 嵐珠 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|943d9764167dfc91f6667993d4acb39b2dc39295",
@@ -12158,8 +12051,7 @@
             "PL!N-pb1-021-R | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|9447ece3df36238a8e8fb403e3b92a8a3e8fcbed",
@@ -12238,8 +12130,7 @@
             "PL!N-pb1-012-R | 鐘 嵐珠 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|972180423e111bae506179ac3bff5c4ab792fb2d",
@@ -12315,8 +12206,7 @@
             "PL!-pb1-009-R | 矢澤にこ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|984c052ee7b3a391008949fa4cb9471f01e25062",
@@ -12394,8 +12284,7 @@
             "PL!S-bp3-011-N | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|9eb2e3893d75f0732444a48a96ad1f65ff0339dd",
@@ -12474,8 +12363,7 @@
             "PL!-pb1-005-R | 星空 凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a28e4c232b4d225c60902de363e61f6f4a8a6d26",
@@ -12558,8 +12446,7 @@
             "PL!SP-pb1-009-R | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a321a3aebab07ee9f183e49395204ee36821b3cb",
@@ -12673,8 +12560,7 @@
             "PL!-pb1-002-R | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a82f68c6fbfe92cd091058453b36b668a00c6238",
@@ -12782,8 +12668,7 @@
             "PL!S-pb1-002-R | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a94ca813fa99996428478d7b06ac5e77a2297a69",
@@ -12873,8 +12758,7 @@
             "PL!-pb1-016-R | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ab807c18cfa493fd746919b68291e0b3cba80df2",
@@ -12961,8 +12845,7 @@
             "PL!N-pb1-035-N | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|af2dd47c8e44c583a6301dfd5fd1473f2beac825",
@@ -13037,8 +12920,7 @@
             "PL!SP-bp2-002-R | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|b29a329ca9ee69580548e5ccba79088b47f2378c",
@@ -13135,8 +13017,7 @@
             "PL!HS-PR-021-RM | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|b45bea47159a335cbb3710c5aef59bc58a0cf532",
@@ -13223,8 +13104,7 @@
             "PL!-bp4-006-R | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|b96544d011b2e6a4f10f5a8c81722acb9d98a72e",
@@ -13315,8 +13195,7 @@
             "PL!-pb1-011-R | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|baa40718925a8f46265406bcbc2e994e0619a285",
@@ -13402,8 +13281,7 @@
             "PL!SP-bp1-008-R | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|bbee9fbe82c256954b546bbe01858f1b2d0707dc",
@@ -13486,8 +13364,7 @@
             "PL!N-bp1-004-R | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c0e40cc5325b642fc53035ca686aadc34a56909f",
@@ -13586,8 +13463,7 @@
             "PL!-pb1-004-R | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c14b3d5513521edc240ef2548f6e8063afb9f0e5",
@@ -13689,8 +13565,7 @@
             "PL!SP-bp2-007-R | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c3c7e5533b0408f9ab50600899bd867df0450c2e",
@@ -13799,8 +13674,7 @@
             "PL!N-pb1-010-R | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c431c90139d399b64c46fedcd251cecd9d68d7d0",
@@ -13886,8 +13760,7 @@
             "PL!-pb1-008-R | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|cd7b807a256ec94f6b14c82302ee8b2aaffab078",
@@ -13960,8 +13833,7 @@
             "PL!N-bp3-003-R | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d4ea71c01f23096d1139eeca8ebd5cf5555280e4",
@@ -14051,8 +13923,7 @@
             "PL!HS-bp1-009-R | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e2d3222552a8b079443f7242a0fc266e09938e9d",
@@ -14153,8 +14024,7 @@
             "PL!HS-bp2-009-R | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|eaf93951e714e85b83e21553f2ffbca13d04feb4",
@@ -14220,8 +14090,7 @@
             "PL!N-pb1-002-R | 中須かすみ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ec1e15558520efc612026dc1268cc343abfd25a9",
@@ -14324,8 +14193,7 @@
             "PL!SP-pb1-011-R | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|f44c2049e52ead6d89fba7bf3a16ec0af4705854",
@@ -14434,8 +14302,7 @@
             "PL!-pb1-018-R | 矢澤にこ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|fc451f932a769dc112c4d720070673862071b2e3",
@@ -14522,8 +14389,7 @@
             "PL!N-bp5-022-N | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|fe2c0d695ccd8c08baa95ae7d839feee9248ef7f",
@@ -14577,8 +14443,7 @@
             "PL!N-bp3-006-R | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|fe946064c523031a87ee33d2b2dfa2949e777803",
@@ -14656,8 +14521,7 @@
             "PL!HS-bp2-008-R | 徒町 小鈴 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|021f4c8c52b3b292792032bf3e30f7a7d18b100a",
@@ -14724,8 +14588,7 @@
             "PL!SP-bp5-014-N | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|0a6f91c4cdb090809b6ce6a8f88bfb04f9948fa6",
@@ -14788,8 +14651,7 @@
             "PL!-sd1-006-SD | 西木野 真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|14df82cb6f59aef32ab9d8e611dbc70cd19ce56e",
@@ -14860,8 +14722,7 @@
             "PL!HS-sd1-005-SD | 徒町小鈴 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|203b8857a078189eb4cad6b4c4a5611f023cc065",
@@ -14945,8 +14806,7 @@
             "PL!SP-sd1-007-SD | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2c4ca809dae0c2103211d49318240eba4f15f609",
@@ -15025,8 +14885,7 @@
             "PL!SP-pb1-016-N | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2d223f5b9bbbc17d7e531dbfa17643c6dc7e0949",
@@ -15089,8 +14948,7 @@
             "PL!-sd1-003-SD | 南 ことり (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|2de69e01a9d488a193f84955324d74c8b334ca3d",
@@ -15144,8 +15002,7 @@
             "PL!S-sd1-013-SD | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|321d2796e0ecaf809ac1d15f4e23f2086184311f",
@@ -15215,8 +15072,7 @@
             "PL!N-bp3-013-N | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|44010042ee998548a42776b82dd2581e849b7ff0",
@@ -15275,8 +15131,7 @@
             "PL!-bp5-013-N | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|4706f724fae0966af04f3510a58ec3f03e3175ce",
@@ -15352,8 +15207,7 @@
             "PL!S-sd1-002-SD | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|501ad6fded721ff4d86f278cfb1a2a57bcc413ea",
@@ -15451,8 +15305,7 @@
             "PL!SP-sd1-009-SD | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|6223c6bc636fbd37cfe05b9126ab1d101dcec7e9",
@@ -15515,8 +15368,7 @@
             "PL!N-sd1-001-SD | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|7927e4e487d073efe731543f0239eabe22d67277",
@@ -15568,8 +15420,7 @@
             "PL!N-bp4-021-N | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|7bb7a19c90c4379a18b89dd372c4f32896781cd7",
@@ -15637,8 +15488,7 @@
             "PL!HS-bp2-017-N | 徒町 小鈴 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|888464fda33c19c4892bfcd0409d82fe9f35b984",
@@ -15695,8 +15545,7 @@
             "LL-bp1-001-R+ | 上原歩夢&澁谷かのん&日野下花帆 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|88b016043f1d0b89b6bcf734cc3fcf78511bec08",
@@ -15764,8 +15613,7 @@
             "PL!S-bp5-011-N | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|89ff8a6d898c59939b1393500c2c915840046b44",
@@ -15832,8 +15680,7 @@
             "PL!SP-sd1-001-SD | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|91097084de9570cc37c0f30c5fac711f7e26a1a2",
@@ -15918,8 +15765,7 @@
             "PL!-sd1-007-SD | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|922121632727c2fda212f94effb1c386007d7da9",
@@ -15998,8 +15844,7 @@
             "PL!SP-pb1-015-N | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|99af38ab97b7bc19caaa7707ac101ed9b367884f",
@@ -16056,8 +15901,7 @@
             "PL!N-bp5-021-N | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|9b23e43049b38b63406e8e39db30eae320f80027",
@@ -16129,8 +15973,7 @@
             "PL!-sd1-001-SD | 高坂 穂乃果 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|9c62ef67f159122b59041021475d7b59a5c6e6b6",
@@ -16204,8 +16047,7 @@
             "LL-bp4-001-R+ | 絢瀬絵里&朝香果林&葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a1da6024eeb23463004e2e1281aa1016fa2335f1",
@@ -16262,8 +16104,7 @@
             "PL!SP-bp4-013-N | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|a6e1e6406989618ff6677d35b26c6db4e7aadbed",
@@ -16342,8 +16183,7 @@
             "PL!SP-pb1-017-N | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|b9c707f72e9cbc86e3a6826ad4f5c01db1e160ae",
@@ -16429,8 +16269,7 @@
             "PL!SP-bp5-013-N | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|c0f650fbaaa2953e950946177a3ee9e2d8a947de",
@@ -16513,8 +16352,7 @@
             "PL!HS-sd1-006-SD | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|ca9e714325376b66b127595ea3ac7433aaf76ebe",
@@ -16590,8 +16428,7 @@
             "PL!HS-sd1-014-SD | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|cb1e40629f4f5dee3a1e1c74ad4397b613a40e32",
@@ -16667,8 +16504,7 @@
             "PL!HS-sd1-004-SD | 百生吟子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|cdac08f73dc47acd72a27368dba870a25bb73035",
@@ -16728,8 +16564,7 @@
             "PL!HS-bp2-014-N | 大沢瑠璃乃 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|cfcb67cfada0beb1beee5ff1d4dbb28a23ddda92",
@@ -16780,8 +16615,7 @@
             "PL!SP-sd1-004-SD | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d222ded4067a2d1ece153c5437570368684a470f",
@@ -16864,8 +16698,7 @@
             "PL!-bp5-014-N | 星空凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d45cd986a41c13893a9a2caba4d1efd174ae6835",
@@ -16917,8 +16750,7 @@
             "PL!HS-bp2-016-N | 百生 吟子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|d58ff3223af972ec6d5f074fe6d5d56b45fe0529",
@@ -16971,8 +16803,7 @@
             "PL!S-bp5-010-N | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|daaa88596995c3fa2c6c607e816c16d9a42c5858",
@@ -17062,8 +16893,7 @@
             "PL!HS-sd1-013-SD | 徒町小鈴 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|def201ad1187f2e116cfb5265d32cf1e25579d47",
@@ -17138,8 +16968,7 @@
             "PL!SP-sd1-002-SD | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|e4167014699b88e1448f2db2b1843e44aadcf5ed",
@@ -17234,8 +17063,7 @@
             "PL!N-bp4-023-N | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|eb8336f40740b72a86954499ae3201cdb1fccc70",
@@ -17309,8 +17137,7 @@
             "PL!S-sd1-006-SD | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|eed3e47032d6d184fd94230d2968b29327fa715c",
@@ -17380,8 +17207,7 @@
             "PL!S-sd1-003-SD | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T1|f4ecde62bc0db3ab0f66a20a6d970d7c11f88709",
@@ -17442,8 +17268,7 @@
             "PL!-sd1-004-SD | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|cbe76908b0afa115b38afbfaf243d2c9174a9dda",
@@ -17642,8 +17467,7 @@
             "PL!SP-bp2-022-N | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|746d4169ad9b54e46bd746c670c4f5144514ccb7",
@@ -17785,8 +17609,7 @@
             "PL!S-bp3-017-N | 小原鞠莉 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|68b0c9afdcaf4c1ec6b3836175b59348449e2b2d",
@@ -17906,8 +17729,7 @@
             "PL!-bp3-013-N | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|7884c06a3d4405c3fa55691c71505dcfeccc4907",
@@ -18027,8 +17849,7 @@
             "PL!HS-bp5-003-SEC | 大沢瑠璃乃 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|04b1c8c97ce3b4df4896e1666cfa4399bf363c7e",
@@ -18144,8 +17965,112 @@
             "PL!-bp3-008-SEC | 小泉花陽 (ab#1)"
           ]
         }
+      ]
+    },
+    {
+      "signature": "T2|0898a54eeee3db5d0c953f181896904de6806c8b",
+      "signature_hash": "0898a54eeee3db5d0c953f181896904de6806c8b",
+      "signature_source": "{\"frames\":[{\"op\":\"NOP\",\"params\":{\"raw_cond\":\"SUCCESS_LIVE_COUNT_EQUAL_OPPONENT\"}},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"attr\":{\"target_player\":\"SELF\"},\"op\":\"ADD_HEARTS\",\"params\":{\"heart_type\":\"YELLOW\"},\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":2},{\"op\":\"RETURN\"}],\"trigger\":2}",
+      "trigger_id": 2,
+      "trigger": "ON_LIVE_START",
+      "frame_count": 4,
+      "opcode_sequence": [
+        "NOP",
+        "JUMP_IF_FALSE",
+        "ADD_HEARTS",
+        "RETURN"
       ],
-      "source_mode": "frame_authored"
+      "frames": [
+        {
+          "op": "NOP",
+          "frame_index": 0,
+          "params": {
+            "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": "YELLOW"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "cards": [
+        "PL!N-bp5-007-AR | 優木せつ菜 [member_db:757] (ab#0 ON_LIVE_START)",
+        "PL!N-bp5-007-R＋ | 優木せつ菜 [member_db:4853] (ab#0 ON_LIVE_START)",
+        "PL!N-bp5-007-P | 優木せつ菜 [member_db:8949] (ab#0 ON_LIVE_START)",
+        "PL!N-bp5-007-SEC | 優木せつ菜 [member_db:13045] (ab#0 ON_LIVE_START)",
+        "PL!N-bp5-007-AR | 優木せつ菜 (ab#0)",
+        "PL!N-bp5-007-R+ | 優木せつ菜 (ab#0)",
+        "PL!N-bp5-007-P | 優木せつ菜 (ab#0)",
+        "PL!N-bp5-007-SEC | 優木せつ菜 (ab#0)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!N-bp5-007-AR",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 757,
+          "name": "優木せつ菜",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!N-bp5-007-R+",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 4853,
+          "name": "優木せつ菜",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!N-bp5-007-P",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 8949,
+          "name": "優木せつ菜",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!N-bp5-007-SEC",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 13045,
+          "name": "優木せつ菜",
+          "trigger": 2
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
+          "en": "",
+          "card_examples": [
+            "PL!N-bp5-007-AR | 優木せつ菜 (ab#0)",
+            "PL!N-bp5-007-R+ | 優木せつ菜 (ab#0)",
+            "PL!N-bp5-007-P | 優木せつ菜 (ab#0)",
+            "PL!N-bp5-007-SEC | 優木せつ菜 (ab#0)"
+          ]
+        }
+      ]
     },
     {
       "signature": "T2|13870c582bdf735ef52007744c126264f591e6f6",
@@ -18281,8 +18206,7 @@
             "PL!N-bp3-001-SEC | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|159c30e6381ef8a0fbc79b3ce9bdcd90d89d25f9",
@@ -18413,8 +18337,7 @@
             "PL!HS-bp1-004-SEC | 夕霧綴理 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|1ee801cd659f9177e34e9a3a4c76a220c5706f7d",
@@ -18569,8 +18492,7 @@
             "PL!N-bp3-008-SEC | エマ・ヴェルデ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|29f7b0255c87e961a72195063f05c61b9f25bcd7",
@@ -18716,8 +18638,7 @@
             "PL!SP-bp5-001-SEC | 澁谷かのん (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|2db9c079fa113151c01c920b04bfab43667a0cef",
@@ -18890,8 +18811,7 @@
             "PL!N-bp3-009-SEC | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|2dd111e6662e3eed4bf223ae02bfbadbc88a699b",
@@ -18990,8 +18910,7 @@
             "PL!SP-bp5-003-SEC | 嵐 千砂都 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|3d8021d8477425c6d14c68e2a438ff4abae488cf",
@@ -19094,8 +19013,7 @@
             "PL!S-bp5-002-SEC | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|5853c7d7a8829efdd45ef38feba2e34728dc64d3",
@@ -19201,108 +19119,7 @@
             "PL!SP-bp2-009-SEC | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
-      "signature": "T2|5ddbd3d26c4bba659bc6ecbcfee06722e65d32e2",
-      "signature_hash": "5ddbd3d26c4bba659bc6ecbcfee06722e65d32e2",
-      "signature_source": "{\"frames\":[{\"op\":\"SCORE_COMPARE\"},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"attr\":{\"target_player\":\"OPPONENT\"},\"op\":\"ADD_HEARTS\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":2},{\"op\":\"RETURN\"}],\"trigger\":2}",
-      "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
-      "frame_count": 4,
-      "opcode_sequence": [
-        "SCORE_COMPARE",
-        "JUMP_IF_FALSE",
-        "ADD_HEARTS",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "SCORE_COMPARE",
-          "frame_index": 0
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "ADD_HEARTS",
-          "frame_index": 2,
-          "value": 2,
-          "attr": {
-            "target_player": "OPPONENT"
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 3
-        }
-      ],
-      "cards": [
-        "PL!N-bp5-007-AR | 優木せつ菜 [member_db:757] (ab#0 ON_LIVE_START)",
-        "PL!N-bp5-007-R＋ | 優木せつ菜 [member_db:4853] (ab#0 ON_LIVE_START)",
-        "PL!N-bp5-007-P | 優木せつ菜 [member_db:8949] (ab#0 ON_LIVE_START)",
-        "PL!N-bp5-007-SEC | 優木せつ菜 [member_db:13045] (ab#0 ON_LIVE_START)",
-        "PL!N-bp5-007-AR | 優木せつ菜 (ab#0)",
-        "PL!N-bp5-007-R+ | 優木せつ菜 (ab#0)",
-        "PL!N-bp5-007-P | 優木せつ菜 (ab#0)",
-        "PL!N-bp5-007-SEC | 優木せつ菜 (ab#0)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!N-bp5-007-AR",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 757,
-          "name": "優木せつ菜",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!N-bp5-007-R+",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4853,
-          "name": "優木せつ菜",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!N-bp5-007-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 8949,
-          "name": "優木せつ菜",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!N-bp5-007-SEC",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 13045,
-          "name": "優木せつ菜",
-          "trigger": 2
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
-          "en": "",
-          "card_examples": [
-            "PL!N-bp5-007-AR | 優木せつ菜 (ab#0)",
-            "PL!N-bp5-007-R+ | 優木せつ菜 (ab#0)",
-            "PL!N-bp5-007-P | 優木せつ菜 (ab#0)",
-            "PL!N-bp5-007-SEC | 優木せつ菜 (ab#0)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|62d70bfea74a86552cd004c16cd533f3c31f4ebd",
@@ -19392,8 +19209,7 @@
             "PL!SP-bp4-008-SEC | 若菜四季 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6cc411046a304c1604d2c97cda1b988898e274ee",
@@ -19509,8 +19325,7 @@
             "PL!S-bp2-007-SEC | 国木田花丸 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|8a7b7e3a55181167acdaa99da35f4a85e56a2ea4",
@@ -19627,8 +19442,7 @@
             "PL!-bp4-005-SEC | 星空凛 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|92762096eec96b4c240ca8b5489e2d5347ef0a60",
@@ -19763,8 +19577,7 @@
             "PL!-bp3-004-SEC | 園田海未 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|96b5412b5cec145bc05b128f56bece4f1a52ddc8",
@@ -19880,8 +19693,7 @@
             "PL!N-bp4-010-SEC | 三船栞子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|96f5545e1b1128e1575500c8aaedd9b0d7a22073",
@@ -20014,8 +19826,7 @@
             "PL!HS-bp1-006-SEC | 藤島 慈 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a27656e97b66c6add501d40f88691feb52939859",
@@ -20119,8 +19930,7 @@
             "PL!N-bp3-005-SEC | 宮下 愛 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a346b70a1dc561ba190c0427c356242c1aa94be1",
@@ -20231,8 +20041,7 @@
             "PL!S-bp3-003-SEC | 松浦果南 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ab0a52535a78adc10f9dd7046c6304d77ee58720",
@@ -20392,8 +20201,7 @@
             "PL!HS-bp2-005-SEC | 大沢瑠璃乃 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|c5aaf89edc66d92b8264636da22b6d5cf935704b",
@@ -20544,8 +20352,7 @@
             "PL!N-bp4-004-SEC | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|d08e524448df189f98609cf8c3c0d7319917f09e",
@@ -20648,8 +20455,7 @@
             "PL!SP-bp2-010-SEC | ウィーン・マルガレーテ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|e0dcaab24880d6a4e0d24d80c75f591c49f704d6",
@@ -20746,8 +20552,7 @@
             "PL!N-bp4-011-SEC | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|e59edc7e46fb8d26cda9f66fdd0194c762dcea0f",
@@ -20887,8 +20692,7 @@
             "PL!HS-bp2-007-SEC | 百生 吟子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|f7db085cfd5f1c36f07c0c34cac65b3645c1ec9c",
@@ -21001,8 +20805,7 @@
             "PL!N-bp1-003-SEC | 桜坂しずく (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|fc038b90bee731f5340b4805953fdae0b4cb2172",
@@ -21122,8 +20925,7 @@
             "PL!S-bp5-005-SEC | 渡辺 曜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|4296579ceb6bd5c58e16b95fddf82cd106c1b81f",
@@ -21412,8 +21214,7 @@
             "PL!SP-bp5-009-P | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|60875dea856fbcdff1256a2eadf8b32878488a85",
@@ -21508,8 +21309,7 @@
             "PL!N-bp5-004-P | 朝香果林 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|90686a26f6ebebc33a2d1b9c9bc2d29f08eac86c",
@@ -21599,8 +21399,7 @@
             "PL!-bp5-006-P | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a4fc0b3048a91f114b2d096df2844379393c9c6f",
@@ -21695,8 +21494,7 @@
             "PL!HS-bp5-006-P | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|aea5886d8b256545cba98de02068424b6ff7246e",
@@ -21801,8 +21599,7 @@
             "PL!HS-bp2-025-L | ココン東西 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b12440dd9d789c7ed1eaba809d7138bb113e1834",
@@ -21905,138 +21702,7 @@
             "PL!HS-PR-005-PR | 大沢瑠璃乃 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
-      "signature": "T2|b5369943ebc31945dab9be004ebb34953bc8681a",
-      "signature_hash": "b5369943ebc31945dab9be004ebb34953bc8681a",
-      "signature_source": "{\"frames\":[{\"attr\":{\"is_optional\":1,\"unit_enabled\":1,\"unit_id\":\"DOLLCHESTRA\"},\"op\":\"MOVE_TO_DISCARD\",\"slot\":{\"target_slot\":\"HAND\"},\"value\":1},{\"op\":\"JUMP_IF_FALSE\",\"value\":4},{\"attr\":{\"target_player\":\"SELF\",\"unit_enabled\":1,\"unit_id\":\"DOLLCHESTRA\"},\"op\":\"SELECT_MEMBER\",\"slot\":{\"source_zone\":\"STAGE\",\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"NOP\",\"slot\":{\"comparison\":\"GE\",\"target_slot\":\"STAGE_0\"},\"value\":10},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"attr\":{\"card_type\":\"MEMBER\",\"target_player\":\"SELF\"},\"op\":\"ADD_HEARTS\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"RETURN\"}],\"trigger\":2}",
-      "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
-      "frame_count": 7,
-      "opcode_sequence": [
-        "MOVE_TO_DISCARD",
-        "JUMP_IF_FALSE",
-        "SELECT_MEMBER",
-        "NOP",
-        "JUMP_IF_FALSE",
-        "ADD_HEARTS",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "unit_enabled": 1,
-            "unit_id": "DOLLCHESTRA",
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 4
-        },
-        {
-          "op": "SELECT_MEMBER",
-          "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "unit_enabled": 1,
-            "unit_id": "DOLLCHESTRA"
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "STAGE"
-          }
-        },
-        {
-          "op": "NOP",
-          "frame_index": 3,
-          "value": 10,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 4,
-          "value": 1
-        },
-        {
-          "op": "ADD_HEARTS",
-          "frame_index": 5,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "card_type": "MEMBER"
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 6
-        }
-      ],
-      "cards": [
-        "PL!HS-bp5-005-AR | 徒町 小鈴 [member_db:697] (ab#0 ON_LIVE_START)",
-        "PL!HS-bp5-005-R | 徒町 小鈴 [member_db:4793] (ab#0 ON_LIVE_START)",
-        "PL!HS-bp5-005-P | 徒町 小鈴 [member_db:8889] (ab#0 ON_LIVE_START)",
-        "PL!HS-bp5-005-AR | 徒町 小鈴 (ab#0)",
-        "PL!HS-bp5-005-R | 徒町 小鈴 (ab#0)",
-        "PL!HS-bp5-005-P | 徒町 小鈴 (ab#0)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!HS-bp5-005-AR",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 697,
-          "name": "徒町 小鈴",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!HS-bp5-005-R",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4793,
-          "name": "徒町 小鈴",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!HS-bp5-005-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 8889,
-          "name": "徒町 小鈴",
-          "trigger": 2
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
-          "en": "",
-          "card_examples": [
-            "PL!HS-bp5-005-AR | 徒町 小鈴 (ab#0)",
-            "PL!HS-bp5-005-R | 徒町 小鈴 (ab#0)",
-            "PL!HS-bp5-005-P | 徒町 小鈴 (ab#0)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|cd514c18a1fdbaa769471f1551f4f59ba18b200c",
@@ -22133,8 +21799,144 @@
             "PL!SP-PR-012-PR | ウィーン・マルガレーテ (ab#0)"
           ]
         }
+      ]
+    },
+    {
+      "signature": "T2|ce083ebe975bebab0191c4d32c587d84e4fa3320",
+      "signature_hash": "ce083ebe975bebab0191c4d32c587d84e4fa3320",
+      "signature_source": "{\"frames\":[{\"attr\":{\"is_optional\":1,\"unit_enabled\":1,\"unit_id\":\"DOLLCHESTRA\"},\"op\":\"MOVE_TO_DISCARD\",\"slot\":{\"target_slot\":\"HAND\"},\"value\":1},{\"op\":\"JUMP_IF_FALSE\",\"value\":5},{\"attr\":{\"target_player\":\"SELF\",\"unit_enabled\":1,\"unit_id\":\"DOLLCHESTRA\"},\"op\":\"SELECT_MEMBER\",\"slot\":{\"source_zone\":\"STAGE\",\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"META_RULE\",\"params\":{\"offset\":1,\"raw_effect\":\"SET_SOURCE_COST_FROM_SELECTED_MINUS\"}},{\"op\":\"NOP\",\"params\":{\"raw_cond\":\"SOURCE_MEMBER_COST_GE\"},\"value\":10},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"attr\":{\"card_type\":\"MEMBER\",\"target_player\":\"SELF\"},\"op\":\"ADD_HEARTS\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"RETURN\"}],\"trigger\":2}",
+      "trigger_id": 2,
+      "trigger": "ON_LIVE_START",
+      "frame_count": 8,
+      "opcode_sequence": [
+        "MOVE_TO_DISCARD",
+        "JUMP_IF_FALSE",
+        "SELECT_MEMBER",
+        "META_RULE",
+        "NOP",
+        "JUMP_IF_FALSE",
+        "ADD_HEARTS",
+        "RETURN"
       ],
-      "source_mode": "frame_authored"
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "unit_enabled": 1,
+            "unit_id": "DOLLCHESTRA",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 5
+        },
+        {
+          "op": "SELECT_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "unit_enabled": 1,
+            "unit_id": "DOLLCHESTRA"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE"
+          }
+        },
+        {
+          "op": "META_RULE",
+          "frame_index": 3,
+          "params": {
+            "offset": 1,
+            "raw_effect": "SET_SOURCE_COST_FROM_SELECTED_MINUS"
+          }
+        },
+        {
+          "op": "NOP",
+          "frame_index": 4,
+          "value": 10,
+          "params": {
+            "raw_cond": "SOURCE_MEMBER_COST_GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 6,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "MEMBER"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 7
+        }
+      ],
+      "cards": [
+        "PL!HS-bp5-005-AR | 徒町 小鈴 [member_db:697] (ab#0 ON_LIVE_START)",
+        "PL!HS-bp5-005-R | 徒町 小鈴 [member_db:4793] (ab#0 ON_LIVE_START)",
+        "PL!HS-bp5-005-P | 徒町 小鈴 [member_db:8889] (ab#0 ON_LIVE_START)",
+        "PL!HS-bp5-005-AR | 徒町 小鈴 (ab#0)",
+        "PL!HS-bp5-005-R | 徒町 小鈴 (ab#0)",
+        "PL!HS-bp5-005-P | 徒町 小鈴 (ab#0)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!HS-bp5-005-AR",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 697,
+          "name": "徒町 小鈴",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!HS-bp5-005-R",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 4793,
+          "name": "徒町 小鈴",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!HS-bp5-005-P",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 8889,
+          "name": "徒町 小鈴",
+          "trigger": 2
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+          "en": "",
+          "card_examples": [
+            "PL!HS-bp5-005-AR | 徒町 小鈴 (ab#0)",
+            "PL!HS-bp5-005-R | 徒町 小鈴 (ab#0)",
+            "PL!HS-bp5-005-P | 徒町 小鈴 (ab#0)"
+          ]
+        }
+      ]
     },
     {
       "signature": "T2|07afd8735ed25d428555a203de0f3dd7f73c0204",
@@ -22221,8 +22023,7 @@
             "PL!N-bp4-009-R | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|0d81572d0c9efc0df04a83524d6f929f4c5e17c8",
@@ -22314,8 +22115,7 @@
             "PL!SP-bp4-020-N | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|1d7004917af91f31c02544bb6c4c4ded02eef1c6",
@@ -22394,8 +22194,7 @@
             "PL!SP-bp5-222-R | 聖澤悠奈 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|241aaa36c624edc56481aa7e0ed177f64163c0d1",
@@ -22488,8 +22287,7 @@
             "PL!S-bp3-025-L | SUKI for you, DREAM for you! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|264e7cc18348287b1465849d78ffd93a53b9e846",
@@ -22567,8 +22365,7 @@
             "PL!-bp3-001-R | 高坂穂乃果 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|34fe95851993de4b5817c63d1e02204a69647111",
@@ -22671,8 +22468,7 @@
             "PL!HS-PR-023-PR | 桂城 泉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|3d477c25beeef760a8eda4d6cb6fd5effe85d953",
@@ -22774,8 +22570,7 @@
             "PL!N-bp3-015-N | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|4af370d7ba4ea3ea9f570e68ca22aa9b7870d8c7",
@@ -22889,8 +22684,7 @@
             "PL!N-bp3-010-R | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|4eabbb736b6e55411fd5713d100aeb6e246b9242",
@@ -22967,8 +22761,7 @@
             "PL!-bp3-007-R | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|5807fd91eac5e0deaf1d012305542303fb7a4b24",
@@ -23076,8 +22869,7 @@
             "PL!SP-pb1-001-R | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6295fb595c276bd464531ddd66603387b1da3935",
@@ -23169,8 +22961,7 @@
             "PL!HS-bp2-003-R | 乙宗 梢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|73ad07b015dee874179136dbc0b6837799dbc37c",
@@ -23262,8 +23053,7 @@
             "PL!N-bp1-005-R | 宮下 愛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|7e9b65252a257ee9283e5547047b0068c213b8ed",
@@ -23355,8 +23145,7 @@
             "PL!N-pb1-009-R | 天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|8032afcb9cee8e1a4348eb80f95f94d823b475ee",
@@ -23434,8 +23223,7 @@
             "PL!N-bp1-001-R | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|894f0e7b318a4de3f0636e5f9b524c03f1f3d475",
@@ -23524,8 +23312,7 @@
             "PL!SP-pb1-004-R | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|89cdd8670e63e17270c7ede9290bf4c9578f50e9",
@@ -23634,8 +23421,7 @@
             "PL!N-bp3-002-R | 中須かすみ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9cd8a68e0e3971366c593ed4c4551d907df6e9a0",
@@ -23729,8 +23515,7 @@
             "PL!-pb1-010-R | 高坂穂乃果 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9daed615a197fc8beca8acd1cf5a9f9f3c3c9993",
@@ -23862,8 +23647,7 @@
             "PL!N-pb1-004-R | 朝香果林 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9ed189ec7e58f0394327ecee2aa89cf903b8d969",
@@ -23941,8 +23725,7 @@
             "PL!-bp4-001-R | 高坂穂乃果 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a3fe9a7539ee37d900c59284e576e58241bd4102",
@@ -24005,8 +23788,7 @@
             "PL!SP-pb1-007-R | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a5f57351d50e08f743b588e3e7d3b10525a3127b",
@@ -24107,8 +23889,7 @@
             "PL!-pb1-015-R | 西木野真姫 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a6408e579d1a27a74b53c64178339cf75d379761",
@@ -24171,8 +23952,7 @@
             "PL!S-pb1-008-R | 小原鞠莉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ae2ca925d08a6e6d32833662296e7eb5d1b29626",
@@ -24263,8 +24043,7 @@
             "PL!S-pb1-003-R | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b771553f9ccc7be985eb596fdf208f22e6d09dcc",
@@ -24378,8 +24157,7 @@
             "PL!-pb1-002-R | 絢瀬絵里 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|c8fb99df69413c97b627849c3dd6a17d7639d855",
@@ -24460,8 +24238,7 @@
             "PL!N-bp3-028-SECL | ツナガルコネクト (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|e208a6fe6db068de521db1df43441bf28ebbf946",
@@ -24553,8 +24330,7 @@
             "PL!S-PR-019-PR | 国木田花丸 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|eb8e72d6cd0ec10a1ecec2c182760503bba09f5e",
@@ -24647,8 +24423,7 @@
             "PL!HS-PR-017-PR | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|f1dd9f045c0e7a545387ebd546999bbc8c1c8675",
@@ -24732,8 +24507,7 @@
             "PL!N-bp4-002-R | 中須かすみ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|feb232e21586634c770b57537a6fc8c1ea04c13f",
@@ -24859,8 +24633,7 @@
             "PL!-bp3-006-R | 西木野真姫 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|023c59a623ab7343fbf5c76a47e7bb9ed6a21034",
@@ -24942,8 +24715,7 @@
             "PL!S-sd1-009-SD | 黒澤ルビィ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|02a1c922a208ea1cf9ac781758f9237768330ca7",
@@ -25019,8 +24791,7 @@
             "PL!SP-bp1-026-L | 未来予報ハレルヤ！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|02f0508a79e51d77f10f19f98cac74d81f3904d8",
@@ -25126,8 +24897,7 @@
             "PL!HS-bp5-017-L | Dream Believers（104期Ver.） (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|038df4e1fcae43b880791271911540bf3eeddcae",
@@ -25219,8 +24989,7 @@
             "PL!N-bp1-028-L | Butterfly (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|05264fa6adf37d33b2ef2f1f73636884bce5561e",
@@ -25283,8 +25052,7 @@
             "PL!N-bp1-027-L | Solitude Rain (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|05812e4f39096e3676611e0e2100370e00cfd614",
@@ -25354,8 +25122,7 @@
             "PL!N-pb1-038-L | PHOENIX (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|079e2f12b26392fe53ebf0fa955ecbc81141b02d",
@@ -25423,8 +25190,7 @@
             "PL!N-bp5-028-L | CHASE! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|0a90cf8ed615d01e7079f28f909bed842e8e60a6",
@@ -25515,8 +25281,7 @@
             "PL!N-bp4-031-L | NEO SKY, NEO MAP! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|0b0e7c17c12fa77c1d007b25d13c423f4ea47ed5",
@@ -25610,8 +25375,7 @@
             "PL!N-sd1-001-SD | 上原歩夢 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|0c86fcdfcd0e95385ecb353bdac27bb2f6d36d25",
@@ -25701,8 +25465,7 @@
             "PL!N-pb1-039-L | Stellar Stream (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|16da612e33bd305e870c6f09386615fd9eea81af",
@@ -25773,8 +25536,7 @@
             "PL!-bp3-019-L | 僕らのLIVE 君とのLIFE (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|19437055af7e2e6f00c31ca6f540c529e0742a01",
@@ -25857,8 +25619,7 @@
             "PL!-bp3-026-L | Oh,Love&Peace! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|1aa8de1cf0a451c58becb86d7c927174a43d9aec",
@@ -25951,8 +25712,7 @@
             "PL!-bp4-021-L | ?←HEARTBEAT (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|1b3f27b78991b810d2fca2842845763a1fcf0a27",
@@ -26019,8 +25779,7 @@
             "LL-bp3-001-R+ | 園田海未&津島善子&天王寺璃奈 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|2084b2da3ea0f0ec616adc77941bc59f03b6be9f",
@@ -26088,8 +25847,7 @@
             "PL!N-sd1-028-SD | Dream with You (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|22729aae63841854ba9bbf03e9446c9ef9f4f790",
@@ -26157,8 +25915,7 @@
             "PL!SP-bp4-028-L | DAISUKI FULL POWER (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|26789adcda799623355160ca8fafccad45da6c5c",
@@ -26248,8 +26005,7 @@
             "PL!-sd1-003-SD | 南 ことり (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|2c67dd5d9314adae94cd8aa5a8fcff00a4f411f7",
@@ -26350,8 +26106,7 @@
             "PL!HS-sd1-008-SD | 桂城 泉 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|2f306936789a909cb4c0540dd2f8f321978d463e",
@@ -26528,8 +26283,7 @@
             "PL!-bp3-024-L | 夏色えがおで1,2,Jump! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|303624436439b1599d11b8b7d45a796216209581",
@@ -26600,8 +26354,7 @@
             "PL!-bp4-022-L | No brand girls (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|30f0ed365c589db55a27aadceb97e6aea9139a2a",
@@ -26657,8 +26410,7 @@
             "PL!SP-pb1-025-L | Jellyfish (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|32a1a3c4ec03bc5424f3cc89639f292ab904ad2e",
@@ -26752,8 +26504,7 @@
             "PL!HS-bp2-026-L | みらくりえーしょん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|331c65f9677451ea00ae7d25ae9c870b5924ebdc",
@@ -26821,8 +26572,7 @@
             "PL!-bp3-024-L | 夏色えがおで1,2,Jump! (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|35af83e68715da704f1a46d3a76b9ae69911894a",
@@ -26890,8 +26640,7 @@
             "PL!SP-bp4-025-L | Special Color (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|377aa7bdab776c132122e19a55d7ad415b148e30",
@@ -26964,8 +26713,7 @@
             "PL!SP-pb1-024-L | ニュートラル (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|380818c235df58e9ae415752f2d830935b6988b7",
@@ -27046,8 +26794,7 @@
             "PL!S-bp2-025-L | 青空Jumping Heart (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|3b6134d4d342ae358599a486813889d167360e6e",
@@ -27139,8 +26886,7 @@
             "PL!-bp3-022-L | ユメノトビラ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|3bf6057b1ba7694c634b0d382a6a04cd2f13191e",
@@ -27212,8 +26958,7 @@
             "PL!SP-bp4-024-L | ノンフィクション!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|3f977d19ce7bbea8cc2a5496a9099d9fe405b1ea",
@@ -27270,8 +27015,7 @@
             "PL!S-pb1-019-L | 元気全開DAY！DAY！DAY！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|414d85d7fa119b0fd0a3cba3936f596364ab1418",
@@ -27341,8 +27085,7 @@
             "PL!-bp5-020-L | Wonder zone (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|456a998a80a01e6c006b17463e4691f6f965d1d9",
@@ -27410,8 +27153,7 @@
             "PL!N-bp1-029-L | Eutopia (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|45ff258b3c2df5261d22a0554f574cd1e247931a",
@@ -27496,8 +27238,7 @@
             "PL!S-bp2-023-L | MY舞☆TONIGHT (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|47321dcc4cabfde61bfabfc7db7b85a96c6b8a58",
@@ -27571,8 +27312,7 @@
             "LL-bp4-001-R+ | 絢瀬絵里&朝香果林&葉月 恋 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|4874498d15b1f1f4199b72b5a1965d5f57b44486",
@@ -27624,8 +27364,7 @@
             "PL!-sd1-022-SD | 僕らは今のなかで (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|494f87473f21ff54a3e46272af006afb3f9a681f",
@@ -27697,8 +27436,7 @@
             "PL!S-bp5-017-N | 小原鞠莉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|4d76456e183d9da1a055210721f2f22759971fbb",
@@ -27741,8 +27479,7 @@
             "PL!N-bp3-026-L | サイコーハート (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|51ddce5f67e1e88559dde6962e3a83c079bfdc20",
@@ -27797,8 +27534,7 @@
             "PL!SP-bp4-023-L | Dazzling Game (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|54f161921a4c0ebb41e2e375655a29bd2043f89a",
@@ -27889,8 +27625,7 @@
             "PL!HS-bp2-024-L | レディバグ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|5792fe2b777ee05b773b37f9ba34cfee89883e68",
@@ -27960,8 +27695,7 @@
             "PL!HS-bp5-021-L | ジョーショーキリュー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|5b4fc8581db83cb32581f992657059c7edd033c4",
@@ -28034,8 +27768,7 @@
             "LL-bp1-001-R+ | 上原歩夢&澁谷かのん&日野下花帆 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|5be0a27ff3b72627f66bac55074e867f809a6fab",
@@ -28130,8 +27863,7 @@
             "PL!HS-sd1-003-SD | 大沢瑠璃乃 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|65ca02d56f4a8b4eb7cc8254a073038d31144183",
@@ -28220,8 +27952,7 @@
             "PL!-bp4-020-L | Love wing bell (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6609a2097fbbaec4810857b38cd38512fff4bc8d",
@@ -28306,8 +28037,7 @@
             "PL!HS-sd1-020-SD | Link to the FUTURE（104期Ver.） (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|694657b5a6d470da5c463c17cfab32b5b5bbdee5",
@@ -28380,8 +28110,7 @@
             "PL!-sd1-009-SD | 矢澤 にこ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6960c97a3419d7f0042882c97d6adab95e3445e9",
@@ -28451,8 +28180,7 @@
             "PL!N-bp5-013-N | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6cf88ec0605ad107231245a11d29e35d012df534",
@@ -28508,8 +28236,7 @@
             "PL!N-pb1-034-N | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|6d7f3afa8b3a6403e292ea26fd5b8868eeb109c7",
@@ -28590,8 +28317,7 @@
             "PL!-pb1-029-L | 知らないLove＊教えてLove (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|75ca4c59556872cccfd14897c2695328538fec70",
@@ -28654,8 +28380,7 @@
             "PL!-bp5-023-L | 乙姫心で恋宮殿 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|784064c2103b91b5473a49fa3407a8ea4e739f03",
@@ -28722,8 +28447,7 @@
             "PL!SP-bp2-023-L | Go!! リスタート (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|79d3b86854d288b3994632709e0e4dab65ef6f49",
@@ -28801,8 +28525,7 @@
             "PL!SP-bp4-022-N | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|79f34cbf156f1e3ec00eb8b2ab5fda58eeb19319",
@@ -28883,8 +28606,7 @@
             "LL-bp5-002-L | Bring the LOVE！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|7aeb6b09a097d1b8a898fbebeeddb211c6ddd9d0",
@@ -28954,8 +28676,7 @@
             "PL!SP-bp4-012-N | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|7e63e292bc60f6742aad79ae1d7bccf742d0f05c",
@@ -29033,8 +28754,7 @@
             "PL!HS-bp5-018-L | AURORA FLOWER (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|7f7591bb0a2ee112b1a054bde3f024f3bbcf2442",
@@ -29102,8 +28822,7 @@
             "PL!N-bp5-015-N | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|8071471130a5bd36aacab8c08bad2915b15fa09b",
@@ -29177,8 +28896,7 @@
             "PL!-bp4-017-N | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|80a0df3f4a94d248d87c7e070adbf72fbe33590f",
@@ -29250,8 +28968,7 @@
             "PL!N-pb1-042-L | Eternalize Love!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|822fb0ee7102a951dedec7436cb8cacd130c6a7d",
@@ -29328,8 +29045,7 @@
             "PL!N-bp3-025-L | Awakening Promise (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|84e8c662e1ef5f26bc35d49a79e264154399c97c",
@@ -29396,8 +29112,7 @@
             "PL!-bp3-023-L | ミはμ'sicのミ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|870750d0a13dce9efb31d6f6a9f0a6b1e40793eb",
@@ -29531,8 +29246,7 @@
             "PL!S-bp3-024-L | Deep Resonance (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|87905260ba7fafad58a9946be00b4de9ec46fd06",
@@ -29588,8 +29302,7 @@
             "PL!N-pb1-036-N | 鐘 嵐珠 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|87e0fe587eda126c07656e1c2736866a33d06b30",
@@ -29657,8 +29370,7 @@
             "PL!N-bp5-026-L | TOKIMEKI Runners (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|89227523aff0b851c6c7bbd0cfe88f92278e5674",
@@ -29730,8 +29442,7 @@
             "PL!HS-bp2-022-L | アオクハルカ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|897c13ebeb20090f456f07313530937e1a358981",
@@ -29803,8 +29514,7 @@
             "PL!S-pb1-020-L | トリコリコPLEASE!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|95a504cb30d90b6a6dfe05ac7c7ee44e338906bc",
@@ -29916,8 +29626,7 @@
             "PL!N-bp5-029-L | 無敵級*ビリーバー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9906f9dbb51ef732864cea6ed73271ebb86b75ef",
@@ -29972,8 +29681,7 @@
             "PL!S-bp5-022-L | SELF CONTROL!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9d0d41a596135c8d5b41900316064d87bbf6bc8c",
@@ -30063,8 +29771,7 @@
             "PL!HS-bp5-022-L | Retrofuture (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|9d46f0ef93498690b66059e8c13aa85de44194e8",
@@ -30129,8 +29836,7 @@
             "PL!-bp5-011-N | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a4485f86efe059ee9e27575cb1eb2ae99d907e37",
@@ -30196,8 +29902,7 @@
             "PL!HS-bp5-019-L | ハナムスビ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a69a4d8ab5963163bbfd8a04c46e964e85231175",
@@ -30276,8 +29981,7 @@
             "PL!SP-pb1-023-L | ディストーション (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a80e24e9cbdff8c6b9ee458cad406bea5e51b850",
@@ -30345,8 +30049,7 @@
             "PL!SP-bp1-027-L | Sing！Shine！Smile！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|a93e00f06698dfffb7d479af09bfdd1fbbd822ec",
@@ -30409,8 +30112,7 @@
             "PL!-bp5-022-L | A song for You! You? You!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|aa46a133a8c5577b906709b00b7658f3c177dbe4",
@@ -30606,8 +30308,7 @@
             "PL!-bp5-021-L | SUNNY DAY SONG (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ac8b41e0c046d27919c8d1716c3ddaab7550e528",
@@ -30712,8 +30413,7 @@
             "PL!N-bp4-028-L | stars we chase (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|af5c9d5fe942e33ed36e9c6d026c0c2772585cdc",
@@ -30803,8 +30503,7 @@
             "PL!-bp5-010-N | 高坂穂乃果 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b3720a0367e0906d7f599f0e0b7b6e755bd1827d",
@@ -30909,8 +30608,7 @@
             "PL!S-bp3-021-L | 想いよひとつになれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b3ba2b831b4fd8342956126291340844e5ff82e3",
@@ -30982,8 +30680,7 @@
             "PL!SP-bp5-026-L | Let's be ONE (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b3e862da1571fccf3cac8f408241cb4c1a47b8c3",
@@ -31078,8 +30775,7 @@
             "PL!SP-bp4-024-L | ノンフィクション!! (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b4ee8aab0ce04afd46986b520991c62338c4f540",
@@ -31191,8 +30887,7 @@
             "LL-PR-004-PR | 愛♡スクリ～ム！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b6111a636d7a9033daeaa65b7515b30eff0baca0",
@@ -31341,8 +31036,7 @@
             "PL!-bp5-024-L | Private Wars (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b785ee0ab875abf9297d6431fe9f1995e1a0f644",
@@ -31435,8 +31129,7 @@
             "PL!SP-bp4-023-L | Dazzling Game (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b895592af9bbb2b497acc35dadf0516f9255deb5",
@@ -31492,8 +31185,7 @@
             "PL!-bp4-024-L | 小夜啼鳥恋詩 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b9c9e4617abd6bb839951bb86320f215131cb588",
@@ -31565,8 +31257,7 @@
             "PL!-pb1-030-L | Cutie Panther (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|b9cab09dcdcca57a77ad90c343ec64d11af2dd62",
@@ -31632,8 +31323,7 @@
             "PL!HS-bp2-020-L | Link to the FUTURE (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|bc240683b4639fc9d6b55c7eb4216066b04fb29a",
@@ -31703,8 +31393,7 @@
             "PL!S-bp5-016-N | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|bf0d8345d746768e2d59e9bcc97a52c4a44b4feb",
@@ -31772,8 +31461,7 @@
             "PL!SP-sd1-026-SD | 私のSymphony 〜澁谷かのんVer.〜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|bff1364f448b4c1b9917471601a4ba1a4b78cff8",
@@ -31873,8 +31561,7 @@
             "LL-bp2-001-R+ | 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|c0d2498bd845bf195f4998d2a752dfc4e1d94388",
@@ -31947,8 +31634,7 @@
             "PL!SP-pb1-023-L | ディストーション (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|c0fdce4f1b896a2267c440cb7f7904f5d8b4e1d4",
@@ -32088,8 +31774,7 @@
             "PL!HS-bp2-019-L | Bloom the smile, Bloom the dream! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|c6b29282dc04e76aeae7ed886a799c84795a551d",
@@ -32164,8 +31849,7 @@
             "PL!HS-bp5-020-L | バアドケージ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|cc3c92bcd7d5f4700cc4def534c1b21b9027daa5",
@@ -32235,8 +31919,7 @@
             "PL!HS-PR-029-PR | 大沢瑠璃乃 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ccb65576877564c745293ec23a628b56f7ac0253",
@@ -32314,8 +31997,7 @@
             "PL!N-bp5-027-L | ミラクル STAY TUNE！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|d74fdd5bb181557a12efdfaa2e4c2d3cc4de158b",
@@ -32415,8 +32097,7 @@
             "PL!-pb1-028-L | WAO-WAO Powerful day! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|d984c07c7e8b8e91d66dd90cfd36033068994599",
@@ -32523,8 +32204,7 @@
             "PL!SP-bp1-024-L | Tiny Stars (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|da86d70f0a3c920d8d414ddb0e3094c848119a43",
@@ -32589,8 +32269,7 @@
             "PL!SP-bp5-024-L | MIRACLE NEW STORY (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|df951a25a60c0e6376fc36a6b3e210000db5d2cf",
@@ -32645,8 +32324,7 @@
             "PL!N-bp4-025-L | VIVID WORLD (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|e02c23f80b7039c8e8ee9c55fdc705a5942fdb38",
@@ -32710,8 +32388,7 @@
             "PL!S-sd1-004-SD | 黒澤ダイヤ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|e6c7f28025d7c0733a04262f763f57a80b120e97",
@@ -32792,8 +32469,7 @@
             "PL!N-sd1-004-SD | 朝香果林 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ea2b61e9e3760071d5443fbcb5e18188886eba4b",
@@ -32874,8 +32550,7 @@
             "PL!SP-sd1-003-SD | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ebedf6b94cd1c588d8234cbaf02575932f1852fe",
@@ -32943,8 +32618,7 @@
             "PL!HS-bp5-021-L | ジョーショーキリュー (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ec5305f24dd9a1ead800a280ca22af401c347925",
@@ -33045,8 +32719,7 @@
             "PL!N-pb1-037-L | Cara Tesoro (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|ee681ee4157e6272002f2eaa79af2ecd24e5da28",
@@ -33127,8 +32800,7 @@
             "PL!N-bp4-029-L | Rise Up High! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|efd39d4201019cdf1bd11a7e39a01ce29b2e552a",
@@ -33200,8 +32872,7 @@
             "PL!N-bp4-027-L | EMOTION (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|f0424a5b64884415510b8f174cfcfbe8bb06f0e7",
@@ -33286,8 +32957,7 @@
             "PL!-bp4-011-N | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|f15e672818af2e4a143af05a30d3adde7d686406",
@@ -33354,8 +33024,7 @@
             "PL!-bp4-014-N | 星空 凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|f552d978218fb318ad13e1e5312b9442b75d7a20",
@@ -33412,8 +33081,7 @@
             "PL!S-sd1-022-SD | Jump up HIGH!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|fa3aab5dc9020d45877ff5e4038ba3b7f9d406bd",
@@ -33537,8 +33205,7 @@
             "PL!HS-sd1-002-SD | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|fb10a4df54de0e19bbe3364c8a4389208d83efe2",
@@ -33619,8 +33286,7 @@
             "PL!N-sd1-010-SD | 三船栞子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|fba008a98b8ecdae85ddf685d272848fdcf00edf",
@@ -33700,8 +33366,7 @@
             "PL!HS-sd1-018-SD | Dream Believers（105期Ver.） (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T2|fe982a75ca4b69e4410b9cf90f3369d213c70753",
@@ -33798,8 +33463,7 @@
             "PL!S-bp5-023-L | Awaken the power (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|4ebbd5267518244b305d2ac057c20c259c9afbd5",
@@ -33931,8 +33595,7 @@
             "PL!SP-PR-016-PR | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|b36b3af415829599d31f8767210a437f6d0c0ea3",
@@ -34043,8 +33706,7 @@
             "PL!S-bp2-024-L | 君のこころは輝いてるかい？ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|00b25b412f12a784161ceb1897e8204252c2fd04",
@@ -34160,8 +33822,7 @@
             "PL!N-bp5-007-SEC | 優木せつ菜 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0af35749a32ff6e09c4513472afb73ad23543e5c",
@@ -34262,8 +33923,7 @@
             "PL!N-bp5-012-SEC | 鐘 嵐珠 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|60de452b53dd3db98866ae54c503d05235ddbf2d",
@@ -34359,8 +34019,7 @@
             "PL!N-bp4-007-SEC | 優木せつ菜 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|7a2b77b8ad3095b2a46ec03e920e6468c8d9c8b1",
@@ -34478,8 +34137,7 @@
             "PL!N-bp4-011-SEC | ミア・テイラー (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|c5563deab87dca747a64bf9a3b505765ee317bc9",
@@ -34597,8 +34255,7 @@
             "PL!S-bp5-022-L | SELF CONTROL!! (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|f5e5feb6058d7ad949b038ab876851abfca246e3",
@@ -34755,8 +34412,7 @@
             "PL!S-bp2-008-SEC | 小原鞠莉 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|12fedb125ff1e16881cab136ed0cc3f5c02dd217",
@@ -34871,8 +34527,7 @@
             "PL!N-bp5-010-P | 三船栞子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|4f49895e9e8e9545e1092f73a3ddabd932cd7a47",
@@ -34947,8 +34602,7 @@
             "PL!N-bp5-006-P | 近江彼方 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|762f17621e974a686501c6b046339c165e9256a2",
@@ -35038,8 +34692,7 @@
             "PL!S-bp5-007-P | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|c59e92133d23113ca2ffa97ac30a49754b0c7312",
@@ -35129,8 +34782,7 @@
             "PL!S-sd1-014-SD | 渡辺 曜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|04ce08c2997d48804f8ec3023fd3393785cfcc01",
@@ -35209,8 +34861,7 @@
             "PL!N-bp4-001-R | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0f1460fcbf5828090fcc9488acc1f0a6dd89f363",
@@ -35284,8 +34935,7 @@
             "PL!S-pb1-022-L+ | 逃走迷走メビウスループ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|1ccdb3fb883a637d1b1a59db76b6b4aa6dfd005d",
@@ -35377,8 +35027,7 @@
             "PL!SP-pb1-004-R | 平安名すみれ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|2590a675fbfded82a1e0fa79721194ddb5094948",
@@ -35456,8 +35105,7 @@
             "PL!S-bp3-005-R | 渡辺 曜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|4f985107cbb518fc54098d3e3dad4b2f9dd16ee3",
@@ -35546,8 +35194,7 @@
             "PL!SP-pb1-001-R | 澁谷かのん (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|842b9558fadab20912509b39238b08cc7a90314c",
@@ -35614,8 +35261,7 @@
             "PL!S-pb1-003-R | 松浦果南 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|8daea0e2c19d13984d05e146b759ed549d52f7e2",
@@ -35693,8 +35339,7 @@
             "PL!N-bp4-003-R | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|904655a0fe532ab4b14876bd45db09d421ad04dd",
@@ -35763,8 +35408,7 @@
             "PL!N-pb1-012-R | 鐘 嵐珠 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|9eb01e21f297f95b699d9fd2625fa15d1adecea9",
@@ -35848,8 +35492,7 @@
             "PL!SP-bp4-006-R | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|a8bcf5202feab7e9f3246a44df337a7980a644e2",
@@ -35930,8 +35573,7 @@
             "PL!S-pb1-007-R | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|adfe245834705b4c041cdba247b715602e6fe75c",
@@ -36009,8 +35651,7 @@
             "PL!SP-bp2-024-SECL | ビタミンSUMMER! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|e29f67e51ac9793d5464180c6f2a16e5f70b4100",
@@ -36100,8 +35741,7 @@
             "PL!S-bp3-002-R | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0069c74579e5ccfbb669c54fff5e6177eb07faf9",
@@ -36182,8 +35822,7 @@
             "PL!HS-bp1-023-L | ド！ド！ド！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|03cba35d04fa9a673d0830e0cdc24ba6bf1ab378",
@@ -36258,8 +35897,7 @@
             "PL!SP-bp4-027-L | Chance Day, Chance Way! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|09cd701f7d224f1d86f381794d77152abb8859e5",
@@ -36327,8 +35965,7 @@
             "PL!S-bp5-020-L | Landing action Yeah!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0b80e18c845cc0f42d6585c8121e8b07e52c09c9",
@@ -36406,8 +36043,7 @@
             "PL!SP-bp5-025-L | 常夏☆サンシャイン (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0dfa9dde020c845c434c3b793fc5cebcb10728c0",
@@ -36474,8 +36110,7 @@
             "PL!SP-bp5-027-L | HOT PASSION!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|0edc576f1de8ada3a9a5815d82b024cee66f8db2",
@@ -36564,8 +36199,7 @@
             "PL!N-bp4-030-L | Daydream Mermaid (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|108cc73b56bcc27909985126764e325c8af4e77e",
@@ -36649,8 +36283,7 @@
             "PL!S-pb1-021-L | Strawberry Trapper (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|19b57e6eb04ea186402243423f14b9ba6e5ecaf6",
@@ -36723,8 +36356,7 @@
             "PL!SP-bp4-026-L | Wish Song (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|1ad87a8a160f53266bcf2f50def22c6c53142fdf",
@@ -36796,8 +36428,7 @@
             "PL!N-bp4-025-L | VIVID WORLD (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|20e05a54ef6636b2e9e2ff36191f941fdbb66d0d",
@@ -36855,8 +36486,7 @@
             "PL!SP-bp2-025-L | Bubble Rise (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|2342984947e842219b3fcaec6be1d8e3225f0944",
@@ -36914,8 +36544,7 @@
             "PL!S-sd1-019-SD | 未来の僕らは知ってるよ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|2621d24d9365ef480d3b729d26b24796fa475967",
@@ -36982,8 +36611,7 @@
             "PL!S-bp3-019-L | MIRACLE WAVE (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|2a157314da64459c9706b7d3330cbfa71dc994db",
@@ -37039,8 +36667,7 @@
             "LL-bp5-002-L | Bring the LOVE！ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|35afe6f491647a9a880b78bda35dd2e89dad72a6",
@@ -37123,8 +36750,7 @@
             "PL!N-bp3-027-L | La Bella Patria (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|3cbff1af5a4a40b28718b251fe83ab4d94d27242",
@@ -37197,8 +36823,7 @@
             "PL!N-bp1-026-L | Poppin' Up! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|3d76d506ca5edfd9a76f975028d9daa43b96c40c",
@@ -37284,8 +36909,7 @@
             "PL!HS-sd1-017-SD | 夏めきペイン (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|44a4e91c3cbc86639189928aa5af279d2b96dde7",
@@ -37344,8 +36968,7 @@
             "PL!HS-bp1-021-L | Holiday∞Holiday (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|505c1c318158c7c47c56568bc5384a79790523e8",
@@ -37421,8 +37044,7 @@
             "PL!-pb1-031-L | 輝夜の城で踊りたい (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|5a7197f01972d6fce8517fa051ad1c56b4a66f30",
@@ -37493,8 +37115,7 @@
             "PL!HS-bp1-022-L | AWOKE (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|661e2273c2d174d83e8f5ebeb45464f6a16ca500",
@@ -37584,8 +37205,7 @@
             "PL!S-sd1-020-SD | JIMO-AI Dash! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|67d3d998cf0e80a0c32e971d95d90253ccfca10c",
@@ -37656,8 +37276,7 @@
             "PL!-pb1-032-L | SENTIMENTAL StepS (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|6dd0529f42a42014c85adec586165a912644e810",
@@ -37740,8 +37359,7 @@
             "PL!SP-bp4-026-L | Wish Song (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|7c0495d88c787ef2d7167493007890c7aaea115f",
@@ -37808,8 +37426,7 @@
             "PL!S-pb1-024-L | 僕らの走ってきた道は・・・ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|8a2645de20d960d379504190bb2c3e9262a73bfd",
@@ -37879,8 +37496,7 @@
             "PL!SP-bp5-020-N | 鬼塚夏美 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|8f9de74e5d657f3e23bca9c0c763f5e4372eb2a2",
@@ -37950,8 +37566,7 @@
             "PL!-sd1-019-SD | START:DASH!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|901d7923856efc2607f425c66dee6de5f2cc8276",
@@ -38018,8 +37633,7 @@
             "PL!S-bp2-022-L | 未熟DREAMER (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|96cd0ecfdbacef356e0c0a15e67dc9e7ff78071e",
@@ -38086,8 +37700,7 @@
             "PL!SP-bp1-023-L | START!! True dreams (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|988708e35cab7d5eea50778839291a97d97747e3",
@@ -38160,8 +37773,7 @@
             "PL!SP-PR-018-PR | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|99c1cf1fca2cb592ba43ecc229f5e67a839dae3c",
@@ -38234,8 +37846,7 @@
             "PL!N-bp5-026-L | TOKIMEKI Runners (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|a6527beff95c46ae0f59ab70054a74446b3f0adc",
@@ -38299,8 +37910,7 @@
             "PL!N-bp3-031-L | MONSTER GIRLS (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|a8124b55662eb15dad1baae129d87042e77e7127",
@@ -38383,8 +37993,7 @@
             "PL!S-bp5-019-L | not ALONE not HITORI (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|a82494c2d5ea3a516c70fc4c25e7538940093ac6",
@@ -38439,8 +38048,7 @@
             "PL!S-bp2-021-L | 未体験HORIZON (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|ab2cb6f6021b196bbf244df997158871c0cbda00",
@@ -38519,8 +38127,7 @@
             "PL!-pb1-030-L | Cutie Panther (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|b90161591ec274d1c54511c6e4a41737d83df2b2",
@@ -38593,8 +38200,7 @@
             "PL!SP-bp4-025-L | Special Color (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|bc75f4c2c02c1af7eba5b0e94b5657ed6f440ad2",
@@ -38661,8 +38267,7 @@
             "PL!-bp3-026-L | Oh,Love&Peace! (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|d1f0c6e7acfb3621cce5da3410b56b1563b3311e",
@@ -38777,8 +38382,7 @@
             "PL!N-bp4-030-L | Daydream Mermaid (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|dd43cd2878808c4d2d707b80b0f54a33cfc229c4",
@@ -38845,8 +38449,7 @@
             "PL!HS-PR-028-PR | Echoes Beyond (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|e5250731f3973a3ed7fccabf2f400bc50fe53cd6",
@@ -38913,8 +38516,7 @@
             "PL!-bp4-023-L | もぎゅっと\"love\"で接近中！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|eba67a943bb1abc6e2ea7037c2666100ec7e6253",
@@ -38966,8 +38568,7 @@
             "PL!S-pb1-019-L | 元気全開DAY！DAY！DAY！ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|f207ebaf6c1374793da3f9cf55316ac931111792",
@@ -39051,8 +38652,7 @@
             "PL!SP-bp1-024-L | Tiny Stars (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T3|f5342f019b52c14f62cceba11575230daa1c75ac",
@@ -39133,8 +38733,7 @@
             "PL!SP-bp5-023-L | Shooting Voice!! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|3a0123e621f60907564d50216d1228225216ed6f",
@@ -39665,8 +39264,7 @@
             "PL!SP-pb1-002-R | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|20db4bab350950370226f321d623ea87e88df6b8",
@@ -39913,8 +39511,7 @@
             "PL!SP-bp4-009-R | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|833eecbfe5d4a2b9f2d81579941ba40e5f67018d",
@@ -40079,8 +39676,7 @@
             "PL!SP-sd1-025-SD | 未来は風のように (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|8b360c5981280754600ca67708ef1fe22cf2b061",
@@ -40255,8 +39851,7 @@
             "PL!SP-bp4-003-R | 嵐 千砂都 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|137d379dc54538870a2604376c7aae76397f2ea6",
@@ -40409,8 +40004,7 @@
             "PL!SP-bp5-012-N | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|5808234943efae8ec21254cd0f9a002a08e2da52",
@@ -40557,8 +40151,7 @@
             "PL!N-pb1-011-R | ミア・テイラー (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|40b13fa6810811e59c6180a03d2dee80cd041225",
@@ -40668,8 +40261,7 @@
             "PL!SP-bp1-001-R | 澁谷かのん (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|c60796cda5567a50fc11d73de2f495f7a9233196",
@@ -40795,8 +40387,7 @@
             "PL!S-PR-037-PR | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|abf48872f0083abbeb80419e69ad3e97fcf86ad8",
@@ -40902,8 +40493,7 @@
             "PL!SP-bp5-016-N | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|594481b4064335dd1fd5782b7348424a0c1c495f",
@@ -40991,8 +40581,7 @@
             "PL!S-bp5-001-SEC | 高海千歌 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|64a15b28b8118cb5d842a1555aa67e098e42a8c2",
@@ -41082,8 +40671,7 @@
             "PL!SP-bp5-003-SEC | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|76a0020f8cf8d519f560fbed059e29671b1c83b0",
@@ -41171,8 +40759,7 @@
             "PL!SP-bp4-004-SEC | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|87882ed02c3f0be560ec07efee05cd34df39a346",
@@ -41273,8 +40860,7 @@
             "PL!SP-bp4-021-N | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|9db28775bc88558142075ab2cafeb83461ae46c5",
@@ -41362,8 +40948,7 @@
             "PL!N-bp4-007-SEC | 優木せつ菜 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|a17bb6d7d1866afd5b7b90cae0eb0cd04cfa9b51",
@@ -41461,8 +41046,7 @@
             "PL!N-bp1-012-SEC | 鐘 嵐珠 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|bebe08e7b8d223cabd74aef30ec3dff6691ae022",
@@ -41547,8 +41131,7 @@
             "PL!SP-bp2-010-SEC | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|3fdb50570e4ca424b239f7d12dae4fc335741a01",
@@ -41621,8 +41204,7 @@
             "PL!HS-bp5-004-P | 百生 吟子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|655f4c47f3bb775320ed8783049059f127efa329",
@@ -41712,8 +41294,7 @@
             "PL!S-PR-031-PR | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|708e25bd4591a410dfcc0a76b072eae1e80f947d",
@@ -41790,8 +41371,7 @@
             "PL!-bp5-008-P | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|a86bcf9f4f446e419d44eeb1cc01835cf80aabaa",
@@ -41869,8 +41449,7 @@
             "PL!SP-bp5-011-P | 鬼塚冬毬 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|defe49ba7b18e8d49b6b14de2c6348509746d7be",
@@ -41947,8 +41526,7 @@
             "PL!SP-bp5-011-P | 鬼塚冬毬 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|e81400602b75fa13d882ab6bb92346196eb848c1",
@@ -42025,8 +41603,7 @@
             "PL!SP-bp5-011-P | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|1b0aaa6e831743efa2653e4f2b52955afdaa1548",
@@ -42089,8 +41666,7 @@
             "PL!-bp4-008-R | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|2f7555b687bbfdfd5b976c02d19dcfd11b3372c7",
@@ -42166,8 +41742,7 @@
             "PL!-pb1-014-R | 星空 凛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|334839d3724598971bd8d23a4ead6f2e26b08f53",
@@ -42230,8 +41805,7 @@
             "PL!-pb1-004-R | 園田海未 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|4e364389f557af82e2a57a2309c537f5168db9c0",
@@ -42305,8 +41879,7 @@
             "PL!-pb1-002-R | 絢瀬絵里 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|5a6880b4f4e27be2f71532f60f9cc8a6165088d6",
@@ -42384,8 +41957,7 @@
             "PL!-bp5-111-R | 綺羅ツバサ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|6326d864bf84db66df0ae454395d0b39300a1522",
@@ -42463,8 +42035,7 @@
             "PL!N-pb1-008-R | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|81b5b6bc0d13c24c7a24a19c2add59a58849310d",
@@ -42527,8 +42098,7 @@
             "PL!SP-bp1-004-R | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|887c5234d7ec360d300880748ec114b83d5dc1cd",
@@ -42597,8 +42167,7 @@
             "PL!HS-sd1-005-SD | 徒町小鈴 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|c07c5e6ed43b0b71691910d0cea3a9f5fe7767c5",
@@ -42665,8 +42234,7 @@
             "PL!-bp5-333-R | 統堂英玲奈 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|c77a32b90a75fe0bf938e57fd0cf7e8fe17838c6",
@@ -42729,8 +42297,7 @@
             "PL!SP-pb1-010-R | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|0887d61d5daee61e7ea7d2c9ffe4efe389990525",
@@ -42782,8 +42349,7 @@
             "PL!HS-sd1-020-SD | Link to the FUTURE（104期Ver.） (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|1c137c09c5347e3997fe2a3c6c149942e5e4784e",
@@ -42835,8 +42401,7 @@
             "PL!HS-bp2-020-L | Link to the FUTURE (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|24f36370bee2eae183de469579dffd8d5521c262",
@@ -42896,8 +42461,7 @@
             "LL-bp2-001-R+ | 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|4e2339cf9a7b006bd03682961d0b00d7c15a82fc",
@@ -42949,8 +42513,7 @@
             "PL!-bp4-019-L | Angelic Angel (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|51c405a5f481a7f8ee9cc5b46ba6b7fcf3657ac5",
@@ -43002,8 +42565,7 @@
             "PL!S-bp2-024-L | 君のこころは輝いてるかい？ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|5f01fae1cdca2ea934dba4d58b2229fa4c01229b",
@@ -43069,8 +42631,7 @@
             "PL!SP-bp5-017-N | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|afb2f4cc8ab81e159aa42d53187653166b5335e6",
@@ -43125,8 +42686,7 @@
             "PL!HS-sd1-004-SD | 百生吟子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|b6ea08f68b257d9c1ead4ea355759237959961b3",
@@ -43189,8 +42749,7 @@
             "PL!S-bp3-016-N | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T6|faed6f98fa46d20a753bf59efe3da7f84df0e06b",
@@ -43242,8 +42801,7 @@
             "LL-bp2-001-R+ | 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|eed60aad92f1a72b76e5f26f8b389d81701df99c",
@@ -43761,8 +43319,7 @@
             "PL!SP-bp5-111-R | 柊摩央 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|b28e28ca1a22a0a9e82d1ebef9bdb836d8e10e76",
@@ -44047,8 +43604,7 @@
             "PL!N-sd1-005-SD | 宮下 愛 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|6403f92d4fbfa179f3d209cadd80dd9c6ae4d413",
@@ -44194,8 +43750,7 @@
             "PL!N-bp1-006-SEC | 近江彼方 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|70e6c7f3f6e9abb5b309367f380d502d99e880b0",
@@ -44321,8 +43876,7 @@
             "PL!SP-bp1-003-SEC | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|a13212ed71ef4b19954a8304e59b239268b68d0f",
@@ -44435,8 +43989,7 @@
             "PL!SP-bp5-001-SEC | 澁谷かのん (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|bc5c3eecd00c5748bbdf7e24ec69d847aca92f54",
@@ -44564,8 +44117,7 @@
             "PL!N-sd1-007-SD | 優木せつ菜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|0599845d49eff83e62ec7b30b1f6d6a34cc74b27",
@@ -44717,8 +44269,7 @@
             "PL!-bp3-009-SEC | 矢澤にこ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|22a4c3c3d4c37b70889f9a90d853a1f51231e6b9",
@@ -44827,8 +44378,7 @@
             "PL!N-bp1-006-SEC | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|26524e99d20200bfcbd0f07025cb13608fc3998a",
@@ -44921,8 +44471,7 @@
             "PL!HS-bp1-004-SEC | 夕霧綴理 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|28642768cccc3778a7b9f45d048921677c2007d2",
@@ -45022,8 +44571,7 @@
             "PL!N-bp1-002-SEC | 中須かすみ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|43bb707bbff13f0fc933401715baa80287c856e8",
@@ -45115,8 +44663,7 @@
             "PL!-bp3-008-SEC | 小泉花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|5c7611fcfb5142cad5eb49e43f8c1b7c39ffaba5",
@@ -45231,8 +44778,7 @@
             "PL!-bp4-002-SEC | 絢瀬絵里 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|64d47815fe9e9fee7398a7ddb0ce9abbc81603cd",
@@ -45323,8 +44869,7 @@
             "PL!HS-bp5-001-SEC | 日野下花帆 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|66784b2316a4c6b93d89882208033dbdc693620d",
@@ -45488,8 +45033,7 @@
             "PL!SP-bp5-002-SEC | 唐 可可 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|8b258098f4b218749f5f49a6b31785ee1e213cf0",
@@ -45580,8 +45124,7 @@
             "PL!S-bp5-222-R | 鹿角理亞 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|8d18a1982590dc06164c67afb095bb7d571e663d",
@@ -45665,8 +45208,7 @@
             "PL!SP-bp2-006-SEC | 桜小路きな子 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|99151d4bc2d7a63c4b8b2759c54dbc3b81112196",
@@ -45780,8 +45322,7 @@
             "PL!S-bp3-001-SEC | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|a17bfb03b41c0e53fdc72799cb96bf898d381ac0",
@@ -45938,8 +45479,7 @@
             "PL!-bp5-003-SEC | 南 ことり (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|a9c0082a92552d55d83ce158c5f81accb1866d7a",
@@ -46045,8 +45585,7 @@
             "PL!SP-bp1-009-R | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|bd57e914325b2484166219668a4461dc14494d67",
@@ -46153,8 +45692,7 @@
             "PL!N-bp3-008-SEC | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|c535f06bd6e622c2993cfa01101e0c538e6d9812",
@@ -46252,8 +45790,7 @@
           ]
         }
       ],
-      "choice_count": 2,
-      "source_mode": "frame_authored"
+      "choice_count": 2
     },
     {
       "signature": "T7|ca1377a988ff9b7e0ca475273f212c3033b6697a",
@@ -46424,8 +45961,7 @@
             "PL!S-bp3-006-SEC | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|ceae9def7e7f9649f06851d2a3e2e3067b901cd4",
@@ -46531,8 +46067,7 @@
             "PL!SP-bp5-005-SEC | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|df22933174ce74f2c87e9057d127911e63681ca8",
@@ -46627,8 +46162,7 @@
             "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|f64d7d7b58f317958170af8ee27ee8c874d0f122",
@@ -46730,8 +46264,7 @@
             "PL!-bp5-004-SEC | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|f9141f627851aae5fa47886b2a9d895735a38f29",
@@ -46824,8 +46357,7 @@
             "PL!HS-bp5-002-SEC | 村野さやか (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|0ed5def6f56b216af47a0053cf7df1507751b479",
@@ -46947,8 +46479,7 @@
             "PL!HS-bp1-002-RM | 村野さやか (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|178562e2ab3de486e9700e9022b0570a1a827789",
@@ -47059,8 +46590,7 @@
             "PL!N-PR-010-PR | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|2decd682d0b2d1d0228ee7dabb1c5f0cbe85153b",
@@ -47186,8 +46716,7 @@
             "PL!N-bp5-003-P | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|953986611097bf76c1408b09fd63731391e1647c",
@@ -47270,8 +46799,7 @@
             "PL!N-bp5-008-P | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|b938621bb893d3ded3ea14ec426d2e1a34c8f217",
@@ -47349,8 +46877,7 @@
             "PL!SP-bp5-006-P | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|0a793194ebde3fdfd2349ec64a578de05eb74daf",
@@ -47448,8 +46975,7 @@
             "PL!-pb1-007-R | 東條 希 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|10ce1a71a57dd1f3396c940412ceb178a446a41f",
@@ -47529,8 +47055,7 @@
             "PL!HS-bp2-001-R | 日野下花帆 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|201e12a3614e95d73d7162cffefec82cfa829e17",
@@ -47614,8 +47139,7 @@
             "PL!SP-bp1-010-R | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|27f758108b1c446ee9caa4c6a28915c19c9de377",
@@ -47692,8 +47216,7 @@
             "PL!SP-bp2-008-R | 若菜四季 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|3067d35bfd4a4df6181e2e65c7671fe75c3e96a8",
@@ -47757,8 +47280,7 @@
             "PL!SP-bp4-010-R | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|363dc47e6a4b3493830a817dea1d742933847c9f",
@@ -47845,8 +47367,7 @@
             "PL!N-pb1-003-R | 桜坂しずく (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|3d99edfed0e3ed59eb1ec0a2a83ec9bfae182e8e",
@@ -47964,8 +47485,7 @@
             "PL!S-pb1-006-R | 津島善子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|51715077df272b082f369497c054e0807490651d",
@@ -48058,8 +47578,7 @@
             "PL!N-bp3-007-R | 優木せつ菜 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|562d4f2db843dcda0c7dd558940b13960360e7e7",
@@ -48177,8 +47696,7 @@
             "PL!N-bp4-008-R | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|82796ace3b79bb36d8024e171e801aeb9057eec9",
@@ -48287,8 +47805,7 @@
             "PL!S-bp3-008-R | 小原鞠莉 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|83f09b1b2d3aa649d1125c56f1dd35b76c1c3691",
@@ -48392,8 +47909,7 @@
             "PL!-bp5-111-R | 綺羅ツバサ (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|8b2e2899ada43cda49a2f885d68e4df543519326",
@@ -48531,8 +48047,7 @@
             "PL!-pb1-001-R | 高坂穂乃果 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|aa4fe682b5bc1a2a4a64e32e1802b67691f0e6e6",
@@ -48629,8 +48144,7 @@
             "PL!S-bp3-007-R | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|e569ef3ce4f218ba79d1483f1e9b17f8cf9947ac",
@@ -48701,8 +48215,7 @@
             "PL!N-bp1-008-R | エマ・ヴェルデ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|ef378e08870e69faf0f07bb1134baf3cf381d9b1",
@@ -48777,8 +48290,7 @@
             "PL!S-sd1-007-SD | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|f0f6fa50bbdd1e62e6958a000739acbb77c10a02",
@@ -48862,8 +48374,7 @@
             "PL!-pb1-013-R | 園田海未 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|8d8291b3875d44032584c0b44040dac68de21ef3",
@@ -48918,8 +48429,7 @@
             "PL!SP-bp5-020-N | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|a4bbe89b51ef1fa32049888dcb3b0db0f8ea3b66",
@@ -48994,8 +48504,7 @@
             "LL-bp3-001-R+ | 園田海未&津島善子&天王寺璃奈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|c5982535d945f155ffa28a78856692bc13372fa4",
@@ -49078,8 +48587,7 @@
             "PL!SP-bp5-021-N | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|d2770fba43041c848cb6594ad89001a4225cd28a",
@@ -49165,8 +48673,7 @@
             "PL!HS-bp2-018-N | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|e49c634f53fca4b864e06537d23a22d860684cbe",
@@ -49223,8 +48730,7 @@
             "PL!-sd1-008-SD | 小泉 花陽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|e8f0188c33d1292b9cc6a2cc99283cfc0b864262",
@@ -49296,8 +48802,7 @@
             "PL!SP-bp4-018-N | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T7|f82ff282d9a83dcf7b312df078695b38819958d5",
@@ -49349,141 +48854,7 @@
             "PL!SP-sd1-011-SD | 鬼塚冬毬 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
-    },
-    {
-      "signature": "T8|3c8e3f0f9de706787fe4208ee52e17f7af213fbc",
-      "signature_hash": "3c8e3f0f9de706787fe4208ee52e17f7af213fbc",
-      "signature_source": "{\"frames\":[{\"attr\":{\"group_enabled\":1,\"group_id\":\"NIJIGASAKI\",\"has_blade_heart\":1,\"is_cost_type\":1,\"value_enabled\":1,\"value_threshold\":10},\"op\":\"BATON\"},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"op\":\"ACTIVATE_ENERGY\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":2},{\"attr\":{\"group_enabled\":1,\"group_id\":\"NIJIGASAKI\",\"has_blade_heart\":1,\"is_cost_type\":1,\"value_enabled\":1,\"value_threshold\":15},\"op\":\"BATON\"},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"op\":\"DRAW\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"RETURN\"}],\"trigger\":8}",
-      "trigger_id": 8,
-      "trigger": "ON_LEAVES",
-      "frame_count": 7,
-      "opcode_sequence": [
-        "BATON",
-        "JUMP_IF_FALSE",
-        "ACTIVATE_ENERGY",
-        "BATON",
-        "JUMP_IF_FALSE",
-        "DRAW",
-        "RETURN"
-      ],
-      "frames": [
-        {
-          "op": "BATON",
-          "frame_index": 0,
-          "attr": {
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI",
-            "has_blade_heart": 1,
-            "value_enabled": 1,
-            "value_threshold": 10,
-            "is_cost_type": 1
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "ACTIVATE_ENERGY",
-          "frame_index": 2,
-          "value": 2,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "BATON",
-          "frame_index": 3,
-          "attr": {
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI",
-            "has_blade_heart": 1,
-            "value_enabled": 1,
-            "value_threshold": 15,
-            "is_cost_type": 1
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 4,
-          "value": 1
-        },
-        {
-          "op": "DRAW",
-          "frame_index": 5,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 6
-        }
-      ],
-      "cards": [
-        "PL!N-bp5-005-AR | 宮下 愛 [member_db:755] (ab#0 ON_LEAVES)",
-        "PL!N-bp5-005-R＋ | 宮下 愛 [member_db:4851] (ab#0 ON_LEAVES)",
-        "PL!N-bp5-005-P | 宮下 愛 [member_db:8947] (ab#0 ON_LEAVES)",
-        "PL!N-bp5-005-SEC | 宮下 愛 [member_db:13043] (ab#0 ON_LEAVES)",
-        "PL!N-bp5-005-AR | 宮下 愛 (ab#0)",
-        "PL!N-bp5-005-R+ | 宮下 愛 (ab#0)",
-        "PL!N-bp5-005-P | 宮下 愛 (ab#0)",
-        "PL!N-bp5-005-SEC | 宮下 愛 (ab#0)"
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!N-bp5-005-AR",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 755,
-          "name": "宮下 愛",
-          "trigger": 8
-        },
-        {
-          "card_no": "PL!N-bp5-005-R+",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4851,
-          "name": "宮下 愛",
-          "trigger": 8
-        },
-        {
-          "card_no": "PL!N-bp5-005-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 8947,
-          "name": "宮下 愛",
-          "trigger": 8
-        },
-        {
-          "card_no": "PL!N-bp5-005-SEC",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 13043,
-          "name": "宮下 愛",
-          "trigger": 8
-        }
-      ],
-      "pseudocode": "",
-      "primary_text_jp": "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、さらにカードを1枚引く。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、さらにカードを1枚引く。",
-          "en": "",
-          "card_examples": [
-            "PL!N-bp5-005-AR | 宮下 愛 (ab#0)",
-            "PL!N-bp5-005-R+ | 宮下 愛 (ab#0)",
-            "PL!N-bp5-005-P | 宮下 愛 (ab#0)",
-            "PL!N-bp5-005-SEC | 宮下 愛 (ab#0)"
-          ]
-        }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|4c294770d82d8aa4beb05dcb591e6212ffab9355",
@@ -49573,8 +48944,139 @@
             "PL!HS-bp5-003-SEC | 大沢瑠璃乃 (ab#0)"
           ]
         }
+      ]
+    },
+    {
+      "signature": "T8|6d0a47a63fa94a76902df23e5c8f91ba6a516323",
+      "signature_hash": "6d0a47a63fa94a76902df23e5c8f91ba6a516323",
+      "signature_source": "{\"frames\":[{\"attr\":{\"group_enabled\":1,\"group_id\":\"NIJIGASAKI\",\"is_cost_type\":1,\"not_has_blade_heart\":1,\"value_enabled\":1,\"value_threshold\":10},\"op\":\"BATON\"},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"op\":\"ACTIVATE_ENERGY\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":2},{\"attr\":{\"group_enabled\":1,\"group_id\":\"NIJIGASAKI\",\"is_cost_type\":1,\"not_has_blade_heart\":1,\"value_enabled\":1,\"value_threshold\":15},\"op\":\"BATON\"},{\"op\":\"JUMP_IF_FALSE\",\"value\":1},{\"op\":\"DRAW\",\"slot\":{\"target_slot\":\"CONTEXT\"},\"value\":1},{\"op\":\"RETURN\"}],\"trigger\":8}",
+      "trigger_id": 8,
+      "trigger": "ON_LEAVES",
+      "frame_count": 7,
+      "opcode_sequence": [
+        "BATON",
+        "JUMP_IF_FALSE",
+        "ACTIVATE_ENERGY",
+        "BATON",
+        "JUMP_IF_FALSE",
+        "DRAW",
+        "RETURN"
       ],
-      "source_mode": "frame_authored"
+      "frames": [
+        {
+          "op": "BATON",
+          "frame_index": 0,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "not_has_blade_heart": 1,
+            "value_enabled": 1,
+            "value_threshold": 10,
+            "is_cost_type": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ACTIVATE_ENERGY",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "BATON",
+          "frame_index": 3,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "not_has_blade_heart": 1,
+            "value_enabled": 1,
+            "value_threshold": 15,
+            "is_cost_type": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 5,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 6
+        }
+      ],
+      "cards": [
+        "PL!N-bp5-005-AR | 宮下 愛 [member_db:755] (ab#0 ON_LEAVES)",
+        "PL!N-bp5-005-R＋ | 宮下 愛 [member_db:4851] (ab#0 ON_LEAVES)",
+        "PL!N-bp5-005-P | 宮下 愛 [member_db:8947] (ab#0 ON_LEAVES)",
+        "PL!N-bp5-005-SEC | 宮下 愛 [member_db:13043] (ab#0 ON_LEAVES)",
+        "PL!N-bp5-005-AR | 宮下 愛 (ab#0)",
+        "PL!N-bp5-005-R+ | 宮下 愛 (ab#0)",
+        "PL!N-bp5-005-P | 宮下 愛 (ab#0)",
+        "PL!N-bp5-005-SEC | 宮下 愛 (ab#0)"
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!N-bp5-005-AR",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 755,
+          "name": "宮下 愛",
+          "trigger": 8
+        },
+        {
+          "card_no": "PL!N-bp5-005-R+",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 4851,
+          "name": "宮下 愛",
+          "trigger": 8
+        },
+        {
+          "card_no": "PL!N-bp5-005-P",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 8947,
+          "name": "宮下 愛",
+          "trigger": 8
+        },
+        {
+          "card_no": "PL!N-bp5-005-SEC",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 13043,
+          "name": "宮下 愛",
+          "trigger": 8
+        }
+      ],
+      "pseudocode": "",
+      "primary_text_jp": "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、さらにカードを1枚引く。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、さらにカードを1枚引く。",
+          "en": "",
+          "card_examples": [
+            "PL!N-bp5-005-AR | 宮下 愛 (ab#0)",
+            "PL!N-bp5-005-R+ | 宮下 愛 (ab#0)",
+            "PL!N-bp5-005-P | 宮下 愛 (ab#0)",
+            "PL!N-bp5-005-SEC | 宮下 愛 (ab#0)"
+          ]
+        }
+      ]
     },
     {
       "signature": "T8|11f6b966ea91c52b0cab4e34f671a703029a1c78",
@@ -49672,8 +49174,7 @@
             "PL!S-bp2-002-R | 桜内梨子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|1a8a7fefd3ceeb30139a8ccbfc63f941ecdb1d9a",
@@ -49739,8 +49240,7 @@
             "PL!-PR-002-PR | 絢瀬絵里 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|5515d60f1e1d4619cb8ee883df84b7582bdfef89",
@@ -49810,8 +49310,7 @@
             "PL!HS-sd1-001-SD | 日野下花帆 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|8596b89eddda73ccbd4789a3da86ac1fe977d0a2",
@@ -49878,8 +49377,7 @@
             "PL!HS-bp2-015-N | 藤島 慈 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|a4fdbb3c2c6a8b72d0f25af8edf8cde6c590a3e8",
@@ -49939,8 +49437,7 @@
             "PL!HS-bp2-012-N | 乙宗 梢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T8|b4248b19c5e5c788cffce8f313d413fe705cb2e4",
@@ -50000,8 +49497,7 @@
             "PL!HS-bp2-013-N | 夕霧綴理 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|00f8a192b86ca8eebe80c34930d45b832ee36a28",
@@ -50110,8 +49606,7 @@
             "PL!-bp5-004-SEC | 園田海未 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|1c5ba10ef62829d497d2895fa21e82068ff298c8",
@@ -50240,8 +49735,7 @@
             "PL!N-bp5-001-SEC | 上原歩夢 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|3953a3e045edb6262bf7c1d3fd4f0be91dbffd4b",
@@ -50354,8 +49848,7 @@
             "PL!S-bp2-007-SEC | 国木田花丸 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|712b9c07ba03a215ecb843543dc482cddb02c2a9",
@@ -50439,8 +49932,7 @@
             "PL!S-bp2-003-R | 松浦果南 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|014d8c8ed48d52a76b7d4d9b55930d70325fce8a",
@@ -50495,8 +49987,7 @@
             "PL!S-sd1-001-SD | 高海千歌 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|33565673b9071b8e793e0ddcbc66faf63f4dc4d3",
@@ -50569,8 +50060,7 @@
             "PL!SP-bp2-021-N | ウィーン・マルガレーテ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|b2fea2d6ca8a2001828f8f145003d90f8aaa5cda",
@@ -50622,8 +50112,7 @@
             "PL!S-bp3-020-L | ダイスキだったらダイジョウブ！ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|bd43674ce2b038384aeaff2dabd7da9edd219b3a",
@@ -50696,8 +50185,7 @@
             "PL!SP-bp2-020-N | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T9|cdcb9cd877a6fb95984273a4ae288ac7a08366ed",
@@ -50771,8 +50259,7 @@
             "PL!SP-bp2-015-N | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|8b8c5731e46119e14740d95c388eef3e8592edf7",
@@ -50884,8 +50371,7 @@
             "PL!SP-bp5-004-SEC | 平安名すみれ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|cfafe3d544501dddefbe0fa3c2e8e8ad73cfbf52",
@@ -51001,8 +50487,7 @@
             "PL!SP-bp4-011-SEC | 鬼塚冬毬 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|16c36a682ed9ea16df3e0d59eec7b5a5b3bf1822",
@@ -51065,8 +50550,7 @@
             "PL!SP-pb1-006-R | 桜小路きな子 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|57c073c5402f0f9e2b62060a3802a4a914ff3f86",
@@ -51150,8 +50634,7 @@
             "PL!SP-bp4-007-R | 米女メイ (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|795ee2b8569fd18b3e489d68a0d9eac6c5ca2d60",
@@ -51215,8 +50698,7 @@
             "PL!SP-bp2-003-R | 嵐 千砂都 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|8fd3fe9839ac8416c7167f531b379031ead61a38",
@@ -51310,8 +50792,7 @@
             "PL!S-bp5-111-R | 鹿角聖良 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|c447eaab932ef6094541d311d9ebd639f1c723e1",
@@ -51389,8 +50870,7 @@
             "PL!S-bp5-222-R | 鹿角理亞 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|0d7585e01f3c8bf1b22783ba9a6a1ec86ea10731",
@@ -51457,8 +50937,7 @@
             "PL!N-bp4-026-L | DIVE! (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|3562977d655a30e2c064d1259e273dad74de0331",
@@ -51514,8 +50993,7 @@
             "PL!SP-bp4-016-N | 葉月 恋 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|58795f1fdd408914921331e3ea40712344d707e3",
@@ -51595,8 +51073,7 @@
             "PL!N-bp4-026-L | DIVE! (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|95e18e2429cb32a2ccfd3268f99a2aed9bcd113e",
@@ -51648,8 +51125,7 @@
             "PL!SP-pb1-020-N | 鬼塚夏美 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T10|be573266d4b2339fcbd60e75d56056c91bec4f5f",
@@ -51701,8 +51177,7 @@
             "PL!HS-bp5-014-N | 安養寺 姫芽 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T11|2cb370cd5c62641839e6f200d07fed8d4315c7f0",
@@ -51754,8 +51229,7 @@
             "PL!N-bp5-030-L | 繚乱！ビクトリーロード (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T11|bdd9b73dd7a1377d9f13ef08500639d8c9caf748",
@@ -51826,8 +51300,7 @@
             "PL!N-bp5-030-L | 繚乱！ビクトリーロード (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T13|81ce370e09c800db2e4725a7bcb496d28b3b989b",
@@ -51949,8 +51422,7 @@
             "PL!SP-bp5-005-SEC | 葉月 恋 (ab#1)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T14|a05a8d44851f9e74256752b13a9118ef29adb0c9",
@@ -52013,8 +51485,7 @@
             "PL!-pb1-015-R | 西木野真姫 (ab#2)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     },
     {
       "signature": "T14|68564d37dec2dc83c9233c7477464fd7e17b703d",
@@ -52101,8 +51572,7 @@
             "PL!N-bp4-018-N | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "source_mode": "frame_authored"
+      ]
     }
   ]
 }

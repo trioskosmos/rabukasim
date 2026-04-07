@@ -1,30 +1,12 @@
 use super::*;
-use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_STAGE, ZONE_DISCARD, ZONE_HAND};
-use crate::core::enums::Zone;
+use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_STAGE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::interaction_zone::{
+    cards_for_source_zone, selected_target_key, selection_source_zone,
+};
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::models::AbilityContext;
-
-fn selected_target_key(source_zone: Zone, slot_idx: i32) -> i32 {
-    ((source_zone as i32) << 8) | slot_idx
-}
-
-fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: Zone) -> Vec<i32> {
-    match source_zone {
-        Zone::Hand => state.players[target_player].hand.to_vec(),
-        Zone::Discard => state.players[target_player].discard.to_vec(),
-        _ => state.players[target_player].stage.to_vec(),
-    }
-}
-
-fn selection_source_zone(raw_zone: u8) -> Zone {
-    match raw_zone {
-        x if x == ZONE_HAND as u8 => Zone::Hand,
-        x if x == ZONE_DISCARD as u8 => Zone::Discard,
-        _ => Zone::Stage,
-    }
-}
 
 fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize {
     let source_zone = selection_source_zone(source_zone);
@@ -32,7 +14,7 @@ fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize
         .iter()
         .enumerate()
         .filter(|(idx, cid)| {
-            **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx as i32))
+            **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx))
         })
         .count()
 }
@@ -52,7 +34,7 @@ fn count_remaining_targets(
         .enumerate()
         .filter(|(idx, cid)| {
             **cid >= 0
-                && !keys.contains(&selected_target_key(source_zone, *idx as i32))
+                && !keys.contains(&selected_target_key(source_zone, *idx))
                 && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
         })
         .count()
@@ -162,15 +144,11 @@ pub fn resolve_select_choice(
     let source_zone_enum = selection_source_zone(source_zone);
     let selected_cid = {
         let source_cards = cards_for_source_zone(state, target_player, source_zone_enum);
-        let idx = if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
-            choice.saturating_sub(1) as usize
-        } else {
-            choice as usize
-        };
+        let idx = choice.max(0) as usize;
         source_cards.get(idx).copied().unwrap_or(-1)
     };
     if source_zone == ZONE_HAND as u8 || source_zone == ZONE_DISCARD as u8 {
-        ctx.selected_hand_idx = if choice > 0 { choice - 1 } else { choice } as i16;
+        ctx.selected_hand_idx = choice as i16;
         ctx.target_card_id = selected_cid;
     } else {
         ctx.target_slot = choice as i16;
@@ -196,7 +174,7 @@ pub fn resolve_select_choice(
         ctx.choice_index = -1;
         ctx.v_remaining = -1;
     }
-    let selected_key = selected_target_key(source_zone_enum, choice);
+    let selected_key = selected_target_key(source_zone_enum, choice as usize);
     if !ctx.selected_target_keys.contains(&selected_key) {
         ctx.selected_target_keys.push(selected_key);
     }
@@ -222,7 +200,7 @@ pub fn resolve_select_choice(
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {
         let current_selection_count = count_selected_targets(
-            cards_for_source_zone(state, target_player, source_zone_enum).as_slice(),
+            cards_for_source_zone(state, target_player, source_zone_enum),
             source_zone,
             &ctx.selected_target_keys,
         );
@@ -230,7 +208,7 @@ pub fn resolve_select_choice(
             state,
             db,
             ctx,
-            cards_for_source_zone(state, target_player, source_zone_enum).as_slice(),
+            cards_for_source_zone(state, target_player, source_zone_enum),
             source_zone,
             &ctx.selected_target_keys,
             filter_attr,

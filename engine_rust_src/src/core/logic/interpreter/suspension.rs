@@ -5,9 +5,198 @@
 
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::TARGET_SLOT_STAGE;
+use crate::core::logic::filter::structured_filter_from_attr;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
+use std::time::Instant;
+
+fn suspend_profile_enabled() -> bool {
+    std::env::var("BENCH_PROFILE_RESPONSE_ACTIONS")
+        .ok()
+        .map(|value| {
+            let value = value.trim();
+            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
+        })
+        .unwrap_or(false)
+}
+
+fn suspend_profile_threshold_us() -> u64 {
+    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(2000)
+}
+
+fn try_build_prefilled_actions(
+    state: &GameState,
+    db: &CardDatabase,
+    chooser_p_idx: usize,
+    effect_opcode: i32,
+    target_slot: i32,
+    choice_type: ChoiceType,
+    filter_attr: u64,
+    ctx: &AbilityContext,
+) -> Option<Vec<i32>> {
+    let optional = (filter_attr
+        & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL)
+        != 0
+        || choice_type == ChoiceType::Optional;
+
+    match choice_type {
+        ChoiceType::SelectHandDiscard
+            if effect_opcode == crate::core::generated_constants::O_MOVE_TO_DISCARD => {
+            let masked_filter = filter_attr
+                & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
+                & !0x3;
+            let mut actions = Vec::new();
+
+            for (idx, &cid) in state.players[chooser_p_idx].hand.iter().enumerate() {
+                let hand_slot = (chooser_p_idx as u8, 200 + idx as i16);
+                if state.card_matches_filter_with_ctx_at_slot(
+                    db,
+                    cid,
+                    masked_filter,
+                    hand_slot,
+                    ctx,
+                ) {
+                    actions.push((crate::core::logic::ACTION_BASE_HAND_SELECT + idx as i32) as i32);
+                }
+            }
+
+            if actions.is_empty() {
+                return None;
+            }
+            if optional {
+                actions.push(0);
+            }
+            Some(actions)
+        }
+        ChoiceType::SelectDiscard
+            if effect_opcode == crate::core::generated_constants::O_MOVE_TO_DISCARD => {
+            let decoded_slot = DecodedSlot::decode(target_slot);
+            if decoded_slot.source_zone != crate::core::enums::Zone::Stage {
+                return None;
+            }
+
+            let target_player = resolve_target_player(decoded_slot, filter_attr, chooser_p_idx);
+            let masked_filter = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+            let mut actions = Vec::new();
+
+            for (slot_idx, &cid) in state.players[target_player].stage.iter().enumerate() {
+                if cid >= 0
+                    && state.card_matches_filter_with_ctx(db, cid, masked_filter, ctx)
+                {
+                    actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as i32);
+                }
+            }
+
+            if actions.is_empty() {
+                return None;
+            }
+            if optional {
+                actions.push(0);
+            }
+            Some(actions)
+        }
+        ChoiceType::SelectMember if effect_opcode == crate::core::generated_constants::O_SELECT_MEMBER => {
+            if !ctx.selected_target_keys.is_empty() {
+                return None;
+            }
+
+            let requires_waiting_member = usize::try_from(ctx.ability_index)
+                .ok()
+                .and_then(|ability_idx| {
+                    db.get_member(ctx.source_card_id)
+                        .map(|card| &card.abilities)
+                        .or_else(|| db.get_live(ctx.source_card_id).map(|card| &card.abilities))
+                        .and_then(|abilities| abilities.get(ability_idx))
+                })
+                .and_then(|ability| {
+                    ability
+                        .get_frame(ctx.program_counter as usize + 1)
+                        .map(|frame| frame.opcode() == crate::core::generated_constants::O_ACTIVATE_MEMBER)
+                })
+                .unwrap_or(false);
+
+            let decoded_slot = DecodedSlot::decode(target_slot);
+            let target_player = resolve_target_player(decoded_slot, filter_attr, chooser_p_idx);
+            let filter_attr =
+                filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+            let filter_struct = (filter_attr != 0).then(|| structured_filter_from_attr(filter_attr));
+            let mut actions = Vec::new();
+
+            for slot_idx in 0..3 {
+                let cid = state.players[target_player].stage[slot_idx];
+                if cid < 0 {
+                    continue;
+                }
+                if requires_waiting_member && !state.players[target_player].is_tapped(slot_idx) {
+                    continue;
+                }
+
+                let matches = if let Some(filter_struct) = filter_struct.as_ref() {
+                    let effective_hearts = state
+                        .get_effective_hearts(target_player, slot_idx, db, 0)
+                        .to_array();
+                    filter_struct.matches(
+                        state,
+                        db,
+                        cid,
+                        Some((target_player as u8, slot_idx as i16)),
+                        state.players[target_player].is_tapped(slot_idx),
+                        Some(&effective_hearts),
+                        ctx,
+                    )
+                } else {
+                    true
+                };
+
+                if matches {
+                    actions.push((crate::core::logic::ACTION_BASE_STAGE_SLOTS + slot_idx as i32) as i32);
+                }
+            }
+
+            if actions.is_empty() {
+                return None;
+            }
+            if optional {
+                actions.push(0);
+            }
+            Some(actions)
+        }
+        ChoiceType::LookAndChoose | ChoiceType::SelectDiscardPlay if matches!(
+            effect_opcode,
+            crate::core::generated_constants::O_LOOK_AND_CHOOSE
+                | crate::core::generated_constants::O_PLAY_MEMBER_FROM_DISCARD
+                | crate::core::generated_constants::O_PLAY_LIVE_FROM_DISCARD
+                | crate::core::generated_constants::O_RECOVER_MEMBER
+                | crate::core::generated_constants::O_RECOVER_LIVE
+        ) => {
+            let filter_attr =
+                filter_attr & !crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL;
+            let mut actions = Vec::new();
+
+            for (idx, &cid) in state.players[chooser_p_idx].looked_cards.iter().enumerate() {
+                if cid < 0 {
+                    continue;
+                }
+                if filter_attr == 0 || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx) {
+                    actions.push((crate::core::logic::ACTION_BASE_CHOICE + idx as i32) as i32);
+                }
+            }
+
+            if actions.is_empty() {
+                return None;
+            }
+            if optional {
+                actions.push(0);
+            }
+            Some(actions)
+        }
+        _ => None,
+    }
+}
 
 pub fn get_choice_text(db: &CardDatabase, ctx: &AbilityContext) -> String {
     crate::core::logic::ActionFactory::get_choice_text(db, ctx)
@@ -89,6 +278,7 @@ pub fn suspend_interaction(
     options: Vec<serde_json::Value>,
     actions: Vec<i32>,
 ) -> bool {
+    let store_ui_metadata = !(state.ui.silent && state.ui.headless);
     let original_phase = if let Some(p) = ctx.original_phase {
         p
     } else if state.phase == Phase::Response {
@@ -111,7 +301,9 @@ pub fn suspend_interaction(
     p_ctx.original_phase = Some(original_phase);
     let chooser_p_idx = ctx.player_id;
     let mut final_actions = actions.clone();
-
+    let profile_enabled = suspend_profile_enabled();
+    let profile_start = profile_enabled.then(Instant::now);
+    let _filter_cache_scope = crate::core::logic::game_rules_ext::FilterMatchCacheScope::activate();
     state.interaction_stack.push(PendingInteraction {
         ctx: p_ctx,
         card_id: ctx.source_card_id,
@@ -125,11 +317,19 @@ pub fn suspend_interaction(
         target_slot,
         choice_type,
         filter_attr,
-        choice_text: choice_text.to_string(),
+        choice_text: if store_ui_metadata {
+            choice_text.to_string()
+        } else {
+            String::new()
+        },
         v_remaining,
         original_phase,
         original_current_player: original_cp,
-        options: options.clone(),
+        options: if store_ui_metadata {
+            options.clone()
+        } else {
+            Vec::new()
+        },
         actions: Vec::new(),
         execution_id,
         ..Default::default()
@@ -138,7 +338,28 @@ pub fn suspend_interaction(
         state.log("Rule 11.2.2: Pushing new interaction to stack.".to_string());
     }
 
+    let mut action_gen_us = 0u64;
+    let mut fast_prefill_us = 0u64;
     if final_actions.is_empty() {
+        let fast_prefill_start = profile_enabled.then(Instant::now);
+        if let Some(prefilled_actions) = try_build_prefilled_actions(
+            state,
+            db,
+            chooser_p_idx as usize,
+            effect_opcode,
+            target_slot,
+            choice_type,
+            filter_attr,
+            ctx,
+        ) {
+            final_actions = prefilled_actions;
+        }
+        fast_prefill_us = fast_prefill_start
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+    }
+    if final_actions.is_empty() {
+        let action_gen_start = profile_enabled.then(Instant::now);
         let saved_phase = state.phase;
         let saved_current_player = state.current_player;
         state.phase = Phase::Response;
@@ -146,6 +367,29 @@ pub fn suspend_interaction(
         state.generate_legal_actions(db, chooser_p_idx as usize, &mut final_actions);
         state.phase = saved_phase;
         state.current_player = saved_current_player;
+        action_gen_us = action_gen_start
+            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
+            .unwrap_or(0);
+    }
+    if let Some(profile_start) = profile_start {
+        let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
+        if total_us >= suspend_profile_threshold_us() || action_gen_us >= suspend_profile_threshold_us() {
+            let pending_desc = state
+                .interaction_stack
+                .last()
+                .map(logging::describe_pending_interaction)
+                .unwrap_or_else(|| "pending[none]".to_string());
+            println!(
+                "[PROFILE] SuspendInteraction total_us={} fast_prefill_us={} action_gen_us={} chooser={} prefilled_actions={} generated_actions={} pending={}",
+                total_us,
+                fast_prefill_us,
+                action_gen_us,
+                chooser_p_idx,
+                actions.len(),
+                final_actions.len(),
+                pending_desc
+            );
+        }
     }
     if state.debug.debug_mode {
         eprintln!(

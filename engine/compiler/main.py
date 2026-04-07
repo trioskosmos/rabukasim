@@ -31,12 +31,8 @@ from pydantic import TypeAdapter
 from ..models.ability import (
     Ability,
     AbilityCostType,
-    Condition,
     ConditionType,
-    Cost,
-    Effect,
     EffectType,
-    TargetType,
     TriggerType,
 )
 from ..models.card import EnergyCard, LiveCard, MemberCard
@@ -56,36 +52,6 @@ def _coerce_int(v: Any) -> int:
         return int(v or 0)
     except (ValueError, TypeError):
         return 0
-
-
-def _coerce_bool(v: Any) -> bool:
-    return bool(v)
-
-
-def _coerce_enum(enum_cls: Any, v: Any, default: Any) -> Any:
-    try:
-        return enum_cls(int(v or 0))
-    except (ValueError, TypeError, KeyError):
-        return default
-
-
-def _dict_or_empty(v: Any) -> dict:
-    return v if isinstance(v, dict) else {}
-
-
-def _compact_runtime_card_dump(card_dump: dict[str, Any]) -> dict[str, Any]:
-    """Convert card to the compact runtime export.
-
-    The runtime payload keeps authored `frame_program` plus semantic
-    `effects`/`conditions`/`costs` so Rust can execute frames directly while
-    still using derived semantic metadata.
-    """
-    if not isinstance(card_dump, dict):
-        return card_dump
-    
-    # Note: frame_program is now excluded via _build_export_excludes
-    # We keep effects, conditions, costs as the primary semantic data
-    return card_dump
 
 
 def _init_worker(sparse_mapping: dict, manual_translations: dict):
@@ -141,14 +107,10 @@ def _process_card_worker(args):
         if ctype == "メンバー":
             card = parse_member(packed_id, card_no, item)
             dumped = _MEMBER_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
-            if export_profile == "runtime":
-                dumped = _compact_runtime_card_dump(dumped)
             return ("member", str(packed_id), dumped, None)
         elif ctype == "ライブ":
             card = parse_live(packed_id, card_no, item)
             dumped = _LIVE_ADAPTER.dump_python(card, mode="json", exclude=exclude_card_fields)
-            if export_profile == "runtime":
-                dumped = _compact_runtime_card_dump(dumped)
             return ("live", str(packed_id), dumped, None)
         else:
             card = parse_energy(packed_id, card_no, item)
@@ -397,6 +359,46 @@ SYN_FLAG_LIFE_LEAD = 1 << 4
 
 COST_FLAG_DISCARD = 0x01
 
+_TRIGGER_SEMANTIC_FLAGS = {
+    TriggerType.ON_PLAY: 0x01,
+    TriggerType.ACTIVATED: 0x02,
+}
+
+_EFFECT_FLAG_MAP = {
+    EffectType.DRAW: FLAG_DRAW,
+    EffectType.SEARCH_DECK: FLAG_SEARCH,
+    EffectType.RECOVER_MEMBER: FLAG_RECOVER,
+    EffectType.RECOVER_LIVE: FLAG_RECOVER,
+    EffectType.ADD_BLADES: FLAG_BUFF,
+    EffectType.ADD_HEARTS: FLAG_BUFF,
+    EffectType.BUFF_POWER: FLAG_BUFF,
+    EffectType.ENERGY_CHARGE: FLAG_CHARGE,
+    EffectType.MOVE_MEMBER: FLAG_MOVE,
+    EffectType.SWAP_CARDS: FLAG_MOVE,
+    EffectType.TAP_MEMBER: FLAG_TAP,
+    EffectType.TAP_OPPONENT: FLAG_TAP,
+    EffectType.REDUCE_COST: FLAG_REDUCE,
+    EffectType.BOOST_SCORE: FLAG_BOOST,
+    EffectType.TRANSFORM_COLOR: FLAG_TRANSFORM,
+    EffectType.REDUCE_HEART_REQ: FLAG_WIN_COND,
+}
+
+_SYNERGY_FLAG_MAP = {
+    ConditionType.COUNT_GROUP: SYN_FLAG_GROUP,
+    ConditionType.SELF_IS_GROUP: SYN_FLAG_GROUP,
+    ConditionType.HAS_COLOR: SYN_FLAG_COLOR,
+    ConditionType.BATON: SYN_FLAG_BATON,
+    ConditionType.IS_CENTER: SYN_FLAG_CENTER,
+    ConditionType.LIFE_LEAD: SYN_FLAG_LIFE_LEAD,
+}
+
+_COST_FLAG_MAP = {
+    AbilityCostType.DISCARD_HAND: COST_FLAG_DISCARD,
+    AbilityCostType.DISCARD_MEMBER: COST_FLAG_DISCARD,
+    AbilityCostType.TAP_SELF: COST_FLAG_TAP,
+    AbilityCostType.TAP_MEMBER: COST_FLAG_TAP,
+}
+
 # Load manual translations
 MANUAL_TRANSLATIONS_EN_PATH = "data/manual_translations_en.json"
 _manual_translations_en = {}
@@ -537,8 +539,8 @@ class SparseSourceManager:
                             or entry.get("primary_text_en", "")
                             or ""
                         ),
-                        "is_once_per_turn": _coerce_bool(entry.get("is_once_per_turn", False)),
-                        "requires_selection": _coerce_bool(entry.get("requires_selection", False)),
+                        "is_once_per_turn": bool(entry.get("is_once_per_turn", False)),
+                        "requires_selection": bool(entry.get("requires_selection", False)),
                         "choice_flags": _coerce_int(entry.get("choice_flags", 0)),
                         "choice_count": _coerce_int(entry.get("choice_count", 0)),
                         "source_words": entry.get("source_words", []),
@@ -569,7 +571,6 @@ def _build_ability_from_sparse_entry(
     entry: dict[str, Any],
     raw_text: str,
     ability_index: int,
-    legacy_payload: dict[str, Any] | None = None,
 ) -> Ability:
     """
     Build an Ability object from a sparse authored entry.
@@ -577,14 +578,12 @@ def _build_ability_from_sparse_entry(
     FLOW:
     1. Extract trigger_id, frames, flags from sparse entry
     2. _select_ability_raw_text() - get appropriate raw text for this ability
-    3. _ability_from_dict() - create base Ability object
-    4. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
+    3. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
     
     Args:
         entry: Sparse index entry with trigger_id, frames, flags
     raw_text: Full ability text from cards.json
     ability_index: Index of this ability on the card (0, 1, 2...)
-    legacy_payload: Optional legacy data from cards.json["abilities"]
     
     Returns:
         Ability object ready for semantic population
@@ -592,26 +591,17 @@ def _build_ability_from_sparse_entry(
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
     frames = list(entry.get("frames", []) or [])
     ability_raw_text = str(entry.get("raw_text", "") or "").strip() or _select_ability_raw_text(raw_text, ability_index, entry)
-    payload = dict(legacy_payload or {})
-    payload["trigger"] = trigger_id
-    payload["is_once_per_turn"] = entry.get(
-        "is_once_per_turn", payload.get("is_once_per_turn", False)
+    return Ability(
+        raw_text=ability_raw_text,
+        trigger=TriggerType(trigger_id),
+        effects=[],
+        frame_program={"frames": frames},
+        costs=[],
+        conditions=[],
+        is_once_per_turn=bool(entry.get("is_once_per_turn", False)),
+        requires_selection=bool(entry.get("requires_selection", False)),
+        card_no="",
     )
-    payload["requires_selection"] = entry.get(
-        "requires_selection", payload.get("requires_selection", False)
-    )
-    payload["choice_flags"] = entry.get("choice_flags", payload.get("choice_flags", 0))
-    payload["choice_count"] = entry.get("choice_count", payload.get("choice_count", 0))
-    payload["modal_options"] = entry.get("modal_options", payload.get("modal_options", []))
-    payload["option_names"] = entry.get("option_names", payload.get("option_names", []))
-    payload["pseudocode"] = entry.get("pseudocode", payload.get("pseudocode", ""))
-    payload["filters"] = entry.get("filters", payload.get("filters", []))
-    ability = _ability_from_dict(payload)
-    ability.raw_text = ability_raw_text
-    # Store frame data so the semantic processor can rebuild effects/costs.
-    frame_data = {"frames": frames}
-    ability.frame_program = frame_data
-    return ability
 
 
 def _split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
@@ -656,97 +646,7 @@ def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str,
     return raw_text
 
 
-def _card_has_ability_source(data: dict[str, Any]) -> bool:
-    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text", "pseudocode")) or bool(
-        data.get("abilities")
-    ) or bool(
-        isinstance(data.get("frame_program"), dict)
-        and data["frame_program"].get("frames")
-    )
-
-def _ability_from_dict(payload: dict[str, Any]) -> Ability:
-    effects: list[Effect] = []
-    for eff in payload.get("effects", []) if isinstance(payload.get("effects"), list) else []:
-        if not isinstance(eff, dict):
-            continue
-        effect_type = _coerce_enum(EffectType, eff.get("effect_type", eff.get("type", 0)), EffectType.NONE)
-        target = _coerce_enum(TargetType, eff.get("target", eff.get("target_type", 0)), TargetType.SELF)
-
-        modal_options = []
-        for option in eff.get("modal_options", []) if isinstance(eff.get("modal_options"), list) else []:
-            option_items = []
-            for item in option if isinstance(option, list) else []:
-                if isinstance(item, dict):
-                    option_items.append(_effect_from_dict(item))
-            if option_items:
-                modal_options.append(option_items)
-
-        effects.append(
-            Effect(
-                effect_type=effect_type,
-                value=_coerce_int(eff.get("value", 0)),
-                target=target,
-                params=_dict_or_empty(eff.get("params", {})),
-                is_optional=_coerce_bool(eff.get("is_optional", eff.get("optional", False))),
-            )
-        )
-
-    conditions: list[Condition] = []
-    for cond in payload.get("conditions", []) if isinstance(payload.get("conditions"), list) else []:
-        if not isinstance(cond, dict):
-            continue
-        cond_type = _coerce_enum(ConditionType, cond.get("type", cond.get("condition_type", 0)), ConditionType.NONE)
-        conditions.append(
-            Condition(
-                type=cond_type,
-                params=_dict_or_empty(cond.get("params", {})),
-                is_negated=_coerce_bool(cond.get("is_negated", cond.get("negated", False))),
-                value=_coerce_int(cond.get("value", 0)),
-                attr=_coerce_int(cond.get("attr", 0)),  # Include attr field
-            )
-        )
-
-    costs: list[Cost] = []
-    for cost in payload.get("costs", []) if isinstance(payload.get("costs"), list) else []:
-        if not isinstance(cost, dict):
-            continue
-        cost_type = _coerce_enum(AbilityCostType, cost.get("type", cost.get("cost_type", 0)), AbilityCostType.NONE)
-        costs.append(
-            Cost(
-                type=cost_type,
-                value=_coerce_int(cost.get("value", 0)),
-                params=_dict_or_empty(cost.get("params", {})),
-                is_optional=_coerce_bool(cost.get("is_optional", cost.get("optional", False))),
-            )
-        )
-
-    ability = Ability(
-        raw_text=str(payload.get("raw_text", payload.get("original_text", ""))),
-        trigger=TriggerType(int(payload.get("trigger", 0))),
-        effects=effects,
-        conditions=conditions,
-        costs=costs,
-        is_once_per_turn=bool(payload.get("is_once_per_turn", False)),
-        requires_selection=bool(payload.get("requires_selection", False)),
-        card_no=str(payload.get("card_no", "")),
-    )
-    return ability
-
-
-def _effect_from_dict(payload: dict[str, Any]) -> Effect:
-    """Create an Effect from a dictionary - simplified version."""
-    effect_type = _coerce_enum(EffectType, payload.get("effect_type", payload.get("type", 0)), EffectType.NONE)
-    target = _coerce_enum(TargetType, payload.get("target", payload.get("target_type", 0)), TargetType.SELF)
-    return Effect(
-        effect_type=effect_type,
-        value=_coerce_int(payload.get("value", 0)),
-        target=target,
-        params=_dict_or_empty(payload.get("params", {})),
-        is_optional=_coerce_bool(payload.get("is_optional", payload.get("optional", False))),
-    )
-
-
-def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability]:
+def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
     """
     Resolve abilities for a card from the sparse YAML index.
     
@@ -757,24 +657,22 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
     4. Return list of abilities (empty list if card has no abilities)
     
     Args:
-        card_kind: "MEMBER" or "LIVE" (for error messages)
         card_no: Card number like "LL-PR-001-PR"
         data: Raw card dict from cards.json
     
     Returns:
         List of Ability objects (may be empty)
     """
-    if not _card_has_ability_source(data):
+    if not (
+        any(str(data.get(key, "")).strip() for key in ("ability", "original_text", "pseudocode"))
+        or bool(data.get("abilities"))
+        or bool(isinstance(data.get("frame_program"), dict) and data["frame_program"].get("frames"))
+    ):
         return []
 
     abilities: list[Ability] = []
     used_sparse = False
     raw_text = str(data.get("ability", data.get("original_text", "")))
-    legacy_abilities = (
-        list(data.get("abilities", []))
-        if isinstance(data.get("abilities"), list)
-        else []
-    )
 
     for ab_idx in range(10):
         entry = _sparse_manager.get_ability(card_no, ab_idx)
@@ -783,13 +681,11 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
                 break
             continue
 
-        legacy_payload = legacy_abilities[ab_idx] if ab_idx < len(legacy_abilities) and isinstance(legacy_abilities[ab_idx], dict) else None
         abilities.append(
             _build_ability_from_sparse_entry(
                 entry,
                 raw_text,
                 ab_idx,
-                legacy_payload,
             )
         )
         used_sparse = True
@@ -801,38 +697,14 @@ def _resolve_abilities(card_kind: str, card_no: str, data: dict) -> list[Ability
 
 def _compute_ability_flags(ab: Ability) -> dict[str, int]:
     """Calculate flags for a single ability based on its effects - simplified version."""
-    # Simple flag calculation based on effects and conditions
     ability_flags = 0
     choice_flags = int(getattr(ab, "choice_flags", 0) or 0)
     choice_count = int(getattr(ab, "choice_count", 0) or 0)
-    
-    # Map effect types to flags
+
     for eff in ab.effects:
         et = eff.effect_type
-        if et == EffectType.DRAW:
-            ability_flags |= FLAG_DRAW
-        elif et == EffectType.SEARCH_DECK:
-            ability_flags |= FLAG_SEARCH
-        elif et in (EffectType.RECOVER_MEMBER, EffectType.RECOVER_LIVE):
-            ability_flags |= FLAG_RECOVER
-        elif et in (EffectType.ADD_BLADES, EffectType.ADD_HEARTS, EffectType.BUFF_POWER):
-            ability_flags |= FLAG_BUFF
-        elif et == EffectType.ENERGY_CHARGE:
-            ability_flags |= FLAG_CHARGE
-        elif et in (EffectType.MOVE_MEMBER, EffectType.SWAP_CARDS):
-            ability_flags |= FLAG_MOVE
-        elif et in (EffectType.TAP_MEMBER, EffectType.TAP_OPPONENT):
-            ability_flags |= FLAG_TAP
-        elif et == EffectType.REDUCE_COST:
-            ability_flags |= FLAG_REDUCE
-        elif et == EffectType.BOOST_SCORE:
-            ability_flags |= FLAG_BOOST
-        elif et == EffectType.TRANSFORM_COLOR:
-            ability_flags |= FLAG_TRANSFORM
-        elif et == EffectType.REDUCE_HEART_REQ:
-            ability_flags |= FLAG_WIN_COND
-        
-        # Choice detection
+        ability_flags |= _EFFECT_FLAG_MAP.get(et, 0)
+
         if et == EffectType.LOOK_AND_CHOOSE:
             choice_flags |= CHOICE_FLAG_LOOK
             choice_count = max(choice_count, int(eff.params.get("choose_count", 0) or 0))
@@ -865,50 +737,40 @@ def compute_flags(card):
     cost_flags = 0
 
     for ab in card.abilities:
-        # Semantic Flags
-        if ab.trigger == TriggerType.ON_PLAY:
-            semantic_flags |= 0x01
-        if ab.trigger == TriggerType.ACTIVATED:
-            semantic_flags |= 0x02
-        if ab.trigger in [TriggerType.TURN_START, TriggerType.TURN_END]:
+        semantic_flags |= _TRIGGER_SEMANTIC_FLAGS.get(ab.trigger, 0)
+        if ab.trigger in (TriggerType.TURN_START, TriggerType.TURN_END):
             semantic_flags |= 0x04
         if ab.is_once_per_turn:
             semantic_flags |= 0x08
 
-        # Frame/opcode loop for Ability & Choice Flags
         res = _compute_ability_flags(ab)
         ability_flags |= res["ability_flags"]
         ab.choice_flags = res["choice_flags"]
         ab.choice_count = res["choice_count"]
-        
+
         if res.get("unflagged_logic", False):
             semantic_flags |= 0x10
 
-        # Synergy Flags
         for c in ab.conditions:
-            if c.type in [ConditionType.COUNT_GROUP, ConditionType.SELF_IS_GROUP]:
-                synergy_flags |= SYN_FLAG_GROUP
-            if c.type == ConditionType.HAS_COLOR:
-                synergy_flags |= SYN_FLAG_COLOR
-            if c.type == ConditionType.BATON:
-                synergy_flags |= SYN_FLAG_BATON
-            if c.type == ConditionType.IS_CENTER:
-                synergy_flags |= SYN_FLAG_CENTER
-            if c.type == ConditionType.LIFE_LEAD:
-                synergy_flags |= SYN_FLAG_LIFE_LEAD
+            synergy_flags |= _SYNERGY_FLAG_MAP.get(c.type, 0)
 
-        # Cost Flags
         for cost in ab.costs:
-            if cost.type in [AbilityCostType.DISCARD_HAND, AbilityCostType.DISCARD_MEMBER]:
-                cost_flags |= COST_FLAG_DISCARD
-            if cost.type in [AbilityCostType.TAP_SELF, AbilityCostType.TAP_MEMBER]:
-                cost_flags |= COST_FLAG_TAP
+            cost_flags |= _COST_FLAG_MAP.get(cost.type, 0)
 
     card.ability_flags = ability_flags
     card.semantic_flags = semantic_flags
     card.synergy_flags = synergy_flags
     if hasattr(card, "cost_flags"):
         card.cost_flags = cost_flags
+
+
+def _hydrate_card_abilities(card_no: str, data: dict) -> tuple[str, list[Ability], dict]:
+    translation_en = _manual_translations_en.get(card_no)
+    abilities = _resolve_abilities(card_no, data)
+    for ab in abilities:
+        ab.card_no = card_no
+    _populate_semantic_from_frames(abilities)
+    return translation_en, abilities, data.get("special_heart", {})
 
 
 def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
@@ -928,18 +790,7 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
     Returns:
         MemberCard ready for JSON export
     """
-    spec = data.get("special_heart", {})
-    translation_en = _manual_translations_en.get(card_no)
-
-    # --- Ability Source Resolution ---
-    # Resolve directly from authored frame data.
-    abilities = _resolve_abilities("MEMBER", card_no, data)
-
-    for ab in abilities:
-        ab.card_no = card_no
-
-    # Populate semantic effects/conditions/costs from frames for direct Rust consumption.
-    _populate_semantic_from_frames(abilities, card_no)
+    translation_en, abilities, spec = _hydrate_card_abilities(card_no, data)
 
     card = MemberCard(
         card_id=card_id,
@@ -968,25 +819,14 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
 
 
 def parse_live(card_id: int, card_no: str, data: dict) -> LiveCard:
-    spec = data.get("special_heart", {})
-    translation_en = _manual_translations_en.get(card_no)
-
-    # --- Ability Source Resolution ---
-    # Resolve directly from authored frame data.
-    abilities = _resolve_abilities("LIVE", card_no, data)
-
-    for ab in abilities:
-        ab.card_no = card_no
-
-    # Populate semantic effects/conditions/costs from frames for direct Rust consumption.
-    _populate_semantic_from_frames(abilities, card_no)
+    translation_en, abilities, spec = _hydrate_card_abilities(card_no, data)
 
     card = LiveCard(
         card_id=card_id,
         card_no=card_no,
         name=str(data.get("name", "Unknown")),
         score=int(data.get("score", 0)),
-        required_hearts=parse_live_reqs(data.get("need_heart", {})),
+        required_hearts=parse_hearts(data.get("need_heart", {})),
         abilities=abilities,
         groups=data.get("series", ""),
         units=data.get("unit", ""),
@@ -1055,13 +895,6 @@ def parse_blade_hearts(heart_dict: dict) -> np.ndarray:
             except ValueError:
                 pass
     return hearts
-
-
-def parse_live_reqs(req_dict: dict) -> np.ndarray:
-    # Use parse_hearts directly as it now handles 7 elements correctly
-    return parse_hearts(req_dict)
-
-
 def main():
     """Main entry point for the compiler."""
     parser = argparse.ArgumentParser(

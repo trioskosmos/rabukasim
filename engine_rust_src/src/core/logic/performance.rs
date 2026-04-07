@@ -1064,150 +1064,176 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let total_score =
         live_score + note_icons as u32 + state.players[p_idx].live_score_bonus.max(0) as u32;
 
-    // Build performance result data for UI.
+    // Build performance results.
     {
         let mut lives_list: Vec<Value> = Vec::new();
-        let mut temp_hearts_debug = total_hearts; // For simulating filling logic
-        for i in 0..3 {
-            let cid = live_ids_before_discard[i];
-            if cid >= 0 {
-                if let Some(l) = db.get_live(cid) {
-                    let (req_board, adjustments) = get_live_requirements(state, db, p_idx, l);
 
-                    // Calculate "filled" state for UI
-                    let mut filled = [0u8; 7];
-                    let mut sim_have = temp_hearts_debug;
-                    let mut wildcards = sim_have[6] as i32;
+        if state.ui.silent && db.is_vanilla {
+            for i in 0..3 {
+                let cid = live_ids_before_discard[i];
+                if cid < 0 {
+                    continue;
+                }
+                if let Some(live) = db.get_live(cid) {
+                    lives_list.push(json!({
+                        "id": cid,
+                        "card_id": cid,
+                        "slot_idx": i,
+                        "passed": passed_flags[i],
+                        "score": live.score,
+                    }));
+                }
+            }
 
-                    // 1. Specific requirements
-                    for ci in 0..6 {
-                        let need = req_board.get_color_count(ci);
-                        // Match with same color first
-                        let matching = sim_have[ci].min(need);
-                        filled[ci] = matching;
-                        sim_have[ci] -= matching;
+            state.ui.performance_results.insert(
+                p_idx as u8,
+                json!({
+                    "success": all_met,
+                    "total_hearts": total_hearts,
+                    "note_icons": note_icons,
+                    "yell_count": total_blades,
+                    "lives": lives_list,
+                    "total_score_bonus": state.players[p_idx].live_score_bonus,
+                    "total_score": total_score
+                }),
+            );
+        } else {
+            let mut temp_hearts_debug = total_hearts;
+            for i in 0..3 {
+                let cid = live_ids_before_discard[i];
+                if cid >= 0 {
+                    if let Some(l) = db.get_live(cid) {
+                        let (req_board, adjustments) = get_live_requirements(state, db, p_idx, l);
 
-                        // Then fill deficit with wildcards
-                        let deficit = need.saturating_sub(matching);
-                        if deficit > 0 {
-                            let take_wild = wildcards.min(deficit as i32);
-                            filled[ci] += take_wild as u8;
-                            wildcards -= take_wild;
+                        let mut filled = [0u8; 7];
+                        let mut sim_have = temp_hearts_debug;
+                        let mut wildcards = sim_have[6] as i32;
+
+                        for ci in 0..6 {
+                            let need = req_board.get_color_count(ci);
+                            let matching = sim_have[ci].min(need);
+                            filled[ci] = matching;
+                            sim_have[ci] -= matching;
+
+                            let deficit = need.saturating_sub(matching);
+                            if deficit > 0 {
+                                let take_wild = wildcards.min(deficit as i32);
+                                filled[ci] += take_wild as u8;
+                                wildcards -= take_wild;
+                            }
+                        }
+
+                        let any_need = req_board.get_color_count(6);
+                        let used_wild = wildcards.min(any_need as i32);
+                        filled[6] = used_wild as u8;
+                        let mut remaining_any = any_need.saturating_sub(used_wild as u8);
+
+                        if remaining_any > 0 {
+                            for ci in 0..6 {
+                                let take = (sim_have[ci] as i32).min(remaining_any as i32);
+                                filled[6] += take as u8;
+                                sim_have[ci] -= take as u8;
+                                remaining_any -= take as u8;
+                                if remaining_any == 0 {
+                                    break;
+                                }
+                            }
+                        }
+                        sim_have[6] = wildcards.max(0) as u8;
+
+                        lives_list.push(json!({
+                            "id": cid,
+                            "card_id": cid,
+                            "slot_idx": i,
+                            "name": l.name,
+                            "img": l.img_path,
+                            "passed": passed_flags[i],
+                            "score": l.score,
+                            "required": req_board.to_array(),
+                            "filled": filled,
+                            "spare": sim_have,
+                            "adjustments": adjustments,
+                        }));
+
+                        if sequential_passed[i] {
+                            consume_hearts_from_pool(&mut temp_hearts_debug, &req_board.to_array());
                         }
                     }
-                    // 2. Any requirement
-                    let any_need = req_board.get_color_count(6);
-                    // Use remaining wildcards first
-                    let used_wild = wildcards.min(any_need as i32);
-                    filled[6] = used_wild as u8;
-                    let mut remaining_any = any_need.saturating_sub(used_wild as u8);
+                }
+            }
 
-                    // Then use remaining colored hearts
-                    if remaining_any > 0 {
-                        for ci in 0..6 {
-                            let take = (sim_have[ci] as i32).min(remaining_any as i32);
-                            filled[6] += take as u8;
-                            sim_have[ci] -= take as u8;
-                            remaining_any -= take as u8;
-                            if remaining_any == 0 {
-                                break;
+            let mut score_breakdown: Vec<Value> = Vec::new();
+            if live_score > 0 {
+                score_breakdown.push(json!({
+                    "source": "Base Live Score",
+                    "value": live_score,
+                    "type": "base"
+                }));
+            }
+            for i in 0..3 {
+                if passed_flags[i] {
+                    if let Some(cid) = live_ids_before_discard.get(i).copied() {
+                        if cid >= 0 {
+                            if let Some(l) = db.get_live(cid) {
+                                score_breakdown.push(json!({
+                                    "source": format!("Live: {}", l.name),
+                                    "value": l.score,
+                                    "type": "base_live"
+                                }));
                             }
                         }
                     }
-                    sim_have[6] = wildcards.max(0) as u8; // Update sim_have wildcard count for spare calculation
-
-                    lives_list.push(json!({
-                        "id": cid,
-                        "name": l.name,
-                        "img": l.img_path,
-                        "passed": passed_flags[i],
-                        "score": l.score,
-                        "required": req_board.to_array(),
-                        "filled": filled,
-                        "spare": sim_have,
-                        "adjustments": adjustments,
-                    }));
-
-                    // If successfully passed in sequence, permanently consume for next live card UI check
-                    // We use sequential_passed because passed_flags might have been cleared by Rule 8.3.16
-                    if sequential_passed[i] {
-                        consume_hearts_from_pool(&mut temp_hearts_debug, &req_board.to_array());
-                    }
                 }
             }
-        }
-
-        let mut score_breakdown: Vec<Value> = Vec::new();
-        if live_score > 0 {
-            score_breakdown.push(json!({
-                "source": "Base Live Score",
-                "value": live_score,
-                "type": "base"
-            }));
-        }
-        for i in 0..3 {
-            if passed_flags[i] {
-                if let Some(cid) = live_ids_before_discard.get(i).copied() {
-                    if cid >= 0 {
-                        if let Some(l) = db.get_live(cid) {
-                            score_breakdown.push(json!({
-                                "source": format!("Live: {}", l.name),
-                                "value": l.score,
-                                "type": "base_live"
-                            }));
-                        }
-                    }
-                }
+            if note_icons > 0 {
+                score_breakdown.push(json!({
+                    "source": "Note Bonus",
+                    "value": note_icons,
+                    "type": "note"
+                }));
             }
-        }
-        if note_icons > 0 {
-            score_breakdown.push(json!({
-                "source": "Note Bonus",
-                "value": note_icons,
-                "type": "note"
-            }));
-        }
-        for &(cid, bonus) in &state.players[p_idx].live_score_bonus_logs {
-            let name = if cid >= 0 {
-                db.get_member(cid)
-                    .map(|m| m.name.clone())
-                    .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
-                    .unwrap_or_else(|| format!("Card {}", cid))
-            } else {
-                "Ability Effect".to_string()
-            };
-            score_breakdown.push(json!({
-                "source": name,
-                "source_id": cid,
-                "value": bonus,
-                "type": "triggered_ability"
-            }));
-        }
+            for &(cid, bonus) in &state.players[p_idx].live_score_bonus_logs {
+                let name = if cid >= 0 {
+                    db.get_member(cid)
+                        .map(|m| m.name.clone())
+                        .or_else(|| db.get_live(cid).map(|l| l.name.clone()))
+                        .unwrap_or_else(|| format!("Card {}", cid))
+                } else {
+                    "Ability Effect".to_string()
+                };
+                score_breakdown.push(json!({
+                    "source": name,
+                    "source_id": cid,
+                    "value": bonus,
+                    "type": "triggered_ability"
+                }));
+            }
 
-        let member_contributions: Vec<_> = member_summary.values().collect();
-        state.ui.performance_results.insert(
-            p_idx as u8,
-            json!({
-                "success": all_met,
-                "total_hearts": total_hearts,
-                "note_icons": note_icons,
-                "yell_count": total_blades,
-                "lives": lives_list,
-                "yell_cards": yell_cards_meta,
-                "member_contributions": member_contributions,
-                "breakdown": {
-                    "blades": blade_breakdown,
-                    "hearts": heart_breakdown,
-                    "allocations": allocations,
-                    "requirements": Vec::<serde_json::Value>::new(),
-                    "transforms": transform_logs,
-                    "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
-                    "scores": score_breakdown,
-                },
-                "total_score_bonus": state.players[p_idx].live_score_bonus,
-                "total_score": total_score
-            }),
-        );
+            let member_contributions: Vec<_> = member_summary.values().collect();
+            state.ui.performance_results.insert(
+                p_idx as u8,
+                json!({
+                    "success": all_met,
+                    "total_hearts": total_hearts,
+                    "note_icons": note_icons,
+                    "yell_count": total_blades,
+                    "lives": lives_list,
+                    "yell_cards": yell_cards_meta,
+                    "member_contributions": member_contributions,
+                    "breakdown": {
+                        "blades": blade_breakdown,
+                        "hearts": heart_breakdown,
+                        "allocations": allocations,
+                        "requirements": Vec::<serde_json::Value>::new(),
+                        "transforms": transform_logs,
+                        "score_bonus_logs": state.players[p_idx].live_score_bonus_logs,
+                        "scores": score_breakdown,
+                    },
+                    "total_score_bonus": state.players[p_idx].live_score_bonus,
+                    "total_score": total_score
+                }),
+            );
+        }
     }
 
     // state.yell_cards.clear(); // REMOVED: Now cleared in untap_all() for persistence

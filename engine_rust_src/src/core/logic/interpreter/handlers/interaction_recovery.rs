@@ -1,6 +1,9 @@
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
+use crate::core::logic::interpreter::handlers::interaction_zone::{
+    collect_zone_cards, normalized_source_zone, remove_card_from_zone,
+};
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -265,16 +268,6 @@ pub fn handle_recovery(
     HandlerResult::Continue
 }
 
-// === Helper functions (inlined from interaction_zone) ===
-
-fn normalized_source_zone(zone: crate::core::logic::Zone) -> Zone {
-    if zone == Zone::Default {
-        Zone::Discard
-    } else {
-        zone
-    }
-}
-
 fn normalize_same_name(name: &str) -> String {
     name.replace(' ', "")
 }
@@ -283,68 +276,6 @@ fn same_name_recovery_matches(candidate_name: &str, revealed_name: &str) -> bool
     let normalized_candidate = normalize_same_name(candidate_name);
     let normalized_revealed = normalize_same_name(revealed_name);
     normalized_candidate.contains(&normalized_revealed)
-}
-
-fn collect_zone_cards(state: &GameState, p_idx: usize, zone: Zone) -> Vec<i32> {
-    match zone {
-        Zone::Yell => state.players[p_idx].yell_cards.iter().copied().collect(),
-        Zone::Hand => state.players[p_idx].hand.iter().copied().collect(),
-        Zone::Deck => state.players[p_idx].deck.iter().copied().collect(),
-        _ => state.players[p_idx].discard.iter().copied().collect(),
-    }
-}
-
-fn remove_card_from_zone(
-    state: &mut GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-    p_idx: usize,
-    zone: Zone,
-    cid: i32,
-) -> bool {
-    match zone {
-        Zone::Yell => {
-            if let Some(pos) = state.players[p_idx].yell_cards.iter().position(|&x| x == cid) {
-                state.players[p_idx].yell_cards.remove(pos);
-                true
-            } else {
-                false
-            }
-        }
-        Zone::Hand => {
-            if let Some(pos) = state.players[p_idx].hand.iter().position(|&x| x == cid) {
-                state.players[p_idx].remove_hand_card(pos);
-                true
-            } else {
-                false
-            }
-        }
-        Zone::Deck => {
-            if let Some(pos) = state.players[p_idx].deck.iter().position(|&x| x == cid) {
-                state.players[p_idx].remove_deck_card(pos);
-                true
-            } else {
-                false
-            }
-        }
-        Zone::Stage => {
-            for i in 0..3 {
-                if state.players[p_idx].stage[i] == cid {
-                    state.handle_member_leaves_stage(p_idx, i, db, ctx);
-                    return true;
-                }
-            }
-            false
-        }
-        _ => {
-            if let Some(pos) = state.players[p_idx].discard.iter().position(|&x| x == cid) {
-                state.players[p_idx].remove_discard_card(pos);
-                true
-            } else {
-                false
-            }
-        }
-    }
 }
 
 fn type_matches(db: &CardDatabase, cid: i32, op: i32) -> bool {
