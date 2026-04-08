@@ -4,7 +4,6 @@ use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
 use crate::core::logic::interpreter::costs::check_frame_cost;
 use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState};
 use crate::core::types::{MAX_HAND_SIZE, STAGE_SLOT_COUNT};
-use std::collections::HashMap;
 use std::time::Instant;
 
 pub struct MainPhaseGenerator;
@@ -35,12 +34,24 @@ fn ability_needs_condition_check(ab: &crate::core::logic::Ability) -> bool {
 }
 
 fn ability_is_trivially_activatable(ab: &crate::core::logic::Ability) -> bool {
-    !ab.is_once_per_turn
+    ab.per_turn_limit() == 0
         && ab.costs.is_empty()
         && !ability_needs_condition_check(ab)
         && !ab.runtime_has_frame_cost_checks()
         && !ab.runtime_has_look_choose_checks()
         && !ability_requires_deck_top_window(ab)
+}
+
+fn projected_aura_mask(slot_idx: i16, secondary_slot_idx: i16) -> usize {
+    let mut mask = 0u8;
+
+    for candidate_slot in [slot_idx, secondary_slot_idx] {
+        if candidate_slot >= 0 && candidate_slot < STAGE_SLOT_COUNT as i16 {
+            mask |= 1u8 << (candidate_slot as u32);
+        }
+    }
+
+    mask as usize
 }
 
 fn projected_aura_for_slots<'a>(
@@ -49,9 +60,10 @@ fn projected_aura_for_slots<'a>(
     p_idx: usize,
     slot_idx: i16,
     secondary_slot_idx: i16,
-    cache: &'a mut HashMap<(i16, i16), crate::core::logic::rules::BoardAura>,
+    cache: &'a mut [Option<crate::core::logic::rules::BoardAura>; 8],
 ) -> &'a crate::core::logic::rules::BoardAura {
-    cache.entry((slot_idx, secondary_slot_idx)).or_insert_with(|| {
+    let cache_idx = projected_aura_mask(slot_idx, secondary_slot_idx);
+    cache[cache_idx].get_or_insert_with(|| {
         crate::core::logic::rules::calculate_projected_board_aura(
             state,
             p_idx,
@@ -155,6 +167,7 @@ impl ActionGenerator for MainPhaseGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
+        let _condition_cache_scope = crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         let _filter_cache_scope = crate::core::logic::game_rules_ext::FilterMatchCacheScope::activate();
         let profile_enabled = legal_profile_enabled();
         let profile_start = if profile_enabled {
@@ -172,24 +185,20 @@ impl ActionGenerator for MainPhaseGenerator {
         let prevent_activate = player.prevent_activate();
         let prevent_play_to_slot_mask = player.prevent_play_to_slot_mask();
         let prevent_baton_touch = player.prevent_baton_touch();
-        let mut projected_aura_cache: HashMap<(i16, i16), crate::core::logic::rules::BoardAura> =
-            HashMap::new();
         let board_has_dynamic_cost_modifiers = !player.board_aura.cost_modifiers.is_empty();
         let board_has_slot_cost_modifiers = player.board_aura.slot_cost_modifiers != [0; STAGE_SLOT_COUNT];
         let t_granted_cost_scan = profile_enabled.then(Instant::now);
-        let hand_has_granted_cost_modifiers: Vec<bool> = if player.granted_abilities.is_empty() {
-            vec![false; player.hand.len()]
+        let hand_has_granted_cost_modifiers: [bool; MAX_HAND_SIZE] = if player.granted_abilities.is_empty() {
+            [false; MAX_HAND_SIZE]
         } else {
-            player
-                .hand
-                .iter()
-                .map(|&cid| {
-                    player
-                        .granted_abilities
-                        .iter()
-                        .any(|(target_cid, _, _)| *target_cid == cid)
-                })
-                .collect()
+            let mut granted_costs = [false; MAX_HAND_SIZE];
+            for (hand_idx, &cid) in player.hand.iter().enumerate().take(MAX_HAND_SIZE) {
+                granted_costs[hand_idx] = player
+                    .granted_abilities
+                    .iter()
+                    .any(|(target_cid, _, _)| *target_cid == cid);
+            }
+            granted_costs
         };
         let granted_cost_modifier_us = t_granted_cost_scan
             .map(|t| t.elapsed().as_nanos() as u64 / 1000)
@@ -204,6 +213,8 @@ impl ActionGenerator for MainPhaseGenerator {
         let mut multi_slot_cost_deltas = [[0i32; STAGE_SLOT_COUNT]; STAGE_SLOT_COUNT];
         let mut multi_slot_requires_full_cost = [[true; STAGE_SLOT_COUNT]; STAGE_SLOT_COUNT];
         let t_slot_projection = profile_enabled.then(Instant::now);
+        let mut projected_aura_cache: [Option<crate::core::logic::rules::BoardAura>; 8] =
+            std::array::from_fn(|_| None);
 
         let can_skip_projected_aura = prevent_baton_touch == 0
             && !board_has_dynamic_cost_modifiers
@@ -515,7 +526,7 @@ impl ActionGenerator for MainPhaseGenerator {
                                             .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
                                     let cost_ok = ability_costs_payable(state, db, p_idx, &ctx, ab);
 
-                                    let once_per_turn_ok = !ab.is_once_per_turn
+                                    let once_per_turn_ok = ab.per_turn_limit() == 0
                                         || state.check_once_per_turn(
                                             p_idx,
                                             0,
@@ -527,6 +538,7 @@ impl ActionGenerator for MainPhaseGenerator {
                                             ),
                                             cid as u32,
                                             ab_idx,
+                                            ab.per_turn_limit(),
                                         );
 
                                     if cond_ok && cost_ok && once_per_turn_ok {
@@ -589,13 +601,14 @@ impl ActionGenerator for MainPhaseGenerator {
                                         })
                                         .all(|c| state.check_condition(db, p_idx, c, &ctx, 0));
                                 let cost_ok = ability_costs_payable(state, db, p_idx, &ctx, ab);
-                                let once_per_turn_ok = !ab.is_once_per_turn
+                                let once_per_turn_ok = ab.per_turn_limit() == 0
                                     || state.check_once_per_turn(
                                         p_idx,
                                         1,
                                         hand_idx as u8,
                                         cid as u32,
                                         ab_idx,
+                                        ab.per_turn_limit(),
                                     );
 
                                 if cond_ok && cost_ok && once_per_turn_ok {

@@ -343,12 +343,15 @@ impl Telemetry {
         entry.max_ns = entry.max_ns.max(elapsed_ns);
 
         let state_key = (op, snapshot.fingerprint());
-        let state_entry = self.state_costs.entry(state_key).or_insert_with(|| StateCostRecord {
-            count: 0,
-            total_ns: 0,
-            max_ns: 0,
-            sample: snapshot.clone(),
-        });
+        let state_entry = self
+            .state_costs
+            .entry(state_key)
+            .or_insert_with(|| StateCostRecord {
+                count: 0,
+                total_ns: 0,
+                max_ns: 0,
+                sample: snapshot.clone(),
+            });
         state_entry.count += 1;
         state_entry.total_ns += elapsed_ns;
         state_entry.max_ns = state_entry.max_ns.max(elapsed_ns);
@@ -394,22 +397,19 @@ impl Telemetry {
         }
     }
 
-    fn record_step_error(
-        &mut self,
-        phase: Phase,
-        action: i32,
-        message: &str,
-        snapshot: &Snapshot,
-    ) {
+    fn record_step_error(&mut self, phase: Phase, action: i32, message: &str, snapshot: &Snapshot) {
         self.step_errors += 1;
         let key = format!("{:?}|{}|{}", phase, action, message);
-        let entry = self.step_error_records.entry(key).or_insert_with(|| StepErrorRecord {
-            count: 0,
-            phase,
-            action,
-            message: message.to_string(),
-            snapshot: snapshot.clone(),
-        });
+        let entry = self
+            .step_error_records
+            .entry(key)
+            .or_insert_with(|| StepErrorRecord {
+                count: 0,
+                phase,
+                action,
+                message: message.to_string(),
+                snapshot: snapshot.clone(),
+            });
         entry.count += 1;
     }
 }
@@ -591,7 +591,12 @@ fn build_random_deck(db: &CardDatabase, rng: &mut SmallRng) -> (Vec<i32>, Vec<i3
     (members, lives, energy)
 }
 
-fn choose_random_action(state: &GameState, db: &CardDatabase, telemetry: &mut Telemetry, config: Config) -> Vec<i32> {
+fn choose_random_action(
+    state: &GameState,
+    db: &CardDatabase,
+    telemetry: &mut Telemetry,
+    config: Config,
+) -> Vec<i32> {
     let snapshot = Snapshot::capture(state);
     let t0 = Instant::now();
     let legal = state.get_legal_action_ids(db);
@@ -609,7 +614,12 @@ fn choose_random_action(state: &GameState, db: &CardDatabase, telemetry: &mut Te
     legal
 }
 
-fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry, config: Config) -> GameOutcome {
+fn run_one_game(
+    db: &CardDatabase,
+    rng: &mut SmallRng,
+    telemetry: &mut Telemetry,
+    config: Config,
+) -> GameOutcome {
     let game_start = Instant::now();
     let (p0_members, p0_lives, p0_energy) = build_random_deck(db, rng);
     let (p1_members, p1_lives, p1_energy) = build_random_deck(db, rng);
@@ -655,7 +665,9 @@ fn run_one_game(db: &CardDatabase, rng: &mut SmallRng, telemetry: &mut Telemetry
                 config.slow_us,
             );
         } else {
-            let action = *legal.choose(rng).expect("non-empty legal list should have a random action");
+            let action = *legal
+                .choose(rng)
+                .expect("non-empty legal list should have a random action");
             chosen_action = Some(action);
             let total_start = Instant::now();
             let internal_start = Instant::now();
@@ -788,12 +800,7 @@ fn print_op_stats(telemetry: &Telemetry) {
     println!("\n=== Timing By Operation ===");
     println!(
         "{:<22} {:>10} {:>12} {:>12} {:>12} {:>12}",
-        "Operation",
-        "Calls",
-        "Total_ms",
-        "Avg_us",
-        "StdDev_us",
-        "Max_us"
+        "Operation", "Calls", "Total_ms", "Avg_us", "StdDev_us", "Max_us"
     );
     println!("{}", "-".repeat(88));
 
@@ -955,10 +962,7 @@ fn print_stalls(telemetry: &Telemetry) {
             .unwrap_or_else(|| "<missing sample>".to_string());
         println!(
             "fingerprint={:016x} hits={} max_repeat={} {}",
-            fingerprint,
-            record.count,
-            record.max_repeat,
-            label,
+            fingerprint, record.count, record.max_repeat, label,
         );
     }
 }
@@ -1045,10 +1049,7 @@ fn main() {
     );
     println!(
         "per_game_ms median={} avg={} p95={} max={}",
-        median_game_ms,
-        avg_game_ms,
-        p95_game_ms,
-        max_game_ms,
+        median_game_ms, avg_game_ms, p95_game_ms, max_game_ms,
     );
     println!(
         "throughput {:.2} games/s {:.2} actions/s",
@@ -1056,7 +1057,10 @@ fn main() {
         total_steps as f64 / wall_start.elapsed().as_secs_f64().max(0.001),
     );
     println!("benign_pass_loops={}", telemetry.benign_pass_loops);
-    println!("real_no_progress_events={}", telemetry.real_no_progress_events);
+    println!(
+        "real_no_progress_events={}",
+        telemetry.real_no_progress_events
+    );
     println!("step_errors={}", telemetry.step_errors);
 
     print_top_games(&outcomes);

@@ -77,12 +77,23 @@ pub struct AbilityManifestAbility {
     pub choice_count: u8,
     pub requires_selection: bool,
     pub is_once_per_turn: bool,
+    pub turn_limit: u8,
     pub card_no: String,
     pub card_id: i32,
     pub name: String,
     pub db: String,
 }
 
+fn raw_text_turn_limit(text: &str) -> u8 {
+    let mut limit = 0u8;
+    if text.contains("{{turn1.png") || text.contains("ターン1回") {
+        limit = limit.max(1);
+    }
+    if text.contains("{{turn2.png") || text.contains("ターン2回") {
+        limit = limit.max(2);
+    }
+    limit
+}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct AbilityManifestCard {
     pub card_id: i32,
@@ -196,6 +207,11 @@ impl AbilityManifest {
                         .get("is_once_per_turn")
                         .and_then(Value::as_bool)
                         .unwrap_or(false),
+                    turn_limit: ability
+                        .get("turn_limit")
+                        .and_then(Value::as_u64)
+                        .map(|value| value as u8)
+                        .unwrap_or_else(|| raw_text_turn_limit(&source_text)),
                     card_no: card_no.clone(),
                     card_id,
                     name: name.clone(),
@@ -305,15 +321,6 @@ fn nested_flag_value(frame: &Value, key: &str, nested_key: &str) -> bool {
         != 0
 }
 
-fn semantic_text_contains(value: &Value, needle: &str) -> bool {
-    value
-        .get("decoded")
-        .or_else(|| semantic_value(value, "decoded"))
-        .and_then(Value::as_str)
-        .map(|decoded| decoded.to_ascii_lowercase().contains(needle))
-        .unwrap_or(false)
-}
-
 fn frame_attr(frame: &Value) -> Option<&Value> {
     frame_field(frame, "attr")
 }
@@ -328,9 +335,6 @@ fn is_optional_frame(frame: &Value) -> bool {
         || nested_flag_value(frame, "attr", "is_optional")
         || frame_bool_flag(frame, "is_optional")
         || frame_bool_flag(frame, "optional_effect")
-        || semantic_text_contains(frame, "optional")
-        || semantic_text_contains(frame, "may")
-        || semantic_text_contains(frame, "もよい")
 }
 
 fn is_negated_frame(frame: &Value) -> bool {
@@ -670,5 +674,24 @@ impl IfEmpty for String {
         } else {
             self
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn optionality_requires_structured_flags() {
+        let text_only = json!({
+            "semantic": { "decoded": "This effect may be ignored." }
+        });
+        assert!(!is_optional_frame(&text_only));
+
+        let structured = json!({
+            "attr": { "is_optional": 1 }
+        });
+        assert!(is_optional_frame(&structured));
     }
 }

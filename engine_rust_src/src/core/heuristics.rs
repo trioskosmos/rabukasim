@@ -85,6 +85,8 @@ pub struct OriginalHeuristic {
     pub config: HeuristicConfig,
 }
 
+pub type LegacyHeuristic = OriginalHeuristic;
+
 impl Default for OriginalHeuristic {
     fn default() -> Self {
         Self {

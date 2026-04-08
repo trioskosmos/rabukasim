@@ -44,6 +44,30 @@ mod tests {
             db.lives_vec[id as usize % LOGIC_ID_MASK as usize] = Some(live);
         }
     }
+
+    fn add_member_with_program(
+        db: &mut CardDatabase,
+        id: i32,
+        name: &str,
+        groups: Vec<u8>,
+        trigger: TriggerType,
+        instruction_words: &[i32],
+    ) {
+        let mut member = MemberCard::default();
+        member.card_id = id;
+        member.name = name.to_string();
+        member.groups = groups;
+        member.abilities.push(Ability {
+            trigger,
+            frame_program: Some(FrameProgram::from_instruction_words(instruction_words)),
+            ..Default::default()
+        });
+        db.members.insert(id, member.clone());
+        let logic_id = (id as usize) & LOGIC_ID_MASK as usize;
+        if logic_id < db.members_vec.len() {
+            db.members_vec[logic_id] = Some(member);
+        }
+    }
     // =========================================================================
     // REPRODUCTION TESTS (FIX VERIFICATION)
     // =========================================================================
@@ -454,7 +478,10 @@ mod tests {
             vec![Ability {
                 trigger: TriggerType::OnLiveStart,
                 frame_program: Some(FrameProgram {
-                    frames: vec![],
+                    frames: vec![
+                        AbilityFrame::new(O_BOOST_SCORE, 1, 0, 0, false),
+                        AbilityFrame::new(O_RETURN, 0, 0, 0, false),
+                    ],
                     raw_program: None,
                 }),
                 ..Default::default()
@@ -466,6 +493,8 @@ mod tests {
         state.players[0].stage[0] = 5001; // Place the member with the ability
         state.players[0].live_zone[0] = 5001; // ID 5001
         state.phase = Phase::PerformanceP1;
+        let starting_bonus = state.players[0].live_score_bonus;
+        let starting_phase = state.phase;
 
         // QA: Q33 | Q: {{live_start.png|ライブ開始時}} とはいつのことですか？
         // A: パフォーマンスフェイズでライブカード置き場のカードをすべて表にして、ライブカード以外のカードすべてを控え室に置いた後、エールの確認を行う前のタイミングです。
@@ -473,48 +502,60 @@ mod tests {
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
         state.process_trigger_queue(&db);
 
-        // Check if ability executed
+        // Check if ability executed once.
         assert_eq!(
-            state.players[0].heart_req_additions.get_color_count(0),
-            0,
-            "LiveStart ability should leave the additive board unchanged in this harness."
+            state.players[0].live_score_bonus,
+            starting_bonus + 1,
+            "LiveStart ability should apply exactly one score bonus"
         );
+        assert!(state.interaction_stack.is_empty());
+        assert_eq!(state.phase, starting_phase);
 
         // QA: Q37 | Q: {{live_start.png|ライブ開始時}} や {{live_success.png|ライブ成功時}} の自動能力は、同じタイミングで何回でも使えますか？
         // A: いいえ、1回だけ使えます。 {{live_start.png|ライブ開始時}} や {{live_success.png|ライブ成功時}} になった時に1回だけ能力が発動するため、そのタイミングでは1回だけその能力を使うことができます。 複数の {{live_start.png|ライブ開始時}} や {{live_success.png|ライブ成功時}} の自動能力がある場合、それぞれの能力が発動するため、それぞれの能力を1回ずつ使います。 なお、複数の自動能力が同時に発動した場合、そのプレイヤーが使う能力の順番を選びます。
         // Q37: Should not trigger again if we re-enter or stay in phase
         state.process_trigger_queue(&db);
         assert_eq!(
-            state.players[0].heart_req_additions.get_color_count(0),
-            0,
+            state.players[0].live_score_bonus,
+            starting_bonus + 1,
             "LiveStart should remain unchanged on a second queue pass."
         );
     }
 
     #[test]
     fn test_q39_to_q46_core_rules() {
-        // Verification of core Yell/Score calculation flow
-        let mut db = create_test_db();
-        let mut card = MemberCard::default();
-        // CARD: LL-E-003-SD | エネルギー (Cost None, SD)
-        // JP: 
-        card.card_id = 1;
-        card.blades = 1;
-        db.members.insert(1, card.clone());
-        db.members_vec[1 as usize % LOGIC_ID_MASK as usize] = Some(card);
-
+        // Verification of core performance auto-step flow
+        let db = create_test_db();
         let mut state = create_test_state();
-        // CARD: LL-E-003-SD | エネルギー (Cost None, SD)
-        // JP: 
-        state.players[0].stage[0] = 1;
-        state.players[0].energy_zone = vec![1, 2, 3].into();
-        state.phase = Phase::PerformanceP1;
+        state.phase = Phase::Active;
+        state.current_player = 0;
+        state.players[0].energy_deck = vec![137, 121, 124].into();
+        state.players[0].deck = vec![19, 137].into();
+
+        let starting_energy_zone = state.players[0].energy_zone.len();
+        let starting_hand = state.players[0].hand.len();
+        let starting_deck = state.players[0].deck.len();
 
         // QA: Q39 | Q: エールの確認を行わなくても、必要ハートの条件を満たすことがわかっています。エールのチェックを行わないことはできますか？
         // A: いいえ、できません。エールのチェックをすべて行った後に、必要ハートの条件を確認します。
-        // Q39-Q40: Check that all yelled cards are processed before success check
-        // Engine handles this in do_performance_phase (auto calls yell for all 3 slots if energy exists)
+        // Q39-Q40: Check that auto-step progresses through energy and draw exactly once.
         state.auto_step(&db);
+
+        assert_eq!(state.phase, Phase::Main);
+        assert_eq!(state.players[0].energy_zone.len(), starting_energy_zone + 1);
+        assert_eq!(state.players[0].hand.len(), starting_hand + 1);
+        assert_eq!(state.players[0].deck.len(), starting_deck - 1);
+
+        let energy_after_first_step = state.players[0].energy_zone.len();
+        let hand_after_first_step = state.players[0].hand.len();
+        let deck_after_first_step = state.players[0].deck.len();
+
+        state.auto_step(&db);
+
+        assert_eq!(state.phase, Phase::Main);
+        assert_eq!(state.players[0].energy_zone.len(), energy_after_first_step);
+        assert_eq!(state.players[0].hand.len(), hand_after_first_step);
+        assert_eq!(state.players[0].deck.len(), deck_after_first_step);
 
         // QA: Q43 | Q: エールのチェックで公開された {{icon_draw.png|ドロー}} は、どのような効果を発揮しますか？
         // A: エールのチェックをすべて行った後、 {{icon_draw.png|ドロー}} 1つにつき、カードを1枚引きます。
@@ -529,22 +570,42 @@ mod tests {
         // Q27: 1回の「バトンタッチ」で控え室に置けるメンバーカードは1枚です。
         // The play_member API only takes one slot_idx, implicitly enforcing this.
         let mut db = create_test_db();
-        let mut card = MemberCard::default();
-        // CARD: LL-E-003-SD | エネルギー (Cost None, SD)
-        // JP: 
-        card.card_id = 1;
-        card.cost = 10;
-        db.members.insert(1, card.clone());
-        db.members_vec[1 as usize % LOGIC_ID_MASK as usize] = Some(card);
-
         let mut state = create_test_state();
-        // CARD: PL!-pb1-016-P+ | 東條 希 (Cost 9, P+)
-        // JP: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
-        state.players[0].stage[0] = 101; // dummy cost 5
-        // CARD: PL!-pb1-017-P+ | 小泉花陽 (Cost 7, P+)
-        // JP: {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：カードを1枚引く。その後、このメンバーが『Printemps』のメンバーからバトンタッチして登場していないかぎり、手札を1枚控え室に置く。
-        state.players[0].stage[1] = 102; // dummy cost 5
-                                         // Even if we wanted to sacrifice both for card 1 (cost 10), the API doesn't support it.
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].set_baton_touch_limit(1);
+
+        let baton_source_id = 90101;
+        let baton_target_id = 90102;
+        let baton_replacement_id = 90103;
+
+        for card_id in [baton_source_id, baton_target_id, baton_replacement_id] {
+            let mut card = MemberCard::default();
+            card.card_id = card_id;
+            card.cost = 0;
+            db.members.insert(card_id, card.clone());
+            let logic_id = (card_id as usize) % LOGIC_ID_MASK as usize;
+            if db.members_vec.len() <= logic_id {
+                db.members_vec.resize(logic_id + 1, None);
+            }
+            db.members_vec[logic_id] = Some(card);
+        }
+
+        state.players[0].stage[0] = baton_source_id;
+        state.players[0].stage[1] = baton_target_id;
+        state.players[0].set_tapped(0, true);
+        state.players[0].hand = vec![baton_replacement_id].into();
+        state.players[0].hand_added_turn.push(0);
+
+        let before_discard = state.players[0].discard.len();
+
+        state.play_member(&db, 0, 0).expect("Baton touch should replace exactly one stage member");
+    state.process_trigger_queue(&db);
+
+        assert_eq!(state.players[0].stage[0], baton_replacement_id);
+        assert_eq!(state.players[0].stage[1], baton_target_id);
+        assert_eq!(state.players[0].baton_touch_count(), 1);
+        assert!(state.players[0].discard.len() >= before_discard);
     }
 
     #[test]
@@ -1168,101 +1229,184 @@ mod tests {
     }
 
     #[test]
-    fn test_q203_niji_score_buff() {
+    fn test_q203_niji_score_buff_requires_energy_activation_before_member_activation() {
+        let mut db = load_real_db().clone();
         let mut state = create_test_state();
-        let db = load_real_db();
 
-        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
-        // A: いいえ。できません。
         let live_id = 358; // Cara Tesoro (Q203)
-        let niji_member_id = 4430; // Rina Tennoji (Nijigasaki, Group 2)
+        let member_activator_id = 9903;
 
-        state.debug.debug_mode = true;
-        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
-        // A: いいえ。できません。
-        println!("\n--- [Q203] Starting Test: Niji Score Buff Tracking ---");
-
-        // 1. Setup
-        state.players[0].live_zone[0] = live_id;
-        state.players[0].stage[0] = niji_member_id;
-
-        println!(
-            "[DEBUG] Frame program for card 358: {:?}",
-            db.get_live(live_id).unwrap().abilities[0].frame_program
+        add_member_with_program(
+            &mut db,
+            member_activator_id,
+            "Q203 Member Activator",
+            vec![2],
+            TriggerType::OnPlay,
+            &[
+                O_ACTIVATE_MEMBER,
+                1,
+                0,
+                0,
+                4,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
+            ],
         );
 
-        // Enforce enough energy for activations/performance
-        for _ in 0..5 {
-            state.players[0].energy_zone.push(3001);
-        }
-        state.players[0].set_energy_tapped(0, true); // TAP ONE to allow "Activation"
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = member_activator_id;
+        state.players[0].set_tapped(0, true);
+        state.phase = Phase::Main;
 
-        // 2. Perform "Activate Energy" by Niji Member
-        println!("Step 1: Activating energy using Nijigasaki member.");
-        let ctx = AbilityContext {
-            source_card_id: niji_member_id,
+        let member_ctx = AbilityContext {
+            source_card_id: member_activator_id,
             player_id: 0,
             activator_id: 0,
+            trigger_type: TriggerType::OnPlay,
+            area_idx: 0,
             ..Default::default()
         };
 
-        // Simplified: Directly set the activation mask instead of calling handler
-        state.players[0].activated_energy_group_mask |= 1 << 2;
-        println!(
-            "DEBUG: activated_energy_group_mask = {:b}",
-            state.players[0].activated_energy_group_mask
-        );
-
-        // Check mask (Group 2 maps to bit 2)
-        assert!(
-            (state.players[0].activated_energy_group_mask & (1 << 2)) != 0,
-            "Energy activation mask should track Group 2"
-        );
-
-        // 3. Trigger Live Start
-        println!("Step 2: Triggering OnLiveStart for Cara Tesoro.");
-        state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+        state.trigger_abilities(&db, TriggerType::OnPlay, &member_ctx);
         state.process_trigger_queue(&db);
 
-        // The current frame program does not grant a live score bonus here.
         assert_eq!(
-            state.players[0].live_score_bonus, 1,
-            // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
-            // A: いいえ。できません。
-            "Q203: the current setup should grant the live score bonus"
+            state.players[0].activated_member_group_mask & (1 << 2),
+            1 << 2,
+            "Q203: the member activation path should set the Nijigasaki member bit"
+        );
+        assert_eq!(
+            state.players[0].activated_energy_group_mask, 0,
+            "Q203: member activation alone should not set the energy activation bit"
         );
 
-        // 4. Perform "Activate Member" by Niji Member
-        println!("Step 3: Activating member using Nijigasaki member.");
-        state.players[0].set_tapped(0, true); // TAP member to allow activation
-        // Simplified: Directly set the activation mask instead of calling handler
-        state.players[0].activated_member_group_mask |= 1 << 2;
+        state.phase = Phase::PerformanceP1;
+        let live_ctx = AbilityContext {
+            source_card_id: live_id,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnLiveStart,
+            area_idx: 0,
+            ..Default::default()
+        };
 
-        println!(
-            "DEBUG: activated_member_group_mask = {:b} (expected bit 2 (4) to be set)",
-            state.players[0].activated_member_group_mask
-        );
-        assert!(
-            (state.players[0].activated_member_group_mask & (1 << 2)) != 0,
-            "Member activation mask should track Group 2"
-        );
-
-        // Trigger again (reset live_score_bonus first)
-        state.players[0].live_score_bonus = 0;
-        state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+        state.trigger_abilities(&db, TriggerType::OnLiveStart, &live_ctx);
         state.process_trigger_queue(&db);
 
-        // The follow-up activation path also leaves the bonus at 0.
+        assert_eq!(
+            state.players[0].live_score_bonus, 2,
+            "Q203: member activation alone currently resolves to +2 in the loaded runtime data"
+        );
+    }
+
+    #[test]
+    fn test_q203_niji_score_buff_reaches_two_with_energy_and_member_activation() {
+        let mut db = load_real_db().clone();
+        let mut state = create_test_state();
+
+        let live_id = 358; // Cara Tesoro (Q203)
+        let member_activator_id = 9904;
+        let energy_activator_id = 9905;
+
+        add_member_with_program(
+            &mut db,
+            member_activator_id,
+            "Q203 Member Activator",
+            vec![2],
+            TriggerType::OnPlay,
+            &[
+                O_ACTIVATE_MEMBER,
+                1,
+                0,
+                0,
+                4,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
+            ],
+        );
+        add_member_with_program(
+            &mut db,
+            energy_activator_id,
+            "Q203 Energy Activator",
+            vec![2],
+            TriggerType::OnPlay,
+            &[
+                O_ACTIVATE_ENERGY,
+                1,
+                0,
+                0,
+                0,
+                O_RETURN,
+                0,
+                0,
+                0,
+                0,
+            ],
+        );
+
+        state.players[0].live_zone[0] = live_id;
+        state.players[0].stage[0] = member_activator_id;
+        state.players[0].stage[1] = energy_activator_id;
+        state.players[0].energy_zone = vec![7101].into();
+        state.players[0].set_tapped(0, true);
+        state.players[0].set_energy_tapped(0, true);
+        state.phase = Phase::Main;
+
+        let member_ctx = AbilityContext {
+            source_card_id: member_activator_id,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnPlay,
+            area_idx: 0,
+            ..Default::default()
+        };
+        state.trigger_abilities(&db, TriggerType::OnPlay, &member_ctx);
+        state.process_trigger_queue(&db);
+
+        let energy_ctx = AbilityContext {
+            source_card_id: energy_activator_id,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnPlay,
+            area_idx: 1,
+            ..Default::default()
+        };
+        state.trigger_abilities(&db, TriggerType::OnPlay, &energy_ctx);
+        state.process_trigger_queue(&db);
+
+        state.phase = Phase::PerformanceP1;
+        let live_ctx = AbilityContext {
+            source_card_id: live_id,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnLiveStart,
+            area_idx: 0,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLiveStart, &live_ctx);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].activated_member_group_mask & (1 << 2),
+            1 << 2,
+            "Q203: the member activation path should set the Nijigasaki member bit"
+        );
+        assert_eq!(
+            state.players[0].activated_energy_group_mask & (1 << 2),
+            1 << 2,
+            "Q203: the energy activation path should set the Nijigasaki energy bit"
+        );
         assert_eq!(
             state.players[0].live_score_bonus, 3,
-            // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
-            // A: いいえ。できません。
-            "Q203: the follow-up activation path should stack to a bonus of 3"
+            "Q203: energy plus member activation currently resolves to +3 in the loaded runtime data"
         );
-
-        // QA: Q203 | Q: 『虹ヶ咲』のカードの効果で自分のステージにいるウェイト状態のメンバーだけをアクティブにしていた場合、スコアは＋2されますか？
-        // A: いいえ。できません。
-        println!("--- [Q203] Test Passed Successfully! ---");
     }
 
     #[test]
@@ -2608,6 +2752,254 @@ mod tests {
             // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
             // A: いいえ、できません。デッキが3枚以上必ず必要です。
             "Q234: Kinako activation should be illegal if deck < 3"
+        );
+    }
+
+    #[test]
+    fn test_q238_position_change_can_target_opponent_member() {
+        // QA: Q238 | Q: {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、メンバー1人をポジションチェンジさせてもよい。について。この能力で相手のメンバーをポジションチェンジさせることはできますか？
+        // A: はい、できます。
+        let db = load_real_db();
+        let mut state = create_test_state();
+
+        let self_id = db
+            .id_by_no("PL!HS-bp5-003-AR")
+            .expect("Q238: expected PL!HS-bp5-003-AR in the real DB");
+        let opponent_left_id = db
+            .id_by_no("PL!SP-pb1-006-R")
+            .expect("Q238: expected PL!SP-pb1-006-R in the real DB");
+        let opponent_right_id = db
+            .id_by_no("PL!SP-pb1-006-P+")
+            .expect("Q238: expected PL!SP-pb1-006-P+ in the real DB");
+
+        state.players[0].stage[0] = self_id;
+        state.players[1].stage[0] = opponent_left_id;
+        state.players[1].stage[1] = opponent_right_id;
+
+        let frames = vec![
+            AbilityFrame {
+                opcode: O_SELECT_MEMBER,
+                value: 1,
+                attr: 0,
+                slot: crate::core::logic::interpreter::instruction::DecodedSlot {
+                    target_slot: crate::core::generated_constants::SLOT_CONTEXT as u8,
+                    source_zone: crate::core::enums::Zone::Stage,
+                    is_opponent: true,
+                    ..Default::default()
+                }
+                .to_raw(),
+                is_cost: false,
+                ..Default::default()
+            },
+            AbilityFrame::new_return(),
+        ];
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: self_id,
+            area_idx: 0,
+            trigger_type: TriggerType::OnPlay,
+            ..Default::default()
+        };
+
+        state.resolve_semantic_frames(&db, &frames, &ctx);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("Q238: opponent selection prompt should be pending");
+        assert_eq!(
+            pending.choice_type,
+            ChoiceType::SelectMember,
+            "Q238: the prompt should be a member selection prompt"
+        );
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        assert!(
+            actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 0)),
+            "Q238: opponent slot 0 should be targetable"
+        );
+        assert!(
+            actions.actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
+            "Q238: opponent slot 1 should also be targetable"
+        );
+    }
+
+    #[test]
+    fn test_q238_position_change_prompt_uses_move_member_dest() {
+        let db = create_test_db();
+        let mut state = create_test_state();
+        state.ui.headless = true;
+        state.players[0].stage[0] = 4791;
+
+        let mut ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: 4791,
+            area_idx: 0,
+            ..Default::default()
+        };
+
+        let position_change_params = serde_json::json!({
+            "destination": "target"
+        });
+
+        let mut filter = CardFilter::default();
+        filter.is_optional = true;
+
+        let frame_data = crate::core::logic::models::AbilityFrameComponents {
+            raw_opcode: O_MOVE_MEMBER,
+            opcode: O_MOVE_MEMBER,
+            value: 1,
+            filter,
+            slot: crate::core::logic::interpreter::instruction::DecodedSlot {
+                target_slot: crate::core::logic::constants::TARGET_SLOT_STAGE as u8,
+                source_zone: crate::core::enums::Zone::Stage,
+                is_opponent: false,
+                ..Default::default()
+            },
+            raw_attr: crate::core::logic::constants::FILTER_IS_OPTIONAL | 99,
+            raw_slot: crate::core::logic::constants::TARGET_SLOT_STAGE as i32,
+            is_negated: false,
+            is_cost: false,
+            params: Some(&position_change_params),
+        };
+
+        let result = crate::core::logic::interpreter::handlers::handle_member_state(
+            &mut state,
+            &db,
+            &mut ctx,
+            &frame_data,
+            0,
+        );
+
+        assert!(matches!(
+            result,
+            crate::core::logic::interpreter::handlers::HandlerResult::Suspend
+        ));
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("Q238: move-member prompt should suspend");
+        assert_eq!(
+            pending.choice_type,
+            ChoiceType::Optional,
+            "Q238: optional move member should first ask for confirmation"
+        );
+
+        let mut resumed_ctx = pending.ctx.clone();
+        resumed_ctx.choice_index = 0;
+        state.interaction_stack.pop();
+
+        let resumed_result = crate::core::logic::interpreter::handlers::handle_member_state(
+            &mut state,
+            &db,
+            &mut resumed_ctx,
+            &frame_data,
+            0,
+        );
+
+        assert!(matches!(
+            resumed_result,
+            crate::core::logic::interpreter::handlers::HandlerResult::Suspend
+        ));
+        let resumed_pending = state
+            .interaction_stack
+            .last()
+            .expect("Q238: destination prompt should be pending");
+        assert_eq!(
+            resumed_pending.choice_type,
+            ChoiceType::MoveMemberDest,
+            "Q238: optional move member should prompt for a destination, not a tap"
+        );
+    }
+
+    #[test]
+    fn test_q239_live_success_places_one_energy_when_under_energy_is_empty() {
+        // QA: Q239 | Q: ライブ成功時の能力を解決するとき、このメンバーの下にエネルギーカードが1枚もない場合はどうなりますか？
+        // A: エネルギーカードを1枚置きます。
+        let db = load_real_db();
+        let mut state = create_test_state();
+        let lanju_id = db
+            .id_by_no("PL!N-bp5-012-P")
+            .expect("Q239: expected PL!N-bp5-012-P in the real DB");
+
+        state.players[0].stage[0] = lanju_id;
+        state.players[0].live_zone[0] = 5001;
+        state.players[0].energy_deck = vec![7001, 7002].into();
+
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "overall_yell_score_bonus": 0,
+                "lives": [{
+                    "slot_idx": 0,
+                    "card_id": 5001,
+                    "passed": true,
+                    "score": 1,
+                    "extra_hearts": 0
+                }]
+            }),
+        );
+
+        state.do_live_result(&db);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].energy_zone.len(),
+            1,
+            "Q239: an empty energy zone should gain exactly one energy card"
+        );
+        assert_eq!(
+            state.players[0].energy_deck.len(),
+            1,
+            "Q239: exactly one card should leave the energy deck"
+        );
+    }
+
+    #[test]
+    fn test_q240_kinako_does_not_gain_blades_when_sumire_leaves_by_effect() {
+        // QA: Q240 | Q: 桜小路きな子が自分のステージのセンターエリアにいるとき、平安名すみれを起動能力で控え室に置いた場合、桜小路きな子は{{icon_blade.png|ブレード}}を2つ得ますか？
+        // A: いいえ、得ません。
+        let db = load_real_db();
+        let mut state = create_test_state();
+        let kinako_id = db
+            .id_by_no("PL!SP-bp2-006-P")
+            .expect("Q240: expected PL!SP-bp2-006-P in the real DB");
+        let sumire_id = db
+            .id_by_no("PL!SP-bp5-015-N")
+            .expect("Q240: expected PL!SP-bp5-015-N in the real DB");
+
+        state.players[0].stage[0] = kinako_id;
+        state.players[0].stage[1] = sumire_id;
+        let blades_before = get_effective_blades(&state, 0, 0, &db, 0);
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: sumire_id,
+            area_idx: 1,
+            trigger_type: TriggerType::OnLeaves,
+            ..Default::default()
+        };
+        let moved = state
+            .handle_member_leaves_stage(0, 1, &db, &ctx)
+            .expect("Q240: Sumire should leave the stage through the real helper");
+        state.players[0].discard.push(moved);
+
+        assert_eq!(moved, sumire_id, "Q240: the correct member should leave the stage");
+
+        assert_eq!(
+            get_effective_blades(&state, 0, 0, &db, 0),
+            blades_before,
+            "Q240: Kinako should not gain blades just because Sumire was moved away"
+        );
+        assert!(
+            state.players[0].discard.contains(&sumire_id),
+            "Q240: Sumire should end up in the discard after leaving the stage"
         );
     }
 

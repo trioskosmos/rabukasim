@@ -33,12 +33,12 @@
 use super::CardDatabase;
 pub use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
+use crate::core::models::Zone;
+use crate::core::models::{AbilityContext, GameState};
 use serde::{de, Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use crate::core::models::{AbilityContext, GameState};
-use crate::core::models::Zone;
 
 /// Conversion error types for better error handling
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,7 +58,9 @@ impl std::fmt::Display for ConversionError {
             ConversionError::InvalidCardType(t) => write!(f, "Invalid card type: {}", t),
             ConversionError::InvalidGroupId(g) => write!(f, "Invalid group ID: {}", g),
             ConversionError::InvalidUnitId(u) => write!(f, "Invalid unit ID: {}", u),
-            ConversionError::InvalidValueThreshold(v) => write!(f, "Invalid value threshold: {}", v),
+            ConversionError::InvalidValueThreshold(v) => {
+                write!(f, "Invalid value threshold: {}", v)
+            }
             ConversionError::InvalidZoneMask(z) => write!(f, "Invalid zone mask: {}", z),
         }
     }
@@ -238,7 +240,9 @@ impl CardFilter {
 
     pub fn from_json_value(value: &Value) -> Option<Self> {
         let candidate = if let Some(obj) = value.as_object() {
-            obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value)
+            obj.get("attr")
+                .or_else(|| obj.get("filter"))
+                .unwrap_or(value)
         } else {
             value
         };
@@ -250,7 +254,8 @@ impl CardFilter {
                 .map(|attr| Self::from_attr(attr as u64))
                 .or_else(|| number.as_u64().map(Self::from_attr)),
             Value::Object(object) => {
-                let mut filter = serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
+                let mut filter =
+                    serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
                 if filter != Self::default() {
                     filter.is_enabled = true;
                     Some(filter)
@@ -268,7 +273,11 @@ impl CardFilter {
         ctx: &AbilityContext,
     ) -> Vec<String> {
         let p_idx = ctx.player_id as usize;
-        let mut source_cards: Vec<i32> = state.players[p_idx].revealed_cards.iter().copied().collect();
+        let mut source_cards: Vec<i32> = state.players[p_idx]
+            .revealed_cards
+            .iter()
+            .copied()
+            .collect();
         if source_cards.is_empty() {
             source_cards = ctx
                 .selected_cards
@@ -317,31 +326,47 @@ impl CardFilter {
     /// Convert to raw 64-bit format with clear bit operations and validation
     pub fn to_attr_computed(&self) -> u64 {
         let mut attr: u64 = 0;
-        
+
         // Validate inputs before conversion
-        debug_assert!(self.target_player <= 3, "Invalid target player: {}", self.target_player);
+        debug_assert!(
+            self.target_player <= 3,
+            "Invalid target player: {}",
+            self.target_player
+        );
         debug_assert!(self.card_type <= 2, "Invalid card type: {}", self.card_type);
         debug_assert!(self.group_id <= 127, "Invalid group ID: {}", self.group_id);
         debug_assert!(self.unit_id <= 127, "Invalid unit ID: {}", self.unit_id);
-        debug_assert!(self.value_threshold <= 31, "Invalid value threshold: {}", self.value_threshold);
-        
+        debug_assert!(
+            self.value_threshold <= 31,
+            "Invalid value threshold: {}",
+            self.value_threshold
+        );
+
         // Set basic fields
         attr |= self.target_player as u64;
         attr |= (self.card_type as u64) << 2;
-        
+
         // Set group information
         let (group_enabled, group_id) = self.get_group_info();
         if group_enabled {
             attr |= 1 << 4; // Group Enable flag
             attr |= (group_id as u64) << 5;
         }
-        
+
         // Set boolean flags
-        if self.is_tapped { attr |= 1 << 12; }
-        if self.has_blade_heart { attr |= 1 << 13; }
-        if self.not_has_blade_heart { attr |= 1 << 14; }
-        if self.unique_names { attr |= 1 << 15; }
-        
+        if self.is_tapped {
+            attr |= 1 << 12;
+        }
+        if self.has_blade_heart {
+            attr |= 1 << 13;
+        }
+        if self.not_has_blade_heart {
+            attr |= 1 << 14;
+        }
+        if self.unique_names {
+            attr |= 1 << 15;
+        }
+
         // Set unit information
         if self.unit_enabled {
             attr |= 1 << 16;
@@ -350,27 +375,41 @@ impl CardFilter {
             // Legacy packed attrs reuse the unit-id bits for a third character id.
             attr |= (self.char_id_3 as u64) << 17;
         }
-        
+
         // Set value information
         if self.value_enabled {
             attr |= 1 << 24;
             attr |= (self.value_threshold as u64) << 25;
-            if self.is_le { attr |= 1 << 30; }
-            if self.is_cost_type { attr |= 1 << 31; }
+            if self.is_le {
+                attr |= 1 << 30;
+            }
+            if self.is_cost_type {
+                attr |= 1 << 31;
+            }
         }
-        
+
         // Set remaining fields
         attr |= (self.color_mask as u64) << 32;
         attr |= (self.char_id_1 as u64) << 39;
         attr |= (self.char_id_2 as u64) << 46;
         attr |= (self.zone_mask as u64) << 53;
         attr |= (self.special_id as u64) << 56;
-        if self.is_setsuna { attr |= 1 << 59; }
-        if self.compare_accumulated { attr |= 1 << 60; }
-        if self.is_optional { attr |= 1 << 61; }
-        if self.keyword_energy { attr |= 1 << 62; }
-        if self.keyword_member { attr |= 1 << 63; }
-        
+        if self.is_setsuna {
+            attr |= 1 << 59;
+        }
+        if self.compare_accumulated {
+            attr |= 1 << 60;
+        }
+        if self.is_optional {
+            attr |= 1 << 61;
+        }
+        if self.keyword_energy {
+            attr |= 1 << 62;
+        }
+        if self.keyword_member {
+            attr |= 1 << 63;
+        }
+
         attr
     }
 
@@ -454,13 +493,13 @@ impl CardFilter {
         if self.card_type > 0 && self.card_type <= 2 {
             let is_member = member.is_some();
             let is_live = live.is_some();
-            
+
             let matches = match self.card_type {
-                1 => is_member,  // Member
-                2 => is_live,    // Live
+                1 => is_member, // Member
+                2 => is_live,   // Live
                 _ => false,
             };
-            
+
             if !matches {
                 return false;
             }
@@ -469,9 +508,19 @@ impl CardFilter {
         // 2. Group Filter (bits 4-11)
         if self.group_enabled {
             let group_match = member
-                .map(|card| card.groups.iter().copied().any(|group| self.group_matches(group)))
+                .map(|card| {
+                    card.groups
+                        .iter()
+                        .copied()
+                        .any(|group| self.group_matches(group))
+                })
                 .or_else(|| {
-                    live.map(|card| card.groups.iter().copied().any(|group| self.group_matches(group)))
+                    live.map(|card| {
+                        card.groups
+                            .iter()
+                            .copied()
+                            .any(|group| self.group_matches(group))
+                    })
                 })
                 .unwrap_or(false);
 
@@ -523,8 +572,7 @@ impl CardFilter {
             }
         }
 
-        if self.zone_mask != 0
-            && !card_matches_zone_mask(state, cid, self.zone_mask, checked_slot)
+        if self.zone_mask != 0 && !card_matches_zone_mask(state, cid, self.zone_mask, checked_slot)
         {
             return false;
         }
@@ -532,7 +580,9 @@ impl CardFilter {
         // 4. Value Filter (bits 24-31)
         if self.value_enabled {
             let actual_val = if self.is_cost_type {
-                member.map(|card| card.cost.min(u8::MAX as u32) as u8).unwrap_or(0)
+                member
+                    .map(|card| card.cost.min(u8::MAX as u32) as u8)
+                    .unwrap_or(0)
             } else if let Some(h) = effective_hearts {
                 sum_matching_hearts(h, self.color_mask)
             } else if let Some(card) = member {
@@ -581,7 +631,10 @@ impl CardFilter {
             {
                 if self.color_mask != 0 {
                     let search_char = (self.color_mask & 0x7F) as char;
-                    if !name.to_uppercase().contains(search_char.to_ascii_uppercase()) {
+                    if !name
+                        .chars()
+                        .any(|candidate_char| candidate_char.eq_ignore_ascii_case(&search_char))
+                    {
                         return false;
                     }
                 } else {
@@ -604,7 +657,10 @@ impl CardFilter {
 
         if self.special_id == 3 {
             if let Some((checked_player, checked_slot)) = checked_slot {
-                if checked_player == ctx.player_id && ctx.area_idx >= 0 && checked_slot == ctx.area_idx {
+                if checked_player == ctx.player_id
+                    && ctx.area_idx >= 0
+                    && checked_slot == ctx.area_idx
+                {
                     return false;
                 }
             } else if cid == ctx.source_card_id {
@@ -704,8 +760,7 @@ impl CardFilter {
             not_has_blade_heart: ((attr >> A_STANDARD_NOT_HAS_BLADE_HEART_SHIFT)
                 & A_STANDARD_NOT_HAS_BLADE_HEART_MASK)
                 != 0,
-            unique_names: ((attr >> A_STANDARD_UNIQUE_NAMES_SHIFT)
-                & A_STANDARD_UNIQUE_NAMES_MASK)
+            unique_names: ((attr >> A_STANDARD_UNIQUE_NAMES_SHIFT) & A_STANDARD_UNIQUE_NAMES_MASK)
                 != 0,
             unit_enabled,
             unit_id: ((attr >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8,
@@ -715,11 +770,9 @@ impl CardFilter {
             value_threshold: ((attr >> A_STANDARD_VALUE_THRESHOLD_SHIFT)
                 & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
             is_le: ((attr >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
-            is_cost_type: ((attr >> A_STANDARD_IS_COST_TYPE_SHIFT)
-                & A_STANDARD_IS_COST_TYPE_MASK)
+            is_cost_type: ((attr >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK)
                 != 0,
-            color_mask: ((attr >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK)
-                as u8,
+            color_mask: ((attr >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK) as u8,
             char_id_1: ((attr >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
             char_id_2: ((attr >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
             char_id_3: if unit_enabled {
@@ -728,10 +781,8 @@ impl CardFilter {
                 ((attr >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8
             },
             zone_mask: ((attr >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
-            special_id: ((attr >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK)
-                as u8,
-            is_setsuna: ((attr >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK)
-                != 0,
+            special_id: ((attr >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK) as u8,
+            is_setsuna: ((attr >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK) != 0,
             compare_accumulated: ((attr >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT)
                 & A_STANDARD_COMPARE_ACCUMULATED_MASK)
                 != 0,
@@ -937,19 +988,19 @@ impl CardFilter {
 
     /// Create CardFilter from authored frame JSON without accepting raw packed attrs.
     pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
-        let mut filter = Self::from_json_value(payload)
-            .or_else(|| filter_from_params(Some(payload)))
-            .unwrap_or_default();
+        let parse_frame_filter = |value: &Value| {
+            CardFilter::from_json_value(value).or_else(|| {
+                filter_parts_from_params(Some(value)).map(|(filter, _)| filter)
+            })
+        };
 
-        if let Some(options_filter) = Self::from_json_value(options)
-            .or_else(|| filter_from_params(Some(options)))
-        {
+        let mut filter = parse_frame_filter(payload).unwrap_or_default();
+
+        if let Some(options_filter) = parse_frame_filter(options) {
             filter = filter.with_overlay(&options_filter);
         }
 
-        if let Some(params_filter) = Self::from_json_value(params)
-            .or_else(|| filter_from_params(Some(params)))
-        {
+        if let Some(params_filter) = parse_frame_filter(params) {
             filter = filter.with_overlay(&params_filter);
         }
 
@@ -1037,9 +1088,18 @@ fn card_matches_zone_mask(
         }
     }
 
-    let in_stage = state.players.iter().any(|player| player.get_slot_of(cid).is_some());
-    let in_hand = state.players.iter().any(|player| player.hand.iter().any(|&card_id| card_id == cid));
-    let in_discard = state.players.iter().any(|player| player.discard.iter().any(|&card_id| card_id == cid));
+    let in_stage = state
+        .players
+        .iter()
+        .any(|player| player.get_slot_of(cid).is_some());
+    let in_hand = state
+        .players
+        .iter()
+        .any(|player| player.hand.iter().any(|&card_id| card_id == cid));
+    let in_discard = state
+        .players
+        .iter()
+        .any(|player| player.discard.iter().any(|&card_id| card_id == cid));
 
     match zone_mask as i32 {
         ZONE_MASK_STAGE => in_stage,
@@ -1298,16 +1358,6 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
     }
 }
 
-pub fn filter_from_params(params: Option<&serde_json::Value>) -> Option<CardFilter> {
-    filter_parts_from_params(params).and_then(|(filter, _)| {
-        if filter == CardFilter::default() {
-            None
-        } else {
-            Some(filter)
-        }
-    })
-}
-
 pub fn filter_attr_from_params(params: Option<&serde_json::Value>) -> Option<u64> {
     filter_parts_from_params(params).map(|(filter, extras)| filter.to_attr() | extras)
 }
@@ -1324,30 +1374,28 @@ pub fn merge_filter_attr_with_params(base_attr: u64, params: Option<&serde_json:
 }
 
 pub(crate) fn parse_target_player_value(value: &Value) -> Option<u8> {
-    value
-        .as_u64()
-        .map(|value| (value & 0x3) as u8)
-        .or_else(|| {
-            value.as_str().map(|value| match value.to_ascii_uppercase().as_str() {
-                "SELF" | "ME" | "PLAYER" => 1,
-                "OPPONENT" => 2,
-                "BOTH" | "ALL" => 3,
-                _ => 0,
+    value.as_u64().map(|value| (value & 0x3) as u8).or_else(|| {
+        value
+            .as_str()
+            .and_then(|value| match value.to_ascii_uppercase().as_str() {
+                "SELF" | "ME" | "PLAYER" => Some(1),
+                "OPPONENT" => Some(2),
+                "BOTH" | "ALL" => Some(3),
+                _ => None,
             })
-        })
+    })
 }
 
 pub(crate) fn parse_card_type_value(value: &Value) -> Option<u8> {
-    value
-        .as_u64()
-        .map(|value| (value & 0x3) as u8)
-        .or_else(|| {
-            value.as_str().map(|value| match value.to_ascii_uppercase().as_str() {
-                "MEMBER" => 1,
-                "LIVE" => 2,
-                _ => 0,
+    value.as_u64().map(|value| (value & 0x3) as u8).or_else(|| {
+        value
+            .as_str()
+            .and_then(|value| match value.to_ascii_uppercase().as_str() {
+                "MEMBER" => Some(1),
+                "LIVE" => Some(2),
+                _ => None,
             })
-        })
+    })
 }
 
 pub(crate) fn parse_group_id_value(value: &Value) -> Option<u8> {
@@ -1418,27 +1466,24 @@ pub(crate) fn parse_color_mask_value(value: &Value) -> Option<u8> {
 }
 
 pub(crate) fn parse_special_id_value(value: &Value) -> Option<u8> {
-    value
-        .as_u64()
-        .map(|value| (value & 0x7) as u8)
-        .or_else(|| {
-            value.as_str().map(|value| {
-                match value
-                    .to_ascii_uppercase()
-                    .replace('_', " ")
-                    .replace('-', " ")
-                    .as_str()
-                {
-                    "BASE COST" => 5,
-                    "SELECTED DISCARD" => 6,
-                    "SELECTED DISCARD GROUP" | "SAME GROUP AS SELECTED DISCARD" => 7,
-                    "SAME NAME" | "SAMENAME" => 4,
-                    "NOT MY" | "NOTMY" => 2,
-                    "NOT SELF" | "NOTSELF" => 3,
-                    _ => 0,
-                }
-            })
+    value.as_u64().map(|value| (value & 0x7) as u8).or_else(|| {
+        value.as_str().and_then(|value| {
+            match value
+                .to_ascii_uppercase()
+                .replace('_', " ")
+                .replace('-', " ")
+                .as_str()
+            {
+                "BASE COST" => Some(5),
+                "SELECTED DISCARD" => Some(6),
+                "SELECTED DISCARD GROUP" | "SAME GROUP AS SELECTED DISCARD" => Some(7),
+                "SAME NAME" | "SAMENAME" => Some(4),
+                "NOT MY" | "NOTMY" => Some(2),
+                "NOT SELF" | "NOTSELF" => Some(3),
+                _ => None,
+            }
         })
+    })
 }
 
 pub(crate) fn parse_zone_mask_value(value: &Value) -> Option<u8> {
@@ -1601,7 +1646,8 @@ fn parse_semantic_heart_filter(part: &str) -> Option<(u8, u8)> {
         .strip_prefix("HEART_")
         .or_else(|| token.strip_prefix("COLOR_"))
         .unwrap_or(token);
-    let (color_part, threshold_part) = token.rsplit_once("_X").or_else(|| token.rsplit_once('X'))?;
+    let (color_part, threshold_part) =
+        token.rsplit_once("_X").or_else(|| token.rsplit_once('X'))?;
 
     let color_mask = match color_part {
         "SMILE" | "PINK" | "COLOR_0" | "00" | "0" => 1 << 0,
@@ -1635,16 +1681,18 @@ fn semantic_heart_mask_from_value(value: &Value) -> Option<u8> {
             _ => None,
         })
         .or_else(|| {
-            value.as_str().and_then(|value| match value.trim().to_ascii_uppercase().as_str() {
-                "PINK" | "SMILE" | "0" | "COLOR_0" => Some(1 << 0),
-                "RED" | "1" | "COLOR_1" => Some(1 << 1),
-                "YELLOW" | "2" | "COLOR_2" => Some(1 << 2),
-                "GREEN" | "PURE" | "3" | "COLOR_3" => Some(1 << 3),
-                "BLUE" | "COOL" | "4" | "COLOR_4" => Some(1 << 4),
-                "PURPLE" | "5" | "COLOR_5" => Some(1 << 5),
-                "ANY" | "ALL" | "6" | "COLOR_7" => Some(1 << 6),
-                _ => None,
-            })
+            value
+                .as_str()
+                .and_then(|value| match value.trim().to_ascii_uppercase().as_str() {
+                    "PINK" | "SMILE" | "0" | "COLOR_0" => Some(1 << 0),
+                    "RED" | "1" | "COLOR_1" => Some(1 << 1),
+                    "YELLOW" | "2" | "COLOR_2" => Some(1 << 2),
+                    "GREEN" | "PURE" | "3" | "COLOR_3" => Some(1 << 3),
+                    "BLUE" | "COOL" | "4" | "COLOR_4" => Some(1 << 4),
+                    "PURPLE" | "5" | "COLOR_5" => Some(1 << 5),
+                    "ANY" | "ALL" | "6" | "COLOR_7" => Some(1 << 6),
+                    _ => None,
+                })
         })
 }
 
@@ -1862,218 +1910,4 @@ fn params_object<'a>(params: Option<&'a Value>) -> Option<&'a serde_json::Map<St
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::core::logic::card_db::{LiveCard, MemberCard};
-    use serde_json::json;
-
-    fn test_db_with_runtime_cards() -> CardDatabase {
-        let mut db = CardDatabase::default();
-
-        let mut muse_member = MemberCard::default();
-        muse_member.card_id = 100;
-        muse_member.name = "Muse Setsuna".to_string();
-        muse_member.normalized_name = "MuseSetsuna".to_string();
-        muse_member.cost = 3;
-        muse_member.hearts = [1, 1, 0, 0, 0, 0, 0];
-        muse_member.groups = vec![0];
-        muse_member.units = vec![5];
-        muse_member.char_mask = (1u128 << 27) | (1u128 << 32);
-        muse_member.semantic_flags = 0x100;
-        db.members.insert(100, muse_member.clone());
-
-        let mut blade_live = LiveCard::default();
-        blade_live.card_id = 200;
-        blade_live.name = "Blade Live".to_string();
-        blade_live.normalized_name = "BladeLive".to_string();
-        blade_live.required_hearts = [2, 2, 0, 0, 0, 0, 0];
-        blade_live.blade_hearts = [0, 0, 0, 0, 1, 0, 0];
-        blade_live.groups = vec![1, 11];
-        blade_live.units = vec![5];
-        blade_live.char_mask = 1u128 << 32;
-        db.lives.insert(200, blade_live.clone());
-
-        db
-    }
-
-    #[test]
-    fn filter_parts_from_params_support_keyword_area_and_player_aliases() {
-        let params = json!({
-            "player": "OPPONENT",
-            "area": "ANY_STAGE",
-            "keyword": "COUNT_UNIQUE_NAMES"
-        });
-
-        let (filter, extras) = filter_parts_from_params(Some(&params)).unwrap();
-
-        assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
-        assert!(filter.unique_names);
-        assert_ne!(extras & FILTER_ANY_STAGE, 0);
-    }
-
-    #[test]
-    fn merge_filter_attr_with_params_preserves_passthrough_and_overlays_filter_bits() {
-        let base_attr = FILTER_REVEALED_CONTEXT | TARGET_PLAYER_SELF as u64;
-        let params = json!({
-            "player": "OPPONENT",
-            "keyword": "DID_ACTIVATE_MEMBER",
-            "group_id": 3
-        });
-
-        let merged = merge_filter_attr_with_params(base_attr, Some(&params));
-        let merged_filter = CardFilter::from_attr(merged);
-
-        assert_eq!(merged_filter.target_player, TARGET_PLAYER_OPPONENT as u8);
-        assert!(merged_filter.keyword_member);
-        assert!(merged_filter.group_enabled);
-        assert_eq!(merged_filter.group_id, 3);
-        assert_ne!(merged & FILTER_REVEALED_CONTEXT, 0);
-    }
-
-    #[test]
-    fn filter_parts_from_params_support_character_name_lists() {
-        let params = json!({
-            "filter": "Umi/Yoshiko/Rina"
-        });
-
-        let (filter, extras) = filter_parts_from_params(Some(&params)).unwrap();
-
-        assert_eq!(extras, 0);
-        assert_eq!(filter.char_id_1, 4);
-        assert_eq!(filter.char_id_2, 16);
-        assert_eq!(filter.char_id_3, 29);
-    }
-
-    #[test]
-    fn matches_enforces_group_char_zone_and_flag_filters() {
-        let db = test_db_with_runtime_cards();
-        let mut state = GameState::default();
-        state.players[0].stage[0] = 100;
-        state.players[0].discard.push(200);
-
-        let ctx = AbilityContext {
-            player_id: 0,
-            source_card_id: 999,
-            selected_cards: vec![200].into(),
-            ..AbilityContext::default()
-        };
-
-        let muse_group = CardFilter {
-            is_enabled: true,
-            group_enabled: true,
-            group_id: 0,
-            ..CardFilter::default()
-        };
-        assert!(muse_group.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-
-        let char_filter = CardFilter {
-            is_enabled: true,
-            char_id_1: 27,
-            ..CardFilter::default()
-        };
-        assert!(char_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-        assert!(!char_filter.matches(&state, &db, 200, None, false, None, &ctx));
-
-        let setsuna_filter = CardFilter {
-            is_enabled: true,
-            is_setsuna: true,
-            ..CardFilter::default()
-        };
-        assert!(setsuna_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-        assert!(!setsuna_filter.matches(&state, &db, 200, None, false, None, &ctx));
-
-        let discard_zone_filter = CardFilter {
-            is_enabled: true,
-            zone_mask: ZONE_DISCARD as u8,
-            ..CardFilter::default()
-        };
-        assert!(discard_zone_filter.matches(&state, &db, 200, None, false, None, &ctx));
-        assert!(!discard_zone_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-
-        let selected_discard_filter = CardFilter {
-            is_enabled: true,
-            special_id: 6,
-            ..CardFilter::default()
-        };
-        assert!(selected_discard_filter.matches(&state, &db, 200, None, false, None, &ctx));
-        assert!(!selected_discard_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-
-        let blade_filter = CardFilter {
-            is_enabled: true,
-            has_blade_heart: true,
-            ..CardFilter::default()
-        };
-        assert!(blade_filter.matches(&state, &db, 200, None, false, None, &ctx));
-        assert!(!blade_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-
-        let selected_group_filter = CardFilter {
-            is_enabled: true,
-            special_id: 7,
-            ..CardFilter::default()
-        };
-        assert!(selected_group_filter.matches(&state, &db, 200, None, false, None, &ctx));
-        assert!(!selected_group_filter.matches(&state, &db, 100, Some((0, 0)), false, None, &ctx));
-    }
-
-    #[test]
-    fn matches_uses_member_cost_even_with_effective_hearts() {
-        let mut db = CardDatabase::default();
-        let mut member = MemberCard::default();
-        member.card_id = 300;
-        member.cost = 4;
-        member.hearts = [0, 0, 0, 0, 0, 0, 0];
-        db.members.insert(300, member);
-
-        let state = GameState::default();
-        let ctx = AbilityContext::default();
-        let filter = CardFilter {
-            is_enabled: true,
-            value_enabled: true,
-            value_threshold: 4,
-            is_cost_type: true,
-            ..CardFilter::default()
-        };
-        let inflated_hearts = [9, 9, 9, 9, 9, 9, 9];
-
-        assert!(filter.matches(&state, &db, 300, None, false, Some(&inflated_hearts), &ctx));
-
-        let strict_filter = CardFilter {
-            value_threshold: 3,
-            is_le: true,
-            ..filter
-        };
-        assert!(!strict_filter.matches(&state, &db, 300, None, false, Some(&inflated_hearts), &ctx));
-    }
-
-    #[test]
-    fn filter_parts_from_params_parse_string_special_and_zone_masks() {
-        let params = json!({
-            "special_id": "Selected Discard Group",
-            "zone_mask": "DISCARD",
-            "player": "OPPONENT"
-        });
-
-        let (filter, _) = filter_parts_from_params(Some(&params)).unwrap();
-
-        assert_eq!(filter.special_id, 7);
-        assert_eq!(filter.zone_mask, ZONE_DISCARD as u8);
-        assert_eq!(filter.target_player, TARGET_PLAYER_OPPONENT as u8);
-    }
-
-    #[test]
-    fn filter_parts_from_params_parse_named_group_unit_character_and_color_values() {
-        let params = json!({
-            "group_id": "HASUNOSORA",
-            "unit_id": "DOLLCHESTRA",
-            "char_id_1": "RURINO",
-            "color_mask": "RED|BLUE|ANY"
-        });
-
-        let (filter, _) = filter_parts_from_params(Some(&params)).unwrap();
-
-        assert_eq!(filter.group_id, 4);
-        assert_eq!(filter.unit_id, 14);
-        assert_eq!(filter.char_id_1, 65);
-        assert_eq!(filter.color_mask, (1 << 1) | (1 << 4) | (1 << 6));
-    }
-}
+mod tests;

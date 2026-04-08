@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from types import SimpleNamespace
@@ -6,7 +7,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from backend.rust_serializer import RustGameStateSerializer
+from backend.rust_serializer import FILTER_IS_OPTIONAL, RustGameStateSerializer
 from engine.game.enums import Phase
 
 
@@ -127,3 +128,38 @@ def test_serialize_state_maps_sparse_choice_action_to_original_selection_index()
     assert action["selection_index"] == 2
     assert action["target_index"] == 2
     assert action["card_id"] == 303
+
+
+def test_resolve_choice_name_handles_select_mode_and_optional_look_and_choose():
+    serializer = RustGameStateSerializer({}, {}, {})
+
+    pending_choice = {
+        "options": [{}, {}],
+        "options_text": ["Pay 2 Energy", "Discard 2 Hand"],
+        "choice_type": "SELECT_MODE",
+        "type": "SELECT_MODE",
+    }
+
+    assert serializer._resolve_choice_name(1, pending_choice, lang="en") == "Discard 2 Hand"
+
+    state = make_state()
+    state.players = [make_player(0), make_player(1)]
+    state.get_player = lambda idx: state.players[idx]
+    state.get_legal_actions = lambda: [True]
+    state.pending_choices = [(
+        "select_from_list",
+        json.dumps(
+            {
+                "choice_type": "LOOK_AND_CHOOSE",
+                "source_card_id": 500,
+                "source_player": 0,
+                "target_player": 0,
+                "filter_attr": FILTER_IS_OPTIONAL,
+            }
+        ),
+    )]
+
+    serialized = serializer.serialize_state(state, viewer_idx=0, lang="en")
+
+    assert serialized["pending_choice"]["filter_attr"] == FILTER_IS_OPTIONAL
+    assert serialized["legal_actions"][0]["name"] == "No / Skip"

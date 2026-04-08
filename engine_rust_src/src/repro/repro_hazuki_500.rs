@@ -52,9 +52,19 @@ fn test_hazuki_500_looks_at_five_cards_after_optional_discard() {
         .last()
         .expect("Ren's optional discard prompt should be pending");
     assert_eq!(discard_prompt.choice_type, ChoiceType::SelectHandDiscard);
+    assert_ne!(
+        discard_prompt.filter_attr
+            & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL,
+        0,
+        "optional discard prompt should carry the optional bit"
+    );
 
     let mut actions = TestActionReceiver::default();
     state.generate_legal_actions(&db, p_idx, &mut actions);
+    assert!(
+        actions.actions.contains(&0),
+        "optional discard should expose a skip action"
+    );
     let discard_action = actions
         .actions
         .iter()

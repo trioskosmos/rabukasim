@@ -217,3 +217,34 @@ fn test_look_and_choose_remainder() {
     assert_eq!(state3.players[0].deck.len(), 1); // Only the unlooked card remains in deck
     assert_eq!(state3.players[0].discard.len(), 4); // All looked cards move to discard
 }
+
+/// Verifies that card 574 discards itself from the activated stage slot without asking for another slot.
+#[test]
+fn test_card_574_self_discards_without_stage_selection() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.phase = Phase::Main;
+    state.current_player = 0;
+    state.ui.silent = true;
+
+    state.players[0].stage = [574, 121, 124];
+
+    state
+        .activate_ability(&db, 0, 0)
+        .expect("card 574 should activate without requiring a stage-slot choice");
+
+    assert_eq!(state.players[0].stage[0], -1);
+    assert_eq!(state.players[0].stage[1], 121);
+    assert_eq!(state.players[0].stage[2], 124);
+    assert!(
+        state.players[0].discard.contains(&574),
+        "card 574 should move directly to discard"
+    );
+    if let Some(pending) = state.interaction_stack.last() {
+        assert_ne!(
+            pending.choice_type,
+            ChoiceType::SelectStage,
+            "card 574 should not prompt for a stage slot"
+        );
+    }
+}

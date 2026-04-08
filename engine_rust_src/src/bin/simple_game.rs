@@ -56,7 +56,6 @@ use engine_rust::core::logic::{CardDatabase, GameState, ACTION_BASE_PASS};
 use rand::prelude::StdRng;
 use rand::seq::IndexedRandom;
 use rand::SeedableRng;
-use smallvec::SmallVec;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct GameResult {
@@ -310,7 +309,7 @@ fn count_exact_main_sequences(state: &GameState, db: &CardDatabase, max_depth: u
             return 1;
         }
 
-        let mut actions = SmallVec::<[i32; 64]>::new();
+        let mut actions = Vec::<i32>::new();
         state.generate_legal_actions(db, state.current_player as usize, &mut actions);
 
         let mut total = 0usize;

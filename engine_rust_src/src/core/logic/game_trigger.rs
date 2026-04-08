@@ -167,7 +167,7 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= 1000 {
+            if total_us >= 1000 && !self.ui.silent && self.debug.debug_mode {
                 println!("[PROFILE] TriggerQueue total_us={}", total_us);
             }
         }
@@ -180,8 +180,17 @@ impl GameState {
         instance_key: u8,
         id: u32,
         ab_idx: usize,
+        limit: u8,
     ) -> bool {
-        super::interpreter::check_once_per_turn(self, p_idx, source_type, instance_key, id, ab_idx)
+        super::interpreter::check_once_per_turn(
+            self,
+            p_idx,
+            source_type,
+            instance_key,
+            id,
+            ab_idx,
+            limit,
+        )
     }
 
     pub fn consume_once_per_turn(
@@ -191,6 +200,7 @@ impl GameState {
         instance_key: u8,
         id: u32,
         ab_idx: usize,
+        limit: u8,
     ) {
         super::interpreter::consume_once_per_turn(
             self,
@@ -199,6 +209,7 @@ impl GameState {
             instance_key,
             id,
             ab_idx,
+            limit,
         );
     }
 
@@ -318,6 +329,7 @@ impl GameState {
         } else {
             None
         };
+        let _condition_cache_scope = crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         // Fast path: vanilla mode or empty board - skip trigger processing
         if db.is_vanilla {
             return;
@@ -563,7 +575,7 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= 1000 {
+            if total_us >= 1000 && !self.ui.silent && self.debug.debug_mode {
                 println!(
                     "[PROFILE] TriggerFanout total_us={} trigger={:?} player={} source_cid={} start_ab_idx={}",
                     total_us,

@@ -5,8 +5,8 @@ use rand::prelude::IndexedRandom;
 use rand::prelude::*;
 use rayon::prelude::*;
 use std::fs;
-use std::time::Instant;
 use std::thread;
+use std::time::Instant;
 
 const DEFAULT_GAMES: usize = 1000;
 const DEFAULT_WARMUP_GAMES: usize = 5;
@@ -185,7 +185,11 @@ fn run_headless_game(
 
     let elapsed_ns = start.elapsed().as_nanos() as u64;
     let reached_terminal = state.is_terminal();
-    let winner = if reached_terminal { state.get_winner() } else { -1 };
+    let winner = if reached_terminal {
+        state.get_winner()
+    } else {
+        -1
+    };
 
     if trace {
         println!(
@@ -221,7 +225,17 @@ fn main() {
     // Warmup
     println!("Warming up...");
     for _ in 0..config.warmup_games {
-        let _ = run_headless_game(&db, &deck, &lives, &energy, 42, 0, config.max_steps, false, 0);
+        let _ = run_headless_game(
+            &db,
+            &deck,
+            &lives,
+            &energy,
+            42,
+            0,
+            config.max_steps,
+            false,
+            0,
+        );
     }
 
     println!("Running {} games...", config.games);
@@ -258,8 +272,10 @@ fn main() {
 
         pool.install(|| {
             let start_index = if config.trace_first_game { 1 } else { 0 };
-            let mut parallel_results: Vec<(u32, u64, bool, i32)> =
-                (start_index..config.games).into_par_iter().map(run_game).collect();
+            let mut parallel_results: Vec<(u32, u64, bool, i32)> = (start_index..config.games)
+                .into_par_iter()
+                .map(run_game)
+                .collect();
             results.append(&mut parallel_results);
         });
     }
@@ -305,7 +321,10 @@ fn main() {
         "Terminal:     {} (P0={} P1={} Draw={})",
         terminal_games, p0_wins, p1_wins, draws
     );
-    println!("Capped:       {}", config.games.saturating_sub(terminal_games));
+    println!(
+        "Capped:       {}",
+        config.games.saturating_sub(terminal_games)
+    );
     println!("Total steps:  {}", total_steps);
     println!("Avg steps/game: {}", avg_steps_per_game);
     println!(

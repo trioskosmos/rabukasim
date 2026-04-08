@@ -77,57 +77,12 @@ fn main() {
 
     println!("Loading card database...");
     let runtime_json_path = find_runtime_db_json_path();
-    let bin_path = snapshot_cache_path(runtime_json_path.as_deref());
     let json_label = runtime_json_path
         .as_ref()
         .map(|path| path.display().to_string())
         .unwrap_or_else(|| "<embedded launcher asset>".to_string());
     println!("[DB] Canonical runtime JSON mirror: {}", json_label);
-    println!("[DB] Canonical binary snapshot cache: {}", bin_path.display());
-    let stale_binary = runtime_json_path
-        .as_deref()
-        .map(|json_path| binary_snapshot_is_stale(&bin_path, json_path))
-        .unwrap_or(true);
-
-    let mut need_new_snapshot = false;
-    let card_db = match std::fs::read(&bin_path) {
-        Ok(bin_data) => {
-            match CardDatabase::from_binary(&bin_data) {
-                Ok(db) => {
-                    if !stale_binary && snapshot_is_valid(&db) {
-                        println!("[DB] Loaded from binary snapshot (FAST)");
-                        db
-                    } else {
-                        if stale_binary {
-                            println!("[DB] Binary snapshot is older than JSON, reloading from JSON...");
-                        } else {
-                            println!("[DB] Binary snapshot is missing member/live cards, reloading from JSON...");
-                        }
-                        need_new_snapshot = true;
-                        load_db_from_json()
-                    }
-                },
-                Err(e) => {
-                    println!("[DB] Binary load failed, falling back to JSON: {}", e);
-                    need_new_snapshot = true;
-                    load_db_from_json()
-                }
-            }
-        },
-        Err(_) => {
-            println!("[DB] No binary snapshot found, loading from JSON...");
-            need_new_snapshot = true;
-            load_db_from_json()
-        }
-    };
-
-    // Regenerate binary snapshot when missing or stale
-    if need_new_snapshot {
-        if let Ok(bin_data) = card_db.to_binary() {
-            let _ = std::fs::write(&bin_path, bin_data);
-            println!("[DB] Produced binary snapshot for next run.");
-        }
-    }
+    let card_db = load_db_from_json();
 
     // Vanilla DB: same card data but with ability suppression enabled
     let mut vanilla_card_db = card_db.clone();

@@ -279,14 +279,14 @@ impl PyPlayerState {
 
     #[getter]
     fn baton_touch_count(&self) -> u32 {
-        self.inner.baton_touch_count as u32
+        self.inner.baton_touch_count() as u32
     }
     #[setter(baton_touch_count)]
     fn set_baton_touch_count_prop(&mut self, val: u32) {
         self.set_baton_touch_count(val);
     }
     fn set_baton_touch_count(&mut self, val: u32) {
-        self.inner.baton_touch_count = val as u8;
+        self.inner.set_baton_touch_count(val as u8);
     }
 
     #[getter]
@@ -654,7 +654,7 @@ impl PyGameState {
         })
     }
 
-    #[pyo3(signature = (room_id, mode, include_tensor=true, history=None))]
+    #[pyo3(signature = (room_id, mode, _include_tensor=true, history=None))]
     fn to_standardized_json(
         &self,
         room_id: String,
@@ -963,13 +963,13 @@ impl PyGameState {
         self.legal_action_buffer.clone()
     }
 
-    fn get_legal_action_ids(&mut self) -> Vec<i32> {
-        self.inner.get_legal_action_ids(&self.db.inner)
-    }
-
     fn get_legal_action_ids_for_player(&mut self, p_idx: usize) -> Vec<i32> {
         self.inner
             .get_legal_action_ids_for_player(&self.db.inner, p_idx)
+    }
+
+    fn get_legal_action_ids(&mut self) -> Vec<i32> {
+        self.inner.get_legal_action_ids(&self.db.inner)
     }
 
     fn get_observation(&self) -> Vec<f32> {
@@ -1081,8 +1081,10 @@ impl PyGameState {
             activator_id: player_id,
             area_idx: area_idx as i16,
             source_card_id,
+            ability_card_id: -1,
             target_card_id: -1,
             target_slot: target_slot as i16,
+            selected_hand_idx: -1,
             choice_index: choice_index as i16,
             selected_color: selected_color as i16,
             program_counter: 0,
@@ -1093,8 +1095,11 @@ impl PyGameState {
             original_current_player: None,
             repeat_count: 0,
             selected_cards: smallvec::SmallVec::new(),
+            selected_target_keys: smallvec::SmallVec::new(),
             v_accumulated: 0,
             auto_pick: false,
+            is_static_eval: false,
+            skip_initial_condition_precheck: false,
         };
         let frame_program: crate::core::logic::models::FrameProgram =
             serde_json::from_str(&frame_program_json)

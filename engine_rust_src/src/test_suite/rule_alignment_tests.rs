@@ -135,6 +135,11 @@ fn test_priority_p1_triggers_first() {
 
     // Run judgement
     state.do_live_result(&db);
+
+    assert_eq!(state.current_player, 1);
+    assert_eq!(state.players[0].live_score_bonus, 100);
+    assert_eq!(state.players[1].live_score_bonus, 200);
+    assert!(state.interaction_stack.is_empty());
 }
 
 #[test]
@@ -190,5 +195,6 @@ fn test_priority_p1_choice_selection() {
         state.current_player, 1,
         "P1 should be selected for choice first when P1 is first_player"
     );
+    assert_eq!(state.phase, Phase::LiveResult);
     assert!(state.live_result_selection_pending);
 }

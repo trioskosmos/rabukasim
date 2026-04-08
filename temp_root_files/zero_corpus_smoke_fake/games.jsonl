@@ -1,0 +1,1 @@
+{"game_idx": 0, "seed": 1, "deck_name": "stub-deck", "deck_source": "ai/decks", "turns": 1, "winner": 0, "capped": false, "positions": 1, "p0_score": 1, "p1_score": 0, "p0_lives": 3, "p1_lives": 0, "fast_terminal": true, "action_source": "random", "observation_mode": "raw"}

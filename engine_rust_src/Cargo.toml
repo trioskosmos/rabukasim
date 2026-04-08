@@ -13,7 +13,7 @@ unused_crate_dependencies = "allow"
 
 [lib]
 name = "engine_rust"
-crate-type = ["rlib"]
+crate-type = ["rlib", "cdylib"]
 doctest = false
 
 [dependencies]
@@ -102,8 +102,18 @@ path = "examples/bench_fast.rs"
 test = false
 
 [[bin]]
+name = "search_fastest_terminal_turn"
+path = "examples/search_fastest_terminal_turn.rs"
+test = false
+
+[[bin]]
 name = "simple_game"
 path = "src/bin/simple_game.rs"
+test = false
+
+[[bin]]
+name = "abilities_game"
+path = "src/bin/abilities_game.rs"
 test = false
 
 [[bin]]
@@ -184,3 +194,7 @@ lto = false
 codegen-units = 256
 panic = 'abort'
 opt-level = 3
+
+[[test]]
+name = "card574_self_discard"
+path = "tests/card574_self_discard.rs"

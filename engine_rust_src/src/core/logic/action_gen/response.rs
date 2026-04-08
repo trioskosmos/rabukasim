@@ -15,6 +15,7 @@ use crate::core::logic::{
 };
 use crate::core::models::CHOICE_DONE;
 use crate::core::types::{MAX_LIVE_SET_SIZE, STAGE_SLOT_COUNT};
+use smallvec::SmallVec;
 use std::time::Instant;
 
 pub struct ResponseGenerator;
@@ -187,25 +188,37 @@ fn live_recovery_branch_is_legal(
         return None;
     }
 
-    let discard_lives: Vec<&crate::core::logic::card_db::LiveCard> = state.players[p_idx]
+    let discard_lives: SmallVec<[&crate::core::logic::card_db::LiveCard; 8]> = state.players[p_idx]
         .discard
         .iter()
         .filter_map(|&cid| db.get_live(cid))
         .collect();
-    let distinct_names = discard_lives
-        .iter()
-        .map(|card| card.name.as_str())
-        .collect::<std::collections::HashSet<_>>()
-        .len();
-    let distinct_groups = discard_lives
-        .iter()
-        .flat_map(|card| card.groups.iter().copied())
-        .collect::<std::collections::HashSet<_>>()
-        .len();
+
+    let mut distinct_names: SmallVec<[&str; 8]> = SmallVec::new();
+    let mut distinct_groups: SmallVec<[u8; 8]> = SmallVec::new();
+
+    for card in discard_lives.iter() {
+        let name = card.name.as_str();
+        if !distinct_names.iter().any(|existing| *existing == name) {
+            distinct_names.push(name);
+            if distinct_names.len() >= 3 && option_idx == 0 {
+                return Some(true);
+            }
+        }
+
+        for group_id in card.groups.iter().copied() {
+            if !distinct_groups.contains(&group_id) {
+                distinct_groups.push(group_id);
+                if distinct_groups.len() >= 3 && option_idx == 1 {
+                    return Some(true);
+                }
+            }
+        }
+    }
 
     match option_idx {
-        0 if ability.raw_text.contains(distinct_name_branch) => Some(distinct_names >= 3),
-        1 if ability.raw_text.contains(distinct_group_branch) => Some(distinct_groups >= 3),
+        0 if ability.raw_text.contains(distinct_name_branch) => Some(distinct_names.len() >= 3),
+        1 if ability.raw_text.contains(distinct_group_branch) => Some(distinct_groups.len() >= 3),
         _ => None,
     }
 }
@@ -253,6 +266,7 @@ impl ActionGenerator for ResponseGenerator {
         state: &GameState,
         receiver: &mut R,
     ) {
+        let _condition_cache_scope = crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         let profile_enabled = response_profile_enabled();
         let profile_start = profile_enabled.then(Instant::now);
         let pending_desc = if profile_enabled {

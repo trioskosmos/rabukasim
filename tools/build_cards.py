@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -10,6 +11,16 @@ try:
 except ImportError as e:
     print(f"Error importing modules: {e}")
     sys.exit(1)
+
+
+def _compiled_output_is_populated(path: Path) -> bool:
+    if not path.exists():
+        return False
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    return any(payload.get(section) for section in ("member_db", "live_db", "energy_db"))
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,10 +46,19 @@ def print_status(message, is_done=False):
 def main():
     args = parse_args()
 
+    output_path = Path("data/cards_compiled.json")
+    # Source flow is intentional: authored frame data in ability_frame_source.json
+    # is compiled into cards_compiled.json, so this build step must regenerate the
+    # compiled JSON from the authored input rather than the other way around.
     result = prepare_runtime(
         quiet=args.quiet,
         sync_assets=args.sync_launcher_assets,
     )
+
+    if not _compiled_output_is_populated(output_path):
+        print(f"Error: {output_path} was not populated by the compiler.")
+        sys.exit(1)
+
     if args.quiet:
         return
 

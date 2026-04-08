@@ -95,7 +95,7 @@ fn activation_profile_enabled() -> bool {
 }
 
 fn ability_needs_activation_check(ab: &crate::core::logic::Ability) -> bool {
-    ab.is_once_per_turn
+    ab.per_turn_limit() > 0
         || !ab.costs.is_empty()
         || ab.runtime_has_activation_conditions()
         || ab.runtime_has_frame_cost_checks()
@@ -1754,8 +1754,15 @@ impl ResponseController for GameState {
                 return Err("Cannot activate abilities due to restriction".to_string());
             }
 
-            if ab.is_once_per_turn {
-                if !self.check_once_per_turn(p_idx, source_type, instance_key, cid as u32, ab_idx) {
+            if ab.per_turn_limit() > 0 {
+                if !self.check_once_per_turn(
+                    p_idx,
+                    source_type,
+                    instance_key,
+                    cid as u32,
+                    ab_idx,
+                    ab.per_turn_limit(),
+                ) {
                     return Err("Ability already used this turn".to_string());
                 }
             }
@@ -1791,8 +1798,15 @@ impl ResponseController for GameState {
                 return Err("Cannot afford costs".to_string());
             }
 
-            if ab.is_once_per_turn {
-                self.consume_once_per_turn(p_idx, source_type, instance_key, cid as u32, ab_idx);
+            if ab.per_turn_limit() > 0 {
+                self.consume_once_per_turn(
+                    p_idx,
+                    source_type,
+                    instance_key,
+                    cid as u32,
+                    ab_idx,
+                    ab.per_turn_limit(),
+                );
             }
 
             ctx.skip_initial_condition_precheck = true;

@@ -2,7 +2,8 @@
 
 from engine.game.desc_utils import get_action_desc
 from engine.game.state_utils import get_base_id
-from engine.models.ability import EFFECT_DESCRIPTIONS, EffectType, TriggerType
+from engine.models.ability import EffectType, TriggerType
+from engine.models.ability_descriptions import EFFECT_DESCRIPTIONS
 
 
 def format_effect_description(effect):
@@ -119,12 +120,12 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
             ability_lines = []
             for ab in m.abilities:
                 trigger_icon = {
-                    TriggerType.ACTIVATED: "縲占ｵｷ蜍輔・,
-                    TriggerType.ON_PLAY: "縲千匳蝣ｴ縲・,
-                    TriggerType.CONSTANT: "縲仙ｸｸ譎ゅ・,
-                    TriggerType.ON_LIVE_START: "縲舌Λ繧､繝夜幕蟋九・,
-                    TriggerType.ON_LIVE_SUCCESS: "縲舌Λ繧､繝匁・蜉滓凾縲・,
-                }.get(ab.trigger, "縲占・蜍輔・)
+                    TriggerType.ACTIVATED: "ACT",
+                    TriggerType.ON_PLAY: "PLAY",
+                    TriggerType.CONSTANT: "CONST",
+                    TriggerType.ON_LIVE_START: "LIVE_START",
+                    TriggerType.ON_LIVE_SUCCESS: "LIVE_SUCCESS",
+                }.get(ab.trigger, "ABILITY")
                 ability_lines.append(f"{trigger_icon} {ab.raw_text}")
             ability_text = "\n".join(ability_lines)
 
@@ -150,7 +151,7 @@ def serialize_card(cid, member_db, live_db, energy_db, is_viewable=True, peek=Fa
         if not ability_text and hasattr(l, "abilities") and l.abilities:
             ability_lines = []
             for ab in l.abilities:
-                trigger_icon = {TriggerType.ON_LIVE_START: "縲舌Λ繧､繝夜幕蟋九・}.get(ab.trigger, "縲占・蜍輔・)
+                trigger_icon = {TriggerType.ON_LIVE_START: "LIVE_START"}.get(ab.trigger, "ABILITY")
                 ability_lines.append(f"{trigger_icon} {ab.raw_text}")
             ability_text = "\n".join(ability_lines)
 

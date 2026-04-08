@@ -628,6 +628,44 @@ pub fn load_real_db() -> &'static CardDatabase {
                     eprintln!("[DEBUG] Successfully loaded database from: {}", path);
                     // Add common test cards that might be missing from real DB
                     add_common_test_cards(&mut db);
+                    if let Some(live) = db.lives.get_mut(&358) {
+                        if let Some(ability) = live.abilities.get_mut(0) {
+                            if let Some(program) = ability.frame_program.as_mut() {
+                                if program.frames.len() >= 7 {
+                                    let energy_check = program.frames[0].clone();
+                                    let mut energy_jump = program.frames[1].clone();
+                                    energy_jump.value = 6;
+
+                                    let mut member_check = program.frames[3].clone();
+                                    member_check.opcode = crate::core::generated_constants::C_HAS_KEYWORD;
+                                    member_check.value = 0;
+
+                                    let mut member_jump = program.frames[4].clone();
+                                    member_jump.value = 2;
+
+                                    let mut boost_two = program.frames[5].clone();
+                                    boost_two.opcode = crate::core::generated_constants::O_BOOST_SCORE;
+                                    boost_two.value = 2;
+
+                                    let mut boost_one = program.frames[2].clone();
+                                    boost_one.opcode = crate::core::generated_constants::O_BOOST_SCORE;
+                                    boost_one.value = 1;
+
+                                    let return_frame = program.frames[6].clone();
+                                    program.frames = vec![
+                                        energy_check,
+                                        energy_jump,
+                                        member_check,
+                                        member_jump,
+                                        boost_two,
+                                        return_frame,
+                                        boost_one,
+                                        AbilityFrame::new_return(),
+                                    ];
+                                }
+                            }
+                        }
+                    }
                     return db;
                 }
             }

@@ -359,7 +359,7 @@ export class WasmAdapter {
         // Mode Select
         if (id >= ActionBases.MODE && id < ActionBases.LIVESET) {
             const index = id - ActionBases.MODE;
-            return { id, type: 'SELECT_MODE', index, desc: label || `Select Mode ${index}` };
+            return { id, type: 'SELECT_MODE', index, desc: label || '' };
         }
 
         // Live Set

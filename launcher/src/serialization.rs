@@ -141,9 +141,16 @@ pub fn get_filter_description(filter_attr: u64, lang: &str) -> String {
          let id3 = ((filter_attr >> 24) & 0x7F) as u8;
 
          let mut names = Vec::new();
-         if id1 > 0 { names.push(card_db::get_character_name(id1)); }
-         if id2 > 0 { names.push(card_db::get_character_name(id2)); }
-         if id3 > 0 { names.push(card_db::get_character_name(id3)); }
+         for id in [id1, id2, id3] {
+             if id == 0 {
+                 continue;
+             }
+             if let Some(jp_name) = card_db::CHARACTER_NAMES.get(id as usize) {
+                 if !jp_name.is_empty() {
+                     names.push(translate_card_name(jp_name, lang));
+                 }
+             }
+         }
 
          if !names.is_empty() {
              let name_str = names.join("・"); // Use dot for Japanese names? Or slash? Slash is fine.
@@ -504,9 +511,13 @@ pub fn get_action_desc_rich(
                     let mut name = if lang == "jp" { "【スキップ】パス".into() } else { "Pass / Confirm".into() };
                     let mut desc = if lang == "jp" { "何もしない。".into() } else { "Skip or confirm current action.".into() };
 
-                     if gs.phase == Phase::Response {
+                    if gs.phase == Phase::Response {
                         let is_tap = opcode == engine_rust::core::generated_constants::O_TAP_MEMBER || opcode == engine_rust::core::generated_constants::O_TAP_OPPONENT;
-                        if opcode == engine_rust::core::generated_constants::O_PAY_ENERGY || opcode == engine_rust::core::generated_constants::O_MOVE_TO_DISCARD || is_tap {
+                        let is_optional_look_and_choose = opcode == engine_rust::core::generated_constants::O_LOOK_AND_CHOOSE
+                            && pending
+                                .map(|p| (p.filter_attr & engine_rust::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0)
+                                .unwrap_or(false);
+                        if opcode == engine_rust::core::generated_constants::O_PAY_ENERGY || opcode == engine_rust::core::generated_constants::O_MOVE_TO_DISCARD || is_tap || is_optional_look_and_choose {
                              name = if lang == "jp" { "いいえ".into() } else { "No / Skip".into() };
                              desc = if lang == "jp" { "能力やコストの支払いをキャンセルします。".into() } else { "Decline the effect or cost.".into() };
                         }
@@ -711,13 +722,17 @@ pub fn get_action_desc_rich(
              let mut text = String::new();
              let type_str = "CHOICE".to_string();
 
-             let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
-             let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
-             let ab_idx = pending.map(|p| p.ability_index).unwrap_or(-1);
-             let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
-             let is_stage_choice = choice_type == "SELECT_STAGE"
-                 || choice_type == "SELECT_STAGE_EMPTY"
-                 || choice_type == "SELECT_STAGE_EMPTY_BATON";
+            let opcode = pending.map(|p| p.effect_opcode).unwrap_or(0);
+            let card_id = pending.map(|p| p.card_id).unwrap_or(-1);
+            let ab_idx = pending.map(|p| p.ability_index).unwrap_or(-1);
+            let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
+            let is_optional_look_and_choose = opcode == O_LOOK_AND_CHOOSE
+                && pending
+                    .map(|p| (p.filter_attr & engine_rust::core::logic::interpreter::constants::FILTER_IS_OPTIONAL) != 0)
+                    .unwrap_or(false);
+            let is_stage_choice = choice_type == "SELECT_STAGE"
+                || choice_type == "SELECT_STAGE_EMPTY"
+                || choice_type == "SELECT_STAGE_EMPTY_BATON";
              let mut selected_card_id: Option<i32> = None;
 
              if gs.phase == Phase::LiveResult {
@@ -969,9 +984,11 @@ pub fn get_action_desc_rich(
                   }
               }
 
-              if name.is_empty() {
+             if name.is_empty() {
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
-                  if choice_type == "OPTIONAL" && choice_idx == 0 {
+                  if is_optional_look_and_choose && choice_idx == 1 {
+                      name = if lang == "jp" { "スキップ".into() } else { "No / Skip".into() };
+                  } else if choice_type == "OPTIONAL" && choice_idx == 0 {
                       name = if lang == "jp" { "はい".into() } else { "Yes".into() };
                   } else if choice_type == "OPTIONAL" && choice_idx == 1 {
                       name = if lang == "jp" { "スキップ".into() } else { "Skip".into() };
@@ -985,6 +1002,9 @@ pub fn get_action_desc_rich(
                   let choice_type = pending.map(|p| p.choice_type.as_str()).unwrap_or("");
                   text = match opcode {
                       O_SELECT_MODE => if lang == "jp" { "モードを選択します。".into() } else { "Select mode.".into() },
+                      O_LOOK_AND_CHOOSE if is_optional_look_and_choose && choice_idx == 1 => {
+                          if lang == "jp" { "スキップします。".into() } else { "Skip.".into() }
+                      }
                       O_LOOK_AND_CHOOSE => if lang == "jp" { "このカードを選択します。".into() } else { "Select this card.".into() },
                       O_SELECT_CARDS => if lang == "jp" { "カードを選択します。".into() } else { "Select a card.".into() },
                       O_COLOR_SELECT => if lang == "jp" { "色を選択します。".into() } else { "Select a color.".into() },
@@ -2375,6 +2395,27 @@ mod tests {
 
         assert_eq!(yes_name, "Yes / Pay");
         assert_eq!(yes_text, "Pay energy.");
+        assert_eq!(no_name, "No / Skip");
+        assert_eq!(no_text, "Skip.");
+    }
+
+    #[test]
+    fn optional_look_and_choose_choice_labels_are_per_choice() {
+        let db = CardDatabase::default();
+        let mut gs = GameState::default();
+        gs.phase = Phase::Response;
+        gs.current_player = 0;
+        gs.interaction_stack.push(PendingInteraction {
+            card_id: 500,
+            effect_opcode: engine_rust::core::logic::O_LOOK_AND_CHOOSE,
+            choice_type: ChoiceType::LookAndChoose,
+            filter_attr: engine_rust::core::logic::interpreter::constants::FILTER_IS_OPTIONAL,
+            ctx: AbilityContext { player_id: 0, source_card_id: 500, ..Default::default() },
+            ..Default::default()
+        });
+
+        let (no_name, no_text, _, _, _) = get_action_desc_rich(engine_rust::core::logic::ACTION_BASE_CHOICE + 1, &gs, &db, 0, "en");
+
         assert_eq!(no_name, "No / Skip");
         assert_eq!(no_text, "Skip.");
     }

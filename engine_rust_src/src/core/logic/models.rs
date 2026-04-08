@@ -2623,6 +2623,8 @@ pub struct Ability {
     pub costs: Vec<Cost>,
     #[serde(default)]
     pub is_once_per_turn: bool,
+    #[serde(default)]
+    pub turn_limit: u8,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub frame_program: Option<FrameProgram>,
     #[serde(default)]
@@ -2673,6 +2675,7 @@ impl std::hash::Hash for Ability {
         self.conditions.hash(state);
         self.costs.hash(state);
         self.is_once_per_turn.hash(state);
+        self.turn_limit.hash(state);
         self.requires_selection.hash(state);
         self.choice_flags.hash(state);
         self.choice_count.hash(state);
@@ -2696,6 +2699,16 @@ impl std::hash::Hash for Ability {
 }
 
 impl Ability {
+    pub fn per_turn_limit(&self) -> u8 {
+        if self.turn_limit > 0 {
+            self.turn_limit
+        } else if self.is_once_per_turn {
+            1
+        } else {
+            0
+        }
+    }
+
     pub(crate) fn has_authored_frame_program(&self) -> bool {
         self.frame_program
             .as_ref()

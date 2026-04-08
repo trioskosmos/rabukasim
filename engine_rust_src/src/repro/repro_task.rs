@@ -278,7 +278,7 @@ mod tests {
 
         // Step 2: Consume once_per_turn using the same keying the action generator uses:
         // source_type=0, id=card_id, ab_idx=1
-        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1);
+        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1, 1);
 
         // Step 3: Verify blocked at slot 0
         receiver.reset();
@@ -325,7 +325,7 @@ mod tests {
         state.players[0].set_tapped(0, false);
         state.players[0].set_tapped(1, false);
 
-        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1);
+        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1, 1);
 
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);

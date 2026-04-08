@@ -11,6 +11,74 @@ from ..models.ability import Ability, Effect, Condition, Cost
 from ..models.generated_enums import EffectType, ConditionType, AbilityCostType, TargetType
 
 
+_HEART_ICON_RE = re.compile(r"heart[_-]?0*([0-6])", re.IGNORECASE)
+_BRACKET_HEART_PATTERNS = (
+    (0, ("[桃ハート]", "[ピンクハート]", "［桃ハート］", "［ピンクハート］", "【桃ハート】", "【ピンクハート】")),
+    (1, ("[赤ハート]", "[紅ハート]", "［赤ハート］", "［紅ハート］", "【赤ハート】", "【紅ハート】")),
+    (2, ("[黄ハート]", "[黄色ハート]", "［黄ハート］", "［黄色ハート］", "【黄ハート】", "【黄色ハート】")),
+    (3, ("[緑ハート]", "[緑色ハート]", "［緑ハート］", "［緑色ハート］", "【緑ハート】", "【緑色ハート】")),
+    (4, ("[青ハート]", "[青色ハート]", "［青ハート］", "［青色ハート］", "【青ハート】", "【青色ハート】")),
+    (5, ("[紫ハート]", "[紫色ハート]", "［紫ハート］", "［紫色ハート］", "【紫ハート】", "【紫色ハート】")),
+)
+_ALL_HEART_PATTERNS = ("[全ハート]", "［全ハート］", "【全ハート】", "all heart", "any heart", "全部のハート")
+_AREA_PATTERNS = (
+    (0, ("[左サイド]", "【左サイド】", "LEFT SIDE", "LEFT", "AREA_LEFT")),
+    (1, ("[センター]", "【センター】", "CENTER", "MIDDLE", "AREA_CENTER")),
+    (2, ("[右サイド]", "【右サイド】", "RIGHT SIDE", "RIGHT", "AREA_RIGHT")),
+)
+
+
+def extract_heart_color_sequence(text: str) -> list[int]:
+    """Return heart color tokens in authored-text order."""
+    if not text:
+        return []
+
+    normalized = unicodedata.normalize("NFKC", text)
+    hits: list[tuple[int, int]] = []
+
+    for match in _HEART_ICON_RE.finditer(normalized):
+        hits.append((match.start(), int(match.group(1))))
+
+    for color_idx, patterns in _BRACKET_HEART_PATTERNS:
+        for token in patterns:
+            start = 0
+            while True:
+                idx = normalized.find(token, start)
+                if idx < 0:
+                    break
+                hits.append((idx, color_idx))
+                start = idx + len(token)
+
+    if not hits:
+        if any(token.lower() in normalized.lower() for token in _ALL_HEART_PATTERNS):
+            return [6]
+        return []
+
+    hits.sort(key=lambda item: item[0])
+    return [color for _, color in hits if 0 <= color <= 6]
+
+
+def extract_primary_heart_color(text: str) -> int | None:
+    """Infer the most likely heart color from authored text."""
+    colors = extract_heart_color_sequence(text)
+    for color in colors:
+        if color != 6:
+            return color
+    return colors[0] if colors else None
+
+
+def extract_primary_area(text: str) -> int | None:
+    """Infer a left/center/right area index from authored text."""
+    if not text:
+        return None
+
+    normalized = unicodedata.normalize("NFKC", text).upper()
+    for area_idx, patterns in _AREA_PATTERNS:
+        if any(pattern in normalized for pattern in patterns):
+            return area_idx
+    return None
+
+
 _LOOK_AND_CHOOSE_COUNT_PATTERNS = (
     re.compile(r"([0-9]+)枚まで"),
     re.compile(r"choose(?: up to)?\s*([0-9]+)", re.IGNORECASE),
@@ -208,6 +276,9 @@ def populate_semantic_from_frames(abilities: list) -> None:
         ab.conditions = []
         ab.costs = []
         ability_text = str(getattr(ab, "raw_text", "") or "")
+        inferred_area = extract_primary_area(ability_text)
+        inferred_heart_color = extract_primary_heart_color(ability_text)
+        saw_area_condition = False
         
         for frame in frames:
             if not isinstance(frame, dict):
@@ -304,6 +375,8 @@ def populate_semantic_from_frames(abilities: list) -> None:
                         )
                     )
                 else:
+                    if cond_type in {ConditionType.AREA_CHECK, ConditionType.IS_CENTER}:
+                        saw_area_condition = True
                     ab.conditions.append(
                         Condition(
                             type=cond_type,
@@ -331,6 +404,13 @@ def populate_semantic_from_frames(abilities: list) -> None:
             eff_type = _EFFECT_OPCODE_MAP.get(opcode, EffectType.NONE)
             if eff_type != EffectType.NONE:
                 effect_params = dict(params)
+                if eff_type == EffectType.ADD_HEARTS and "color" not in effect_params:
+                    # Frame data often omits heart color, so recover it from the authored text.
+                    effect_color = inferred_heart_color
+                    if effect_color is not None:
+                        effect_params["color"] = effect_color
+                        if effect_color == 6:
+                            effect_params["all"] = True
                 if eff_type == EffectType.LOOK_AND_CHOOSE and "choose_count" not in effect_params:
                     inferred_choose_count = 0
                     if ability_text:
@@ -385,3 +465,12 @@ def populate_semantic_from_frames(abilities: list) -> None:
                     )
                 )
 
+        if inferred_area is not None and any(effect.effect_type == EffectType.ADD_HEARTS for effect in ab.effects):
+            if not saw_area_condition:
+                ab.conditions.append(
+                    Condition(
+                        type=ConditionType.AREA_CHECK,
+                        value=inferred_area,
+                        params={"value": inferred_area},
+                    )
+                )

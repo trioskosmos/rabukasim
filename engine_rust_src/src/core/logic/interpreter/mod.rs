@@ -726,7 +726,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             let instance_key =
                 state.get_once_per_turn_instance_key(p_idx, source_type, ctx.area_idx, cid);
 
-            if ability.is_once_per_turn
+            if ability.per_turn_limit() > 0
                 && !check_once_per_turn(
                     state,
                     p_idx,
@@ -734,15 +734,19 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     instance_key,
                     cid as u32,
                     ab_idx as usize,
+                    ability.per_turn_limit(),
                 )
             {
                 state.clear_execution_id();
                 continue;
             }
 
-            if ability.is_once_per_turn {
+            if ability.per_turn_limit() > 0 {
                 if !state.ui.silent {
-                    state.log("Rule 11.9, Rule 11.9.1, Rule 11.9.2, Q233: Consuming 'Turn 1' keyword capacity after successful cost payment.".to_string());
+                    state.log(format!(
+                        "Rule 11.2, Rule 11.2.1-3: Consuming 'Turn {}' keyword capacity after successful cost payment.",
+                        ability.per_turn_limit()
+                    ));
                 }
                 consume_once_per_turn(
                     state,
@@ -751,6 +755,7 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                     instance_key,
                     cid as u32,
                     ab_idx as usize,
+                    ability.per_turn_limit(),
                 );
             }
 
@@ -837,12 +842,18 @@ pub fn check_once_per_turn(
     instance_key: u8,
     id: u32,
     ab_idx: usize,
+    limit: u8,
 ) -> bool {
+    if limit == 0 {
+        return true;
+    }
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     state.players[p_idx]
         .used_abilities
-        .binary_search(&uid)
-        .is_err()
+        .iter()
+        .filter(|&&entry| entry == uid)
+        .count()
+        < limit as usize
 }
 
 pub fn consume_once_per_turn(
@@ -852,16 +863,28 @@ pub fn consume_once_per_turn(
     instance_key: u8,
     id: u32,
     ab_idx: usize,
+    limit: u8,
 ) {
+    if limit == 0 {
+        return;
+    }
     let uid = get_ability_uid(source_type, instance_key, id, ab_idx as u32);
     if !state.ui.silent {
         state.log(format!(
-            "Rule 11.2.1-3: Consuming 'Turn 1' (Once per turn) capacity for Ability UID {:08X}.",
-            uid
+            "Rule 11.2.1-3: Consuming 'Turn {}' capacity for Ability UID {:08X}.",
+            limit, uid
         ));
     }
+    if state.players[p_idx]
+        .used_abilities
+        .iter()
+        .filter(|&&entry| entry == uid)
+        .count()
+        >= limit as usize
+    {
+        return;
+    }
     match state.players[p_idx].used_abilities.binary_search(&uid) {
-        Ok(_) => {}
-        Err(pos) => state.players[p_idx].used_abilities.insert(pos, uid),
+        Ok(pos) | Err(pos) => state.players[p_idx].used_abilities.insert(pos, uid),
     }
 }

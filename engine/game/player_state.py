@@ -547,12 +547,14 @@ class PlayerState(StateMixin):
                 continue
 
             if eff.effect_type == EffectType.ADD_HEARTS:
-                color_map = {1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5}  # P,R,Y,G,B,P
+                color_map = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5}  # 0-based: pink, red, yellow, green, blue, purple
                 target_colors = []
-                if eff.params.get("color"):
+                if eff.params.get("color") is not None:
                     c = eff.params["color"]
                     if c in color_map:
                         target_colors.append(color_map[c])
+                    elif c == 6:
+                        target_colors = list(range(6))
                 elif eff.params.get("all"):
                     target_colors = list(range(6))
 
@@ -713,13 +715,13 @@ class PlayerState(StateMixin):
         for ce in self.continuous_effects:
             if ce["effect"].effect_type == EffectType.TRANSFORM_COLOR:
                 eff = ce["effect"]
-                src_color = eff.params.get("from_color", eff.params.get("color"))  # 1-based
-                dest_color = eff.params.get("to_color")  # 1-based
-                if src_color and dest_color:
+                src_color = eff.params.get("from_color", eff.params.get("color"))  # 0-based
+                dest_color = eff.params.get("to_color")  # 0-based
+                if src_color is not None and dest_color is not None:
                     try:
                         # Handle possibly float/string values
-                        s_idx = int(src_color) - 1
-                        d_idx = int(dest_color) - 1
+                        s_idx = int(src_color)
+                        d_idx = int(dest_color)
                         if 0 <= s_idx < 6 and 0 <= d_idx < 6:
                             amount_moved = total_hearts[s_idx]
                             total_hearts[d_idx] += amount_moved
@@ -762,9 +764,9 @@ class PlayerState(StateMixin):
                     target_color = eff.params.get("color")
                     val = eff.value
 
-                    if target_color and target_color != "any":
+                    if target_color is not None and target_color != "any":
                         try:
-                            c_idx = int(target_color) - 1
+                            c_idx = int(target_color)
                             if 0 <= c_idx < 6:
                                 reduction_val[c_idx] = val
                         except:

@@ -810,7 +810,6 @@ def parse_member(card_id: int, card_no: str, data: dict) -> MemberCard:
         original_text_en=str(translation_en) if translation_en else "",
         volume_icons=int(spec.get("score", data.get("volume", 0))),
         draw_icons=int(spec.get("draw", data.get("draw", 0))),
-        char_id=int(CHAR_MAP.get(str(data.get("name", "")), 0)),
         faq=data.get("faq", []),
     )
 

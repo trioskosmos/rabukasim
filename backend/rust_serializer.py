@@ -14,6 +14,8 @@ if PROJECT_ROOT not in sys.path:
 from engine.game.desc_utils import get_action_desc
 from engine.game.enums import Phase
 
+FILTER_IS_OPTIONAL = 1 << 61
+
 TRIGGER_ICONS = {
     "jp": {
         1: "【登場】",
@@ -30,6 +32,7 @@ TRIGGER_ICONS = {
         7: "[Activate]",
     }
 }
+
 
 SERIALIZER_STRINGS = {
     "jp": {
@@ -349,6 +352,7 @@ class RustGameStateSerializer:
     def _resolve_choice_name(self, choice_idx, pending_choice, lang="jp"):
         s = SERIALIZER_STRINGS.get(lang, SERIALIZER_STRINGS["jp"])
         options = pending_choice.get("options") or []
+        option_text = pending_choice.get("options_text") or []
         if 0 <= choice_idx < len(options):
             option = options[choice_idx]
             if isinstance(option, dict):
@@ -364,17 +368,27 @@ class RustGameStateSerializer:
                 if text:
                     return text
 
-        if choice_idx == CHOICE_DONE:
-            return s["done"]
+        if 0 <= choice_idx < len(option_text):
+            text = _first_text(option_text[choice_idx])
+            if text:
+                return text
 
         kind = _normalize_choice_key(pending_choice.get("choice_type") or pending_choice.get("type"))
+        skip_label = "いいえ / スキップ" if lang == "jp" else "No / Skip"
         if "optional" in kind:
             if choice_idx == 0:
                 return s["yes"]
             if choice_idx == 1:
-                return s["no"]
+                return skip_label
+        if choice_idx == CHOICE_DONE and (
+            "optional" in kind
+            or (kind == "look_and_choose" and _safe_int(pending_choice.get("filter_attr"), 0) & FILTER_IS_OPTIONAL)
+        ):
+            return skip_label
+        if choice_idx == CHOICE_DONE:
+            return s["done"]
 
-        return f"{s['choose_option']} {choice_idx + 1}"
+        return ""
 
     def _slot_name(self, slot_idx, lang="jp"):
         if lang == "jp":
@@ -473,6 +487,7 @@ class RustGameStateSerializer:
         pending_choice = {
             "type": raw_choice_type,
             "choice_type": choice_type,
+            "filter_attr": _safe_int(params.get("filter_attr"), 0),
             "description": _first_text(params.get("effect_description"), choice_text),
             "text": text,
             "title": text,

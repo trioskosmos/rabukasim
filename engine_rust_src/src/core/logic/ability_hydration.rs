@@ -18,8 +18,15 @@ pub(crate) struct SparseAbilityAssets {
     pub text_index: HashMap<String, String>,
 }
 
-fn raw_text_implies_once_per_turn(text: &str) -> bool {
-    text.contains("{{turn1.png") || text.contains("ターン1回")
+fn raw_text_turn_limit(text: &str) -> u8 {
+    let mut limit = 0u8;
+    if text.contains("{{turn1.png") || text.contains("ターン1回") {
+        limit = limit.max(1);
+    }
+    if text.contains("{{turn2.png") || text.contains("ターン2回") {
+        limit = limit.max(2);
+    }
+    limit
 }
 
 fn sanitize_sparse_json_text(json: &str) -> String {
@@ -114,6 +121,7 @@ fn process_sparse_ability_data(
         "trigger_id",
         "raw_text",
         "is_once_per_turn",
+        "turn_limit",
         "requires_selection",
         "choice_flags",
         "choice_count",
@@ -337,13 +345,24 @@ pub(crate) fn attach_sparse_ability_index(
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
             }
+            if ability.turn_limit == 0 {
+                ability.turn_limit = entry
+                    .get("turn_limit")
+                    .and_then(parse_u8_value)
+                    .unwrap_or(0);
+            }
             let program = sparse_entry_to_frame_program(entry);
             if !program.frames.is_empty() {
                 ability.frame_program = Some(program);
             }
         }
-        if !ability.is_once_per_turn && raw_text_implies_once_per_turn(&ability.raw_text) {
-            ability.is_once_per_turn = true;
+        if ability.turn_limit == 0 {
+            ability.turn_limit = raw_text_turn_limit(&ability.raw_text);
+        }
+        if ability.turn_limit > 0 {
+            ability.is_once_per_turn = ability.turn_limit == 1 || ability.is_once_per_turn;
+        } else if ability.is_once_per_turn {
+            ability.turn_limit = 1;
         }
         if let Some(choose_count) = ability
             .effects

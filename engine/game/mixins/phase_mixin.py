@@ -284,12 +284,12 @@ class PhaseMixin:
             eff = ce["effect"]
             if eff.effect_type == EffectType.TRANSFORM_COLOR:
                 # Value v is the amount or filter? Usually it's "all of type X become Y"
-                # Params: from_color (int 1-6), to_color (int 1-6)
+                # Params: from_color (int 0-5), to_color (int 0-5)
                 src = eff.params.get("from_color", eff.params.get("color"))
                 dest = eff.params.get("to_color")
-                if src and dest:
+                if src is not None and dest is not None:
                     try:
-                        s_idx, d_idx = int(src) - 1, int(dest) - 1
+                        s_idx, d_idx = int(src), int(dest)
                         if 0 <= s_idx < 6 and 0 <= d_idx < 6:
                             transfer = total_hearts[s_idx]
                             total_hearts[d_idx] += transfer
@@ -340,8 +340,8 @@ class PhaseMixin:
                         req[6] = max(0, req[6] - val)
                     else:
                         try:
-                            # color param might be 1-6
-                            c_idx = int(color) - 1
+                            # color param is stored as a 0-based heart index
+                            c_idx = int(color)
                             if 0 <= c_idx < 6:
                                 req[c_idx] = max(0, req[c_idx] - val)
                         except:
@@ -353,7 +353,7 @@ class PhaseMixin:
                         red_vec[6] = val
                     else:
                         try:
-                            c_idx = int(color) - 1
+                            c_idx = int(color)
                             if 0 <= c_idx < 6:
                                 red_vec[c_idx] = val
                         except:

@@ -223,3 +223,58 @@ fn test_nested_suspension_real_flow() {
     // Should still be in Response phase, waiting for recover choice
     assert!(state.phase == Phase::Response || state.phase == Phase::LiveResult);
 }
+
+#[test]
+fn test_optional_suspension_decline_skips_followup_choice() {
+    let mut db = create_test_db();
+    // Member 502 with optional nested ability:
+    // First prompt is Optional tap; declining should skip the follow-up recover prompt.
+    db.members.insert(
+        502,
+        MemberCard {
+            card_id: 502,
+            abilities: vec![Ability {
+                trigger: TriggerType::Activated,
+                frame_program: Some(FrameProgram::from_instruction_words(&[
+                    O_TAP_MEMBER,
+                    0,
+                    2,
+                    536870912,
+                    0,
+                    O_RECOVER_MEMBER,
+                    1,
+                    0,
+                    0,
+                    0,
+                    O_RETURN,
+                    0,
+                    0,
+                    0,
+                    0,
+                ])),
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
+    );
+    let logic_id = (502 as usize) & LOGIC_ID_MASK as usize;
+    db.members_vec.resize(logic_id + 1, None);
+    db.members_vec[logic_id] = Some(db.members[&502].clone());
+
+    let mut state = create_test_state();
+    state.players[0].stage[0] = 502;
+    state.players[0].discard = vec![99, 99].into();
+    state.phase = Phase::LiveResult;
+
+    state.activate_ability(&db, 0, 0).unwrap();
+    assert_eq!(state.phase, Phase::Response);
+    assert_eq!(state.interaction_stack.last().map(|pending| pending.choice_type), Some(ChoiceType::Optional));
+
+    state.activate_ability_with_choice(&db, 0, 0, 1, 0).unwrap();
+
+    assert!(state.interaction_stack.is_empty());
+    assert_eq!(state.players[0].stage[0], 502);
+    assert_eq!(state.players[0].discard.len(), 2);
+    assert!(!state.players[0].is_tapped(0));
+    assert_ne!(state.phase, Phase::Response);
+}

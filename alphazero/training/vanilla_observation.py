@@ -72,6 +72,15 @@ def _claim_card_occurrence(
     return positions[use_idx]
 
 
+def _safe_card_id(card_id: Any) -> int:
+    if card_id is None:
+        return -1
+    try:
+        return int(card_id)
+    except (TypeError, ValueError):
+        return -1
+
+
 def build_card_feature_lookup(full_db: dict[str, Any]) -> dict[int, dict[str, Any]]:
     lookup: dict[int, dict[str, Any]] = {}
     for raw in full_db.get("member_db", {}).values():
@@ -111,9 +120,10 @@ def build_card_feature_lookup(full_db: dict[str, Any]) -> dict[int, dict[str, An
 def _sum_stage_hearts(player_json: dict[str, Any], card_lookup: dict[int, dict[str, Any]]) -> list[float]:
     totals = [0.0] * 7
     for card_id in player_json.get("stage", []):
-        if int(card_id) < 0:
+        card_id = _safe_card_id(card_id)
+        if card_id < 0:
             continue
-        static = card_lookup.get(int(card_id))
+        static = card_lookup.get(card_id)
         if not static or static.get("type") != "member":
             continue
         for color_idx, value in enumerate(static.get("hearts", [])):
@@ -124,9 +134,10 @@ def _sum_stage_hearts(player_json: dict[str, Any], card_lookup: dict[int, dict[s
 def _sum_live_requirements(player_json: dict[str, Any], card_lookup: dict[int, dict[str, Any]]) -> list[float]:
     totals = [0.0] * 7
     for card_id in player_json.get("live_zone", []):
-        if int(card_id) < 0:
+        card_id = _safe_card_id(card_id)
+        if card_id < 0:
             continue
-        static = card_lookup.get(int(card_id))
+        static = card_lookup.get(card_id)
         if not static or static.get("type") != "live":
             continue
         for color_idx, value in enumerate(static.get("hearts", [])):
@@ -155,10 +166,10 @@ def build_vanilla_observation(
     opp_energy_total = len(opp_json.get("energy_zone", []))
     my_energy_untapped = max(0, my_energy_total - my_tapped_mask.bit_count())
     opp_energy_untapped = max(0, opp_energy_total - opp_tapped_mask.bit_count())
-    my_stage_count = sum(1 for card_id in player_json.get("stage", []) if int(card_id) >= 0)
-    opp_stage_count = sum(1 for card_id in opp_json.get("stage", []) if int(card_id) >= 0)
-    my_live_count = sum(1 for card_id in player_json.get("live_zone", []) if int(card_id) >= 0)
-    opp_live_count = sum(1 for card_id in opp_json.get("live_zone", []) if int(card_id) >= 0)
+    my_stage_count = sum(1 for card_id in player_json.get("stage", []) if _safe_card_id(card_id) >= 0)
+    opp_stage_count = sum(1 for card_id in opp_json.get("stage", []) if _safe_card_id(card_id) >= 0)
+    my_live_count = sum(1 for card_id in player_json.get("live_zone", []) if _safe_card_id(card_id) >= 0)
+    opp_live_count = sum(1 for card_id in opp_json.get("live_zone", []) if _safe_card_id(card_id) >= 0)
 
     global_features = [0.0] * GLOBAL_FEATURES
     for idx, phase_id in enumerate(PHASE_FEATURE_ORDER):
@@ -215,25 +226,27 @@ def build_vanilla_observation(
     live_slot_by_pos = [-1] * MAX_INITIAL_DECK
 
     for hand_idx, card_id in enumerate(player_json.get("hand", [])[:MAX_HAND_SLOTS]):
-        deck_pos = _claim_card_occurrence(int(card_id), positions_by_card, next_occurrence)
+        deck_pos = _claim_card_occurrence(_safe_card_id(card_id), positions_by_card, next_occurrence)
         if deck_pos is None:
             continue
         zone_by_pos[deck_pos] = ZONE_HAND
         hand_pos_by_pos[deck_pos] = hand_idx
 
     for slot_idx, card_id in enumerate(player_json.get("stage", [])[:MAX_STAGE_SLOTS]):
-        if int(card_id) < 0:
+        card_id = _safe_card_id(card_id)
+        if card_id < 0:
             continue
-        deck_pos = _claim_card_occurrence(int(card_id), positions_by_card, next_occurrence)
+        deck_pos = _claim_card_occurrence(card_id, positions_by_card, next_occurrence)
         if deck_pos is None:
             continue
         zone_by_pos[deck_pos] = ZONE_STAGE
         stage_slot_by_pos[deck_pos] = slot_idx
 
     for slot_idx, card_id in enumerate(player_json.get("live_zone", [])[:MAX_LIVE_SLOTS]):
-        if int(card_id) < 0:
+        card_id = _safe_card_id(card_id)
+        if card_id < 0:
             continue
-        deck_pos = _claim_card_occurrence(int(card_id), positions_by_card, next_occurrence)
+        deck_pos = _claim_card_occurrence(card_id, positions_by_card, next_occurrence)
         if deck_pos is None:
             continue
         zone_by_pos[deck_pos] = ZONE_LIVE
@@ -241,12 +254,12 @@ def build_vanilla_observation(
 
     for zone_name, zone_id in (("success_lives", ZONE_SUCCESS), ("yell_cards", ZONE_YELL), ("discard", ZONE_DISCARD)):
         for card_id in player_json.get(zone_name, []):
-            deck_pos = _claim_card_occurrence(int(card_id), positions_by_card, next_occurrence)
+            deck_pos = _claim_card_occurrence(_safe_card_id(card_id), positions_by_card, next_occurrence)
             if deck_pos is None:
                 continue
             zone_by_pos[deck_pos] = zone_id
 
-    revealed_cards = {int(card_id) for card_id in player_json.get("revealed_cards", [])}
+    revealed_cards = {_safe_card_id(card_id) for card_id in player_json.get("revealed_cards", []) if _safe_card_id(card_id) >= 0}
     stage_energy_count = [int(value) for value in player_json.get("stage_energy_count", [0] * MAX_STAGE_SLOTS)]
     card_features: list[float] = []
     for deck_pos in range(MAX_INITIAL_DECK):

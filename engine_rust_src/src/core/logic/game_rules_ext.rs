@@ -275,7 +275,7 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= 1000 {
+            if total_us >= 1000 && !self.ui.silent && self.debug.debug_mode {
                 println!(
                     "[PROFILE] RuleChecks total_us={} deck_refresh_us={} energy_reclaim_us={} sync_us={} win_check_us={} trigger_queue_us={}",
                     total_us,

@@ -24,27 +24,106 @@ use super::ability_hydration;
 use super::models::*;
 use super::rules::ability_has_hand_only_self_cost_modifier;
 
-// Custom deserializer to handle both arrays and objects for groups/units fields
-fn deserialize_u8_array<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+// Custom deserializers to handle the compiled metadata shape.
+//
+// The compiler currently emits group/unit metadata as strings (often
+// newline-separated for multi-name cards) rather than numeric arrays, so the
+// runtime needs to map the authored names back to stable numeric ids.
+fn deserialize_group_ids<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
+    deserialize_named_id_list(deserializer, group_id_from_text)
+}
+
+fn deserialize_unit_ids<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    deserialize_named_id_list(deserializer, unit_id_from_text)
+}
+
+fn deserialize_named_id_list<'de, D, F>(deserializer: D, lookup: F) -> Result<Vec<u8>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    F: Fn(&str) -> Option<u8>,
+{
     let value = Value::deserialize(deserializer)?;
+    Ok(extract_named_ids(&value, &lookup))
+}
+
+fn extract_named_ids<F>(value: &Value, lookup: &F) -> Vec<u8>
+where
+    F: Fn(&str) -> Option<u8>,
+{
     match value {
-        Value::Array(arr) => {
-            let mut result = Vec::new();
-            for item in arr {
-                if let Some(num) = item.as_u64() {
-                    result.push(num as u8);
-                }
-            }
-            Ok(result)
+        Value::Array(arr) => arr
+            .iter()
+            .flat_map(|item| extract_named_ids(item, lookup))
+            .collect(),
+        Value::String(text) => text
+            .split(['\n', '\r', ',', '/', ';'])
+            .map(str::trim)
+            .filter(|token| !token.is_empty())
+            .filter_map(|token| lookup(token))
+            .collect(),
+        Value::Number(num) => num.as_u64().map(|num| vec![num as u8]).unwrap_or_default(),
+        Value::Object(object) => object
+            .values()
+            .flat_map(|item| extract_named_ids(item, lookup))
+            .collect(),
+        _ => Vec::new(),
+    }
+}
+
+fn normalize_name_token(name: &str) -> String {
+    name.trim()
+        .replace('　', " ")
+        .replace('！', "!")
+        .replace('・', "・")
+        .replace('　', "")
+}
+
+fn group_id_from_text(name: &str) -> Option<u8> {
+    match normalize_name_token(name).as_str() {
+        "ラブライブ!" => Some(0),
+        "ラブライブ!サンシャイン!!" => Some(1),
+        "ラブライブ!虹ヶ咲学園スクールアイドル同好会" => Some(2),
+        "ラブライブ!スーパースター!!" => Some(3),
+        "蓮ノ空女学院スクールアイドルクラブ" => Some(4),
+        "ラブライブ!蓮ノ空女学院スクールアイドルクラブ" => Some(4),
+        "Aqours" | "AQOURS" => Some(1),
+        "Nijigasaki" | "NIJIGASAKI" | "Nijigaku" | "NIJIGAKU" => Some(2),
+        "Liella!" | "LIELLA" => Some(3),
+        "Hasunosora" | "HASUNOSORA" | "HASU" => Some(4),
+        _ => None,
+    }
+}
+
+fn unit_id_from_text(name: &str) -> Option<u8> {
+    match normalize_name_token(name).as_str() {
+        "" => None,
+        "Printemps" | "PRINTEMPS" => Some(0),
+        "lilywhite" | "LILYWHITE" | "LILY_WHITE" => Some(1),
+        "BiBi" | "BIBI" => Some(2),
+        "CYaRon!" | "CYARON" => Some(3),
+        "AZALEA" => Some(4),
+        "GuiltyKiss" | "GUILTYKISS" | "GUILTY_KISS" => Some(5),
+        "DiverDiva" | "DIVERDIVA" | "DIVER_DIVA" => Some(6),
+        "A・ZU・NA" | "AZUNA" | "A_ZU_NA" => Some(7),
+        "QU4RTZ" => Some(8),
+        "R3BIRTH" => Some(9),
+        "CatChu!" | "CATCHU" => Some(10),
+        "KALEIDOSCORE" => Some(11),
+        "5yncri5e!" | "5YNCRI5E" | "SYNCRISE" => Some(12),
+        "スリーズブーケ" | "CERISE_BOUQUET" | "CERISE" => Some(13),
+        "DOLLCHESTRA" | "DOLL" => Some(14),
+        "みらくらぱーく！" | "みらくらぱーく!" | "MIRA_CRA_PARK" | "MIRAKURA" | "MIRA-CRA" => {
+            Some(15)
         }
-        Value::Object(_) => {
-            // If it's an object, ignore it and return empty vec
-            Ok(Vec::new())
-        }
-        _ => Ok(Vec::new()),
+        "EdelNote" | "EDELNOTE" => Some(16),
+        "AiScReam" | "AISCREAM" => Some(17),
+        _ => None,
     }
 }
 
@@ -77,9 +156,9 @@ pub struct MemberCard {
     pub hearts: [u8; 7],
     pub blade_hearts: [u8; 7],
     pub blades: u32,
-    #[serde(default, deserialize_with = "deserialize_u8_array")]
+    #[serde(default, deserialize_with = "deserialize_group_ids")]
     pub groups: Vec<u8>,
-    #[serde(default, deserialize_with = "deserialize_u8_array")]
+    #[serde(default, deserialize_with = "deserialize_unit_ids")]
     pub units: Vec<u8>,
     pub abilities: Vec<Ability>,
     #[serde(alias = "volume_icons")]
@@ -143,9 +222,9 @@ pub struct LiveCard {
     pub score: u32,
     pub required_hearts: [u8; 7],
     pub abilities: Vec<Ability>,
-    #[serde(default, deserialize_with = "deserialize_u8_array")]
+    #[serde(default, deserialize_with = "deserialize_group_ids")]
     pub groups: Vec<u8>,
-    #[serde(default, deserialize_with = "deserialize_u8_array")]
+    #[serde(default, deserialize_with = "deserialize_unit_ids")]
     pub units: Vec<u8>,
     #[serde(alias = "volume_icons")]
     pub note_icons: u32,
@@ -388,7 +467,7 @@ impl CardDatabase {
             if ab.trigger == TriggerType::TurnStart || ab.trigger == TriggerType::TurnEnd {
                 s_flags |= 0x04;
             }
-            if ab.is_once_per_turn {
+            if ab.per_turn_limit() > 0 {
                 s_flags |= 0x08;
             }
 

@@ -2257,10 +2257,14 @@ def do_action():
                     # immediately chaining through the next RPS/turn-order action.
                     if game_mode == "pve" and is_special_phase:
                         try:
-                            human_legal_mask = gs.get_legal_actions(player_idx=0)
-                            ai_legal_mask = gs.get_legal_actions(player_idx=1)
-                            human_can_act = bool(np.any(human_legal_mask))
-                            ai_can_act = bool(np.any(ai_legal_mask))
+                            if room.get("engine") == "rust":
+                                human_can_act = bool(gs.get_legal_action_ids_for_player(0))
+                                ai_can_act = bool(gs.get_legal_action_ids_for_player(1))
+                            else:
+                                human_legal_mask = gs.get_legal_actions(player_idx=0)
+                                ai_legal_mask = gs.get_legal_actions(player_idx=1)
+                                human_can_act = bool(np.any(human_legal_mask))
+                                ai_can_act = bool(np.any(ai_legal_mask))
                             print(
                                 f"[DEBUG] Special PvE phase readiness: "
                                 f"human_can_act={human_can_act} ai_can_act={ai_can_act}"

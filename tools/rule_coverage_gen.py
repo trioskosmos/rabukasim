@@ -4,7 +4,7 @@ import json
 
 def get_rules():
     rules = []
-    rules_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\docs\rules\rules.txt"
+    rules_path = r"c:\Users\trios\.gemini\antigravity\vscode\loveca-copy\data\rules.txt"
     with open(rules_path, "r", encoding="utf-8") as f:
         for line in f:
             match = re.search(r"^(\d+(\.\d+)*)\.", line)
@@ -53,7 +53,7 @@ def main():
         f.write("Generated automatically to track systematic logging of official rules and rulings within the engine.\n\n")
         f.write(f"> [!NOTE]\n")
         f.write(f"> **Generator:** `tools/rule_coverage_gen.py`\n")
-        f.write(f"> **Rule Source:** `docs/rules/rules.txt`\n")
+        f.write(f"> **Rule Source:** `data/rules.txt`\n")
         f.write(f"> **Q&A Source:** `data/qa_data.json`\n")
         f.write(f"> **Scan Directory:** `engine_rust_src/src/core/logic`\n\n")
         

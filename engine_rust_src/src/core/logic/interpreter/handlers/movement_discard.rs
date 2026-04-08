@@ -1,4 +1,4 @@
-use crate::core::logic::constants::CHOICE_DONE;
+use crate::core::logic::constants::{CHOICE_DONE, TARGET_SLOT_AREA_IDX};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::conditions::resolve_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -94,6 +94,44 @@ pub fn handle_move_to_discard(
         Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[target_player_idx].deck.len(),
         _ => 0,
     } as i32;
+
+    // Self-discarding from a stage ability should always resolve against the
+    // activated member itself, not ask the player to choose another stage slot.
+    let self_stage_discard = source_zone == Zone::Stage
+        && frame_data.slot.target_slot == TARGET_SLOT_AREA_IDX as u8
+        && ctx.area_idx >= 0
+        && ctx.area_idx < 3;
+
+    if self_stage_discard {
+        let idx = ctx.area_idx as usize;
+        if let Some(removed_cid) = remove_card_at_index(state, target_player_idx, Zone::Stage, idx, discard.allow_under_member_selection) {
+            state.players[target_player_idx].push_discard_card(removed_cid);
+            let mut next_ctx = ctx.clone();
+            next_ctx.selected_cards.push(removed_cid);
+            next_ctx.v_remaining = (count - 1).max(0) as i16;
+            ctx.selected_cards = next_ctx.selected_cards.clone();
+            ctx.v_accumulated = next_ctx.selected_cards.len() as i16;
+            ctx.choice_index = -1;
+            ctx.v_remaining = -1;
+
+            let should_tap_self = db.get_live(removed_cid).is_some()
+                && ctx.area_idx >= 0
+                && source_ability(db, ctx).map(|ability| {
+                    ability.effects.iter().any(|effect| {
+                        effect.runtime_opcode == O_NOP
+                            && effect.params.get("raw_effect").and_then(|v| v.as_str()) == Some("TAP_SELF")
+                    })
+                }).unwrap_or(false);
+
+            if should_tap_self {
+                state.players[p_idx].set_tapped(ctx.area_idx as usize, true);
+            }
+
+            state.trigger_move_to_discard(db, target_player_idx, &next_ctx, &[removed_cid]);
+            return HandlerResult::Continue;
+        }
+    }
+
     // === Prompt phase: determine if we need player input ===
     if next_ctx.choice_index == -1 {
         // Not enough cards available
@@ -267,6 +305,26 @@ pub fn handle_move_to_discard(
 
 // === Helper functions ===
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::create_test_state;
+
+    #[test]
+    fn stage_removal_uses_actual_slot_index_even_when_prior_slots_are_empty() {
+        let mut state = create_test_state();
+        state.players[0].stage = [-1, 4192, 104].into();
+
+        let removed = remove_card_at_index(&mut state, 0, Zone::Stage, 2, false);
+
+        assert_eq!(removed, Some(104));
+        assert_eq!(
+            state.players[0].stage.iter().copied().collect::<Vec<_>>(),
+            vec![-1, 4192, -1]
+        );
+    }
+}
+
 fn is_deck_zone(zone: Zone) -> bool {
     matches!(zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default)
 }
@@ -380,14 +438,15 @@ fn remove_card_at_index(
             }
         }
         Zone::Stage => {
-            let cards: Vec<i32> = state.players[player_idx].stage.iter().copied().filter(|&c| c >= 0).collect();
-            if idx < cards.len() {
-                let cid = cards[idx];
-                if let Some(pos) = state.players[player_idx].stage.iter().position(|&c| c == cid) {
-                    state.players[player_idx].clear_stage_card(pos);
+            if idx < 3 {
+                let cid = state.players[player_idx].stage[idx];
+                if cid >= 0 {
+                    state.players[player_idx].clear_stage_card(idx);
                     state.mark_stats_dirty(player_idx);
+                    Some(cid)
+                } else {
+                    None
                 }
-                Some(cid)
             } else {
                 None
             }

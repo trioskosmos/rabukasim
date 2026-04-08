@@ -631,6 +631,12 @@ fn test_frame_program_bytecode_parity_for_simple_draw() {
         .expect("semantic frame program should resolve");
     resolve_ability(&mut bytecode_state, &db, &ability_from_bytecode, &ctx)
         .expect("bytecode ability should resolve");
+
+    assert_eq!(semantic_state.phase, bytecode_state.phase);
+    assert_eq!(semantic_state.current_player, bytecode_state.current_player);
+    assert_eq!(semantic_state.players[0].hand, bytecode_state.players[0].hand);
+    assert_eq!(semantic_state.players[0].deck, bytecode_state.players[0].deck);
+    assert_eq!(semantic_state.players[0].discard, bytecode_state.players[0].discard);
 }
 
 #[test]

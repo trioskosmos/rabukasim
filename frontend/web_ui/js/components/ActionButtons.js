@@ -15,13 +15,13 @@ export const ActionButtons = {
 
         if (a.id === 0 && state.pending_choice) {
             const descriptiveName = getActionName(a);
-            if (descriptiveName && (descriptiveName.includes('【') || descriptiveName.includes('['))) {
-            } else {
-                if (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) {
-                    return i18n.t('done');
-                }
-                return i18n.t('pass_no');
+            if (descriptiveName && descriptiveName !== 'Action 0') {
+                return Tooltips.enrichAbilityText(descriptiveName);
             }
+            if (state.phase === Phase.MULLIGAN_P1 || state.phase === Phase.MULLIGAN_P2) {
+                return i18n.t('done');
+            }
+            return i18n.t('pass_no');
         }
         const energyIcon = `<img src="img/texticon/icon_energy.png" class="inline-icon">`;
         const heartIcon = `<img src="img/texticon/icon_heart.png" class="inline-icon">`;
@@ -41,7 +41,20 @@ export const ActionButtons = {
             }
         }
 
-        if (!name || name.startsWith('Action ')) {
+        if (actionCategory === 'SELECT_MODE' || actionCategory === 'CHOICE' && state.pending_choice?.options) {
+            const modeIdx = getActionValue(a, 'choice_idx');
+            const pc = state.pending_choice;
+            if (pc) {
+                if (pc.options_text && pc.options_text[modeIdx]) {
+                    name = pc.options_text[modeIdx];
+                } else if (pc.options) {
+                    const opt = pc.options[modeIdx];
+                    if (opt && (opt.name || opt.text)) {
+                        name = opt.name || opt.text;
+                    }
+                }
+            }
+        } else if (!name || name.startsWith('Action ')) {
             if (actionCategory === 'COLOR_SELECT' || actionCategory === 'CHOICE' && getActionValue(a, 'target_zone') === 'color') {
                 const colorIdx = getActionValue(a, 'choice_idx');
                 const colorKeys = ['PINK', 'RED', 'YELLOW', 'GREEN', 'BLUE', 'PURPLE'];
@@ -49,21 +62,6 @@ export const ActionButtons = {
                     const colorKey = colorKeys[colorIdx];
                     const trans = i18n.getCurrentTranslations();
                     name = trans?.params?.COLOR?.[colorKey] || colorKey;
-                }
-            } else if (actionCategory === 'SELECT_MODE' || actionCategory === 'CHOICE' && state.pending_choice?.options) {
-                const modeIdx = getActionValue(a, 'choice_idx');
-                const pc = state.pending_choice;
-                if (pc && pc.options) {
-                    const opt = pc.options[modeIdx];
-                    if (opt && (opt.name || opt.text)) {
-                        name = opt.name || opt.text;
-                    }
-                }
-                if (!name && pc && pc.options_text && pc.options_text[modeIdx]) {
-                    name = pc.options_text[modeIdx];
-                }
-                if (!name) {
-                    name = i18n.t('mode_n', { n: modeIdx });
                 }
             } else if (actionCategory === 'SELECT_STAGE') {
                 const slotIdx = getActionValue(a, 'slot_idx', 'area_idx', 'target_index');

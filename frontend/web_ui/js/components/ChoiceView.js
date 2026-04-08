@@ -105,11 +105,11 @@ export const ChoiceView = {
 
             choice.options.forEach((opt, idx) => {
                 const actionId = choice.actions?.[idx];
-                if (actionId === undefined || actionId === null || actionId === 0) {
+                if (actionId === undefined || actionId === null) {
                     return;
                 }
                 const optCardId = opt.card_id !== undefined ? opt.card_id : cardId;
-                const fallbackName = opt.name || opt.text || `Option ${idx + 1}`;
+                const fallbackName = choice.options_text?.[idx] || opt.name || opt.text || "";
                 const a = {
                     id: actionId,
                     source_card_id: sourceCardId,

@@ -188,7 +188,7 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= play_member_profile_threshold_us() {
+            if total_us >= play_member_profile_threshold_us() && !self.ui.silent && self.debug.debug_mode {
                 println!(
                     "[PROFILE] MemberLeaves total_us={} trigger_us={} mutate_us={} p={} slot={} cid={}",
                     total_us,
@@ -247,8 +247,6 @@ impl GameState {
         p_idx: usize,
         receiver: &mut R,
     ) {
-        let _condition_cache_scope =
-            crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         crate::core::logic::action_gen::ActionGeneratorFactory::generate_actions(
             self, db, p_idx, receiver,
         );
