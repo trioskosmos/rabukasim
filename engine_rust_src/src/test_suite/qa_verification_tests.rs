@@ -3271,13 +3271,13 @@ mod tests {
             .get(1)
             .and_then(|ability| ability.frame_program.as_ref())
             .expect("Q4791: expected the OnLeaves frame program");
-        let frame_data = frame_program
+        let _frame_data = frame_program
             .frames
             .get(0)
             .expect("Q4791: expected the first frame")
             .components();
 
-        let mut ctx = AbilityContext {
+        let ctx = AbilityContext {
             player_id: 0,
             activator_id: 0,
             source_card_id: source_id,

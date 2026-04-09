@@ -5,10 +5,12 @@
 import { State } from './state.js';
 import { TextEnricher } from './utils/TextEnricher.js';
 import { Highlighter } from './components/Highlighter.js';
+import { AbilityInspector } from './utils/AbilityInspector.js';
 
 let tooltipTimeout = null;
 let tooltipHideTimeout = null;
 let currentTooltipTarget = null;
+let tooltipRenderToken = 0;
 
 // Cached DOM nodes — these panels are static and never destroyed,
 // so we grab them once at module load instead of on every hover.
@@ -46,6 +48,7 @@ export const Tooltips = {
     },
 
     showTooltip: (target, e, forceTarget = null, useSidebar = false, explicitText = null) => {
+        const renderToken = ++tooltipRenderToken;
         const effectiveTarget = forceTarget || target;
         const dataSource = effectiveTarget.closest('[data-card-id],[data-action-id],[data-text]') || effectiveTarget;
 
@@ -66,6 +69,8 @@ export const Tooltips = {
         if (cardId !== undefined) {
             cardObj = Tooltips.findCardById(parseInt(cardId));
         }
+
+        State.hoveredCardId = cardObj && cardObj.id !== undefined ? cardObj.id : null;
 
         if (actionId !== undefined && state && state.legal_actions) {
             actionObj = state.legal_actions.find(a => a.id === parseInt(actionId));
@@ -109,6 +114,7 @@ export const Tooltips = {
 
         // Action enrichment: If we have an action object, try to get even better text
         let actionRichText = "";
+        let actionSummaryText = "";
         if (actionObj) {
             actionRichText = TextEnricher.getEffectiveActionText(actionObj);
             const rawActionRichText = actionRichText.replace(/<[^>]+>/g, "").trim();
@@ -116,10 +122,12 @@ export const Tooltips = {
             if (rawActionRichText && !TextEnricher.isGenericInstruction(rawActionRichText)) {
                 // If the action text is non-generic (like a translated sub-ability), prioritize it
                 finalAbilityText = actionRichText;
+                actionSummaryText = actionRichText;
             } else if (rawActionRichText && !finalAbilityText.includes(rawActionRichText)) {
                 // If it's a generic mechanical instruction (like "Play X to Slot 0"),
                 // and it's not already in the text, we might want to keep it as a label.
                 actionLabel = actionRichText;
+                actionSummaryText = actionRichText;
             }
         }
 
@@ -132,6 +140,8 @@ export const Tooltips = {
                 combinedText = dText || "";
             } else if (cardText) {
                 combinedText = cardText;
+            } else if (actionSummaryText) {
+                combinedText = actionSummaryText;
             }
         }
 
@@ -145,10 +155,22 @@ export const Tooltips = {
         
         let titleText = (dataSource.dataset.cardName || "Card Detail");
         let metadataHtml = "";
+        let actionHtml = "";
 
         if (cardObj) {
             const translated = window.translateCard ? window.translateCard(cardObj) : { name: cardObj.name, groups: cardObj.groups, units: cardObj.units };
             titleText = translated.name;
+        }
+
+        if (actionObj) {
+            const label = actionLabel || actionRichText || "";
+            if (label) {
+                actionHtml = `
+                    <div class="ability-inspector-block ability-action-block">
+                        <div class="ability-inspector-label">Action</div>
+                        <div class="ability-inspector-text">${label}</div>
+                    </div>`;
+            }
         }
         
         if (descTitle) {
@@ -157,9 +179,28 @@ export const Tooltips = {
         }
 
         const enrichedText = combinedText ? TextEnricher.enrichAbilityText(combinedText) : "";
-        descContent.innerHTML = metadataHtml + enrichedText;
+        const loadingInspector = `<div class="ability-inspector-loading">Loading frame source…</div>`;
+        descContent.innerHTML = metadataHtml + actionHtml + enrichedText + loadingInspector;
         descContent.dataset.rawText = enrichedText;
         descPanel.classList.add('active');
+
+        if (cardObj) {
+            AbilityInspector.renderCardInspectorAsync(cardObj)
+                .then((inspectorHtml) => {
+                    if (renderToken !== tooltipRenderToken) return;
+                    descContent.innerHTML = metadataHtml + actionHtml + enrichedText + inspectorHtml;
+                    descContent.dataset.rawText = enrichedText;
+                })
+                .catch((err) => {
+                    if (renderToken !== tooltipRenderToken) return;
+                    console.warn('[Tooltips] Ability inspector failed:', err);
+                    descContent.innerHTML = metadataHtml + actionHtml + enrichedText + `<div class="ability-inspector-error">Unable to load frame source.</div>`;
+                });
+        }
+
+        AbilityInspector.renderSidebarExamViewAsync(cardObj, state).catch((err) => {
+            console.warn('[Tooltips] Sidebar ability examination failed:', err);
+        });
 
         if (tooltipHideTimeout) {
             clearTimeout(tooltipHideTimeout);
@@ -183,7 +224,9 @@ export const Tooltips = {
                 currentTooltipTarget.classList.remove('highlight-hover');
             }
             currentTooltipTarget = null;
+            State.hoveredCardId = null;
             Highlighter.clearHighlights();
+            AbilityInspector.renderSidebarExamViewAsync(null, State.data).catch(() => null);
         };
 
         if (immediate) {

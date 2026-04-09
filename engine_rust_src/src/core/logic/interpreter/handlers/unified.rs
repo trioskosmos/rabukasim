@@ -129,6 +129,9 @@ fn resolve_draw_count(
     fallback_count: u32,
 ) -> u32 {
     if frame_data.filter.compare_accumulated {
+        if !ctx.selected_cards.is_empty() {
+            return ctx.selected_cards.len() as u32;
+        }
         use crate::core::logic::interpreter::conditions::resolve_count_frame;
         return resolve_count_frame(state, db, frame_data, ctx, 0).max(0) as u32;
     }

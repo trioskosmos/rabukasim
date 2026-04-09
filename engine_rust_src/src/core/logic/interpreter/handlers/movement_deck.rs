@@ -299,13 +299,30 @@ fn handle_move_to_deck(
     remainder_zone: i32,
     a: i64,
 ) -> HandlerResult {
-    if !ctx.selected_cards.is_empty() {
+    if !ctx.selected_cards.is_empty() || !state.players[p_idx].looked_cards.is_empty() {
         let move_count = if v > 0 {
-            (v as usize).min(ctx.selected_cards.len())
+            if !ctx.selected_cards.is_empty() {
+                (v as usize).min(ctx.selected_cards.len())
+            } else {
+                (v as usize).min(state.players[p_idx].looked_cards.len())
+            }
         } else {
-            ctx.selected_cards.len()
+            if !ctx.selected_cards.is_empty() {
+                ctx.selected_cards.len()
+            } else {
+                state.players[p_idx].looked_cards.len()
+            }
         };
-        let moved_cards: Vec<i32> = ctx.selected_cards.iter().take(move_count).copied().collect();
+        let moved_cards: Vec<i32> = if !ctx.selected_cards.is_empty() {
+            ctx.selected_cards.iter().take(move_count).copied().collect()
+        } else {
+            state.players[p_idx]
+                .looked_cards
+                .iter()
+                .take(move_count)
+                .copied()
+                .collect()
+        };
 
         for &cid in &moved_cards {
             if let Some(pos) = state.players[p_idx].discard.iter().position(|&c| c == cid) {
@@ -316,6 +333,10 @@ fn handle_move_to_deck(
                 state.players[p_idx].success_lives.remove(pos);
             } else if let Some(slot) = state.players[p_idx].stage.iter().position(|&c| c == cid) {
                 state.handle_member_leaves_stage(p_idx, slot, db, ctx);
+            } else if let Some(pos) = state.players[p_idx].looked_cards.iter().position(|&c| c == cid) {
+                state.players[p_idx].looked_cards.remove(pos);
+            } else if let Some(pos) = state.players[p_idx].revealed_cards.iter().position(|&c| c == cid) {
+                state.players[p_idx].revealed_cards.remove(pos);
             }
         }
 

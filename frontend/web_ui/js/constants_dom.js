@@ -46,6 +46,8 @@ export const DOM_IDS = {
   SWITCH_BTN: 'switch-btn',
   BTN_SHOW_PLAYER: 'btn-show-player',
   BTN_SHOW_OPPONENT: 'btn-show-opponent',
+  RULES_SIDEBAR_TOGGLE: 'rules-sidebar-toggle',
+  SIDEBAR_MODE_TOGGLE: 'sidebar-mode-toggle',
 
   // Debug Overlay Elements
   DEBUG_SYNC: 'debug-sync',

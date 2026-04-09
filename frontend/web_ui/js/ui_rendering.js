@@ -11,6 +11,7 @@ import { Highlighter } from './components/Highlighter.js';
 import { Phase, fixImg } from './constants.js';
 import * as i18n from './i18n/index.js';
 import { Tooltips } from './ui_tooltips.js';
+import { AbilityInspector } from './utils/AbilityInspector.js';
 import { InteractionAdapter } from './interaction_adapter.js';
 import { LogRenderer as Logs } from './components/LogRenderer.js';
 import { PerformanceRenderer } from './components/PerformanceRenderer.js';
@@ -39,6 +40,7 @@ const DOM_CACHE = {
     ruleLog: null,
     activeAbilitiesList: null,
     activeAbilitiesPanel: null,
+    abilityExamPanel: null,
 };
 
 // Initialize DOM cache on first use
@@ -63,6 +65,7 @@ function initDomCache() {
         ruleLog: 'rule-log',
         activeAbilitiesList: 'active-abilities-list',
         activeAbilitiesPanel: 'active-abilities-panel',
+        abilityExamPanel: 'ability-exam-panel',
     })) {
         DOM_CACHE[key] = document.getElementById(id);
     }
@@ -144,7 +147,14 @@ export const Rendering = {
             Rendering.renderLookedCards(validTargets.selection);
         }
         Rendering.renderSelectionModal(viewState.selectionModal);
-        Rendering.renderRuleLog();
+        if (document.body.classList.contains('sidebar-ability-mode')) {
+            const hoveredCard = State.hoveredCardId !== null && State.hoveredCardId !== undefined
+                ? State.resolveCardData(State.hoveredCardId)
+                : null;
+            AbilityInspector.renderSidebarExamView(hoveredCard, state);
+        } else {
+            Rendering.renderRuleLog();
+        }
         Rendering.renderActiveEffects(state);
         DOMUtils.setVisible(DOM_IDS.ACTIVE_ABILITIES_PANEL, viewState.hasActiveEffects, DISPLAY_VALUES.BLOCK);
         if (state.game_over) {

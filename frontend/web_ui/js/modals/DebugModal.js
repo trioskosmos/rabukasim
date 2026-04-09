@@ -1,5 +1,6 @@
 import { State } from '../state.js';
 import { Network } from '../network.js';
+import { AbilityInspector } from '../utils/AbilityInspector.js';
 import {
     ChoiceTypes,
     ConditionTypes,
@@ -251,6 +252,7 @@ export const DebugModal = {
         if (State.roomCode) await Network.fetchState();
         await DebugModal._refreshSnapshot();
         await DebugModal._refreshHistoryExport();
+        await AbilityInspector.ensureLoaded().catch(() => null);
 
         if (!State.data) {
             const emptyMarkup = '<div style="padding:24px; opacity:0.6; text-align:center; font-size:12px;">Waiting for game state...</div>';
@@ -863,6 +865,11 @@ export const DebugModal = {
                 <div style="display:flex; flex-direction:column; gap:6px;">
                     <strong style="font-size:11px;">Metadata Surface</strong>
                     ${DebugModal._renderMetadataRows(card)}
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <strong style="font-size:11px;">Authored Frame Source</strong>
+                    ${AbilityInspector.renderCardInspector(card)}
                 </div>
 
                 ${abilities.length === 0 ? '<div style="opacity:0.5; font-size:10px;">No abilities on this card.</div>' : `

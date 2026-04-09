@@ -51,6 +51,7 @@ const stateInternal = {
     // Config
     currentLang: localStorage.getItem('lovelive_lang') || 'jp',
     showFriendlyAbilities: localStorage.getItem('lovelive_friendly_abilities') === 'true', // Defaults to false if not set to 'true'
+    sidebarMode: localStorage.getItem('lovelive_sidebar_mode') || 'abilities',
 
     // Card ID Constants (Must match Rust engine)
     TEMPLATE_MASK: 0x1FFFFF, // Bits 0-20
@@ -73,6 +74,7 @@ const stateInternal = {
 
     // Hover Tracking (Persistence across re-renders)
     hoveredActionId: null,
+    hoveredCardId: null,
 
     // Mulligan Tracking (for visual movement to bottom)
     localMulliganSelection: new Set(),

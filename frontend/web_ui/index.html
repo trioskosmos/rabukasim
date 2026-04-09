@@ -41,6 +41,7 @@
     <div id="mobile-action-bar" class="mobile-action-bar"></div>
 
     <header class="header">
+        <div id="sidebar-mode-badge" class="header-mode-badge">Inspect</div>
         <div class="info-bar">
             <!-- Group: Game Connectivity/Meta -->
 
@@ -92,6 +93,12 @@
                 <button id="redo-btn" class="btn btn-secondary btn-sm" data-action="redo" title="Redo last undo">Redo</button>
                 <button id="debug-modal-btn" class="btn btn-secondary btn-sm" data-action="open-debug-modal"
                     title="Debug / State Editor">Debug</button>
+                <button id="ability-inspector-btn" class="btn btn-accent-blue btn-sm" data-action="open-debug-modal" data-value="inspector"
+                    title="Ability Inspector">Abilities</button>
+                <button id="sidebar-mode-toggle" class="btn btn-secondary btn-sm" data-action="toggle-sidebar-mode"
+                    title="Switch the left sidebar between the rules log and ability examination">Inspect</button>
+                <button id="rules-sidebar-toggle" class="btn btn-secondary btn-sm" data-action="toggle-rules-sidebar"
+                    title="Show or hide the rules log">Hide Log</button>
                 <button id="report-btn-header" class="btn btn-primary btn-sm" data-action="open-report-modal" data-i18n="report"
                     title="Report Issue">報告</button>
                 <button class="btn btn-accent-gray btn-sm" data-action="open-settings-modal" title="Settings"
@@ -137,10 +144,15 @@
         <!-- LEFT SIDEBAR (Rule Log) -->
         <div class="sidebar sidebar-left" id="sidebar-left">
             <div class="sidebar-section panel-container">
+                <div class="sidebar-mode-toolbar">
+                    <button id="sidebar-mode-panel-toggle" class="btn btn-secondary btn-xs" data-action="toggle-sidebar-mode"
+                        title="Switch the left sidebar between the rules log and ability examination">Inspect</button>
+                </div>
                 <div id="card-desc-panel" class="card-desc-panel">
                     <h3 id="card-desc-title" class="card-desc-title" data-i18n="card_ability">カード能力</h3>
                     <div id="card-desc-content" class="card-desc-content"></div>
                 </div>
+                <div id="ability-exam-panel" class="ability-exam-panel"></div>
                 <div id="active-abilities-panel" class="active-abilities-panel">
                     <h3 data-i18n="active_effects_applied">適用中の効果</h3>
                     <div id="active-abilities-list" class="ability-list"></div>

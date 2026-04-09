@@ -11,7 +11,14 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 mod state_member_activate;
 pub use state_member_activate::handle_activate_member;
 
-fn blade_threshold_from_params(params: Option<&serde_json::Value>) -> Option<(u32, bool)> {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum BladeThresholdKind {
+    LessEqual,
+    GreaterEqual,
+    Exact,
+}
+
+fn blade_threshold_from_params(params: Option<&serde_json::Value>) -> Option<(u32, BladeThresholdKind)> {
     let filter = params?
         .as_object()?
         .get("filter")
@@ -22,10 +29,22 @@ fn blade_threshold_from_params(params: Option<&serde_json::Value>) -> Option<(u3
 
     if let Some(threshold) = filter
         .strip_prefix("BLADE_LE")
-        .or_else(|| filter.strip_prefix("BLADE_GE"))
         .and_then(|value| value.replace('_', "").parse::<u32>().ok())
     {
-        return Some((threshold, filter.starts_with("BLADE_LE")));
+        return Some((threshold, BladeThresholdKind::LessEqual));
+    }
+    if let Some(threshold) = filter
+        .strip_prefix("BLADE_GE")
+        .and_then(|value| value.replace('_', "").parse::<u32>().ok())
+    {
+        return Some((threshold, BladeThresholdKind::GreaterEqual));
+    }
+    if let Some(threshold) = filter
+        .strip_prefix("BLADE_EQ")
+        .or_else(|| filter.strip_prefix("BLADE_EXACT"))
+        .and_then(|value| value.replace('_', "").parse::<u32>().ok())
+    {
+        return Some((threshold, BladeThresholdKind::Exact));
     }
 
     None
@@ -173,11 +192,11 @@ pub fn handle_tap_opponent(
                             .map(|card| card.blade_hearts.iter().copied().map(u32::from).sum())
                     })
                     .unwrap_or(0);
-                let blade_ok = blade_filter.map_or(true, |(threshold, is_le)| {
-                    if is_le {
-                        actual <= threshold
-                    } else {
-                        actual >= threshold
+                let blade_ok = blade_filter.map_or(true, |(threshold, kind)| {
+                    match kind {
+                        BladeThresholdKind::LessEqual => actual <= threshold,
+                        BladeThresholdKind::GreaterEqual => actual >= threshold,
+                        BladeThresholdKind::Exact => actual == threshold,
                     }
                 });
                 let filter_ok = if blade_filter.is_some() {
@@ -223,7 +242,7 @@ pub fn handle_tap_opponent(
             let cid = state.players[target_p_idx].stage[slot_idx];
             let is_eligible = cid >= 0
                   && !state.players[target_p_idx].is_tapped(slot_idx)
-                  && blade_filter.map_or(true, |(threshold, is_le)| {
+                  && blade_filter.map_or(true, |(threshold, kind)| {
                       let actual = db
                           .get_member(cid)
                           .map(|card| card.blades)
@@ -233,10 +252,10 @@ pub fn handle_tap_opponent(
                               })
                           })
                           .unwrap_or(0);
-                      if is_le {
-                          actual <= threshold
-                      } else {
-                          actual >= threshold
+                      match kind {
+                          BladeThresholdKind::LessEqual => actual <= threshold,
+                          BladeThresholdKind::GreaterEqual => actual >= threshold,
+                          BladeThresholdKind::Exact => actual == threshold,
                       }
                   })
                   && (blade_filter.is_some()

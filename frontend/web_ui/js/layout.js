@@ -26,6 +26,45 @@ function updateMobileSidebarToggleState(isOpen) {
     setSidebarButtonState(btn, isOpen);
 }
 
+function updateRulesSidebarToggleState(isHidden) {
+    const btn = DOMUtils.getElement(DOM_IDS.RULES_SIDEBAR_TOGGLE);
+    if (!btn) return;
+    btn.textContent = isHidden ? 'Rules' : 'Hide Log';
+    btn.style.background = isHidden ? 'var(--accent-blue)' : 'var(--accent-pink)';
+}
+
+function updateSidebarModeToggleState(mode) {
+    const modeLabel = mode === 'abilities' ? 'Log' : 'Inspect';
+    const btn = DOMUtils.getElement(DOM_IDS.SIDEBAR_MODE_TOGGLE);
+    const panelBtn = DOMUtils.getElement('sidebar-mode-panel-toggle');
+    const badge = DOMUtils.getElement('sidebar-mode-badge');
+    [btn, panelBtn].forEach((el) => {
+        if (!el) return;
+        el.textContent = modeLabel;
+        el.style.background = mode === 'abilities' ? 'var(--accent-blue)' : 'var(--accent-pink)';
+    });
+    if (badge) {
+        badge.textContent = mode === 'abilities' ? 'ABILITY EXAM' : 'RULE LOG';
+        badge.classList.toggle('abilities', mode === 'abilities');
+        badge.classList.toggle('rules', mode !== 'abilities');
+    }
+}
+
+function applyRulesSidebarVisibility(isHidden) {
+    document.body.classList.toggle('rules-log-hidden', isHidden);
+    localStorage.setItem('lovelive_hide_rules_sidebar', isHidden ? 'true' : 'false');
+    updateRulesSidebarToggleState(isHidden);
+}
+
+function applySidebarMode(mode) {
+    const resolved = mode === 'rules' ? 'rules' : 'abilities';
+    document.body.classList.toggle('sidebar-ability-mode', resolved === 'abilities');
+    document.body.classList.toggle('sidebar-rules-mode', resolved === 'rules');
+    localStorage.setItem('lovelive_sidebar_mode', resolved);
+    updateSidebarModeToggleState(resolved);
+    if (window.Rendering) window.Rendering.render();
+}
+
 let mobileSidebarOverlayHandler = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -48,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (savedLeftObj && leftSidebar) DOMUtils.setStyle(DOM_IDS.SIDEBAR_LEFT, 'width', savedLeftObj + 'px');
     if (savedRightObj && rightSidebar) DOMUtils.setStyle(DOM_IDS.SIDEBAR_RIGHT, 'width', savedRightObj + 'px');
+
+    const hideRulesSidebar = localStorage.getItem('lovelive_hide_rules_sidebar');
+    applyRulesSidebarVisibility(hideRulesSidebar === null ? false : hideRulesSidebar === 'true');
+    const sidebarMode = localStorage.getItem('lovelive_sidebar_mode') || 'abilities';
+    applySidebarMode(sidebarMode);
 
     // Drag State
     let isResizingLeft = false;
@@ -184,4 +228,14 @@ export function closeSidebar() {
  */
 export function switchBoard(side) {
     setBoardVisibility(side === 'player');
+}
+
+export function toggleRulesSidebar() {
+    const isHidden = !document.body.classList.contains('rules-sidebar-hidden');
+    applyRulesSidebarVisibility(isHidden);
+}
+
+export function toggleSidebarMode() {
+    const isAbilityMode = document.body.classList.contains('sidebar-ability-mode');
+    applySidebarMode(isAbilityMode ? 'rules' : 'abilities');
 }

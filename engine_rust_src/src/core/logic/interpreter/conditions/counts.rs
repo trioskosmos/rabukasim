@@ -33,6 +33,33 @@ fn count_dense_zone_len(cards: &[i32]) -> i32 {
     cards.len() as i32
 }
 
+fn count_unique_groups_in_cards(
+    state: &GameState,
+    db: &CardDatabase,
+    ids: impl IntoIterator<Item = (i32, Option<(u8, i16)>)>,
+    filter: &CardFilter,
+    count_ctx: &AbilityContext,
+) -> i32 {
+    let mut groups = std::collections::HashSet::<u8>::new();
+    for (id, slot) in ids {
+        if id < 0 {
+            continue;
+        }
+        if state.card_matches_filter_with_struct(db, id, slot, filter, count_ctx) {
+            if let Some(member) = db.get_member(id) {
+                for group_id in member.groups.iter().copied() {
+                    groups.insert(group_id);
+                }
+            } else if let Some(live) = db.get_live(id) {
+                for group_id in live.groups.iter().copied() {
+                    groups.insert(group_id);
+                }
+            }
+        }
+    }
+    groups.len() as i32
+}
+
 fn zone_mask_blocks_simple_count(filter: &CardFilter, expected_mask: u8) -> bool {
     match filter.zone_mask as i32 {
         0 => false,
@@ -191,7 +218,8 @@ fn resolve_structured_zone_count(
     };
     let check_success =
         is_explicit_success_count || inferred_zone == Some(SemanticCountZone::SuccessPile);
-    let can_use_simple_len = !frame.counts_unique_names() && !needs_card_scan(&filter);
+    let can_use_simple_len =
+        !frame.counts_unique_names() && !frame.counts_unique_groups() && !needs_card_scan(&filter);
 
     if can_use_simple_len {
         if check_stage {
@@ -230,6 +258,60 @@ fn resolve_structured_zone_count(
                 total += state.players[1 - p_idx].success_lives.len() as i32;
             }
             return total;
+        }
+    }
+
+    if frame.counts_unique_groups() {
+        if check_stage {
+            if zone_mask_blocks_simple_count(&filter, Zone::Stage as u8) {
+                return 0;
+            }
+            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+            extend_with_slot(
+                &mut ids,
+                &state.players[stage_primary_player].stage,
+                stage_primary_player as u8,
+                0,
+            );
+            if let Some(other_player) = stage_secondary_player {
+                extend_with_slot(
+                    &mut ids,
+                    &state.players[other_player].stage,
+                    other_player as u8,
+                    0,
+                );
+            }
+            return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
+        }
+        if check_discard {
+            if zone_mask_blocks_simple_count(&filter, Zone::Discard as u8) {
+                return 0;
+            }
+            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+            extend_with_slot(&mut ids, &state.players[p_idx].discard, p_idx as u8, 100);
+            if include_opponent {
+                extend_with_slot(&mut ids, &state.players[1 - p_idx].discard, (1 - p_idx) as u8, 100);
+            }
+            return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
+        }
+        if check_hand {
+            if zone_mask_blocks_simple_count(&filter, Zone::Hand as u8) {
+                return 0;
+            }
+            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+            extend_with_slot(&mut ids, &state.players[p_idx].hand, p_idx as u8, 200);
+            if include_opponent {
+                extend_with_slot(&mut ids, &state.players[1 - p_idx].hand, (1 - p_idx) as u8, 200);
+            }
+            return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
+        }
+        if check_success {
+            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+            extend_with_slot(&mut ids, &state.players[p_idx].success_lives, p_idx as u8, -1);
+            if include_opponent {
+                extend_with_slot(&mut ids, &state.players[1 - p_idx].success_lives, (1 - p_idx) as u8, -1);
+            }
+            return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
         }
     }
 
@@ -288,6 +370,23 @@ fn resolve_structured_zone_count(
             }
         }
         names.len() as i32
+    } else if frame.counts_unique_groups() {
+        let mut groups = std::collections::HashSet::<u8>::new();
+        for (id, slot) in ids {
+            let matched = state.card_matches_filter_with_struct(db, id, slot, &filter, &count_ctx);
+            if matched {
+                if let Some(m) = db.get_member(id) {
+                    for group_id in m.groups.iter().copied() {
+                        groups.insert(group_id);
+                    }
+                } else if let Some(l) = db.get_live(id) {
+                    for group_id in l.groups.iter().copied() {
+                        groups.insert(group_id);
+                    }
+                }
+            }
+        }
+        groups.len() as i32
     } else {
         let mut res = 0;
         for (id, slot) in ids {
@@ -310,7 +409,7 @@ fn resolve_live_zone_count(
     let player = &state.players[p_idx];
     let filter = frame.filter;
 
-    if !frame.counts_unique_names() && !needs_card_scan(&filter) {
+    if !frame.counts_unique_names() && !frame.counts_unique_groups() && !needs_card_scan(&filter) {
         return count_zone_len(&player.live_zone);
     }
 
@@ -330,6 +429,28 @@ fn resolve_live_zone_count(
             }
         }
         names.len() as i32
+    } else if frame.counts_unique_groups() {
+        let mut groups = std::collections::HashSet::<u8>::new();
+        for (slot_idx, &id) in player.live_zone.iter().enumerate().filter(|(_, &id)| id >= 0) {
+            if state.card_matches_filter_with_struct(
+                db,
+                id,
+                Some((p_idx as u8, slot_idx as i16)),
+                &filter,
+                ctx,
+            ) {
+                if let Some(member) = db.get_member(id) {
+                    for group_id in member.groups.iter().copied() {
+                        groups.insert(group_id);
+                    }
+                } else if let Some(live) = db.get_live(id) {
+                    for group_id in live.groups.iter().copied() {
+                        groups.insert(group_id);
+                    }
+                }
+            }
+        }
+        groups.len() as i32
     } else {
         player
             .live_zone

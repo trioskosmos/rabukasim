@@ -618,6 +618,16 @@ impl<'a> AbilityFrameComponents<'a> {
             || (self.raw_attr & crate::core::logic::constants::FILTER_UNIQUE_NAMES) != 0
     }
 
+    pub fn counts_unique_groups(&self) -> bool {
+        self.params
+            .as_ref()
+            .and_then(|params| params.as_object())
+            .and_then(|params| params.get("raw_cond").or_else(|| params.get("RAW_COND")))
+            .and_then(|value| value.as_str())
+            .map(|raw_cond| raw_cond == "UNIQUE_GROUPS_COUNT")
+            .unwrap_or(false)
+    }
+
     pub fn compare_accumulated(&self) -> bool {
         self.filter.compare_accumulated
     }
@@ -3222,6 +3232,26 @@ mod tests {
         assert_eq!(ability.resolved_frame_source(), "frame_program");
         assert_eq!(frames.len(), 2);
         assert_eq!(frames[0].opcode(), O_RECOVER_LIVE);
+    }
+
+    #[test]
+    fn count_group_frames_can_mark_unique_groups() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "COUNT_GROUP",
+            "value": 3,
+            "params": {
+                "raw_cond": "UNIQUE_GROUPS_COUNT",
+                "MIN": 3
+            },
+            "slot": {
+                "target_slot": "STAGE_0",
+                "comparison": "GE"
+            }
+        }));
+
+        let components = frame.components();
+        assert!(components.counts_unique_groups());
+        assert!(!components.counts_unique_names());
     }
 
     #[test]

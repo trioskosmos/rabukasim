@@ -5,7 +5,7 @@ use crate::core::logic::ability_patterns::{
 };
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::filter::{filter_attr_from_params, structured_filter_from_attr, CardFilter};
-use crate::core::logic::constants::{FILTER_COLOR_MASK, FILTER_COLOR_SHIFT_R5};
+use crate::core::logic::constants::FILTER_COLOR_SHIFT_R5;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::handlers::interaction_zone::selected_target_key;

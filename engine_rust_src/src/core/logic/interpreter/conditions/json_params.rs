@@ -842,6 +842,35 @@ pub fn evaluate_raw_condition(
             }
             compare_count_thresholds(params, groups.len() as i32)
         }
+        "STAGE_TOTAL_COST_GE" => {
+            let target_player = resolved_condition_player(params, ctx);
+            let filter_attr = get_param_case_insensitive(params, "FILTER")
+                .or_else(|| get_param_case_insensitive(params, "filter"))
+                .and_then(|value| value.as_u64())
+                .unwrap_or(cond.attr);
+            let filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr);
+            let min_cost = get_param_case_insensitive(params, "MIN")
+                .or_else(|| get_param_case_insensitive(params, "min"))
+                .or_else(|| get_param_case_insensitive(params, "value"))
+                .and_then(|value| value.as_i64())
+                .unwrap_or(cond.value as i64) as i32;
+            let mut total_cost = 0i32;
+            for (slot_idx, &cid) in state.players[target_player].stage.iter().enumerate() {
+                if cid < 0 {
+                    continue;
+                }
+                if state.card_matches_filter_with_struct(
+                    db,
+                    cid,
+                    Some((target_player as u8, slot_idx as i16)),
+                    &filter,
+                    ctx,
+                ) {
+                    total_cost += db.get_member(cid).map(|member| member.cost as i32).unwrap_or(0);
+                }
+            }
+            total_cost >= min_cost
+        }
         "UNIQUE_HEART_TYPES" => {
             let mut color_mask: u8 = 0;
             for &cid in &state.players[ctx.player_id as usize].stage {
