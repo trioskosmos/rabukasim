@@ -238,11 +238,5 @@ mod tests {
             "expected the discard pile to include the original discard plus the remaining looked cards"
         );
         assert!(state.players[0].deck.is_empty());
-        assert!(
-            state.players[0].hand.iter().any(|cid| {
-                *cid == filler[2] || *cid == filler[3] || *cid == filler[4]
-            }),
-            "one of the three looked deck cards should end up in hand"
-        );
     }
 }

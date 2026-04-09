@@ -6178,7 +6178,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -6215,7 +6215,7 @@
                     "base_value": 1,
                     "divisor": 1
                   },
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -6290,7 +6290,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -6327,7 +6327,7 @@
                     "base_value": 1,
                     "divisor": 1
                   },
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -6402,7 +6402,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -6439,7 +6439,7 @@
                     "base_value": 1,
                     "divisor": 1
                   },
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -6514,7 +6514,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -6551,7 +6551,7 @@
                     "base_value": 1,
                     "divisor": 1
                   },
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -6626,7 +6626,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -6663,7 +6663,7 @@
                     "base_value": 1,
                     "divisor": 1
                   },
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -8398,9 +8398,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -8434,13 +8436,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 3,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -8592,9 +8597,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -8628,13 +8635,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 3,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -8786,9 +8796,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -8822,13 +8834,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 3,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -8980,9 +8995,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -9016,13 +9033,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 3,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -11433,13 +11453,6 @@
               "is_optional": false
             },
             {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11470,6 +11483,7 @@
                 "op": "MOVE_TO_DISCARD",
                 "frame_index": 1,
                 "value": 1,
+                "is_cost": true,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -11541,7 +11555,14 @@
               }
             ]
           },
-          "costs": [],
+          "costs": [
+            {
+              "type": 3,
+              "value": 1,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "conditions": [
             {
               "type": 309,
@@ -11564,7 +11585,7 @@
       "semantic_flags": 2,
       "ability_flags": 12,
       "synergy_flags": 0,
-      "cost_flags": 0
+      "cost_flags": 1
     },
     "4748": {
       "card_id": 4748,
@@ -11668,13 +11689,6 @@
               "is_optional": false
             },
             {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11705,6 +11719,7 @@
                 "op": "MOVE_TO_DISCARD",
                 "frame_index": 1,
                 "value": 1,
+                "is_cost": true,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -11776,7 +11791,14 @@
               }
             ]
           },
-          "costs": [],
+          "costs": [
+            {
+              "type": 3,
+              "value": 1,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "conditions": [
             {
               "type": 309,
@@ -11799,7 +11821,7 @@
       "semantic_flags": 2,
       "ability_flags": 12,
       "synergy_flags": 0,
-      "cost_flags": 0
+      "cost_flags": 1
     },
     "8844": {
       "card_id": 8844,
@@ -11903,13 +11925,6 @@
               "is_optional": false
             },
             {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -11940,6 +11955,7 @@
                 "op": "MOVE_TO_DISCARD",
                 "frame_index": 1,
                 "value": 1,
+                "is_cost": true,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -12011,7 +12027,14 @@
               }
             ]
           },
-          "costs": [],
+          "costs": [
+            {
+              "type": 3,
+              "value": 1,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "conditions": [
             {
               "type": 309,
@@ -12034,7 +12057,7 @@
       "semantic_flags": 2,
       "ability_flags": 12,
       "synergy_flags": 0,
-      "cost_flags": 0
+      "cost_flags": 1
     },
     "12940": {
       "card_id": 12940,
@@ -12138,13 +12161,6 @@
               "is_optional": false
             },
             {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 41,
               "value": {
                 "count": 4
@@ -12175,6 +12191,7 @@
                 "op": "MOVE_TO_DISCARD",
                 "frame_index": 1,
                 "value": 1,
+                "is_cost": true,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -12246,7 +12263,14 @@
               }
             ]
           },
-          "costs": [],
+          "costs": [
+            {
+              "type": 3,
+              "value": 1,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "conditions": [
             {
               "type": 309,
@@ -12269,7 +12293,7 @@
       "semantic_flags": 2,
       "ability_flags": 12,
       "synergy_flags": 0,
-      "cost_flags": 0
+      "cost_flags": 1
     },
     "653": {
       "card_id": 653,
@@ -36068,9 +36092,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -36079,14 +36105,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -36210,9 +36239,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -36221,14 +36252,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -36352,9 +36386,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -36363,14 +36399,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -36494,9 +36533,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -36505,14 +36546,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -37361,7 +37405,8 @@
                 "frame_index": 0,
                 "value": 2,
                 "attr": {
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "special_id": "Selected Discard Group"
                 },
                 "slot": {
                   "target_slot": "HAND"
@@ -37467,7 +37512,8 @@
                 "frame_index": 0,
                 "value": 2,
                 "attr": {
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "special_id": "Selected Discard Group"
                 },
                 "slot": {
                   "target_slot": "HAND"
@@ -37573,7 +37619,8 @@
                 "frame_index": 0,
                 "value": 2,
                 "attr": {
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "special_id": "Selected Discard Group"
                 },
                 "slot": {
                   "target_slot": "HAND"
@@ -66649,9 +66696,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             },
             {
@@ -66696,13 +66745,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 4,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -66848,9 +66900,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             },
             {
@@ -66895,13 +66949,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 4,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -85880,9 +85937,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -85924,13 +85983,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 5,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -86010,9 +86072,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -86054,13 +86118,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 5,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -86140,9 +86207,11 @@
             },
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -86184,13 +86253,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 5,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -88729,9 +88801,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -88740,7 +88814,7 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
@@ -88748,7 +88822,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -88886,9 +88963,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -88897,7 +88976,7 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
@@ -88905,7 +88984,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -89043,9 +89125,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -89054,7 +89138,7 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
@@ -89062,7 +89146,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -89178,9 +89265,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -89189,7 +89278,7 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
@@ -89197,7 +89286,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -105400,9 +105492,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -105411,14 +105505,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -105608,9 +105705,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -105619,14 +105718,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -105816,9 +105918,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -105827,14 +105931,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -106024,9 +106131,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -106035,14 +106144,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -107304,9 +107416,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -107315,14 +107429,17 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -111818,9 +111935,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -111829,13 +111948,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -111896,9 +112018,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -111907,13 +112031,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -111974,9 +112101,11 @@
           "effects": [
             {
               "effect_type": 20,
-              "value": 1,
+              "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -111985,13 +112114,16 @@
               {
                 "op": "MOVE_MEMBER",
                 "frame_index": 0,
-                "value": 1,
+                "value": 99,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
+                  "source_zone": "STAGE"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -113834,7 +113966,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             },
             {
@@ -113848,7 +113982,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -113877,6 +114013,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_1"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -113902,6 +114041,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_2"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -113971,7 +114113,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             },
             {
@@ -113985,7 +114129,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -114014,6 +114160,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_1"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -114039,6 +114188,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_2"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -114108,7 +114260,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             },
             {
@@ -114122,7 +114276,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -114151,6 +114307,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_1"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -114176,6 +114335,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_2"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {
@@ -122780,7 +122942,9 @@
               "effect_type": 20,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "destination": "POSITION_CHANGE"
+              },
               "is_optional": false
             }
           ],
@@ -122826,6 +122990,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_1"
+                },
+                "params": {
+                  "destination": "POSITION_CHANGE"
                 }
               },
               {

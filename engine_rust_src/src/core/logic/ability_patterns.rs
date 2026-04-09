@@ -1,5 +1,5 @@
 use crate::core::enums::*;
-use crate::core::logic::heart_semantics::{decode_heart_type_from_params, decode_heart_type_from_text};
+use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
 
@@ -49,36 +49,10 @@ fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(
         .or_else(|| match heart_components.resolved_filter_attr() {
             0..=6 => Some(heart_components.resolved_filter_attr() as u8),
             7 => Some(6),
-            _ => decode_heart_type_from_text(&ability.raw_text).map(|color| color as u8),
+            _ => None,
         })?;
 
     Some((select_frame.attr(), heart_color))
-}
-
-fn source_group_backfilled_filter_attr(
-    db: &CardDatabase,
-    live_card_id: i32,
-    filter_attr: u64,
-) -> u64 {
-    if filter_attr == 0 {
-        return filter_attr;
-    }
-
-    let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-    if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
-        return filter_attr;
-    }
-
-    let Some(live) = db.get_live(live_card_id) else {
-        return filter_attr;
-    };
-    if live.groups.len() != 1 {
-        return filter_attr;
-    }
-
-    let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
-    filter.group_id = live.groups[0];
-    filter.to_attr() | passthrough
 }
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
@@ -303,40 +277,17 @@ pub fn pending_targeted_live_heart_bonus(
 ) -> Option<(u64, u8)> {
     let ability = pending_live_ability(db, pi)?;
     let (filter_attr, heart_color_idx) = structured_targeted_live_heart_bonus_signature(ability)?;
-    let live_card_id = [
-        if pi.ability_card_id >= 0 {
-            pi.ability_card_id
-        } else {
-            pi.card_id
-        },
-        if pi.ctx.ability_card_id >= 0 {
-            pi.ctx.ability_card_id
-        } else {
-            pi.ctx.source_card_id
-        },
-    ]
-    .into_iter()
-        .find(|cid| db.get_live(*cid).is_some())
-        .unwrap_or(pi.card_id);
-    let filter_attr = source_group_backfilled_filter_attr(db, live_card_id, filter_attr);
-
     let current_frame_matches = ability
         .get_frame(pi.ctx.program_counter as usize)
         .map(|frame| {
             frame.opcode() == O_SELECT_MEMBER
-                && (frame
-                    .components()
-                    .normalized_select_member_filter_attr_with_source(db, &pi.ctx)
-                    & !0x3)
+                && (frame.components().targeted_select_member_filter_attr() & !0x3)
                     == (filter_attr & !0x3)
         })
         .unwrap_or(false)
         || ability.resolved_frames().iter().any(|frame| {
             frame.opcode() == O_SELECT_MEMBER
-                && (frame
-                    .components()
-                    .normalized_select_member_filter_attr_with_source(db, &pi.ctx)
-                    & !0x3)
+                && (frame.components().targeted_select_member_filter_attr() & !0x3)
                     == (filter_attr & !0x3)
         });
     if !(matches!(pi.choice_type, ChoiceType::SelectMember)
@@ -374,10 +325,7 @@ pub fn should_skip_inline_live_precheck(ability: &Ability) -> bool {
     {
         return true;
     }
-
-    let condition_blocks = ability.raw_text.matches("CONDITION:").count();
-    ability.trigger == TriggerType::OnLiveStart
-        && condition_blocks > ability.conditions.len().max(1)
+    false
 }
 
 #[cfg(test)]

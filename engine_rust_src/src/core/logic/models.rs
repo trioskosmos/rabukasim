@@ -1,7 +1,6 @@
 use crate::core::enums::ChoiceType;
 use crate::core::enums::*;
 use crate::core::generated_layout::*;
-use crate::core::logic::CardDatabase;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::{
     parse_comparison_value, parse_remainder_zone_value, parse_target_slot_value, DecodedSlot,
@@ -135,61 +134,8 @@ impl<'a> AbilityFrameComponents<'a> {
         self.resolved_filter_attr()
     }
 
-    pub fn normalized_select_member_filter_attr_with_source(
-        &self,
-        db: &CardDatabase,
-        ctx: &AbilityContext,
-    ) -> u64 {
-        let filter_attr = self.resolved_filter_attr();
-        if filter_attr == 0 {
-            return filter_attr;
-        }
-
-        let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-        if !filter.group_enabled || filter.group_id != 0 || filter.unit_enabled {
-            return filter_attr;
-        }
-
-        let source_card_id = if ctx.ability_card_id >= 0 {
-            ctx.ability_card_id
-        } else {
-            ctx.source_card_id
-        };
-        let source_groups = db
-            .get_live(source_card_id)
-            .map(|card| card.groups.as_slice())
-            .or_else(|| db.get_member(source_card_id).map(|card| card.groups.as_slice()));
-        let Some(source_groups) = source_groups else {
-            return filter_attr;
-        };
-        if source_groups.len() != 1 {
-            return filter_attr;
-        }
-
-        filter.group_id = source_groups[0];
-        filter.to_attr() | crate::core::logic::filter::passthrough_filter_attr(filter_attr)
-    }
-
     pub fn targeted_select_member_filter_attr(&self) -> u64 {
         let filter_attr = self.resolved_filter_attr();
-        if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
-            && filter_attr != 0
-        {
-            let mut filter = crate::core::logic::filter::structured_filter_from_attr(filter_attr);
-            let passthrough = crate::core::logic::filter::passthrough_filter_attr(filter_attr);
-            filter.target_player = TARGET_PLAYER_SELF as u8;
-            filter.to_attr() | passthrough
-        } else {
-            filter_attr
-        }
-    }
-
-    pub fn targeted_select_member_filter_attr_with_source(
-        &self,
-        db: &CardDatabase,
-        ctx: &AbilityContext,
-    ) -> u64 {
-        let filter_attr = self.normalized_select_member_filter_attr_with_source(db, ctx);
         if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
             && filter_attr != 0
         {
@@ -208,6 +154,10 @@ impl<'a> AbilityFrameComponents<'a> {
         } else {
             SemanticComparisonMode::GreaterEqual
         }
+    }
+
+    pub fn semantic_recovery_branch_spec(&self) -> Option<SemanticRecoveryBranchSpec> {
+        semantic_recovery_branch_spec_from_params(self.params)
     }
 }
 
@@ -271,6 +221,41 @@ pub struct SemanticLookAndChooseSpec {
     pub selection_filter: CardFilter,
     pub selection_filter_attr: u64,
     pub suspend_slot: i32,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SemanticRecoveryBranchKind {
+    UniqueDiscardLiveNames,
+    UniqueDiscardLiveGroups,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SemanticRecoveryBranchSpec {
+    pub kind: SemanticRecoveryBranchKind,
+    pub minimum: usize,
+}
+
+pub fn semantic_recovery_branch_spec_from_params(
+    params: Option<&Value>,
+) -> Option<SemanticRecoveryBranchSpec> {
+    let params = params?.as_object()?;
+    let raw_cond = params
+        .get("raw_cond")
+        .or_else(|| params.get("RAW_COND"))
+        .and_then(|value| value.as_str())?;
+    let minimum = params
+        .get("MIN")
+        .or_else(|| params.get("min"))
+        .and_then(|value| value.as_i64())
+        .unwrap_or(3) as usize;
+
+    let kind = match raw_cond {
+        "UNIQUE_DISCARD_LIVE_NAMES_COUNT" => SemanticRecoveryBranchKind::UniqueDiscardLiveNames,
+        "UNIQUE_DISCARD_LIVE_GROUPS_COUNT" => SemanticRecoveryBranchKind::UniqueDiscardLiveGroups,
+        _ => return None,
+    };
+
+    Some(SemanticRecoveryBranchSpec { kind, minimum })
 }
 
 impl SemanticLookAndChooseSpec {
@@ -2091,13 +2076,24 @@ impl AbilityFrame {
         } else {
             raw_opcode
         };
+        let mut raw_attr = self.attr;
+        if opcode == O_MOVE_MEMBER && !self.params.is_null() {
+            let params = &self.params;
+            if params.get("destination").is_some()
+                || params.get("DESTINATION").is_some()
+                || params.get("source").is_some()
+                || params.get("SOURCE").is_some()
+            {
+                raw_attr |= 99;
+            }
+        }
         AbilityFrameComponents {
             raw_opcode,
             opcode,
             value: self.value,
             filter: CardFilter::from_attr(self.attr),
             slot: DecodedSlot::decode(self.slot),
-            raw_attr: self.attr,
+            raw_attr,
             raw_slot: self.slot,
             is_negated,
             is_cost: self.is_cost,
@@ -2535,6 +2531,8 @@ pub struct PendingInteraction {
     pub target_slot: i32,
     #[serde(default)]
     pub choice_type: ChoiceType,
+    #[serde(default)]
+    pub filter: CardFilter,
     pub filter_attr: u64,
     pub choice_text: String,
     pub v_remaining: i16,
@@ -2560,6 +2558,7 @@ impl Default for PendingInteraction {
             effect_opcode: 0,
             target_slot: -1,
             choice_type: ChoiceType::default(),
+            filter: CardFilter::default(),
             filter_attr: 0,
             choice_text: String::new(),
             v_remaining: -1,
@@ -2599,19 +2598,25 @@ impl PendingInteraction {
     }
 
     pub fn selection_target_zone(&self) -> Option<usize> {
-        let filter = crate::core::logic::filter::structured_filter_from_attr(self.filter_attr);
+        let filter = self.filter;
         if filter.zone_mask != 0 {
             Some(filter.zone_mask as usize)
         } else {
+            let fallback_filter = crate::core::logic::filter::structured_filter_from_attr(
+                self.filter_attr,
+            );
+            if fallback_filter.zone_mask != 0 {
+                return Some(fallback_filter.zone_mask as usize);
+            }
             let packed_zone =
-                ((self.filter_attr & crate::core::logic::constants::FILTER_MASK_LOWER) >> 12) & 0x0F;
+                ((self.filter_attr & crate::core::logic::constants::FILTER_MASK_LOWER) >> 12)
+                    & 0x0F;
             (packed_zone > 0).then_some(packed_zone as usize)
         }
     }
 
     pub fn uses_total_cost_budget(&self) -> bool {
-        let filter = CardFilter::from_attr(self.filter_attr as u64);
-        filter.compare_accumulated
+        self.filter.compare_accumulated
             || (self.filter_attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0
     }
 

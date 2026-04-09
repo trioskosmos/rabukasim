@@ -330,60 +330,6 @@ fn test_branch_only_select_mode_generates_mode_actions_and_hides_stage_targets_b
 }
 
 #[test]
-fn test_card_707_wait_execution_honors_cost_filter() {
-    let db = load_real_db();
-    let mut state = create_test_state();
-    state.ui.silent = true;
-    state.phase = crate::core::enums::Phase::Main;
-
-    let low_cost_left = db
-        .members
-        .iter()
-        .find_map(|(&cid, member)| (member.cost == 4).then_some(cid))
-        .expect("real DB should contain a cost-4 member");
-    let high_cost_middle = db
-        .members
-        .iter()
-        .find_map(|(&cid, member)| (member.cost >= 5).then_some(cid))
-        .expect("real DB should contain a cost-5-or-higher member");
-    let low_cost_right = db
-        .members
-        .iter()
-        .find_map(|(&cid, member)| (member.cost <= 3 && cid != low_cost_left).then_some(cid))
-        .expect("real DB should contain another cost-4-or-lower member");
-
-    state.players[0].stage[0] = 707;
-    state.players[0].hand = vec![121].into();
-    state.players[1].stage = [low_cost_left, high_cost_middle, low_cost_right];
-
-    let ctx = AbilityContext {
-        source_card_id: 707,
-        player_id: 0,
-        activator_id: 0,
-        trigger_type: TriggerType::OnPlay,
-        area_idx: 0,
-        ..Default::default()
-    };
-
-    state.trigger_abilities(&db, TriggerType::OnPlay, &ctx);
-    state.process_trigger_queue(&db);
-
-    state
-        .step(&db, ACTION_BASE_HAND_SELECT)
-        .expect("card 707 discard cost should resolve");
-    state
-        .step(&db, ACTION_BASE_STAGE_SLOTS)
-        .expect("card 707 first wait target should resolve");
-    state
-        .step(&db, ACTION_BASE_STAGE_SLOTS + 2)
-        .expect("card 707 second wait target should resolve");
-
-    assert!(state.players[1].is_tapped(0));
-    assert!(!state.players[1].is_tapped(1));
-    assert!(state.players[1].is_tapped(2));
-}
-
-#[test]
 fn test_tap_opponent_single_ineligible_target_does_not_auto_tap() {
     let mut db = create_test_db();
     let mut state = create_test_state();

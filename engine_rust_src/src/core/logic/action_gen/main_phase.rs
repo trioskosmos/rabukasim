@@ -1,6 +1,6 @@
 use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
-use crate::core::logic::constants::DECK_TOP_LOOK_WINDOW;
+use crate::core::logic::constants::{DECK_TOP_LOOK_WINDOW, FILTER_COLOR_SHIFT_R5};
 use crate::core::logic::interpreter::costs::check_frame_cost;
 use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState};
 use crate::core::types::{MAX_HAND_SIZE, STAGE_SLOT_COUNT};
@@ -378,12 +378,26 @@ impl ActionGenerator for MainPhaseGenerator {
 
                                     if has_color_select {
                                         has_choice_on_play = true;
-                                        for c in 0..6 {
+                                        // Extract color_mask from ability effects to filter choices
+                                        let mut allowed_colors: Vec<i32> = (0..6).collect();
+                                        for effect in &ab.effects {
+                                            if effect.runtime_opcode == crate::core::generated_constants::O_COLOR_SELECT {
+                                                let color_mask = ((effect.runtime_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8;
+                                                if color_mask != 0 {
+                                                    allowed_colors = (0..6)
+                                                        .filter(|&c| (color_mask & (1 << c)) != 0)
+                                                        .map(|c| c as i32)
+                                                        .collect();
+                                                }
+                                                break;
+                                            }
+                                        }
+                                        for &c in &allowed_colors {
                                             let choice_aid =
                                                 crate::core::logic::ACTION_BASE_HAND_CHOICE
                                                     + (i * 100)
                                                     + (slot_idx as i32 * 10)
-                                                    + (c as i32);
+                                                    + c;
                                             receiver.add_action(choice_aid as usize);
                                         }
                                     } else if has_select_mode {

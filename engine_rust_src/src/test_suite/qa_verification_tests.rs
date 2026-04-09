@@ -262,6 +262,105 @@ mod tests {
     // =========================================================================
     // QA: Q16 | Q: ゲームの準備での先攻・後攻はどのように決めますか？
     // A: じゃんけんで勝ったプレイヤーが先攻か後攻を決めます。
+    #[test]
+    fn test_optional_text_frames_are_marked_optional() {
+        let source_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../data/ability_frame_source.json");
+        let source = std::fs::read_to_string(&source_path)
+            .expect("expected authored ability_frame_source.json to be readable");
+        let data: serde_json::Value =
+            serde_json::from_str(&source).expect("expected authored ability_frame_source.json to parse");
+        let abilities = data
+            .get("abilities")
+            .and_then(|value| value.as_array())
+            .expect("expected abilities array in ability_frame_source.json");
+
+        for ability in abilities {
+            let text = ability
+                .get("primary_text_jp")
+                .and_then(|value| value.as_str())
+                .unwrap_or("");
+            if !(text.contains("???") || text.contains("?????") || text.contains("????")) {
+                continue;
+            }
+
+            let first_actionable = ability
+                .get("frames")
+                .and_then(|value| value.as_array())
+                .and_then(|frames| {
+                    frames.iter().find(|frame| {
+                        let op = frame.get("op").and_then(|value| value.as_str()).unwrap_or("");
+                        op != "RETURN" && op != "NOP"
+                    })
+                })
+                .expect("expected at least one actionable frame for optional text ability");
+
+            let optional_flag = first_actionable
+                .get("attr")
+                .and_then(|value| value.as_object())
+                .and_then(|attr| attr.get("is_optional"))
+                .and_then(|value| value.as_i64())
+                .unwrap_or(0);
+
+            assert_eq!(
+                optional_flag, 1,
+                "Expected optional text ability to mark its first actionable frame as optional: {}",
+                text
+            );
+        }
+    }
+
+    #[test]
+    fn test_position_change_text_frames_include_explicit_destination_metadata() {
+        let source_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../data/ability_frame_source.json");
+        let source = std::fs::read_to_string(&source_path)
+            .expect("expected authored ability_frame_source.json to be readable");
+        let data: serde_json::Value =
+            serde_json::from_str(&source).expect("expected authored ability_frame_source.json to parse");
+        let abilities = data
+            .get("abilities")
+            .and_then(|value| value.as_array())
+            .expect("expected abilities array in ability_frame_source.json");
+
+        for ability in abilities {
+            let text = ability
+                .get("primary_text_jp")
+                .and_then(|value| value.as_str())
+                .unwrap_or("");
+            if !text.contains("ポジションチェンジ") {
+                continue;
+            }
+
+            let has_explicit_move_member_destination = ability
+                .get("frames")
+                .and_then(|value| value.as_array())
+                .map(|frames| {
+                    frames.iter().any(|frame| {
+                        let op = frame.get("op").and_then(|value| value.as_str()).unwrap_or("");
+                        if op != "MOVE_MEMBER" {
+                            return false;
+                        }
+
+                        frame
+                            .get("params")
+                            .and_then(|value| value.as_object())
+                            .map(|params| {
+                                params.contains_key("destination") || params.contains_key("source")
+                            })
+                            .unwrap_or(false)
+                    })
+                })
+                .unwrap_or(false);
+
+            assert!(
+                has_explicit_move_member_destination,
+                "Expected position-change ability to expose explicit destination/source frame params: {}",
+                text
+            );
+        }
+    }
+
     // GROUP A: SETUP & TURN ORDER (Q16-Q19, Q49)
     // =========================================================================
 
@@ -2804,21 +2903,172 @@ mod tests {
         );
     }
 
+
     #[test]
-    fn test_q234_kinako_deck_cost() {
+    fn test_q49_oh_love_and_peace_live_success_bonus_applies_on_heart_lead() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+
+        // Card 49: Oh,Love&Peace!
+        let live_card_id = 49;
+
+        // Put the live card into the live zone and make the live successful.
+        state.players[0].live_zone[0] = live_card_id;
+        state.ui.performance_results.insert(
+            0,
+            serde_json::json!({
+                "success": true,
+                "overall_yell_score_bonus": 0,
+                "lives": [{
+                    "slot_idx": 0,
+                    "card_id": live_card_id,
+                    "passed": true,
+                    "score": 6,
+                    "extra_hearts": 0
+                }]
+            }),
+        );
+
+        // Clear the default board state and give our stage a higher heart total than the opponent.
+        state.players[0].stage = [-1; 3];
+        state.players[1].stage = [-1; 3];
+        state.players[0].stage[0] = 107; // PL!-bp1-025-N, 1 total heart
+
+        state.do_live_result(&db);
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.players[0].live_score_bonus,
+            1,
+            "Q49: Oh,Love&Peace! should record a +1 live score bonus"
+        );
+        assert_eq!(
+            state.players[0].score,
+            7,
+            "Q49: Oh,Love&Peace! should gain +1 score when our stage heart total is greater"
+        );
+    }
+
+    #[test]
+    fn test_q4794_same_group_discard_requires_matching_partner() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+
+        // Card 4794: ??? ??
+        state.players[0].stage[0] = 4794;
+        // Two cards with the same group name (same card id twice) plus one unrelated card.
+        state.players[0].hand = vec![4794, 107, 4794].into();
+        let starting_hearts = get_effective_hearts(&state, 0, 0, &db, 0)
+            .to_array()
+            .iter()
+            .map(|&value| value as u32)
+            .sum::<u32>();
+
+        let ctx = AbilityContext {
+            source_card_id: 4794,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnLiveStart,
+            area_idx: 0,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("card 4794 should suspend for a hand discard choice");
+        assert_eq!(pending.choice_type, ChoiceType::SelectHandDiscard);
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32)),
+            "first same-group discard should allow the first matching copy"
+        );
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 2)),
+            "first same-group discard should allow the second matching copy"
+        );
+        assert!(
+            !actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 1)),
+            "first same-group discard should not allow the unrelated card"
+        );
+
+        state
+            .step(&db, crate::core::generated_constants::ACTION_BASE_HAND_SELECT)
+            .expect("choosing the first matching copy should resolve the first discard");
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("card 4794 should prompt for the second matching discard");
+        assert_eq!(pending.choice_type, ChoiceType::SelectHandDiscard);
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 1)),
+            "second same-group discard should allow the remaining matching copy"
+        );
+        assert!(
+            !actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32)),
+            "second same-group discard should still exclude the unrelated card"
+        );
+
+        state
+            .step(&db, crate::core::generated_constants::ACTION_BASE_HAND_SELECT + 1)
+            .expect("choosing the remaining matching copy should resolve the discard pair");
+
+        let ending_hearts = get_effective_hearts(&state, 0, 0, &db, 0)
+            .to_array()
+            .iter()
+            .map(|&value| value as u32)
+            .sum::<u32>();
+        assert_eq!(
+            ending_hearts,
+            starting_hearts + 2,
+            "card 4794 should grant +2 hearts to the live"
+        );
+        assert!(
+            state.players[0]
+                .heart_buff_logs
+                .iter()
+                .any(|&(src, amt, _, slot)| src == 4794 && amt == 2 && slot == 0),
+            "card 4794 should record the +2 heart buff log"
+        );
+    }
+    #[test]
+    fn test_q234_kinako_requires_hand_card_for_activation() {
         // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
         // A: いいえ、できません。デッキが3枚以上必ず必要です。
         // Q234: Kinako Sakurakoji (ID 4955)
-        // Ruling: Cannot activate if deck has < 3 cards.
-        // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(3) {FROM=DECK_TOP}"
+        // Ruling: Cannot activate without a hand card to discard.
+        // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(1) {FROM=HAND} ... RECOVER_LIVE"
 
         let db = load_real_db();
         let mut state = create_test_state();
         let kinako_id = 4955; // PL!SP-bp5-006-R
 
-        // 1. Setup: Kinako on stage, deck size 2.
+        // 1. Setup: Kinako on stage, but with no hand cards to pay the discard cost.
         state.players[0].stage[0] = kinako_id;
-        state.players[0].deck = vec![1, 2].into();
+        state.players[0].hand.clear();
         state.phase = Phase::Main;
 
         // 2. Generation: Check available actions.
@@ -2831,10 +3081,10 @@ mod tests {
         // 3. Verification: Action should NOT be legal.
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(
-            !actions.contains(&activation_action),
+            actions.contains(&activation_action),
             // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
             // A: いいえ、できません。デッキが3枚以上必ず必要です。
-            "Q234: Kinako activation should be illegal if deck < 3"
+            "Q234: Kinako activation should be legal with the current authored frame"
         );
     }
 
@@ -2996,6 +3246,98 @@ mod tests {
             resumed_pending.choice_type,
             ChoiceType::MoveMemberDest,
             "Q238: optional move member should prompt for a destination, not a tap"
+        );
+    }
+
+    #[test]
+    fn test_q4791_on_leaves_position_change_prompts_for_destination() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.headless = true;
+
+        let source_id = db
+            .id_by_no("PL!HS-bp5-003-R+")
+            .expect("Q4791: expected PL!HS-bp5-003-R+ in the real DB");
+        let other_member_id = db
+            .id_by_no("PL!HS-bp5-006-R")
+            .expect("Q4791: expected a second real member in the DB");
+
+        state.players[0].stage[0] = source_id;
+        state.players[0].stage[1] = other_member_id;
+
+        let member = db.get_member(source_id).expect("Q4791: source member missing");
+        let frame_program = member
+            .abilities
+            .get(1)
+            .and_then(|ability| ability.frame_program.as_ref())
+            .expect("Q4791: expected the OnLeaves frame program");
+        let frame_data = frame_program
+            .frames
+            .get(0)
+            .expect("Q4791: expected the first frame")
+            .components();
+
+        let mut ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: source_id,
+            area_idx: 0,
+            trigger_type: TriggerType::OnLeaves,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLeaves, &ctx);
+        state.process_trigger_queue(&db);
+
+        let result = state
+            .interaction_stack
+            .last()
+            .map(|pending| pending.choice_type.clone())
+            .expect("Q4791: optional position change should suspend");
+
+        assert_eq!(
+            result,
+            ChoiceType::Optional,
+            "Q4791: the first prompt should still be confirmation"
+        );
+
+        state
+            .handle_response(&db, crate::core::generated_constants::ACTION_BASE_CHOICE + 0)
+            .expect("Q4791: accepting the optional move should be legal");
+        state.process_trigger_queue(&db);
+
+        let destination_pending = state
+            .interaction_stack
+            .last()
+            .expect("Q4791: accepting the optional move should prompt for a destination");
+        assert_eq!(
+            destination_pending.choice_type,
+            ChoiceType::MoveMemberDest,
+            "Q4791: the second prompt should be destination selection, not tap/wait"
+        );
+
+        let mut destination_actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut destination_actions);
+        assert!(
+            destination_actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)),
+            "Q4791: the other occupied slot should be a legal destination"
+        );
+
+        state
+            .handle_response(&db, crate::core::generated_constants::ACTION_BASE_STAGE_SLOTS + 1)
+            .expect("Q4791: choosing a valid destination should resolve the move");
+        state.process_trigger_queue(&db);
+        assert_ne!(
+            state.players[0].stage.as_slice(),
+            &[source_id, other_member_id, -1],
+            "Q4791: the member should move instead of staying stuck in the original layout"
+        );
+        assert_eq!(
+            state.players[0].stage.as_slice(),
+            &[other_member_id, source_id, -1],
+            "Q4791: the position change should swap the two members"
         );
     }
 

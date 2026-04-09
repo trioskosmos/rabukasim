@@ -1603,7 +1603,13 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                     state.log(format!("Rule 11.5, Rule 11.5.1, Rule 11.5.2: Broadcasting [ライブ成功時] (On Live Success) triggers for player {}.", p));
                     state.log(format!("Rule 8.4.1, Rule 8.4.2, Rule 8.4.3, Rule 8.4.4, Rule 8.4.6: Player {} live SUCCESS event and score resolution.", p));
                 }
+                let bonus_before_triggers = state.players[p].live_score_bonus;
                 state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
+                state.process_trigger_queue(db);
+                let bonus_delta = state.players[p].live_score_bonus - bonus_before_triggers;
+                if bonus_delta != 0 {
+                    state.players[p].score = (state.players[p].score as i32 + bonus_delta).max(0) as u32;
+                }
                 if state.phase == Phase::Response {
                     return;
                 }

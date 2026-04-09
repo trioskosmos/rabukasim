@@ -5,10 +5,12 @@
 
 use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::TARGET_SLOT_STAGE;
+use crate::core::logic::filter::CardFilter;
 use crate::core::logic::filter::structured_filter_from_attr;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState, PendingInteraction, Phase};
+use std::collections::HashMap;
 use std::time::Instant;
 
 fn suspend_profile_enabled() -> bool {
@@ -43,25 +45,77 @@ fn try_build_prefilled_actions(
         != 0
         || choice_type == ChoiceType::Optional;
 
+    fn card_groups<'a>(db: &'a CardDatabase, cid: i32) -> Option<&'a [u8]> {
+        db.get_member(cid)
+            .map(|card| card.groups.as_slice())
+            .or_else(|| db.get_live(cid).map(|card| card.groups.as_slice()))
+    }
+
+    fn same_group_partner_exists(db: &CardDatabase, hand: &[i32], idx: usize) -> bool {
+        let Some(groups) = card_groups(db, hand[idx]) else {
+            return false;
+        };
+
+        let mut counts = HashMap::<u8, usize>::new();
+        for &cid in hand.iter() {
+            if cid < 0 {
+                continue;
+            }
+            if let Some(candidate_groups) = card_groups(db, cid) {
+                for &group in candidate_groups {
+                    *counts.entry(group).or_insert(0) += 1;
+                }
+            }
+        }
+
+        groups.iter().any(|group| counts.get(group).copied().unwrap_or(0) > 1)
+    }
+
     match choice_type {
         ChoiceType::SelectHandDiscard
             if effect_opcode == crate::core::generated_constants::O_MOVE_TO_DISCARD => {
-            let masked_filter = filter_attr
-                & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK
-                & !0x3;
+            let masked_filter = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+            let filter = CardFilter::from_attr(masked_filter);
+            let first_selected_groups = ctx
+                .selected_cards
+                .first()
+                .and_then(|cid| card_groups(db, *cid))
+                .map(|groups| groups.to_vec());
             let mut actions = Vec::new();
 
             for (idx, &cid) in state.players[chooser_p_idx].hand.iter().enumerate() {
                 let hand_slot = (chooser_p_idx as u8, 200 + idx as i16);
-                if state.card_matches_filter_with_ctx_at_slot(
-                    db,
-                    cid,
-                    masked_filter,
-                    hand_slot,
-                    ctx,
-                ) {
-                    actions.push((crate::core::logic::ACTION_BASE_HAND_SELECT + idx as i32) as i32);
+                let same_group_ok = if ctx.selected_cards.is_empty() {
+                    same_group_partner_exists(db, state.players[chooser_p_idx].hand.as_slice(), idx)
+                } else if let Some(required_groups) = first_selected_groups.as_ref() {
+                    card_groups(db, cid)
+                        .map(|candidate_groups| {
+                            candidate_groups
+                                .iter()
+                                .any(|candidate_group| required_groups.contains(candidate_group))
+                        })
+                        .unwrap_or(false)
+                } else {
+                    true
+                };
+                if !same_group_ok {
+                    continue;
                 }
+                let mut candidate_filter = filter;
+                candidate_filter.special_id = 0;
+                let candidate_attr = candidate_filter.to_attr();
+                if candidate_attr != 0
+                    && !state.card_matches_filter_with_ctx_at_slot(
+                        db,
+                        cid,
+                        candidate_attr,
+                        hand_slot,
+                        ctx,
+                    )
+                {
+                    continue;
+                }
+                actions.push((crate::core::logic::ACTION_BASE_HAND_SELECT + idx as i32) as i32);
             }
 
             if actions.is_empty() {
@@ -316,6 +370,7 @@ pub fn suspend_interaction(
         effect_opcode,
         target_slot,
         choice_type,
+        filter: crate::core::logic::filter::structured_filter_from_attr(filter_attr),
         filter_attr,
         choice_text: if store_ui_metadata {
             choice_text.to_string()
@@ -499,6 +554,18 @@ pub fn resolve_target_player(
     let raw_target = (filter_attr & 0x3) as u8;
 
     if decoded_slot.is_opponent || decoded_slot.target_slot == 2 || raw_target == 2 {
+        1 - default_player
+    } else {
+        default_player
+    }
+}
+
+pub fn resolve_target_player_from_filter(
+    decoded_slot: DecodedSlot,
+    filter: CardFilter,
+    default_player: usize,
+) -> usize {
+    if decoded_slot.is_opponent || decoded_slot.target_slot == 2 || filter.target_player == 2 {
         1 - default_player
     } else {
         default_player

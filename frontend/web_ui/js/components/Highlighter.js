@@ -71,14 +71,28 @@ export const Highlighter = {
             specificHighlighted = true;
         }
 
-        if (!specificHighlighted) {
+        // Special handling for mulligan actions (IDs 300-359)
+        // Mulligan action IDs map directly to hand index: hand_idx = actionId - 300
+        if (!specificHighlighted && a.id >= 300 && a.id <= 359) {
+            const handIdx = a.id - 300;
+            const mulliganEl = zoneElementId(sourcePrefix, 'hand', handIdx);
+            if (mulliganEl) {
+                Highlighter.addHighlight(mulliganEl, 'highlight-source');
+                specificHighlighted = true;
+            }
+        }
+
+        // Only fall back to card ID search if we have no zone/index info at all
+        // This prevents highlighting the wrong card when there are duplicate IDs
+        if (!specificHighlighted && sourceZone === undefined && sourceIndex === undefined) {
             let srcCardId = getActionValue(a, 'source_card_id');
             if ((srcCardId === undefined || srcCardId === -1) && state.pending_choice) {
                 srcCardId = state.pending_choice.source_card_id || state.pending_choice.card_id || (state.pending_choice.params ? state.pending_choice.params.source_card_id : -1);
             }
 
             if (srcCardId !== undefined && srcCardId !== -1) {
-                Highlighter.highlightCardById(srcCardId, 'highlight-source');
+                // Pass source zone/index as preferred parameters to handle duplicate IDs correctly
+                Highlighter.highlightCardById(srcCardId, 'highlight-source', true, sourceZone, sourceIndex, sourcePrefix);
             }
         }
     },
@@ -92,6 +106,8 @@ export const Highlighter = {
         if (srcId === undefined || srcId === -1) return;
 
         let found = false;
+        let foundZone = null;
+        let foundIndex = null;
         const perspectivePlayer = State.perspectivePlayer;
         const selfPrefix = getPlayerPrefix(choice.source_player, perspectivePlayer, (state.active_player === perspectivePlayer ? 'my' : 'opp'));
 
@@ -99,20 +115,24 @@ export const Highlighter = {
         if (area !== undefined) {
             Highlighter.addHighlight(`${selfPrefix}-stage-slot-${area}`, 'highlight-source');
             found = true;
+            foundZone = 'stage';
+            foundIndex = area;
         }
 
         const handIdx = choice.hand_idx !== undefined ? choice.hand_idx : (choice.params ? choice.params.hand_idx : undefined);
         if (handIdx !== undefined) {
             Highlighter.addHighlight(`${selfPrefix}-hand-card-${handIdx}`, 'highlight-source');
             found = true;
+            foundZone = 'hand';
+            foundIndex = handIdx;
         }
 
         if (!found) {
-            Highlighter.highlightCardById(srcId);
+            Highlighter.highlightCardById(srcId, 'highlight-source', true, null, null, selfPrefix);
         }
     },
 
-    highlightCardById: (srcId, className = 'highlight-source', firstOnly = true) => {
+    highlightCardById: (srcId, className = 'highlight-source', firstOnly = true, preferredZone = null, preferredIndex = null, preferredPrefix = 'my') => {
         const state = State.data;
         if (!state) return;
 
@@ -122,9 +142,57 @@ export const Highlighter = {
             { id: 1 - perspectivePlayer, prefix: 'opp' }
         ];
 
+        // If we have a preferred zone and index, try that first
+        if (preferredZone && preferredIndex !== null) {
+            const preferredEl = zoneElementId(preferredPrefix, preferredZone, preferredIndex);
+            if (preferredEl) {
+                // Verify the card at this position matches the expected ID
+                const p = state.players[playersMap.find(pm => pm.prefix === preferredPrefix)?.id ?? perspectivePlayer];
+                let cardAtPos = null;
+                if (preferredZone === 'hand' && p?.hand) {
+                    cardAtPos = p.hand[preferredIndex];
+                } else if (preferredZone === 'stage' && p?.stage) {
+                    cardAtPos = p.stage[preferredIndex];
+                } else if (preferredZone === 'live' && p?.live_zone) {
+                    cardAtPos = p.live_zone[preferredIndex];
+                } else if (preferredZone === 'energy' && p?.energy) {
+                    cardAtPos = p.energy[preferredIndex]?.card;
+                }
+                const cidAtPos = cardAtPos ? (cardAtPos.id ?? cardAtPos) : -1;
+                if (cidAtPos === srcId || cidAtPos === (srcId & 0x1FFFFF)) { // Check both raw and masked ID
+                    Highlighter.addHighlight(preferredEl, className);
+                    return;
+                }
+            }
+        }
+
         for (const pMap of playersMap) {
             const p = state.players[pMap.id];
             if (!p) continue;
+
+            // Check preferred zone first if specified (but no specific index)
+            if (preferredZone === 'hand' && p.hand) {
+                for (let idx = 0; idx < p.hand.length; idx++) {
+                    const card = p.hand[idx];
+                    const cid = card ? card.id : -1;
+                    if (cid === srcId) {
+                        Highlighter.addHighlight(`${pMap.prefix}-hand-card-${idx}`, className);
+                        if (firstOnly) return;
+                    }
+                }
+            } else if (preferredZone !== 'hand') {
+                // Only search hand if not already searched as preferred zone
+                if (p.hand) {
+                    for (let idx = 0; idx < p.hand.length; idx++) {
+                        const card = p.hand[idx];
+                        const cid = card ? card.id : -1;
+                        if (cid === srcId) {
+                            Highlighter.addHighlight(`${pMap.prefix}-hand-card-${idx}`, className);
+                            if (firstOnly) return;
+                        }
+                    }
+                }
+            }
 
             if (p.stage) {
                 for (let idx = 0; idx < p.stage.length; idx++) {
@@ -132,16 +200,6 @@ export const Highlighter = {
                     const cid = card ? card.id : -1;
                     if (cid === srcId) {
                         Highlighter.addHighlight(`${pMap.prefix}-stage-slot-${idx}`, className);
-                        if (firstOnly) return;
-                    }
-                }
-            }
-            if (p.hand) {
-                for (let idx = 0; idx < p.hand.length; idx++) {
-                    const card = p.hand[idx];
-                    const cid = card ? card.id : -1;
-                    if (cid === srcId) {
-                        Highlighter.addHighlight(`${pMap.prefix}-hand-card-${idx}`, className);
                         if (firstOnly) return;
                     }
                 }

@@ -1,24 +1,15 @@
 
 use super::*;
 
-fn source_heart_requirement_color_hint(db: &CardDatabase, source_cid: i32) -> Option<usize> {
-    db.get_member(source_cid)
-        .map(|member| member.original_text.as_str())
-        .or_else(|| db.get_live(source_cid).map(|live| live.original_text.as_str()))
-        .and_then(crate::core::logic::heart_semantics::decode_heart_type_from_text)
-}
-
 fn resolve_requirement_color(
-    db: &CardDatabase,
-    ctx: &AbilityContext,
+    _db: &CardDatabase,
+    _ctx: &AbilityContext,
     frame: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> usize {
     let target_slot = frame.slot.target_slot as usize;
     if let Some(color) = crate::core::logic::heart_semantics::decode_heart_type_from_params(frame.params)
     {
         color
-    } else if source_heart_requirement_color_hint(db, ctx.source_card_id).is_some() {
-        source_heart_requirement_color_hint(db, ctx.source_card_id).unwrap_or(6)
     } else if matches!(target_slot, 1 | 2 | 3 | 5 | 6) {
         target_slot
     } else if frame.filter.color_mask != 0 {

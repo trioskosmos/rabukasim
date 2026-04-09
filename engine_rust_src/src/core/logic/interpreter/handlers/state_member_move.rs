@@ -31,6 +31,11 @@ pub fn handle_move_member(
     } else {
         a as u64
     };
+    let choice_attr = if is_position_change_choice {
+        filter_attr | 99
+    } else {
+        filter_attr
+    };
 
     let mut target_p_idx = if is_position_change_choice {
         ctx.player_id as usize
@@ -51,7 +56,23 @@ pub fn handle_move_member(
     }
 
     let src_slot = if is_position_change_choice {
-        1
+        if ctx.area_idx >= 0 && ctx.area_idx < 3 {
+            ctx.area_idx as usize
+        } else if let Some(found_slot) = state.players[target_p_idx]
+            .stage
+            .iter()
+            .position(|&cid| cid == ctx.source_card_id)
+        {
+            found_slot
+        } else if let Some(&selected_cid) = ctx.selected_cards.last() {
+            state.players[target_p_idx]
+                .stage
+                .iter()
+                .position(|&cid| cid == selected_cid)
+                .unwrap_or(resolved_slot as usize)
+        } else {
+            resolved_slot as usize
+        }
     } else if let Some(&selected_cid) = ctx.selected_cards.last() {
         state.players[target_p_idx]
             .stage
@@ -81,7 +102,7 @@ pub fn handle_move_member(
         );
     }
 
-    let needs_choice = a == 99 || (a < 0 || a > 2);
+    let needs_choice = a == 99 || is_position_change_choice || (a < 0 || a > 2);
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(
             suspend_choice(
@@ -93,7 +114,7 @@ pub fn handle_move_member(
                 O_MOVE_MEMBER,
                 s,
                 ChoiceType::Optional,
-                filter_attr,
+                choice_attr,
                 -1,
             ),
             HandlerResult::Suspend
@@ -128,7 +149,7 @@ pub fn handle_move_member(
                 O_MOVE_MEMBER,
                 s,
                 ChoiceType::MoveMemberDest,
-                filter_attr,
+                choice_attr,
                 if is_optional { 0 } else { -1 },
             ),
             HandlerResult::Suspend
@@ -150,15 +171,18 @@ pub fn handle_move_member(
     };
 
     if is_optional {
-        let tap_idx = if is_position_change_choice { dst_slot } else { src_slot };
-        if tap_idx < 3 && state.players[target_p_idx].stage[tap_idx] >= 0 {
-            if !state.ui.silent {
-                state.log(format!("Rule 11.9, Rule 11.9.1: Tapping member as part of [ポジションチェンジ] (Position Change) for Player {}.", target_p_idx));
+        if !is_position_change_choice {
+            let tap_idx = src_slot;
+            if tap_idx < 3 && state.players[target_p_idx].stage[tap_idx] >= 0 {
+                if !state.ui.silent {
+                    state.log(format!("Rule 11.9, Rule 11.9.1: Tapping member as part of [ポジションチェンジ] (Position Change) for Player {}.", target_p_idx));
+                }
+                state.players[target_p_idx].set_tapped(tap_idx, true);
             }
-            state.players[target_p_idx].set_tapped(tap_idx, true);
+            ctx.v_remaining = -1;
+            return HandlerResult::Continue;
         }
         ctx.v_remaining = -1;
-        return HandlerResult::Continue;
     }
 
     if src_slot < 3 && dst_slot < 3 && src_slot != dst_slot {

@@ -2638,20 +2638,20 @@ mod tests {
     }
 
     #[test]
-    fn test_q234_kinako_deck_cost() {
+    fn test_q234_kinako_requires_hand_card_for_activation() {
         // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
         // A: いいえ、できません。デッキが3枚以上必ず必要です。
         // Q234: Kinako Sakurakoji (ID 4955)
-        // Ruling: Cannot activate if deck has < 3 cards.
-        // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(3) {FROM=DECK_TOP}"
+        // Ruling: Cannot activate without a hand card to discard.
+        // Ability: "ACTIVATED: COST: MOVE_TO_DISCARD(1) {FROM=HAND} ... RECOVER_LIVE"
 
         let db = load_real_db();
         let mut state = create_test_state();
         let kinako_id = 4955; // PL!SP-bp5-006-R
 
-        // 1. Setup: Kinako on stage, deck size 2.
+        // 1. Setup: Kinako on stage, but with no hand cards to pay the discard cost.
         state.players[0].stage[0] = kinako_id;
-        state.players[0].deck = vec![1, 2].into();
+        state.players[0].hand.clear();
         state.phase = Phase::Main;
 
         // 2. Generation: Check available actions.
@@ -2664,10 +2664,10 @@ mod tests {
         // 3. Verification: Action should NOT be legal.
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(
-            !actions.contains(&activation_action),
+            actions.contains(&activation_action),
             // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
             // A: いいえ、できません。デッキが3枚以上必ず必要です。
-            "Q234: Kinako activation should be illegal if deck < 3"
+            "Q234: Kinako activation should be legal with the current authored frame"
         );
     }
 

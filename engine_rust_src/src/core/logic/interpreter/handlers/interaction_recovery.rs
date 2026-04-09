@@ -5,7 +5,7 @@ use crate::core::logic::interpreter::handlers::interaction_zone::{
     collect_zone_cards, normalized_source_zone, remove_card_from_zone,
 };
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::AbilityFrameComponents;
+use crate::core::logic::models::{AbilityFrameComponents, SemanticRecoveryBranchKind};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
@@ -17,20 +17,6 @@ fn recovery_uses_same_name_filter(
     frame_idx: usize,
 ) -> bool {
     recovery_special_id(db, ctx, frame_data, frame_idx) == 4
-}
-
-fn recovery_raw_condition(frame_data: &AbilityFrameComponents<'_>) -> Option<String> {
-    frame_data
-        .params
-        .as_ref()
-        .and_then(|params| params.as_object())
-        .and_then(|params| {
-            params
-                .get("raw_cond")
-                .or_else(|| params.get("RAW_COND"))
-                .and_then(|value| value.as_str())
-                .map(|value| value.to_string())
-        })
 }
 
 fn recovery_special_id(
@@ -106,10 +92,13 @@ pub fn handle_recovery(
     let a = frame_data.raw_attr as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
-    let raw_cond = recovery_raw_condition(frame_data);
+    let recovery_branch_spec = frame_data.semantic_recovery_branch_spec();
     let ignore_attr_filter = matches!(
-        raw_cond.as_deref(),
-        Some("UNIQUE_DISCARD_LIVE_NAMES_COUNT" | "UNIQUE_DISCARD_LIVE_GROUPS_COUNT")
+        recovery_branch_spec.map(|spec| spec.kind),
+        Some(
+            SemanticRecoveryBranchKind::UniqueDiscardLiveNames
+                | SemanticRecoveryBranchKind::UniqueDiscardLiveGroups
+        )
     );
     let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
         Zone::Discard

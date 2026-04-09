@@ -30,6 +30,14 @@ pub fn handle_opponent_choose(
         ) {
             return HandlerResult::Suspend;
         }
+    } else {
+        // Opponent has made a choice - copy the chosen card to looked_cards for ADD_TO_HAND
+        let choice_idx = ctx.choice_index as usize;
+        if choice_idx < ctx.selected_cards.len() {
+            let chosen_card = ctx.selected_cards[choice_idx];
+            let original_player = 1 - ctx.player_id; // ctx.player_id was flipped, so original is the other one
+            state.players[original_player as usize].looked_cards.push(chosen_card);
+        }
     }
     HandlerResult::Continue
 }

@@ -3,11 +3,11 @@
 .perf-overview-shell {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 0;
 }
 
 .perf-comparison-banner {
-    padding: var(--space-md);
+    padding: 2px;
     background: linear-gradient(135deg, rgba(241, 186, 76, 0.1), transparent);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -16,7 +16,7 @@
 .perf-player-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-sm);
+    gap: 2px;
 }
 
 .perf-panel {
@@ -24,7 +24,7 @@
     backdrop-filter: var(--glass-blur);
     border-radius: var(--radius-md);
     border: 1px solid var(--glass-border);
-    padding: var(--space-md);
+    padding: 2px;
     border-left: 4px solid #666;
 }
 
@@ -36,11 +36,11 @@
 .perf-metric-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-xs);
+    gap: 2px;
 }
 
 .perf-metric-card {
-    padding: var(--space-xs) var(--space-sm);
+    padding: 1px 2px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
@@ -57,7 +57,7 @@
 .heart-progress-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 1px;
 }
 
 .heart-pip {
@@ -117,13 +117,13 @@
 .turn-history-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 1px;
 }
 
 .turn-event-item {
     background: rgba(255, 255, 255, 0.03);
     border-left: 3px solid #666;
-    padding: 4px 10px;
+    padding: 1px 2px;
 }
 
 .turn-event-item.play { border-left-color: var(--accent-blue); background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent); }
@@ -134,10 +134,10 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 2px;
     align-items: center;
     background: rgba(0,0,0,0.1);
-    padding: 4px 8px;
+    padding: 1px 2px;
     border-radius: 6px;
     min-height: 24px;
 }
@@ -145,7 +145,7 @@
 .heart-grid-cell {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 1px;
     font-weight: bold;
     font-size: 0.85rem;
 }
@@ -158,7 +158,7 @@
 .perf-yell-gallery {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 2px;
 }
 
 .perf-yell-card-modern {
@@ -168,10 +168,10 @@
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 8px;
     overflow: hidden;
-    padding: 4px;
+    padding: 1px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 1px;
 }
 
 .perf-yell-card-art-wrap {
@@ -214,9 +214,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin: 4px 0;
-    padding: 8px;
+    gap: 4px;
+    margin: 1px 0;
+    padding: 2px;
     background: rgba(0,0,0,0.2);
     border-radius: 8px;
 }
@@ -235,7 +235,7 @@
     font-size: 1.2rem;
     font-weight: bold;
     color: var(--text-dim);
-    margin-top: 12px;
+    margin-top: 2px;
 }
 
 .perf-math-result .perf-math-value {
@@ -249,25 +249,25 @@
     font-size: 0.75rem;
     color: var(--text-dim);
     text-align: center;
-    margin-top: 4px;
+    margin-top: 1px;
 }
 
 .perf-match-summary {
     border-top: 1px solid rgba(255,255,255,0.05);
-    padding-top: 8px;
-    margin-top: 8px;
+    padding-top: 2px;
+    margin-top: 2px;
 }
 .perf-panel-body-grid {
     display: grid;
     grid-template-columns: 1.1fr 0.9fr;
-    gap: var(--space-md);
+    gap: 2px;
     align-items: start;
 }
 
 .perf-body-column-left, .perf-body-column-right {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 2px;
 }
 
 .perf-body-column-left > *, .perf-body-column-right > * {
@@ -301,18 +301,18 @@
 .hearts-compact {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 1px;
     align-items: center;
 }
 
 .perf-panel-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: var(--space-md);
+    margin-bottom: 2px;
 }
 
 .perf-panel-header h2 {
-    margin: 4px 0;
+    margin: 1px 0;
     font-size: 1.4rem;
 }
 
@@ -322,7 +322,7 @@
 }
 
 .perf-status-pill {
-    padding: 4px 12px;
+    padding: 1px 4px;
     border-radius: var(--radius-full);
     font-weight: 800;
     font-size: 0.75rem;
@@ -333,7 +333,7 @@
 .perf-status-pill.failure { background: var(--accent-pink); color: #fff; }
 
 .perf-outcome-pill {
-    margin-top: 4px;
+    margin-top: 1px;
     font-size: 0.7rem;
     text-align: right;
     color: var(--text-muted);

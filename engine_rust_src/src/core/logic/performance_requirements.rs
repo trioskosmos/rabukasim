@@ -6,18 +6,10 @@ use super::player::PlayerState;
 use super::rules::calculate_board_aura;
 use crate::core::enums::*;
 use crate::core::hearts::*;
-use crate::core::logic::heart_semantics::decode_heart_type_from_text;
 use serde_json::json; // Value removed
 
 fn decode_heart_requirement_color(frame: &AbilityFrameComponents<'_>) -> usize {
     frame.resolved_color_index(6, 6)
-}
-
-fn source_heart_requirement_color_hint(db: &CardDatabase, source_cid: i32) -> Option<usize> {
-    db.get_member(source_cid)
-        .map(|member| member.original_text.as_str())
-        .or_else(|| db.get_live(source_cid).map(|live| live.original_text.as_str()))
-        .and_then(decode_heart_type_from_text)
 }
 
 pub fn process_heart_modifiers_frames(
@@ -161,8 +153,7 @@ pub fn get_live_requirements(
                     if op == O_INCREASE_HEART_COST {
                         touches_live_requirements = true;
                         let val = frame.value();
-                        let idx = source_heart_requirement_color_hint(db, source_cid)
-                            .unwrap_or_else(|| decode_heart_requirement_color(&frame.components()));
+                        let idx = decode_heart_requirement_color(&frame.components());
                         if idx < 7 {
                             aura.heart_req_additions.add_to_color(idx, val as i32);
                         }
