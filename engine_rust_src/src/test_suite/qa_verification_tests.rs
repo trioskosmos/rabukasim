@@ -1713,6 +1713,60 @@ mod tests {
     }
 
     #[test]
+    fn test_q115_future_hallelujah_all_blade_counts_as_any_heart() {
+        // Card 519 (Future Hallelujah) requires 2 Red / 2 Yellow / 2 Purple.
+        // This regression proves that an ALL blade (wild heart, index 6)
+        // can satisfy the missing color during the performance allocator.
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+
+        let live_id = 519; // Future Hallelujah
+        state.players[0].live_zone[0] = live_id;
+
+        // Satisfy the card's condition: 5+ unique Liella! members across stage/discard.
+        let liella_ids = [560, 486, 488, 484, 485];
+        for &id in &liella_ids {
+            state.players[0].discard.push(id);
+        }
+
+        let live_card = db.get_live(live_id).unwrap();
+        let (req_board, _) =
+            crate::core::logic::performance::get_live_requirements(&state, &db, 0, live_card);
+
+        assert_eq!(req_board.get_color_count(1), 2, "Future Hallelujah should require 2 Red");
+        assert_eq!(
+            req_board.get_color_count(2),
+            2,
+            "Future Hallelujah should require 2 Yellow"
+        );
+        assert_eq!(
+            req_board.get_color_count(5),
+            2,
+            "Future Hallelujah should require 2 Purple"
+        );
+
+        // Simulate a performance pool where one Purple is missing but one ALL blade exists.
+        // The board still includes the two generic hearts from the card's live requirements.
+        let mut available = req_board.to_array_u32();
+        available[5] = 1; // One Purple short.
+        available[6] = 3; // Keep the generic hearts and add one ALL blade / wild heart.
+
+        let (satisfied, total_req) =
+            crate::core::hearts::process_hearts(&mut available, &req_board.to_array_u32());
+
+        assert_eq!(
+            satisfied, total_req,
+            "Future Hallelujah's requirement should be fully satisfiable with an ALL blade as the missing color"
+        );
+        assert_eq!(
+            available[5],
+            0,
+            "The wildcard should cover the missing Purple requirement"
+        );
+    }
+
+    #[test]
     fn test_q206_baton_touch_cost_reduction() {
         // QA: Q206 | Q: 自分のステージにウェイト状態のメンバーが1人だけおり、このメンバーを登場させるためにそのウェイト状態のメンバーをバトンタッチで控え室に置こうとしています。 このとき、このメンバーカードのコストはいくつになりますか？
         // A: 15コストとしてプレイできます。
@@ -1924,37 +1978,66 @@ mod tests {
     }
 
     #[test]
-    fn test_split_frame_index_entries_hydrate_on_target_cards() {
+    fn test_split_frame_index_entries_follow_their_gameplay_text() {
         let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
 
-        let emma = db.get_member(4433).unwrap();
-        let emma_ability = &emma.abilities[0];
-        let emma_frames = emma_ability.resolved_frames();
+        let nijigasaki_member = db
+            .members
+            .values()
+            .find(|member| member.groups.contains(&(crate::core::generated_constants::GROUP_NIJIGASAKI as u8)))
+            .map(|member| member.card_id)
+            .expect("expected a Nijigasaki member");
 
-        let rin = db.get_member(4195).unwrap();
-        let rin_ability = &rin.abilities[0];
-        let rin_frames = rin_ability.resolved_frames();
+        let lilywhite_live = db
+            .lives
+            .values()
+            .find(|live| live.units.contains(&(crate::core::generated_constants::UNIT_LILY_WHITE as u8)))
+            .map(|live| live.card_id)
+            .expect("expected a lilywhite live card");
 
-        let blade = db.get_member(410).unwrap();
-        let blade_ability = &blade.abilities[0];
-        let blade_frames = blade_ability.resolved_frames();
+        let blade_live = db
+            .card_no_to_id
+            .get("PL!S-PR-029-PR")
+            .copied()
+            .expect("expected the cost-13 blade aura live card");
 
-        assert!(
-            emma_frames.len() >= 3,
-            "Emma should hydrate the split COUNT_STAGE + REDUCE_COST frame program"
+        state.players[0].stage = [nijigasaki_member, -1, -1];
+        state.players[0].set_tapped(0, true);
+        state.players[0].success_lives = vec![lilywhite_live].into();
+        state.players[0].live_zone[0] = blade_live;
+        state.players[0].hand = vec![4433, 4195].into();
+
+        let emma_delta = crate::core::logic::rules::calculate_cost_delta(&state, &db, 4433, 0);
+        assert_eq!(
+            emma_delta,
+            -2,
+            "Emma should reduce hand cost when another Nijigasaki member is waiting on stage"
         );
-        assert!(
-            rin_frames.len() >= 3,
-            "Rin should hydrate the split raw condition + REDUCE_COST frame program"
-        );
-        assert!(
-            blade_frames.len() >= 3,
-            "The cost-13 blade aura should hydrate the split COUNT_STAGE + ADD_BLADES frame program"
-        );
 
-        assert!(!emma_ability.conditions.is_empty());
-        assert!(!rin_ability.conditions.is_empty());
-        assert!(!blade_ability.conditions.is_empty());
+        state.players[0].set_tapped(0, false);
+        state.players[0].stage = [-1, -1, -1];
+        let emma_neutral = crate::core::logic::rules::calculate_cost_delta(&state, &db, 4433, 0);
+        assert_eq!(emma_neutral, 0, "Emma should not reduce cost without the stage condition");
+
+        let rin_delta = crate::core::logic::rules::calculate_cost_delta(&state, &db, 4195, 0);
+        assert_eq!(rin_delta, -2, "Rin should reduce hand cost when a lilywhite card is in the success pile");
+
+        state.players[0].success_lives.clear();
+        let rin_neutral = crate::core::logic::rules::calculate_cost_delta(&state, &db, 4195, 0);
+        assert_eq!(rin_neutral, 0, "Rin should not reduce cost without a lilywhite success card");
+
+        let mut aura_state = create_test_state();
+        aura_state.players[0].stage[0] = 410;
+        aura_state.players[1].stage[1] = 4448;
+        let aura = crate::core::logic::rules::calculate_board_aura(&aura_state, 0, &db);
+        assert_eq!(aura.blades[0], 2, "the PR live should grant +2 blades when a 13+ cost member is on either stage");
+
+        aura_state.players[0].stage = [-1, -1, -1];
+        aura_state.players[1].stage = [-1, -1, -1];
+        let neutral_aura = crate::core::logic::rules::calculate_board_aura(&aura_state, 0, &db);
+        assert_eq!(neutral_aura.blades[0], 0, "the PR live should not grant blades without a 13+ cost member");
     }
     // =========================================================================
     // GROUP D: WAVE 2 & SPECIAL CARDS (Nico, CatChu!, etc.)

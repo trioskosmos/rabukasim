@@ -196,5 +196,9 @@ panic = 'abort'
 opt-level = 3
 
 [[test]]
+name = "qa_verification_tests"
+path = "tests/qa_verification_tests.rs"
+
+[[test]]
 name = "card574_self_discard"
 path = "tests/card574_self_discard.rs"

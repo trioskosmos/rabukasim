@@ -351,6 +351,10 @@ fn apply_reduce_cost_modifiers(
                             .success_lives
                             .iter()
                             .any(|&id| id == source_card_id),
+                        Some(SemanticCountZone::Energy) => state.players[owner_idx]
+                            .energy_zone
+                            .iter()
+                            .any(|&id| id == source_card_id),
                         None if op == O_REDUCE_COST => state.players[owner_idx]
                             .hand
                             .iter()
@@ -373,7 +377,7 @@ fn apply_reduce_cost_modifiers(
                             .iter()
                             .position(|&id| id == source_card_id)
                             .map(|idx| (owner_idx as u8, idx as i16)),
-                        Some(SemanticCountZone::SuccessPile) | None => None,
+                        Some(SemanticCountZone::Energy) | Some(SemanticCountZone::SuccessPile) | None => None,
                     };
                     let source_matches_filter = if semantic.raw_attr == 0 {
                         true
@@ -1511,6 +1515,9 @@ fn apply_aura_modifier(
                 .count() as i32,
             SemanticScaleSource::CountZone(SemanticCountZone::SuccessPile) => {
                 state.players[p_idx].success_lives.len() as i32
+            }
+            SemanticScaleSource::CountZone(SemanticCountZone::Energy) => {
+                state.players[p_idx].energy_zone.len() as i32
             }
         };
     }

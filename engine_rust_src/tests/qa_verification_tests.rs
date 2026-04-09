@@ -79,3 +79,161 @@ fn test_filter_constant_usage_canonical_names_only() {
         );
     }
 }
+
+#[test]
+fn test_ability_frame_source_has_explicit_add_hearts_metadata() {
+    let json_content = std::fs::read_to_string("../data/ability_frame_source.json")
+        .expect("Failed to read ability_frame_source.json");
+    let data: serde_json::Value = serde_json::from_str(&json_content)
+        .expect("Failed to parse ability_frame_source.json");
+
+    let abilities = data
+        .get("abilities")
+        .and_then(|value| value.as_array())
+        .expect("ability_frame_source.json should contain an abilities array");
+
+    let mut add_hearts_count = 0usize;
+    for ability in abilities {
+        if let Some(frames) = ability.get("frames").and_then(|value| value.as_array()) {
+            for frame in frames {
+                if frame.get("op").and_then(|value| value.as_str()) != Some("ADD_HEARTS") {
+                    continue;
+                }
+
+                add_hearts_count += 1;
+                let params = frame
+                    .get("params")
+                    .and_then(|value| value.as_object())
+                    .expect("ADD_HEARTS frames should carry params metadata");
+                assert!(
+                    params.contains_key("heart_type") || params.contains_key("heart_types"),
+                    "ADD_HEARTS frames should explicitly mark heart_type or heart_types: {:?}",
+                    frame
+                );
+            }
+        }
+    }
+
+    assert_eq!(add_hearts_count, 73, "Expected the normalized source to contain 73 ADD_HEARTS frames");
+
+    fn find_ability<'a>(
+        abilities: &'a [serde_json::Value],
+        card_no: &str,
+        ability_index: usize,
+    ) -> &'a serde_json::Value {
+        abilities
+            .iter()
+            .find(|ability| {
+                ability
+                    .get("card_refs")
+                    .and_then(|value| value.as_array())
+                    .and_then(|refs| refs.first())
+                    .and_then(|first| first.get("card_no"))
+                    .and_then(|value| value.as_str())
+                    == Some(card_no)
+                    && ability
+                        .get("card_refs")
+                        .and_then(|value| value.as_array())
+                        .and_then(|refs| refs.first())
+                        .and_then(|first| first.get("ability_index"))
+                        .and_then(|value| value.as_u64())
+                        .map(|idx| idx as usize)
+                        == Some(ability_index)
+            })
+            .expect("Expected to find a matching ability entry in ability_frame_source.json")
+    }
+
+    let tiny_stars = find_ability(abilities, "PL!SP-bp1-024-L", 0);
+    let tiny_hearts: Vec<i64> = tiny_stars
+        .get("frames")
+        .and_then(|value| value.as_array())
+        .unwrap()
+        .iter()
+        .filter(|frame| frame.get("op").and_then(|value| value.as_str()) == Some("ADD_HEARTS"))
+        .map(|frame| {
+            frame
+                .get("params")
+                .and_then(|value| value.as_object())
+                .and_then(|params| params.get("heart_type"))
+                .and_then(|value| value.as_i64())
+                .expect("Tiny Stars ADD_HEARTS frames should have numeric heart_type metadata")
+        })
+        .collect();
+    assert_eq!(tiny_hearts, vec![4, 0], "Tiny Stars should carry distinct heart metadata for each member");
+
+    for (ability_index, expected_heart_type, expected_target_player) in [
+        (0usize, 2i64, Some("OPPONENT")),
+        (1usize, 2i64, Some("BOTH")),
+        (2usize, 4i64, Some("SELF")),
+    ] {
+        let card_864 = find_ability(abilities, "PL!SP-bp5-011-AR", ability_index);
+        let card_864_heart = card_864
+            .get("frames")
+            .and_then(|value| value.as_array())
+            .unwrap()
+            .iter()
+            .find(|frame| frame.get("op").and_then(|value| value.as_str()) == Some("ADD_HEARTS"))
+            .expect("Card 864 ADD_HEARTS frame should exist");
+        let params = card_864_heart
+            .get("params")
+            .and_then(|value| value.as_object())
+            .expect("Card 864 ADD_HEARTS frame should have params");
+        assert_eq!(
+            params.get("heart_type").and_then(|value| value.as_i64()),
+            Some(expected_heart_type),
+            "Card 864 ability {} should preserve the expected heart color",
+            ability_index
+        );
+        assert_eq!(
+            card_864_heart
+                .get("attr")
+                .and_then(|value| value.as_object())
+                .and_then(|attr| attr.get("target_player"))
+                .and_then(|value| value.as_str()),
+            expected_target_player,
+            "Card 864 ability {} should preserve the expected target scope",
+            ability_index
+        );
+    }
+
+    let rina_all = find_ability(abilities, "PL!N-bp3-009-P", 0);
+    let rina_heart = rina_all
+        .get("frames")
+        .and_then(|value| value.as_array())
+        .unwrap()
+        .iter()
+        .find(|frame| frame.get("op").and_then(|value| value.as_str()) == Some("ADD_HEARTS"))
+        .expect("Rina ability should include ADD_HEARTS");
+    let rina_params = rina_heart
+        .get("params")
+        .and_then(|value| value.as_object())
+        .expect("Rina ADD_HEARTS should have params");
+    assert_eq!(
+        rina_params.get("heart_type").and_then(|value| value.as_i64()),
+        Some(6),
+        "All-heart grants should be normalized to the ANY heart type"
+    );
+    assert_eq!(
+        rina_params.get("all").and_then(|value| value.as_bool()),
+        Some(true),
+        "All-heart grants should also mark the explicit all-heart flag"
+    );
+
+    let mia = find_ability(abilities, "PL!N-bp4-011-P", 0);
+    let mia_heart = mia
+        .get("frames")
+        .and_then(|value| value.as_array())
+        .unwrap()
+        .iter()
+        .find(|frame| frame.get("op").and_then(|value| value.as_str()) == Some("ADD_HEARTS"))
+        .expect("Mia ability should include ADD_HEARTS");
+    let mia_params = mia_heart
+        .get("params")
+        .and_then(|value| value.as_object())
+        .expect("Mia ADD_HEARTS should have params");
+    assert_eq!(
+        mia_params.get("heart_type").and_then(|value| value.as_str()),
+        Some("SELECTED"),
+        "Choice-based heart grants should be marked as selected hearts"
+    );
+}

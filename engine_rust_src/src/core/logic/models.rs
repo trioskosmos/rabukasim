@@ -226,6 +226,7 @@ pub enum SemanticCountZone {
     Discard,
     Stage,
     SuccessPile,
+    Energy,
 }
 
 impl SemanticCountZone {
@@ -235,6 +236,7 @@ impl SemanticCountZone {
             Self::Discard => C_COUNT_DISCARD,
             Self::Stage => C_COUNT_STAGE,
             Self::SuccessPile => C_COUNT_SUCCESS_LIVE,
+            Self::Energy => C_COUNT_ENERGY,
         }
     }
 }
@@ -747,6 +749,7 @@ impl<'a> AbilityFrameComponents<'a> {
                     Some(SemanticCountZone::SuccessPile)
                 }
                 "STAGE" => Some(SemanticCountZone::Stage),
+                "ENERGY" => Some(SemanticCountZone::Energy),
                 _ => None,
             };
             if let Some(zone) = zone {
@@ -790,6 +793,7 @@ impl<'a> AbilityFrameComponents<'a> {
                 "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
                     SemanticScaleSource::SuccessPile
                 }
+                "ENERGY" => SemanticScaleSource::CountZone(SemanticCountZone::Energy),
                 _ => SemanticScaleSource::None,
             };
         }
@@ -1781,7 +1785,7 @@ impl AbilityFrame {
 
         match opcode_key.as_str() {
             "RETURN" => AbilityFrame { opcode: O_RETURN, ..Default::default() },
-            "DRAW" => Self::with_components(O_DRAW, value, CardFilter::default(), slot, is_cost, Value::Null),
+            "DRAW" => Self::with_components(O_DRAW, value, CardFilter::default(), slot, is_cost, params),
             "RECOVER_LIVE" => Self::with_raw_parts(
                 O_RECOVER_LIVE,
                 value,
@@ -3075,12 +3079,13 @@ impl Ability {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::logic::AbilityContext;
     use crate::core::logic::CardDatabase;
     use crate::core::logic::constants::FILTER_REVEALED_CONTEXT;
     use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-    use crate::test_helpers::create_test_state;
+    use crate::core::enums::Phase;
+    use crate::test_helpers::{create_test_state, load_real_db, TestActionReceiver};
     use serde_json::json;
-
     #[test]
     fn ability_has_effects_works() {
         let ability = Ability {
@@ -3342,6 +3347,33 @@ mod tests {
     }
 
     #[test]
+    fn structured_count_stage_frame_preserves_not_self_filter_bits() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "COUNT_STAGE",
+            "value": 1,
+            "attr": {
+                "group_enabled": 1,
+                "group_id": 12,
+                "special_id": "Not Self"
+            },
+            "slot": {
+                "target_slot": "STAGE_0",
+                "comparison": "GE"
+            }
+        }));
+
+        let program = FrameProgram {
+            frames: vec![frame],
+            raw_program: None,
+        };
+        let conditions = crate::core::logic::ability_hydration::derive_conditions_from_frame_program(&program);
+
+        assert_eq!(conditions.len(), 1);
+        assert_eq!(conditions[0].condition_type, ConditionType::CountStage);
+        assert_eq!(CardFilter::from_attr(conditions[0].attr).special_id, 3);
+    }
+
+    #[test]
     fn structured_frame_parses_named_slot_identifiers() {
         let frame = AbilityFrame::from_json_value(&json!({
             "opcode": "SELECT_MEMBER",
@@ -3387,6 +3419,242 @@ mod tests {
         assert_eq!(frame.scalar_dynamic_divisor(), 4);
         assert_eq!(frame_data.scalar_dynamic_base(), 1);
         assert_eq!(frame_data.scalar_dynamic_divisor(), 4);
+    }
+
+    #[test]
+    fn card_617_draws_once_per_six_energy_from_text() {
+        let db = load_real_db();
+        let card_id = *db.card_no_to_id.get("PL!SP-sd1-001-SD").unwrap();
+        let member = db.get_member(card_id).unwrap();
+        let ability = member.abilities.get(0).unwrap();
+
+        let draw_count = |energy_count: usize| {
+            let mut state = create_test_state();
+            state.phase = Phase::Main;
+            state.current_player = 0;
+            state.ui.silent = true;
+            state.players[0].stage = [card_id, -1, -1];
+            state.players[0].hand.clear();
+            state.players[0].discard.clear();
+            state.players[0].deck.clear();
+            for card in 9000..9004 {
+                state.players[0].deck.push(card);
+            }
+            state.players[0].energy_zone.clear();
+            for card in 1000..(1000 + energy_count as i32) {
+                state.players[0].energy_zone.push(card);
+            }
+
+            let before = state.players[0].hand.len();
+            let ctx = AbilityContext {
+                player_id: 0,
+                source_card_id: card_id,
+                ability_index: 0,
+                area_idx: 0,
+                ..Default::default()
+            };
+            state.resolve_ability(&db, ability, &ctx);
+            state.players[0].hand.len() - before
+        };
+
+            assert_eq!(draw_count(5), 0);
+            assert_eq!(draw_count(6), 1);
+            assert_eq!(draw_count(11), 1);
+            assert_eq!(draw_count(12), 2);
+    }
+
+    #[test]
+    fn energy_threshold_draw_cards_follow_their_text() {
+        let db = load_real_db();
+        let cards = ["PL!SP-PR-003-PR", "PL!SP-PR-007-PR", "PL!SP-PR-010-PR"];
+
+        for card_no in cards {
+            let card_id = *db.card_no_to_id.get(card_no).unwrap();
+            let ability = db.get_member(card_id).unwrap().abilities.get(0).unwrap();
+
+            let draw_count = |energy_count: usize| {
+                let mut state = create_test_state();
+                state.phase = Phase::Main;
+                state.current_player = 0;
+                state.ui.silent = true;
+                state.players[0].stage = [card_id, -1, -1];
+                state.players[0].hand.clear();
+                state.players[0].discard.clear();
+                state.players[0].deck.clear();
+                for card in 9000..9004 {
+                    state.players[0].deck.push(card);
+                }
+                state.players[0].energy_zone.clear();
+                for card in 1000..(1000 + energy_count as i32) {
+                    state.players[0].energy_zone.push(card);
+                }
+
+                let before = state.players[0].hand.len();
+                let ctx = AbilityContext {
+                    player_id: 0,
+                    source_card_id: card_id,
+                    ability_index: 0,
+                    area_idx: 0,
+                    ..Default::default()
+                };
+                state.resolve_ability(&db, ability, &ctx);
+                state.players[0].hand.len() - before
+            };
+
+            assert_eq!(draw_count(6), 0, "{card_no} should not draw below 7 energy");
+            assert_eq!(draw_count(7), 1, "{card_no} should draw at 7 energy");
+        }
+    }
+
+    fn resolve_pending_prompt(state: &mut crate::core::logic::GameState, db: &CardDatabase) {
+        let trace_prompts = std::env::var("TRACE_PROMPTS").is_ok();
+        while !state.interaction_stack.is_empty() {
+            let mut actions = TestActionReceiver::default();
+            state.generate_legal_actions(db, 0, &mut actions);
+            if trace_prompts {
+                eprintln!("prompt={:?}", state.interaction_stack.last());
+                eprintln!("actions={:?}", actions.actions);
+            }
+            let action_ids = actions.actions;
+            let action = action_ids
+                .iter()
+                .copied()
+                .find(|action| *action > 0)
+                .or_else(|| action_ids.iter().copied().find(|action| *action == 0))
+                .expect("expected a legal selection action");
+            state.step(db, action).expect("selection should resolve");
+            state.process_trigger_queue(db);
+        }
+    }
+
+    fn ability_for_card_no<'a>(db: &'a CardDatabase, card_no: &str) -> &'a Ability {
+        let card_id = *db.card_no_to_id.get(card_no).unwrap();
+        db.get_member(card_id)
+            .map(|card| card.abilities.get(0).unwrap())
+            .or_else(|| db.get_live(card_id).map(|card| card.abilities.get(0).unwrap()))
+            .expect("card should have a first ability")
+    }
+
+    #[test]
+    fn muse_live_recovery_puts_the_discard_live_card_on_top_of_deck_before_draw() {
+        let db = load_real_db();
+        let card_id = *db.card_no_to_id.get("PL!-pb1-006-P+").unwrap();
+        let live_card = db
+            .lives
+            .values()
+            .find(|card| card.groups.contains(&(crate::core::generated_constants::GROUP_MUSE as u8)))
+            .map(|card| card.card_id)
+            .expect("expected at least one MUSE live card");
+
+        let run_case = |opponent_tapped: bool| {
+            let mut state = create_test_state();
+            state.ui.silent = true;
+            state.phase = Phase::Main;
+            state.current_player = 0;
+            state.players[0].hand = vec![card_id].into();
+            state.players[0].discard = vec![live_card].into();
+            state.players[0].deck = vec![9001, 9002].into();
+            state.players[0].energy_zone = (0..20).map(|idx| 5000 + idx).collect();
+            state.players[1].stage[0] = 9003;
+            state.players[1].set_tapped(0, opponent_tapped);
+
+            state
+                .step(
+                    &db,
+                    crate::test_helpers::Action::PlayMember {
+                        hand_idx: 0,
+                        slot_idx: 0,
+                    }
+                    .id(),
+                )
+                .expect("play should succeed");
+            state.process_trigger_queue(&db);
+            resolve_pending_prompt(&mut state, &db);
+
+            state
+        };
+
+        let calm_state = run_case(false);
+        assert_eq!(calm_state.players[0].hand.len(), 0);
+        assert_eq!(calm_state.players[0].discard.len(), 0);
+        assert_eq!(calm_state.players[0].deck.last(), Some(&live_card));
+
+        let tapped_state = run_case(true);
+        assert_eq!(tapped_state.players[0].hand.as_slice(), &[live_card]);
+        assert_eq!(tapped_state.players[0].discard.len(), 0);
+        assert_eq!(tapped_state.players[0].deck.as_slice(), &[9001, 9002]);
+    }
+
+    #[test]
+    fn discard_cards_can_return_to_the_top_of_the_deck() {
+        let db = load_real_db();
+        let card_id = *db.card_no_to_id.get("PL!N-bp4-021-N").unwrap();
+        let discard_card = db
+            .members
+            .values()
+            .find(|card| card.card_id != card_id)
+            .map(|card| card.card_id)
+            .expect("expected a discard card for the test");
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].stage[0] = card_id;
+        state.players[0].hand.clear();
+        state.players[0].discard = vec![discard_card].into();
+        state.players[0].deck = vec![8001, 8002].into();
+        state.players[0].energy_zone = (0..20).map(|idx| 6000 + idx).collect();
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            source_card_id: card_id,
+            ability_index: 0,
+            area_idx: 0,
+            trigger_type: TriggerType::OnPlay,
+            ..Default::default()
+        };
+        state.resolve_ability(&db, ability_for_card_no(&db, "PL!N-bp4-021-N"), &ctx);
+        state.process_trigger_queue(&db);
+        resolve_pending_prompt(&mut state, &db);
+
+        assert_eq!(state.players[0].discard.len(), 0);
+        assert_eq!(state.players[0].deck.last(), Some(&discard_card));
+        assert!(state.players[0].hand.is_empty());
+    }
+
+    #[test]
+    fn neo_sky_neo_map_draws_before_putting_three_hand_cards_back_on_top() {
+        let db = load_real_db();
+        let card_id = *db.card_no_to_id.get("PL!N-bp4-031-L").unwrap();
+        let stage_members = [4350, 285, 4381];
+        let stage_cost_total: u32 = stage_members
+            .iter()
+            .map(|card_id| db.get_member(*card_id).expect("stage member should exist").cost)
+            .sum();
+        assert!(
+            stage_cost_total >= 20,
+            "need a stage total cost of at least 20 for the live-start ability"
+        );
+
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::PerformanceP1;
+        state.current_player = 0;
+        state.players[0].hand.clear();
+        state.players[0].live_zone = [-1; 3];
+        state.players[0].live_zone[0] = card_id;
+        state.players[0].deck = vec![7001, 7002, 7003].into();
+        state.players[0].stage = stage_members;
+        state.interaction_stack.clear();
+
+        state.trigger_event(&db, TriggerType::OnLiveStart, 0, -1, -1, 0, -1);
+        state.process_trigger_queue(&db);
+        resolve_pending_prompt(&mut state, &db);
+        assert!(state.interaction_stack.is_empty());
+        assert!(state.players[0].discard.len() <= 3);
+        let mut deck = state.players[0].deck.to_vec();
+        deck.sort_unstable();
+        assert_eq!(deck, vec![7001, 7002, 7003]);
     }
 
     #[test]

@@ -4528,6 +4528,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -4568,6 +4569,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -4687,6 +4691,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -4727,6 +4732,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -4846,6 +4854,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -4886,6 +4895,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5005,6 +5017,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -5045,6 +5058,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5184,6 +5200,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -5193,6 +5210,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 1
               },
               "is_optional": false
@@ -5202,6 +5220,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 1
               },
               "is_optional": false
@@ -5235,6 +5254,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -5251,6 +5273,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5268,6 +5293,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -5404,6 +5432,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -5413,6 +5442,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 1
               },
               "is_optional": false
@@ -5422,6 +5452,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 1
               },
               "is_optional": false
@@ -5455,6 +5486,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -5471,6 +5505,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5488,6 +5525,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -5624,6 +5664,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -5633,6 +5674,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 1
               },
               "is_optional": false
@@ -5642,6 +5684,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 1
               },
               "is_optional": false
@@ -5675,6 +5718,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -5691,6 +5737,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5708,6 +5757,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -5844,6 +5896,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -5853,6 +5906,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 1
               },
               "is_optional": false
@@ -5862,6 +5916,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 1
               },
               "is_optional": false
@@ -5895,6 +5950,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -5911,6 +5969,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -5928,6 +5989,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -6114,6 +6178,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -6149,7 +6214,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -6224,6 +6290,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -6259,7 +6326,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -6334,6 +6402,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -6369,7 +6438,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -6444,6 +6514,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -6479,7 +6550,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -6554,6 +6626,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -6589,7 +6662,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -7212,6 +7286,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -7230,6 +7305,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -7369,6 +7447,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -7387,6 +7466,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -7526,6 +7608,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -7544,6 +7627,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -7683,6 +7769,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -7701,6 +7788,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -10070,6 +10160,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -10099,6 +10190,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -11275,6 +11369,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -11309,6 +11404,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -11506,6 +11604,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -11540,6 +11639,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -11737,6 +11839,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -11771,6 +11874,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -11968,6 +12074,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -12002,6 +12109,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -12255,7 +12365,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -12289,6 +12402,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -12416,7 +12533,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -12450,6 +12570,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -12577,7 +12701,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -12611,6 +12738,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -12738,7 +12869,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -12772,6 +12906,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -13926,6 +14064,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -13942,6 +14081,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -14005,6 +14147,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -14021,6 +14164,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -14084,6 +14230,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -14100,6 +14247,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -14587,6 +14737,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -14612,6 +14763,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -15128,6 +15282,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -15155,7 +15310,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 4
                 }
               },
               {
@@ -15308,6 +15464,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -15335,7 +15492,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 4
                 }
               },
               {
@@ -15742,6 +15900,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -15759,6 +15918,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -15886,6 +16048,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -15903,6 +16066,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -16524,6 +16690,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -16548,7 +16715,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 5
                 }
               },
               {
@@ -16820,6 +16988,7 @@
                   "base_value": 1,
                   "divisor": 1
                 },
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -16844,7 +17013,8 @@
                   "scalar_dynamic": {
                     "base_value": 1,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 5
                 }
               },
               {
@@ -17730,14 +17900,14 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 15,
+              "effect_type": 74,
               "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
             },
             {
-              "effect_type": 65,
+              "effect_type": 31,
               "value": 1,
               "target": 0,
               "params": {},
@@ -17754,14 +17924,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "RECOVER_LIVE",
+                "op": "SELECT_CARDS",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
-                  "target_player": "SELF",
+                  "card_type": "LIVE",
                   "group_enabled": 1,
-                  "zone_mask": "ALL",
-                  "is_optional": 1
+                  "group_id": "MUSE",
+                  "is_optional": 1,
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -17769,12 +17940,21 @@
                 }
               },
               {
-                "op": "SELECT_MEMBER",
+                "op": "MOVE_TO_DECK",
                 "frame_index": 1,
                 "value": 1,
+                "slot": {
+                  "dest_zone": "DECK",
+                  "remainder_zone": "DECK_TOP"
+                }
+              },
+              {
+                "op": "COUNT_STAGE",
+                "frame_index": 2,
+                "value": 1,
                 "attr": {
-                  "target_player": "OPPONENT",
-                  "is_tapped": 1
+                  "is_tapped": 1,
+                  "target_player": "OPPONENT"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -17783,12 +17963,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "DRAW",
-                "frame_index": 3,
+                "frame_index": 4,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -17796,12 +17976,20 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 203,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-006-P+"
@@ -17813,7 +18001,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 5,
+      "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -17851,14 +18039,14 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 15,
+              "effect_type": 74,
               "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
             },
             {
-              "effect_type": 65,
+              "effect_type": 31,
               "value": 1,
               "target": 0,
               "params": {},
@@ -17875,14 +18063,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "RECOVER_LIVE",
+                "op": "SELECT_CARDS",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
-                  "target_player": "SELF",
+                  "card_type": "LIVE",
                   "group_enabled": 1,
-                  "zone_mask": "ALL",
-                  "is_optional": 1
+                  "group_id": "MUSE",
+                  "is_optional": 1,
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -17890,12 +18079,21 @@
                 }
               },
               {
-                "op": "SELECT_MEMBER",
+                "op": "MOVE_TO_DECK",
                 "frame_index": 1,
                 "value": 1,
+                "slot": {
+                  "dest_zone": "DECK",
+                  "remainder_zone": "DECK_TOP"
+                }
+              },
+              {
+                "op": "COUNT_STAGE",
+                "frame_index": 2,
+                "value": 1,
                 "attr": {
-                  "target_player": "OPPONENT",
-                  "is_tapped": 1
+                  "is_tapped": 1,
+                  "target_player": "OPPONENT"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -17904,12 +18102,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "DRAW",
-                "frame_index": 3,
+                "frame_index": 4,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -17917,12 +18115,20 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 203,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-006-R"
@@ -17934,7 +18140,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 5,
+      "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -21743,6 +21949,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -21789,6 +21996,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -24238,6 +24448,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -24271,6 +24482,9 @@
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -24342,6 +24556,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -24375,6 +24590,9 @@
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -24641,6 +24859,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -24688,6 +24907,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -24766,6 +24988,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -24813,6 +25036,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -25022,6 +25248,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -25066,6 +25293,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -25144,6 +25374,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -25188,6 +25419,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -25670,6 +25904,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -25699,6 +25934,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -27747,7 +27985,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -27801,6 +28041,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -27940,7 +28183,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -27994,6 +28239,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -28133,7 +28381,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -28187,6 +28437,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -28326,7 +28579,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -28380,6 +28635,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -29841,8 +30099,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -29851,21 +30109,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-002-P"
@@ -29877,8 +30179,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 12,
-      "synergy_flags": 0,
+      "ability_flags": 20,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "4285": {
@@ -29958,8 +30260,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -29968,21 +30270,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-002-R+"
@@ -29994,8 +30340,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 12,
-      "synergy_flags": 0,
+      "ability_flags": 20,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "8381": {
@@ -30075,8 +30421,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -30085,21 +30431,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-002-P+"
@@ -30111,8 +30501,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 12,
-      "synergy_flags": 0,
+      "ability_flags": 20,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "12477": {
@@ -30192,8 +30582,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -30202,21 +30592,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-bp2-002-SEC"
@@ -30228,8 +30662,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 12,
-      "synergy_flags": 0,
+      "ability_flags": 20,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "190": {
@@ -32276,6 +32710,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -32337,6 +32772,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -32480,6 +32918,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -32541,6 +32980,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -32684,6 +33126,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -32745,6 +33188,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -32888,6 +33334,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -32949,6 +33396,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -33217,6 +33667,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -33263,6 +33714,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -33348,6 +33802,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -33394,6 +33849,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -35031,6 +35489,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -35055,6 +35514,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -35168,6 +35630,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -35192,6 +35655,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -35305,6 +35771,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -35329,6 +35796,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -35442,6 +35912,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -35466,6 +35937,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -35625,6 +36099,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -35654,6 +36129,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -35763,6 +36241,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -35792,6 +36271,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -35901,6 +36383,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -35930,6 +36413,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -36039,6 +36525,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -36068,6 +36555,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -36374,6 +36864,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -36444,6 +36935,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -36531,6 +37025,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -36601,6 +37096,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -36688,6 +37186,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -36758,6 +37257,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -36828,6 +37330,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -36860,6 +37363,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -36930,6 +37436,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -36962,6 +37469,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -37032,6 +37542,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -37064,6 +37575,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -38367,6 +38881,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -38385,6 +38900,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -38567,6 +39085,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -38644,6 +39163,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -38729,6 +39251,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -38780,6 +39303,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -38914,6 +39440,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -38930,6 +39457,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -39412,6 +39942,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -39470,6 +40001,9 @@
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -39755,6 +40289,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -39803,6 +40338,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -41826,6 +42364,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -41850,6 +42389,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -42901,7 +43443,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -42938,6 +43482,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -43076,7 +43623,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -43113,6 +43662,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -43251,7 +43803,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -43288,6 +43842,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -43426,7 +43983,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -43463,6 +44022,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -45761,7 +46323,10 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -45784,6 +46349,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -45912,7 +46481,10 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -45935,6 +46507,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -46063,7 +46639,10 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -46086,6 +46665,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -46214,7 +46797,10 @@
               "effect_type": 12,
               "value": 2,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -46237,6 +46823,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -48111,7 +48701,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -48165,6 +48757,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -48248,7 +48843,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -48302,6 +48899,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -49802,6 +50402,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -49811,6 +50412,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -49876,6 +50478,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -49887,6 +50492,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50047,6 +50655,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50056,6 +50665,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50121,6 +50731,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50132,6 +50745,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50292,6 +50908,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50301,6 +50918,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50366,6 +50984,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50377,6 +50998,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50537,6 +51161,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50546,6 +51171,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -50611,6 +51237,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50622,6 +51251,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -50720,7 +51352,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -50797,6 +51432,10 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -50961,7 +51600,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -51038,6 +51680,10 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -51202,7 +51848,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -51279,6 +51928,10 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -51443,7 +52096,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             },
             {
@@ -51520,6 +52176,10 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -55309,6 +55969,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -55325,6 +55986,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -55497,6 +56161,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -55513,6 +56178,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -55685,6 +56353,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -55701,6 +56370,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -55873,6 +56545,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -55889,6 +56562,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -56563,6 +57239,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -56604,6 +57281,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -56721,6 +57401,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -56762,6 +57443,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -56879,6 +57563,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -56920,6 +57605,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -57037,6 +57725,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -57078,6 +57767,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -57147,7 +57839,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -57170,6 +57864,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -57318,7 +58015,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -57341,6 +58040,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -57489,7 +58191,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -57512,6 +58216,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -57660,7 +58367,9 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED"
+              },
               "is_optional": false
             }
           ],
@@ -57683,6 +58392,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -58593,6 +59305,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 74,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 31,
               "value": 1,
               "target": 0,
@@ -58603,16 +59322,30 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DECK",
+                "op": "SELECT_CARDS",
                 "frame_index": 0,
                 "value": 1,
+                "attr": {
+                  "is_optional": 1,
+                  "target_player": "SELF"
+                },
                 "slot": {
+                  "source_zone": "DISCARD",
                   "target_slot": "CONTEXT"
                 }
               },
               {
+                "op": "MOVE_TO_DECK",
+                "frame_index": 1,
+                "value": 1,
+                "slot": {
+                  "dest_zone": "DECK",
+                  "remainder_zone": "DECK_TOP"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 2
               }
             ]
           },
@@ -58883,6 +59616,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -58920,6 +59654,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -59020,6 +59757,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -59057,6 +59795,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -59157,6 +59898,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -59194,6 +59936,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -59294,6 +60039,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -59331,6 +60077,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -61399,7 +62148,7 @@
               "value": 2,
               "target": 0,
               "params": {
-                "heart_type": "YELLOW",
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -61430,7 +62179,7 @@
                   "target_slot": "CONTEXT"
                 },
                 "params": {
-                  "heart_type": "YELLOW"
+                  "heart_type": 2
                 }
               },
               {
@@ -61571,7 +62320,7 @@
               "value": 2,
               "target": 0,
               "params": {
-                "heart_type": "YELLOW",
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -61602,7 +62351,7 @@
                   "target_slot": "CONTEXT"
                 },
                 "params": {
-                  "heart_type": "YELLOW"
+                  "heart_type": 2
                 }
               },
               {
@@ -61743,7 +62492,7 @@
               "value": 2,
               "target": 0,
               "params": {
-                "heart_type": "YELLOW",
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -61774,7 +62523,7 @@
                   "target_slot": "CONTEXT"
                 },
                 "params": {
-                  "heart_type": "YELLOW"
+                  "heart_type": 2
                 }
               },
               {
@@ -61915,7 +62664,7 @@
               "value": 2,
               "target": 0,
               "params": {
-                "heart_type": "YELLOW",
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -61946,7 +62695,7 @@
                   "target_slot": "CONTEXT"
                 },
                 "params": {
-                  "heart_type": "YELLOW"
+                  "heart_type": 2
                 }
               },
               {
@@ -63498,6 +64247,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -63522,6 +64272,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -63640,6 +64393,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -63664,6 +64418,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -63782,6 +64539,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -63806,6 +64564,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -63924,6 +64685,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -63948,6 +64710,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -64059,6 +64824,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -64088,6 +64854,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -66446,6 +67215,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -66464,6 +67234,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -66527,6 +67300,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -66545,6 +67319,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -66950,9 +67727,30 @@
             },
             {
               "effect_type": 12,
-              "value": 3,
+              "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
+                "color": 3
+              },
+              "is_optional": false
+            },
+            {
+              "effect_type": 12,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "heart_type": 4,
+                "color": 3
+              },
+              "is_optional": false
+            },
+            {
+              "effect_type": 12,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "heart_type": 5,
                 "color": 3
               },
               "is_optional": false
@@ -66989,14 +67787,39 @@
               {
                 "op": "ADD_HEARTS",
                 "frame_index": 3,
-                "value": 3,
+                "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
+                }
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 4,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
+                }
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 5,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 6
               }
             ]
           },
@@ -67067,9 +67890,30 @@
             },
             {
               "effect_type": 12,
-              "value": 3,
+              "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
+                "color": 3
+              },
+              "is_optional": false
+            },
+            {
+              "effect_type": 12,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "heart_type": 4,
+                "color": 3
+              },
+              "is_optional": false
+            },
+            {
+              "effect_type": 12,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "heart_type": 5,
                 "color": 3
               },
               "is_optional": false
@@ -67106,14 +67950,39 @@
               {
                 "op": "ADD_HEARTS",
                 "frame_index": 3,
-                "value": 3,
+                "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
+                }
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 4,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
+                }
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 5,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 6
               }
             ]
           },
@@ -72479,6 +73348,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 3,
                 "color": 4
               },
               "is_optional": false
@@ -72517,6 +73387,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -75567,6 +76440,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -75591,6 +76465,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -75732,8 +76609,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -75742,21 +76619,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-001-P"
@@ -75768,8 +76689,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "4511": {
@@ -75806,8 +76727,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -75816,21 +76737,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-001-R"
@@ -75842,8 +76807,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "416": {
@@ -76124,6 +77089,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -76156,6 +77122,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -76227,6 +77196,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -76259,6 +77229,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -85183,6 +86156,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -85228,6 +86202,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_0"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -85305,6 +86282,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -85350,6 +86328,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_0"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -85427,6 +86408,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -85472,6 +86454,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_0"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -85549,6 +86534,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -85594,6 +86580,9 @@
                 },
                 "slot": {
                   "target_slot": "STAGE_0"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -87489,6 +88478,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -87520,6 +88510,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -89154,8 +90147,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -89164,21 +90157,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-005-P+"
@@ -89190,8 +90227,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "4560": {
@@ -89228,8 +90265,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -89238,21 +90275,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-005-R"
@@ -89264,8 +90345,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "465": {
@@ -89932,8 +91013,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -89942,21 +91023,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-009-P+"
@@ -89968,8 +91093,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "4564": {
@@ -90006,8 +91131,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -90016,21 +91141,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-009-R"
@@ -90042,8 +91211,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "16771": {
@@ -90852,6 +92021,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -90868,6 +92038,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -97645,6 +98818,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -97679,6 +98853,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -97742,6 +98919,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -97776,6 +98954,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -100664,6 +101845,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -100698,6 +101880,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -101034,6 +102219,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -101066,6 +102252,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -101137,6 +102326,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -101169,6 +102359,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -102803,11 +103996,25 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ENERGY_CHARGE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -102816,7 +104023,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -102828,6 +104035,13 @@
               "params": {},
               "is_negated": false,
               "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
             }
           ],
           "is_once_per_turn": false,
@@ -102839,8 +104053,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -102849,21 +104063,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-005-P"
@@ -102875,7 +104133,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 24,
+      "ability_flags": 16,
       "synergy_flags": 4,
       "cost_flags": 0
     },
@@ -102934,11 +104192,25 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ENERGY_CHARGE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -102947,7 +104219,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -102959,6 +104231,13 @@
               "params": {},
               "is_negated": false,
               "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
             }
           ],
           "is_once_per_turn": false,
@@ -102970,8 +104249,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -102980,21 +104259,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-005-R+"
@@ -103006,7 +104329,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 24,
+      "ability_flags": 16,
       "synergy_flags": 4,
       "cost_flags": 0
     },
@@ -103065,11 +104388,25 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ENERGY_CHARGE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -103078,7 +104415,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -103090,6 +104427,13 @@
               "params": {},
               "is_negated": false,
               "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
             }
           ],
           "is_once_per_turn": false,
@@ -103101,8 +104445,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -103111,21 +104455,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-005-P+"
@@ -103137,7 +104525,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 24,
+      "ability_flags": 16,
       "synergy_flags": 4,
       "cost_flags": 0
     },
@@ -103196,11 +104584,25 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ENERGY_CHARGE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -103209,7 +104611,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -103221,6 +104623,13 @@
               "params": {},
               "is_negated": false,
               "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
             }
           ],
           "is_once_per_turn": false,
@@ -103232,8 +104641,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -103242,21 +104651,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-005-SEC"
@@ -103268,7 +104721,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 24,
+      "ability_flags": 16,
       "synergy_flags": 4,
       "cost_flags": 0
     },
@@ -104528,8 +105981,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -104538,21 +105991,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-009-P"
@@ -104564,8 +106061,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "4661": {
@@ -104602,8 +106099,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 11,
-              "value": 3,
+              "effect_type": 23,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -104612,21 +106109,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 3,
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": "LIELLA"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 2
+              },
+              {
+                "op": "COUNT_ENERGY",
+                "frame_index": 2,
+                "value": 7,
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ENERGY_CHARGE",
+                "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "is_wait": 1
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 231,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 112
+            },
+            {
+              "type": 213,
+              "value": 7,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp4-009-R"
@@ -104638,8 +106179,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 8,
-      "synergy_flags": 0,
+      "ability_flags": 16,
+      "synergy_flags": 4,
       "cost_flags": 0
     },
     "566": {
@@ -105549,6 +107090,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -105578,6 +107120,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -105857,6 +107402,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -105875,6 +107421,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -106340,6 +107889,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -106358,6 +107908,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -108982,6 +110535,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -109019,6 +110573,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -109089,6 +110646,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -109126,6 +110684,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -109196,6 +110757,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -109233,6 +110795,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -109303,6 +110868,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -109340,6 +110906,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112549,6 +114118,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -112565,6 +114135,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112598,6 +114171,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -112614,6 +114188,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112647,6 +114224,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -112664,6 +114242,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -112737,6 +114318,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -112753,6 +114335,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112786,6 +114371,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -112802,6 +114388,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112835,6 +114424,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -112852,6 +114442,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -112925,6 +114518,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 2
               },
               "is_optional": false
@@ -112941,6 +114535,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -112974,6 +114571,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -112990,6 +114588,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -113023,6 +114624,7 @@
               "value": 3,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -113040,6 +114642,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -113113,6 +114718,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -113147,6 +114753,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -113490,6 +115099,7 @@
               "value": 2,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 6,
                 "all": true
               },
@@ -113508,6 +115118,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -116361,7 +117974,8 @@
                 "value": 1,
                 "attr": {
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": 12,
+                  "special_id": "Not Self"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -116394,7 +118008,7 @@
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 112
+              "attr": 400
             }
           ],
           "is_once_per_turn": false,
@@ -116461,7 +118075,8 @@
                 "value": 1,
                 "attr": {
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": 12,
+                  "special_id": "Not Self"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -116494,7 +118109,7 @@
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 112
+              "attr": 400
             }
           ],
           "is_once_per_turn": false,
@@ -117748,7 +119363,13 @@
               "effect_type": 10,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "per_card": "ENERGY",
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 6
+                }
+              },
               "is_optional": false
             }
           ],
@@ -117757,6 +119378,7 @@
               {
                 "op": "COUNT_ENERGY",
                 "frame_index": 0,
+                "value": 6,
                 "slot": {
                   "target_slot": "STAGE_0",
                   "comparison": "GE"
@@ -117773,6 +119395,13 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "per_card": "ENERGY",
+                  "scalar_dynamic": {
+                    "base_value": 1,
+                    "divisor": 6
+                  }
                 }
               },
               {
@@ -117785,7 +119414,7 @@
           "conditions": [
             {
               "type": 213,
-              "value": 0,
+              "value": 6,
               "params": {},
               "is_negated": false,
               "attr": 0
@@ -119784,7 +121413,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -119822,6 +121454,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -120402,6 +122038,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -120418,6 +122055,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 1
               },
               "is_optional": false
@@ -120434,6 +122072,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 5,
                 "color": 1
               },
               "is_optional": false
@@ -120494,6 +122133,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -120523,6 +122165,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -120553,6 +122198,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 5
                 }
               },
               {
@@ -121809,6 +123457,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 2,
                 "color": 3
               },
               "is_optional": false
@@ -121926,6 +123575,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 2
                 }
               },
               {
@@ -126624,6 +128276,7 @@
                   "base_value": 3,
                   "divisor": 1
                 },
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -126660,7 +128313,8 @@
                   "scalar_dynamic": {
                     "base_value": 3,
                     "divisor": 1
-                  }
+                  },
+                  "heart_type": 0
                 }
               },
               {
@@ -128180,6 +129834,20 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 74,
+              "value": 3,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 31,
+              "value": 3,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -128228,8 +129896,26 @@
                 }
               },
               {
+                "op": "SELECT_CARDS",
+                "frame_index": 5,
+                "value": 3,
+                "slot": {
+                  "source_zone": "HAND",
+                  "target_slot": "HAND"
+                }
+              },
+              {
+                "op": "MOVE_TO_DECK",
+                "frame_index": 6,
+                "value": 3,
+                "slot": {
+                  "dest_zone": "DECK",
+                  "remainder_zone": "DECK_TOP"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 7
               }
             ]
           },
@@ -128754,7 +130440,9 @@
               "effect_type": 12,
               "value": 99,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": "SELECTED_CARD"
+              },
               "is_optional": false
             }
           ],
@@ -128820,6 +130508,9 @@
                 "value": 99,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": "SELECTED_CARD"
                 }
               },
               {
@@ -128887,7 +130578,10 @@
               "effect_type": 12,
               "value": 1,
               "target": 0,
-              "params": {},
+              "params": {
+                "heart_type": 6,
+                "all": true
+              },
               "is_optional": false
             }
           ],
@@ -128916,6 +130610,10 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 6,
+                  "all": true
                 }
               },
               {
@@ -129263,6 +130961,7 @@
               "value": 5,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -129311,6 +131010,9 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -132941,6 +134643,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 4,
                 "color": 5
               },
               "is_optional": false
@@ -132964,6 +134667,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 5
               },
               "is_optional": false
@@ -132997,6 +134701,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 4
                 }
               },
               {
@@ -133026,6 +134733,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {
@@ -134999,6 +136709,7 @@
               "value": 1,
               "target": 0,
               "params": {
+                "heart_type": 0,
                 "color": 1
               },
               "is_optional": false
@@ -135024,6 +136735,9 @@
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 0
                 }
               },
               {

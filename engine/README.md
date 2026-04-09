@@ -1,20 +1,18 @@
 # Legacy Python Engine
 
 > [!WARNING]
-> **This directory is RETIRED and should be considered LEGACY.**
-> All active development and logic execution for the LovecaSim engine must happen in `engine_rust_src/`.
+> **This directory is legacy compatibility code.**
+> All active engine logic and test execution live in `engine_rust_src/`.
 
 ### Why is this folder still here?
-The `compiler/` tool still relies on `engine.models` for data structures and type definitions during the `data/cards.json` -> `data/cards_compiled.json` compilation process.
+The `compiler/` and related tooling still depend on `engine.models` for shared schema and card data types while generating `data/cards_compiled.json`.
 
-Most legacy runtime helpers that used to live under `engine/game/` now live in `engine/deprecated/game/` instead. The `engine/game/` package is now compatibility-only.
+The old archive subtree has been removed. `engine/game/` is left only for compatibility with older Python helpers.
 
-### What should I NOT do?
-- **DO NOT** edit code in `engine/game/` or `engine/logic/` and expect it to affect the game.
-- **DO NOT** add new runtime gameplay logic to the Python engine.
-- **DO NOT** add new features to the Python implementation.
-- **DO NOT** rely on this engine for production-level card behavior verification.
+### What should I not do?
+- **Do not** add new runtime gameplay logic to the Python engine.
+- **Do not** treat the Python implementation as the source of truth for production card behavior.
 
 ### What should I do?
-- **ONLY** modify `engine/models/ability.py` if it's necessary to update the shared ability schema used by the Rust runtime export path.
-- All engine logic changes belong in `engine_rust_src/`.
+- **Only** modify `engine/models/ability.py` if the shared ability schema needs to change.
+- Put engine logic changes in `engine_rust_src/`.

@@ -121,6 +121,41 @@ pub fn handle_flavor_action(state: &mut GameState, _db: &CardDatabase, _ctx: &mu
 // DRAW / HAND HANDLERS
 // ============================================================================
 
+fn resolve_draw_count(
+    state: &GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    fallback_count: u32,
+) -> u32 {
+    if frame_data.filter.compare_accumulated {
+        use crate::core::logic::interpreter::conditions::resolve_count_frame;
+        return resolve_count_frame(state, db, frame_data, ctx, 0).max(0) as u32;
+    }
+
+    if frame_data.scale_source() != crate::core::logic::models::SemanticScaleSource::None {
+        if let Some(count_opcode) = frame_data.count_opcode_hint(false) {
+            use crate::core::logic::interpreter::conditions::resolve_count;
+
+            let source_count = resolve_count(
+                state,
+                db,
+                count_opcode,
+                frame_data.raw_attr,
+                frame_data.raw_slot,
+                ctx,
+                0,
+            )
+            .max(0) as u32;
+            let divisor = frame_data.scalar_dynamic_divisor().max(1) as u32;
+            let base = frame_data.scalar_dynamic_base().max(0) as u32;
+            return base * (source_count / divisor);
+        }
+    }
+
+    fallback_count
+}
+
 pub fn handle_draw(
     state: &mut GameState,
     db: &CardDatabase,
@@ -129,12 +164,7 @@ pub fn handle_draw(
 ) -> HandlerResult {
     let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
-    let count = if frame_data.filter.compare_accumulated {
-        use crate::core::logic::interpreter::conditions::resolve_count_frame;
-        resolve_count_frame(state, db, &frame_data, ctx, 0) as u32
-    } else {
-        v as u32
-    };
+    let count = resolve_draw_count(state, db, ctx, frame_data, v as u32);
     let slot = frame_data.slot;
     let target_p = frame_data.target_player_index(p_idx);
 
