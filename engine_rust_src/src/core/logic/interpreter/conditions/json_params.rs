@@ -714,6 +714,8 @@ pub fn evaluate_raw_condition(
             };
 
             let matches_filter = |cid: i32| match filter {
+                "TYPE=LIVE" => db.get_live(cid).is_some(),
+                "TYPE=MEMBER" => db.get_member(cid).is_some(),
                 "TYPE=BLADE_HEART" => card_has_blade_heart(cid),
                 "TYPE_NOT=BLADE_HEART" => !card_has_blade_heart(cid),
                 "HAS_ALL_BLADE" => card_has_blade_heart(cid),

@@ -31,7 +31,7 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
         "export should contain hydrated abilities"
     );
 
-    let first_attr = export
+    let first_filter = export
         .get("abilities")
         .and_then(|abilities| abilities.as_array())
         .and_then(|abilities| {
@@ -39,18 +39,19 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
                 .iter()
                 .flat_map(|ability| {
                     ability
-                        .get("resolved_frames")
-                        .and_then(|frames| frames.as_array())
+                        .get("trace_view")
+                        .and_then(|trace_view| trace_view.get("steps"))
+                        .and_then(|steps| steps.as_array())
                         .into_iter()
                         .flatten()
                 })
-                .find_map(|frame| frame.get("attr"))
+                .find_map(|step| step.get("filter"))
         })
-        .expect("export should include semantic resolved frame attr");
+        .expect("export should include semantic trace_view filter data");
 
     assert!(
-        first_attr.is_object(),
-        "resolved frame attr should be serialized as a semantic object"
+        first_filter.is_object(),
+        "trace_view filter should be serialized as a semantic object"
     );
 
     assert_eq!(
@@ -58,7 +59,7 @@ fn export_hydrated_abilities_writes_data_folder_entrypoint_index() {
             .get("metadata")
             .and_then(|metadata| metadata.get("extraction_entrypoint"))
             .and_then(|value| value.as_str()),
-        Some("Ability::resolved_frames() + Ability::trace_view()")
+        Some("Ability::trace_view()")
     );
 
     let _ = fs::remove_file(&output_path);

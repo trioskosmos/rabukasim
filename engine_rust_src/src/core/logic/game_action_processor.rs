@@ -10,24 +10,8 @@ use super::handlers::{
 };
 use crate::core::heuristics::OriginalHeuristic;
 use crate::core::mcts::{SearchHorizon, MCTS};
+use crate::core::logic::profiling::{env_flag_enabled, env_threshold_us};
 use std::time::Instant;
-
-fn play_member_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_PLAY_MEMBER")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
-
-fn play_member_profile_threshold_us() -> u64 {
-    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(2000)
-}
 
 impl GameState {
     pub fn step(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
@@ -133,7 +117,7 @@ impl GameState {
         db: &CardDatabase,
         ctx: &AbilityContext,
     ) -> Option<i32> {
-        let profile_enabled = play_member_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_PLAY_MEMBER");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -188,7 +172,10 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= play_member_profile_threshold_us() && !self.ui.silent && self.debug.debug_mode {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000)
+                && !self.ui.silent
+                && self.debug.debug_mode
+            {
                 println!(
                     "[PROFILE] MemberLeaves total_us={} trigger_us={} mutate_us={} p={} slot={} cid={}",
                     total_us,

@@ -3054,6 +3054,113 @@ mod tests {
             "card 4794 should record the +2 heart buff log"
         );
     }
+
+    #[test]
+    fn test_hs_pr_016_same_unit_discard_requires_matching_partner() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+
+        // Card 157: HS-PR-016-PR.
+        state.players[0].stage[0] = 157;
+        // Two cards that share the same unit plus one unrelated card.
+        state.players[0].hand = vec![157, 107, 157].into();
+
+        let starting_hearts = get_effective_hearts(&state, 0, 0, &db, 0)
+            .to_array()
+            .iter()
+            .map(|&value| value as u32)
+            .sum::<u32>();
+        let starting_blades = get_effective_blades(&state, 0, 0, &db, 0);
+
+        let ctx = AbilityContext {
+            source_card_id: 157,
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnLiveStart,
+            area_idx: 0,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("card 157 should suspend for a same-unit discard choice");
+        assert_eq!(pending.choice_type, ChoiceType::SelectHandDiscard);
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32)),
+            "first same-unit discard should allow the first matching copy"
+        );
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 2)),
+            "first same-unit discard should allow the second matching copy"
+        );
+        assert!(
+            !actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 1)),
+            "first same-unit discard should not allow the unrelated card"
+        );
+
+        state
+            .step(&db, crate::core::generated_constants::ACTION_BASE_HAND_SELECT)
+            .expect("choosing the first matching copy should resolve the first discard");
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("card 157 should prompt for the second matching discard");
+        assert_eq!(pending.choice_type, ChoiceType::SelectHandDiscard);
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+
+        assert!(
+            actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32 + 1)),
+            "second same-unit discard should allow the remaining matching copy"
+        );
+        assert!(
+            !actions
+                .actions
+                .contains(&(crate::core::generated_constants::ACTION_BASE_HAND_SELECT as i32)),
+            "second same-unit discard should exclude the unrelated card"
+        );
+
+        state
+            .step(&db, crate::core::generated_constants::ACTION_BASE_HAND_SELECT + 1)
+            .expect("choosing the remaining matching copy should resolve the discard pair");
+
+        let ending_hearts = get_effective_hearts(&state, 0, 0, &db, 0)
+            .to_array()
+            .iter()
+            .map(|&value| value as u32)
+            .sum::<u32>();
+        let ending_blades = get_effective_blades(&state, 0, 0, &db, 0);
+
+        assert_eq!(
+            ending_hearts,
+            starting_hearts + 2,
+            "card 157 should grant +2 hearts to the live"
+        );
+        assert_eq!(
+            ending_blades,
+            starting_blades + 2,
+            "card 157 should grant +2 blades to the live"
+        );
+    }
     #[test]
     fn test_q234_kinako_requires_hand_card_for_activation() {
         // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？

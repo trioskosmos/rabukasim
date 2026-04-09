@@ -15,6 +15,14 @@ fn prompt_ctx_for_target(ctx: &AbilityContext, target_player_idx: usize) -> Abil
     prompt_ctx
 }
 
+fn mark_same_unit_discard_if_needed(state: &mut GameState, same_unit_discard: bool) {
+    if same_unit_discard {
+        if let Some(interaction) = state.interaction_stack.last_mut() {
+            interaction.same_unit_discard = true;
+        }
+    }
+}
+
 pub fn handle_move_to_discard(
     state: &mut GameState,
     db: &CardDatabase,
@@ -149,6 +157,7 @@ pub fn handle_move_to_discard(
                 suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, ChoiceType::Optional, filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
+                mark_same_unit_discard_if_needed(state, discard.same_unit_discard);
                 return HandlerResult::Suspend;
             }
         } else if count > 0 && !is_deck_zone(source_zone) {
@@ -157,6 +166,7 @@ pub fn handle_move_to_discard(
                 suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, count as i16),
                 HandlerResult::Suspend
             ) {
+                mark_same_unit_discard_if_needed(state, discard.same_unit_discard);
                 return HandlerResult::Suspend;
             }
         }
@@ -187,6 +197,7 @@ pub fn handle_move_to_discard(
                     suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, remaining),
                     HandlerResult::Suspend
                 ) {
+                    mark_same_unit_discard_if_needed(state, discard.same_unit_discard);
                     return HandlerResult::Suspend;
                 }
             }
@@ -249,13 +260,14 @@ pub fn handle_move_to_discard(
 
             let v_remaining = next_ctx.v_remaining;
             let prompt_ctx = prompt_ctx_for_target(&next_ctx, target_player_idx);
-            if matches!(
-                suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, v_remaining),
-                HandlerResult::Suspend
-            ) {
-                return HandlerResult::Suspend;
+                if matches!(
+                    suspend_choice(state, db, &prompt_ctx, &prompt_ctx, frame_idx, O_MOVE_TO_DISCARD, discard.suspend_slot, choice_type, discard.prompt_filter_attr, v_remaining),
+                    HandlerResult::Suspend
+                ) {
+                    mark_same_unit_discard_if_needed(state, discard.same_unit_discard);
+                    return HandlerResult::Suspend;
+                }
             }
-        }
     } else {
         // === Auto-discard path (no player choice needed) ===
         for _ in 0..count {

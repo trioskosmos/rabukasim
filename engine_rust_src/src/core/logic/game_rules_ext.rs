@@ -12,6 +12,7 @@ use rand_pcg::Pcg64;
 use std::time::Instant;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use crate::core::logic::profiling::env_flag_enabled;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct FilterCacheKey {
@@ -119,16 +120,6 @@ impl GameState {
         });
     }
 
-    fn rule_profile_enabled() -> bool {
-        std::env::var("BENCH_PROFILE_RULE_CHECKS")
-            .ok()
-            .map(|value| {
-                let value = value.trim();
-                !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-            })
-            .unwrap_or(false)
-    }
-
     pub fn resolve_deck_refresh(&mut self, player_idx: usize) {
         if !self.ui.silent {
             self.log(format!(
@@ -192,7 +183,7 @@ impl GameState {
         if !self.ui.silent {
             self.log("Rule 10.1, Rule 10.1.2: Performing check timing (State-Based Actions).".to_string());
         }
-        let profile_enabled = Self::rule_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_RULE_CHECKS");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {

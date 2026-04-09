@@ -5,7 +5,9 @@ use crate::core::logic::interpreter::handlers::interaction_zone::{
     collect_zone_cards, normalized_source_zone, remove_card_from_zone,
 };
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::{AbilityFrameComponents, SemanticRecoveryBranchKind};
+use crate::core::logic::models::{
+    semantic_recovery_branch_spec_from_params, AbilityFrameComponents, SemanticRecoveryBranchKind,
+};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
@@ -92,7 +94,7 @@ pub fn handle_recovery(
     let a = frame_data.raw_attr as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
-    let recovery_branch_spec = frame_data.semantic_recovery_branch_spec();
+    let recovery_branch_spec = semantic_recovery_branch_spec_from_params(frame_data.params);
     let ignore_attr_filter = matches!(
         recovery_branch_spec.map(|spec| spec.kind),
         Some(

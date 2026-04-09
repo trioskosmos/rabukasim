@@ -25,6 +25,7 @@ pub mod models;
 pub mod performance;
 pub mod performance_allocation;
 pub mod performance_requirements;
+pub mod profiling;
 pub mod player;
 pub mod rules;
 pub mod standard_state;

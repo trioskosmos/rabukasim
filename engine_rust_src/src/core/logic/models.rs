@@ -130,10 +130,6 @@ impl<'a> AbilityFrameComponents<'a> {
         }
     }
 
-    pub fn normalized_select_member_filter_attr(&self) -> u64 {
-        self.resolved_filter_attr()
-    }
-
     pub fn targeted_select_member_filter_attr(&self) -> u64 {
         let filter_attr = self.resolved_filter_attr();
         if self.slot.target_slot == crate::core::logic::constants::TARGET_SLOT_STAGE as u8
@@ -154,10 +150,6 @@ impl<'a> AbilityFrameComponents<'a> {
         } else {
             SemanticComparisonMode::GreaterEqual
         }
-    }
-
-    pub fn semantic_recovery_branch_spec(&self) -> Option<SemanticRecoveryBranchSpec> {
-        semantic_recovery_branch_spec_from_params(self.params)
     }
 }
 
@@ -206,6 +198,7 @@ pub struct SemanticDiscardSpec {
     pub allow_under_member_selection: bool,
     pub is_until_size_operation: bool,
     pub embedded_count_opcode: Option<i32>,
+    pub same_unit_discard: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -347,6 +340,7 @@ fn trace_opcode_name(opcode: i32) -> String {
         O_LOOK_AND_CHOOSE => "LOOK_AND_CHOOSE".to_string(),
         O_RECOVER_LIVE => "RECOVER_LIVE".to_string(),
         O_RECOVER_MEMBER => "RECOVER_MEMBER".to_string(),
+        O_SWAP_ZONE => "SWAP_ZONE".to_string(),
         O_RETURN => "RETURN".to_string(),
         O_JUMP => "JUMP".to_string(),
         O_JUMP_IF_FALSE => "JUMP_IF_FALSE".to_string(),
@@ -370,7 +364,7 @@ fn trace_step_family(opcode: i32) -> Option<&'static str> {
         O_LOOK_AND_CHOOSE | O_SELECT_MEMBER | O_SELECT_CARDS | O_SELECT_LIVE | O_SELECT_PLAYER
         | O_SELECT_MODE => Some("selection"),
         O_DRAW | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_MOVE_TO_DECK
-        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD => Some("movement"),
+        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD | O_SWAP_ZONE => Some("movement"),
         O_BOOST_SCORE | O_ADD_BLADES | O_ADD_HEARTS | O_SET_SCORE | O_REDUCE_SCORE
         | O_REDUCE_COST | O_INCREASE_COST | O_SET_HEART_COST | O_INCREASE_HEART_COST
         | O_REDUCE_HEART_REQ | O_TRANSFORM_COLOR | O_TRANSFORM_BLADES | O_TRANSFORM_HEART => {
@@ -399,9 +393,11 @@ fn trace_consumer_paths_for_opcode(opcode: i32) -> Vec<String> {
             paths.push("engine_rust_src/src/core/logic/interpreter/handlers/interaction.rs".to_string());
         }
         O_DRAW | O_RECOVER_LIVE | O_RECOVER_MEMBER | O_MOVE_MEMBER | O_MOVE_TO_DECK
-        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD | O_MOVE_TO_DISCARD => {
+        | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD | O_MOVE_TO_DISCARD
+        | O_SWAP_ZONE => {
             paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_deck.rs".to_string());
             paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_discard.rs".to_string());
+            paths.push("engine_rust_src/src/core/logic/interpreter/handlers/movement_swap_zone.rs".to_string());
             paths.push("engine_rust_src/src/core/logic/interpreter/handlers/interaction.rs".to_string());
         }
         O_BOOST_SCORE | O_ADD_BLADES | O_ADD_HEARTS | O_SET_SCORE | O_REDUCE_SCORE
@@ -910,6 +906,11 @@ impl<'a> AbilityFrameComponents<'a> {
             allow_under_member_selection: self.allow_under_member_selection(),
             is_until_size_operation: self.is_until_size_operation(),
             embedded_count_opcode: self.embedded_count_opcode(),
+            same_unit_discard: self
+                .params
+                .and_then(|params| params.get("same_unit_discard"))
+                .and_then(|value| value.as_bool())
+                .unwrap_or(false),
         }
     }
 
@@ -2556,6 +2557,8 @@ pub struct PendingInteraction {
     pub options: Vec<Value>,
     #[serde(default)]
     pub execution_id: u32,
+    #[serde(default)]
+    pub same_unit_discard: bool,
 }
 
 impl Default for PendingInteraction {
@@ -2577,6 +2580,7 @@ impl Default for PendingInteraction {
             actions: Vec::new(),
             options: Vec::new(),
             execution_id: 0,
+            same_unit_discard: false,
         }
     }
 }
@@ -2870,10 +2874,6 @@ impl Ability {
 
     pub fn resolved_frames(&self) -> Cow<'_, [AbilityFrame]> {
         if let Some(ref frame_program) = self.frame_program {
-            if !frame_program.frames.is_empty() {
-                return Cow::Borrowed(&frame_program.frames);
-            }
-
             return Cow::Borrowed(&frame_program.frames);
         }
 
@@ -2884,10 +2884,6 @@ impl Ability {
                     .map(AbilityFrame::from_effect)
                     .collect(),
             );
-        }
-
-        if let Some(ref frame_program) = self.frame_program {
-            return Cow::Borrowed(&frame_program.frames);
         }
 
         Cow::Borrowed(&[])

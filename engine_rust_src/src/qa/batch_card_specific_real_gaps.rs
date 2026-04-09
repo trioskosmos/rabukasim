@@ -582,6 +582,46 @@ mod tests {
     }
 
     #[test]
+    fn test_q184_under_member_energy_returns_to_energy_deck_on_leave() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+        state.ui.silent = true;
+        state.phase = Phase::Main;
+
+        let member_id = db
+            .id_by_no("PL!N-bp3-001-P")
+            .expect("Q184: expected under-member energy card in DB");
+
+        state.players[0].stage[0] = member_id;
+        state.players[0].energy_zone.clear();
+        state.players[0].energy_zone.push(3001);
+        state.players[0].stage_energy[0].push(3001);
+        state.players[0].sync_stage_energy_count(0);
+
+        let energy_deck_before = state.players[0].energy_deck.len();
+        assert_eq!(state.players[0].stage_energy_count[0], 1);
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: member_id,
+            area_idx: 0,
+            trigger_type: TriggerType::OnLeaves,
+            ..Default::default()
+        };
+
+        state
+            .handle_member_leaves_stage(0, 0, &db, &ctx)
+            .expect("Q184: member leave should resolve");
+        state.process_rule_checks(&db);
+
+        assert_eq!(state.players[0].stage[0], -1);
+        assert_eq!(state.players[0].stage_energy_count[0], 0);
+        assert!(state.players[0].stage_energy[0].is_empty());
+        assert_eq!(state.players[0].energy_deck.len(), energy_deck_before + 1);
+    }
+
+    #[test]
     fn test_q193_double_baton_can_land_in_either_source_slot() {
         let db = load_real_db();
         let state = setup_sumire_double_baton_state(&db);

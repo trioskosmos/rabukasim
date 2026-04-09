@@ -9,18 +9,9 @@ use crate::core::generated_constants::{
 };
 use crate::core::logic::ability_patterns::should_skip_inline_live_precheck;
 use crate::core::logic::Ability;
+use crate::core::logic::profiling::env_flag_enabled;
 use crate::core::logic::interpreter::uses_paired_keyword_effect_conditions;
 use std::time::Instant;
-
-fn trigger_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_TRIGGERS")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
 
 fn should_precheck_trigger_condition(cond: &crate::core::logic::Condition) -> bool {
     !matches!(
@@ -153,7 +144,7 @@ impl GameState {
             return;
         }
 
-        let profile_enabled = trigger_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_TRIGGERS");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -323,7 +314,7 @@ impl GameState {
         ctx: &AbilityContext,
         start_ab_idx: usize,
     ) {
-        let profile_enabled = trigger_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_TRIGGERS");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {

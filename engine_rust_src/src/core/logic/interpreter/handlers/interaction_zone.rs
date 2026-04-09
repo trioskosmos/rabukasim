@@ -16,6 +16,7 @@ pub fn collect_zone_cards(state: &GameState, p_idx: usize, source_zone: Zone) ->
         Zone::Yell => state.players[p_idx].yell_cards.iter().copied().collect(),
         Zone::Hand => state.players[p_idx].hand.iter().copied().collect(),
         Zone::Deck => state.players[p_idx].deck.iter().copied().collect(),
+        Zone::SuccessPile => state.players[p_idx].success_lives.iter().copied().collect(),
         _ => state.players[p_idx].discard.iter().copied().collect(),
     }
 }
@@ -46,6 +47,7 @@ pub fn draw_zone_cards(
             cards
         }
         Zone::Yell => state.players[p_idx].yell_cards.drain(..).collect(),
+        Zone::SuccessPile => state.players[p_idx].success_lives.drain(..).collect(),
         _ => {
             if state.players[p_idx].deck.len() < count {
                 state.resolve_deck_refresh(p_idx);
@@ -65,6 +67,7 @@ pub fn cards_for_source_zone(state: &GameState, target_player: usize, source_zon
     match source_zone {
         Zone::Hand => state.players[target_player].hand.as_slice(),
         Zone::Discard => state.players[target_player].discard.as_slice(),
+        Zone::SuccessPile => state.players[target_player].success_lives.as_slice(),
         _ => state.players[target_player].stage.as_slice(),
     }
 }
@@ -118,6 +121,18 @@ pub fn remove_card_from_zone(
                 }
             }
             false
+        }
+        Zone::SuccessPile => {
+            if let Some(pos) = state.players[p_idx]
+                .success_lives
+                .iter()
+                .position(|&x| x == cid)
+            {
+                state.players[p_idx].remove_success_live_card(pos);
+                true
+            } else {
+                false
+            }
         }
         _ => {
             if let Some(pos) = state.players[p_idx].discard.iter().position(|&x| x == cid) {

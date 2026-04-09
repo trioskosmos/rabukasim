@@ -51,26 +51,6 @@ extension-module = ["dep:pyo3", "dep:numpy", "pyo3/extension-module"]
 gpu = []
 perf_profile = []
 
-# [[bin]]
-# name = "ai_battle"
-# path = "src/bin/ai_battle.rs"
-# test = false
-
-# [[bin]]
-# name = "ai_game"
-# path = "src/bin/ai_game.rs"
-# test = false
-
-# [[bin]]
-# name = "simple_game"
-# path = "src/bin/simple_game.rs"
-# test = false
-
-# [[bin]]
-# name = "test_turn_runner"
-# path = "src/bin/test_turn_runner.rs"
-# test = false
-
 [[bin]]
 name = "bench_diagnostic"
 path = "examples/bench_diagnostic.rs"

@@ -4,9 +4,7 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::core::logic::card_db::CardDatabase;
-use crate::core::logic::filter::CardFilter;
-use crate::core::logic::interpreter::instruction::DecodedSlot;
-use crate::core::logic::models::{AbilityFrame, AbilityTraceView};
+use crate::core::logic::models::AbilityTraceView;
 use serde::Serialize;
 
 const DEFAULT_INPUT_CANDIDATES: &[&str] = &[
@@ -39,29 +37,6 @@ struct ExportSummary {
 }
 
 #[derive(Debug, Serialize)]
-struct SemanticAbilityFrameExport {
-    opcode: i32,
-    value: i32,
-    attr: CardFilter,
-    slot: DecodedSlot,
-    is_cost: bool,
-    params: serde_json::Value,
-}
-
-impl From<&AbilityFrame> for SemanticAbilityFrameExport {
-    fn from(frame: &AbilityFrame) -> Self {
-        Self {
-            opcode: frame.opcode,
-            value: frame.value,
-            attr: frame.filter(),
-            slot: frame.dslot(),
-            is_cost: frame.is_cost,
-            params: frame.params.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
 struct HydratedAbilityEntry {
     card_kind: &'static str,
     card_id: i32,
@@ -78,7 +53,6 @@ struct HydratedAbilityEntry {
     effect_count: usize,
     condition_count: usize,
     cost_count: usize,
-    resolved_frames: Vec<SemanticAbilityFrameExport>,
     trace_view: AbilityTraceView,
     action_routes: Vec<String>,
     serialization_paths: Vec<String>,
@@ -138,13 +112,8 @@ fn push_member_entries(
     for member in members {
         for (ability_index, ability) in member.abilities.iter().enumerate() {
             let resolved_frame_source = ability.resolved_frame_source().to_string();
-            let resolved_frames: Vec<SemanticAbilityFrameExport> = ability
-                .resolved_frames()
-                .iter()
-                .map(SemanticAbilityFrameExport::from)
-                .collect();
-            let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
+            let has_resolved_frames = !trace_view.steps.is_empty();
             let diagnostics = trace_view.diagnostics.clone();
 
             *summary
@@ -172,7 +141,6 @@ fn push_member_entries(
                 effect_count: ability.effects.len(),
                 condition_count: ability.conditions.len(),
                 cost_count: ability.costs.len(),
-                resolved_frames,
                 trace_view,
                 action_routes: diagnostics.action_routes,
                 serialization_paths: diagnostics.serialization_paths,
@@ -199,13 +167,8 @@ fn push_live_entries(
     for live in lives {
         for (ability_index, ability) in live.abilities.iter().enumerate() {
             let resolved_frame_source = ability.resolved_frame_source().to_string();
-            let resolved_frames: Vec<SemanticAbilityFrameExport> = ability
-                .resolved_frames()
-                .iter()
-                .map(SemanticAbilityFrameExport::from)
-                .collect();
-            let has_resolved_frames = !resolved_frames.is_empty();
             let trace_view = ability.trace_view();
+            let has_resolved_frames = !trace_view.steps.is_empty();
             let diagnostics = trace_view.diagnostics.clone();
 
             *summary
@@ -233,7 +196,6 @@ fn push_live_entries(
                 effect_count: ability.effects.len(),
                 condition_count: ability.conditions.len(),
                 cost_count: ability.costs.len(),
-                resolved_frames,
                 trace_view,
                 action_routes: diagnostics.action_routes,
                 serialization_paths: diagnostics.serialization_paths,
@@ -254,7 +216,7 @@ fn build_export(db: &CardDatabase) -> HydratedAbilityExport {
     HydratedAbilityExport {
         metadata: ExportMetadata {
             generated_unix_seconds: now_unix_seconds(),
-            extraction_entrypoint: "Ability::resolved_frames() + Ability::trace_view()",
+            extraction_entrypoint: "Ability::trace_view()",
             compiled_cards_source: COMPILED_CARDS_SOURCE_LABEL.to_string(),
         },
         summary,

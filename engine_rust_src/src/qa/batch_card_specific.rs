@@ -4164,8 +4164,9 @@ mod tests {
         state.players[1].hand.clear();
         state.players[1].deck = vec![opponent_draw].into();
 
-        let self_heart03_before = get_effective_hearts(&state, 0, 0, &db, 0).get_color_count(2);
-        let opponent_heart03_before = get_effective_hearts(&state, 1, 0, &db, 0).get_color_count(2);
+        let self_heart03_before = state.players[0].heart_buffs[0].get_color_count(2);
+        let self_right_heart03_before = state.players[0].heart_buffs[1].get_color_count(2);
+        let opponent_heart03_before = state.players[1].heart_buffs[0].get_color_count(2);
 
         state.trigger_event(&db, TriggerType::OnLiveStart, 0, live_id, 0, 0, -1);
         state.process_trigger_queue(&db);
@@ -4176,12 +4177,17 @@ mod tests {
             "669: the heart-grant branch should finish without prompting for an opponent member"
         );
         assert_eq!(
-            get_effective_hearts(&state, 0, 0, &db, 0).get_color_count(2),
+            state.players[0].heart_buffs[0].get_color_count(2),
             self_heart03_before + 1,
-            "669: the lone legal self target should gain one heart_03 bonus until end of live"
+            "669: the lone legal self target should gain one heart_03 buff until end of live"
         );
         assert_eq!(
-            get_effective_hearts(&state, 1, 0, &db, 0).get_color_count(2),
+            state.players[0].heart_buffs[1].get_color_count(2),
+            self_right_heart03_before,
+            "669: the unselected self stage member must not gain the heart_03 buff from SUNNY DAY SONG"
+        );
+        assert_eq!(
+            state.players[1].heart_buffs[0].get_color_count(2),
             opponent_heart03_before,
             "669: the opponent stage member must not gain the heart_03 bonus from SUNNY DAY SONG"
         );

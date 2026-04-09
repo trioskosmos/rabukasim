@@ -360,12 +360,19 @@ impl GameState {
         self.get_legal_action_ids_for_player(db, self.current_player as usize)
     }
 
+    pub fn get_legal_action_ids_into(&self, db: &CardDatabase, p_idx: usize, out: &mut Vec<i32>) {
+        out.clear();
+        self.generate_legal_actions(db, p_idx, out);
+        if out.len() > 1 {
+            out.sort_unstable();
+            out.dedup();
+        }
+    }
+
     pub fn get_legal_action_ids_for_player(&self, db: &CardDatabase, p_idx: usize) -> Vec<i32> {
-        let mut actions = SmallVec::<[i32; 64]>::new();
-        self.generate_legal_actions(db, p_idx, &mut actions);
-        actions.sort_unstable();
-        actions.dedup();
-        actions.to_vec()
+        let mut actions = Vec::new();
+        self.get_legal_action_ids_into(db, p_idx, &mut actions);
+        actions
     }
 
     pub fn get_legal_actions(&self, db: &CardDatabase) -> Vec<bool> {

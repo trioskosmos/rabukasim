@@ -107,17 +107,6 @@ mod validation {
         None
     }
     
-    /// Validate raw attribute mask for color extraction
-    pub fn validate_raw_attr_mask(mask: usize) -> Option<usize> {
-        if mask == 0x7F {
-            return Some(6); // Special case for full mask
-        }
-        if mask.count_ones() == 1 && mask < 1 << 7 {
-            return Some(mask.trailing_zeros() as usize);
-        }
-        None
-    }
-    
     /// Check if deck refresh is needed for player
     pub fn needs_deck_refresh(state: &GameState, p_idx: usize) -> bool {
         state.players[p_idx].deck.is_empty()
@@ -147,7 +136,7 @@ fn semantic_heart_color_from_frame(frame: &AbilityFrameComponents<'_>, fallback:
 
     // Validate raw attribute mask
     if frame.raw_attr != 0 {
-        if let Some(color) = validation::validate_raw_attr_mask(frame.raw_attr as usize) {
+        if let Some(color) = validation::validate_color_mask(frame.raw_attr as usize) {
             return color;
         }
     }

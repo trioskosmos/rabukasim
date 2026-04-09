@@ -2,28 +2,12 @@ use crate::core::enums::*;
 use crate::core::logic::action_gen::ActionGenerator;
 use crate::core::logic::constants::{DECK_TOP_LOOK_WINDOW, FILTER_COLOR_SHIFT_R5};
 use crate::core::logic::interpreter::costs::check_frame_cost;
+use crate::core::logic::profiling::{env_flag_enabled, env_threshold_us};
 use crate::core::logic::{AbilityContext, ActionReceiver, CardDatabase, GameState};
 use crate::core::types::{MAX_HAND_SIZE, STAGE_SLOT_COUNT};
 use std::time::Instant;
 
 pub struct MainPhaseGenerator;
-
-fn legal_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_LEGAL_ACTIONS")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
-
-fn legal_profile_threshold_us() -> u64 {
-    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(2000)
-}
 
 fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
     ab.runtime_has_deck_top_window()
@@ -169,7 +153,7 @@ impl ActionGenerator for MainPhaseGenerator {
     ) {
         let _condition_cache_scope = crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
         let _filter_cache_scope = crate::core::logic::game_rules_ext::FilterMatchCacheScope::activate();
-        let profile_enabled = legal_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_LEGAL_ACTIONS");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -643,7 +627,7 @@ impl ActionGenerator for MainPhaseGenerator {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= legal_profile_threshold_us() {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                 println!(
                     "[PROFILE] LegalActionsMain total_us={} precompute_us={} granted_cost_mod_us={} slot_projection_us={} play_hand_us={} stage_abilities_us={} hand_abilities_us={} p={} hand={} stage0={} stage1={}",
                     total_us,

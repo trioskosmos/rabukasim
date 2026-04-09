@@ -1,10 +1,3 @@
-// pub mod karin_repro;
-// pub mod on_leaves_repro;
-// pub mod fix_kimi_no_kokoro;  // Removed: duplicate of wave6_tests::test_kimi_no_kokoro_prevention
-// pub mod cost_dependency_repro;
-// pub mod size_test;
-// pub mod mini_engine_tests;
-// pub mod movement_parity_tests;
 #[cfg(test)]
 pub mod card_579_verification;
 #[cfg(test)]

@@ -522,6 +522,18 @@ impl PlayerState {
         Some(old)
     }
 
+    pub fn remove_success_live_card(&mut self, idx: usize) -> Option<i32> {
+        if idx >= self.success_lives.len() {
+            return None;
+        }
+
+        let old = self.success_lives.remove(idx);
+        if old >= 0 {
+            self.remove_card_location(old);
+        }
+        Some(old)
+    }
+
     pub fn push_hand_card(&mut self, card_id: i32) {
         self.hand.push(card_id);
         self.record_card_location(card_id, Zone::Hand, -1);

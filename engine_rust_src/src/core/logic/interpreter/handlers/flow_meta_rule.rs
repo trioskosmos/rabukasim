@@ -1,5 +1,6 @@
 use super::HandlerResult;
 use crate::core::enums::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::merge_filter_attr_with_params;
 use crate::core::logic::interpreter::conditions::get_condition_count;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
@@ -75,6 +76,8 @@ pub fn handle_meta_rule(
             state.players[p_idx].yell_cards.len() as u32
         };
 
+        state.players[p_idx].yell_heart_bonus = [HeartBoard::default(); 3];
+        state.players[p_idx].yell_blade_bonus = [0; 3];
         if !state.players[p_idx].yell_cards.is_empty() {
             state.players[p_idx].yell_cards.clear();
         }

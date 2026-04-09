@@ -4,6 +4,8 @@ use crate::test_helpers::load_real_db;
 
 #[test]
 fn test_meta_rule_yell_mulligan() {
+    use crate::core::generated_constants::ACTION_BASE_CHOICE;
+
     let db = load_real_db();
     let mut state = GameState::default();
     state.ui.silent = false;
@@ -12,16 +14,36 @@ fn test_meta_rule_yell_mulligan() {
 
     // Card 418: PL!S-bp2-004-R (Kurosawa Dia)
     let dia_id = 418;
-    state.players[0].stage[1] = dia_id;
+    let mut member_ids: Vec<i32> = db
+        .members
+        .values()
+        .map(|member| member.card_id)
+        .filter(|&card_id| card_id != dia_id)
+        .collect();
+    member_ids.sort_unstable();
+    assert!(
+        member_ids.len() >= 5,
+        "Need at least five member cards to build the yell mulligan fixture"
+    );
 
-    let member_id = 1;
-    state.players[0].deck.push(member_id);
-    state.players[0].deck.push(member_id);
+    let old_yell_a = member_ids[0];
+    let old_yell_b = member_ids[1];
+    let new_yell_a = member_ids[2];
+    let new_yell_b = member_ids[3];
+    let new_yell_c = member_ids[4];
 
-    // Force collection for yell context
-    state.players[0].yell_cards.push(member_id);
+    // Force a first yell pile with no live cards and make Dia the revealed source.
+    state.players[0].yell_cards = vec![dia_id, old_yell_a, old_yell_b].into();
 
-    // Directly execute trigger logic
+    // Put a fresh three-card yell on top of the deck so the ability can re-yell
+    // without needing a deck refresh from the discard pile.
+    state.players[0].deck.push(new_yell_c);
+    state.players[0].deck.push(new_yell_b);
+    state.players[0].deck.push(new_yell_a);
+
+    // Prove the re-yell path clears old bonuses instead of stacking them.
+    state.players[0].yell_blade_bonus = [9, 9, 9];
+
     let ab = &db.get_member(dia_id).unwrap().abilities[0];
     let ctx = AbilityContext {
         source_card_id: dia_id,
@@ -31,7 +53,41 @@ fn test_meta_rule_yell_mulligan() {
     };
     state.resolve_ability(&db, ab, &ctx);
 
-    assert_eq!(state.players[0].cheer_mod_count, 2);
+    let interaction = state
+        .interaction_stack
+        .last()
+        .expect("Expected optional yell mulligan prompt");
+    assert_eq!(interaction.choice_type, ChoiceType::Optional);
+
+    state
+        .handle_response(&db, ACTION_BASE_CHOICE + 0)
+        .expect("Accepting the yell mulligan should resolve");
+    state.process_trigger_queue(&db);
+
+    assert_eq!(state.players[0].yell_cards.len(), 3);
+    assert_ne!(
+        state.players[0].yell_cards.as_slice(),
+        &[dia_id, old_yell_a, old_yell_b],
+        "The yell mulligan should replace the original pile"
+    );
+    assert_eq!(
+        state.players[0].yell_blade_bonus[0],
+        db.get_member(state.players[0].yell_cards[0])
+            .map(|member| member.blades as u32)
+            .unwrap_or(0)
+    );
+    assert_eq!(
+        state.players[0].yell_blade_bonus[1],
+        db.get_member(state.players[0].yell_cards[1])
+            .map(|member| member.blades as u32)
+            .unwrap_or(0)
+    );
+    assert_eq!(
+        state.players[0].yell_blade_bonus[2],
+        db.get_member(state.players[0].yell_cards[2])
+            .map(|member| member.blades as u32)
+            .unwrap_or(0)
+    );
 }
 
 #[test]

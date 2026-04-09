@@ -24,6 +24,7 @@ Example runs:
 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
 BENCH_GAMES=4000 BENCH_WORKERS=12 BENCH_MAX_STEPS=10000 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
 BENCH_TRACE_FIRST_GAME=1 BENCH_GAMES=1 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
+BENCH_DEBUG_MODE=1 BENCH_PROFILE_LEGAL_ACTIONS=1 BENCH_PROFILE_TRIGGERS=1 BENCH_PROFILE_PLAY_MEMBER=1 BENCH_PROFILE_STEP_THRESHOLD_US=100 cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_throughput
 ```
 
 By default the benchmark now uses up to 8 workers, capped by the machine's available parallelism.
@@ -37,6 +38,7 @@ Supported environment variables:
 - `BENCH_SEED`: base RNG seed
 - `BENCH_TRACE_FIRST_GAME`: print a trace for the first game when set to `1`, `true`, `yes`, or `on`
 - `BENCH_TRACE_STEP_LIMIT`: number of trace steps printed for the traced game
+- `BENCH_DEBUG_MODE`: enable internal debug-mode profiling output when combined with profiling env vars
 
 ## Deprecated Or Diagnostic Benchmarks
 

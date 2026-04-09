@@ -6,15 +6,15 @@ mod qa_remaining_gaps {
     use crate::core::logic::*;
     use crate::test_helpers::*;
 
-    // QA: Q131 | Q: 『 {{live_start.png|ライブ開始時}} 自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。』について。 相手が先行の場合、相手のライブ開始時に能力を使用できますか？
-    // A: いいえ、発動できません。 {{live_start.png|ライブ開始時}} 能力の効果は自分のライブ開始時に発動します。
+    // QA: Q131 | Q: 、E{{live_start.png|ライブ開始時}} 自刁E��相手を選ぶ。�E刁E�E、そのプレイヤーのチE��キの上からカードを2枚見る。その中から好きな枚数を好きな頁E��でチE��キの上に置き、残りを控え室に置く。』につぁE��、E相手が先行�E場合、相手�Eライブ開始時に能力を使用できますか�E�E
+    // A: ぁE��え、発動できません、E{{live_start.png|ライブ開始時}} 能力�E効果�E自刁E�Eライブ開始時に発動します、E
     /// Q131: Live start abilities should NOT trigger when opponent initiates live
     /// Real test: Verify conditional ability fire only on self-initiated live
     #[test]
     fn test_q131_live_start_condition_ownership() {
         let mut game = Game::new_test();
 
-        // Setup: Player A has member with "ライブ開始時に効果" (live start effect)
+        // Setup: Player A has member with "ライブ開始時に効极E (live start effect)
         let member_a = Card::member("PL!-bp1-001")
             .with_ability_live_start("gain_score", 1);
         game.place_member(Player::A, member_a, Slot::Center);
@@ -35,15 +35,15 @@ mod qa_remaining_gaps {
         assert!(!opponent_live_start.is_empty() || true, "B's abilities may trigger");
     }
 
-    // QA: Q147 | Q: 『 {{live_start.png|ライブ開始時}} 自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを＋１する。』について。 この能力の「自分のライブ中の『μ's』のカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、成功ライブカード置き場に置けますか？
-    // A: はい、可能です。 スコア０の場合でもライブに勝利すれば成功ライブカード置き場に置くことができます。
+    // QA: Q147 | Q: 、E{{live_start.png|ライブ開始時}} 自刁E�Eライブ中の『μ's』�Eカードが2枚以上ある場合、このカード�Eスコアを＋１する。』につぁE��、Eこ�E能力�E「�E刁E�Eライブ中の『μ's』�Eカードが2枚以上ある場合」を満たさず、このカードがスコア0の時、�E功ライブカード置き場に置けますか�E�E
+    // A: はぁE��可能です、Eスコア�E��E場合でもライブに勝利すれば成功ライブカード置き場に置くことができます、E
     /// Q147: Score modifications snapshot at ability resolution time, not maintained
     /// Real test: Verify score change doesn't retroactively update stored bonuses
     #[test]
     fn test_q147_score_bonus_snapshot() {
         let mut game = Game::new_test();
 
-        // Live card with: "ライブ開始時 自分のハンドが5枚以上の場合、このカードのスコアを+1"
+        // Live card with: "ライブ開始時 自刁E�Eハンドが5枚以上�E場合、このカード�EスコアめE1"
         let live_card = Card::live("PL!-bp1-025")
             .with_ability_live_start_conditional("hand_size_5plus", "score", 1);
 
@@ -66,10 +66,10 @@ mod qa_remaining_gaps {
             "Score should remain unchanged after hand reduction");
     }
 
-    // QA: Q148 | Q: 『 {{live_start.png|ライブ開始時}} 自分のステージにいるメンバーが持つ {{icon_blade.png|ブレード}} の合計が10以上の場合、このカードを成功させるための必要ハートは {{heart_00.png|heart0}} {{heart_00.png|heart0}} 少なくなる。』について。 この能力で自分のステージにいるウェイト状態のメンバーの {{icon_blade.png|ブレード}} は含みますか？
-    // A: はい、含みます。
+    // QA: Q148 | Q: 、E{{live_start.png|ライブ開始時}} 自刁E�EスチE�EジにぁE��メンバ�Eが持つ {{icon_blade.png|ブレード}} の合計が10以上�E場合、このカードを成功させるため�E忁E��ハート�E {{heart_00.png|heart0}} {{heart_00.png|heart0}} 少なくなる。』につぁE��、Eこ�E能力で自刁E�EスチE�EジにぁE��ウェイト状態�Eメンバ�Eの {{icon_blade.png|ブレード}} は含みますか�E�E
+    // A: はぁE��含みます、E
     /// Q148: Wait state members' blades count in ability conditions
-    /// Real test: "ステージのメンバーが持つブレードの合計が10以上の場合"
+    /// Real test: "スチE�Eジのメンバ�Eが持つブレード�E合計が10以上�E場吁E
     /// includes wait state members
     #[test]
     fn test_q148_wait_state_blades_counted() {
@@ -86,15 +86,15 @@ mod qa_remaining_gaps {
         game.place_member(Player::A, wait_member, Slot::Left);
         game.set_member_state(Player::A, Slot::Left, MemberState::Wait);
 
-        // Ability: "自分のステージにいるメンバーが持つブレードの合計が10以上の場合"
+        // Ability: "自刁E�EスチE�EジにぁE��メンバ�Eが持つブレード�E合計が10以上�E場吁E
         let total_blades = game.count_stage_blades(Player::A);
 
         // Should be 11: 6 (active) + 5 (wait state) = 11
         assert_eq!(total_blades, 11, "Wait state blades should be included");
     }
 
-    // QA: Q149 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを＋１する。』について。 ハートの総数とはどのハートのことですか？
-    // A: メンバーが持つ基本ハートの数を、色を無視して数えた値のことです。 例えば、 {{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_01.png|heart01}} {{heart_06.png|heart06}} を持つメンバーの場合、そのメンバーのハートの数は5つとなります。
+    // QA: Q149 | Q: 、E{{live_success.png|ライブ�E功時}} 自刁E�EスチE�EジにぁE��メンバ�Eが持つハ�Eト�E総数が、相手�EスチE�EジにぁE��メンバ�Eが持つハ�Eト�E総数より多い場合、このカード�Eスコアを＋１する。』につぁE��、Eハ�Eト�E総数とはどのハ�Eト�Eことですか�E�E
+    // A: メンバ�Eが持つ基本ハ�Eト�E数を、色を無視して数えた値のことです、E例えば、E{{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_03.png|heart03}} {{heart_01.png|heart01}} {{heart_06.png|heart06}} を持つメンバ�Eの場合、そのメンバ�Eのハ�Eト�E数は5つとなります、E
     /// Q149: Heart total (basic hearts only, not blade hearts)
     /// Real test: Verify blade hearts from yell don't count in "heart total" conditions
     #[test]
@@ -123,10 +123,10 @@ mod qa_remaining_gaps {
         assert_eq!(total_with_blades, 5);
     }
 
-    // QA: Q150 | Q: 『 {{live_success.png|ライブ成功時}} 自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを＋１する。』について。 自分のステージに、ハートの数が2,3,5のメンバーがいます。相手のステージには、ハートの数が3,6のメンバーがいます。このとき、ライブ成功時の効果は発動しますか？
-    // A: はい、発動します。 自分のステージのいるメンバーのハートの総数は10、相手のステージにいるメンバーのハートの総数は9となり、自分のほうが多いため発動します。
+    // QA: Q150 | Q: 、E{{live_success.png|ライブ�E功時}} 自刁E�EスチE�EジにぁE��メンバ�Eが持つハ�Eト�E総数が、相手�EスチE�EジにぁE��メンバ�Eが持つハ�Eト�E総数より多い場合、このカード�Eスコアを＋１する。』につぁE��、E自刁E�EスチE�Eジに、ハート�E数ぁE,3,5のメンバ�Eがいます。相手�EスチE�Eジには、ハート�E数ぁE,6のメンバ�Eがいます。このとき、ライブ�E功時の効果�E発動しますか�E�E
+    // A: はぁE��発動します、E自刁E�EスチE�EジのぁE��メンバ�Eのハ�Eト�E総数は10、相手�EスチE�EジにぁE��メンバ�Eのハ�Eト�E総数は9となり、�E刁E�EほぁE��多いため発動します、E
     /// Q150: Surplus heart has specific definition with color requirements
-    /// Real test: "必要ハート" vs actual ハート showing surplus calculation
+    /// Real test: "忁E��ハーチE vs actual ハ�EチEshowing surplus calculation
     #[test]
     fn test_q150_surplus_heart_definition() {
         let mut game = Game::new_test();
@@ -155,8 +155,8 @@ mod qa_remaining_gaps {
             "Blade hearts count as hearts for surplus calculation");
     }
 
-    // QA: Q174 | Q: 『 {{live_success.png|ライブ成功時}} このターン、自分が余剰ハートに {{heart_04.png|heart04}} を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。』について、ステージに緑ハートがなくエールによってALLハートを3枚獲得してライブ成功した時、ライブ成功時能力は使えますか？
-    // A: いいえ。使えません。
+    // QA: Q174 | Q: 、E{{live_success.png|ライブ�E功時}} こ�Eターン、�E刁E��余剰ハ�Eトに {{heart_04.png|heart04}} めEつ以上持っており、かつ自刁E�EスチE�Eジに『虹ヶ咲』�Eメンバ�Eがいる場合、�E刁E�EエネルギーチE��キから、エネルギーカードを1枚ウェイト状態で置く。』につぁE��、スチE�Eジに緑ハートがなくエールによってALLハ�Eトを3枚獲得してライブ�E功した時、ライブ�E功時能力�E使えますか�E�E
+    // A: ぁE��え。使えません、E
     /// Q174: Group name vs unit name - "同じユニット名" uses 'unit', not 'group'
     /// Real test: Select cards from same unit for cost matching
     #[test]
@@ -170,7 +170,7 @@ mod qa_remaining_gaps {
 
         game.set_hand(Player::A, vec![card1.clone(), card2.clone(), card3.clone()]);
 
-        // Ability: "手札の同じユニット名を持つカード2枚を控え室に置いてもよい"
+        // Ability: "手札の同じユニット名を持つカーチE枚を控え室に置ぁE��もよぁE
         // Should match on UNIT, not group
 
         let cost_cards = game.find_same_unit_cards_in_hand(Player::A, "5yncri5e!");
@@ -180,8 +180,8 @@ mod qa_remaining_gaps {
         assert!(!cost_cards.contains(&card3));
     }
 
-    // QA: Q175 | Q: 『 {{live_start.png|ライブ開始時}} 手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、 {{heart_04.png|heart04}} {{heart_04.png|heart04}} {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る。』などについて、この能力を使用しているメンバーカードと同じユニットの必要はありますか？
-    // A: いいえ、同じユニットである必要はありません。 手札から控え室に置くカードのユニットが同じである必要があります。ただし、「μ's」や「Aqours」など、グループ名は参照できません。
+    // QA: Q175 | Q: 、E{{live_start.png|ライブ開始時}} 手札の同じユニット名を持つカーチE枚を控え室に置ぁE��もよぁE��ライブ終亁E��まで、E{{heart_04.png|heart04}} {{heart_04.png|heart04}} {{icon_blade.png|ブレード}} {{icon_blade.png|ブレード}} を得る。』などにつぁE��、この能力を使用してぁE��メンバ�Eカードと同じユニット�E忁E���Eありますか�E�E
+    // A: ぁE��え、同じユニットである忁E���Eありません、E手札から控え室に置くカード�Eユニットが同じである忁E��があります。ただし、「μ's」や「Aqours」など、グループ名は参�Eできません、E
     /// Q175: Cost reduction modifies selection eligibility
     /// Real test: Card with reduced cost becomes eligible for cost-based selections
     #[test]
@@ -217,8 +217,8 @@ mod qa_remaining_gaps {
         assert!(!too_low);
     }
 
-    // QA: Q176 | Q: 『 {{kidou.png|起動}} {{turn1.png|ターン1回}} {{icon_energy.png|E}} {{icon_energy.png|E}} :自分の手札を相手は見ないで１枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時までこのメンバーは「 {{jyouji.png|常時}} ライブの合計スコアを＋１する。」を得る。』について、公開するのは自分の手札ですか？相手の手札ですか？
-    // A: 自分の手札を公開します。
+    // QA: Q176 | Q: 、E{{kidou.png|起動}} {{turn1.png|ターン1回}} {{icon_energy.png|E}} {{icon_energy.png|E}} :自刁E�E手札を相手�E見なぁE���E�枚選び公開する。これにより公開されたカードがライブカード�E場合、ライブ終亁E��までこ�Eメンバ�Eは、E{{jyouji.png|常晁E} ライブ�E合計スコアを＋１する。」を得る。』につぁE��、�E開する�Eは自刁E�E手札ですか�E�相手�E手札ですか�E�E
+    // A: 自刁E�E手札を�E開します、E
     /// Q176: Opponent effect resolution (forced full resolution)
     /// Real test: When opponent card triggers effect on us, must fully resolve it
     #[test]
@@ -247,15 +247,15 @@ mod qa_remaining_gaps {
             "Follow-up discard must execute");
     }
 
-    // QA: Q177 | Q: 『 {{jidou.png|自動}} {{turn1.png|ターン1回}} 自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト４以下のメンバーがウェイト状態になったとき、カードを１枚引く。』について、条件を満たした場合でも自動能力の効果を解決しないことはできますか？
-    // A: いいえ、必ず解決する必要があります。
+    // QA: Q177 | Q: 、E{{jidou.png|自動}} {{turn1.png|ターン1回}} 自刁E�Eカード�E効果によって、相手�EスチE�EジにぁE��アクチE��ブ状態�Eコスト４以下�Eメンバ�Eがウェイト状態になったとき、カードを�E�枚引く。』につぁE��、条件を満たした場合でも�E動�E力�E効果を解決しなぁE��とはできますか�E�E
+    // A: ぁE��え、忁E��解決する忁E��があります、E
     /// Q177: Mandatory auto ability vs optional cost
     /// Real test: Auto ability with conditional MUST fire, but cost is optional
     #[test]
     fn test_q177_mandatory_auto_optional_cost() {
         let mut game = Game::new_test();
 
-        // Auto ability: "自動 このターン、相手のメンバーがウェイト状態になったとき"
+        // Auto ability: "自勁Eこ�Eターン、相手�Eメンバ�Eがウェイト状態になったとぁE
         let member = Card::member("PL!-pb1-015")
             .with_auto_ability_triggered("member_wait",
                 AbilityCost::Energy(2),
@@ -283,8 +283,8 @@ mod qa_remaining_gaps {
             "No effect without cost payment");
     }
 
-    // QA: Q180 | Q: 『 {{toujyou.png|登場}} このターン、自分と相手のステージにいるメンバーは、効果によってはアクティブにならない。』について、この効果が発動したターンにアクティブフェイズを迎えました。そのアクティブフェイズでメンバーをアクティブにできますか？
-    // A: はい、できます。
+    // QA: Q180 | Q: 、E{{toujyou.png|登場}} こ�Eターン、�E刁E��相手�EスチE�EジにぁE��メンバ�Eは、効果によってはアクチE��ブにならなぁE��』につぁE��、この効果が発動したターンにアクチE��ブフェイズを迎えました。そのアクチE��ブフェイズでメンバ�EをアクチE��ブにできますか�E�E
+    // A: はぁE��できます、E
     /// Q180: Area movement vs "cannot activate" effects
     /// Real test: Active phase state changes (wait->active) override ability restrictions
     #[test]
@@ -311,15 +311,15 @@ mod qa_remaining_gaps {
             "Active phase should change wait to active despite restriction");
     }
 
-    // QA: Q183 | Q: 『 {{toujyou.png|登場}} メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。』について、 このカードの効果で相手プレイヤーのメンバーをウェイトにできますか？
-    // A: いいえ。できません。 能力のコストとしてメンバーカードをウェイト状態にする際には、必ず自身のステージのメンバーをウェイト状態にしなければなりません。
+    // QA: Q183 | Q: 、E{{toujyou.png|登場}} メンバ�EめE人までウェイトにしてもよぁE��これによりウェイト状態にしたメンバ�E1人につき、カードを1枚引く。』につぁE��、Eこ�Eカード�E効果で相手�Eレイヤーのメンバ�Eをウェイトにできますか�E�E
+    // A: ぁE��え。できません、E能力�Eコストとしてメンバ�Eカードをウェイト状態にする際には、忁E��自身のスチE�Eジのメンバ�Eをウェイト状態にしなければなりません、E
     /// Q183: Cost effect can only target own board
-    /// Real test: "メンバーをウェイトにする" cost from own ability
+    /// Real test: "メンバ�Eをウェイトにする" cost from own ability
     #[test]
     fn test_q183_cost_only_own_board() {
         let mut game = Game::new_test();
 
-        // Ability with cost: "このターン、自分のメンバー1人をウェイトにして..."
+        // Ability with cost: "こ�Eターン、�E刁E�Eメンバ�E1人をウェイトにして..."
         let member = Card::member("PL!-bp3-004")
             .with_activation_cost_member_wait("own", "draw_2");
 
@@ -342,8 +342,8 @@ mod qa_remaining_gaps {
         assert!(!can_target_opp, "Cannot target opponent member for cost");
     }
 
-    // QA: Q184 | Q: エネルギーカードをメンバーカードの下に置いているとき、メンバーカードの下に置かれたエネルギーカードはエネルギーの数として数えますか？
-    // A: いいえ。数えません。 エネルギーの枚数を参照する際、メンバーカードの下に置かれたエネルギーカードは参照しません。
+    // QA: Q184 | Q: エネルギーカードをメンバ�Eカード�E下に置ぁE��ぁE��とき、メンバ�Eカード�E下に置かれたエネルギーカード�Eエネルギーの数として数えますか�E�E
+    // A: ぁE��え。数えません、Eエネルギーの枚数を参照する際、メンバ�Eカード�E下に置かれたエネルギーカード�E参�Eしません、E
     /// Q184: Energy under member is separate from energy zone
     /// Real test: Under-member energy doesn't count toward energy total
     #[test]
@@ -357,7 +357,7 @@ mod qa_remaining_gaps {
         game.add_energy_to_zone(Player::A, 4);
         assert_eq!(game.energy_count(Player::A), 4);
 
-        // Place energy under member ("メンバーの下に置く")
+        // Place energy under member ("メンバ�Eの下に置ぁE)
         game.place_energy_under_member(Player::A, Slot::Center, 2);
 
         // Energy count should still be 4 (not 6)
@@ -373,18 +373,130 @@ mod qa_remaining_gaps {
             "Under-member energy follows member movement");
     }
 
-    // QA: Q185 | Q: {{live_start.png|ライブ開始時}} 能力による質問への回答が「クッキー＆クリームよりもあなた」でした。 この場合、どの回答として扱いますか？
-    // A: 質問者と回答者のお互いが正しく認識できる場合、回答が一字一句同じものである必要はありません。 対戦相手がどの回答として答えたのか確認をしてください。
-    /// Q185: Opponent ability card response selection
-    /// Real test: "相手はそれらのカードのうち1枚を選ぶ"
+    /// Q184.2: Energy under a member is reclaimed when the member leaves stage
+    #[test]
+    fn test_q184_under_member_energy_returns_to_energy_deck_on_leave() {
+        let db = load_real_db();
+        let mut game = Game::new_test();
+
+        let member = Card::member("PL!N-bp3-001");
+        game.place_member(Player::A, member, Slot::Center);
+        game.add_energy_to_zone(Player::A, 1);
+        game.place_energy_under_member(Player::A, Slot::Center, 1);
+
+        let energy_deck_before = game.players[0].energy_deck.len();
+        assert_eq!(game.energy_under_member(Player::A, Slot::Center), 1);
+
+        let ctx = AbilityContext {
+            player_id: 0,
+            activator_id: 0,
+            source_card_id: game.players[0].stage[0],
+            area_idx: 0,
+            trigger_type: TriggerType::OnLeaves,
+            ..Default::default()
+        };
+
+        game.handle_member_leaves_stage(0, 0, &db, &ctx)
+            .expect("member leave should resolve");
+        game.process_rule_checks(&db);
+
+        assert_eq!(game.players[0].stage[0], -1, "the member should be gone");
+        assert_eq!(
+            game.energy_under_member(Player::A, Slot::Center),
+            0,
+            "under-member energy should be cleared from the emptied slot"
+        );
+        assert_eq!(
+            game.players[0].energy_deck.len(),
+            energy_deck_before + 1,
+            "the reclaimed under-member energy should return to the energy deck"
+        );
+    }
+
+    /// Q184.1: Energy-under-member live-start ability should resolve its move, draw, and blade bonus
+    #[test]
+    fn test_q184_under_member_energy_live_start_bonus_resolution() {
+        let db = load_real_db();
+        let mut state = create_test_state();
+
+        let member = Card::member("PL!N-bp3-001");
+        let support = Card::member("PL!-bp1-001");
+        state.place_member(Player::A, member, Slot::Center);
+        state.place_member(Player::A, support, Slot::Left);
+        state.add_energy_to_zone(Player::A, 1);
+
+        let hand_before = state.hand(Player::A).len();
+        let before_center_blades = state.get_effective_blades(0, 0, &db, 0);
+        let before_left_blades = state.get_effective_blades(0, 1, &db, 0);
+
+        state.phase = Phase::PerformanceP1;
+        let live_ctx = AbilityContext {
+            source_card_id: state.players[0].stage[0],
+            player_id: 0,
+            activator_id: 0,
+            trigger_type: TriggerType::OnLiveStart,
+            area_idx: 0,
+            ..Default::default()
+        };
+
+        state.trigger_abilities(&db, TriggerType::OnLiveStart, &live_ctx);
+        state.process_trigger_queue(&db);
+
+        let pending = state
+            .interaction_stack
+            .last()
+            .expect("PL!N-bp3-001 should open an optional energy placement prompt");
+        assert!(
+            pending.choice_type == ChoiceType::PayEnergy || pending.choice_type == ChoiceType::Optional,
+            "the under-member energy card should surface as an optional energy-style prompt"
+        );
+
+        let mut actions = TestActionReceiver::default();
+        state.generate_legal_actions(&db, 0, &mut actions);
+        let choose_action = actions
+            .actions
+            .iter()
+            .copied()
+            .find(|action| *action > 0)
+            .expect("expected an energy placement choice");
+
+        state
+            .step(&db, choose_action as i32)
+            .expect("energy-under-member choice should resolve");
+        state.process_trigger_queue(&db);
+
+        assert_eq!(
+            state.energy_under_member(Player::A, Slot::Center),
+            1,
+            "one energy should now be under the live-start member"
+        );
+        assert_eq!(
+            state.hand(Player::A).len(),
+            hand_before + 1,
+            "the follow-up draw should add exactly one card to hand"
+        );
+        assert_eq!(
+            state.get_effective_blades(0, 0, &db, 0),
+            before_center_blades + 2,
+            "the under-member live-start bonus should grant +2 blades to the stage"
+        );
+        assert_eq!(
+            state.get_effective_blades(0, 1, &db, 0),
+            before_left_blades + 2,
+            "the blade bonus should apply to other stage members too"
+        );
+    }
+
+    // QA: Q185 | Q: {{live_start.png|ライブ開始時}} 能力による質問への回答が「クチE��ー�E�E��リームよりもあなた」でした、Eこ�E場合、どの回答として扱ぁE��すか�E�E    // A: 質問老E��回答老E�Eお互いが正しく認識できる場合、回答が一字一句同じも�Eである忁E���Eありません、E対戦相手がどの回答として答えた�Eか確認をしてください、E    /// Q185: Opponent ability card response selection
+    /// Real test: "相手�Eそれら�Eカード�EぁE��1枚を選ぶ"
     /// Opponent must fully engage with selection, ability fully resolves
     #[test]
     fn test_q185_opponent_selection_required_for_resolution() {
         let mut game = Game::new_test();
 
-        // Ability: "『登場 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。
-        // そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを
-        // 自分の手札に加える。』"
+        // Ability: "『登場 自刁E�E控え室にある、カード名の異なるライブカードを2枚選ぶ、E
+        // そうした場合、相手�Eそれら�Eカード�EぁE��1枚を選ぶ。これにより相手に選ばれたカードを
+        // 自刁E�E手札に加える。、E
 
         let card1 = Card::live("PL!-bp1-001");
         let card2 = Card::live("PL!-bp1-002");
@@ -405,18 +517,18 @@ mod qa_remaining_gaps {
         assert!(hand_size > 0, "Card should enter hand after opponent selection");
     }
 
-    // QA: Q186 | Q: 『 {{jyouji.png|常時}} 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。』について、 手札の枚数によって、LL-bp2-001-R+のコストは0になりますか？
-    // A: はい、なります。
+    // QA: Q186 | Q: 、E{{jyouji.png|常晁E} 手札にあるこ�Eメンバ�Eカード�Eコスト�E、このカード以外�E自刁E�E手札1枚につき、E少なくなる。』につぁE��、E手札の枚数によって、LL-bp2-001-R+のコスト�E0になりますか�E�E
+    // A: はぁE��なります、E
     /// Q186: Reduced cost validation in cost-exact effects
-    /// Real test: "公開したカードのコストの合計が、10、20、30..."
+    /// Real test: "公開したカード�Eコスト�E合計が、E0、E0、E0..."
     /// with ability that reduces costs mid-selection
     #[test]
     fn test_q186_cost_reduction_affects_validation() {
         let mut game = Game::new_test();
 
-        // Ability: "『起動 ターン1回 手札にあるメンバーカードを好きな枚数公開する：
-        // 公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、
-        // ライブ終了時まで、...を得る。』"
+        // Ability: "『起勁Eターン1囁E手札にあるメンバ�Eカードを好きな枚数公開する！E
+        // 公開したカード�Eコスト�E合計が、E0、E0、E0、E0、E0のぁE��れかの場合、E
+        // ライブ終亁E��まで、E..を得る。、E
 
         // Hand: card cost 5, card cost 5 (total 10 - valid)
         let card1 = Card::member("PL!-bp1-001").with_base_cost(5);
@@ -435,8 +547,8 @@ mod qa_remaining_gaps {
         assert!(is_valid);
 
         // Now if card 1 had cost reduction applied (via ability like Card 129)
-        // e.g., "『常時 手札にあるこのメンバーカードのコストは、
-        // このカード以外の自分の手札1枚につき、1少なくなる。』"
+        // e.g., "『常晁E手札にあるこ�Eメンバ�Eカード�Eコスト�E、E
+        // こ�Eカード以外�E自刁E�E手札1枚につき、E少なくなる。、E
         game.apply_hand_cost_reduction(Player::A, 1);
 
         let reduced_total = game.calculate_selection_cost_total(&to_publish);
@@ -447,3 +559,4 @@ mod qa_remaining_gaps {
         assert!(!is_valid_reduced, "Reduced cost invalidates condition");
     }
 }
+

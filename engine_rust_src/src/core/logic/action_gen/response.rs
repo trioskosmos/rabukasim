@@ -8,8 +8,11 @@ use crate::core::logic::filter::{filter_attr_from_params, structured_filter_from
 use crate::core::logic::constants::FILTER_COLOR_SHIFT_R5;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::instruction::DecodedSlot;
-use crate::core::logic::interpreter::handlers::interaction_zone::selected_target_key;
+use crate::core::logic::interpreter::handlers::interaction_zone::{
+    collect_zone_cards, selected_target_key,
+};
 use crate::core::logic::interpreter::suspension::resolve_target_player_from_filter;
+use crate::core::logic::profiling::{env_flag_enabled, env_threshold_us};
 use crate::core::logic::{
     Ability, AbilityContext, ActionReceiver, CardDatabase, ChoiceType, GameState,
     PendingInteraction,
@@ -19,23 +22,6 @@ use crate::core::types::{MAX_LIVE_SET_SIZE, STAGE_SLOT_COUNT};
 use std::time::Instant;
 
 pub struct ResponseGenerator;
-
-fn response_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_RESPONSE_ACTIONS")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
-
-fn response_profile_threshold_us() -> u64 {
-    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(2000)
-}
 
 fn optional_skip_is_available(pi: &PendingInteraction) -> bool {
     pi.filter.is_optional
@@ -67,14 +53,6 @@ where
     for idx in 0..count {
         if include(idx) {
             receiver.add_action((base_action + idx as i32) as usize);
-        }
-    }
-}
-
-fn add_slot_actions<R: ActionReceiver + ?Sized>(receiver: &mut R, slots: &[i32], base_action: i32) {
-    for (i, &cid) in slots.iter().enumerate() {
-        if cid >= 0 {
-            receiver.add_action((base_action + i as i32) as usize);
         }
     }
 }
@@ -134,24 +112,16 @@ fn add_matching_stage_actions<R: ActionReceiver + ?Sized>(
     added_any
 }
 
-fn add_filtered_card_choice_actions<R: ActionReceiver + ?Sized>(
-    state: &GameState,
-    db: &CardDatabase,
-    receiver: &mut R,
-    cards: &[i32],
-    filter_attr: u64,
-    ctx: &AbilityContext,
-    base_action: i32,
-    pi: &PendingInteraction,
-) {
-    add_cards_matching_filter(state, db, receiver, cards, filter_attr, ctx, base_action);
-    add_optional_done_if_available(receiver, pi);
-}
-
 fn card_groups<'a>(db: &'a CardDatabase, cid: i32) -> Option<&'a [u8]> {
     db.get_member(cid)
         .map(|card| card.groups.as_slice())
         .or_else(|| db.get_live(cid).map(|card| card.groups.as_slice()))
+}
+
+fn card_units<'a>(db: &'a CardDatabase, cid: i32) -> Option<&'a [u8]> {
+    db.get_member(cid)
+        .map(|card| card.units.as_slice())
+        .or_else(|| db.get_live(cid).map(|card| card.units.as_slice()))
 }
 
 fn hand_card_has_same_group_partner(
@@ -222,6 +192,74 @@ fn add_same_group_hand_discard_actions<R: ActionReceiver + ?Sized>(
     add_optional_done_if_available(receiver, pi);
 }
 
+fn hand_card_has_same_unit_partner(
+    db: &CardDatabase,
+    hand: &[i32],
+    idx: usize,
+) -> bool {
+    let Some(candidate_units) = card_units(db, hand[idx]) else {
+        return false;
+    };
+
+    let mut unit_counts = std::collections::HashMap::<u8, usize>::new();
+    for &cid in hand.iter() {
+        if cid < 0 {
+            continue;
+        }
+        if let Some(units) = card_units(db, cid) {
+            for &unit in units {
+                *unit_counts.entry(unit).or_insert(0) += 1;
+            }
+        }
+    }
+
+    candidate_units
+        .iter()
+        .any(|unit| unit_counts.get(unit).copied().unwrap_or(0) > 1)
+}
+
+fn add_same_unit_hand_discard_actions<R: ActionReceiver + ?Sized>(
+    _state: &GameState,
+    db: &CardDatabase,
+    receiver: &mut R,
+    hand: &[i32],
+    _filter_attr: u64,
+    _ctx: &AbilityContext,
+    base_action: i32,
+    pi: &PendingInteraction,
+) {
+    let first_pick = pi.ctx.selected_cards.is_empty();
+    let first_selected_units = pi
+        .ctx
+        .selected_cards
+        .first()
+        .and_then(|cid| card_units(db, *cid))
+        .map(|units| units.to_vec());
+
+    for (i, &cid) in hand.iter().enumerate() {
+        if cid < 0 {
+            continue;
+        }
+        if first_pick {
+            if !hand_card_has_same_unit_partner(db, hand, i) {
+                continue;
+            }
+        } else if let Some(required_units) = first_selected_units.as_ref() {
+            let Some(candidate_units) = card_units(db, cid) else {
+                continue;
+            };
+            if !candidate_units
+                .iter()
+                .any(|unit| required_units.contains(unit))
+            {
+                continue;
+            }
+        }
+        receiver.add_action((base_action + i as i32) as usize);
+    }
+    add_optional_done_if_available(receiver, pi);
+}
+
 fn add_stage_empty_actions<R: ActionReceiver + ?Sized>(
     receiver: &mut R,
     player: &crate::core::logic::player::PlayerState,
@@ -237,14 +275,6 @@ fn add_stage_empty_actions<R: ActionReceiver + ?Sized>(
     }
 }
 
-fn should_enable_targeted_live_bonus(_state: &GameState, pi: &PendingInteraction) -> bool {
-    pi.ctx.trigger_type == TriggerType::OnLiveStart
-        && matches!(
-            pi.choice_type,
-            ChoiceType::SelectMember | ChoiceType::SelectHandDiscard
-        )
-}
-
 fn modal_option_is_legal(
     db: &CardDatabase,
     state: &GameState,
@@ -258,7 +288,7 @@ fn modal_option_is_legal(
 
     if let Some(spec) = frames
         .first()
-        .and_then(|frame| frame.components().semantic_recovery_branch_spec())
+        .and_then(|frame| crate::core::logic::models::semantic_recovery_branch_spec_from_params(frame.components().params))
     {
         let mut distinct_names: Vec<&str> = Vec::new();
         let mut distinct_groups: Vec<u8> = Vec::new();
@@ -323,7 +353,7 @@ impl ActionGenerator for ResponseGenerator {
         receiver: &mut R,
     ) {
         let _condition_cache_scope = crate::core::logic::interpreter::conditions::ConditionEvalCacheScope::activate();
-        let profile_enabled = response_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_RESPONSE_ACTIONS");
         let profile_start = profile_enabled.then(Instant::now);
         let pending_desc = if profile_enabled {
             state
@@ -344,7 +374,7 @@ impl ActionGenerator for ResponseGenerator {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= response_profile_threshold_us() {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                 println!(
                     "[PROFILE] ResponseActions total_us={} p={} used_prefilled_actions={} empty_after_generate={} pending={}",
                     total_us,
@@ -523,7 +553,13 @@ impl ResponseGenerator {
         }
 
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi)
-            .filter(|_| should_enable_targeted_live_bonus(state, pi));
+            .filter(|_| {
+                pi.ctx.trigger_type == TriggerType::OnLiveStart
+                    && matches!(
+                        pi.choice_type,
+                        ChoiceType::SelectMember | ChoiceType::SelectHandDiscard
+                    )
+            });
 
         if let Some((filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
             let mut added_any = false;
@@ -608,7 +644,12 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::RevealHand => {
-                add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
+                add_indexed_actions(
+                    receiver,
+                    player.hand.len(),
+                    ACTION_BASE_HAND_SELECT,
+                    |i| player.hand[i] >= 0,
+                );
                 return;
             }
             ChoiceType::TapO => {
@@ -661,8 +702,18 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectSwapSource => {
-                for i in 0..player.success_lives.len() {
-                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                let decoded_slot = DecodedSlot::decode(pi.target_slot);
+                let source_zone = if decoded_slot.source_zone == Zone::Default {
+                    Zone::SuccessPile
+                } else {
+                    decoded_slot.source_zone
+                };
+                for (i, &cid) in collect_zone_cards(state, p_idx, source_zone).iter().enumerate() {
+                    if cid >= 0
+                        && state.card_matches_filter_with_ctx(db, cid, pi.filter_attr, &pi.ctx)
+                    {
+                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
                 }
                 return;
             }
@@ -690,7 +741,19 @@ impl ResponseGenerator {
                 return;
             }
             ChoiceType::SelectSwapTarget => {
-                add_slot_actions(receiver, player.hand.as_slice(), ACTION_BASE_HAND_SELECT);
+                let decoded_slot = DecodedSlot::decode(pi.target_slot);
+                let target_zone = if decoded_slot.dest_zone == Zone::Default {
+                    Zone::Discard
+                } else {
+                    decoded_slot.dest_zone
+                };
+                for (i, &cid) in collect_zone_cards(state, p_idx, target_zone).iter().enumerate() {
+                    if cid >= 0
+                        && state.card_matches_filter_with_ctx(db, cid, pi.filter_attr, &pi.ctx)
+                    {
+                        receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
+                    }
+                }
                 return;
             }
             _ => {}
@@ -1113,7 +1176,18 @@ impl ResponseGenerator {
                 filter_ctx.player_id = pi.ctx.activator_id;
                 let hand_filter_attr = pi.discard_selection_filter_attr();
                 let hand_filter = CardFilter::from_attr(hand_filter_attr);
-                if hand_filter.special_id == 7 && pi.ctx.selected_cards.is_empty() {
+                if pi.same_unit_discard {
+                    add_same_unit_hand_discard_actions(
+                        state,
+                        db,
+                        receiver,
+                        state.players[target_player].hand.as_slice(),
+                        hand_filter_attr,
+                        &filter_ctx,
+                        ACTION_BASE_HAND_SELECT,
+                        pi,
+                    );
+                } else if hand_filter.special_id == 7 && pi.ctx.selected_cards.is_empty() {
                     add_same_group_hand_discard_actions(
                         state,
                         db,
@@ -1125,7 +1199,7 @@ impl ResponseGenerator {
                         pi,
                     );
                 } else {
-                    add_filtered_card_choice_actions(
+                    add_cards_matching_filter(
                         state,
                         db,
                         receiver,
@@ -1133,12 +1207,12 @@ impl ResponseGenerator {
                         hand_filter_attr,
                         &filter_ctx,
                         ACTION_BASE_HAND_SELECT,
-                        pi,
                     );
+                    add_optional_done_if_available(receiver, pi);
                 }
             }
             ChoiceType::SelectDiscardPlay => {
-                add_filtered_card_choice_actions(
+                add_cards_matching_filter(
                     state,
                     db,
                     receiver,
@@ -1146,8 +1220,8 @@ impl ResponseGenerator {
                     final_filter_attr,
                     &pi.ctx,
                     ACTION_BASE_CHOICE,
-                    pi,
                 );
+                add_optional_done_if_available(receiver, pi);
             }
             ChoiceType::SelectStage => {
                 for i in 0..STAGE_SLOT_COUNT {

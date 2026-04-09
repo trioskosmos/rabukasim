@@ -1,5 +1,6 @@
 use crate::core::enums::*;
 use crate::core::logic::constants::STAGE_SLOT_COUNT;
+use crate::core::logic::profiling::{env_flag_enabled, env_threshold_us};
 use crate::core::logic::{
     ability_patterns::{
         encode_optional_mode_mask, is_optional_live_start_discard_count_ability,
@@ -65,99 +66,6 @@ pub trait TurnPhaseController {
     fn do_active_phase(&mut self, db: &CardDatabase);
     fn do_energy_phase(&mut self);
     fn do_draw_phase(&mut self, db: &CardDatabase);
-}
-
-fn play_member_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_PLAY_MEMBER")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
-
-fn play_member_profile_threshold_us() -> u64 {
-    std::env::var("BENCH_PROFILE_STEP_THRESHOLD_US")
-        .ok()
-        .and_then(|value| value.parse().ok())
-        .unwrap_or(2000)
-}
-
-fn activation_profile_enabled() -> bool {
-    std::env::var("BENCH_PROFILE_ACTIVATIONS")
-        .ok()
-        .map(|value| {
-            let value = value.trim();
-            !matches!(value, "0" | "false" | "FALSE" | "off" | "OFF")
-        })
-        .unwrap_or(false)
-}
-
-fn ability_needs_activation_check(ab: &crate::core::logic::Ability) -> bool {
-    ab.per_turn_limit() > 0
-        || !ab.costs.is_empty()
-        || ab.runtime_has_activation_conditions()
-        || ab.runtime_has_frame_cost_checks()
-        || ab.runtime_has_look_choose_checks()
-        || ab.runtime_has_deck_top_window()
-}
-
-fn decoded_response_choice_index(action: &DecodedAction) -> i32 {
-    match action {
-        DecodedAction::Pass => 99,
-        DecodedAction::SelectMode { mode_idx } => *mode_idx,
-        DecodedAction::PlayMember { hand_idx, .. } => *hand_idx as i32,
-        DecodedAction::SelectChoice { choice_idx } => *choice_idx,
-        DecodedAction::SelectColor { color_idx } => *color_idx,
-        DecodedAction::SelectEnergy { energy_idx } => *energy_idx as i32,
-        DecodedAction::SelectStageSlot { slot_idx } => *slot_idx as i32,
-        DecodedAction::SelectHand { hand_idx } => *hand_idx as i32,
-        _ => -1,
-    }
-}
-
-fn pending_prompt_ability<'a>(
-    db: &'a CardDatabase,
-    pending: &PendingInteraction,
-) -> Option<&'a crate::core::logic::Ability> {
-    let ability_card_id = if pending.ability_card_id >= 0 {
-        pending.ability_card_id
-    } else {
-        pending.card_id
-    };
-    let ability_idx = usize::try_from(pending.ability_index).ok()?;
-
-    db.get_member(ability_card_id)
-        .and_then(|card| card.abilities.get(ability_idx))
-        .or_else(|| db.get_live(ability_card_id).and_then(|card| card.abilities.get(ability_idx)))
-}
-
-fn build_pending_response_ctx(
-    pending: &PendingInteraction,
-    choice_idx: i32,
-) -> AbilityContext {
-    let restored_phase = pending.ctx.original_phase.unwrap_or_else(|| {
-        if pending.original_phase == Phase::Setup {
-            pending.original_phase
-        } else {
-            pending.original_phase
-        }
-    });
-    let mut ctx = pending.ctx.clone();
-    ctx.choice_index = choice_idx as i16;
-    ctx.original_phase = Some(restored_phase);
-    ctx.player_id = if matches!(pending.choice_type, ChoiceType::OpponentChoose | ChoiceType::SelectHandDiscard) {
-        pending.ctx.player_id
-    } else {
-        pending.original_current_player
-    };
-    ctx
-}
-
-fn should_fast_resume_move_to_discard(pending: &PendingInteraction) -> bool {
-    pending.is_move_to_discard_prompt()
-        && matches!(pending.choice_type, ChoiceType::SelectHandDiscard | ChoiceType::SelectDiscard)
 }
 
 impl TurnController for GameState {
@@ -832,14 +740,65 @@ impl ResponseController for GameState {
         }
 
         if let Some(pending) = self.interaction_stack.last().cloned() {
-            if should_fast_resume_move_to_discard(&pending) {
-                let choice_idx = decoded_response_choice_index(&decoded_action);
-                let mut ctx = build_pending_response_ctx(&pending, choice_idx);
+            if pending.is_move_to_discard_prompt()
+                && matches!(
+                    pending.choice_type,
+                    ChoiceType::SelectHandDiscard | ChoiceType::SelectDiscard
+                )
+            {
+                let choice_idx = match decoded_action {
+                    DecodedAction::Pass => 99,
+                    DecodedAction::SelectMode { mode_idx } => mode_idx,
+                    DecodedAction::PlayMember { hand_idx, .. } => hand_idx as i32,
+                    DecodedAction::SelectChoice { choice_idx } => choice_idx,
+                    DecodedAction::SelectColor { color_idx } => color_idx,
+                    DecodedAction::SelectEnergy { energy_idx } => energy_idx as i32,
+                    DecodedAction::SelectStageSlot { slot_idx } => slot_idx as i32,
+                    DecodedAction::SelectHand { hand_idx } => hand_idx as i32,
+                    _ => -1,
+                };
+                let restored_phase = pending
+                    .ctx
+                    .original_phase
+                    .unwrap_or(pending.original_phase);
+                let mut ctx = pending.ctx.clone();
+                ctx.choice_index = choice_idx as i16;
+                ctx.original_phase = Some(restored_phase);
+                ctx.player_id = if matches!(
+                    pending.choice_type,
+                    ChoiceType::OpponentChoose | ChoiceType::SelectHandDiscard
+                ) {
+                    pending.ctx.player_id
+                } else {
+                    pending.original_current_player
+                };
 
                 crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
 
-                let ability = pending_prompt_ability(db, &pending)
-                    .ok_or_else(|| format!("Ability index {} not found on card {}", pending.ability_index, pending.card_id))?;
+                let ability_card_id = if pending.ability_card_id >= 0 {
+                    pending.ability_card_id
+                } else {
+                    pending.card_id
+                };
+                let ability_idx = usize::try_from(pending.ability_index).ok().ok_or_else(|| {
+                    format!(
+                        "Ability index {} not found on card {}",
+                        pending.ability_index, pending.card_id
+                    )
+                })?;
+                let ability = db
+                    .get_member(ability_card_id)
+                    .and_then(|card| card.abilities.get(ability_idx))
+                    .or_else(|| {
+                        db.get_live(ability_card_id)
+                            .and_then(|card| card.abilities.get(ability_idx))
+                    })
+                    .ok_or_else(|| {
+                        format!(
+                            "Ability index {} not found on card {}",
+                            pending.ability_index, pending.card_id
+                        )
+                    })?;
 
                 if ability.costs.iter().any(|cost| cost.is_optional)
                     && !crate::core::logic::interpreter::costs::pay_costs_transactional_including_optional(
@@ -1062,7 +1021,7 @@ impl ResponseController for GameState {
         choice_idx: i32,
         start_ab_idx: usize,
     ) -> Result<(), String> {
-        let profile_enabled = play_member_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_PLAY_MEMBER");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -1197,7 +1156,7 @@ impl ResponseController for GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= play_member_profile_threshold_us() {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                 println!(
                     "[PROFILE] PlayMember total_us={} legality_us={} cost_us={} energy_scan_us={} execute_us={} p={} hand_idx={} slot_idx={} secondary_slot_idx={} card_id={}",
                     total_us,
@@ -1236,7 +1195,7 @@ impl ResponseController for GameState {
         if db.is_vanilla {
             return Err("Abilities are disabled in vanilla mode".to_string());
         }
-        let profile_enabled = activation_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_ACTIVATIONS");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -1744,7 +1703,14 @@ impl ResponseController for GameState {
         };
 
         // ENFORCEMENT PHASE: Check conditions and costs
-        if !self.debug.debug_ignore_conditions && ability_needs_activation_check(ab) {
+        if !self.debug.debug_ignore_conditions
+            && (ab.per_turn_limit() > 0
+                || !ab.costs.is_empty()
+                || ab.runtime_has_activation_conditions()
+                || ab.runtime_has_frame_cost_checks()
+                || ab.runtime_has_look_choose_checks()
+                || ab.runtime_has_deck_top_window())
+        {
             if self.core.players[p_idx].prevent_activate() > 0 {
                 return Err("Cannot activate abilities due to restriction".to_string());
             }
@@ -1822,7 +1788,7 @@ impl ResponseController for GameState {
         if !self.interaction_stack.is_empty() {
             if let Some(profile_start) = profile_start {
                 let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-                if total_us >= play_member_profile_threshold_us() {
+                if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                     println!(
                         "[PROFILE] ActivateAbility total_us={} validate_us={} resolve_us={} rule_checks_us={} p={} slot_idx={} ab_idx={} card_id={} suspended=1",
                         total_us,
@@ -1849,7 +1815,7 @@ impl ResponseController for GameState {
             .unwrap_or(0);
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= play_member_profile_threshold_us() {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                 println!(
                     "[PROFILE] ActivateAbility total_us={} validate_us={} resolve_us={} rule_checks_us={} p={} slot_idx={} ab_idx={} card_id={} suspended=0",
                     total_us,
@@ -2212,7 +2178,7 @@ impl GameState {
         start_ab_idx: usize,
         choice: i32,
     ) {
-        let profile_enabled = play_member_profile_enabled();
+        let profile_enabled = env_flag_enabled("BENCH_PROFILE_PLAY_MEMBER");
         let profile_start = if profile_enabled {
             Some(Instant::now())
         } else {
@@ -2306,7 +2272,11 @@ impl GameState {
         self.core.players[p_idx].set_stage_card(slot_idx, card_id);
         self.core.players[p_idx].set_tapped(slot_idx, false);
         self.core.players[p_idx].set_moved(slot_idx, true);
-        self.sync_player_stats(db, p_idx);
+        if db.is_vanilla {
+            self.mark_stats_dirty(p_idx);
+        } else {
+            self.sync_player_stats(db, p_idx);
+        }
 
         let t_register = if profile_enabled {
             Some(Instant::now())
@@ -2348,7 +2318,7 @@ impl GameState {
 
         if let Some(profile_start) = profile_start {
             let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= play_member_profile_threshold_us() {
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
                 println!(
                     "[PROFILE] ExecutePlayMember total_us={} remove_hand_us={} register_us={} trigger_event_us={} rule_checks_us={} old_leave_us={} secondary_leave_us={} p={} slot_idx={} secondary_slot_idx={} card_id={}",
                     total_us,

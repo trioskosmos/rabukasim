@@ -4,6 +4,7 @@ use engine_rust::core::logic::{CardDatabase, GameState};
 use rand::prelude::IndexedRandom;
 use rand::prelude::*;
 use rayon::prelude::*;
+use smallvec::SmallVec;
 use std::fs;
 use std::thread;
 use std::time::Instant;
@@ -22,6 +23,7 @@ struct Config {
     seed: u64,
     trace_first_game: bool,
     trace_step_limit: usize,
+    debug_mode: bool,
 }
 
 impl Config {
@@ -38,6 +40,7 @@ impl Config {
             seed: env_u64("BENCH_SEED", 0),
             trace_first_game: env_bool("BENCH_TRACE_FIRST_GAME", false),
             trace_step_limit: env_usize("BENCH_TRACE_STEP_LIMIT", DEFAULT_TRACE_STEP_LIMIT),
+            debug_mode: env_bool("BENCH_DEBUG_MODE", false),
         }
     }
 }
@@ -127,6 +130,7 @@ fn run_headless_game(
     max_steps: usize,
     trace_first_game: bool,
     trace_step_limit: usize,
+    debug_mode: bool,
 ) -> (u32, u64, bool, i32) {
     let mut state = GameState::default();
     state.initialize_game(
@@ -140,10 +144,11 @@ fn run_headless_game(
 
     // HEADLESS MODE - disable all UI/logging
     state.ui.silent = true;
-    state.debug.debug_mode = false;
+    state.debug.debug_mode = debug_mode;
 
     let mut rng = StdRng::seed_from_u64(seed);
     let mut total_steps = 0u32;
+    let mut legal: SmallVec<[i32; 64]> = SmallVec::new();
     let trace = trace_first_game && game_index == 0;
 
     let start = Instant::now();
@@ -157,7 +162,12 @@ fn run_headless_game(
 
     while !state.is_terminal() && (total_steps as usize) < max_steps {
         let phase_before = state.phase;
-        let legal = state.get_legal_action_ids(db);
+        legal.clear();
+        state.generate_legal_actions(db, state.current_player as usize, &mut legal);
+        if legal.len() > 1 {
+            legal.sort_unstable();
+            legal.dedup();
+        }
         if legal.is_empty() {
             if trace && (total_steps as usize) < trace_step_limit {
                 println!(
@@ -210,13 +220,14 @@ fn main() {
     let config = Config::from_env();
     println!("=== Raw Throughput Benchmark (Headless/Silent) ===\n");
     println!(
-        "games={} warmup_games={} workers={} max_steps={} seed={} trace_first_game={}",
+        "games={} warmup_games={} workers={} max_steps={} seed={} trace_first_game={} debug_mode={}",
         config.games,
         config.warmup_games,
         config.workers,
         config.max_steps,
         config.seed,
         config.trace_first_game,
+        config.debug_mode,
     );
 
     let db = load_db();
@@ -235,6 +246,7 @@ fn main() {
             config.max_steps,
             false,
             0,
+            false,
         );
     }
 
@@ -253,6 +265,7 @@ fn main() {
             config.max_steps,
             config.trace_first_game,
             config.trace_step_limit,
+            config.debug_mode,
         )
     };
 
