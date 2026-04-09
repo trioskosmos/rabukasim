@@ -1,42 +1,32 @@
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
-    remove_card_from_zone, source_zone_for_select_cards,
+    place_card_at_destination, remove_card_from_zone, target_slot_destination,
 };
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
-use crate::core::models::TriggerType;
-
-fn place_chosen_card(state: &mut GameState, p_idx: usize, chosen: i32, dest_zone: u8) {
-    match dest_zone {
-        6 => state.players[p_idx].gain_hand_card(chosen),
-        7 => state.players[p_idx].push_discard_card(chosen),
-        8 | 0 => state.players[p_idx].push_deck_card(chosen),
-        13 => state.players[p_idx].push_success_live_card(chosen),
-        _ => state.players[p_idx].push_hand_card(chosen),
-    }
-}
 
 #[allow(clippy::too_many_arguments)]
 pub fn resolve_select_cards(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
+    frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
     frame_idx: usize,
     p_idx: usize,
     s: i32,
     v: i32,
     a: i64,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
-    effective_zone: u8,
+    _effective_zone: u8,
     _is_optional: bool,
 ) -> HandlerResult {
+    let spec = frame_data.semantic_select_cards_spec();
     let choice = ctx.choice_index as i32;
     if choice == CHOICE_DONE as i32 {
         return HandlerResult::Continue;
     }
 
-    let choice_type = crate::core::logic::interpreter::handlers::interaction_zone::choice_type_for_select_cards_zone(effective_zone);
+    let choice_type = spec.choice_type();
     let is_variable_selection = v < 0;
 
     if choice != CHOICE_DONE as i32
@@ -51,7 +41,7 @@ pub fn resolve_select_cards(
             state.players[p_idx].revealed_cards.push(chosen);
         }
         if dest_zone != 0 {
-            let actual_source = source_zone_for_select_cards(slot_info.source_zone as u8);
+            let actual_source = spec.source_zone;
             let found = remove_card_from_zone(state, db, ctx, p_idx, actual_source, chosen);
 
             if found {
@@ -59,29 +49,46 @@ pub fn resolve_select_cards(
                     let slot = choice as usize;
                     let play_card = ctx.selected_cards.last().copied().unwrap_or(chosen);
                     if slot < 3 && play_card >= 0 {
-                        if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
-                            state.players[p_idx].push_discard_card(cid as i32);
-                        }
-                        state.players[p_idx].stage[slot] = play_card;
-                        if slot_info.is_wait {
-                            state.players[p_idx].set_tapped(slot, true);
-                        }
-                        state.players[p_idx].set_moved(slot, true);
-                        state.register_played_member(p_idx, play_card, db);
+                        place_card_at_destination(
+                            state,
+                            db,
+                            ctx,
+                            p_idx,
+                            play_card,
+                            target_slot_destination(dest_zone),
+                            Some(slot),
+                            slot_info.is_wait,
+                            false,
+                            spec.source_zone,
+                        );
                         finish_pending_interaction(state);
-                        let new_ctx = AbilityContext {
-                            source_card_id: play_card,
-                            player_id: p_idx as u8,
-                            activator_id: p_idx as u8,
-                            area_idx: slot as i16,
-                            ..Default::default()
-                        };
-                        state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
                     } else {
-                        state.players[p_idx].gain_hand_card(play_card);
+                        place_card_at_destination(
+                            state,
+                            db,
+                            ctx,
+                            p_idx,
+                            play_card,
+                            target_slot_destination(dest_zone),
+                            None,
+                            slot_info.is_wait,
+                            false,
+                            spec.source_zone,
+                        );
                     }
                 } else {
-                    place_chosen_card(state, p_idx, chosen, dest_zone);
+                    place_card_at_destination(
+                        state,
+                        db,
+                        ctx,
+                        p_idx,
+                        chosen,
+                        target_slot_destination(dest_zone),
+                        None,
+                        slot_info.is_wait,
+                        false,
+                        spec.source_zone,
+                    );
                 }
             }
         }

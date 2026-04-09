@@ -8,35 +8,15 @@ use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::models::AbilityContext;
 
-fn count_selected_targets(cards: &[i32], source_zone: u8, keys: &[i32]) -> usize {
-    let source_zone = selection_source_zone(source_zone);
+fn count_targets<F>(cards: &[i32], mut predicate: F) -> usize
+where
+    F: FnMut(usize, i32) -> bool,
+{
     cards
         .iter()
+        .copied()
         .enumerate()
-        .filter(|(idx, cid)| {
-            **cid >= 0 && keys.contains(&selected_target_key(source_zone, *idx))
-        })
-        .count()
-}
-
-fn count_remaining_targets(
-    state: &GameState,
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-    cards: &[i32],
-    source_zone: u8,
-    keys: &[i32],
-    filter_attr: u64,
-) -> usize {
-    let source_zone = selection_source_zone(source_zone);
-    cards
-        .iter()
-        .enumerate()
-        .filter(|(idx, cid)| {
-            **cid >= 0
-                && !keys.contains(&selected_target_key(source_zone, *idx))
-                && state.card_matches_filter_with_ctx(db, **cid, filter_attr, ctx)
-        })
+        .filter(|(idx, cid)| predicate(*idx, *cid))
         .count()
 }
 
@@ -199,20 +179,16 @@ pub fn resolve_select_choice(
     }
 
     if supports_partial_completion && !ctx.selected_cards.is_empty() {
-        let current_selection_count = count_selected_targets(
-            cards_for_source_zone(state, target_player, source_zone_enum),
-            source_zone,
-            &ctx.selected_target_keys,
-        );
-        let remaining_candidates = count_remaining_targets(
-            state,
-            db,
-            ctx,
-            cards_for_source_zone(state, target_player, source_zone_enum),
-            source_zone,
-            &ctx.selected_target_keys,
-            filter_attr,
-        );
+        let source_cards = cards_for_source_zone(state, target_player, source_zone_enum);
+        let target_zone = selection_source_zone(source_zone);
+        let current_selection_count = count_targets(source_cards, |idx, cid| {
+            cid >= 0 && ctx.selected_target_keys.contains(&selected_target_key(target_zone, idx))
+        });
+        let remaining_candidates = count_targets(source_cards, |idx, cid| {
+            cid >= 0
+                && !ctx.selected_target_keys.contains(&selected_target_key(target_zone, idx))
+                && state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+        });
 
         let remaining_picks = (v as usize).saturating_sub(current_selection_count);
 

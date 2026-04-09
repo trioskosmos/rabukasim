@@ -5836,7 +5836,7 @@ mod tests {
         let natsumi_id = db
             .id_by_no("PL!SP-bp5-009-AR")
             .expect("expected PL!SP-bp5-009-AR in the real DB");
-        let live_id = first_live_id(&db);
+        let live_id = first_live_without_trigger(&db, TriggerType::OnLiveStart, natsumi_id);
         let filler_ids = first_unique_member_ids(&db, 5, &[natsumi_id]);
 
         state.ui.silent = true;

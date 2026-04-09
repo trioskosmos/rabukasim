@@ -1,11 +1,11 @@
-use crate::core::enums::{TriggerType, Zone};
+use crate::core::enums::Zone;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
-    draw_zone_cards, target_slot_destination,
+    draw_zone_cards, place_card_at_destination, target_slot_destination,
 };
 use crate::core::logic::interpreter::handlers::HandlerResult;
-use crate::core::logic::models::{AbilityFrameComponents, SemanticLookAndChooseSpec};
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::O_LOOK_AND_CHOOSE;
 use rand::seq::SliceRandom;
@@ -30,50 +30,6 @@ fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &Ab
     choose_count
 }
 
-fn semantic_spec(
-    db: &CardDatabase,
-    ctx: &AbilityContext,
-    frame_data: &AbilityFrameComponents<'_>,
-) -> SemanticLookAndChooseSpec {
-    let choose_count = resolve_choose_count(db, ctx, frame_data);
-    frame_data.semantic_look_and_choose_spec(choose_count)
-}
-
-fn reveal_count_for_zone(state: &GameState, p_idx: usize, source_zone: Zone, look_count: usize) -> usize {
-    match source_zone {
-        Zone::Hand => state.players[p_idx].hand.len(),
-        Zone::Discard => state.players[p_idx].discard.len(),
-        Zone::Yell => state.players[p_idx].yell_cards.len(),
-        _ => look_count,
-    }
-}
-
-fn populate_looked_cards(
-    state: &mut GameState,
-    p_idx: usize,
-    source_zone: Zone,
-    reveal_count: usize,
-) {
-    let drawn = draw_zone_cards(state, p_idx, source_zone, reveal_count);
-    state.players[p_idx].looked_cards.extend(drawn);
-}
-
-fn resolved_finalize_destination(spec: &SemanticLookAndChooseSpec, ctx: &AbilityContext) -> Zone {
-    let dest = spec.finalize_destination();
-    if dest != spec.source_zone || spec.remainder_to_discard || spec.remainder_zone != Zone::Default {
-        return dest;
-    }
-
-    let is_real_ability = ctx.ability_index >= 0
-        || ctx.ability_card_id >= 0
-        || ctx.trigger_type != TriggerType::None;
-    if is_real_ability && matches!(spec.source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom) {
-        Zone::Discard
-    } else {
-        dest
-    }
-}
-
 pub fn handle_look_and_choose(
     state: &mut GameState,
     db: &CardDatabase,
@@ -81,7 +37,8 @@ pub fn handle_look_and_choose(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let spec = semantic_spec(db, ctx, frame_data);
+    let choose_count = resolve_choose_count(db, ctx, frame_data);
+    let spec = frame_data.semantic_look_and_choose_spec(choose_count);
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
@@ -93,8 +50,14 @@ pub fn handle_look_and_choose(
         state.players[p_idx].looked_cards.clear();
     }
     if state.players[p_idx].looked_cards.is_empty() {
-        let reveal_count = reveal_count_for_zone(state, p_idx, source_zone, look_count);
-        populate_looked_cards(state, p_idx, source_zone, reveal_count);
+        let reveal_count = match source_zone {
+            Zone::Hand => state.players[p_idx].hand.len(),
+            Zone::Discard => state.players[p_idx].discard.len(),
+            Zone::Yell => state.players[p_idx].yell_cards.len(),
+            _ => look_count,
+        };
+        let drawn = draw_zone_cards(state, p_idx, source_zone, reveal_count);
+        state.players[p_idx].looked_cards.extend(drawn);
     }
 
     if ctx.choice_index == -1 {
@@ -130,12 +93,32 @@ pub fn handle_look_and_choose(
 
     // Handle CHOICE_DONE (skip) by finalizing the remaining looked cards.
     if choice == CHOICE_DONE as i32 {
+        let final_destination = {
+            let dest = spec.finalize_destination();
+            if dest != spec.source_zone
+                || spec.remainder_to_discard
+                || spec.remainder_zone != Zone::Default
+            {
+                dest
+            } else {
+                let is_real_ability = ctx.ability_index >= 0
+                    || ctx.ability_card_id >= 0
+                    || ctx.trigger_type != crate::core::models::TriggerType::None;
+                if is_real_ability
+                    && matches!(spec.source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom)
+                {
+                    Zone::Discard
+                } else {
+                    dest
+                }
+            }
+        };
         return finalize_look_choice(
             state,
             db,
             ctx,
             p_idx,
-            resolved_finalize_destination(&spec, ctx),
+            final_destination,
             source_zone,
             &mut revealed,
         );
@@ -172,12 +155,27 @@ pub fn handle_look_and_choose(
     }
 
     // === Phase 4: Finalize (move unchosen cards to destination) ===
+    let final_destination = {
+        let dest = spec.finalize_destination();
+        if dest != spec.source_zone || spec.remainder_to_discard || spec.remainder_zone != Zone::Default {
+            dest
+        } else {
+            let is_real_ability = ctx.ability_index >= 0
+                || ctx.ability_card_id >= 0
+                || ctx.trigger_type != crate::core::models::TriggerType::None;
+            if is_real_ability && matches!(spec.source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom) {
+                Zone::Discard
+            } else {
+                dest
+            }
+        }
+    };
     finalize_look_choice(
         state,
         db,
         ctx,
         p_idx,
-        resolved_finalize_destination(&spec, ctx),
+        final_destination,
         source_zone,
         &mut revealed,
     )
@@ -185,7 +183,7 @@ pub fn handle_look_and_choose(
 
 // === Inlined helper functions ===
 
-fn apply_look_choice(
+pub(crate) fn apply_look_choice(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
@@ -197,60 +195,21 @@ fn apply_look_choice(
     chosen: i32,
 ) {
     let destination = target_slot_destination(target_slot);
-
-    match destination {
-        Zone::Discard => state.players[p_idx].push_discard_card(chosen),
-        Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[p_idx].push_deck_card(chosen),
-        Zone::Stage => {
-            let slot = slot_info.target_slot as usize;
-            if slot < 3 {
-                if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
-                    state.players[p_idx].push_discard_card(cid as i32);
-                }
-                state.players[p_idx].stage[slot] = chosen;
-                if slot_info.is_wait {
-                    state.players[p_idx].set_tapped(slot, true);
-                }
-                state.players[p_idx].set_moved(slot, true);
-                state.register_played_member(p_idx, chosen, db);
-                let new_ctx = AbilityContext {
-                    source_card_id: chosen,
-                    player_id: p_idx as u8,
-                    activator_id: p_idx as u8,
-                    area_idx: slot as i16,
-                    ..Default::default()
-                };
-                state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
-            } else {
-                state.players[p_idx].gain_hand_card(chosen);
-            }
-        }
-        Zone::SuccessPile => state.players[p_idx].push_success_live_card(chosen),
-        _ => state.players[p_idx].push_hand_card(chosen),
-    }
-
-    if reveal_flag {
-        if !state.players[p_idx].revealed_cards.contains(&chosen) {
-            state.players[p_idx].revealed_cards.push(chosen);
-        }
-    }
-
-    // Legacy stage-energy sources still arrive as a raw slot zone id, not a first-class enum.
-    if source_zone as i32 == 15 {
-        for slot in 0..3 {
-            if let Some(pos) = state.players[p_idx].stage_energy[slot]
-                .iter()
-                .position(|&c| c == chosen)
-            {
-                state.players[p_idx].stage_energy[slot].remove(pos);
-                state.players[p_idx].sync_stage_energy_count(slot);
-                break;
-            }
-        }
-    }
+    place_card_at_destination(
+        state,
+        db,
+        ctx,
+        p_idx,
+        chosen,
+        destination,
+        Some(slot_info.target_slot as usize),
+        slot_info.is_wait,
+        reveal_flag,
+        source_zone,
+    );
 }
 
-fn finalize_look_choice(
+pub(crate) fn finalize_look_choice(
     state: &mut GameState,
     _db: &CardDatabase,
     _ctx: &AbilityContext,

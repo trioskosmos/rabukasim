@@ -276,6 +276,7 @@ pub struct SemanticLookAndChooseSpec {
     pub remainder_zone: Zone,
     pub reveal: bool,
     pub remainder_to_discard: bool,
+    pub is_optional: bool,
     pub selection_filter: CardFilter,
     pub selection_filter_attr: u64,
     pub suspend_slot: i32,
@@ -1019,6 +1020,7 @@ impl<'a> AbilityFrameComponents<'a> {
             remainder_zone: self.slot.dest_zone,
             reveal: look.reveal,
             remainder_to_discard: look.dest_discard,
+            is_optional: self.filter.is_optional,
             selection_filter,
             selection_filter_attr: {
                 let attr = if self.raw_attr != 0 {
@@ -1034,6 +1036,34 @@ impl<'a> AbilityFrameComponents<'a> {
                     attr
                 }
             },
+            suspend_slot: self.raw_slot,
+        }
+    }
+
+    pub fn semantic_select_cards_spec(&self) -> SemanticLookAndChooseSpec {
+        let source_zone = if self.slot.source_zone == Zone::Default {
+            match self.slot.target_slot {
+                x if x == Zone::Hand as u8 => Zone::Hand,
+                x if x == Zone::Discard as u8 => Zone::Discard,
+                x if x == Zone::Deck as u8 => Zone::Deck,
+                x if x == Zone::Yell as u8 => Zone::Yell,
+                _ => Zone::Discard,
+            }
+        } else {
+            self.slot.source_zone
+        };
+
+        SemanticLookAndChooseSpec {
+            look_count: 0,
+            choose_count: 1,
+            source_zone,
+            target_slot: self.slot.target_slot,
+            remainder_zone: self.slot.dest_zone,
+            reveal: false,
+            remainder_to_discard: false,
+            is_optional: self.filter.is_optional,
+            selection_filter: self.filter,
+            selection_filter_attr: self.resolved_filter_attr(),
             suspend_slot: self.raw_slot,
         }
     }
@@ -2116,6 +2146,7 @@ impl AbilityFrame {
             },
         )
     }
+
     pub fn is_dynamic(&self) -> bool {
         (self.attr()
             & (A_STANDARD_COMPARE_ACCUMULATED_MASK << A_STANDARD_COMPARE_ACCUMULATED_SHIFT) as u64)
@@ -3791,6 +3822,52 @@ mod tests {
         };
 
         assert_eq!(pending.selection_target_zone(), Some(Zone::Discard as usize));
+    }
+
+    #[test]
+    fn select_cards_spec_uses_source_zone_to_pick_prompt_type() {
+        let hand_frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_CARDS",
+            "value": 1,
+            "slot": { "source_zone": "HAND" },
+        }));
+        let discard_frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_CARDS",
+            "value": 1,
+            "slot": { "source_zone": "DISCARD" },
+        }));
+        let deck_frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_CARDS",
+            "value": 1,
+            "slot": { "source_zone": "DECK" },
+        }));
+
+        assert_eq!(
+            hand_frame.components().semantic_select_cards_spec().choice_type(),
+            ChoiceType::SelectHandDiscard
+        );
+        assert_eq!(
+            discard_frame.components().semantic_select_cards_spec().choice_type(),
+            ChoiceType::SelectDiscardPlay
+        );
+        assert_eq!(
+            deck_frame.components().semantic_select_cards_spec().choice_type(),
+            ChoiceType::LookAndChoose
+        );
+    }
+
+    #[test]
+    fn select_cards_spec_falls_back_to_target_slot_zone_when_source_missing() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "SELECT_CARDS",
+            "value": 1,
+            "slot": { "target_slot": "HAND" },
+        }));
+
+        let spec = frame.components().semantic_select_cards_spec();
+
+        assert_eq!(spec.source_zone, Zone::Hand);
+        assert_eq!(spec.choice_type(), ChoiceType::SelectHandDiscard);
     }
 }
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

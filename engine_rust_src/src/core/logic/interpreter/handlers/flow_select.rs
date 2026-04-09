@@ -14,19 +14,6 @@ use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES, TARGET_S
 #[path = "flow_select_resolve.rs"]
 mod flow_select_resolve;
 
-fn resolve_select_member_target_player(
-    slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
-    filter_attr: u64,
-    p_idx: usize,
-    is_targeted_select_member_cost: bool,
-) -> usize {
-    if is_targeted_select_member_cost {
-        return p_idx;
-    }
-
-    resolve_target_player(slot_info, filter_attr, p_idx)
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn handle_select_ops(
     state: &mut GameState,
@@ -116,12 +103,11 @@ pub fn handle_select_ops(
     };
 
     if op == O_SELECT_MEMBER && v == 99 && ctx.choice_index == -1 {
-        let target_player = resolve_select_member_target_player(
-            effective_slot_info,
-            filter_attr,
-            p_idx,
-            is_targeted_select_member_cost,
-        );
+        let target_player = if is_targeted_select_member_cost {
+            p_idx
+        } else {
+            resolve_target_player(effective_slot_info, filter_attr, p_idx)
+        };
         ctx.selected_cards.clear();
         ctx.selected_target_keys.clear();
 
@@ -158,12 +144,11 @@ pub fn handle_select_ops(
             _ => p_idx as u8,
         };
 
-        let select_member_target_player = resolve_select_member_target_player(
-            effective_slot_info,
-            filter_attr,
-            p_idx,
-            is_targeted_select_member_cost,
-        );
+        let select_member_target_player = if is_targeted_select_member_cost {
+            p_idx
+        } else {
+            resolve_target_player(effective_slot_info, filter_attr, p_idx)
+        };
         let matching_cards = |target_player: usize| -> Vec<i32> {
             cards_for_source_zone(state, target_player, effective_slot_info.source_zone)
                 .iter()

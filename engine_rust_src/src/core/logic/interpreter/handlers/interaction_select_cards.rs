@@ -2,9 +2,6 @@ use crate::core::enums::ChoiceType;
 use crate::core::logic::constants::{CHOICE_DONE, CHOICE_NO, CHOICE_YES};
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
-use crate::core::logic::interpreter::handlers::interaction_zone::{
-    choice_type_for_select_cards_zone, resolved_select_cards_zone,
-};
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::interpreter::handlers::HandlerResult;
 use crate::core::logic::interpreter::suspension::finish_pending_interaction;
@@ -15,15 +12,6 @@ use crate::core::O_SELECT_CARDS;
 mod interaction_select_cards_resolve;
 
 const VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT: i16 = -32000;
-
-fn cancel_optional_selection(state: &mut GameState) {
-    let p_idx = state.current_player as usize;
-    if let Some(execution_id) = state.ui.current_execution_id {
-        state.ui.cancelled_execution_ids.insert(execution_id);
-    }
-    state.players[p_idx].looked_cards.clear();
-    finish_pending_interaction(state);
-}
 
 pub fn handle_select_cards(
     state: &mut GameState,
@@ -46,7 +34,7 @@ pub fn handle_select_cards(
     let is_variable_selection = v < 0;
 
     let slot_info = frame_data.slot;
-    let effective_zone = resolved_select_cards_zone(slot_info);
+    let spec = frame_data.semantic_select_cards_spec();
 
     if is_optional
         && is_variable_selection
@@ -77,7 +65,12 @@ pub fn handle_select_cards(
         && ctx.v_remaining == VARIABLE_SELECT_CARDS_OPTIONAL_PROMPT
     {
         if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_DONE {
-            cancel_optional_selection(state);
+            let p_idx = state.current_player as usize;
+            if let Some(execution_id) = state.ui.current_execution_id {
+                state.ui.cancelled_execution_ids.insert(execution_id);
+            }
+            state.players[p_idx].looked_cards.clear();
+            finish_pending_interaction(state);
             return HandlerResult::Continue;
         }
 
@@ -109,7 +102,12 @@ pub fn handle_select_cards(
 
     if is_optional && v == 99 && ctx.v_remaining == optional_prompt_marker {
         if ctx.choice_index == CHOICE_YES || ctx.choice_index == CHOICE_DONE {
-            cancel_optional_selection(state);
+            let p_idx = state.current_player as usize;
+            if let Some(execution_id) = state.ui.current_execution_id {
+                state.ui.cancelled_execution_ids.insert(execution_id);
+            }
+            state.players[p_idx].looked_cards.clear();
+            finish_pending_interaction(state);
             return HandlerResult::Continue;
         }
 
@@ -121,10 +119,12 @@ pub fn handle_select_cards(
 
     if ctx.choice_index == -1 {
         state.players[p_idx].looked_cards.clear();
-        let cards_to_filter = match effective_zone {
-            6 => state.players[p_idx].hand.to_vec(),
-            7 => state.players[p_idx].discard.to_vec(),
-            4 => state.players[p_idx]
+        let cards_to_filter = match spec.source_zone {
+            crate::core::enums::Zone::Hand => state.players[p_idx].hand.to_vec(),
+            crate::core::enums::Zone::Discard => state.players[p_idx].discard.to_vec(),
+            crate::core::enums::Zone::Deck => state.players[p_idx].deck.to_vec(),
+            crate::core::enums::Zone::Yell => state.players[p_idx].yell_cards.to_vec(),
+            crate::core::enums::Zone::Stage => state.players[p_idx]
                 .stage
                 .iter()
                 .cloned()
@@ -144,7 +144,6 @@ pub fn handle_select_cards(
             return HandlerResult::Continue;
         }
 
-        let choice_type = choice_type_for_select_cards_zone(effective_zone);
         if matches!(
             suspend_choice(
                 state,
@@ -154,7 +153,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 0,
-                choice_type,
+                spec.choice_type(),
                 a as u64,
                 if ctx.v_remaining >= 0 {
                     ctx.v_remaining
@@ -179,7 +178,7 @@ pub fn handle_select_cards(
         v,
         a,
         slot_info,
-        effective_zone,
+        spec.source_zone as u8,
         is_optional,
     )
 }

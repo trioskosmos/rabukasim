@@ -1,7 +1,6 @@
-use crate::core::enums::{ChoiceType, Zone};
+use crate::core::enums::{TriggerType, Zone};
 use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::filter::{structured_filter_attr, CardFilter};
-use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
 pub fn normalized_source_zone(zone: Zone) -> Zone {
@@ -131,21 +130,6 @@ pub fn remove_card_from_zone(
     }
 }
 
-pub fn resolved_select_cards_zone(slot_info: DecodedSlot) -> u8 {
-    let source_zone = slot_info.source_zone as u8;
-    if source_zone != 0 {
-        return source_zone;
-    }
-
-    match slot_info.target_slot as u8 {
-        zone if zone == Zone::Hand as u8 => Zone::Hand as u8,
-        zone if zone == Zone::Discard as u8 => Zone::Discard as u8,
-        zone if zone == Zone::Deck as u8 => Zone::Deck as u8,
-        zone if zone == Zone::Yell as u8 => Zone::Yell as u8,
-        _ => Zone::Discard as u8,
-    }
-}
-
 pub fn selection_source_zone(raw_zone: u8) -> Zone {
     match raw_zone {
         x if x == Zone::Hand as u8 => Zone::Hand,
@@ -165,22 +149,65 @@ pub fn target_slot_destination(target_slot: u8) -> Zone {
     }
 }
 
-pub fn choice_type_for_select_cards_zone(effective_zone: u8) -> ChoiceType {
-    match effective_zone {
-        6 => ChoiceType::SelectHandDiscard,
-        7 => ChoiceType::SelectDiscardPlay,
-        _ => ChoiceType::LookAndChoose,
+#[allow(clippy::too_many_arguments)]
+pub fn place_card_at_destination(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &mut AbilityContext,
+    p_idx: usize,
+    chosen: i32,
+    destination: Zone,
+    stage_slot: Option<usize>,
+    is_wait: bool,
+    reveal_flag: bool,
+    source_zone: Zone,
+) {
+    match destination {
+        Zone::Discard => state.players[p_idx].push_discard_card(chosen),
+        Zone::Deck | Zone::DeckTop | Zone::DeckBottom => state.players[p_idx].push_deck_card(chosen),
+        Zone::Stage => {
+            let slot = stage_slot.unwrap_or(usize::MAX);
+            if slot < 3 {
+                if let Some(cid) = state.handle_member_leaves_stage(p_idx, slot, db, ctx) {
+                    state.players[p_idx].push_discard_card(cid as i32);
+                }
+                state.players[p_idx].stage[slot] = chosen;
+                if is_wait {
+                    state.players[p_idx].set_tapped(slot, true);
+                }
+                state.players[p_idx].set_moved(slot, true);
+                state.register_played_member(p_idx, chosen, db);
+                let new_ctx = AbilityContext {
+                    source_card_id: chosen,
+                    player_id: p_idx as u8,
+                    activator_id: p_idx as u8,
+                    area_idx: slot as i16,
+                    ..Default::default()
+                };
+                state.trigger_abilities(db, TriggerType::OnPlay, &new_ctx);
+            } else {
+                state.players[p_idx].gain_hand_card(chosen);
+            }
+        }
+        Zone::SuccessPile => state.players[p_idx].push_success_live_card(chosen),
+        _ => state.players[p_idx].push_hand_card(chosen),
     }
-}
 
-pub fn source_zone_for_select_cards(source_zone: u8) -> Zone {
-    match if source_zone != 0 { source_zone } else { 7 } {
-        4 => Zone::Stage,
-        6 => Zone::Hand,
-        7 => Zone::Discard,
-        8 => Zone::Deck,
-        15 => Zone::Yell,
-        _ => Zone::Discard,
+    if reveal_flag && !state.players[p_idx].revealed_cards.contains(&chosen) {
+        state.players[p_idx].revealed_cards.push(chosen);
+    }
+
+    if source_zone as i32 == 15 {
+        for slot in 0..3 {
+            if let Some(pos) = state.players[p_idx].stage_energy[slot]
+                .iter()
+                .position(|&c| c == chosen)
+            {
+                state.players[p_idx].stage_energy[slot].remove(pos);
+                state.players[p_idx].sync_stage_energy_count(slot);
+                break;
+            }
+        }
     }
 }
 
