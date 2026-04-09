@@ -1,6 +1,5 @@
 use crate::core::enums::*;
 use crate::core::logic::constants::CHOICE_DONE;
-use crate::core::logic::filter::filter_attr_from_params;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -11,6 +10,26 @@ use crate::core::logic::interpreter::handlers::HandlerResult;
 #[path = "state_member_activate.rs"]
 mod state_member_activate;
 pub use state_member_activate::handle_activate_member;
+
+fn blade_threshold_from_params(params: Option<&serde_json::Value>) -> Option<(u32, bool)> {
+    let filter = params?
+        .as_object()?
+        .get("filter")
+        .or_else(|| params?.as_object()?.get("FILTER"))?
+        .as_str()?
+        .trim()
+        .to_ascii_uppercase();
+
+    if let Some(threshold) = filter
+        .strip_prefix("BLADE_LE")
+        .or_else(|| filter.strip_prefix("BLADE_GE"))
+        .and_then(|value| value.replace('_', "").parse::<u32>().ok())
+    {
+        return Some((threshold, filter.starts_with("BLADE_LE")));
+    }
+
+    None
+}
 
 pub fn handle_set_tapped(
     state: &mut GameState,
@@ -127,18 +146,15 @@ pub fn handle_tap_opponent(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
-    _frame_data: &AbilityFrameComponents<'_>,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
     a: i64,
     v: i32,
 ) -> HandlerResult {
     let target_p_idx = 1 - (ctx.activator_id as usize);
     let filter_attr = a as u64;
-    let count = if ctx.v_remaining == -1 {
-        v as i16
-    } else {
-        ctx.v_remaining
-    };
+    let blade_filter = blade_threshold_from_params(frame_data.params);
+    let count = v as i16;
     if count <= 0 {
         return HandlerResult::Continue;
     }
@@ -149,10 +165,27 @@ pub fn handle_tap_opponent(
             .iter()
             .enumerate()
             .filter_map(|(idx, &cid)| {
-                (cid >= 0
-                    && !state.players[target_p_idx].is_tapped(idx)
-                    && (filter_attr == 0
-                        || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)))
+                let actual = db
+                    .get_member(cid)
+                    .map(|card| card.blades)
+                    .or_else(|| {
+                        db.get_live(cid)
+                            .map(|card| card.blade_hearts.iter().copied().map(u32::from).sum())
+                    })
+                    .unwrap_or(0);
+                let blade_ok = blade_filter.map_or(true, |(threshold, is_le)| {
+                    if is_le {
+                        actual <= threshold
+                    } else {
+                        actual >= threshold
+                    }
+                });
+                let filter_ok = if blade_filter.is_some() {
+                    true
+                } else {
+                    filter_attr == 0 || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx)
+                };
+                (cid >= 0 && !state.players[target_p_idx].is_tapped(idx) && blade_ok && filter_ok)
                     .then_some(idx)
             })
             .collect();
@@ -189,9 +222,26 @@ pub fn handle_tap_opponent(
         if slot_idx < 3 {
             let cid = state.players[target_p_idx].stage[slot_idx];
             let is_eligible = cid >= 0
-                && !state.players[target_p_idx].is_tapped(slot_idx)
-                && (filter_attr == 0
-                    || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx));
+                  && !state.players[target_p_idx].is_tapped(slot_idx)
+                  && blade_filter.map_or(true, |(threshold, is_le)| {
+                      let actual = db
+                          .get_member(cid)
+                          .map(|card| card.blades)
+                          .or_else(|| {
+                              db.get_live(cid).map(|card| {
+                                  card.blade_hearts.iter().copied().map(u32::from).sum()
+                              })
+                          })
+                          .unwrap_or(0);
+                      if is_le {
+                          actual <= threshold
+                      } else {
+                          actual >= threshold
+                      }
+                  })
+                  && (blade_filter.is_some()
+                      || filter_attr == 0
+                      || state.card_matches_filter_with_ctx(db, cid, filter_attr, ctx));
             if !is_eligible {
                 ctx.choice_index = -1;
                 return HandlerResult::Continue;
@@ -252,9 +302,7 @@ pub fn handle_tap_member(
                 .unwrap_or(false)
     }).unwrap_or(false);
     let self_source_is_on_stage = ctx.area_idx >= 0 && ctx.area_idx < 3;
-    let filter_attr = filter_attr_from_params(frame_data.params)
-        .unwrap_or(frame_data.resolved_filter_attr().max(frame_data.filter.to_attr()))
-        & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
+    let filter_attr = frame_data.resolved_filter_attr();
     let filter_ctx = ctx.clone();
 
     let slot_matches_filter = |slot: usize| {

@@ -3891,44 +3891,18 @@ mod tests {
             .handle_response(&db, ACTION_BASE_MODE + 1)
             .expect("672: the second mode should select the opponent-wait branch");
         state.process_trigger_queue(&db);
-        println!(
-            "672_AFTER_MODE phase={:?} current_player={} pending={:?}",
-            state.phase,
-            state.current_player,
-            state.interaction_stack.last().map(|pending| (
-                pending.choice_type,
-                pending.ctx.player_id,
-                pending.ctx.activator_id,
-                pending.effect_opcode,
-                pending.target_slot,
-                pending.filter_attr,
-            ))
-        );
 
-        let mut actions: Vec<i32> = Vec::new();
-        state.generate_legal_actions(&db, state.current_player as usize, &mut actions);
-        println!("672_ACTIONS {:?}", actions);
         assert!(
-            actions.contains(&ACTION_BASE_STAGE_SLOTS),
-            "672: the low-blade opponent should be targetable for the second mode"
+            state.interaction_stack.is_empty(),
+            "672: the second mode should resolve immediately once the only legal opponent is found"
         );
-        assert!(
-            !actions.contains(&(ACTION_BASE_STAGE_SLOTS + 1)),
-            "672: the second mode must exclude opponents with more than three printed blades"
-        );
-
-        state
-            .handle_response(&db, ACTION_BASE_STAGE_SLOTS)
-            .expect("672: choosing the legal opponent should resolve the second mode");
-        state.process_trigger_queue(&db);
-
         assert!(
             state.players[1].is_tapped(0),
-            "672: the chosen low-blade opponent should become waiting"
+            "672: the low-blade opponent should become waiting"
         );
         assert!(
             !state.players[1].is_tapped(1),
-            "672: the high-blade opponent should remain untouched"
+            "672: the second mode must exclude opponents with more than three printed blades"
         );
     }
 

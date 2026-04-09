@@ -16,7 +16,7 @@ from .main import compile_cards
 
 
 def _card_has_ability_source(data: dict[str, Any]) -> bool:
-    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text", "pseudocode")) or bool(
+    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text")) or bool(
         data.get("abilities")
     ) or bool(
         isinstance(data.get("frame_program"), dict)

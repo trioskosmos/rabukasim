@@ -2,11 +2,10 @@
 
 This document defines the working plan for building a reliable Japanese text -> semantic frame verifier for the ability system.
 
-The goal is not to wire a new parser directly into gameplay. The goal is to make the ability pipeline explain itself well enough that we can tell, for any card, whether the problem is:
+The goal is not to wire a new parser directly into gameplay. The goal is to make the authored ability source and the runtime behavior line up well enough that we can tell, for any card, whether the problem is:
 
 - the Japanese text parser missing a rule family
 - the authored frame source being wrong or incomplete
-- the runtime hydration layer mutating data in an unexpected way
 - the runtime still relying on a fallback or heuristic
 
 ## What the tests should prove
@@ -33,19 +32,19 @@ For parser and verification work, use:
 This is the authored source we should compare against the Japanese text.
 The human-editable entry should be text-first, with `primary_text_jp` at the top of each ability record.
 
-Do not use `data/cards_compiled.json` as the primary comparison target for parser work. That file is a compiled runtime artifact and may already reflect hydration, normalization, or fallback repair.
+Do not use `data/cards_compiled.json` as the primary comparison target for parser work. That file is a compiled runtime artifact and may already reflect runtime lowering.
 
 ## Current system shape
 
-The live ability pipeline is split across multiple layers:
+The live ability pipeline is split across a small set of layers:
 
 1. Japanese printed text in the card data
 2. authored sparse frame source in `data/ability_frame_source.json`
-3. hydration into runtime `AbilityFrame` values
+3. compile-time lowering into runtime frame programs
 4. interpreter execution
 5. response/action generation and prompt resolution
 
-This means the system can be correct in one layer and wrong in another. We need a verifier that can say which layer is responsible.
+This means the system can be correct in one layer and wrong in another. We need a verifier that can say which layer is responsible without depending on a hidden hydration bridge.
 
 ## Verification model
 
@@ -99,7 +98,6 @@ The result should be one of:
 - `match`
 - `parser_gap`
 - `frame_gap`
-- `hydration_gap`
 - `ambiguous`
 - `needs_review`
 

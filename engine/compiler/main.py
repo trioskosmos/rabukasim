@@ -3,7 +3,7 @@
 DATA FLOW:
 ---------
 1. INPUT: data/cards.json (raw card data)
-2. INPUT: data/ability_frame_source.json (authored sparse frame-program source)
+2. INPUT: data/ability_frame_source.json (authored sparse semantic source)
 3. PROCESS: compile_cards() parses each card, resolves abilities from the authored sparse source
 4. OUTPUT: data/cards_compiled.json (compiled card database)
 """
@@ -74,7 +74,6 @@ def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
     # carrying derived effects, conditions, and costs.
     exclude_ability_fields = {
         "bytecode": True,
-        "pseudocode": True,
         "filters": True,
         "option_names": True,
         "semantic_form": True,  # Exclude from default export
@@ -154,7 +153,6 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
-            "source_note": "Derived from cards.json plus authored ability sources. Runtime exports ship semantic effects/conditions/costs; Rust rebuilds executable frames from authored sparse data and semantic fallbacks.",
             "execution_model": "semantic_runtime_export",
         },
     }
@@ -511,21 +509,16 @@ class SparseSourceManager:
             next_mapping = {}
             abilities_list = data.get("abilities")
             if not isinstance(abilities_list, list):
-                abilities_list = [
-                    entry
-                    for key, entry in data.items()
-                    if isinstance(entry, dict)
-                    and not str(key).startswith("_")
-                    and key not in {"generated_at", "source", "metadata_source", "summary", "schema"}
-                ]
+                abilities_list = []
             self._log(f"SparseSourceManager.load() found {len(abilities_list)} authored entries")
 
             for entry in abilities_list:
                 trigger_id = _coerce_int(entry.get("trigger_id", 0))
                 frames = list(entry.get("frames", []) or [])
                 card_refs = entry.get("card_refs", [])
-                cards_list = card_refs if isinstance(card_refs, list) and card_refs else entry.get("cards", [])
-                for card_ref in cards_list:
+                if not isinstance(card_refs, list):
+                    continue
+                for card_ref in card_refs:
                     extracted = self._extract_card_ref(card_ref)
                     if extracted is None:
                         continue
@@ -534,9 +527,9 @@ class SparseSourceManager:
                         "trigger_id": trigger_id,
                         "frames": frames,
                         "raw_text": str(
-                            entry.get("raw_text", "")
-                            or entry.get("primary_text_jp", "")
+                            entry.get("primary_text_jp", "")
                             or entry.get("primary_text_en", "")
+                            or entry.get("raw_text", "")
                             or ""
                         ),
                         "is_once_per_turn": bool(entry.get("is_once_per_turn", False)),
@@ -632,7 +625,12 @@ def _split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
 
 def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str, Any]) -> str:
     """Select the most specific authored text for an ability before cost inference."""
-    entry_text = str(entry.get("raw_text", "") or entry.get("pseudocode", "") or "").strip()
+    entry_text = str(
+        entry.get("raw_text", "")
+        or entry.get("primary_text_jp", "")
+        or entry.get("primary_text_en", "")
+        or ""
+    ).strip()
     if entry_text:
         return entry_text
 
@@ -664,7 +662,7 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
         List of Ability objects (may be empty)
     """
     if not (
-        any(str(data.get(key, "")).strip() for key in ("ability", "original_text", "pseudocode"))
+        any(str(data.get(key, "")).strip() for key in ("ability", "original_text"))
         or bool(data.get("abilities"))
         or bool(isinstance(data.get("frame_program"), dict) and data["frame_program"].get("frames"))
     ):

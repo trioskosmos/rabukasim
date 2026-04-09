@@ -82,11 +82,6 @@ pub fn handle_move_member(
     }
 
     let needs_choice = a == 99 || (a < 0 || a > 2);
-    // `O_MOVE_MEMBER` resolves a position change destination, not a tap target.
-    // Optional move-member prompts must stay on the move path so the selected
-    // member is relocated instead of merely becoming tapped.
-    let legacy_tap_selection = false;
-
     if is_optional && ctx.choice_index == -1 && ctx.v_remaining == -1 {
         if matches!(
             suspend_choice(
@@ -132,11 +127,7 @@ pub fn handle_move_member(
                 frame_idx,
                 O_MOVE_MEMBER,
                 s,
-                if legacy_tap_selection {
-                    ChoiceType::TapMSelect
-                } else {
-                    ChoiceType::MoveMemberDest
-                },
+                ChoiceType::MoveMemberDest,
                 filter_attr,
                 if is_optional { 0 } else { -1 },
             ),
@@ -158,22 +149,8 @@ pub fn handle_move_member(
         a as usize
     };
 
-    let tap_slot = |use_destination: bool| {
-        if legacy_tap_selection {
-            if use_destination {
-                dst_slot
-            } else {
-                src_slot
-            }
-        } else if is_position_change_choice && use_destination {
-            dst_slot
-        } else {
-            src_slot
-        }
-    };
-
     if is_optional {
-        let tap_idx = tap_slot(needs_choice);
+        let tap_idx = if is_position_change_choice { dst_slot } else { src_slot };
         if tap_idx < 3 && state.players[target_p_idx].stage[tap_idx] >= 0 {
             if !state.ui.silent {
                 state.log(format!("Rule 11.9, Rule 11.9.1: Tapping member as part of [ポジションチェンジ] (Position Change) for Player {}.", target_p_idx));
@@ -233,18 +210,6 @@ pub fn handle_move_member(
                     state.trigger_abilities(db, TriggerType::OnPositionChange, &pos_ctx);
                 }
             }
-        }
-    } else if src_slot < 3 && dst_slot == src_slot {
-        if state.players[target_p_idx].stage[src_slot] >= 0 {
-            if state.debug.debug_mode {
-                eprintln!(
-                    "[MOVE_MEMBER_DBG] tapping target_p_idx={} slot={} cid={}",
-                    target_p_idx,
-                    src_slot,
-                    state.players[target_p_idx].stage[src_slot]
-                );
-            }
-            state.players[target_p_idx].set_tapped(src_slot, true);
         }
     }
 

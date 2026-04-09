@@ -7,8 +7,6 @@
 ### Why is this folder still here?
 The `compiler/` and related tooling still depend on `engine.models` for shared schema and card data types while generating `data/cards_compiled.json`.
 
-The old archive subtree has been removed. `engine/game/` is left only for compatibility with older Python helpers.
-
 ### What should I not do?
 - **Do not** add new runtime gameplay logic to the Python engine.
 - **Do not** treat the Python implementation as the source of truth for production card behavior.

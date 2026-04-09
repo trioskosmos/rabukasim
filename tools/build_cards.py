@@ -47,9 +47,6 @@ def main():
     args = parse_args()
 
     output_path = Path("data/cards_compiled.json")
-    # Source flow is intentional: authored frame data in ability_frame_source.json
-    # is compiled into cards_compiled.json, so this build step must regenerate the
-    # compiled JSON from the authored input rather than the other way around.
     result = prepare_runtime(
         quiet=args.quiet,
         sync_assets=args.sync_launcher_assets,
@@ -62,10 +59,10 @@ def main():
     if args.quiet:
         return
 
-    if result.cards_changed or result.ability_source_changed:
+    if result.cards_changed or result.launcher_assets_changed:
         print_status("Build complete.", is_done=True)
     else:
-        print_status("Card and ability artifacts are up to date.", is_done=True)
+        print_status("Card artifacts are up to date.", is_done=True)
 
 if __name__ == "__main__":
     main()

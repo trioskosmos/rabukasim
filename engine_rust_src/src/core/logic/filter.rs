@@ -982,7 +982,6 @@ impl CardFilter {
         if overlay.keyword_member {
             self.keyword_member = true;
         }
-
         self
     }
 
@@ -1854,7 +1853,6 @@ fn apply_string_token(filter: &mut CardFilter, extras: &mut u64, part: &str) {
             filter.value_enabled = true;
             filter.value_threshold = threshold;
             filter.is_le = upper.starts_with("BLADE_LE");
-            *extras |= crate::core::generated_constants::FILTER_BLADE_FILTER_FLAG;
         }
         return;
     }

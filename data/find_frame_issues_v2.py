@@ -5,6 +5,17 @@ import json
 import re
 from pathlib import Path
 
+def _opcode_sequence(group):
+    seq = group.get('opcode_sequence') or []
+    if seq:
+        return seq
+    frames = group.get('frames', []) or []
+    return [
+        str(frame.get('op', '')).strip().upper()
+        for frame in frames
+        if isinstance(frame, dict) and str(frame.get('op', '')).strip()
+    ]
+
 def analyze_ability_frames():
     filepath = Path("c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/data/ability_frame_source.json")
     
@@ -19,7 +30,7 @@ def analyze_ability_frames():
         signature = group.get('signature', '')
         primary_jp = group.get('primary_text_jp', '')
         frames = group.get('frames', [])
-        opcode_seq = group.get('opcode_sequence', [])
+        opcode_seq = _opcode_sequence(group)
         card_refs = group.get('card_refs', [])
         source_texts = group.get('source_ability_texts', [])
         

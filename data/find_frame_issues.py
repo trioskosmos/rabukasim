@@ -5,13 +5,40 @@ import json
 import re
 from pathlib import Path
 
+def _opcode_sequence(group):
+    seq = group.get('opcode_sequence') or []
+    if seq:
+        return seq
+    frames = group.get('frames', []) or []
+    return [
+        str(frame.get('op', '')).strip().upper()
+        for frame in frames
+        if isinstance(frame, dict) and str(frame.get('op', '')).strip()
+    ]
+
+def _card_labels(cards):
+    labels = []
+    for card in cards or []:
+        if isinstance(card, dict):
+            card_no = str(card.get('card_no', '')).strip()
+            name = str(card.get('name', '')).strip()
+            if card_no and name:
+                labels.append(f"{card_no} | {name}")
+            elif card_no:
+                labels.append(card_no)
+            elif name:
+                labels.append(name)
+        else:
+            labels.append(str(card))
+    return labels
+
 def analyze_ability_frames():
     filepath = Path("c:/Users/trios/.gemini/antigravity/vscode/loveca-copy/data/ability_frame_source.json")
     
     with open(filepath, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
-    signature_groups = data.get('signature_groups', [])
+    signature_groups = data.get('abilities', data.get('signature_groups', []))
     
     issues = []
     
@@ -19,8 +46,8 @@ def analyze_ability_frames():
         signature = group.get('signature', '')
         primary_jp = group.get('primary_text_jp', '')
         frames = group.get('frames', [])
-        opcode_seq = group.get('opcode_sequence', [])
-        cards = group.get('cards', [])
+        opcode_seq = _opcode_sequence(group)
+        cards = group.get('card_refs', group.get('cards', []))
         
         # Skip empty or trivial frames
         if len(frames) <= 1:  # Just RETURN
@@ -171,7 +198,7 @@ def generate_report(issues):
         lines.append(f"## Issue {i}: {issue['signature']}")
         lines.append("")
         lines.append("**Cards:**")
-        for card in issue['cards']:
+        for card in _card_labels(issue['cards']):
             card_name = card.split('|')[1].strip() if '|' in card else card
             lines.append(f"- {card_name}")
         lines.append("")
