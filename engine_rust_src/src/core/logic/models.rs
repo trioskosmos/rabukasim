@@ -6,10 +6,42 @@ use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::instruction::{
     parse_comparison_value, parse_remainder_zone_value, parse_target_slot_value, DecodedSlot,
 };
+use crate::core::logic::interpreter::conditions::common::parse_condition_type;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
 use std::hash::{Hash, Hasher};
+
+pub(crate) fn derive_conditions_from_frame_program(program: &FrameProgram) -> Vec<Condition> {
+    let mut conditions = Vec::new();
+    for frame in &program.frames {
+        let components = frame.components();
+        let opcode = components.opcode;
+        let is_raw_condition = components
+            .params
+            .and_then(|params| params.as_object())
+            .map(|params| params.get("raw_cond").is_some() || params.get("RAW_COND").is_some())
+            .unwrap_or(false);
+        let is_condition_opcode = is_raw_condition
+            || (opcode >= crate::core::logic::constants::CONDITION_START_1
+                && opcode <= crate::core::logic::constants::CONDITION_END_1)
+            || (opcode >= crate::core::logic::constants::CONDITION_START_2
+                && opcode <= crate::core::logic::constants::CONDITION_END_2);
+        if !is_condition_opcode {
+            continue;
+        }
+
+        conditions.push(Condition {
+            condition_type: parse_condition_type(opcode),
+            value: components.value,
+            attr: components.raw_attr,
+            target_slot: components.raw_slot as u8,
+            is_negated: components.is_negated,
+            params: components.params.cloned().unwrap_or_default(),
+        });
+    }
+    conditions
+}
 
 /// Flat, uniform runtime ability frame.
 ///
@@ -482,7 +514,6 @@ fn trace_source_paths() -> Vec<String> {
         "data/ability_frame_source.json".to_string(),
         "data/ability_runtime_entrypoints.json".to_string(),
         "engine_rust_src/src/core/logic/card_db.rs".to_string(),
-        "engine_rust_src/src/core/logic/ability_hydration.rs".to_string(),
         "engine_rust_src/src/export_hydrated_abilities.rs".to_string(),
     ]
 }
@@ -494,13 +525,6 @@ fn trace_warnings_for_ability(ability: &Ability, frames: &[AbilityFrame]) -> Vec
         warnings.push(
             "resolved through synthesized semantic effects instead of an authored frame_program"
                 .to_string(),
-        );
-    }
-
-    if ability.frame_program.is_some() && ability.resolved_frame_source() == "frame_program_unmatched"
-    {
-        warnings.push(
-            "frame_program exists but does not match the authored resolution path".to_string(),
         );
     }
 
@@ -2754,8 +2778,6 @@ impl Ability {
     pub fn resolved_frame_source(&self) -> &'static str {
         if self.has_authored_frame_program() {
             "frame_program"
-        } else if self.frame_program.is_some() {
-            "frame_program_unmatched"
         } else if !self.effects.is_empty() {
             "effects"
         } else {
@@ -3097,7 +3119,6 @@ impl Ability {
                 serialization_paths: vec![
                     "engine_rust_src/src/core/logic/models.rs".to_string(),
                     "engine_rust_src/src/core/logic/card_db.rs".to_string(),
-                    "engine_rust_src/src/core/logic/ability_hydration.rs".to_string(),
                     "engine_rust_src/src/export_hydrated_abilities.rs".to_string(),
                 ],
                 serialization_fields: trace_serialization_fields(),
@@ -3240,7 +3261,7 @@ mod tests {
     }
 
     #[test]
-    fn unmatched_frame_program_does_not_fall_back_to_effects() {
+    fn empty_frame_program_still_reports_effects_source() {
         let ability = Ability {
             trigger: TriggerType::OnPlay,
             effects: vec![Effect {
@@ -3256,7 +3277,7 @@ mod tests {
         };
 
         let frames = ability.resolved_frames();
-        assert_eq!(ability.resolved_frame_source(), "frame_program_unmatched");
+        assert_eq!(ability.resolved_frame_source(), "effects");
         assert!(frames.is_empty());
     }
 
@@ -3397,7 +3418,7 @@ mod tests {
             frames: vec![frame],
             raw_program: None,
         };
-        let conditions = crate::core::logic::ability_hydration::derive_conditions_from_frame_program(&program);
+        let conditions = derive_conditions_from_frame_program(&program);
 
         assert_eq!(conditions.len(), 1);
         assert_eq!(conditions[0].condition_type, ConditionType::CountStage);

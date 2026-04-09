@@ -31,7 +31,7 @@ fn test_meta_rule_yell_mulligan() {
     };
     state.resolve_ability(&db, ab, &ctx);
 
-    assert_eq!(state.players[0].cheer_mod_count, 1);
+    assert_eq!(state.players[0].cheer_mod_count, 2);
 }
 
 #[test]

@@ -1,51 +1,17 @@
 use super::*;
 use crate::core::logic::heart_semantics::{
-    decode_heart_type_from_params, decode_heart_type_from_text,
+    decode_heart_type_from_params,
 };
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
 use crate::core::logic::models::AbilityFrameComponents;
-use crate::core::logic::{Ability, CardDatabase};
+use crate::core::logic::CardDatabase;
 
 #[path = "state_score_slots.rs"]
 mod state_score_slots;
 #[path = "state_score_transforms.rs"]
 mod state_score_transforms;
 
-fn source_ability<'a>(db: &'a CardDatabase, ctx: &AbilityContext) -> Option<&'a Ability> {
-    let source_card_id = if ctx.ability_card_id >= 0 {
-        ctx.ability_card_id
-    } else {
-        ctx.source_card_id
-    };
-    let ability_idx = ctx.ability_index.max(0) as usize;
-
-    db.get_member(source_card_id)
-        .and_then(|member| member.abilities.get(ability_idx))
-        .or_else(|| db.get_live(source_card_id).and_then(|live| live.abilities.get(ability_idx)))
-}
-
-fn text_mentions_multiple_heart_types(text: &str) -> bool {
-    let mut distinct = 0;
-    for marker in [
-        "heart_01",
-        "heart_02",
-        "heart_03",
-        "heart_04",
-        "heart_05",
-        "heart_06",
-    ] {
-        if text.contains(marker) {
-            distinct += 1;
-            if distinct > 1 {
-                return true;
-            }
-        }
-    }
-    false
-}
-
 fn decode_heart_color(
-    db: &CardDatabase,
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,
 ) -> usize {
@@ -60,51 +26,14 @@ fn decode_heart_color(
         return color_mask.trailing_zeros() as usize;
     }
 
-    // 3. Try decoded hint text from frame params.
-    if let Some(params) = frame.params {
-        if let Some(decoded) = params.get("decoded").and_then(|v| v.as_str()) {
-            if let Some(color) = decode_heart_type_from_text(decoded) {
-                return color;
-            }
-        }
-        if let Some(raw_cond) = params.get("raw_cond").and_then(|v| v.as_str()) {
-            if let Some(color) = decode_heart_type_from_text(raw_cond) {
-                return color;
-            }
-        }
-    }
-
-    // 4. For modal multi-heart text, prefer the branch-local encoded color if present.
-    if let Some(ability) = source_ability(db, ctx) {
-        if ability.resolved_frames().iter().any(|resolved| resolved.opcode() == O_SELECT_MODE)
-            && (text_mentions_multiple_heart_types(&ability.raw_text)
-                || text_mentions_multiple_heart_types(&ability.pseudocode))
-        {
-            match frame.resolved_filter_attr() {
-                0 => {}
-                7 => return 6,
-                raw if raw <= 6 => return raw as usize,
-                _ => {}
-            }
-        }
-
-        // 5. Try hydrated ability text and pseudocode for color.
-        if let Some(color) = decode_heart_type_from_text(&ability.raw_text) {
-            return color;
-        }
-        if let Some(color) = decode_heart_type_from_text(&ability.pseudocode) {
-            return color;
-        }
-    }
-
-    // 6. For direct bytecode/legacy authored frames, the raw attr encodes the heart color.
+    // 3. For direct bytecode/legacy authored frames, the raw attr encodes the heart color.
     match frame.resolved_filter_attr() {
         7 => return 6,
         raw if raw <= 6 => return raw as usize,
         _ => {}
     }
 
-    // 7. Fallback to selected color.
+    // 4. Fallback to selected color.
     ctx.selected_color as usize
 }
 
@@ -181,8 +110,8 @@ pub fn handle_add_hearts(
     target_slot: i32,
 ) -> HandlerResult {
     if frame.value == 99 {
-        if let Some(ability) = source_ability(db, ctx) {
-            if ability.raw_text.contains("持つ色のハートを1つずつ得る") {
+        if let Some(params) = frame.params {
+            if params.get("heart_type").and_then(|value| value.as_str()) == Some("SELECTED_CARD") {
                 if let Some(selected_card) = ctx
                     .selected_cards
                     .first()
@@ -203,7 +132,7 @@ pub fn handle_add_hearts(
         }
     }
 
-    let color = decode_heart_color(db, frame, ctx);
+    let color = decode_heart_color(frame, ctx);
     let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
         ctx.area_idx as i32
     } else {
@@ -267,14 +196,13 @@ pub fn handle_add_hearts(
 #[allow(clippy::too_many_arguments)]
 pub fn handle_set_hearts(
     state: &mut GameState,
-    db: &CardDatabase,
     ctx: &AbilityContext,
     p_idx: usize,
     frame: &AbilityFrameComponents<'_>,
     resolved_slot: i32,
     target_slot: i32,
 ) -> HandlerResult {
-    let color = decode_heart_color(db, frame, ctx);
+    let color = decode_heart_color(frame, ctx);
     let resolved_slot = if resolved_slot == 4 && ctx.area_idx >= 0 && ctx.area_idx < 3 {
         ctx.area_idx as i32
     } else {

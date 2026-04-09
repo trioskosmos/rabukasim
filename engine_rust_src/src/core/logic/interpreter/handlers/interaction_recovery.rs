@@ -19,6 +19,20 @@ fn recovery_uses_same_name_filter(
     recovery_special_id(db, ctx, frame_data, frame_idx) == 4
 }
 
+fn recovery_raw_condition(frame_data: &AbilityFrameComponents<'_>) -> Option<String> {
+    frame_data
+        .params
+        .as_ref()
+        .and_then(|params| params.as_object())
+        .and_then(|params| {
+            params
+                .get("raw_cond")
+                .or_else(|| params.get("RAW_COND"))
+                .and_then(|value| value.as_str())
+                .map(|value| value.to_string())
+        })
+}
+
 fn recovery_special_id(
     db: &CardDatabase,
     ctx: &AbilityContext,
@@ -92,6 +106,11 @@ pub fn handle_recovery(
     let a = frame_data.raw_attr as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
+    let raw_cond = recovery_raw_condition(frame_data);
+    let ignore_attr_filter = matches!(
+        raw_cond.as_deref(),
+        Some("UNIQUE_DISCARD_LIVE_NAMES_COUNT" | "UNIQUE_DISCARD_LIVE_GROUPS_COUNT")
+    );
     let source_zone = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
         Zone::Discard
     } else {
@@ -171,7 +190,9 @@ pub fn handle_recovery(
         };
         for cid in &candidate_iter {
             if type_matches(db, *cid, real_op)
-                && (a == 0 || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
+                && (ignore_attr_filter
+                    || a == 0
+                    || state.card_matches_filter_with_ctx(db, *cid, a as u64, ctx))
             {
                 state.players[p_idx].looked_cards.push(*cid);
             }

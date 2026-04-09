@@ -11,7 +11,6 @@ import os
 import tempfile
 import yaml
 from datetime import datetime, timezone
-from hashlib import sha1
 from pathlib import Path
 from typing import Any
 
@@ -130,33 +129,6 @@ def _normalize_frame(frame: Any, idx: int) -> dict[str, Any]:
             normalized[key] = frame[key]
 
     return normalized
-
-
-def _signature_hash(trigger_id: int, frames: list[dict]) -> dict[str, str]:
-    """Generate a signature hash for an ability."""
-    def _canonicalize_signature_frame(value: Any) -> Any:
-        if isinstance(value, dict):
-            return {
-                key: _canonicalize_signature_frame(nested)
-                for key, nested in sorted(value.items())
-                if key not in {"frame_index", "source_words", "semantic", "readable", "decoded"}
-            }
-        if isinstance(value, list):
-            return [_canonicalize_signature_frame(item) for item in value]
-        return value
-
-    sig_payload = {
-        "trigger": trigger_id,
-        "frames": [_canonicalize_signature_frame(frame) for frame in frames],
-    }
-    sig_source = json.dumps(sig_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-    sig_hash = sha1(sig_source.encode("utf-8")).hexdigest()
-
-    return {
-        "signature": "T" + str(trigger_id) + "|" + sig_hash,
-        "signature_hash": sig_hash,
-        "signature_source": sig_source,
-    }
 
 
 def _trigger_name_from_id(trigger_id: int, metadata: dict[str, Any]) -> str:
@@ -293,26 +265,6 @@ def _build_card_ref_lookup(card_db: dict[str, Any] | None) -> dict[tuple[str, in
     return lookup
 
 
-def _parse_card_label(label: str) -> tuple[str, int | None]:
-    text = str(label or "").strip()
-    if not text:
-        return "", None
-
-    card_no = text.split(" | ", 1)[0].strip()
-    ability_index = None
-    if "(ab#" in text:
-        suffix = text.split("(ab#", 1)[1]
-        digits = ""
-        for ch in suffix:
-            if ch.isdigit():
-                digits += ch
-            else:
-                break
-        if digits:
-            ability_index = int(digits)
-    return _normalize_card_no(card_no), ability_index
-
-
 def _entry_card_handles(entry: dict[str, Any]) -> list[tuple[str, int, str]]:
     handles: list[tuple[str, int, str]] = []
     seen: set[tuple[str, int]] = set()
@@ -329,19 +281,6 @@ def _entry_card_handles(entry: dict[str, Any]) -> list[tuple[str, int, str]]:
             continue
         seen.add(key)
         handles.append((card_no, ability_index, _card_ref_label(ref)))
-
-    for label in entry.get("cards", []):
-        if not isinstance(label, str):
-            continue
-        card_no, ability_index = _parse_card_label(label)
-        if not card_no:
-            continue
-        ability_index = 0 if ability_index is None else ability_index
-        key = (card_no, ability_index)
-        if key in seen:
-            continue
-        seen.add(key)
-        handles.append((card_no, ability_index, label.strip()))
 
     return handles
 
@@ -364,25 +303,6 @@ def _collect_entry_card_refs(entry: dict[str, Any], card_ref_lookup: dict[tuple[
         merged = dict(card_ref_lookup.get(key, {}))
         merged.update(ref)
         merged["ability_index"] = ability_index
-        refs.append(merged)
-
-    for label in entry.get("cards", []):
-        if not isinstance(label, str):
-            continue
-        card_no, ability_index = _parse_card_label(label)
-        if not card_no:
-            continue
-        ability_index = 0 if ability_index is None else ability_index
-        key = (card_no, ability_index)
-        if key in seen:
-            continue
-        seen.add(key)
-        merged = dict(card_ref_lookup.get(key, {}))
-        if not merged:
-            merged = {
-                "card_no": card_no,
-                "ability_index": ability_index,
-            }
         refs.append(merged)
 
     return refs
@@ -563,37 +483,22 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
         # Normalize frames
         normalized_frames = [_normalize_frame(f, i) for i, f in enumerate(raw_frames)]
 
-        # Get signature
-        sig = _signature_hash(trigger_id, normalized_frames)
-
         # Get card references
         card_refs = _collect_entry_card_refs(entry, card_ref_lookup)
-        cards = []
-        for ref in entry.get("cards", []):
-            if isinstance(ref, str) and ref.strip():
-                cards.append(ref.strip())
-
-        cards.extend(_card_ref_label(ref) for ref in card_refs if _card_ref_label(ref))
-        cards = list(dict.fromkeys(cards))
-
+        source_ability_texts = _collect_entry_texts(entry, card_text_lookup)
         normalized = {
-            "signature": sig["signature"],
-            "signature_hash": sig["signature_hash"],
-            "signature_source": sig["signature_source"],
+            # Human-editable first: the JP text is the main thing we copy and inspect.
+            "primary_text_jp": source_ability_texts[0]["jp"] if source_ability_texts else "",
+            "primary_text_en": source_ability_texts[0]["en"] if source_ability_texts else "",
+            "source_ability_texts": source_ability_texts,
             "trigger_id": trigger_id,
             "trigger": _trigger_name_from_id(trigger_id, metadata),
             "frame_count": len(normalized_frames),
             "opcode_sequence": [frame["op"] for frame in normalized_frames],
             "frames": normalized_frames,
-            "cards": cards,
             "card_refs": card_refs,
             "pseudocode": "",  # Simplified - no complex pseudocode generation
         }
-
-        source_ability_texts = _collect_entry_texts(entry, card_text_lookup)
-        normalized["primary_text_jp"] = source_ability_texts[0]["jp"] if source_ability_texts else ""
-        normalized["primary_text_en"] = source_ability_texts[0]["en"] if source_ability_texts else ""
-        normalized["source_ability_texts"] = source_ability_texts
 
         # Copy authored-only metadata before sorting so it stays aligned.
         if "choice_flags" in entry:
@@ -607,15 +512,23 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
 
         entries.append(normalized)
 
-    # Sort: by trigger, then by card count (desc), then by hash
-    entries.sort(key=lambda e: (e["trigger_id"], -len(e["cards"]), e["signature_hash"]))
+    # Sort: by trigger, then by card count (desc), then by the first visible JP text.
+    # Keep the authored file easy to inspect and edit by humans.
+    entries.sort(
+        key=lambda e: (
+            e["trigger_id"],
+            -len(e["card_refs"]),
+            e.get("primary_text_jp", ""),
+            e.get("card_refs", [{}])[0].get("card_no", "") if e.get("card_refs") else "",
+        )
+    )
 
-    total_card_refs = sum(len(entry["cards"]) for entry in entries)
+    total_card_refs = sum(len(entry["card_refs"]) for entry in entries)
     unique_cards = {
-        card_label.split(" | ", 1)[0]
+        _normalize_card_no(ref.get("card_no", ""))
         for entry in entries
-        for card_label in entry["cards"]
-        if isinstance(card_label, str) and card_label
+        for ref in entry["card_refs"]
+        if isinstance(ref, dict) and _normalize_card_no(ref.get("card_no", ""))
     }
     text_covered_count = sum(1 for entry in entries if entry.get("primary_text_jp") or entry.get("primary_text_en"))
 
@@ -629,7 +542,6 @@ def normalize_authored_ability_index(payload: dict[str, Any], metadata: dict[str
             "card_count": len(unique_cards),
             "ability_count": total_card_refs,
             "unique_ability_count": len(entries),
-            "signature_group_count": len({e["signature_hash"] for e in entries}),
             "text_covered_ability_count": text_covered_count,
             "text_missing_ability_count": len(entries) - text_covered_count,
         },

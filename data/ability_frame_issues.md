@@ -1,352 +1,743 @@
 # Ability Frame Issues - Mismatches Between Frames and JP Text
 
-**File analyzed:** `ability_frame_source.json`  
-**Generated:** 2026-04-09  
-**Total unique abilities:** 544  
-**Issues found:** 10 signatures with clear mismatches
+**File analyzed:** `ability_frame_source.json`
+**Generated:** 2026-04-09
+**Issues found:** 42
+
+| Severity | Count |
+|----------|-------|
+| CRITICAL | 3 |
+| HIGH | 29 |
+| MEDIUM | 10 |
 
 ---
 
-## Issue 1: T1|6eab94976ce3fea5f3acc7dbeeda0d41ef24be2b
-
-**Cards:**
-- PL!HS-bp1-005-P | 大沢瑠璃乃
-- PL!HS-bp5-011-N | 大沢瑠璃乃
-- PL!N-bp5-014-N | 中須かすみ
-- PL!S-bp5-014-N | 渡辺 曜
-- PL!S-bp5-015-N | 津島善子
-- etc.
-
-**Frame opcodes:** `DRAW(2)` → `MOVE_TO_DISCARD(1)`
-
-**Primary JP Text:**
-> {{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。
-
-**Problem:**
-- Frame does DRAW first then MOVE_TO_DISCARD, but text describes MOVE_TO_DISCARD first then DRAW
-- Frame only discards 1 card (`value: 1`) while text says "up to 3 cards" (3枚まで)
-- Frame draws fixed 2 cards regardless of discard count, but text says draw "same number as discarded"
-
-**Severity:** HIGH - Mechanic doesn't match card text
-
----
-
-## Issue 2: T6|40b13fa6810811e59c6180a03d2dee80cd041225
-
-**Cards:**
-- PL!HS-bp5-018-L | AURORA FLOWER
-- PL!N-bp5-006-AR | 近江彼方
-- PL!SP-bp1-001-P | 澁谷かのん
-
-**Frame opcodes:** `RETURN` only (no-op frame)
-
-**Primary JP Text (AURORA FLOWER):**
-> {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。
-
-**Problem:**
-- Frame is completely empty - just a RETURN opcode
-- No implementation of the group tagging meta-rule
-- Card should be treated as multiple groups simultaneously but frame does nothing
-
-**Severity:** CRITICAL - Ability not implemented at all
-
----
-
-## Issue 3: T1|e139dc8878e4906085cb5de8c5ec4ce010776b6b
-
-**Cards:**
-- PL!SP-bp4-011-P | 鬼塚冬毬
-
-**Frame opcodes:** `NOP` → `SELECT_MEMBER` → `MOVE_MEMBER`
-
-**Primary JP Text:**
-> {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
-
-**Problem:**
-- Frame lacks the "original blade count ≤ 3" condition check
-- The NOP check only verifies STAGE_0 exists, not blade count condition
-- Targets any opponent member instead of filtering by blade count ≤ 3
-
-**Severity:** HIGH - Missing critical targeting condition
-
----
-
-## Issue 4: T1|2a6040441970a725ac5cabbde288467fb0154619
-
-**Cards:**
-- PL!N-bp4-010-P | 三船栞子
-
-**Frame opcodes:** `JUMP_IF_FALSE` → `RECOVER_LIVE`
-
-**Primary JP Text:**
-> {{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい。そうした場合、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く。
-
-**Problem:**
-- Frame only implements the second half (recover from discard → success pile)
-- Missing the first part: moving from success pile → discard
-- This is a swap/exchange mechanic but frame only does one direction
-
-**Severity:** HIGH - Only half of ability implemented
-
----
-
-## Issue 5: T1|8792aceb310d1f255d4565f6007b88e1c3d768d3
-
-**Cards:**
-- PL!SP-bp2-006-P | 桜小路きな子
-
-**Frame opcodes:** `BATON` → `RECOVER_MEMBER` from DISCARD
-
-**Primary JP Text:**
-> {{toujyou.png|登場}}バトンタッチして登場した場合、このバトンタッチで控え室に置かれた『Liella!』のメンバーカードを1枚手札に加える。
-
-**Problem:**
-- Frame recovers ANY 'Liella!' member from discard
-- Should specifically recover the card that was just put there by THIS baton touch
-- Missing "track specific card discarded by baton" logic
-
-**Severity:** MEDIUM - Can recover wrong card from discard
-
----
-
-## Issue 6: T0|686fd7af1ff738fb6c085dcfda4c9c5ce08aec7a
+## Issue 1: ``
+**Severity:** CRITICAL
 
 **Cards:**
 - PL!S-bp2-004-P | 黒澤ダイヤ
+- PL!S-bp2-004-R | 黒澤ダイヤ
 
-**Frame opcodes:** `META_RULE(1)` → `RETURN`
+**Frame opcodes:** `META_RULE → RETURN`
 
 **Primary JP Text:**
 > {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。
 
-**Problem:**
-- META_RULE(1) is just a rule flag - no actual implementation
-- Missing: yell result checking (no live cards)
-- Missing: optional discard of revealed cards
-- Missing: blade heart loss on discard
-- Missing: repeat yell mechanic
-
-**Severity:** CRITICAL - Complex ability not implemented
+**Problem(s):**
+- Text: complex yell-repeat mechanic; Frame: only META_RULE placeholder
 
 ---
 
-## Issue 7: T1|6b3d982e5e058d8642e43e6a451193f2e4620340
+## Issue 2: ``
+**Severity:** CRITICAL
 
 **Cards:**
-- PL!HS-bp5-001-AR | 日野下花帆
+- PL!HS-bp2-020-L | Link to the FUTURE
 
-**Frame opcodes:** `MOVE_TO_DISCARD(4)` → `DISCARDED_CARDS` check → `ADD_BLADES(2)`
+**Frame opcodes:** `META_RULE → RETURN`
 
 **Primary JP Text:**
-> {{toujyou.png|登場}}自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+> {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。
 
-**Problem:**
-- `DISCARDED_CARDS` check with `card_type:LIVE` may check wrong scope
-- Should check if ANY of the 4 just-discarded cards were live cards
-- Frame logic may not properly correlate the check with the specific 4 cards
-
-**Severity:** MEDIUM - Condition check may not work correctly
+**Problem(s):**
+- Text: card treated as multiple groups; Frame: empty/META_RULE placeholder only
 
 ---
 
-## Issue 8: T1|75dc8f4de8fe6e45fe2c8f05e94f2a078db2dd15
+## Issue 3: ``
+**Severity:** CRITICAL
 
 **Cards:**
-- PL!SP-bp4-005-P | 葉月 恋
+- PL!HS-sd1-020-SD | Link to the FUTURE（104期Ver.）
 
-**Frame opcodes:** `BATON` (group LIELLA) → `ENERGY_CHARGE(2)`
+**Frame opcodes:** `META_RULE → RETURN`
 
 **Primary JP Text:**
-> {{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。
+> {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。
 
-**Problem:**
-- Frame checks BATON condition and group LIELLA
-- Missing the "energy ≥ 7" condition check entirely
-- Energy charge happens regardless of energy count
-
-**Severity:** HIGH - Missing critical resource condition
-
-**Status:** FIXED in frame data. The ability now gates the energy charge behind the `COUNT_ENERGY >= 7` check.
+**Problem(s):**
+- Text: card treated as multiple groups; Frame: empty/META_RULE placeholder only
 
 ---
 
-## Issue 9: T1|a71ca3f9f06c9e38ed1b86c5afd923e00bd0a6e8
+## Issue 4: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!HS-bp1-010-N | 日野下花帆
+- PL!HS-bp1-014-N | 大沢瑠璃乃
+- PL!N-bp1-014-N | 中須かすみ
+
+**Frame opcodes:** `DRAW → MOVE_TO_DISCARD → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '黒澤ダイヤ (ab#0)' differs in: has_live_card, discard
+
+---
+
+## Issue 5: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!HS-bp1-005-P | 大沢瑠璃乃
+- PL!HS-bp1-005-R | 大沢瑠璃乃
+- PL!HS-bp5-011-N | 大沢瑠璃乃
+
+**Frame opcodes:** `DRAW → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '大沢瑠璃乃 (ab#0)' differs in: discard; Card '徒町 小鈴 (ab#0)' differs in: draw; Card '中須かすみ (ab#0)' differs in: has_live_card, to_hand, draw; Card '渡辺 曜 (ab#0)' differs in: deck_bottom, to_deck, discard, draw; Card '津島善子 (ab#0)' differs in: draw
+
+---
+
+## Issue 6: ``
+**Severity:** HIGH
 
 **Cards:**
 - PL!S-bp2-008-P | 小原鞠莉
-- PL!SP-bp2-013-N | 唐 可可
-- PL!SP-bp2-014-N | 嵐 千砂都
-- PL!SP-bp2-018-N | 米女メイ
+- PL!S-bp2-008-R+ | 小原鞠莉
+- PL!S-bp2-008-P+ | 小原鞠莉
 
-**Frame opcodes:** `SELECT_CARDS(1)` from DISCARD → `MOVE_TO_DECK`
+**Frame opcodes:** `SELECT_CARDS → MOVE_TO_DECK → RETURN`
 
-**Primary JP Text (小原鞠莉):**
+**Primary JP Text:**
 > {{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。
 
-**Primary JP Text (唐 可可):**
-> {{toujyou.png|登場}}自分の控え室からカードを1枚までデッキの一番上に置く。
-
-**Problem:**
-- All cards share same frame but have different ability texts
-- Frame allows selecting any card, not just live cards (for cards that require live)
-- Frame doesn't specify deck position (top vs bottom)
-- Some cards should put to bottom, some to top - frame doesn't differentiate
-
-**Severity:** MEDIUM - Shared frame for different abilities
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '唐 可可 (ab#0)' differs in: has_live_card, deck_top, deck_bottom
 
 ---
 
-## Issue 10: T2|a346b70a1dc561ba190c0427c356242c1aa94be1
+## Issue 7: ``
+**Severity:** HIGH
 
 **Cards:**
-- PL!S-bp3-003-P | 松浦果南
+- PL!SP-bp4-011-P | 鬼塚冬毬
+- PL!SP-bp4-011-R+ | 鬼塚冬毬
 
-**Frame opcodes:** `SELECT_MEMBER` → `ADD_BLADES` with dynamic scalar calculation
+**Frame opcodes:** `NOP → JUMP_IF_FALSE → SELECT_MEMBER → MOVE_MEMBER → RETURN`
 
 **Primary JP Text:**
-> {{live_start.png|ライブ開始時}}手札を2枚まで控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+> {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
 
-**Problem:**
-- Frame uses complex `compare_accumulated` dynamic calculation
-- Text clearly states: per discarded card = 2 blades
-- Frame's dynamic scalar (`base_value:2, divisor:1`) with remainder_zone STAGE doesn't match the simple "2 blades per discarded card" scaling
-- Should be: discard 1 card → 2 blades, discard 2 cards → 4 blades (up to 2 cards)
-
-**Severity:** MEDIUM - Scaling logic overcomplicated/mismatched
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
 
 ---
 
-## Issue 11: T1|fcdb4734ffc7d57e34d3f32f9d8c7c6b69c51345
+## Issue 8: ``
+**Severity:** HIGH
 
 **Cards:**
-- PL!S-pb1-013-N | 黒澤ダイヤ
-- PL!S-pb1-014-N | 渡辺 曜
-- PL!S-pb1-015-N | 津島善子
+- PL!N-bp4-010-P | 三船栞子
+- PL!N-bp4-010-R+ | 三船栞子
 
-**Frame opcodes:** `MOVE_TO_DISCARD(1)` → `SUM_VALUE` → `LOOK_AND_CHOOSE`
-
-**Primary JP Text (黒澤ダイヤ):**
-> {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|heart04}}を2個以上持つメンバーカードか、必要ハートに{{heart_04.png|heart04}}を2以上含むライブカードを1枚公開して手札に加えてもよい。
-
-**Problem:**
-- **Same frame shared by 3 cards with different heart requirements!**
-- 黒澤ダイヤ requires heart_04 (green)
-- 渡辺 曜 requires heart_02 (red)
-- 津島善子 requires heart_05 (purple)
-- Frame doesn't check for specific heart colors - missing heart color filter in LOOK_AND_CHOOSE
-
-**Severity:** HIGH - Shared frame doesn't match different card requirements
-
----
-
-## Issue 12: T1|34f62fee5737420f80dcc601930fc0b9964af5ec
-
-**Cards:**
-- PL!-pb1-006-P+ | 西木野真姫
-
-**Frame opcodes:** `RECOVER_LIVE(1)` → `SELECT_MEMBER` → `DRAW(1)`
+**Frame opcodes:** `JUMP_IF_FALSE → RECOVER_LIVE → RETURN`
 
 **Primary JP Text:**
-> {{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態のメンバーがいる場合、カードを1枚引く。
+> {{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい。そうした場合、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く。
 
-**Problem:**
-- Frame uses `RECOVER_LIVE` with `zone_mask: "ALL"` but text specifies "put to top of deck"
-- Should use `MOVE_TO_DECK_TOP` opcode, not `RECOVER_LIVE`
-- Missing deck position specification in frame
-
-**Severity:** MEDIUM - Wrong destination zone
-
-**Status:** FIXED in frame data. The ability now selects the live card from discard, puts it on top of the deck, then checks for the tapped opponent member draw.
+**Problem(s):**
+- Text: swap live cards (success<->discard); Frame: only recovers from discard (half implemented)
 
 ---
 
-## Issue 13: T1|7927e4e487d073efe731543f0239eabe22d67277
+## Issue 9: ``
+**Severity:** HIGH
 
 **Cards:**
-- PL!N-bp4-021-N | 天王寺璃奈
+- PL!-pb1-002-P+ | 絢瀬絵里
+- PL!-pb1-002-R | 絢瀬絵里
 
-**Frame opcodes:** `MOVE_TO_DECK(1)`
+**Frame opcodes:** `GROUP_FILTER → JUMP_IF_FALSE → SET_TAPPED → JUMP_IF_FALSE → SELECT_MEMBER → MOVE_MEMBER → RETURN`
 
 **Primary JP Text:**
-> {{toujyou.png|登場}}自分の控え室にあるカード1枚をデッキの一番上に置いてもよい。
+> {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：自分のステージにいるメンバーが『BiBi』のみの場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
 
-**Problem:**
-- Frame uses `MOVE_TO_DECK` without specifying deck position
-- Text explicitly says "top of deck" (一番上)
-- Should use `MOVE_TO_DECK_TOP` opcode
-
-**Severity:** MEDIUM - Missing deck position specification
-
-**Status:** FIXED in frame data. The ability now selects from discard and moves the chosen card to the top of the deck.
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
 
 ---
 
-## Issue 14: T2|0a90cf8ed615d01e7079f28f909bed842e8e60a6
+## Issue 10: ``
+**Severity:** HIGH
 
 **Cards:**
-- PL!N-bp4-031-L | NEO SKY, NEO MAP!
+- PL!-pb1-009-P+ | 矢澤にこ
+- PL!-pb1-009-R | 矢澤にこ
 
-**Frame opcodes:** `NOP` → `GROUP_FILTER` → `SCORE_COMPARE` → `DRAW(3)`
+**Frame opcodes:** `SELECT_MEMBER → MOVE_MEMBER → RETURN`
 
 **Primary JP Text:**
-> {{live_start.png|ライブ開始時}}自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて、かつそれらのコストの合計が20以上の場合、カードを3枚引き、自分の手札を3枚好きな順番でデッキの上に置く。
+> {{toujyou.png|登場}}相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が1つ以下のメンバー1人をウェイトにする。
 
-**Problem:**
-- Frame does `DRAW(3)` but **missing second part of ability!**
-- Text says: "put 3 hand cards on top of deck in any order"
-- Frame lacks: hand selection + MOVE_TO_DECK_TOP operation
-- Only half of ability implemented
-
-**Severity:** HIGH - Incomplete ability implementation
-
-**Status:** FIXED in frame data. The ability now draws 3 and then lets the player choose 3 hand cards to place on top of the deck.
+**Problem(s):**
+- Text: blade count <= 1; Frame: missing blade count check
 
 ---
 
-## Issue 15: T3|2590a675fbfded82a1e0fa79721194ddb5094948
+## Issue 11: ``
+**Severity:** HIGH
 
 **Cards:**
-- PL!S-bp3-005-P | 渡辺 曜 (ON_LIVE_SUCCESS)
+- LL-bp4-001-R+ | 絢瀬絵里&朝香果林&葉月 恋
 
-**Frame opcodes:** `NOP` → `JUMP_IF_FALSE` → `DRAW(1)`
+**Frame opcodes:** `LOOK_AND_CHOOSE → TAP_OPPONENT → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキの上からカードを5枚見る。その中から「絢瀬絵里」か「朝香果林」か「葉月恋」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。その後、相手のステージにいる、これにより公開したカードのコスト以下で、かつ元々持つ{{icon_blade.png|...
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 12: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!S-bp5-002-AR | 桜内梨子
+- PL!S-bp5-002-R+ | 桜内梨子
+
+**Frame opcodes:** `SYNC_COST → JUMP_IF_FALSE → TAP_OPPONENT → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のすべてのメンバーをウェイトにする。
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 13: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp5-024-L | Private Wars
+
+**Frame opcodes:** `HAS_MEMBER → JUMP_IF_FALSE → SELECT_MODE → JUMP → JUMP → SELECT_MEMBER → ACTIVATE_MEMBER → ADD_BLADES → JUMP → SELECT_MEMBER → MOVE_MEMBER → JUMP → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}自分のステージに『A-RISE』のメンバーがいる場合、以下から1つを選ぶ。
+・ウェイト状態のメンバー1人をアクティブにし、ライブ終了時まで、そのメンバーは{{icon_blade.png|ブレード}}を得る。
+・相手のステージにいる元々持つ{{icon_blade.png|ブレード}}が3つ以下のメンバー1人...
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 14: ``
+**Severity:** HIGH
+
+**Cards:**
+- LL-bp4-001-R+ | 絢瀬絵里&朝香果林&葉月 恋
+
+**Frame opcodes:** `LOOK_AND_CHOOSE → TAP_OPPONENT → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキの上からカードを5枚見る。その中から「絢瀬絵里」か「朝香果林」か「葉月恋」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。その後、相手のステージにいる、これにより公開したカードのコスト以下で、かつ元々持つ{{icon_blade.png|...
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 15: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp5-001-AR | 高坂穂乃果
+- PL!-bp5-001-R+ | 高坂穂乃果
+- PL!-bp5-001-P | 高坂穂乃果
+
+**Frame opcodes:** `MOVE_TO_DISCARD → JUMP_IF_FALSE → RETURN`
+
+**Primary JP Text:**
+> {{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る。その中からカードを1枚手札に加える。残りを控え室に置く。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '徒町小鈴 (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 16: ``
+**Severity:** HIGH
+
+**Cards:**
+- LL-bp5-001-L | Live with a smile!
+- PL!-bp3-025-L | タカラモノズ
+- PL!N-bp3-030-L | Love U my friends
+
+**Frame opcodes:** `NOP → JUMP_IF_FALSE → BOOST_SCORE → RETURN`
+
+**Primary JP Text:**
+> {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|...
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card 'タカラモノズ (ab#0)' differs in: has_live_card; Card 'Love U my friends (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 17: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp4-005-P | 星空 凛
+- PL!-bp4-005-R+ | 星空 凛
+- PL!-bp4-005-P+ | 星空凛
+
+**Frame opcodes:** `BOOST_SCORE → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '東條 希 (ab#1)' differs in: has_live_card; Card '園田海未 (ab#1)' differs in: has_live_card; Card '園田海未 (ab#1)' differs in: has_live_card; Card '天王寺璃奈 (ab#1)' differs in: deck_bottom, to_deck, draw; Card '鐘 嵐珠 (ab#0)' differs in: has_live_card; Card '中須かすみ (ab#1)' differs in: to_deck
+
+---
+
+## Issue 18: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!HS-bp2-002-P | 村野さやか
+- PL!HS-bp2-002-R+ | 村野さやか
+- PL!HS-bp2-002-P+ | 村野さやか
+
+**Frame opcodes:** `BATON → JUMP_IF_FALSE → COUNT_ENERGY → JUMP_IF_FALSE → ENERGY_CHARGE → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '高海千歌 (ab#0)' differs in: has_live_card; Card '黒澤ルビィ (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 19: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp4-018-N | 矢澤にこ
+- PL!HS-bp5-007-AR | セラス 柳田 リリエンフェルト
+- PL!HS-bp5-007-R | セラス 柳田 リリエンフェルト
+
+**Frame opcodes:** `ADD_BLADES → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card 'セラス 柳田 リリエンフェルト (ab#1)' differs in: has_live_card; Card '朝香果林 (ab#0)' differs in: has_live_card; Card '嵐 千砂都 (ab#1)' differs in: has_live_card
+
+---
+
+## Issue 20: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp3-002-P | 絢瀬絵里
+- PL!-bp3-002-R | 絢瀬絵里
+- PL!-sd1-001-SD | 高坂 穂乃果
+
+**Frame opcodes:** `ADD_BLADES → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '高坂 穂乃果 (ab#1)' differs in: has_live_card
+
+---
+
+## Issue 21: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp5-003-AR | 南 ことり
+- PL!-bp5-003-R+ | 南 ことり
+- PL!-bp5-003-P | 南 ことり
+
+**Frame opcodes:** `NOP → JUMP_IF_FALSE → ADD_HEARTS → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '澁谷かのん (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 22: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-bp4-002-P | 絢瀬絵里
+- PL!-bp4-002-R+ | 絢瀬絵里
+- PL!-bp4-002-P+ | 絢瀬絵里
+
+**Frame opcodes:** `ADD_HEARTS → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart0...
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '葉月 恋 (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 23: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!HS-bp5-016-N | 桂城 泉
+- PL!N-pb1-007-P+ | 優木せつ菜
+- PL!N-pb1-007-R | 優木せつ菜
+
+**Frame opcodes:** `ADD_HEARTS → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{heart_06.png|heart06}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '優木せつ菜 (ab#0)' differs in: has_live_card
+
+---
+
+## Issue 24: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!HS-sd1-005-SD | 徒町小鈴
+- PL!-bp4-020-L | Love wing bell
+
+**Frame opcodes:** `ADD_BLADES → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}このカードが自分の成功ライブカード置き場にあるかぎり、自分のセンターエリアにいる『μ's』のメンバーは{{icon_blade.png|ブレード}}を得る。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '徒町小鈴 (ab#1)' differs in: has_live_card
+
+---
+
+## Issue 25: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!SP-pb1-010-P+ | ウィーン・マルガレーテ
+- PL!SP-pb1-010-R | ウィーン・マルガレーテ
+
+**Frame opcodes:** `INCREASE_COST → RETURN`
+
+**Primary JP Text:**
+> {{jyouji.png|常時}}自分のエネルギーが10枚以上ある場合、ステージにいるこのメンバーのコストを+４する。
+
+**Problem(s):**
+- Text requires energy >= 10; Frame lacks energy count check
+
+---
+
+## Issue 26: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-pb1-002-P+ | 絢瀬絵里
+- PL!-pb1-002-R | 絢瀬絵里
+
+**Frame opcodes:** `ADD_HEARTS → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：自分のステージにいるメンバーが『BiBi』のみの場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
+{{jyouji.png|常時}}相手のステージにいるウェイ...
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 27: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-PR-003-PR | 南ことり
+- PL!-PR-004-PR | 園田海未
+- PL!-bp4-003-P | 南 ことり
+
+**Frame opcodes:** `MOVE_TO_DISCARD → RECOVER_LIVE → RETURN`
+
+**Primary JP Text:**
+> {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '鐘 嵐珠 (ab#1)' differs in: discard; Card '柊摩央 (ab#1)' differs in: discard
+
+---
+
+## Issue 28: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!-PR-012-PR | 小泉花陽
+- PL!HS-bp1-007-P | 百生 吟子
+- PL!HS-bp1-007-R | 百生 吟子
+
+**Frame opcodes:** `DRAW → RETURN`
+
+**Primary JP Text:**
+> {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '百生 吟子 (ab#0)' differs in: discard
+
+---
+
+## Issue 29: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!N-pb1-006-P+ | 近江彼方
+- PL!N-pb1-006-R | 近江彼方
+- PL!SP-bp5-001-AR | 澁谷かのん
+
+**Frame opcodes:** `ACTIVATE_ENERGY → RETURN`
+
+**Primary JP Text:**
+> {{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card '澁谷かのん (ab#2)' differs in: discard, draw
+
+---
+
+## Issue 30: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!N-bp3-004-P | 朝香果林
+- PL!N-bp3-004-R | 朝香果林
+- PL!N-pb1-011-P+ | ミア・テイラー
+
+**Frame opcodes:** `MOVE_TO_DISCARD → RECOVER_LIVE → RETURN`
+
+**Primary JP Text:**
+> {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。
+
+**Problem(s):**
+- Shared frame for cards with different abilities: Card 'ミア・テイラー (ab#1)' differs in: deck_bottom, to_deck, discard
+
+---
+
+## Issue 31: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!SP-bp4-011-P | 鬼塚冬毬
+- PL!SP-bp4-011-R+ | 鬼塚冬毬
+
+**Frame opcodes:** `NOP → JUMP_IF_FALSE → SELECT_MEMBER → MOVE_MEMBER → RETURN`
+
+**Primary JP Text:**
+> {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
+
+**Problem(s):**
+- Text: blade count <= 3; Frame: missing blade count check
+
+---
+
+## Issue 32: ``
+**Severity:** HIGH
+
+**Cards:**
+- PL!S-bp5-111-P+ | 鹿角聖良
+- PL!S-bp5-111-R | 鹿角聖良
+
+**Frame opcodes:** `IS_SELF_MOVE → JUMP_IF_FALSE → SELECT_MEMBER → MOVE_MEMBER → RETURN`
+
+**Primary JP Text:**
+> {{jidou.png|自動}}このメンバーがエリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が2つ以下のメンバー1人をウェイトにする。
+
+**Problem(s):**
+- Text: blade count <= 2; Frame: missing blade count check
+
+---
+
+## Issue 33: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!SP-bp2-006-P | 桜小路きな子
+- PL!SP-bp2-006-R+ | 桜小路きな子
+
+**Frame opcodes:** `BATON → JUMP_IF_FALSE → RECOVER_MEMBER → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}バトンタッチして登場した場合、このバトンタッチで控え室に置かれた『Liella!』のメンバーカードを1枚手札に加える。
+
+**Problem(s):**
+- Text: recover card discarded by THIS baton; Frame: lacks discard tracking
+
+---
+
+## Issue 34: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!N-pb1-010-P+ | 三船栞子
+- PL!N-pb1-010-R | 三船栞子
+
+**Frame opcodes:** `SELECT_MODE → JUMP → JUMP → ACTIVATE_ENERGY → JUMP → RECOVER_LIVE → JUMP → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}以下から1つを選ぶ。
+・エネルギーを1枚アクティブにする。
+・自分の控え室にある『虹ヶ咲』のライブカードを2枚まで好きな順番でデッキの上に置く。
+
+**Problem(s):**
+- Text: put live card to deck; Frame: uses RECOVER_LIVE (wrong dest, should be MOVE_TO_DECK)
+
+---
+
+## Issue 35: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!SP-bp2-011-P | 鬼塚冬毬
+- PL!SP-bp2-011-R | 鬼塚冬毬
+
+**Frame opcodes:** `SELECT_CARDS → OPPONENT_CHOOSE → ADD_TO_HAND → RETURN`
+
+**Primary JP Text:**
+> {{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+
+**Problem(s):**
+- Text: select LIVE card; Frame: SELECT_CARDS lacks LIVE type filter
+
+---
+
+## Issue 36: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!HS-PR-020-PR | 徒町 小鈴
+- PL!HS-PR-023-PR | 桂城 泉
+
+**Frame opcodes:** `PAY_ENERGY → JUMP_IF_FALSE → SUM_VALUE → JUMP_IF_FALSE → SELECT_CARDS → MOVE_TO_DECK → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分の控え室にあるメンバーカード2枚を好きな順番でデッキの一番上に置く。
+
+**Problem(s):**
+- Text: put to deck TOP; Frame: MOVE_TO_DECK lacks top position
+
+---
+
+## Issue 37: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!N-bp4-009-P | 天王寺璃奈
+- PL!N-bp4-009-R | 天王寺璃奈
+
+**Frame opcodes:** `SCORE_COMPARE → JUMP_IF_FALSE → DRAW → MOVE_TO_DECK → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを2枚引き、自分の手札を1枚デッキの一番上に置く。
+
+**Problem(s):**
+- Text: put hand cards to deck top; Frame: lacks hand card selection
+- Text: put to deck top; Frame: lacks deck top specification
+- Text: put to deck TOP; Frame: MOVE_TO_DECK lacks top position
+
+---
+
+## Issue 38: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!S-sd1-004-SD | 黒澤ダイヤ
+
+**Frame opcodes:** `DRAW → MOVE_TO_DECK → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}カードを1枚引いてもよい。そうした場合、手札2枚を好きな順番でデッキの上に置く。
+
+**Problem(s):**
+- Text: put hand cards to deck top; Frame: lacks hand card selection
+- Text: put to deck top; Frame: lacks deck top specification
+- Text: put to deck TOP; Frame: MOVE_TO_DECK lacks top position
+
+---
+
+## Issue 39: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!S-sd1-009-SD | 黒澤ルビィ
+
+**Frame opcodes:** `REVEAL_CARDS → JUMP_IF_FALSE → MOVE_TO_DECK → ADD_BLADES → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}手札の『Aqours』のカードを1枚公開してもよい：これにより公開したカードをデッキの一番上か一番下に置き、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+
+**Problem(s):**
+- Text: put to deck TOP; Frame: MOVE_TO_DECK lacks top position
+
+---
+
+## Issue 40: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!S-bp5-023-L | Awaken the power
+
+**Frame opcodes:** `HAS_MEMBER → HAS_MEMBER → SCORE_COMPARE → JUMP_IF_FALSE → MOVE_TO_DECK → RETURN`
+
+**Primary JP Text:**
+> {{live_start.png|ライブ開始時}}自分のステージに『Aqours』のメンバーと『SaintSnow』のメンバーがいて、かつそれらのメンバーのコストが合計20以上の場合、自分の控え室にある『Aqours』と『SaintSnow』のライブカードを4枚まで好きな順番でデッキの上に置いてもよい。
+
+**Problem(s):**
+- Text: put to deck TOP; Frame: MOVE_TO_DECK lacks top position
+
+---
+
+## Issue 41: ``
+**Severity:** MEDIUM
+
+**Cards:**
+- PL!S-bp3-005-P | 渡辺 曜
+- PL!S-bp3-005-R | 渡辺 曜
+
+**Frame opcodes:** `NOP → JUMP_IF_FALSE → DRAW → RETURN`
 
 **Primary JP Text:**
 > {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの枚数が、相手がエールによって公開したカードの枚数より少ない場合、カードを1枚引く。
 
-**Problem:**
-- Frame uses `NOP` check on `STAGE_0` which doesn't compare yell counts
-- Text requires comparing player's revealed card count vs opponent's
-- Missing proper yell count comparison logic
-- Current frame would trigger incorrectly
-
-**Severity:** MEDIUM - Wrong condition check logic
+**Problem(s):**
+- Text: compare yell counts; Frame: uses NOP check (not proper comparison)
 
 ---
 
-## Summary of all issues with their required fixes
+## Issue 42: ``
+**Severity:** MEDIUM
 
-| Severity | Count | Description |
-|----------|-------|-------------|
-| CRITICAL | 2 | Ability not implemented or severely broken |
-| HIGH | 7 | Major mechanic mismatch or missing condition |
-| MEDIUM | 6 | Minor logic issue or wrong targeting |
+**Cards:**
+- PL!S-bp2-021-L | 未体験HORIZON
 
-## Common Issue Patterns
+**Frame opcodes:** `MOVE_TO_DECK → RETURN`
 
-1. **Missing conditional checks** - Frame doesn't verify resource counts (energy ≥ X, blade count ≤ Y)
-2. **Incomplete implementations** - Only half of a two-part ability is coded
-3. **Shared frames for different cards** - One signature used for cards with different ability texts
-4. **Wrong ordering** - Operations happen in wrong sequence vs text description
-5. **Meta rules as placeholders** - Complex abilities flagged with META_RULE but not implemented
-6. **Missing deck position specs** - "Top/bottom of deck" not specified in frame
-7. **Missing heart color filters** - Heart color requirements not checked in frames
+**Primary JP Text:**
+> {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚までデッキの一番下に置く。
 
-## Recommendations
+**Problem(s):**
+- Text: put to deck BOTTOM; Frame: MOVE_TO_DECK lacks bottom position
 
-1. Review all BATON-related frames for proper discard tracking
-2. Implement missing energy count checks (COUNT_ENERGY with threshold)
-3. Add blade count filtering for targeting conditions
-4. Split shared signatures where card texts differ meaningfully
-5. Replace META_RULE placeholders with actual frame implementations
-6. Add deck position specifications (TOP/BOTTOM) where text requires it
-7. Add heart color filtering for cards with heart-specific requirements
+---

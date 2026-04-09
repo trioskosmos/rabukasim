@@ -193,6 +193,18 @@ fn filtered_stage_cards(
         .collect()
 }
 
+fn discard_live_cards<'a>(
+    state: &'a GameState,
+    db: &'a CardDatabase,
+    p_idx: usize,
+) -> Vec<&'a crate::core::logic::card_db::LiveCard> {
+    state.players[p_idx]
+        .discard
+        .iter()
+        .filter_map(|&cid| db.get_live(cid))
+        .collect()
+}
+
 pub fn evaluate_raw_condition(
     state: &GameState,
     db: &CardDatabase,
@@ -806,8 +818,29 @@ pub fn evaluate_raw_condition(
                 {
                     costs.insert(cost);
                 }
+                }
+                compare_count_thresholds(params, costs.len() as i32)
             }
-            compare_count_thresholds(params, costs.len() as i32)
+        "UNIQUE_DISCARD_LIVE_NAMES_COUNT" => {
+            let target_player = resolved_condition_player(params, ctx);
+            let mut names = std::collections::HashSet::<String>::new();
+            for card in discard_live_cards(state, db, target_player) {
+                let name = card.name.trim();
+                if !name.is_empty() {
+                    names.insert(name.to_string());
+                }
+            }
+            compare_count_thresholds(params, names.len() as i32)
+        }
+        "UNIQUE_DISCARD_LIVE_GROUPS_COUNT" => {
+            let target_player = resolved_condition_player(params, ctx);
+            let mut groups = std::collections::HashSet::<u8>::new();
+            for card in discard_live_cards(state, db, target_player) {
+                for group_id in card.groups.iter().copied() {
+                    groups.insert(group_id);
+                }
+            }
+            compare_count_thresholds(params, groups.len() as i32)
         }
         "UNIQUE_HEART_TYPES" => {
             let mut color_mask: u8 = 0;

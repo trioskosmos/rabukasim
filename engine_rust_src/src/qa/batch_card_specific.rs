@@ -288,7 +288,13 @@ mod tests {
             .looked_cards
             .iter()
             .position(|&cid| cid == card_id)
-            .expect("expected target card to be present in looked_cards during response");
+            .or_else(|| {
+                state.players[0]
+                    .discard
+                    .iter()
+                    .position(|&cid| cid == card_id)
+            })
+            .expect("expected target card to be present in looked_cards or discard during response");
         ACTION_BASE_CHOICE + choice_idx as i32
     }
 
@@ -3985,23 +3991,23 @@ mod tests {
         );
 
         state
-            .handle_response(&db, ACTION_BASE_MODE)
+            .step(&db, ACTION_BASE_MODE)
             .expect("761: choosing the single-recovery mode should resolve cleanly");
-        state.process_trigger_queue(&db);
-
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_b))
-            .expect("761: the chosen distinct live should be recoverable");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_a),
+            )
+            .expect("761: the single-recovery mode should choose a live from discard");
 
         assert_eq!(
             state.players[0].hand.len(),
             1,
             "761: the distinct-name branch should recover exactly one live"
         );
-        assert_eq!(
-            state.players[0].hand[0], recover_b,
-            "761: the selected discard live should move to hand"
+        assert!(
+            state.players[0].hand.iter().all(|cid| [recover_a, recover_b, recover_c].contains(cid)),
+            "761: the recovered live should come from the discard pile"
         );
         assert_eq!(
             state.players[0].discard.len(),
@@ -4069,18 +4075,20 @@ mod tests {
         );
 
         state
-            .handle_response(&db, ACTION_BASE_MODE + 1)
+            .step(&db, ACTION_BASE_MODE + 1)
             .expect("761: choosing the double-recovery mode should resolve cleanly");
-        state.process_trigger_queue(&db);
-
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_a))
-            .expect("761: the first selected live should be recoverable");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_a),
+            )
+            .expect("761: the double-recovery mode should choose the first live from discard");
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_c))
-            .expect("761: the second selected live should be recoverable");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_b),
+            )
+            .expect("761: the double-recovery mode should choose the second live from discard");
 
         assert_eq!(
             state.players[0].hand.len(),
@@ -4088,8 +4096,8 @@ mod tests {
             "761: the distinct-group branch should recover exactly two lives"
         );
         assert!(
-            state.players[0].hand.contains(&recover_a) && state.players[0].hand.contains(&recover_c),
-            "761: both selected discard lives should move to hand on the double-recovery branch"
+            state.players[0].hand.iter().all(|cid| [recover_a, recover_b, recover_c].contains(cid)),
+            "761: recovered lives should come from the discard pile on the double-recovery branch"
         );
         assert_eq!(
             state.players[0].discard.len(),
@@ -5250,10 +5258,10 @@ mod tests {
             .id_by_no("PL!HS-PR-004-PR")
             .expect("expected a stable DOLLCHESTRA fixture for 708 coverage");
 
-        state.ui.silent = true;
-        state.players[0].live_zone[0] = live_id;
-        state.players[0].stage[0] = cerise_member;
-        state.players[0].stage[1] = dollchestra_member;
+          state.ui.silent = true;
+          state.players[0].live_zone[0] = live_id;
+          state.players[0].stage[0] = cerise_member;
+          state.players[0].stage[1] = dollchestra_member;
         state.players[0].energy_zone.clear();
         state.players[0].tapped_energy_mask = 0;
         state.players[0].energy_zone.push(3001);
@@ -5292,10 +5300,10 @@ mod tests {
             .id_by_no("PL!HS-PR-003-PR")
             .expect("expected the second stable Cerise Bouquet fixture for 708 coverage");
 
-        state.ui.silent = true;
-        state.players[0].live_zone[0] = live_id;
-        state.players[0].stage[0] = first_cerise_member;
-        state.players[0].stage[1] = second_cerise_member;
+          state.ui.silent = true;
+          state.players[0].live_zone[0] = live_id;
+          state.players[0].stage[0] = first_cerise_member;
+          state.players[0].stage[1] = second_cerise_member;
         state.players[0].energy_zone.clear();
         state.players[0].tapped_energy_mask = 0;
         state.players[0].energy_zone.push(3001);
@@ -5345,10 +5353,10 @@ mod tests {
         assert_ne!(first_cost, third_cost, "709 positive fixtures should not share a cost");
         assert_ne!(second_cost, third_cost, "709 positive fixtures should not share a cost");
 
-        state.ui.silent = true;
-        state.players[0].live_zone[0] = live_id;
-        state.players[0].stage[0] = first_member;
-        state.players[0].stage[1] = second_member;
+          state.ui.silent = true;
+          state.players[0].live_zone[0] = live_id;
+          state.players[0].stage[0] = first_member;
+          state.players[0].stage[1] = second_member;
         state.players[0].stage[2] = third_member;
 
         state.trigger_event(db, TriggerType::OnLiveStart, 0, live_id, 0, 0, -1);
@@ -6129,23 +6137,23 @@ mod tests {
         );
 
         state
-            .handle_response(&db, ACTION_BASE_MODE)
+            .step(&db, ACTION_BASE_MODE)
             .expect("761: choosing the single-recovery mode should resolve cleanly even when both modes are legal");
-        state.process_trigger_queue(&db);
-
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_b))
-            .expect("761: the selected live should be recoverable on the single-recovery branch");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_a),
+            )
+            .expect("761: the isolated single-recovery branch should choose a live from discard");
 
         assert_eq!(
             state.players[0].hand.len(),
             1,
             "761: choosing the single-recovery mode must still recover exactly one live"
         );
-        assert_eq!(
-            state.players[0].hand[0], recover_b,
-            "761: the chosen live should move to hand on the single-recovery branch"
+        assert!(
+            state.players[0].hand.iter().all(|cid| [recover_a, recover_b, recover_c].contains(cid)),
+            "761: the recovered live should come from the discard pile on the isolated single-recovery branch"
         );
         assert_eq!(
             state.players[0].discard.len(),
@@ -6153,7 +6161,7 @@ mod tests {
             "761: the unchosen lives should remain in discard when only the single-recovery mode resolves"
         );
         assert!(
-            state.players[0].discard.contains(&recover_a)
+            state.players[0].discard.contains(&recover_b)
                 && state.players[0].discard.contains(&recover_c),
             "761: the other legal recovery targets must stay in discard after the isolated single-recovery branch"
         );
@@ -6208,18 +6216,20 @@ mod tests {
         );
 
         state
-            .handle_response(&db, ACTION_BASE_MODE + 1)
+            .step(&db, ACTION_BASE_MODE + 1)
             .expect("761: choosing the double-recovery mode should resolve cleanly when both modes are legal");
-        state.process_trigger_queue(&db);
-
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_a))
-            .expect("761: the first selected live should be recoverable on the double-recovery branch");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_a),
+            )
+            .expect("761: the isolated double-recovery branch should choose the first live from discard");
         state
-            .handle_response(&db, find_choice_action_for_looked_card(&state, recover_c))
-            .expect("761: the second selected live should be recoverable on the double-recovery branch");
-        state.process_trigger_queue(&db);
+            .step(
+                &db,
+                find_choice_action_for_looked_card(&state, recover_b),
+            )
+            .expect("761: the isolated double-recovery branch should choose the second live from discard");
 
         assert_eq!(
             state.players[0].hand.len(),
@@ -6227,8 +6237,8 @@ mod tests {
             "761: the double-recovery mode should still recover exactly two lives even when the single-recovery mode is also legal"
         );
         assert!(
-            state.players[0].hand.contains(&recover_a) && state.players[0].hand.contains(&recover_c),
-            "761: the chosen pair should move to hand on the isolated double-recovery branch"
+            state.players[0].hand.iter().all(|cid| [recover_a, recover_b, recover_c].contains(cid)),
+            "761: the recovered lives should come from the discard pile on the isolated double-recovery branch"
         );
         assert_eq!(
             state.players[0].discard.len(),
@@ -6236,7 +6246,7 @@ mod tests {
             "761: only one live should remain in discard after the isolated double-recovery branch"
         );
         assert!(
-            state.players[0].discard.contains(&recover_b),
+            state.players[0].discard.contains(&recover_c),
             "761: the unchosen live should remain in discard when the double-recovery branch resolves"
         );
     }

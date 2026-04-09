@@ -25,7 +25,6 @@ const COMPILED_CARDS_SOURCE_LABEL: &str = "data/cards_compiled.json";
 #[derive(Debug, Serialize)]
 struct ExportMetadata {
     generated_unix_seconds: u64,
-    hydration_boundary: &'static str,
     extraction_entrypoint: &'static str,
     compiled_cards_source: String,
 }
@@ -255,7 +254,6 @@ fn build_export(db: &CardDatabase) -> HydratedAbilityExport {
     HydratedAbilityExport {
         metadata: ExportMetadata {
             generated_unix_seconds: now_unix_seconds(),
-            hydration_boundary: "ability_hydration::attach_sparse_ability_index()",
             extraction_entrypoint: "Ability::resolved_frames() + Ability::trace_view()",
             compiled_cards_source: COMPILED_CARDS_SOURCE_LABEL.to_string(),
         },

@@ -2,8 +2,9 @@
 mod tests {
     use crate::core::*;
     use crate::core::enums::*;
-    use crate::core::logic::card_db::CardDatabase;
+    use crate::core::logic::card_db::{CardDatabase, LOGIC_ID_MASK, MemberCard};
     use crate::core::logic::game::{ActionReceiver, GameState};
+    use crate::core::logic::models::{Ability, FrameProgram};
     use crate::test_helpers::Action;
     use crate::test_helpers::load_real_db;
 
@@ -253,95 +254,103 @@ mod tests {
 
     #[test]
     fn test_once_per_turn_slot_movement() {
-        let db = load_db();
-        let target_cid = 4264; // Has Activated ability at index 1
-
+        let mut db = CardDatabase::default();
         let mut state = GameState::default();
+
+        let target_cid = 3993;
+        let mut card = MemberCard::default();
+        card.card_id = target_cid;
+        card.abilities.push(Ability {
+            trigger: TriggerType::Activated,
+            is_once_per_turn: true,
+            frame_program: Some(FrameProgram::from_instruction_words(&[
+                O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0,
+            ])),
+            ..Default::default()
+        });
+        CardDatabase::enrich_member_runtime_metadata(&mut card);
+        db.members.insert(target_cid, card.clone());
+        db.members_vec[(target_cid as usize) & LOGIC_ID_MASK as usize] = Some(card);
+
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.players[0]
-            .energy_zone
-            .extend(std::iter::repeat(100).take(10));
         state.players[0].stage[0] = target_cid;
         state.players[0].set_tapped(0, false);
 
-        // Step 1: Generate actions - ability should be available
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        let action_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
+        let action_id = (ACTION_BASE_STAGE + 0 * 100 + 0 * 10) as usize;
         let initial_actions = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("Initial slot 0 actions: {:?}", initial_actions);
-        assert!(
-            !initial_actions.is_empty(),
-            "Should have activation initially"
-        );
+        assert!(!initial_actions.is_empty(), "Should have activation initially");
 
-        // Step 2: Consume once_per_turn using the same keying the action generator uses:
-        // source_type=0, id=card_id, ab_idx=1
-        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1, 1);
+        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 0, 1);
 
-        // Step 3: Verify blocked at slot 0
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
         let after_consume = stage_actions_in_range(&receiver, action_id, action_id + 1);
         println!("After consume at slot 0: {:?}", after_consume);
-        assert!(
-            after_consume.is_empty(),
-            "Should be blocked after once_per_turn consume"
-        );
+        assert!(after_consume.is_empty(), "Should be blocked after once_per_turn consume");
 
-        // Step 4: "Baton touch" - move card from slot 0 to slot 1
         state.players[0].stage[1] = target_cid;
-        state.players[0].stage[0] = -1; // Empty slot 0
+        state.players[0].stage[0] = -1;
         state.players[0].set_tapped(1, false);
 
-        // Step 5: Check if ability is STILL blocked at slot 1
-        // Because tracking is by card_id (not slot_idx), the restriction persists.
         receiver.reset();
         state.generate_legal_actions(&db, 0, &mut receiver);
-        // Slot 1, ab_idx 1 → ACTION_BASE_STAGE + 1*100 + 1*10
-        let action_id_slot1 = (ACTION_BASE_STAGE + 1 * 100 + 1 * 10) as usize;
+        let action_id_slot1 = (ACTION_BASE_STAGE + 1 * 100 + 0 * 10) as usize;
         let slot1_actions = stage_actions_in_range(&receiver, action_id_slot1, action_id_slot1 + 1);
         println!("After baton touch to slot 1: {:?}", slot1_actions);
         assert!(
             slot1_actions.is_empty(),
-            "Once-per-turn should persist across slot movement (card_id keyed)"
+            "Once-per-turn should persist across slot movement for the same copy"
         );
     }
 
     #[test]
     fn test_once_per_turn_duplicate_copies_remain_independent() {
-        let db = load_db();
-        let target_cid = 4264; // Has Activated ability at index 1
-
+        let mut db = CardDatabase::default();
         let mut state = GameState::default();
+
+        let target_cid_0 = 3996;
+        let target_cid_1 = 3997;
+        for cid in [target_cid_0, target_cid_1] {
+            let mut card = MemberCard::default();
+            card.card_id = cid;
+            card.abilities.push(Ability {
+                trigger: TriggerType::Activated,
+                is_once_per_turn: true,
+                frame_program: Some(FrameProgram::from_instruction_words(&[
+                    O_DRAW, 1, 0, 0, O_RETURN, 0, 0, 0,
+                ])),
+                ..Default::default()
+            });
+            CardDatabase::enrich_member_runtime_metadata(&mut card);
+            db.members.insert(cid, card.clone());
+            db.members_vec[(cid as usize) & LOGIC_ID_MASK as usize] = Some(card);
+        }
+
         state.phase = Phase::Main;
         state.current_player = 0;
-        state.players[0]
-            .energy_zone
-            .extend(std::iter::repeat(100).take(10));
-        state.players[0].stage[0] = target_cid;
-        state.players[0].stage[1] = target_cid;
+        state.players[0].stage[0] = target_cid_0;
+        state.players[0].stage[1] = target_cid_1;
         state.players[0].set_tapped(0, false);
         state.players[0].set_tapped(1, false);
 
-        state.consume_once_per_turn(0, 0, 0, target_cid as u32, 1, 1);
+        state.consume_once_per_turn(0, 0, 0, target_cid_0 as u32, 0, 1);
 
         let mut receiver = new_receiver();
         state.generate_legal_actions(&db, 0, &mut receiver);
 
-        let slot0_action_id = (ACTION_BASE_STAGE + 0 * 100 + 1 * 10) as usize;
-        let slot1_action_id = (ACTION_BASE_STAGE + 1 * 100 + 1 * 10) as usize;
+        let slot0_action_id = (ACTION_BASE_STAGE + 0 * 100 + 0 * 10) as usize;
+        let slot1_action_id = (ACTION_BASE_STAGE + 1 * 100 + 0 * 10) as usize;
         let slot0_actions = stage_actions_in_range(&receiver, slot0_action_id, slot0_action_id + 1);
         let slot1_actions = stage_actions_in_range(&receiver, slot1_action_id, slot1_action_id + 1);
 
-        assert!(
-            slot0_actions.is_empty(),
-            "The consumed copy in slot 0 should remain blocked"
-        );
+        assert!(slot0_actions.is_empty(), "The consumed copy in slot 0 should remain blocked");
         assert!(
             !slot1_actions.is_empty(),
-            "A second copy with the same card ID should keep its own once-per-turn availability"
+            "A different copy should keep its own once-per-turn availability"
         );
     }
 

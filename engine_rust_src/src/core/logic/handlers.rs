@@ -1703,16 +1703,11 @@ impl ResponseController for GameState {
         }
 
         // Unified logging: records to both turn_history and rule_log
-        let p_code = if ab.pseudocode.is_empty() {
-            ""
-        } else {
-            &format!(": {}", ab.pseudocode)
-        };
         self.log_event(
             "ACTIVATE",
             &format!(
-                "Player {} activates ability of {}{}",
-                p_idx, card.name, p_code
+                "Player {} activates ability of {}",
+                p_idx, card.name
             ),
             cid,
             ab_idx as i16,

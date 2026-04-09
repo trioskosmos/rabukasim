@@ -176,49 +176,47 @@ fn live_recovery_branch_is_legal(
     ability: &Ability,
     option_idx: usize,
 ) -> Option<bool> {
-    if !ability.raw_text.contains("ライブカード") {
-        return None;
-    }
-
-    let distinct_name_branch = "カード名が異なるライブカードが3枚以上";
-    let distinct_group_branch = "グループ名が異なるライブカードが3枚以上";
-    if !ability.raw_text.contains(distinct_name_branch)
-        && !ability.raw_text.contains(distinct_group_branch)
-    {
-        return None;
-    }
-
-    let discard_lives: SmallVec<[&crate::core::logic::card_db::LiveCard; 8]> = state.players[p_idx]
-        .discard
+    let frames = ability.get_modal_option_frames(option_idx)?;
+    let params = frames
         .iter()
-        .filter_map(|&cid| db.get_live(cid))
-        .collect();
+        .find_map(|frame| frame.params.as_object())?;
+    let raw_cond = params
+        .get("raw_cond")
+        .or_else(|| params.get("RAW_COND"))
+        .and_then(|value| value.as_str())?;
+    let min = params
+        .get("MIN")
+        .or_else(|| params.get("min"))
+        .and_then(|value| value.as_i64())
+        .unwrap_or(3) as usize;
 
     let mut distinct_names: SmallVec<[&str; 8]> = SmallVec::new();
     let mut distinct_groups: SmallVec<[u8; 8]> = SmallVec::new();
 
-    for card in discard_lives.iter() {
-        let name = card.name.as_str();
-        if !distinct_names.iter().any(|existing| *existing == name) {
-            distinct_names.push(name);
-            if distinct_names.len() >= 3 && option_idx == 0 {
-                return Some(true);
+    for cid in state.players[p_idx].discard.iter().copied() {
+        let Some(card) = db.get_live(cid) else {
+            continue;
+        };
+
+        if matches!(raw_cond, "UNIQUE_DISCARD_LIVE_NAMES_COUNT") {
+            let name = card.name.as_str();
+            if !distinct_names.iter().any(|existing| *existing == name) {
+                distinct_names.push(name);
             }
         }
 
-        for group_id in card.groups.iter().copied() {
-            if !distinct_groups.contains(&group_id) {
-                distinct_groups.push(group_id);
-                if distinct_groups.len() >= 3 && option_idx == 1 {
-                    return Some(true);
+        if matches!(raw_cond, "UNIQUE_DISCARD_LIVE_GROUPS_COUNT") {
+            for group_id in card.groups.iter().copied() {
+                if !distinct_groups.contains(&group_id) {
+                    distinct_groups.push(group_id);
                 }
             }
         }
     }
 
-    match option_idx {
-        0 if ability.raw_text.contains(distinct_name_branch) => Some(distinct_names.len() >= 3),
-        1 if ability.raw_text.contains(distinct_group_branch) => Some(distinct_groups.len() >= 3),
+    match raw_cond {
+        "UNIQUE_DISCARD_LIVE_NAMES_COUNT" => Some(distinct_names.len() >= min),
+        "UNIQUE_DISCARD_LIVE_GROUPS_COUNT" => Some(distinct_groups.len() >= min),
         _ => None,
     }
 }
@@ -233,15 +231,14 @@ fn modal_option_is_legal(
     let Some(frames) = ability.get_modal_option_frames(option_idx) else {
         return ability.has_authored_frame_program() && option_idx < ability.modal_option_count();
     };
+
+    if let Some(result) = live_recovery_branch_is_legal(db, state, p_idx, ability, option_idx) {
+        return result;
+    }
+
     let Some(first_frame) = frames.first() else {
         return false;
     };
-
-    if first_frame.opcode() == O_RECOVER_LIVE {
-        if let Some(result) = live_recovery_branch_is_legal(db, state, p_idx, ability, option_idx) {
-            return result;
-        }
-    }
 
     match first_frame.opcode() {
         O_PAY_ENERGY => {
@@ -300,11 +297,12 @@ impl ActionGenerator for ResponseGenerator {
             }
         }
 
-        // FINAL FALLBACK: If no actions were generated for a mandatory interaction,
-        // we MUST allow Pass (0) to avoid a complete softlock.
+        // Keep Pass(0) available for mandatory interactions so the game does not softlock
+        // when a prompt path produces no legal actions.
         if receiver.is_empty() {
             receiver.add_action(0);
         }
+
     }
 }
 

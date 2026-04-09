@@ -238,8 +238,6 @@ impl ActionFactory {
                 .map(|ability| {
                     if !ability.raw_text.is_empty() {
                         ability.raw_text.clone()
-                    } else if !ability.pseudocode.is_empty() {
-                        ability.pseudocode.clone()
                     } else {
                         ability
                             .option_names

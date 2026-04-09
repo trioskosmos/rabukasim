@@ -82,15 +82,12 @@ mod tests {
             let card = db
                 .get_member(card_id)
                 .unwrap_or_else(|| panic!("card {card_id} should exist"));
-            let key = format!("{}#0", card.card_no);
-            let sparse = db.sparse_ability_index.get(&key);
             let ab = card.abilities.first().expect("ability missing");
             let frames = ab.resolved_frames();
             eprintln!(
-                "[HYDRATE_DBG] card_id={} card_no={} sparse={} frame_program={} frame_len={} resolved_source={} first_opt={} effect0_opt={} effects={}",
+                "[HYDRATE_DBG] card_id={} card_no={} frame_program={} frame_len={} resolved_source={} first_opt={} effect0_opt={} effects={}",
                 card_id,
                 card.card_no,
-                sparse.is_some(),
                 ab.frame_program.is_some(),
                 ab.frame_program.as_ref().map(|p| p.frames.len()).unwrap_or(0),
                 ab.resolved_frame_source(),

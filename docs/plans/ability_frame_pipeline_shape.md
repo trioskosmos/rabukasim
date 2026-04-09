@@ -44,9 +44,9 @@ Top-level keys:
 
 Each ability entry always has:
 
-- `signature`
-- `signature_hash`
-- `signature_source`
+- `primary_text_jp`
+- `primary_text_en`
+- `source_ability_texts`
 - `trigger_id`
 - `trigger`
 - `frame_count`
@@ -55,9 +55,8 @@ Each ability entry always has:
 - `cards`
 - `card_refs`
 - `pseudocode`
-- `primary_text_jp`
-- `primary_text_en`
-- `source_ability_texts`
+
+The older hash fields and generated signature keys are treated as internal generator bookkeeping. They should not be considered part of the human-edited authored contract, and they should not be the first thing someone has to scan when editing the file.
 
 Optional authored metadata is preserved when present:
 

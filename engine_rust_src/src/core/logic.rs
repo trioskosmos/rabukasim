@@ -4,7 +4,6 @@
 // in some tests and fallback paths.
 
 pub mod ability_patterns;
-mod ability_hydration;
 pub mod action_factory;
 pub mod action_gen;
 pub mod ai_encoding;

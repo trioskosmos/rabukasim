@@ -20,9 +20,15 @@ use crate::core::hearts::HeartBoard;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use super::ability_hydration;
 use super::models::*;
 use super::rules::ability_has_hand_only_self_cost_modifier;
+
+fn parse_u8_value(value: &serde_json::Value) -> Option<u8> {
+    value
+        .as_u64()
+        .or_else(|| value.as_str().and_then(|s| s.parse::<u64>().ok()))
+        .map(|v| v as u8)
+}
 
 // Custom deserializers to handle the compiled metadata shape.
 //
@@ -276,8 +282,6 @@ pub struct CardDatabase {
     pub card_no_to_id: HashMap<String, i32>,
     pub energy_db: HashMap<i32, EnergyCard>,
     #[serde(skip)]
-    pub sparse_ability_index: HashMap<String, Value>,
-    #[serde(skip)]
     pub legacy_id_aliases: HashMap<i32, i32>,
     #[serde(default)]
     pub is_vanilla: bool,
@@ -391,7 +395,6 @@ impl Default for CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
-            sparse_ability_index: HashMap::new(),
             legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
@@ -442,14 +445,6 @@ impl CardDatabase {
         ];
 
         for ab in &mut card.abilities {
-            if let Some(frame_program) = ab.frame_program.as_mut() {
-                if !ab.raw_text.is_empty() {
-                    ability_hydration::annotate_distinctness_nops_from_text(
-                        &ab.raw_text,
-                        &mut frame_program.frames,
-                    );
-                }
-            }
             let mut runtime_has_deck_top_window = false;
             let mut runtime_has_frame_cost_checks = false;
             let mut runtime_has_optional_frame = false;
@@ -573,7 +568,7 @@ impl CardDatabase {
                                             effect.params.get("CHOOSE_COUNT")
                                         })
                                     })
-                                    .and_then(ability_hydration::parse_u8_value)
+                                    .and_then(parse_u8_value)
                                     .unwrap_or(1);
                                 effect_pick.max(1)
                             };
@@ -674,7 +669,7 @@ impl CardDatabase {
 
             if let Some(frame_program) = ab.frame_program.as_ref() {
                 let derived_conditions =
-                    ability_hydration::derive_conditions_from_frame_program(frame_program);
+                    crate::core::logic::models::derive_conditions_from_frame_program(frame_program);
                 ab.conditions = derived_conditions;
             }
 
@@ -906,17 +901,9 @@ impl CardDatabase {
         for ab in &mut card.abilities {
             trigger_mask |= 1u32 << (ab.trigger as u32 % 32);
 
-            if let Some(frame_program) = ab.frame_program.as_mut() {
-                if !ab.raw_text.is_empty() {
-                    ability_hydration::annotate_distinctness_nops_from_text(
-                        &ab.raw_text,
-                        &mut frame_program.frames,
-                    );
-                }
-            }
             if let Some(frame_program) = ab.frame_program.as_ref() {
                 let derived_conditions =
-                    ability_hydration::derive_conditions_from_frame_program(frame_program);
+                    crate::core::logic::models::derive_conditions_from_frame_program(frame_program);
                 ab.conditions = derived_conditions;
             }
 
@@ -985,10 +972,6 @@ impl CardDatabase {
     }
 
     pub fn from_value(raw: serde_json::Value) -> serde_json::Result<Self> {
-        let sparse_assets = ability_hydration::load_sparse_assets();
-        let text_index = sparse_assets.text_index;
-        let sparse_ability_index = sparse_assets.ability_index;
-
         let mut db = Self {
             members: HashMap::new(),
             lives: HashMap::new(),
@@ -996,7 +979,6 @@ impl CardDatabase {
             lives_vec: vec![None; 4096],
             card_no_to_id: HashMap::new(),
             energy_db: HashMap::new(),
-            sparse_ability_index,
             legacy_id_aliases: HashMap::new(),
             is_vanilla: false,
             cached_vanilla: None,
@@ -1006,14 +988,6 @@ impl CardDatabase {
             for (_, val) in members_raw {
                 match serde_json::from_value::<MemberCard>(val.clone()) {
                     Ok(mut card) => {
-                        if !db.sparse_ability_index.is_empty() {
-                            ability_hydration::attach_sparse_ability_index(
-                                &card.card_no,
-                                &mut card.abilities,
-                                &db.sparse_ability_index,
-                                &text_index,
-                            )?;
-                        }
                         Self::enrich_member_runtime_metadata(&mut card);
 
                         db.members.insert(card.card_id, card.clone());
@@ -1046,14 +1020,6 @@ impl CardDatabase {
             for (_, val) in lives_raw {
                 match serde_json::from_value::<LiveCard>(val.clone()) {
                     Ok(mut card) => {
-                        if !db.sparse_ability_index.is_empty() {
-                            ability_hydration::attach_sparse_ability_index(
-                                &card.card_no,
-                                &mut card.abilities,
-                                &db.sparse_ability_index,
-                                &text_index,
-                            )?;
-                        }
                         Self::enrich_live_runtime_metadata(&mut card);
 
                         db.lives.insert(card.card_id, card.clone());
