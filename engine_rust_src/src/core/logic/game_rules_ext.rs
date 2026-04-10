@@ -156,11 +156,13 @@ impl GameState {
         );
     }
 
+    #[inline(always)]
     pub fn check_win_condition(&mut self) {
-        if self.phase == Phase::Terminal {
+        if !self.core.needs_win_check || self.phase == Phase::Terminal {
             return;
         }
 
+        self.core.needs_win_check = false;
         let p0_win = self.core.players[0].success_lives.len() >= 3;
         let p1_win = self.core.players[1].success_lives.len() >= 3;
 

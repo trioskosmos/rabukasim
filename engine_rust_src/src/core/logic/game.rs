@@ -81,6 +81,14 @@ impl GameState {
     }
 
     pub fn sync_cached_stats(&mut self, db: &CardDatabase, p_idx: usize) {
+        if db.is_truly_vanilla() {
+            self.needs_stat_sync_mask &= !(1 << p_idx);
+            if self.needs_stat_sync_mask == 0 {
+                self.needs_stat_sync = false;
+            }
+            return;
+        }
+
         use crate::core::logic::rules::{calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura};
 
         if !self.ui.silent {

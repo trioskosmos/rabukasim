@@ -575,6 +575,14 @@ pub fn calculate_cost_delta(
     }
 }
 
+// Cost evaluation is a hot path for action resolution. It must compute the
+// effective play cost for a hand card by combining base cost, global reductions,
+// hand-only modifiers, slot aura modifiers, granted ability overrides, and
+// dynamic state-based cost modifiers.
+//
+// The implementation avoids unnecessary database lookups and only builds a
+// projected aura when the play would actually depend on a baton-touch board
+// change.
 fn get_member_cost_impl(
     state: &GameState,
     p_idx: usize,
@@ -608,6 +616,7 @@ fn get_member_cost_impl(
             card_id, cost
         );
     }
+
     let projected_aura_owned = if projected_aura_override.is_none() && has_baton_source {
         Some(calculate_projected_board_aura(
             state,
@@ -691,10 +700,6 @@ fn get_member_cost_impl(
                     if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
                         apply = false;
                     }
-                } else if let Some(src_m) = db.get_member(modif.source_cid) {
-                    if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
-                        let _ = ab;
-                    }
                 }
                 if apply {
                     cost -= modif.amount as i32;
@@ -726,10 +731,6 @@ fn get_member_cost_impl(
                 };
                 if !cost_state.card_matches_filter_with_ctx(db, card_id, modif.filter_mask, &src_ctx) {
                     apply = false;
-                }
-            } else if let Some(src_m) = db.get_member(modif.source_cid) {
-                if let Some(ab) = src_m.abilities.get(modif.ability_idx as usize) {
-                    let _ = ab;
                 }
             }
             if apply {
@@ -1268,6 +1269,50 @@ fn calculate_board_aura_with_exclusions(
 ) -> BoardAura {
     let mut aura = BoardAura::default();
     if db.is_truly_vanilla() {
+        return aura;
+    }
+
+    // Board aura calculation is expensive because it may evaluate multiple
+    // constant abilities, conditions, and filters per stage/live card.
+    // If no relevant constant ability exists, we can skip the entire pass.
+    // TriggerType::Constant = 6, so bit 6 in trigger_mask indicates constant abilities
+    const CONSTANT_TRIGGER_BIT: u32 = 1 << 6;
+    let mut has_any_constant_ability = false;
+    let player = &state.players[player_idx];
+
+    // Check stage cards for constant abilities
+    for slot_idx in 0..3 {
+        if excluded_slots[slot_idx] {
+            continue;
+        }
+        let cid = player.stage[slot_idx];
+        if cid < 0 {
+            continue;
+        }
+        if let Some(m) = db.get_member(cid) {
+            if (m.trigger_mask & CONSTANT_TRIGGER_BIT) != 0 {
+                has_any_constant_ability = true;
+                break;
+            }
+        }
+    }
+
+    // Check granted abilities for constant triggers
+    if !has_any_constant_ability && !player.granted_abilities.is_empty() {
+        for &(_target_cid, source_cid, ab_idx) in &player.granted_abilities {
+            if let Some(src_m) = db.get_member(source_cid) {
+                if let Some(ab) = src_m.abilities.get(ab_idx as usize) {
+                    if ab.trigger == TriggerType::Constant {
+                        has_any_constant_ability = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // If no constant abilities exist, return empty aura immediately
+    if !has_any_constant_ability {
         return aura;
     }
 

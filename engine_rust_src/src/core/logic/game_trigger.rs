@@ -140,7 +140,7 @@ fn card_name_from_db<'a>(db: &'a CardDatabase, cid: i32, is_live: bool) -> Optio
 
 impl GameState {
     pub fn process_trigger_queue(&mut self, db: &CardDatabase) {
-        if self.core.trigger_depth > 0 {
+        if self.core.trigger_depth > 0 || self.core.trigger_queue.is_empty() {
             return;
         }
 
@@ -219,11 +219,16 @@ impl GameState {
             };
         }
 
-        let matching_stage_count = self.core.players[p_idx]
-            .stage
-            .iter()
-            .filter(|&&cid| cid == card_id)
-            .count();
+        // Short-circuit: we only need to know if there's more than 1 match
+        let mut matching_stage_count = 0;
+        for &cid in &self.core.players[p_idx].stage {
+            if cid == card_id {
+                matching_stage_count += 1;
+                if matching_stage_count > 1 {
+                    break; // Early exit once we know count > 1
+                }
+            }
+        }
 
         if matching_stage_count <= 1 {
             0

@@ -185,8 +185,8 @@ impl ActionGenerator for MainPhaseGenerator {
             granted_costs
         };
         let granted_cost_modifier_us = t_granted_cost_scan
-            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-            .unwrap_or(0);
+            .map(|t| t.elapsed().as_secs_f64() * 1_000_000.0)
+            .unwrap_or(0.0);
 
         // Pre-calculate stage slot costs, data, and restrictions (CRITICAL OPTIMIZATION)
         let mut stage_data = [None; STAGE_SLOT_COUNT];
@@ -271,8 +271,8 @@ impl ActionGenerator for MainPhaseGenerator {
             }
         }
         let slot_projection_us = t_slot_projection
-            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-            .unwrap_or(0);
+            .map(|t| t.elapsed().as_secs_f64() * 1_000_000.0)
+            .unwrap_or(0.0);
         let precompute_us = granted_cost_modifier_us + slot_projection_us;
 
         let t_play_hand = profile_enabled.then(Instant::now);
@@ -363,20 +363,27 @@ impl ActionGenerator for MainPhaseGenerator {
                                     if has_color_select {
                                         has_choice_on_play = true;
                                         // Extract color_mask from ability effects to filter choices
-                                        let mut allowed_colors: Vec<i32> = (0..6).collect();
+                                        let mut allowed_colors = [0i32; 6];
+                                        let mut allowed_color_count = 6;
+                                        for c in 0..6 {
+                                            allowed_colors[c] = c as i32;
+                                        }
                                         for effect in &ab.effects {
                                             if effect.runtime_opcode == crate::core::generated_constants::O_COLOR_SELECT {
                                                 let color_mask = ((effect.runtime_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8;
                                                 if color_mask != 0 {
-                                                    allowed_colors = (0..6)
-                                                        .filter(|&c| (color_mask & (1 << c)) != 0)
-                                                        .map(|c| c as i32)
-                                                        .collect();
+                                                    allowed_color_count = 0;
+                                                    for c in 0..6 {
+                                                        if (color_mask & (1 << c)) != 0 {
+                                                            allowed_colors[allowed_color_count] = c as i32;
+                                                            allowed_color_count += 1;
+                                                        }
+                                                    }
                                                 }
                                                 break;
                                             }
                                         }
-                                        for &c in &allowed_colors {
+                                        for &c in allowed_colors[..allowed_color_count].iter() {
                                             let choice_aid =
                                                 crate::core::logic::ACTION_BASE_HAND_CHOICE
                                                     + (i * 100)
@@ -480,8 +487,8 @@ impl ActionGenerator for MainPhaseGenerator {
             }
         }
         let play_hand_us = t_play_hand
-            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-            .unwrap_or(0);
+            .map(|t| t.elapsed().as_secs_f64() * 1_000_000.0)
+            .unwrap_or(0.0);
 
         let t_stage_abilities = profile_enabled.then(Instant::now);
         // 2. Activate Stage Ability
@@ -553,8 +560,8 @@ impl ActionGenerator for MainPhaseGenerator {
             }
         }
         let stage_ability_us = t_stage_abilities
-            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-            .unwrap_or(0);
+            .map(|t| t.elapsed().as_secs_f64() * 1_000_000.0)
+            .unwrap_or(0.0);
 
         let t_hand_abilities = profile_enabled.then(Instant::now);
         // 3. Activate Hand Ability
@@ -622,14 +629,14 @@ impl ActionGenerator for MainPhaseGenerator {
             }
         }
         let hand_ability_us = t_hand_abilities
-            .map(|t| t.elapsed().as_nanos() as u64 / 1000)
-            .unwrap_or(0);
+            .map(|t| t.elapsed().as_secs_f64() * 1_000_000.0)
+            .unwrap_or(0.0);
 
         if let Some(profile_start) = profile_start {
-            let total_us = profile_start.elapsed().as_nanos() as u64 / 1000;
-            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) {
+            let total_us = profile_start.elapsed().as_secs_f64() * 1_000_000.0;
+            if total_us >= env_threshold_us("BENCH_PROFILE_STEP_THRESHOLD_US", 2000) as f64 {
                 println!(
-                    "[PROFILE] LegalActionsMain total_us={} precompute_us={} granted_cost_mod_us={} slot_projection_us={} play_hand_us={} stage_abilities_us={} hand_abilities_us={} p={} hand={} stage0={} stage1={}",
+                    "[PROFILE] LegalActionsMain total_us={:.2} precompute_us={:.2} granted_cost_mod_us={:.2} slot_projection_us={:.2} play_hand_us={:.2} stage_abilities_us={:.2} hand_abilities_us={:.2} p={} hand={} stage0={} stage1={}",
                     total_us,
                     precompute_us,
                     granted_cost_modifier_us,

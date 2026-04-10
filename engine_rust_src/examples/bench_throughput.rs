@@ -4,7 +4,6 @@ use engine_rust::core::logic::{CardDatabase, GameState};
 use rand::prelude::IndexedRandom;
 use rand::prelude::*;
 use rayon::prelude::*;
-use smallvec::SmallVec;
 use std::fs;
 use std::thread;
 use std::time::Instant;
@@ -75,7 +74,7 @@ fn load_db() -> CardDatabase {
         if std::path::Path::new(path).exists() {
             let json = fs::read_to_string(path).expect("read");
             let mut db = CardDatabase::from_json(&json).expect("parse");
-            db.is_vanilla = true;
+            db.is_vanilla = env_bool("BENCH_VANILLA_MODE", false);
             return db;
         }
     }
@@ -148,7 +147,7 @@ fn run_headless_game(
 
     let mut rng = StdRng::seed_from_u64(seed);
     let mut total_steps = 0u32;
-    let mut legal: SmallVec<[i32; 64]> = SmallVec::new();
+    let mut legal: Vec<i32> = Vec::with_capacity(64);
     let trace = trace_first_game && game_index == 0;
 
     let start = Instant::now();

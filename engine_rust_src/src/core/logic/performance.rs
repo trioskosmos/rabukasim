@@ -8,6 +8,7 @@ pub use super::performance_allocation::*;
 pub use super::performance_requirements::*;
 use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::interpreter::check_condition;
+use crate::core::logic::rules::{calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura};
 use serde_json::{json, Value};
 use smallvec::SmallVec;
 
@@ -290,44 +291,51 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Initialize breakdown logs Early to capture sources before they are moved by triggers
     // HEADLESS PATH: Skip all UI data structures in headless mode
     let is_headless = state.ui.headless;
-    
-    let mut heart_breakdown = Vec::new();
-    let mut blade_breakdown = Vec::new();
-    let mut heart_sources: Vec<SourceInfo> = Vec::new();
-    let mut allocations = Vec::new();
-    let mut transform_logs = Vec::new();
-    let mut member_summary: std::collections::HashMap<(usize, i32), Value> = std::collections::HashMap::new();
-    
+
+    let mut heart_breakdown: Option<Vec<Value>> = if !is_headless { Some(Vec::new()) } else { None };
+    let mut blade_breakdown: Option<Vec<Value>> = if !is_headless { Some(Vec::new()) } else { None };
+    let mut heart_sources: Option<Vec<SourceInfo>> = if !is_headless { Some(Vec::new()) } else { None };
+    let mut allocations: Option<Vec<Value>> = if !is_headless { Some(Vec::new()) } else { None };
+    let mut transform_logs: Option<Vec<Value>> = if !is_headless { Some(Vec::new()) } else { None };
+    let mut member_summary: Option<std::collections::HashMap<(usize, i32), Value>> =
+        if !is_headless {
+            Some(std::collections::HashMap::new())
+        } else {
+            None
+        };
+
     // HEADLESS OPTIMIZATION: requirement_logs is never populated - skip entirely
     // Old code: let requirement_logs: Vec<serde_json::Value> = Vec::new();
-    
+
     // Only build UI data structures when not in headless mode
     if !is_headless {
-        for i in 0..3 {
-            let cid = state.players[p_idx].stage[i];
-            if cid >= 0 {
-                if let Some(m) = db.get_member(cid) {
-                    member_summary.insert(
-                        (i, cid),
-                        json!({
-                            "source": m.name,
-                            "source_id": cid,
-                            "slot": i,
-                            "img": m.img_path,
-                            "hearts": [0, 0, 0, 0, 0, 0, 0],
-                            "base_hearts": m.hearts,
-                            "bonus_hearts": [0, 0, 0, 0, 0, 0, 0],
-                            "blades": 0,
-                            "base_blades": m.blades,
-                            "bonus_blades": 0,
-                            "note_icons": 0,
-                            "base_notes": m.note_icons,
-                            "bonus_notes": 0,
-                            "draw_icons": m.draw_icons,
-                            "ability_blade_bonuses": [],
-                            "ability_heart_bonuses": []
-                        }),
-                    );
+        if let Some(member_summary) = member_summary.as_mut() {
+            for i in 0..3 {
+                let cid = state.players[p_idx].stage[i];
+                if cid >= 0 {
+                    if let Some(m) = db.get_member(cid) {
+                        member_summary.insert(
+                            (i, cid),
+                            json!({
+                                "source": m.name,
+                                "source_id": cid,
+                                "slot": i,
+                                "img": m.img_path,
+                                "hearts": [0, 0, 0, 0, 0, 0, 0],
+                                "base_hearts": m.hearts,
+                                "bonus_hearts": [0, 0, 0, 0, 0, 0, 0],
+                                "blades": 0,
+                                "base_blades": m.blades,
+                                "bonus_blades": 0,
+                                "note_icons": 0,
+                                "base_notes": m.note_icons,
+                                "bonus_notes": 0,
+                                "draw_icons": m.draw_icons,
+                                "ability_blade_bonuses": [],
+                                "ability_heart_bonuses": []
+                            }),
+                        );
+                    }
                 }
             }
         }
@@ -340,25 +348,30 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
     // Apply Cheer Mod (Meta Rule)
     total_blades += state.players[p_idx].cheer_mod_count as u32;
 
+    let aura = calculate_board_aura(state, p_idx, db);
     for i in 0..3 {
-        let eff_b = state.get_effective_blades(p_idx, i, db, 0);
+        let eff_b = get_effective_blades_with_aura(state, p_idx, i, db, &aura);
         let cid = state.players[p_idx].stage[i];
         if cid >= 0 {
             if let Some(m) = db.get_member(cid) {
                 if !is_headless && eff_b > 0 {
-                    blade_breakdown.push(json!({
-                        "source": m.name,
-                        "source_id": cid,
-                        "value": eff_b,
-                        "type": "member"
-                    }));
+                    if let Some(buf) = blade_breakdown.as_mut() {
+                        buf.push(json!({
+                            "source": m.name,
+                            "source_id": cid,
+                            "value": eff_b,
+                            "type": "member"
+                        }));
+                    }
                 }
 
                 if !is_headless {
-                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
-                        let bonus_b = eff_b as i32 - m.blades as i32;
-                        entry["blades"] = json!(eff_b);
-                        entry["bonus_blades"] = json!(bonus_b);
+                    if let Some(map) = member_summary.as_mut() {
+                        if let Some(entry) = map.get_mut(&(i, cid)) {
+                            let bonus_b = eff_b as i32 - m.blades as i32;
+                            entry["blades"] = json!(eff_b);
+                            entry["bonus_blades"] = json!(bonus_b);
+                        }
                     }
 
                     let mut slot_blade_buffs: Vec<Value> = state.players[p_idx]
@@ -477,8 +490,10 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
                     }
-                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
-                        entry["ability_blade_bonuses"] = json!(slot_blade_buffs);
+                    if let Some(map) = member_summary.as_mut() {
+                        if let Some(entry) = map.get_mut(&(i, cid)) {
+                            entry["ability_blade_bonuses"] = json!(slot_blade_buffs);
+                        }
                     }
                 }
                 total_blades += eff_b;
@@ -531,8 +546,7 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
     let mut total_hearts = [0u8; 7];
     let mut note_icons = 0;
     for i in 0..3 {
-        let mut eff_h = state
-            .get_effective_hearts(p_idx, i, db, 0)
+        let mut eff_h = get_effective_hearts_with_aura(state, p_idx, i, db, &aura)
             .to_array()
             .map(|h| h as u32);
         let mut printed_h = [0u32; 7];
@@ -557,14 +571,16 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 printed_h = [0u32; 7];
                 printed_h[dst_col as usize] = printed_sum;
 
-                if !state.ui.silent && transform_logs.is_empty() {
+                if !state.ui.silent && transform_logs.as_ref().map_or(true, |v| v.is_empty()) {
                     // Log once per transform type
                     let source_name = db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
-                    transform_logs.push(json!({
-                        "source": source_name,
-                        "desc": format!("All colors -> {}", dst_col),
-                        "type": "transform"
-                    }));
+                    if let Some(buf) = transform_logs.as_mut() {
+                        buf.push(json!({
+                            "source": source_name,
+                            "desc": format!("All colors -> {}", dst_col),
+                            "type": "transform"
+                        }));
+                    }
                 }
             }
         }
@@ -595,29 +611,31 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         for k in 0..7 {
                             h8[k] = eff_h[k] as u8;
                         }
-                        heart_sources.push(SourceInfo {
-                            id: cid,
-                            slot: i as i16,
-                            name: m.name.clone(),
-                            hearts: h8,
-                            base_hearts: source_base_h,
-                            documented_bonus_hearts: documented_bonus_h,
-                            is_yell: false,
-                        });
-
-                        heart_breakdown.push(json!({
-                            "source": m.name,
-                            "source_id": cid,
-                            "value": eff_h,
-                            "type": "member"
-                        }));
+                        if let Some(src) = heart_sources.as_mut() {
+                            src.push(SourceInfo {
+                                id: cid,
+                                slot: i as i16,
+                                name: m.name.clone(),
+                                hearts: h8,
+                                base_hearts: source_base_h,
+                                documented_bonus_hearts: documented_bonus_h,
+                                is_yell: false,
+                            });
+                        }
+                        if let Some(buf) = heart_breakdown.as_mut() {
+                            buf.push(json!({
+                                "source": m.name,
+                                "source_id": cid,
+                                "value": eff_h,
+                                "type": "member"
+                            }));
+                        }
                     }
 
                     let mut slot_heart_buffs = if !is_headless {
                         state.players[p_idx]
                         .heart_buff_logs
-                        .iter()
-                        .filter(|&&(_, _, _, slot)| slot == i as u8)
+                        .iter()                        .filter(|&&(_, _, _, slot)| slot == i as u8)
                         .map(|&(src_cid, amt, color, _)| {
                             let source_name =
                                 db.get_name(src_cid).unwrap_or_else(|| "Effect".to_string());
@@ -749,13 +767,15 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                         }
                     }
 
-                    if let Some(entry) = member_summary.get_mut(&(i, cid)) {
-                        entry["hearts"] = json!(eff_h);
-                        entry["base_hearts"] = json!(source_base_h);
-                        entry["bonus_hearts"] = json!(true_bonus_h);
-                        entry["note_icons"] = json!(m.note_icons);
-                        entry["base_notes"] = json!(m.note_icons);
-                        entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
+                    if let Some(map) = member_summary.as_mut() {
+                        if let Some(entry) = map.get_mut(&(i, cid)) {
+                            entry["hearts"] = json!(eff_h);
+                            entry["base_hearts"] = json!(source_base_h);
+                            entry["bonus_hearts"] = json!(true_bonus_h);
+                            entry["note_icons"] = json!(m.note_icons);
+                            entry["base_notes"] = json!(m.note_icons);
+                            entry["ability_heart_bonuses"] = json!(slot_heart_buffs);
+                        }
                     }
                     }
                 }
@@ -799,22 +819,26 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
             };
             let bh_sum: u32 = bh.iter().map(|&h| h as u32).sum();
             if bh_sum > 0 {
-                heart_sources.push(SourceInfo {
-                    id: cid,
-                    slot: -1,
-                    name: format!("Yell: {}", name),
-                    hearts: bh,
-                    base_hearts: bh, // For yells, everything is "base" (printed on yell card)
-                    documented_bonus_hearts: [0u8; 7], // Yells don't have documented bonuses
-                    is_yell: true,
-                });
+                if let Some(src) = heart_sources.as_mut() {
+                    src.push(SourceInfo {
+                        id: cid,
+                        slot: -1,
+                        name: format!("Yell: {}", name),
+                        hearts: bh,
+                        base_hearts: bh, // For yells, everything is "base" (printed on yell card)
+                        documented_bonus_hearts: [0u8; 7], // Yells don't have documented bonuses
+                        is_yell: true,
+                    });
+                }
 
-                heart_breakdown.push(json!({
-                    "source": format!("Yell: {}", name),
-                    "source_id": cid,
-                    "value": bh,
-                    "type": "yell"
-                }));
+                if let Some(buf) = heart_breakdown.as_mut() {
+                    buf.push(json!({
+                        "source": format!("Yell: {}", name),
+                        "source_id": cid,
+                        "value": bh,
+                        "type": "yell"
+                    }));
+                }
             }
         }
         if ni > 0 {
@@ -827,12 +851,14 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 } else {
                     "Unknown"
                 };
-                blade_breakdown.push(json!({
-                    "source": format!("Yell: {}", name),
-                    "source_id": cid,
-                    "value": ni,
-                    "type": "yell"
-                }));
+                if let Some(buf) = blade_breakdown.as_mut() {
+                    buf.push(json!({
+                        "source": format!("Yell: {}", name),
+                        "source_id": cid,
+                        "value": ni,
+                        "type": "yell"
+                    }));
+                }
             }
         }
 
@@ -862,12 +888,13 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     } else {
                         "Effect".to_string()
                     };
-
-                    transform_logs.push(json!({
-                        "source": source_name,
-                        "desc": format!("All colors -> {}", dst_col),
-                        "type": "transform"
-                    }));
+                    if let Some(buf) = transform_logs.as_mut() {
+                        buf.push(json!({
+                            "source": source_name,
+                            "desc": format!("All colors -> {}", dst_col),
+                            "type": "transform"
+                        }));
+                    }
                 }
             }
         }
@@ -918,16 +945,21 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                     let _req_arr = req_board.to_array();
 
                     if !state.ui.silent {
+                    if let (Some(heart_sources), Some(allocations)) = (
+                        heart_sources.as_mut(),
+                        allocations.as_mut(),
+                    ) {
                         allocate_hearts_for_live(
                             cid,
                             i,
                             &live.name,
                             &req_board,
-                            &mut heart_sources,
-                            &mut allocations,
+                            heart_sources,
+                            allocations,
                             &mut remaining_hearts,
                         );
-                    } else {
+                    }
+                } else {
                         use super::performance_requirements::consume_hearts_from_pool;
                         consume_hearts_from_pool(&mut remaining_hearts, &req_board.to_array());
                     }
@@ -1198,7 +1230,9 @@ pub fn execute_performance_phase(state: &mut GameState, db: &CardDatabase) {
                 }));
             }
 
-            let member_contributions: Vec<_> = member_summary.values().collect();
+            let member_contributions: Vec<_> = member_summary
+                .as_ref()
+                .map_or_else(Vec::new, |m| m.values().collect());
             state.ui.performance_results.insert(
                 p_idx as u8,
                 json!({
@@ -1797,7 +1831,7 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 let target_idx = valid_candidates[0];
                 let cid = state.players[p].live_zone[target_idx];
 
-                state.players[p].push_success_live_card(cid as i32);
+                state.push_success_live_card(p, cid as i32);
                 if cid == 111 {
                     state.players[p].push_discard_card(cid);
                 }

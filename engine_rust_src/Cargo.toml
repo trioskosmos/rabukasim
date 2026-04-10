@@ -82,6 +82,16 @@ path = "examples/bench_fast.rs"
 test = false
 
 [[bin]]
+name = "bench_pass_action"
+path = "examples/bench_pass_action.rs"
+test = false
+
+[[bin]]
+name = "bench_profile_legal_actions"
+path = "examples/bench_profile_legal_actions.rs"
+test = false
+
+[[bin]]
 name = "search_fastest_terminal_turn"
 path = "examples/search_fastest_terminal_turn.rs"
 test = false
@@ -149,6 +159,7 @@ debug = "line-tables-only"
 incremental = true
 codegen-units = 256
 lto = false
+panic = 'abort'
 split-debuginfo = "packed"
 
 [profile.test.package."*"]

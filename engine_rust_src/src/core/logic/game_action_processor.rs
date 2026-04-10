@@ -26,7 +26,10 @@ impl GameState {
         self.step_internal(db, action)?;
         self.auto_step(db);
         // Skip sync during LiveSet - no board changes that affect auras
-        if !matches!(self.phase, Phase::LiveSet) {
+        // Also skip if no stats are dirty (mask is 0 and no global sync flag)
+        if !matches!(self.phase, Phase::LiveSet)
+            && (self.needs_stat_sync_mask != 0 || self.needs_stat_sync)
+        {
             self.sync_all_stats(db);
         }
         Ok(())
@@ -62,7 +65,9 @@ impl GameState {
         
         let mut loop_count = 0;
         while loop_count < 40 {
-            self.check_win_condition();
+            if self.core.needs_win_check {
+                self.check_win_condition();
+            }
 
             if self.phase == Phase::Terminal || self.phase == Phase::Response {
                 break;

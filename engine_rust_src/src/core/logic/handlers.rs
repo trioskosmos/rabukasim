@@ -277,6 +277,11 @@ impl MulliganController for GameState {
 
 impl MainPhaseController for GameState {
     fn handle_main(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
+        if action == ACTION_BASE_PASS {
+            self.end_main_phase(db);
+            return Ok(());
+        }
+
         let decoded = DecodedAction::decode(action);
 
         if db.is_vanilla {
@@ -428,7 +433,7 @@ impl MainPhaseController for GameState {
                     }
                     self.core.players[p_idx].push_discard_card(cid);
                 } else {
-                    self.core.players[p_idx].push_success_live_card(cid);
+                    self.push_success_live_card(p_idx, cid);
                     self.obtained_success_live[p_idx] = true;
                     if !self.ui.silent {
                         self.log(format!(
@@ -1926,10 +1931,10 @@ impl TurnPhaseController for GameState {
 
         self.core.players[p_idx].untap_all(skip);
         
-        // Fast path: skip TurnStart trigger if no cards (nothing to trigger)
+        // Only trigger TurnStart if the player actually has stage/live cards.
         let has_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0)
             || self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
-        if has_cards || !db.is_vanilla {
+        if has_cards {
             let ctx = AbilityContext {
                 source_card_id: -1,
                 player_id: p_idx as u8,
@@ -1981,10 +1986,10 @@ impl TurnPhaseController for GameState {
     fn do_draw_phase(&mut self, db: &CardDatabase) {
         let p_idx = self.current_player as usize;
         
-        // Fast path: skip TurnStart trigger if no cards (nothing to trigger)
+        // Only trigger TurnStart if the player actually has stage/live cards.
         let has_cards = self.core.players[p_idx].stage.iter().any(|&c| c >= 0)
             || self.core.players[p_idx].live_zone.iter().any(|&c| c >= 0);
-        if has_cards || !db.is_vanilla {
+        if has_cards {
             let ctx = AbilityContext {
                 source_card_id: -1,
                 player_id: p_idx as u8,

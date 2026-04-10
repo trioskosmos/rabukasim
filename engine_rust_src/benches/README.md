@@ -18,6 +18,22 @@ On the 12-core machine used for the latest sweep, 8 workers was the best measure
 
 Use this benchmark when you want raw engine throughput, step rate, or thread-scaling data.
 
+### `../examples/bench_pass_action.rs`
+This is a new pass-only benchmark for the engine. It:
+
+- runs a tight loop of `step_internal(ACTION_BASE_PASS)` plus `auto_step`
+- measures the pass-only engine path without random legal-action selection
+- reports per-pass latency and the split between `step_internal` and `auto_step`
+- is useful when you want to profile engine overhead for the common pass/auto-step loop
+
+Use this benchmark when you need a microbenchmark for the pass-only path rather than full-game random-action throughput.
+
+Example run:
+
+```bash
+cargo run --release --manifest-path engine_rust_src/Cargo.toml --bin bench_pass_action
+```
+
 Example runs:
 
 ```bash

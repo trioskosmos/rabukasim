@@ -187,6 +187,8 @@ pub struct CoreGameState {
     pub needs_stat_sync_mask: u8,
     #[serde(default = "true_fn")]
     pub needs_stat_sync: bool,
+    #[serde(default = "true_fn")]
+    pub needs_win_check: bool,
 }
 
 fn true_fn() -> bool {
@@ -224,6 +226,7 @@ impl Default for CoreGameState {
             obtained_success_live: [false; 2],
             needs_stat_sync_mask: 0,
             needs_stat_sync: true,
+            needs_win_check: true,
         }
     }
 }

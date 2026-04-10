@@ -8,6 +8,11 @@ use super::state::*;
 use crate::core::enums::*;
 
 impl GameState {
+    pub fn push_success_live_card(&mut self, p_idx: usize, card_id: i32) {
+        self.core.players[p_idx].push_success_live_card(card_id);
+        self.core.needs_win_check = true;
+    }
+
     pub fn setup_turn_log(&mut self) {
         if self.ui.silent {
             return;
@@ -59,6 +64,7 @@ impl GameState {
         self.core.performance_yell_done = other.core.performance_yell_done;
         self.core.rps_choices = other.core.rps_choices;
         self.core.obtained_success_live = other.core.obtained_success_live;
+        self.core.needs_win_check = other.core.needs_win_check;
 
         self.ui.silent = other.ui.silent;
         if !self.ui.silent {

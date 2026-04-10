@@ -204,7 +204,7 @@ pub fn place_card_at_destination(
                 state.players[p_idx].gain_hand_card(chosen);
             }
         }
-        Zone::SuccessPile => state.players[p_idx].push_success_live_card(chosen),
+        Zone::SuccessPile => state.push_success_live_card(p_idx, chosen),
         _ => state.players[p_idx].push_hand_card(chosen),
     }
 
