@@ -1,4 +1,5 @@
 use engine_rust::core::logic::{AbilityContext, CardDatabase, GameState};
+use engine_rust::core::models::LiveCard;
 
 /// Test: Card 500 (葉月 恋) - ON_PLAY ability
 /// Condition: Discard 1 hand card (optional) -> Look at top 5 deck cards -> 
@@ -238,6 +239,71 @@ fn test_card_57_energy_activation_fail_condition() {
     );
 
     println!("Test passed: Energy did not activate when condition failed.");
+}
+
+/// Test: Card 62 (東條 希) - CONSTANT ability
+/// Condition: Success live score total >= 6
+/// Effect: Increase this stage member's cost by 3
+#[test]
+fn test_card_62_constant_cost_increase_score_total_threshold() {
+    let mut state = GameState::default();
+    state.debug.debug_mode = true;
+    let json_content = std::fs::read_to_string("../data/cards_compiled.json")
+        .expect("Failed to read cards_compiled.json");
+    let mut db = CardDatabase::from_json(&json_content).unwrap();
+
+    let p1 = 0;
+    let card_id = 62; // PL!-bp4-008-P
+
+    state.players[p1].stage[0] = card_id;
+    state.players[p1].stage[1] = -1;
+    state.players[p1].stage[2] = -1;
+
+    let ctx = AbilityContext {
+        player_id: p1 as u8,
+        source_card_id: card_id,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    let member = db.get_member(card_id).expect("Card 62 not found");
+    let ability = member.abilities[0].clone();
+    let frame_program = ability
+        .semantic_frame_program()
+        .expect("Card 62 ability should have frame data");
+
+    // No success lives: condition should fail and no cost modifier should be added.
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
+    assert!(
+        state.players[p1].cost_modifiers.is_empty(),
+        "Cost modifier should not be added when success live score total < 6"
+    );
+
+    state.players[p1].cost_modifiers.clear();
+    state.players[p1].success_lives = vec![55001, 55002].into();
+
+    let mut live1 = LiveCard::default();
+    live1.card_id = 55001;
+    live1.score = 3;
+    let mut live2 = LiveCard::default();
+    live2.card_id = 55002;
+    live2.score = 3;
+
+    db.lives.insert(55001, live1.clone());
+    db.lives.insert(55002, live2.clone());
+
+    state.resolve_semantic_frames(&db, &frame_program.frames, &ctx);
+
+    assert_eq!(
+        state.players[p1].cost_modifiers.len(),
+        1,
+        "Cost modifier should be added when success live score total >= 6"
+    );
+    assert_eq!(
+        state.players[p1].cost_modifiers[0].1,
+        3,
+        "The cost modifier should be +3"
+    );
 }
 
 /// Test: Card 62 (東條 希) - ON_PLAY energy charge

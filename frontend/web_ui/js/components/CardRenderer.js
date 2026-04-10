@@ -251,11 +251,18 @@ export const CardRenderer = {
             }
         }
 
+        // Check if we're in mulligan phase for action ID fallback
+        const isMulliganPhase = State.data && (State.data.phase === Phase.MULLIGAN_P1 || State.data.phase === Phase.MULLIGAN_P2);
+
         cards.forEach((card, idx) => {
             if (filter && !filter(card, idx)) return;
 
             const isSelected = selectedIndices.includes(idx);
-            const actionId = validActionMap[idx];
+            let actionId = validActionMap[idx];
+            // Fallback for mulligan: infer action ID from hand index if not in validActionMap
+            if (actionId === undefined && isMulliganPhase && containerId === 'my-hand') {
+                actionId = 300 + idx; // Mulligan action IDs are 300-359
+            }
             const isValid = actionId !== undefined;
             const existingChild = filter ? null : existingChildren[idx];
 
@@ -528,15 +535,23 @@ export const CardRenderer = {
                 }
             };
             if (isValid) {
+                el.setAttribute('data-action-id', actionId);
                 el.onmouseenter = () => {
                     if (window.highlightActionBtn) window.highlightActionBtn(actionId, true);
                 };
                 el.onmouseleave = () => {
                     if (window.highlightActionBtn) window.highlightActionBtn(actionId, false);
                 };
+            } else {
+                el.removeAttribute('data-action-id');
+                el.onmouseenter = null;
+                el.onmouseleave = null;
             }
         } else {
             el.onclick = null;
+            el.removeAttribute('data-action-id');
+            el.onmouseenter = null;
+            el.onmouseleave = null;
         }
     },
 

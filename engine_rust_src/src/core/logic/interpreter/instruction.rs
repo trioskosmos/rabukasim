@@ -2,8 +2,8 @@ use crate::core::enums::Zone;
 use crate::core::generated_constants::*;
 use crate::core::generated_layout::*;
 use crate::core::logic::filter::{
-    parse_card_type_value, parse_special_id_value, parse_target_player_value,
-    parse_zone_mask_value, CardFilter,
+    parse_card_type_value, parse_character_id_value, parse_color_mask_value,
+    parse_special_id_value, parse_target_player_value, parse_zone_mask_value, CardFilter,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -566,6 +566,10 @@ impl<'de> Deserialize<'de> for DecodedFilterAttr {
                 "card_type" => parse_card_type_value(value).unwrap_or_default(),
                 "zone_mask" => parse_zone_mask_value(value).unwrap_or_default(),
                 "special_id" => parse_special_id_value(value).unwrap_or_default(),
+                "color_mask" => parse_color_mask_value(value).unwrap_or_default(),
+                "char_id_1" | "char_id_2" => {
+                    parse_character_id_value(value).unwrap_or_default()
+                }
                 _ => value.as_u64().unwrap_or_default() as u8,
             }
         }

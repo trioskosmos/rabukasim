@@ -69,6 +69,19 @@ export const InteractionAdapter = {
             if (meta.location === 'discard') {
                 valid.discard.all = a.id;
             }
+
+            // Special handling for mulligan actions (IDs 300-359)
+            // These map directly to hand indices but don't have explicit source_zone metadata
+            if (a.id >= 300 && a.id <= 359) {
+                const handIdx = a.id - 300;
+                const mulliganPlayer = a.player ?? state.active_player ?? 0;
+                const isMulliganPlayerMe = mulliganPlayer === State.perspectivePlayer;
+                if (isMulliganPlayerMe) {
+                    valid.myHand[handIdx] = a.id;
+                } else {
+                    valid.oppHand[handIdx] = a.id;
+                }
+            }
         });
 
             const hasCardActions = (Object.keys(valid.myHand).length + Object.keys(valid.myStage).length + Object.keys(valid.myLive).length +

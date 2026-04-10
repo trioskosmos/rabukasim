@@ -3,6 +3,11 @@
 use engine_rust::core::logic::{CardDatabase, GameState, MainPhaseController, Phase};
 use std::collections::HashMap;
 use std::fs;
+use std::iter::Iterator;
+use std::option::Option::Some;
+use std::string::String;
+use std::string::ToString;
+use std::vec::Vec;
 use std::time::Instant;
 
 fn load_db() -> CardDatabase {

@@ -115,7 +115,7 @@ pub fn dispatch(
         O_OPPONENT_CHOOSE => flow_context::handle_opponent_choose(state, db, ctx, frame_idx),
 
         // Color select
-        O_COLOR_SELECT => flow_context::handle_color_select(state, db, ctx, frame_idx),
+        O_COLOR_SELECT => flow_context::handle_color_select(state, db, ctx, frame_data, frame_idx),
 
         // Effects
         O_TRIGGER_REMOTE => flow_effects::handle_trigger_remote(state, db, ctx, frame_data, frame_idx),

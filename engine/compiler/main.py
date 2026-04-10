@@ -300,7 +300,11 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
 
     if not quiet:
         if errors:
-            print(f"\nCompiled {success_count} cards with {len(errors)} errors")
+            print(f"\nCompiled {success_count} cards with {len(errors)} errors:")
+            for error in errors[:20]:  # Show first 20 errors
+                print(f"  {error}")
+            if len(errors) > 20:
+                print(f"  ... and {len(errors) - 20} more errors")
         else:
             print(f"\nCompiled {success_count} cards successfully")
         print("Done.")

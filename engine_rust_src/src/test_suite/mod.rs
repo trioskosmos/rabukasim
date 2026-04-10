@@ -1,3 +1,4 @@
+mod ability_frame_audit_tests;
 mod ability_tests;
 mod baton_pass_tests;
 mod card_interaction_tests;

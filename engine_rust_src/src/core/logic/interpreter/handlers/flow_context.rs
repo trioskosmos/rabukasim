@@ -2,6 +2,7 @@ use super::HandlerResult;
 use crate::core::enums::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
+use crate::core::logic::models::AbilityFrameComponents;
 
 pub fn handle_opponent_choose(
     state: &mut GameState,
@@ -46,6 +47,7 @@ pub fn handle_color_select(
     state: &mut GameState,
     db: &CardDatabase,
     ctx: &mut AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
     if ctx.choice_index == -1 {
@@ -59,7 +61,7 @@ pub fn handle_color_select(
                 O_COLOR_SELECT,
                 0,
                 ChoiceType::ColorSelect,
-                0,
+                frame_data.resolved_filter_attr(),
                 -1,
             ),
             HandlerResult::Suspend

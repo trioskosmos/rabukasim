@@ -802,13 +802,13 @@ impl ResponseGenerator {
                 return;
             }
             O_COLOR_SELECT => {
-                let mut choices_to_show = vec![0, 1, 2, 3, 4, 5]; // Default to all 6 colors
+                let mut choices_to_show = vec![0, 1, 2, 3, 4, 5]; // Default to all 6 explicit colors
 
                 // Check if color_mask is set in filter_attr to restrict choices
                 let color_mask = ((pi.filter_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8;
                 if color_mask != 0 {
-                    // Filter choices based on color_mask bits (0-5 for hearts 1-6)
-                    choices_to_show = (0..6)
+                    // Filter choices based on color_mask bits (0-6 for hearts 1-7 including ANY)
+                    choices_to_show = (0..7)
                         .filter(|&c| (color_mask & (1 << c)) != 0)
                         .collect();
                 }

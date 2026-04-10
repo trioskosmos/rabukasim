@@ -17,13 +17,16 @@ export const Highlighter = {
         const selectors = [
             '.highlight-source', '.highlight-target', '.highlight-target-opp',
             '.valid-drop-target', '.drop-hover', '.highlight-hover',
-            '.hover-highlight', '.selected', '.mulligan-selected'
+            // NOTE: 'hover-highlight' is intentionally NOT cleared here
+            // It's managed by window.highlightActionBtn for persistent hover state
+            '.selected', '.mulligan-selected'
         ];
         document.querySelectorAll(selectors.join(', ')).forEach(el => {
             el.classList.remove(
                 'highlight-source', 'highlight-target', 'highlight-target-opp',
                 'valid-drop-target', 'drop-hover', 'highlight-hover',
-                'hover-highlight', 'selected', 'mulligan-selected'
+                // 'hover-highlight' is NOT removed - managed by window.highlightActionBtn
+                'selected', 'mulligan-selected'
             );
         });
     },

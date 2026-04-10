@@ -107,6 +107,38 @@ where
     deserializer.deserialize_any(BoolOrInt)
 }
 
+fn color_mask_from_value<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    Ok(parse_color_mask_value(&value).unwrap_or_default())
+}
+
+fn character_id_from_value<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    Ok(parse_character_id_value(&value).unwrap_or_default())
+}
+
+fn zone_mask_from_value<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    Ok(parse_zone_mask_value(&value).unwrap_or_default())
+}
+
+fn special_id_from_value<'de, D>(deserializer: D) -> Result<u8, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = Value::deserialize(deserializer)?;
+    Ok(parse_special_id_value(&value).unwrap_or_default())
+}
+
 // --- Filter Bitfield Constants (Now loaded from generated_constants.rs via constants.rs) ---
 pub const FILTER_STATE_FLAGS_MASK: u64 = 61440; // 0xF000
 pub const FILTER_PASSTHROUGH_MASK: u64 = FILTER_ANY_STAGE
@@ -206,11 +238,17 @@ pub struct CardFilter {
     pub is_le: bool,
     #[serde(deserialize_with = "bool_from_int", default)]
     pub is_cost_type: bool,
+    #[serde(deserialize_with = "color_mask_from_value", default)]
     pub color_mask: u8,
+    #[serde(deserialize_with = "character_id_from_value", default)]
     pub char_id_1: u8,
+    #[serde(deserialize_with = "character_id_from_value", default)]
     pub char_id_2: u8,
+    #[serde(deserialize_with = "character_id_from_value", default)]
     pub char_id_3: u8,
+    #[serde(deserialize_with = "zone_mask_from_value", default)]
     pub zone_mask: u8,
+    #[serde(deserialize_with = "special_id_from_value", default)]
     pub special_id: u8,
     #[serde(deserialize_with = "bool_from_int", default)]
     pub is_setsuna: bool,

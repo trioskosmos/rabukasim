@@ -363,7 +363,7 @@ impl ActionGenerator for MainPhaseGenerator {
                                     if has_color_select {
                                         has_choice_on_play = true;
                                         // Extract color_mask from ability effects to filter choices
-                                        let mut allowed_colors = [0i32; 6];
+                                        let mut allowed_colors = [0i32; 7];
                                         let mut allowed_color_count = 6;
                                         for c in 0..6 {
                                             allowed_colors[c] = c as i32;
@@ -373,7 +373,7 @@ impl ActionGenerator for MainPhaseGenerator {
                                                 let color_mask = ((effect.runtime_attr >> FILTER_COLOR_SHIFT_R5) & 0x7F) as u8;
                                                 if color_mask != 0 {
                                                     allowed_color_count = 0;
-                                                    for c in 0..6 {
+                                                    for c in 0..7 {
                                                         if (color_mask & (1 << c)) != 0 {
                                                             allowed_colors[allowed_color_count] = c as i32;
                                                             allowed_color_count += 1;

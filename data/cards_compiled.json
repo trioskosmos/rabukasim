@@ -9869,8 +9869,22 @@
           "frame_program": {
             "frames": [
               {
-                "op": "INCREASE_COST",
+                "op": "SCORE_TOTAL_CHECK",
                 "frame_index": 0,
+                "value": 6,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "INCREASE_COST",
+                "frame_index": 2,
                 "value": 3,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -9878,12 +9892,20 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 304,
+              "value": 6,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp4-008-P"
@@ -9943,8 +9965,22 @@
           "frame_program": {
             "frames": [
               {
-                "op": "INCREASE_COST",
+                "op": "SCORE_TOTAL_CHECK",
                 "frame_index": 0,
+                "value": 6,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "INCREASE_COST",
+                "frame_index": 2,
                 "value": 3,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -9952,12 +9988,20 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 304,
+              "value": 6,
+              "params": {},
+              "is_negated": false,
+              "attr": 0
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp4-008-R"
@@ -11245,6 +11289,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -11271,8 +11322,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -11283,12 +11350,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -11296,6 +11363,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
+                  "group_id": "MUSE",
                   "value_enabled": 1,
                   "value_threshold": 9,
                   "is_cost_type": 1,
@@ -11307,8 +11375,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -11318,7 +11400,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -11373,6 +11455,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -11399,8 +11488,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -11411,12 +11516,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -11424,6 +11529,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
+                  "group_id": "MUSE",
                   "value_enabled": 1,
                   "value_threshold": 9,
                   "is_cost_type": 1,
@@ -11435,8 +11541,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -11446,7 +11566,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -11501,6 +11621,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -11527,8 +11654,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -11539,12 +11682,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -11552,6 +11695,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
+                  "group_id": "MUSE",
                   "value_enabled": 1,
                   "value_threshold": 9,
                   "is_cost_type": 1,
@@ -11563,8 +11707,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -11574,7 +11732,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -12573,6 +12731,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 0,
@@ -12590,8 +12755,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
+                "op": "REDUCE_COST",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "unique_names": 1
+                },
+                "slot": {
+                  "target_slot": "STAGE_0"
+                }
+              },
+              {
+                "op": "SELECT_MEMBER",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT",
@@ -12607,7 +12785,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 1,
+                "frame_index": 2,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -12616,7 +12794,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 3
               }
             ]
           },
@@ -12704,7 +12882,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 1032,
+      "ability_flags": 1096,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -12742,6 +12920,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 0,
@@ -12759,8 +12944,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
+                "op": "REDUCE_COST",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "unique_names": 1
+                },
+                "slot": {
+                  "target_slot": "STAGE_0"
+                }
+              },
+              {
+                "op": "SELECT_MEMBER",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT",
@@ -12776,7 +12974,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 1,
+                "frame_index": 2,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -12785,7 +12983,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 3
               }
             ]
           },
@@ -12873,7 +13071,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 1032,
+      "ability_flags": 1096,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -12911,6 +13109,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 0,
@@ -12928,8 +13133,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
+                "op": "REDUCE_COST",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "unique_names": 1
+                },
+                "slot": {
+                  "target_slot": "STAGE_0"
+                }
+              },
+              {
+                "op": "SELECT_MEMBER",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT",
@@ -12945,7 +13163,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 1,
+                "frame_index": 2,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -12954,7 +13172,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 3
               }
             ]
           },
@@ -13042,7 +13260,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 1032,
+      "ability_flags": 1096,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -13080,6 +13298,13 @@
           "trigger": 7,
           "effects": [
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 65,
               "value": 1,
               "target": 0,
@@ -13097,8 +13322,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
+                "op": "REDUCE_COST",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "unique_names": 1
+                },
+                "slot": {
+                  "target_slot": "STAGE_0"
+                }
+              },
+              {
+                "op": "SELECT_MEMBER",
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT",
@@ -13114,7 +13352,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 1,
+                "frame_index": 2,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -13123,7 +13361,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 3
               }
             ]
           },
@@ -13211,7 +13449,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 1032,
+      "ability_flags": 1096,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -18320,6 +18558,15 @@
               "is_optional": false
             },
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "per_card": "SUCCESS_LIVE"
+              },
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -18356,8 +18603,22 @@
                 "value": 2
               },
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "REDUCE_COST",
                 "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "per_card": "SUCCESS_LIVE"
+                }
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
                   "target_slot": "HAND"
@@ -18365,7 +18626,7 @@
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 3,
+                "frame_index": 4,
                 "value": 1,
                 "attr": {
                   "group_enabled": 1,
@@ -18378,7 +18639,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 5
               }
             ]
           },
@@ -18395,7 +18656,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 4,
+      "ability_flags": 68,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -18440,6 +18701,15 @@
               "is_optional": false
             },
             {
+              "effect_type": 13,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "per_card": "SUCCESS_LIVE"
+              },
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -18476,8 +18746,22 @@
                 "value": 2
               },
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "REDUCE_COST",
                 "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "per_card": "SUCCESS_LIVE"
+                }
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
                   "target_slot": "HAND"
@@ -18485,7 +18769,7 @@
               },
               {
                 "op": "RECOVER_LIVE",
-                "frame_index": 3,
+                "frame_index": 4,
                 "value": 1,
                 "attr": {
                   "group_enabled": 1,
@@ -18498,7 +18782,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 5
               }
             ]
           },
@@ -18515,7 +18799,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 2,
-      "ability_flags": 4,
+      "ability_flags": 68,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -22115,7 +22399,7 @@
               "is_optional": false
             },
             {
-              "effect_type": 30,
+              "effect_type": 45,
               "value": 1,
               "target": 0,
               "params": {},
@@ -22126,7 +22410,7 @@
               "value": 1,
               "target": 0,
               "params": {
-                "heart_type": 0,
+                "heart_type": "SELECTED",
                 "color": 1
               },
               "is_optional": false
@@ -22160,9 +22444,13 @@
                 "value": 2
               },
               {
-                "op": "SELECT_MODE",
+                "op": "COLOR_SELECT",
                 "frame_index": 4,
                 "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "color_mask": "RED|GREEN|ANY"
+                },
                 "slot": {
                   "target_slot": "CONTEXT"
                 }
@@ -22175,7 +22463,7 @@
                   "target_slot": "CONTEXT"
                 },
                 "params": {
-                  "heart_type": 0
+                  "heart_type": "SELECTED"
                 }
               },
               {
@@ -22525,6 +22813,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 40,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 44,
               "value": 1,
               "target": 0,
@@ -22535,17 +22830,29 @@
           "frame_program": {
             "frames": [
               {
+                "op": "REVEAL_CARDS",
+                "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "card_type": "LIVE",
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "HAND"
+                }
+              },
+              {
                 "op": "SUM_VALUE",
-                "frame_index": 0
+                "frame_index": 1
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
+                "frame_index": 2,
                 "value": 1
               },
               {
                 "op": "ADD_TO_HAND",
-                "frame_index": 2,
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -22553,7 +22860,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 4
               }
             ]
           },
@@ -22987,45 +23294,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-011-SD"
@@ -23108,45 +23402,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-012-SD"
@@ -23431,45 +23712,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-sd1-016-SD"
@@ -23630,20 +23898,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
@@ -23653,25 +23912,18 @@
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-001-PR"
@@ -23828,20 +24080,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
@@ -23851,25 +24094,18 @@
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-002-PR"
@@ -24104,20 +24340,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
@@ -24127,25 +24354,18 @@
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!HS-PR-005-PR"
@@ -38418,6 +38638,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -38444,8 +38671,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -38456,12 +38699,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -38481,8 +38724,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -38492,7 +38749,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -38547,6 +38804,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -38573,8 +38837,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -38585,12 +38865,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -38610,8 +38890,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -38621,7 +38915,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -38676,6 +38970,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -38702,8 +39003,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -38714,12 +39031,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -38739,8 +39056,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -38750,7 +39081,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -38883,15 +39214,8 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 10,
-              "value": 0,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -38900,30 +39224,16 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
+                "op": "DRAW",
+                "value": 1,
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "CONTEXT"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                },
-                "frame_index": 1
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 1
               }
             ]
           },
@@ -41219,45 +41529,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-004-PR"
@@ -41435,45 +41732,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-006-PR"
@@ -42390,45 +42674,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-PR-013-PR"
@@ -45533,45 +45804,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-007-P"
@@ -45654,45 +45912,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-007-R"
@@ -46215,45 +46460,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-010-P"
@@ -46336,45 +46568,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-bp1-010-R"
@@ -50371,12 +50590,28 @@
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
           "trigger": 1,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "frame_program": {
             "frames": [
               {
+                "op": "SET_TAPPED",
+                "frame_index": 0,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 0
+                "frame_index": 1
               }
             ]
           },
@@ -50429,12 +50664,28 @@
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
           "trigger": 1,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            }
+          ],
           "frame_program": {
             "frames": [
               {
+                "op": "SET_TAPPED",
+                "frame_index": 0,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 0
+                "frame_index": 1
               }
             ]
           },
@@ -57671,8 +57922,30 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "SWAP_ZONE",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI",
+                  "card_type": "LIVE",
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "DISCARD",
+                  "dest_zone": "SUCCESS_PILE"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -57841,8 +58114,30 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "SWAP_ZONE",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI",
+                  "card_type": "LIVE",
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "DISCARD",
+                  "dest_zone": "SUCCESS_PILE"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -58011,8 +58306,30 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "SWAP_ZONE",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI",
+                  "card_type": "LIVE",
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "DISCARD",
+                  "dest_zone": "SUCCESS_PILE"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -58181,8 +58498,30 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "SWAP_ZONE",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI",
+                  "card_type": "LIVE",
+                  "zone_mask": "ALL"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "DISCARD",
+                  "dest_zone": "SUCCESS_PILE"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -63632,6 +63971,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -63658,8 +64004,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -63670,12 +64032,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -63695,8 +64057,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -63706,7 +64082,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -63761,6 +64137,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -63787,8 +64170,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -63799,12 +64198,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -63824,8 +64223,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -63835,7 +64248,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -63890,6 +64303,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 51,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 58,
               "value": 1,
               "target": 0,
@@ -63916,8 +64336,24 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "SET_TAPPED",
                 "frame_index": 0,
+                "value": 1,
+                "attr": {
+                  "is_optional": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 8
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "is_optional": 1
@@ -63928,12 +64364,12 @@
               },
               {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
+                "frame_index": 3,
+                "value": 6
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 4,
                 "value": {
                   "count": 5
                 },
@@ -63953,8 +64389,22 @@
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 5,
+                "value": 3
+              },
+              {
+                "op": "MOVE_TO_HAND",
+                "frame_index": 6,
+                "value": 1,
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "CONTEXT"
+                }
+              },
+              {
                 "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
+                "frame_index": 7,
                 "value": 1,
                 "slot": {
                   "remainder_zone": "DISCARD",
@@ -63964,7 +64414,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 8
               }
             ]
           },
@@ -73022,45 +73472,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-002-SD"
@@ -73143,45 +73580,32 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
+                "attr": {
+                  "is_optional": 1
+                },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!N-sd1-003-SD"
@@ -73640,7 +74064,7 @@
           "effects": [
             {
               "effect_type": 58,
-              "value": 1,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -73658,13 +74082,13 @@
               {
                 "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "value": 1,
+                "value": 2,
                 "attr": {
                   "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
-                  "source_zone": "STAGE",
+                  "source_zone": "HAND",
                   "dest_zone": "DISCARD"
                 }
               },
@@ -75326,20 +75750,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
@@ -75349,25 +75764,18 @@
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-013-PR"
@@ -75754,20 +76162,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
@@ -75777,25 +76176,18 @@
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-PR-019-PR"
@@ -88426,7 +88818,9 @@
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "group_enabled": 1,
+                  "group_id": 11
                 },
                 "slot": {
                   "target_slot": "HAND",
@@ -88434,22 +88828,13 @@
                 }
               },
               {
-                "op": "NOP",
-                "frame_index": 3,
-                "value": 1,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ADD_BLADES",
-                "frame_index": 5,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -88457,7 +88842,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 5
               }
             ]
           },
@@ -88554,7 +88939,9 @@
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "group_enabled": 1,
+                  "group_id": 11
                 },
                 "slot": {
                   "target_slot": "HAND",
@@ -88562,22 +88949,13 @@
                 }
               },
               {
-                "op": "NOP",
-                "frame_index": 3,
-                "value": 1,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ADD_BLADES",
-                "frame_index": 5,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -88585,7 +88963,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 5
               }
             ]
           },
@@ -88682,7 +89060,9 @@
                 "value": 1,
                 "attr": {
                   "zone_mask": "ALL",
-                  "is_optional": 1
+                  "is_optional": 1,
+                  "group_enabled": 1,
+                  "group_id": 11
                 },
                 "slot": {
                   "target_slot": "HAND",
@@ -88690,22 +89070,13 @@
                 }
               },
               {
-                "op": "NOP",
-                "frame_index": 3,
-                "value": 1,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
                 "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
+                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "ADD_BLADES",
-                "frame_index": 5,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -88713,7 +89084,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 5
               }
             ]
           },
@@ -92283,20 +92654,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 4
                 },
@@ -92306,25 +92668,18 @@
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-013-N"
@@ -95813,6 +96168,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 64,
               "value": 2,
               "target": 0,
@@ -95830,16 +96192,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_KEYWORD",
+                "op": "SELECT_MEMBER",
                 "frame_index": 0,
-                "attr": {
-                  "char_id_1": "LANZHU"
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE",
+                  "area_idx": 0
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 1
+                "value": 6
               },
               {
                 "op": "PAY_ENERGY",
@@ -95852,20 +96217,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 4
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 1
+                "value": 4
               },
               {
                 "op": "DRAW",
-                "frame_index": 6,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -95873,27 +96229,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 226,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            },
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-P"
@@ -95943,6 +96284,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 64,
               "value": 2,
               "target": 0,
@@ -95960,16 +96308,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_KEYWORD",
+                "op": "SELECT_MEMBER",
                 "frame_index": 0,
-                "attr": {
-                  "char_id_1": "LANZHU"
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE",
+                  "area_idx": 0
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 1
+                "value": 6
               },
               {
                 "op": "PAY_ENERGY",
@@ -95982,20 +96333,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 4
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 1
+                "value": 4
               },
               {
                 "op": "DRAW",
-                "frame_index": 6,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -96003,27 +96345,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 226,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            },
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-R+"
@@ -96073,6 +96400,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 64,
               "value": 2,
               "target": 0,
@@ -96090,16 +96424,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_KEYWORD",
+                "op": "SELECT_MEMBER",
                 "frame_index": 0,
-                "attr": {
-                  "char_id_1": "LANZHU"
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE",
+                  "area_idx": 0
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 1
+                "value": 6
               },
               {
                 "op": "PAY_ENERGY",
@@ -96112,20 +96449,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 4
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 1
+                "value": 4
               },
               {
                 "op": "DRAW",
-                "frame_index": 6,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -96133,27 +96461,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 226,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            },
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-P+"
@@ -96203,6 +96516,13 @@
           "trigger": 1,
           "effects": [
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 64,
               "value": 2,
               "target": 0,
@@ -96220,16 +96540,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_KEYWORD",
+                "op": "SELECT_MEMBER",
                 "frame_index": 0,
-                "attr": {
-                  "char_id_1": "LANZHU"
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE",
+                  "area_idx": 0
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 1
+                "value": 6
               },
               {
                 "op": "PAY_ENERGY",
@@ -96242,20 +96565,11 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 4
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 1
+                "value": 4
               },
               {
                 "op": "DRAW",
-                "frame_index": 6,
+                "frame_index": 4,
                 "value": 2,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -96263,27 +96577,12 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 226,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            },
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-002-SEC"
@@ -97574,6 +97873,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 10,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -97599,17 +97905,21 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
+                "value": 1
+              },
+              {
+                "op": "DRAW",
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 4
               }
             ]
           },
@@ -97677,6 +97987,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 10,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -97702,17 +98019,21 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
+                "value": 1
+              },
+              {
+                "op": "DRAW",
+                "frame_index": 3,
                 "value": 1,
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 4
               }
             ]
           },
@@ -98383,45 +98704,29 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp1-012-N"
@@ -98987,6 +99292,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -99014,11 +99326,12 @@
                 }
               },
               {
-                "op": "SUM_VALUE",
-                "frame_index": 2
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 2,
+                "value": 2
               },
               {
-                "op": "NOP",
+                "op": "RECOVER_LIVE",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
@@ -99027,8 +99340,8 @@
                   "zone_mask": "ALL"
                 },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
                 }
               },
               {
@@ -99038,15 +99351,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-P"
@@ -99058,7 +99363,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 0,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -99108,6 +99413,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -99135,11 +99447,12 @@
                 }
               },
               {
-                "op": "SUM_VALUE",
-                "frame_index": 2
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 2,
+                "value": 2
               },
               {
-                "op": "NOP",
+                "op": "RECOVER_LIVE",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
@@ -99148,8 +99461,8 @@
                   "zone_mask": "ALL"
                 },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
                 }
               },
               {
@@ -99159,15 +99472,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-R+"
@@ -99179,7 +99484,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 0,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -99229,6 +99534,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -99256,11 +99568,12 @@
                 }
               },
               {
-                "op": "SUM_VALUE",
-                "frame_index": 2
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 2,
+                "value": 2
               },
               {
-                "op": "NOP",
+                "op": "RECOVER_LIVE",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
@@ -99269,8 +99582,8 @@
                   "zone_mask": "ALL"
                 },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
                 }
               },
               {
@@ -99280,15 +99593,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-P+"
@@ -99300,7 +99605,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 0,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -99350,6 +99655,13 @@
               "target": 0,
               "params": {},
               "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
             }
           ],
           "frame_program": {
@@ -99377,11 +99689,12 @@
                 }
               },
               {
-                "op": "SUM_VALUE",
-                "frame_index": 2
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 2,
+                "value": 2
               },
               {
-                "op": "NOP",
+                "op": "RECOVER_LIVE",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
@@ -99390,8 +99703,8 @@
                   "zone_mask": "ALL"
                 },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
                 }
               },
               {
@@ -99401,15 +99714,7 @@
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp2-001-SEC"
@@ -99421,7 +99726,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 0,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -121209,45 +121514,29 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-008-SD"
@@ -121924,45 +122213,29 @@
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "SUM_VALUE",
-                "frame_index": 2
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
                 "value": 1
               },
               {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
+                "frame_index": 2,
                 "value": {
                   "count": 3,
                   "reveal": 1
                 },
                 "slot": {
                   "target_slot": "HAND",
+                  "remainder_zone": "DISCARD",
                   "source_zone": "DECK_TOP"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 312,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-sd1-017-SD"
@@ -124896,8 +125169,27 @@
                 }
               },
               {
+                "op": "INCREASE_HEART_REQ",
+                "frame_index": 1,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "compare_accumulated": 1
+                },
+                "slot": {
+                  "remainder_zone": "SUCCESS_PILE",
+                  "is_dynamic": 1
+                },
+                "params": {
+                  "scalar_dynamic": {
+                    "base_value": 1,
+                    "divisor": 1
+                  }
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 2
               }
             ]
           },
@@ -126032,7 +126324,20 @@
         {
           "raw_text": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 48,
+              "value": 2,
+              "target": 0,
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 2,
+                  "divisor": 1
+                }
+              },
+              "is_optional": false
+            }
+          ],
           "frame_program": {
             "frames": [
               {
@@ -126044,8 +126349,26 @@
                 }
               },
               {
+                "op": "REDUCE_HEART_REQ",
+                "frame_index": 1,
+                "value": 2,
+                "attr": {
+                  "target_player": "SELF",
+                  "compare_accumulated": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "scalar_dynamic": {
+                    "base_value": 2,
+                    "divisor": 1
+                  }
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 2
               }
             ]
           },
@@ -128438,6 +128761,20 @@
             },
             {
               "effect_type": 30,
+              "value": 2,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 63,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 48,
               "value": 1,
               "target": 0,
               "params": {},
@@ -128483,6 +128820,46 @@
               {
                 "op": "SELECT_MODE",
                 "frame_index": 4,
+                "value": 2,
+                "slot": {
+                  "target_slot": "CONTEXT"
+                }
+              },
+              {
+                "op": "JUMP",
+                "frame_index": 5,
+                "value": 1
+              },
+              {
+                "op": "JUMP",
+                "frame_index": 6,
+                "value": 2
+              },
+              {
+                "op": "PLAY_MEMBER_FROM_DISCARD",
+                "frame_index": 7,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "EDEL_NOTE",
+                  "value_enabled": 1,
+                  "value_threshold": 4,
+                  "is_le": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "DISCARD"
+                }
+              },
+              {
+                "op": "JUMP",
+                "frame_index": 8,
+                "value": 2
+              },
+              {
+                "op": "REDUCE_HEART_REQ",
+                "frame_index": 9,
                 "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -128490,7 +128867,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 10
               }
             ]
           },
@@ -138475,7 +138852,20 @@
         {
           "raw_text": "{{live_start.png|ライブ開始時}}自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。",
           "trigger": 2,
-          "effects": [],
+          "effects": [
+            {
+              "effect_type": 48,
+              "value": 1,
+              "target": 0,
+              "params": {
+                "scalar_dynamic": {
+                  "base_value": 1,
+                  "divisor": 1
+                }
+              },
+              "is_optional": false
+            }
+          ],
           "frame_program": {
             "frames": [
               {
@@ -138491,8 +138881,26 @@
                 }
               },
               {
+                "op": "REDUCE_HEART_REQ",
+                "frame_index": 1,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "compare_accumulated": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "scalar_dynamic": {
+                    "base_value": 1,
+                    "divisor": 1
+                  }
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 2
               }
             ]
           },

@@ -3,12 +3,30 @@
 //! This module contains tests for the new opcodes (91-97) and conditions (301-304)
 //! added for BP05 series cards.
 
-use crate::core::logic::{AbilityContext, CardDatabase};
+use crate::core::logic::{AbilityContext, CardDatabase, card_db::LOGIC_ID_MASK};
 use crate::core::{
-    C_COUNT_ENERGY, C_COUNT_ENERGY_EXACT, C_OPPONENT_HAS_EXCESS_HEART, C_SCORE_TOTAL_CHECK,
+    C_BLADE_COMPARE, C_COUNT_ENERGY, C_COUNT_ENERGY_EXACT, C_HEART_COMPARE,
+    C_OPPONENT_HAND_DIFF, C_OPPONENT_HAS_EXCESS_HEART, C_SCORE_TOTAL_CHECK,
+    C_COST_COMPARE,
 };
-use crate::core::{O_DRAW, O_LOOK_DECK_DYNAMIC, O_REDUCE_SCORE, O_RETURN, O_SKIP_ACTIVATE_PHASE};
-use crate::test_helpers::{create_test_state, load_real_db, TestUtils};
+use crate::core::{O_DRAW, O_JUMP_IF_FALSE, O_LOOK_DECK_DYNAMIC, O_REDUCE_SCORE, O_RETURN, O_SKIP_ACTIVATE_PHASE};
+use crate::test_helpers::{create_test_db, create_test_state, load_real_db, TestUtils};
+
+fn update_member_stats(db: &mut CardDatabase, card_id: i32, cost: Option<u32>, blades: Option<u32>) {
+    if let Some(member) = db.members.get_mut(&card_id) {
+        if let Some(cost) = cost {
+            member.cost = cost;
+        }
+        if let Some(blades) = blades {
+            member.blades = blades;
+        }
+        let idx = (card_id as usize) & LOGIC_ID_MASK as usize;
+        if db.members_vec.len() <= idx {
+            db.members_vec.resize(idx + 1, None);
+        }
+        db.members_vec[idx] = Some(member.clone());
+    }
+}
 
 /// Test O_LOOK_DECK_DYNAMIC (91)
 /// Look at cards from deck equal to live score + v
@@ -393,5 +411,173 @@ fn test_condition_score_total_check() {
         state.players[0].hand.len(),
         hand_before,
         "Should not draw card when total score < 20"
+    );
+}
+
+/// Test C_OPPONENT_HAND_DIFF (219)
+/// Opponent hand size minus player hand size must be at least v.
+#[test]
+fn test_condition_opponent_hand_diff() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.players[0].hand = vec![3001, 3002].into();
+    state.players[1].hand = vec![3003, 3004, 3005].into();
+    state.set_deck(0, &[1, 2, 3]);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
+
+    let bytecode = vec![
+        C_OPPONENT_HAND_DIFF,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
+
+    let before = state.players[0].hand.len();
+    state.resolve_frames(&db, &bytecode, &ctx);
+    assert_eq!(
+        state.players[0].hand.len(),
+        before + 1,
+        "Should draw when opponent hand is larger by at least 1"
+    );
+}
+
+/// Test C_COST_COMPARE (241)
+/// Compares player and opponent stage costs at the selected slot.
+#[test]
+fn test_condition_cost_compare() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.players[0].hand.clear();
+    state.players[1].hand.clear();
+
+    let my_card = 3001;
+    let opp_card = 3002;
+    update_member_stats(&mut db, my_card, Some(3), None);
+    update_member_stats(&mut db, opp_card, Some(1), None);
+    state.players[0].stage[0] = my_card;
+    state.players[1].stage[0] = opp_card;
+    state.set_deck(0, &[1, 2, 3]);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        ..Default::default()
+    };
+
+    let bytecode = vec![
+        // Frame 0: Check if player stage cost > opponent stage cost
+        C_COST_COMPARE, 0, 1, 0, 0,
+        // Frame 1: Jump 1 frame if condition is false (skip draw)
+        O_JUMP_IF_FALSE, 1, 0, 0, 0,
+        // Frame 2: Draw 1 card (executes only if condition passed)
+        O_DRAW, 1, 0, 0, 0,
+        // Frame 3: Return
+        O_RETURN, 0, 0, 0, 0,
+    ];
+
+    let before = state.players[0].hand.len();
+    state.resolve_frames(&db, &bytecode, &ctx);
+    assert_eq!(
+        state.players[0].hand.len(),
+        before + 1,
+        "Should draw when player's stage cost is higher than opponent's"
+    );
+}
+
+/// Test C_BLADE_COMPARE (242)
+/// Checks whether effective blades at the selected slot meet the comparison value.
+#[test]
+fn test_condition_blade_compare() {
+    let mut db = create_test_db();
+    let mut state = create_test_state();
+    state.players[0].hand.clear();
+
+    let my_card = 3001;
+    update_member_stats(&mut db, my_card, None, Some(2));
+    state.players[0].stage[0] = my_card;
+    state.set_deck(0, &[1, 2, 3]);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    let bytecode = vec![
+        C_BLADE_COMPARE,
+        1,
+        0,
+        0,
+        0,
+        O_DRAW,
+        1,
+        0,
+        0,
+        0,
+        O_RETURN,
+        0,
+        0,
+        0,
+        0,
+    ];
+
+    let before = state.players[0].hand.len();
+    state.resolve_frames(&db, &bytecode, &ctx);
+    assert_eq!(
+        state.players[0].hand.len(),
+        before + 1,
+        "Should draw when effective blades at slot 0 are >= 1"
+    );
+}
+
+/// Test C_HEART_COMPARE (243)
+/// Checks the heart count at the selected slot, defaulting to pink when no mask is set.
+#[test]
+fn test_condition_heart_compare() {
+    let db = create_test_db();
+    let mut state = create_test_state();
+    state.players[0].hand.clear();
+
+    let my_card = 3001;
+    state.players[0].stage[0] = my_card;
+    state.set_deck(0, &[1, 2, 3]);
+
+    let ctx = AbilityContext {
+        player_id: 0,
+        area_idx: 0,
+        ..Default::default()
+    };
+
+    let bytecode = vec![
+        // Frame 0: Check if heart count >= 1
+        C_HEART_COMPARE, 1, 0, 0, 0,
+        // Frame 1: Jump 1 frame if condition is false (skip draw)
+        O_JUMP_IF_FALSE, 1, 0, 0, 0,
+        // Frame 2: Draw 1 card (executes only if condition passed)
+        O_DRAW, 1, 0, 0, 0,
+        // Frame 3: Return
+        O_RETURN, 0, 0, 0, 0,
+    ];
+
+    let before = state.players[0].hand.len();
+    state.resolve_frames(&db, &bytecode, &ctx);
+    assert_eq!(
+        state.players[0].hand.len(),
+        before + 1,
+        "Should draw when heart count at slot 0 is >= 1"
     );
 }

@@ -242,13 +242,18 @@ export const Rendering = {
 
         content.innerHTML = '';
         modalState.cards.forEach((c, idx) => {
+            const actionId = modalState.actions[idx];
+            const isClickable = (actionId !== undefined && actionId !== null && actionId !== 0);
             const viewModel = CardRenderer.getCardViewModel(c, {
                 containerId: DOM_IDS.SELECTION_CONTENT,
-                actionId: modalState.actions[idx],
+                actionId: actionId,
+                isValid: isClickable,
+                mini: true
             });
-            const cardEl = CardRenderer.createCardDOM(viewModel, c, (aid) => {
+            const onClick = isClickable ? (aid) => {
                 if (window.doAction) window.doAction(aid);
-            });
+            } : null;
+            const cardEl = CardRenderer.createCardDOM(viewModel, c, onClick);
             cardEl.className = `selection-card-item ${viewModel.classes}`;
             content.appendChild(cardEl);
         });
@@ -327,7 +332,6 @@ export const Rendering = {
     renderTurnHistory: () => PerformanceRenderer.renderTurnHistory(Rendering.getPhaseKey)
 };
 
-// Automatic rendering on state change
 if (typeof window !== 'undefined') {
     State.on('change', () => Rendering.render());
 }
@@ -335,7 +339,7 @@ if (typeof window !== 'undefined') {
 // Global Highlighting Logic for Bidirectional Linkage
 window.highlightActionBtn = (actionId, active) => {
     if (actionId === undefined) return;
-    
+
     // Update global hover state for persistence across re-renders
     if (active) {
         State.hoveredActionId = actionId;
@@ -349,8 +353,8 @@ window.highlightActionBtn = (actionId, active) => {
         if (active) btn.classList.add('hover-highlight');
         else btn.classList.remove('hover-highlight');
     });
-    
-    // 2. Highlight all linked components (Cards, Slots, etc.)
+
+    // 2. Highlight all linked components (Cards, Slots, etc.) via data-action-id
     const linked = document.querySelectorAll(`[data-action-id="${actionId}"]:not(.action-btn)`);
     linked.forEach(el => {
         if (active) el.classList.add('hover-highlight');
@@ -358,13 +362,50 @@ window.highlightActionBtn = (actionId, active) => {
     });
 
     // 3. Use Highlighter to properly highlight based on action metadata (source/target zones)
+    //    Also handle special cases like mulligan actions
     if (active) {
         const state = State.data;
+        let action = null;
+
+        // Try to find action in legal_actions
         if (state && state.legal_actions) {
-            const action = state.legal_actions.find(a => a.id === actionId);
-            if (action) {
-                Highlighter.highlightAction(action);
+            action = state.legal_actions.find(a => a.id === actionId);
+        }
+
+        // Special handling for mulligan actions (IDs 300-359)
+        // These map directly to hand indices even if not in legal_actions
+        if (!action && actionId >= 300 && actionId <= 359) {
+            const handIdx = actionId - 300;
+            const perspectivePlayer = State.perspectivePlayer;
+            const prefix = (state?.active_player === perspectivePlayer) ? 'my' : 'opp';
+
+            // Highlight the card at this hand index directly (if data-action-id linking failed)
+            const handCardId = `${prefix}-hand-card-${handIdx}`;
+            const handCard = document.getElementById(handCardId);
+            if (handCard && !handCard.classList.contains('hover-highlight')) {
+                handCard.classList.add('hover-highlight');
+                handCard.classList.add('highlight-source');
             }
+
+            // Ensure the button is highlighted (if data-action-id linking failed)
+            const mulliganBtn = document.querySelector(`.action-btn[data-action-id="${actionId}"]`);
+            if (mulliganBtn && !mulliganBtn.classList.contains('hover-highlight')) {
+                mulliganBtn.classList.add('hover-highlight');
+            }
+        }
+
+        // Normal action highlighting via Highlighter (for semantic source/target highlighting)
+        if (action) {
+            Highlighter.highlightAction(action);
+
+            // After Highlighter adds highlight-source/target, also add hover-highlight
+            // to ensure bidirectional linking works
+            const highlighted = document.querySelectorAll('.highlight-source, .highlight-target');
+            highlighted.forEach(el => {
+                if (!el.classList.contains('action-btn')) {
+                    el.classList.add('hover-highlight');
+                }
+            });
         }
     } else {
         Highlighter.clearHighlights();
@@ -372,4 +413,3 @@ window.highlightActionBtn = (actionId, active) => {
 };
 
 window.highlightActionTarget = window.highlightActionBtn;
-

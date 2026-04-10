@@ -3,7 +3,8 @@
 //! execution after player input.
 
 use crate::core::logic::card_db::LOGIC_ID_MASK;
-use crate::test_helpers::create_test_state;
+use crate::core::logic::filter::CardFilter;
+use crate::test_helpers::{create_test_state, load_real_db};
 
 use crate::core::logic::*;
 
@@ -96,6 +97,114 @@ fn test_ability_resumption_after_choice() {
     assert_eq!(state.phase, Phase::Main);
     assert!(state.players[0].discard.len() <= 2);
     assert!(state.interaction_stack.is_empty());
+}
+
+#[test]
+fn test_color_select_actions_are_filtered_by_color_mask() {
+    let db = CardDatabase::default();
+    let mut state = create_test_state();
+    let mut filter = CardFilter::new();
+    filter.target_player = crate::core::generated_constants::TARGET_PLAYER_SELF as u8;
+    filter.color_mask = (1 << crate::core::generated_constants::HEART_COLOR_RED)
+        | (1 << crate::core::generated_constants::HEART_COLOR_GREEN)
+        | (1 << crate::core::generated_constants::HEART_COLOR_PURPLE);
+
+    let filter_attr = filter.to_attr();
+    let ctx = AbilityContext {
+        player_id: 0,
+        source_card_id: 646,
+        ability_card_id: 646,
+        activator_id: 0,
+        ..Default::default()
+    };
+
+    let suspended = crate::core::logic::interpreter::suspension::suspend_interaction(
+        &mut state,
+        &db,
+        &ctx,
+        0,
+        crate::core::generated_constants::O_COLOR_SELECT,
+        0,
+        crate::core::enums::ChoiceType::ColorSelect,
+        "",
+        filter_attr,
+        -1,
+        Vec::new(),
+        Vec::new(),
+    );
+
+    assert!(suspended, "Color select interaction should suspend and generate actions");
+    let actions = state
+        .interaction_stack
+        .last()
+        .expect("pending interaction")
+        .actions
+        .clone();
+    assert_eq!(actions, vec![
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_RED,
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_GREEN,
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_PURPLE,
+    ]);
+}
+
+#[test]
+fn test_real_card_646_color_select_uses_color_mask() {
+    let db = load_real_db();
+    let mut state = create_test_state();
+    state.ui.silent = true;
+
+    let card_id: i32 = 646;
+    let card = match db.get_member(card_id) {
+        Some(card) => card,
+        None => {
+            println!("test_real_card_646_color_select_uses_color_mask: SKIPPED (card 646 missing from DB)");
+            return;
+        }
+    };
+
+    let ability_idx = match card
+        .abilities
+        .iter()
+        .position(|ability| ability.words().iter().step_by(5).any(|&op| op == crate::core::generated_constants::O_COLOR_SELECT))
+    {
+        Some(idx) => idx,
+        None => {
+            println!("test_real_card_646_color_select_uses_color_mask: SKIPPED (color select ability not found)");
+            return;
+        }
+    };
+
+    let ability = &card.abilities[ability_idx];
+    let frames = ability
+        .frame_program
+        .as_ref()
+        .map(|program| program.frames.clone())
+        .unwrap_or_default();
+
+    state.players[0].stage[0] = card_id;
+    let ctx = AbilityContext {
+        player_id: 0,
+        area_idx: 0,
+        source_card_id: card_id,
+        ability_card_id: card_id,
+        trigger_type: ability.trigger,
+        ..Default::default()
+    };
+
+    state.resolve_semantic_frames(db, &frames, &ctx);
+
+    assert_eq!(state.phase, Phase::Response);
+    let actions = state
+        .interaction_stack
+        .last()
+        .expect("pending interaction")
+        .actions
+        .clone();
+    assert_eq!(actions, vec![
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_RED,
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_GREEN,
+        crate::core::generated_constants::ACTION_BASE_COLOR + crate::core::generated_constants::HEART_COLOR_ANY,
+    ]);
 }
 
 /// Verifies that multiple activations or nested triggers correctly manage the pending context.

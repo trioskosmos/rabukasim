@@ -31,6 +31,22 @@ pub fn handle_optional_nop(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
+    // Check if NOP is being used as a condition check (has comparison mode set on slot)
+    // This handles cases like Onitsuka Natsumi where NOP checks "on play or move" condition
+    if frame_data.slot.comparison != 0 && !frame_data.filter.is_optional {
+        // NOP with comparison mode is being used as a placeholder for unimplemented conditions
+        // Common patterns:
+        // - slot.target_slot = STAGE_0, comparison = GE: Check if member was just played/moved
+        // For now, treat as "condition met" if the trigger type is OnPlay or OnPositionChange
+        let condition_met = matches!(ctx.trigger_type, TriggerType::OnPlay | TriggerType::OnPositionChange);
+        
+        // Store result in v_remaining for JUMP_IF_FALSE to check
+        // v_remaining = 0 means condition false, v_remaining = 1 means condition true
+        ctx.v_remaining = if condition_met { 1 } else { 0 };
+        
+        return HandlerResult::Continue;
+    }
+
     if !frame_data.filter.is_optional || ctx.choice_index != -1 || ctx.v_remaining != -1 {
         return HandlerResult::Continue;
     }
