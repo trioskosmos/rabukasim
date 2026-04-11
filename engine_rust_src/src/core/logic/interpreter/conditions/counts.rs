@@ -496,6 +496,7 @@ fn resolve_count_components(
     depth: u32,
 ) -> i32 {
     let p_idx = ctx.activator_id as usize;
+    let player = &state.players[p_idx];
 
     if frame.opcode == C_COUNT_LIVE_ZONE {
         resolve_live_zone_count(state, db, frame, ctx)

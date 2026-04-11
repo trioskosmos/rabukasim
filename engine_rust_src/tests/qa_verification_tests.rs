@@ -237,3 +237,70 @@ fn test_ability_frame_source_has_explicit_add_hearts_metadata() {
         "Choice-based heart grants should be marked as selected hearts"
     );
 }
+
+#[test]
+fn test_all_abilities_have_frame_verification() {
+    let json_content = std::fs::read_to_string("../data/ability_frame_source.json")
+        .expect("Failed to read ability_frame_source.json");
+    let data: serde_json::Value = serde_json::from_str(&json_content)
+        .expect("Failed to parse ability_frame_source.json");
+
+    let abilities = data
+        .get("abilities")
+        .and_then(|value| value.as_array())
+        .expect("ability_frame_source.json should contain an abilities array");
+
+    let mut missing_verification = Vec::new();
+    let mut invalid_verification = Vec::new();
+
+    for (index, ability) in abilities.iter().enumerate() {
+        // Check if frame_verification exists
+        let verification = match ability.get("frame_verification") {
+            Some(v) => v,
+            None => {
+                missing_verification.push(index);
+                continue;
+            }
+        };
+
+        // Check verification structure
+        let has_verified = verification.get("verified").is_some();
+        let has_notes = verification.get("notes").and_then(|v| v.as_array()).is_some();
+        let has_text_mapping = verification.get("text_mapping").is_some();
+
+        if !has_verified || !has_notes || !has_text_mapping {
+            invalid_verification.push((
+                index,
+                format!(
+                    "verified: {}, notes: {}, text_mapping: {}",
+                    has_verified, has_notes, has_text_mapping
+                ),
+            ));
+        }
+    }
+
+    if !missing_verification.is_empty() {
+        panic!(
+            "Found {} abilities without frame_verification: {:?}",
+            missing_verification.len(),
+            missing_verification
+        );
+    }
+
+    if !invalid_verification.is_empty() {
+        panic!(
+            "Found {} abilities with invalid verification structure:\n{}",
+            invalid_verification.len(),
+            invalid_verification
+                .iter()
+                .map(|(idx, reason)| format!("Ability {}: {}", idx, reason))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+    }
+
+    println!(
+        "All {} abilities have valid frame_verification structures",
+        abilities.len()
+    );
+}

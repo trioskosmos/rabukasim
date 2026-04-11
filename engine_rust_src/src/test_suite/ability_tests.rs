@@ -267,9 +267,11 @@ fn test_ability_64_kurosawa_dia_flavor_choice() {
         .expect("Card PL!S-bp5-004 should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = card.abilities.iter()
-        .position(|a| a.ability_id == 64)
-        .expect("Card should have ability #64");
+    let ability_idx = 64;
+    assert!(
+        card.abilities.get(ability_idx).is_some(),
+        "Card should have ability #64"
+    );
 
     // Test 1: With both Aqours and SaintSnow members - both options should work
     let mut state1 = create_test_state();
@@ -317,9 +319,11 @@ fn test_ability_64_option1_aqours_blade() {
         .expect("Card should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = card.abilities.iter()
-        .position(|a| a.ability_id == 64)
-        .expect("Card should have ability #64");
+    let ability_idx = 64;
+    assert!(
+        card.abilities.get(ability_idx).is_some(),
+        "Card should have ability #64"
+    );
 
     let mut state = create_test_state();
     state.phase = Phase::Main;
@@ -345,9 +349,11 @@ fn test_ability_64_option2_saintsnow_position_change() {
         .expect("Card should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = card.abilities.iter()
-        .position(|a| a.ability_id == 64)
-        .expect("Card should have ability #64");
+    let ability_idx = 64;
+    assert!(
+        card.abilities.get(ability_idx).is_some(),
+        "Card should have ability #64"
+    );
 
     let mut state = create_test_state();
     state.phase = Phase::Main;

@@ -80,6 +80,7 @@ class Ability:
     trigger: TriggerType
     effects: List[Effect]
     frame_program: Dict[str, Any] = field(default_factory=dict)
+    semantic_form: Dict[str, Any] = field(default_factory=dict)
     bytecode: List[int] = field(default_factory=list)
     costs: List[Cost] = field(default_factory=list)
     conditions: List[Condition] = field(default_factory=list)

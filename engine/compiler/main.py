@@ -37,7 +37,10 @@ from ..models.ability import (
 )
 from ..models.card import EnergyCard, LiveCard, MemberCard
 from ..models.enums import CHAR_MAP
-from .semantic_processor import populate_semantic_from_frames as _populate_semantic_from_frames
+from .semantic_processor import (
+    populate_semantic_from_frames as _populate_semantic_from_frames,
+    populate_semantic_from_text as _populate_semantic_from_text,
+)
 
 # Worker-local adapters (initialized once per process)
 _MEMBER_ADAPTER: TypeAdapter[MemberCard] | None = None
@@ -89,6 +92,15 @@ def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
         )
 
     return exclude_ability_fields, exclude_card_fields
+
+
+def _card_has_ability_source(data: dict[str, Any]) -> bool:
+    return any(str(data.get(key, "")).strip() for key in ("ability", "original_text")) or bool(
+        data.get("abilities")
+    ) or bool(
+        isinstance(data.get("frame_program"), dict)
+        and data["frame_program"].get("frames")
+    ) or bool(str(data.get("pseudocode", "")).strip())
 
 
 def _process_card_worker(args):
@@ -771,6 +783,7 @@ def _hydrate_card_abilities(card_no: str, data: dict) -> tuple[str, list[Ability
     abilities = _resolve_abilities(card_no, data)
     for ab in abilities:
         ab.card_no = card_no
+    _populate_semantic_from_text(abilities)
     _populate_semantic_from_frames(abilities)
     return translation_en, abilities, data.get("special_heart", {})
 
