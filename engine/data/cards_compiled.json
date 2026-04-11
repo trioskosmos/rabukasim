@@ -116297,17 +116297,12 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_KEYWORD",
+                "op": "META_RULE",
                 "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1,
-                  "group_id": "NIJIGASAKI",
-                  "keyword_energy": 1
-                },
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                "value": 0,
+                "params": {
+                  "raw_cond": "KEYWORD_ENERGY",
+                  "FILTER": "GROUP=2"
                 }
               },
               {
@@ -116324,17 +116319,12 @@
                 }
               },
               {
-                "op": "HAS_KEYWORD",
+                "op": "META_RULE",
                 "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1,
-                  "group_id": "NIJIGASAKI",
-                  "keyword_member": 1
-                },
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                "value": 0,
+                "params": {
+                  "raw_cond": "KEYWORD_MEMBER",
+                  "FILTER": "GROUP=2"
                 }
               },
               {
