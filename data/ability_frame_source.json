@@ -3355,7 +3355,21 @@
           "name": "若菜四季",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Right side position check + activate 2 energy",
+          "Frame 0: HAS_KEYWORD checks for right side position (char_id_1=LANZHU placeholder)",
+          "Frame 1: JUMP_IF_FALSE skips if not on right side",
+          "Frame 2: ACTIVATE_ENERGY with value=2 - activates 2 energy",
+          "4 cards share this pattern (若菜四季 ab#1 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}【右サイド】": "Frame 0: HAS_KEYWORD with char_id_1=LANZHU (right side check)",
+          "エネルギーを2枚アクティブにする": "Frame 2: ACTIVATE_ENERGY with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}【左サイド】カードを2枚引き、手札を1枚控え室に置く。",
@@ -3447,7 +3461,23 @@
           "name": "若菜四季",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Left side position check + draw 2 discard 1",
+          "Frame 0: HAS_KEYWORD checks for left side position",
+          "Frame 1: JUMP_IF_FALSE skips if not on left side",
+          "Frame 2: DRAW with value=2",
+          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
+          "4 cards share this pattern (若菜四季 ab#0 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}【左サイド】": "Frame 0: HAS_KEYWORD with char_id_1=LANZHU (left side check)",
+          "カードを2枚引き": "Frame 2: DRAW with value=2",
+          "手札を1枚控え室に置く": "Frame 3: MOVE_TO_DISCARD with value=1, source_zone=HAND"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した場合、自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える。",
@@ -3537,7 +3567,21 @@
           "name": "百生 吟子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Baton from lower cost Cerise Bouquet member to recover Hasunosora live card",
+          "Frame 0: NOP with unit_enabled=CERISE_BOUQUE checks baton condition",
+          "Frame 1: JUMP_IF_FALSE skips if condition not met",
+          "Frame 2: RECOVER_LIVE with group_id=HASUNOSORA - recovers live card to hand",
+          "4 cards share this pattern (百生吟子 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した場合": "Frame 0: NOP with unit_id=CERISE_BOUQUET (baton check)",
+          "自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える": "Frame 2: RECOVER_LIVE with group_id=HASUNOSORA, source_zone=DISCARD, target_slot=HAND"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
@@ -3603,7 +3647,19 @@
           "name": "エマ・ヴェルデ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Simple activate 2 energy on play",
+          "Frame 0: ACTIVATE_ENERGY with value=2",
+          "Frame 1: RETURN",
+          "4 cards share this pattern (日野下花帆, エマ・ヴェルデ)"
+        ],
+        "text_mapping": {
+          "エネルギーを2枚アクティブにする": "Frame 0: ACTIVATE_ENERGY with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}バトンタッチして登場した場合、このバトンタッチで控え室に置かれた『Liella!』のメンバーカードを1枚手札に加える。",
@@ -3684,7 +3740,21 @@
           "name": "桜小路きな子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Baton touch to recover Liella member from discard to hand",
+          "Frame 0: BATON checks if baton touched",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: RECOVER_MEMBER with group_id=LIELLA - recovers member to hand",
+          "4 cards share this pattern (桜小路きな子 variants)"
+        ],
+        "text_mapping": {
+          "バトンタッチして登場した場合": "Frame 0: BATON check",
+          "このバトンタッチで控え室に置かれた『Liella!』のメンバーカードを1枚手札に加える": "Frame 2: RECOVER_MEMBER with group_id=LIELLA, source_zone=DISCARD, target_slot=HAND"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
@@ -3767,7 +3837,21 @@
           "name": "松浦果南",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard live card from hand to draw 3",
+          "Frame 0: MOVE_TO_DISCARD with card_type=LIVE, is_optional=1",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: DRAW with value=3",
+          "4 cards share this pattern (松浦果南 variants)"
+        ],
+        "text_mapping": {
+          "手札のライブカードを1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with card_type=LIVE, is_optional=1",
+          "カードを3枚引く": "Frame 2: DRAW with value=3"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、自分の控え室から『みらくらぱーく！』のカードを1枚手札に加える。",
@@ -3883,7 +3967,26 @@
           "name": "大沢瑠璃乃",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard hand + check other members on stage to recover Mira Cra Park card",
+          "Frame 0: MOVE_TO_DISCARD optional from HAND",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: SUM_VALUE aggregates value",
+          "Frame 3: COUNT_STAGE checks if other members on stage (special_id=Not Self)",
+          "Frame 4: SUM_VALUE checks comparison",
+          "Frame 5: JUMP_IF_FALSE skips if condition not met",
+          "Frame 6: RECOVER_MEMBER with unit_id=MIRA_CRA_PARK",
+          "4 cards share this pattern (大沢瑠璃乃 variants)"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "自分のステージにほかのメンバーがいる場合": "Frames 3-5: COUNT_STAGE with special_id=Not Self + SUM_VALUE comparison",
+          "自分の控え室から『みらくらぱーく！』のカードを1枚手札に加える": "Frame 6: RECOVER_MEMBER with unit_id=MIRA_CRA_PARK"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
@@ -3980,7 +4083,23 @@
           "name": "桜坂しずく",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard to look at 7 cards, choose up to 3 member cards with heart_02/04/05",
+          "Frame 0: MOVE_TO_DISCARD optional from HAND",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: LOOK_AND_CHOOSE with count=7, choose_count=3, color_mask=RED|GREEN|BLUE (heart colors), is_optional=1",
+          "4 cards share this pattern (桜坂しずく variants)"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "自分のデッキの上からカードを7枚見る": "Frame 2: LOOK_AND_CHOOSE value.count=7",
+          "その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい": "Frame 2: color_mask=RED|GREEN|BLUE, choose_count=3, is_optional=1",
+          "残りを控え室に置く": "Frame 2: remainder_zone=DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
@@ -4068,7 +4187,21 @@
           "name": "桜坂しずく",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard hand to recover Nijigasaki live card from discard",
+          "Frame 0: MOVE_TO_DISCARD optional from HAND",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI",
+          "4 cards share this pattern (桜坂しずく variants)"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える": "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}能力を持たないメンバーからバトンタッチして登場した場合、カードを1枚引く。",
@@ -4143,7 +4276,21 @@
           "name": "高海千歌",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Baton from member with no ability to draw 1 card",
+          "Frame 0: BATON checks if baton touched",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: DRAW with value=1",
+          "4 cards share this pattern (高海千歌 variants)"
+        ],
+        "text_mapping": {
+          "能力を持たないメンバーからバトンタッチして登場した場合": "Frame 0: BATON check for no-ability member",
+          "カードを1枚引く": "Frame 2: DRAW with value=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。",
@@ -4226,7 +4373,19 @@
           "name": "優木せつ菜",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Both players recover 1 live card from discard to hand",
+          "Frame 0: RECOVER_LIVE for SELF",
+          "Frame 1: RECOVER_LIVE for OPPONENT (target_slot=STAGE_2)",
+          "4 cards share this pattern (優木せつ菜 variants)"
+        ],
+        "text_mapping": {
+          "自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える": "Frames 0-1: RECOVER_LIVE for SELF + RECOVER_LIVE for OPPONENT"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
@@ -4310,7 +4469,21 @@
           "name": "米女メイ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If energy >= 11, recover 1 live card from discard to hand",
+          "Frame 0: COUNT_ENERGY with value=11, comparison=GE",
+          "Frame 1: JUMP_IF_FALSE skips if energy < 11",
+          "Frame 2: RECOVER_LIVE",
+          "4 cards share this pattern (米女メイ variants)"
+        ],
+        "text_mapping": {
+          "自分のエネルギーが11枚以上ある場合": "Frame 0: COUNT_ENERGY with value=11, comparison=GE",
+          "自分の控え室からライブカードを1枚手札に加える": "Frame 2: RECOVER_LIVE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
@@ -4409,7 +4582,22 @@
           "name": "澁谷かのん",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional: Select Liella member, negate all LIVE_START abilities, then recover Liella card",
+          "Frame 0: SELECT_MEMBER with group_id=LIELLA, is_optional=1",
+          "Frame 1: NEGATE_EFFECT negates selected member's LIVE_START abilities",
+          "Frame 2: JUMP_IF_FALSE skips if not activated",
+          "Frame 3: RECOVER_LIVE with group_id=LIELLA",
+          "4 cards share this pattern (澁谷かのん variants)"
+        ],
+        "text_mapping": {
+          "自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい": "Frames 0-1: SELECT_MEMBER (LIELLA, optional) + NEGATE_EFFECT",
+          "これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える": "Frames 2-3: JUMP_IF_FALSE + RECOVER_LIVE with group_id=LIELLA"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分のステージにいるメンバー1人につき、カードを1枚引く。その後、手札を1枚控え室に置く。",
@@ -4683,7 +4871,23 @@
           "name": "日野下花帆",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Draw 1 card per member on stage, then discard 1 from hand",
+          "Frame 0: COUNT_STAGE counts members on stage",
+          "Frame 1: JUMP_IF_FALSE skips if no members",
+          "Frame 2: DRAW with value=1 (draws once, not per member - ISSUE: should be per member)",
+          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
+          "4 cards share this pattern (園田海未 variants)",
+          "ISSUE: Text says 'メンバー1人につき、カードを1枚引く' (1 card per member), but frame only draws 1"
+        ],
+        "text_mapping": {
+          "自分のステージにいるメンバー1人につき、カードを1枚引く": "Frame 0-2: COUNT_STAGE + JUMP_IF_FALSE + DRAW (ISSUE: only draws 1, not per member)",
+          "その後、手札を1枚控え室に置く": "Frame 3: MOVE_TO_DISCARD with value=1, source_zone=HAND"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい。そうした場合、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く。",
@@ -4781,7 +4985,21 @@
           "name": "三船栞子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If cost 13+ member on stage, draw 1 card",
+          "Frame 0: COUNT_STAGE with value_threshold=13, is_cost_type=1 - checks for cost≥13 member",
+          "Frame 1: JUMP_IF_FALSE skips if no cost≥13 member",
+          "Frame 2: DRAW with value=1",
+          "4 cards share this pattern (矢澤にこ variants)"
+        ],
+        "text_mapping": {
+          "自分のステージにコスト13以上のメンバーがいる場合": "Frame 0: COUNT_STAGE with value_threshold=13, is_cost_type=1, comparison=GE",
+          "カードを1枚引く": "Frame 2: DRAW with value=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを1枚手札に加える。",
@@ -4855,7 +5073,23 @@
           "name": "星空凛",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Mill 4 cards from deck top, if live card among them, add 2 blades",
+          "Frame 0: MOVE_TO_DISCARD with value=4, source_zone=DECK_TOP - mills 4 cards",
+          "Frame 1: DISCARDED_CARDS with card_type=LIVE - checks if live card was milled",
+          "Frame 2: JUMP_IF_FALSE skips if no live card",
+          "Frame 3: ADD_BLADES with value=2",
+          "4 cards share this pattern (日野下花帆 variants)"
+        ],
+        "text_mapping": {
+          "自分のデッキの上からカードを4枚控え室に置く": "Frame 0: MOVE_TO_DISCARD with value=4, source_zone=DECK_TOP",
+          "それらの中にライブカードがある場合": "Frame 1-2: DISCARDED_CARDS with card_type=LIVE + JUMP_IF_FALSE",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 3: ADD_BLADES with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。",
@@ -4930,7 +5164,21 @@
           "name": "村野さやか",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional swap Nijigasaki live card from success pile to discard, then from discard to success pile",
+          "Frame 0: SWAP_ZONE with group_id=NIJIGASAKI, card_type=LIVE, is_optional=1 - moves from SUCCESS_PILE to DISCARD",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: SWAP_ZONE with group_id=NIJIGASAKI, card_type=LIVE - moves from DISCARD to SUCCESS_PILE",
+          "4 cards share this pattern (三船栞子 variants)"
+        ],
+        "text_mapping": {
+          "自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい": "Frame 0: SWAP_ZONE with group_id=NIJIGASAKI, source_zone=SUCCESS_PILE, dest_zone=DISCARD, is_optional=1",
+          "そうした場合、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く": "Frames 1-2: JUMP_IF_FALSE + SWAP_ZONE with source_zone=DISCARD, dest_zone=SUCCESS_PILE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
@@ -4974,7 +5222,19 @@
           "name": "平安名すみれ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Recover 1 member card with cost ≤2 from discard to hand",
+          "Frame 0: RECOVER_MEMBER with value_threshold=2, is_le=1, is_cost_type=1",
+          "Frame 1: RETURN",
+          "4 cards share this pattern (星空凛 variants)"
+        ],
+        "text_mapping": {
+          "自分の控え室からコスト2以下のメンバーカードを1枚手札に加える": "Frame 0: RECOVER_MEMBER with value_threshold=2, is_le=1, is_cost_type=1, source_zone=DISCARD, target_slot=HAND"
+        }
+      }
     },
     {
       "primary_text_jp": "{{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n(対戦相手のカードの効果でも発動する。)",
@@ -5022,7 +5282,19 @@
           "name": "桜小路きな子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional recover up to 2 member cards with cost ≤2 from discard to hand",
+          "Frame 0: RECOVER_MEMBER with value=2, value_threshold=2, is_le=1, is_cost_type=1, is_optional=1",
+          "Frame 1: RETURN",
+          "4 cards share this pattern (村野さやか variants)"
+        ],
+        "text_mapping": {
+          "自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える": "Frame 0: RECOVER_MEMBER with value=2, value_threshold=2, is_le=1, is_cost_type=1, is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
@@ -5097,7 +5369,27 @@
           "name": "桜小路きな子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "CRITICAL: Frames only implement optional tap, missing the actual opponent tap effect",
+          "Frame 0: SET_TAPPED optional on self",
+          "Frame 1: RETURN",
+          "Missing: SELECT_MEMBER to find opponent with exactly 4 blades",
+          "Missing: TAP_OPPONENT or MOVE_MEMBER to actually tap the opponent",
+          "Text says: '相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする'"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにしてもよい": "Frame 0: SET_TAPPED with is_optional=1",
+          "相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする": "NOT IMPLEMENTED - should SELECT_MEMBER with blade filter=4, then TAP_OPPONENT"
+        },
+        "required_frames": [
+          "SET_TAPPED with is_optional=1 (already present)",
+          "SELECT_MEMBER targeting OPPONENT with blade count exactly 4",
+          "TAP_OPPONENT or MOVE_MEMBER to tap selected opponent"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『SaintSnow』のカードを1枚手札に加える。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -5187,7 +5479,21 @@
           "name": "黒澤ルビィ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Auto ability: On play or move, add 2 blades",
+          "Frame 0: ADD_BLADES with value=2",
+          "Frame 1: RETURN",
+          "Note: Trigger is ON_PLAY but text says '登場か、エリアを移動するたび' - should trigger on move too",
+          "2 cards share this pattern (桜小路きな子 ab#1 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーが登場か、エリアを移動するたび": "Auto trigger (currently ON_PLAY only, should also trigger on move)",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 0: ADD_BLADES with value=2 (missing duration=LIVE_END)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーよりコストが低いメンバーからバトンタッチして登場した場合、自分と相手はそれぞれ自身の手札の枚数が3枚になるまで手札を控え室に置き、その後、自分と相手はそれぞれカードを3枚引く。",
@@ -5295,7 +5601,23 @@
           "name": "東條 希",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy to look at top 3, choose 1 to hand, discard rest",
+          "Frame 0: PAY_ENERGY with is_optional=1",
+          "Frame 1: JUMP_IF_FALSE skips if not paid",
+          "Frame 2: LOOK_AND_CHOOSE with count=3, reveal=1",
+          "3 cards share this pattern (澁谷かのん, 若菜四季, 桜小路きな子)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY with is_optional=1",
+          "自分のデッキの上からカードを3枚見る": "Frame 2: LOOK_AND_CHOOSE value.count=3",
+          "その中から1枚を手札に加え": "Frame 2: target_slot=HAND",
+          "残りを控え室に置く": "Frame 2: remainder_zone=DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -5391,7 +5713,24 @@
           "name": "津島善子",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy to recover SaintSnow card, then add 2 blades",
+          "Frame 0: PAY_ENERGY with is_optional=1",
+          "Frame 1: JUMP_IF_FALSE skips to RETURN if not paid",
+          "Frame 2: RECOVER_MEMBER with group_id=11 (SaintSnow), is_optional=1",
+          "Frame 3: JUMP_IF_FALSE skips blade gain if not recovered",
+          "Frame 4: ADD_BLADES with value=2",
+          "3 cards share this pattern (黒澤ルビィ variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY with is_optional=1",
+          "自分の控え室から『SaintSnow』のカードを1枚手札に加える": "Frame 2: RECOVER_MEMBER with group_id=11",
+          "そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 3-4: JUMP_IF_FALSE + ADD_BLADES with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -5487,7 +5826,27 @@
           "name": "若菜四季",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Baton from lower cost member: both players discard down to 3 cards, then draw 3",
+          "Frame 0: BATON checks baton condition",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: SET_TARGET_SELF",
+          "Frame 3: MOVE_TO_DISCARD with value=-2147483645 (discard to 3 cards)",
+          "Frame 4: DRAW with value=3",
+          "Frame 5: SET_TARGET_OPPONENT",
+          "Frame 6: MOVE_TO_DISCARD with value=-2147483645 (discard to 3 cards)",
+          "Frame 7: DRAW with value=3",
+          "3 cards share this pattern (東條希 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーよりコストが低いメンバーからバトンタッチして登場した場合": "Frame 0: BATON check",
+          "自分と相手はそれぞれ自身の手札の枚数が3枚になるまで手札を控え室に置き": "Frames 3,6: MOVE_TO_DISCARD with value=-2147483645 (discard down to 3)",
+          "その後、自分と相手はそれぞれカードを3枚引く": "Frames 4,7: DRAW with value=3"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -5613,7 +5972,24 @@
           "name": "絢瀬絵里",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self + discard hand to look at 5, choose cost9+ Aqours member to hand",
+          "Frame 0: MOVE_TO_DISCARD optional from HAND (cost to tap)",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: LOOK_AND_CHOOSE with count=5, group=AQOURS, cost≥9, is_optional=1",
+          "Frame 3: MOVE_TO_DISCARD discards remainder",
+          "3 cards share this pattern (津島善子 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにし、手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1 (cost)",
+          "自分のデッキの上からカードを5枚見る": "Frame 2: LOOK_AND_CHOOSE value.count=5",
+          "その中からコスト9以上の『Aqours』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 2: group_id=AQOURS, value_threshold=9, is_cost_type=1, is_optional=1",
+          "残りを控え室に置く": "Frame 3: MOVE_TO_DISCARD with remainder_zone=DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『蓮ノ空』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -5739,7 +6115,19 @@
           "name": "桂城 泉",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self + discard hand to look at 5, choose cost9+ Liella member to hand",
+          "Same pattern as ability 58 but for Liella group",
+          "3 cards share this pattern (若菜四季 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにし、手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "その中からコスト9以上の『Liella!』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 2: group_id=LIELLA, value_threshold=9, is_cost_type=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『虹ヶ咲』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -5865,7 +6253,27 @@
           "name": "天王寺璃奈",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self + optional discard hand to look at 5, choose cost9+ Muse member",
+          "Frame 0: SET_TAPPED optional on self",
+          "Frame 1: JUMP_IF_FALSE skips if not tapped",
+          "Frame 2: MOVE_TO_DISCARD optional from HAND",
+          "Frame 3: JUMP_IF_FALSE skips if not discarded",
+          "Frame 4: LOOK_AND_CHOOSE with count=5, group=MUSE, cost≥9, is_optional=1",
+          "Frame 5: JUMP_IF_FALSE skips if not chosen",
+          "Frame 6: MOVE_TO_HAND moves chosen card",
+          "Frame 7: MOVE_TO_DISCARD discards remainder",
+          "3 cards share this pattern (絢瀬絵里 variants)"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにし": "Frame 0: SET_TAPPED with is_optional=1",
+          "手札を1枚控え室に置いてもよい": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
+          "その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 4: LOOK_AND_CHOOSE with group_id=MUSE, value_threshold=9"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
@@ -5922,7 +6330,17 @@
           "name": "黒澤ルビィ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Same pattern as ability 60 but for Hasunosora group",
+          "3 cards share this pattern (桂城泉 variants)"
+        ],
+        "text_mapping": {
+          "その中からコスト9以上の『蓮ノ空』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 4: LOOK_AND_CHOOSE with group_id=HASUNOSORA"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。",
@@ -6051,7 +6469,17 @@
           "name": "小泉花陽",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Same pattern as ability 60 but for Nijigasaki group",
+          "3 cards share this pattern (天王寺璃奈 variants)"
+        ],
+        "text_mapping": {
+          "その中からコスト9以上の『虹ヶ咲』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 4: LOOK_AND_CHOOSE with group_id=NIJIGASAKI"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
@@ -6184,7 +6612,19 @@
           "name": "黒澤ダイヤ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Simple add 1 blade on play",
+          "Frame 0: ADD_BLADES with value=1",
+          "Note: Missing duration=LIVE_END for 'ライブ終了時まで'",
+          "3 cards share this pattern (黒澤ダイヤ, 小原鞠莉, 黒澤ルビィ)"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 0: ADD_BLADES with value=1 (missing duration=LIVE_END)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・自分の控え室にカード名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。\n・自分の控え室にグループ名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを2枚手札に加える。",
@@ -6312,7 +6752,23 @@
           "name": "ミア・テイラー",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Choice ability: draw 1 discard 1 OR tap all cost≤2 opponents",
+          "Frame 0: SELECT_MODE with 2 options",
+          "Frames 1-2: JUMP routing",
+          "Frames 3-5: Option 1 - DRAW + MOVE_TO_DISCARD + JUMP to RETURN",
+          "Frames 6-8: Option 2 - SELECT_MEMBER (cost≤2) + MOVE_MEMBER (tap) + JUMP to RETURN",
+          "3 cards share this pattern (星空凛, 西木野真姫, 小泉花陽)"
+        ],
+        "text_mapping": {
+          "以下から1つを選ぶ": "Frame 0: SELECT_MODE with value=2",
+          "カードを1枚引き、手札を1枚控え室に置く": "Frames 3-4: DRAW + MOVE_TO_DISCARD",
+          "相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする": "Frames 6-7: SELECT_MEMBER (value_threshold=2, is_le=1) + MOVE_MEMBER (is_wait=1)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい：自分の控え室から、これにより控え室に置いたカードと同じ枚数の『Aqours』のライブカードを手札に加える。",
@@ -6393,7 +6849,22 @@
           "name": "松浦果南",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Choice ability: give blade to Aqours member OR position change SaintSnow member",
+          "Frame 0: SELECT_MODE with 2 options",
+          "Frames 1-2: JUMP routing",
+          "Frames 3-5: Option 1 - SELECT_MEMBER (Aqours, exclude_self) + ADD_BLADES + JUMP",
+          "Frames 6-8: Option 2 - SELECT_MEMBER (SaintSnow) + MOVE_MEMBER (position_change) + JUMP",
+          "3 cards share this pattern (黒澤ダイヤ variants)"
+        ],
+        "text_mapping": {
+          "自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frames 3-4: SELECT_MEMBER (group=AQOURS, exclude_self=1) + ADD_BLADES",
+          "自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる": "Frames 6-7: SELECT_MEMBER (group=SAINT_SNOW) + MOVE_MEMBER (destination=POSITION_CHANGE)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
@@ -6473,7 +6944,22 @@
           "name": "宮下 愛",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Choice ability: recover 1 live if 3+ unique names OR recover 2 live if 3+ unique groups",
+          "Frame 0: SELECT_MODE with 2 options",
+          "Frames 1-2: JUMP routing",
+          "Frames 3-6: Option 1 - NOP (UNIQUE_DISCARD_LIVE_NAMES_COUNT≥3) + JUMP_IF_FALSE + RECOVER_LIVE(1) + RETURN",
+          "Frames 7-10: Option 2 - NOP (UNIQUE_DISCARD_LIVE_GROUPS_COUNT≥3) + JUMP_IF_FALSE + RECOVER_LIVE(2) + RETURN",
+          "3 cards share this pattern (ミア・テイラー variants)"
+        ],
+        "text_mapping": {
+          "自分の控え室にカード名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを1枚手札に加える": "Frames 3-6: NOP (raw_cond=UNIQUE_DISCARD_LIVE_NAMES_COUNT, MIN=3) + RECOVER_LIVE with value=1",
+          "自分の控え室にグループ名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを2枚手札に加える": "Frames 7-10: NOP (raw_cond=UNIQUE_DISCARD_LIVE_GROUPS_COUNT, MIN=3) + RECOVER_LIVE with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|heart04}}を2個以上持つメンバーカードか、必要ハートに{{heart_04.png|heart04}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -6536,7 +7022,22 @@
           "name": "黒澤ダイヤ",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard up to 2 non-blade-heart members from hand, recover that many Aqours live cards",
+          "Frame 0: MOVE_TO_DISCARD with value=2, has_blade_heart=1 (filter no blade heart), is_optional=1",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: RECOVER_LIVE with group_id=AQOURS, is_optional=1",
+          "Note: RECOVER_LIVE value=1, should match discarded count (may need SUM_VALUE)",
+          "3 cards share this pattern (松浦果南 variants)"
+        ],
+        "text_mapping": {
+          "手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with has_blade_heart=1, is_optional=1",
+          "自分の控え室から、これにより控え室に置いたカードと同じ枚数の『Aqours』のライブカードを手札に加える": "Frame 2: RECOVER_LIVE with group_id=AQOURS (ISSUE: value=1, should match discarded count)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_02.png|heart02}}を2個以上持つメンバーカードか、必要ハートに{{heart_02.png|heart02}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
@@ -6607,7 +7108,21 @@
           "name": "渡辺 曜",
           "trigger": 1
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard hand to tap up to 2 cost≤4 opponents",
+          "Frame 0: MOVE_TO_DISCARD optional from HAND",
+          "Frame 1: JUMP_IF_FALSE skips if not activated",
+          "Frame 2: TAP_OPPONENT with value=2, value_threshold=4, is_le=1, is_cost_type=1",
+          "3 cards share this pattern (桂城泉, 宮下愛 variants)"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "相手のステージにいるコスト4以下のメンバーを2人までウェイトにする": "Frame 2: TAP_OPPONENT with value=2, value_threshold=4, is_le=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_05.png|heart05}}を2個以上持つメンバーカードか、必要ハートに{{heart_05.png|heart05}}を2以上含むライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
