@@ -29,6 +29,17 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--quiet", action="store_true", help="Reduce build output")
     parser.add_argument(
+        "--ability-source-mode",
+        choices=["frame", "semantic"],
+        default="frame",
+        help="Choose the authored ability source used by the compiler",
+    )
+    parser.add_argument(
+        "--ability-source-path",
+        default=None,
+        help="Override the authored ability source path directly",
+    )
+    parser.add_argument(
         "--sync-launcher-assets",
         action="store_true",
         help="Also sync launcher/frontend assets and mirror cards_compiled.json into live copies",
@@ -50,6 +61,8 @@ def main():
     result = prepare_runtime(
         quiet=args.quiet,
         sync_assets=args.sync_launcher_assets,
+        ability_source_mode=args.ability_source_mode,
+        ability_source_path=args.ability_source_path,
     )
 
     if not _compiled_output_is_populated(output_path):

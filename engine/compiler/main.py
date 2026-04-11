@@ -40,6 +40,7 @@ from ..models.enums import CHAR_MAP
 from .semantic_processor import (
     populate_semantic_from_frames as _populate_semantic_from_frames,
     populate_semantic_from_text as _populate_semantic_from_text,
+    semantic_form_to_frame_program,
 )
 
 # Worker-local adapters (initialized once per process)
@@ -57,7 +58,11 @@ def _coerce_int(v: Any) -> int:
         return 0
 
 
-def _init_worker(sparse_mapping: dict, manual_translations: dict):
+def _init_worker(
+    sparse_mapping: dict,
+    manual_translations: dict,
+    source_path: str,
+):
     """Initializer for multiprocessing pool to set up expensive adapters."""
     global _MEMBER_ADAPTER, _LIVE_ADAPTER, _ENERGY_ADAPTER, _manual_translations_en, _sparse_manager
     _MEMBER_ADAPTER = TypeAdapter(MemberCard)
@@ -66,7 +71,7 @@ def _init_worker(sparse_mapping: dict, manual_translations: dict):
     _manual_translations_en = manual_translations
     
     # We provide a pre-loaded "mapping" to avoid re-parsing YAML in each worker
-    _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
+    _sparse_manager = SparseSourceManager(source_path)
     _sparse_manager.mapping = sparse_mapping
     # Mark it as "loaded" to prevent get_ability() from calling load() again
     _sparse_manager._last_loaded_mtime = float("inf")
@@ -136,7 +141,13 @@ def _process_card_worker(args):
 # COMPILATION PIPELINE - Top Level Entry Point
 # =============================================================================
 
-def compile_cards(input_path: str, output_path: str, quiet: bool = False, export_profile: str = "runtime") -> bool:
+def compile_cards(
+    input_path: str,
+    output_path: str,
+    quiet: bool = False,
+    export_profile: str = "runtime",
+    ability_source_path: str | None = None,
+) -> bool:
     """
     Main compilation pipeline.
     
@@ -152,6 +163,9 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         quiet: Minimize output logging
         export_profile: "runtime" (production) or "full" (with inspection fields)
     """
+    if ability_source_path:
+        _set_sparse_source_path(ability_source_path)
+
     if not quiet:
         print(f"Loading raw cards from {input_path}...")
     with open(input_path, "r", encoding="utf-8") as f:
@@ -165,6 +179,9 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
             "version": "1.0",
             "source": input_path,
             "ability_source": SPARSE_INDEX_PATH,
+            "ability_source_mode": (
+                "semantic_dump" if str(SPARSE_INDEX_PATH).endswith("ability_semantic_dump.json") else "frame_source"
+            ),
             "execution_model": "semantic_runtime_export",
         },
     }
@@ -265,7 +282,11 @@ def compile_cards(input_path: str, output_path: str, quiet: bool = False, export
         worker_count = multiprocessing.cpu_count()
     worker_count = max(1, worker_count)
 
-    init_args = (_sparse_manager.mapping, _manual_translations_en)
+    init_args = (
+        _sparse_manager.mapping,
+        _manual_translations_en,
+        SPARSE_INDEX_PATH,
+    )
     
     # Default to single worker for speed (multiprocessing has overhead for small datasets)
     if worker_count == 1 or len(worker_args) < 100:
@@ -531,6 +552,13 @@ class SparseSourceManager:
             for entry in abilities_list:
                 trigger_id = _coerce_int(entry.get("trigger_id", 0))
                 frames = list(entry.get("frames", []) or [])
+                if not frames:
+                    semantic_form = entry.get("semantic_form", {})
+                    if isinstance(semantic_form, dict):
+                        frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
+                semantic_form = entry.get("semantic_form", {})
+                if not isinstance(semantic_form, dict):
+                    semantic_form = {}
                 card_refs = entry.get("card_refs", [])
                 if not isinstance(card_refs, list):
                     continue
@@ -542,9 +570,11 @@ class SparseSourceManager:
                     next_mapping[(card_no, ab_idx)] = {
                         "trigger_id": trigger_id,
                         "frames": frames,
+                        "semantic_form": semantic_form,
                         "raw_text": str(
                             entry.get("primary_text_jp", "")
                             or entry.get("primary_text_en", "")
+                            or semantic_form.get("source_text", "")
                             or entry.get("raw_text", "")
                             or ""
                         ),
@@ -570,10 +600,18 @@ class SparseSourceManager:
         return self.mapping.get((self._normalize_card_no(card_no), ab_idx))
 
 
-# Global sparse manager for the editable authored frame source.
+# Global sparse manager for the authored ability source.
 ABILITY_FRAME_SOURCE_PATH = "data/ability_frame_source.json"
+ABILITY_SEMANTIC_DUMP_PATH = "data/ability_semantic_dump.json"
 SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
+
+
+def _set_sparse_source_path(source_path: str) -> None:
+    """Rebuild the sparse source manager from a different authored source."""
+    global SPARSE_INDEX_PATH, _sparse_manager
+    SPARSE_INDEX_PATH = source_path
+    _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
 def _build_ability_from_sparse_entry(
@@ -599,18 +637,47 @@ def _build_ability_from_sparse_entry(
     """
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
     frames = list(entry.get("frames", []) or [])
+    if not frames:
+        semantic_form = entry.get("semantic_form", {})
+        if isinstance(semantic_form, dict):
+            frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
+    semantic_form = entry.get("semantic_form", {})
+    if not isinstance(semantic_form, dict):
+        semantic_form = {}
     ability_raw_text = str(entry.get("raw_text", "") or "").strip() or _select_ability_raw_text(raw_text, ability_index, entry)
     return Ability(
         raw_text=ability_raw_text,
         trigger=TriggerType(trigger_id),
         effects=[],
         frame_program={"frames": frames},
+        semantic_form=semantic_form,
         costs=[],
         conditions=[],
         is_once_per_turn=bool(entry.get("is_once_per_turn", False)),
         requires_selection=bool(entry.get("requires_selection", False)),
         card_no="",
     )
+
+
+def _semantic_entry_is_complete(entry: dict[str, Any]) -> bool:
+    semantic_form = entry.get("semantic_form", {})
+    if not isinstance(semantic_form, dict):
+        return False
+
+    coverage = semantic_form.get("coverage", {})
+    if not isinstance(coverage, dict):
+        return False
+
+    try:
+        unmatched_clause_count = int(coverage.get("unmatched_clause_count", 1) or 0)
+    except (TypeError, ValueError):
+        unmatched_clause_count = 1
+
+    operations = semantic_form.get("operations", [])
+    if not isinstance(operations, list) or not operations:
+        return False
+
+    return unmatched_clause_count == 0
 
 
 def _split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
@@ -689,15 +756,16 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
     raw_text = str(data.get("ability", data.get("original_text", "")))
 
     for ab_idx in range(10):
-        entry = _sparse_manager.get_ability(card_no, ab_idx)
-        if entry is None:
+        selected_entry = _sparse_manager.get_ability(card_no, ab_idx)
+
+        if selected_entry is None:
             if used_sparse:
                 break
             continue
 
         abilities.append(
             _build_ability_from_sparse_entry(
-                entry,
+                selected_entry,
                 raw_text,
                 ab_idx,
             )
@@ -706,7 +774,7 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
 
     if used_sparse:
         return abilities
-    raise ValueError(f"[{card_no}] Missing frame entry and no frame data was available")
+    raise ValueError(f"[{card_no}] Missing frame entry and no semantic data was available")
 
 
 def _compute_ability_flags(ab: Ability) -> dict[str, int]:
@@ -783,8 +851,6 @@ def _hydrate_card_abilities(card_no: str, data: dict) -> tuple[str, list[Ability
     abilities = _resolve_abilities(card_no, data)
     for ab in abilities:
         ab.card_no = card_no
-    _populate_semantic_from_text(abilities)
-    _populate_semantic_from_frames(abilities)
     return translation_en, abilities, data.get("special_heart", {})
 
 

@@ -11,7 +11,10 @@ Simple structure like: "when [trigger], if [condition], then [effect] with [para
 """
 
 import re
+import unicodedata
 from typing import Any, Dict, List, Optional
+
+from ..models.generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 
 
 # ============================================================================
@@ -568,6 +571,21 @@ def _semantic_operation(
     if notes:
         operation["notes"] = notes
     return operation
+
+
+def _strip_trailing_return(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if frames and str(frames[-1].get("op", frames[-1].get("opcode", ""))).upper() == "RETURN":
+        return frames[:-1]
+    return frames
+
+
+def _frames_for_text(text: str) -> list[dict[str, Any]]:
+    semantic_form = extract_semantic_form_from_text(text)
+    frame_program = semantic_form_to_frame_program(semantic_form)
+    frames = frame_program.get("frames", [])
+    if not isinstance(frames, list):
+        return []
+    return [dict(frame) for frame in frames if isinstance(frame, dict)]
 
 
 def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -3850,13 +3868,13 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
 
     if match := _GAIN_HEARTS_RE.fullmatch(compact):
         runtime = _semantic_runtime_frame(
-            "ADD_BLADES",
+            "ADD_HEARTS",
             value=1,
             slot={},
         )
         operation = _semantic_operation(
             kind="effect",
-            code="add_blades(1)",
+            code="add_hearts(1)",
             matched_text=body,
             runtime=runtime,
             notes={"value": 1},
@@ -3865,14 +3883,14 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
 
     if match := _GAIN_HEARTS_DURATION_RE.fullmatch(compact):
         runtime = _semantic_runtime_frame(
-            "ADD_BLADES",
+            "ADD_HEARTS",
             value=1,
             slot={},
             params={"duration": "LIVE_END"},
         )
         operation = _semantic_operation(
             kind="effect",
-            code="add_blades(1, duration=LIVE_END)",
+            code="add_hearts(1, duration=LIVE_END)",
             matched_text=body,
             runtime=runtime,
             notes={"value": 1, "duration": "LIVE_END"},
@@ -3994,12 +4012,28 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
     if match := _CONDITIONAL_EFFECT_RE.fullmatch(compact):
         condition = match.group(1)
         effect = match.group(2)
-        runtime = _semantic_runtime_frame(
-            "CONDITIONAL",
-            value=0,
-            slot={},
-            params={"condition": condition, "effect": effect},
-        )
+        condition_frames = _strip_trailing_return(_frames_for_text(condition))
+        effect_frames = _strip_trailing_return(_frames_for_text(effect))
+        if condition_frames and effect_frames:
+            runtime = {
+                "frames": condition_frames
+                + [
+                    {
+                        "op": "JUMP_IF_FALSE",
+                        "value": len(effect_frames) + 1,
+                        "slot": {},
+                        "params": {"condition": condition, "effect": effect},
+                    }
+                ]
+                + effect_frames
+            }
+        else:
+            runtime = _semantic_runtime_frame(
+                "CONDITIONAL",
+                value=0,
+                slot={},
+                params={"condition": condition, "effect": effect},
+            )
         operation = _semantic_operation(
             kind="conditional",
             code=f"if({condition}, then={effect})",
@@ -4134,7 +4168,11 @@ def semantic_form_to_frame_program(semantic_form: dict[str, Any]) -> dict[str, A
             continue
         runtime = operation.get("runtime")
         if isinstance(runtime, dict) and runtime:
-            frames.append(dict(runtime))
+            nested_frames = runtime.get("frames")
+            if isinstance(nested_frames, list) and nested_frames:
+                frames.extend([dict(frame) for frame in nested_frames if isinstance(frame, dict)])
+            else:
+                frames.append(dict(runtime))
 
     if frames and str(frames[-1].get("op", frames[-1].get("opcode", ""))).upper() != "RETURN":
         frames.append({"op": "RETURN"})
