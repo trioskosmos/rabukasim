@@ -290,13 +290,82 @@ This is a flavor choice ability where the player chooses from 4 distinct options
 11. ✓ **PL!-bp4-020-L** (Love wing bell) - Fixed missing condition checks (success pile + μ's in center), documented
 
 ## Remaining to examine:
-- Flavor choice abilities with missing option_names (scanning in progress)
-- Conditional jump issues (36 abilities flagged)
-- Continue systematic review of all 614 abilities option_names
+- **Systematic scan through all 614 abilities is ongoing**
+- Flavor choice abilities with missing option_names (scanning in progress - found ~15+ so far)
+- Conditional jump issues (36 abilities flagged in audit report)
+- Need to verify all abilities with SELECT_MODE have proper option_names
 
-## Summary of Scanned Abilities
+## Summary of Scanned Abilities (Ongoing)
+
+### Critical Issues Fixed:
+1. **PL!S-bp2-001-P (#454)** - Mia Taylor - Fixed wrong success pile check frames
+2. **PL!S-pb1-009-P+ (#456)** - Ruby Kurosawa - Verified correct
+3. **PL!S-pb1-003-P+ (#387)** - Kanan Matsuura - Verified correct (Yell recovery)
+
+### option_names Added (Re-applied after revert):
+4. **PL!S-bp5-004 (#64)** - Dia Kurosawa - 2 options (blade/position change)
+5. **PL!-PR-005-PR (#63)** - Rin Hoshizora - 2 options (draw/discard or wait)
+6. **PL!N-bp5-011-AR (#65)** - Mia Taylor - 2 options (recover live)
+7. **PL!N-pb1-010-P+ (#101)** - Ayumu Uehara - 2 options (energy or deck)
+8. **PL!S-pb1-002-P+ (#121)** - Yoshiko Tsushima - 2 options (mill or pass)
+9. **PL!N-pb1-008-P+ (#127)** - Emma Verde - 2 options (activate member/energy)
+10. **PL!SP-bp4-026-P** - Kinako Sakurakoji - 2 options (blade+1 or activate)
+
+### Documented as Needing Complex Fixes:
+11. **Ability #3** - Dia Kurosawa - LIVE_START trigger mismatch (needs heart counting)
+
+### Verified Correct:
+12. **Ability #6** - Rurino Ozawa - Simple DRAW 1
+13. **Ability #0** - Dia Kurosawa - Yell pile check (complex META_RULE, correct)
+14. **Ability #1** - Simple draw/discard - Correct
+15. **Ability #50** - Chika Takami - Look at 3, add to hand - Correct
+16. **Ability #152** - Riko Sakurauchi - Flavor choice (has SELECT_MODE, needs option_names)
+17. **Ability #153** - Nico Yazawa - PLAY_MEMBER_FROM_DISCARD - Correct
+18. **Ability #154** - Keke Tang - Simple draw/discard - Correct
+19. **Ability #192** - Shiki Wakana - Simple heart on LIVE_START - Correct
+20. **Ability #613** - Joushou Kiryuu - Center score+1 with MIRA_CRA_PARK - Correct
+
+### Scanning Strategy:
+- Scanned ~40+ abilities out of 614 total
+- Found pattern: Many flavor choice abilities missing option_names
+- Found some conditional jump issues - most already have JUMP_IF_FALSE correctly placed
+- Need to continue systematic scan through remaining ~570 abilities
+- Priority: Focus on SELECT_MODE abilities first, then verify conditional jump logic
 
 ### Critical Issues Fixed (Session Summary):
+
+**RE-FIXES (Reverted Changes Re-Applied):**
+*Note: Following fixes were previously applied but reverted - now re-fixed.*
+
+1. **PL!S-pb1-009-P+ (#456)** - 黒澤ルビィ
+   - Issue: Used wrong opcodes (BATON/COUNT_ENERGY) for success pile check
+   - Fix: Changed to COUNT_SUCCESS with BOTH players → ADD_BLADES
+   - Status: ✓ RE-FIXED (Jan 2025)
+
+2. **PL!-bp3-003-P/R** - 南ことり
+   - Issue: RECOVER_MEMBER missing MUSE group filter
+   - Fix: Added target_player:SELF, group_enabled:1, group_id:MUSE
+   - Status: ✓ RE-FIXED (Jan 2025)
+
+3. **PL!-bp4-020-L** - Love wing bell
+   - Issue: ADD_BLADES executed unconditionally (no condition checks)
+   - Fix: Added IN_SUCCESS_PILE check + COUNT_STAGE for μ's in center
+   - Status: ✓ RE-FIXED (Jan 2025)
+
+4. **PL!N-bp1-006-P/R+/P+/SEC** - 近江彼方
+   - Issue: HAS_KEYWORD checking LANZHU instead of NIJIGASAKI group
+   - Fix: Changed to COUNT_STAGE with group_id:NIJIGASAKI
+   - Status: ✓ RE-FIXED (Jan 2025)
+
+5. **PL!S-bp3-025-L** - SUKI for you, DREAM for you!
+   - Issue: COUNT_BLADES checking STAGE_0 instead of CONTEXT (selected member)
+   - Fix: Changed target_slot to CONTEXT + added target_player:SELF
+   - Status: ✓ RE-FIXED (Jan 2025)
+
+6. **PL!S-bp2-001-P (#454)** - 高海千歌
+   - Issue: Used wrong opcodes (BATON/COUNT_ENERGY/ENERGY_CHARGE) for success pile check
+   - Fix: Changed to COUNT_SUCCESS with SELF=0 AND OPPONENT>=1 → ADD_BLADES
+   - Status: ✓ RE-FIXED (Jan 2025)
 
 **Priority Fixes (from analysis document):**
 1. **PL!S-bp2-001-P (#454)** - Mia Taylor
@@ -328,7 +397,7 @@ This is a flavor choice ability where the player chooses from 4 distinct options
 4. **PL!N-bp5-011-AR/R/P** - ミア・テイラー Flavor Choice
    - Issue: Missing option_names for SELECT_MODE
    - Fix: Added option_names describing both choices
-   - Status: ✓ FIXED & DOCUMENTED
+   - Status: ✓ FIXED & DOCUMENTED (not reverted)
 
 5. **PL!-bp3-003-P/R** - 南ことり
    - Issue: RECOVER_MEMBER missing MUSE group filter

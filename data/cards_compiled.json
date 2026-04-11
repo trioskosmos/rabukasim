@@ -11286,121 +11286,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 5
-              },
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 8
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
-                "value": {
-                  "count": 5
-                },
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "MUSE",
-                  "value_enabled": 1,
-                  "value_threshold": 9,
-                  "is_cost_type": 1,
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
-                "op": "MOVE_TO_HAND",
-                "frame_index": 6,
-                "value": 1,
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "CONTEXT"
-                }
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 7,
-                "value": 1,
-                "slot": {
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "STAGE",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 0
               }
             ]
           },
@@ -11416,7 +11308,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
+      "semantic_flags": 0,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -11452,121 +11344,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 5
-              },
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 8
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
-                "value": {
-                  "count": 5
-                },
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "MUSE",
-                  "value_enabled": 1,
-                  "value_threshold": 9,
-                  "is_cost_type": 1,
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
-                "op": "MOVE_TO_HAND",
-                "frame_index": 6,
-                "value": 1,
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "CONTEXT"
-                }
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 7,
-                "value": 1,
-                "slot": {
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "STAGE",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 0
               }
             ]
           },
@@ -11582,7 +11366,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
+      "semantic_flags": 0,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -11618,121 +11402,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からコスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 5
-              },
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 8
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 4,
-                "value": {
-                  "count": 5
-                },
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "MUSE",
-                  "value_enabled": 1,
-                  "value_threshold": 9,
-                  "is_cost_type": 1,
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
-                "op": "MOVE_TO_HAND",
-                "frame_index": 6,
-                "value": 1,
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "CONTEXT"
-                }
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 7,
-                "value": 1,
-                "slot": {
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "STAGE",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 0
               }
             ]
           },
@@ -11748,7 +11424,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
+      "semantic_flags": 0,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -39460,7 +39136,7 @@
       "abilities": [
         {
           "raw_text": "{{live_start.png|ライブ開始時}}自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
-          "trigger": 1,
+          "trigger": 2,
           "effects": [
             {
               "effect_type": 58,
@@ -39470,8 +39146,8 @@
               "is_optional": false
             },
             {
-              "effect_type": 10,
-              "value": 0,
+              "effect_type": 11,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -39483,27 +39159,39 @@
                 "op": "MOVE_TO_DISCARD",
                 "value": 3,
                 "attr": {
-                  "is_optional": 1
+                  "target_player": "SELF"
                 },
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "DISCARD",
+                  "source_zone": "DECK"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                },
+                "op": "CHECK_ALL_MEMBERS",
+                "value": 3,
+                "attr": {},
                 "frame_index": 1
               },
               {
-                "op": "RETURN",
+                "op": "JUMP_IF_FALSE",
+                "value": 1,
                 "frame_index": 2
+              },
+              {
+                "op": "ADD_BLADES",
+                "value": 2,
+                "attr": {
+                  "duration": "LIVE_END"
+                },
+                "slot": {
+                  "target_slot": "SELF"
+                },
+                "frame_index": 3
+              },
+              {
+                "op": "RETURN",
+                "frame_index": 4
               }
             ]
           },
@@ -39519,8 +39207,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 1,
+      "semantic_flags": 0,
+      "ability_flags": 8,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -45345,11 +45033,13 @@
                 "frame_index": 0
               },
               {
-                "op": "HAS_KEYWORD",
+                "op": "COUNT_STAGE",
                 "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "char_id_1": "LANZHU"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -45385,11 +45075,11 @@
               "attr": 0
             },
             {
-              "type": 226,
+              "type": 203,
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 0
+              "attr": 80
             }
           ],
           "is_once_per_turn": false,
@@ -45489,11 +45179,13 @@
                 "frame_index": 0
               },
               {
-                "op": "HAS_KEYWORD",
+                "op": "COUNT_STAGE",
                 "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "char_id_1": "LANZHU"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -45529,11 +45221,11 @@
               "attr": 0
             },
             {
-              "type": 226,
+              "type": 203,
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 0
+              "attr": 80
             }
           ],
           "is_once_per_turn": false,
@@ -45633,11 +45325,13 @@
                 "frame_index": 0
               },
               {
-                "op": "HAS_KEYWORD",
+                "op": "COUNT_STAGE",
                 "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "char_id_1": "LANZHU"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -45673,11 +45367,11 @@
               "attr": 0
             },
             {
-              "type": 226,
+              "type": 203,
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 0
+              "attr": 80
             }
           ],
           "is_once_per_turn": false,
@@ -45777,11 +45471,13 @@
                 "frame_index": 0
               },
               {
-                "op": "HAS_KEYWORD",
+                "op": "COUNT_STAGE",
                 "frame_index": 1,
                 "value": 1,
                 "attr": {
-                  "char_id_1": "LANZHU"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -45817,11 +45513,11 @@
               "attr": 0
             },
             {
-              "type": 226,
+              "type": 203,
               "value": 1,
               "params": {},
               "is_negated": false,
-              "attr": 0
+              "attr": 80
             }
           ],
           "is_once_per_turn": false,
@@ -50691,154 +50387,6 @@
       "draw_icons": 0,
       "semantic_flags": 1,
       "ability_flags": 128,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "274": {
-      "card_id": 274,
-      "card_no": "PL!N-bp3-006-P",
-      "name": "近江彼方",
-      "cost": 9,
-      "hearts": [
-        0,
-        1,
-        2,
-        1,
-        1,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "blades": 2,
-      "original_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-      "original_text_en": "",
-      "groups": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
-      "units": "QU4RTZ",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!N-bp3-006-P"
-        }
-      ],
-      "img_path": "cards_webp/PL!N-bp3-P-006-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "4370": {
-      "card_id": 4370,
-      "card_no": "PL!N-bp3-006-R",
-      "name": "近江彼方",
-      "cost": 9,
-      "hearts": [
-        0,
-        1,
-        2,
-        1,
-        1,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "blades": 2,
-      "original_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-      "original_text_en": "",
-      "groups": "ラブライブ！虹ヶ咲学園スクールアイドル同好会",
-      "units": "QU4RTZ",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!N-bp3-006-R"
-        }
-      ],
-      "img_path": "cards_webp/PL!N-bp3-P-006-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -66139,18 +65687,25 @@
       "abilities": [
         {
           "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
+          "trigger": 4,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
+              "effect_type": 64,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
             },
             {
-              "effect_type": 10,
-              "value": 0,
+              "effect_type": 58,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -66159,30 +65714,36 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                },
+                "op": "PAY_ENERGY",
+                "value": 2,
+                "attr": {},
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
+                "op": "MOVE_TO_DISCARD",
+                "value": 1,
+                "attr": {},
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "HAND"
                 },
                 "frame_index": 1
               },
               {
-                "op": "RETURN",
+                "op": "RECOVER_LIVE",
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 2
+                },
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
+                },
                 "frame_index": 2
+              },
+              {
+                "op": "RETURN",
+                "frame_index": 3
               }
             ]
           },
@@ -66198,8 +65759,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 1,
+      "semantic_flags": 4,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -74444,18 +74005,25 @@
       "abilities": [
         {
           "raw_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
+          "trigger": 4,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
+              "effect_type": 64,
+              "value": 2,
               "target": 0,
               "params": {},
               "is_optional": false
             },
             {
-              "effect_type": 10,
-              "value": 0,
+              "effect_type": 58,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 15,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -74464,30 +74032,36 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                },
+                "op": "PAY_ENERGY",
+                "value": 2,
+                "attr": {},
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
+                "op": "MOVE_TO_DISCARD",
+                "value": 1,
+                "attr": {},
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "HAND"
                 },
                 "frame_index": 1
               },
               {
-                "op": "RETURN",
+                "op": "RECOVER_LIVE",
+                "value": 1,
+                "attr": {
+                  "group_enabled": 1,
+                  "group_id": 2
+                },
+                "slot": {
+                  "target_slot": "HAND",
+                  "source_zone": "DISCARD"
+                },
                 "frame_index": 2
+              },
+              {
+                "op": "RETURN",
+                "frame_index": 3
               }
             ]
           },
@@ -74503,8 +74077,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 1,
+      "semantic_flags": 4,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -77837,8 +77411,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 23,
-              "value": 2,
+              "effect_type": 11,
+              "value": 3,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -77847,65 +77421,64 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BATON",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 0,
-                "value": 1,
+                "value": 0,
                 "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "target_player": "SELF",
+                  "is_eq": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 2
+                "value": 5
               },
               {
-                "op": "COUNT_ENERGY",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 2,
-                "value": 7,
+                "value": 1,
+                "attr": {
+                  "target_player": "OPPONENT",
+                  "is_ge": 1
+                },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 1
+                "value": 3
               },
               {
-                "op": "ENERGY_CHARGE",
+                "op": "ADD_BLADES",
                 "frame_index": 4,
-                "value": 2,
+                "value": 3,
                 "slot": {
-                  "target_slot": "CONTEXT",
-                  "is_wait": 1
+                  "target_slot": "CONTEXT"
                 }
               },
               {
+                "op": "JUMP",
+                "frame_index": 5,
+                "value": 1
+              },
+              {
+                "op": "NOP",
+                "frame_index": 6
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 231,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 112
-            },
-            {
-              "type": 213,
-              "value": 7,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-001-P"
@@ -77917,8 +77490,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 16,
-      "synergy_flags": 4,
+      "ability_flags": 8,
+      "synergy_flags": 0,
       "cost_flags": 0
     },
     "4511": {
@@ -77955,8 +77528,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 23,
-              "value": 2,
+              "effect_type": 11,
+              "value": 3,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -77965,65 +77538,64 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BATON",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 0,
-                "value": 1,
+                "value": 0,
                 "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "target_player": "SELF",
+                  "is_eq": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 2
+                "value": 5
               },
               {
-                "op": "COUNT_ENERGY",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 2,
-                "value": 7,
+                "value": 1,
+                "attr": {
+                  "target_player": "OPPONENT",
+                  "is_ge": 1
+                },
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
-                "value": 1
+                "value": 3
               },
               {
-                "op": "ENERGY_CHARGE",
+                "op": "ADD_BLADES",
                 "frame_index": 4,
-                "value": 2,
+                "value": 3,
                 "slot": {
-                  "target_slot": "CONTEXT",
-                  "is_wait": 1
+                  "target_slot": "CONTEXT"
                 }
               },
               {
+                "op": "JUMP",
+                "frame_index": 5,
+                "value": 1
+              },
+              {
+                "op": "NOP",
+                "frame_index": 6
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 7
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 231,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 112
-            },
-            {
-              "type": 213,
-              "value": 7,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-bp2-001-R"
@@ -78035,8 +77607,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 16,
-      "synergy_flags": 4,
+      "ability_flags": 8,
+      "synergy_flags": 0,
       "cost_flags": 0
     },
     "416": {
@@ -87113,6 +86685,13 @@
               "is_optional": false
             },
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 1,
               "target": 0,
@@ -87120,12 +86699,17 @@
               "is_optional": false
             },
             {
-              "effect_type": 20,
-              "value": 99,
+              "effect_type": 65,
+              "value": 1,
               "target": 0,
-              "params": {
-                "destination": "POSITION_CHANGE"
-              },
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 20,
+              "value": 1,
+              "target": 0,
+              "params": {},
               "is_optional": false
             }
           ],
@@ -87144,16 +86728,29 @@
               {
                 "op": "JUMP",
                 "frame_index": 2,
-                "value": 2
+                "value": 4
               },
               {
-                "op": "ADD_BLADES",
+                "op": "SELECT_MEMBER",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "AQOURS"
+                  "group_id": "AQOURS",
+                  "exclude_self": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE"
+                }
+              },
+              {
+                "op": "ADD_BLADES",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -87161,22 +86758,32 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
+                "frame_index": 5,
+                "value": 4
               },
               {
-                "op": "MOVE_MEMBER",
-                "frame_index": 5,
-                "value": 99,
+                "op": "SELECT_MEMBER",
+                "frame_index": 6,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "SAINT_SNOW"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
                   "source_zone": "STAGE"
-                },
-                "params": {
-                  "destination": "POSITION_CHANGE"
+                }
+              },
+              {
+                "op": "MOVE_MEMBER",
+                "frame_index": 7,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "params": {
+                    "destination": "POSITION_CHANGE"
+                  }
                 }
               },
               {
@@ -87248,6 +86855,13 @@
               "is_optional": false
             },
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 1,
               "target": 0,
@@ -87255,12 +86869,17 @@
               "is_optional": false
             },
             {
-              "effect_type": 20,
-              "value": 99,
+              "effect_type": 65,
+              "value": 1,
               "target": 0,
-              "params": {
-                "destination": "POSITION_CHANGE"
-              },
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 20,
+              "value": 1,
+              "target": 0,
+              "params": {},
               "is_optional": false
             }
           ],
@@ -87279,16 +86898,29 @@
               {
                 "op": "JUMP",
                 "frame_index": 2,
-                "value": 2
+                "value": 4
               },
               {
-                "op": "ADD_BLADES",
+                "op": "SELECT_MEMBER",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "AQOURS"
+                  "group_id": "AQOURS",
+                  "exclude_self": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE"
+                }
+              },
+              {
+                "op": "ADD_BLADES",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -87296,22 +86928,32 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
+                "frame_index": 5,
+                "value": 4
               },
               {
-                "op": "MOVE_MEMBER",
-                "frame_index": 5,
-                "value": 99,
+                "op": "SELECT_MEMBER",
+                "frame_index": 6,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "SAINT_SNOW"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
                   "source_zone": "STAGE"
-                },
-                "params": {
-                  "destination": "POSITION_CHANGE"
+                }
+              },
+              {
+                "op": "MOVE_MEMBER",
+                "frame_index": 7,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "params": {
+                    "destination": "POSITION_CHANGE"
+                  }
                 }
               },
               {
@@ -87383,6 +87025,13 @@
               "is_optional": false
             },
             {
+              "effect_type": 65,
+              "value": 1,
+              "target": 0,
+              "params": {},
+              "is_optional": false
+            },
+            {
               "effect_type": 11,
               "value": 1,
               "target": 0,
@@ -87390,12 +87039,17 @@
               "is_optional": false
             },
             {
-              "effect_type": 20,
-              "value": 99,
+              "effect_type": 65,
+              "value": 1,
               "target": 0,
-              "params": {
-                "destination": "POSITION_CHANGE"
-              },
+              "params": {},
+              "is_optional": false
+            },
+            {
+              "effect_type": 20,
+              "value": 1,
+              "target": 0,
+              "params": {},
               "is_optional": false
             }
           ],
@@ -87414,16 +87068,29 @@
               {
                 "op": "JUMP",
                 "frame_index": 2,
-                "value": 2
+                "value": 4
               },
               {
-                "op": "ADD_BLADES",
+                "op": "SELECT_MEMBER",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "AQOURS"
+                  "group_id": "AQOURS",
+                  "exclude_self": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "source_zone": "STAGE"
+                }
+              },
+              {
+                "op": "ADD_BLADES",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -87431,22 +87098,32 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
+                "frame_index": 5,
+                "value": 4
               },
               {
-                "op": "MOVE_MEMBER",
-                "frame_index": 5,
-                "value": 99,
+                "op": "SELECT_MEMBER",
+                "frame_index": 6,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "SAINT_SNOW"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
                   "source_zone": "STAGE"
-                },
-                "params": {
-                  "destination": "POSITION_CHANGE"
+                }
+              },
+              {
+                "op": "MOVE_MEMBER",
+                "frame_index": 7,
+                "value": 1,
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "params": {
+                    "destination": "POSITION_CHANGE"
+                  }
                 }
               },
               {
@@ -89482,50 +89159,13 @@
       "abilities": [
         {
           "raw_text": "{{live_start.png|ライブ開始時}}自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_04.png|heart04}}の合計が4以上の場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 10,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "DRAW",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 1,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "zone_mask": "Guest+Friend"
-                },
-                "slot": {
-                  "target_slot": "STAGE_1",
-                  "source_zone": "HAND",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 0
               }
             ]
           },
@@ -89541,8 +89181,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 1,
+      "semantic_flags": 0,
+      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -89580,15 +89220,8 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 10,
-              "value": 0,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -89597,24 +89230,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
+                "op": "DRAW",
+                "value": 1,
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "CONTEXT"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
+                "op": "BOTTOM_DECK",
+                "value": 1,
+                "attr": {},
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "HAND"
                 },
                 "frame_index": 1
               },
@@ -89676,14 +89304,7 @@
           "effects": [
             {
               "effect_type": 58,
-              "value": 3,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 10,
-              "value": 0,
+              "value": 10,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -89693,29 +89314,19 @@
             "frames": [
               {
                 "op": "MOVE_TO_DISCARD",
-                "value": 3,
+                "value": 10,
                 "attr": {
-                  "is_optional": 1
+                  "target_player": "SELF"
                 },
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "DISCARD",
+                  "source_zone": "DECK"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                },
-                "frame_index": 1
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 2
+                "frame_index": 1
               }
             ]
           },
@@ -89732,7 +89343,7 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 1,
-      "ability_flags": 1,
+      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -92377,8 +91988,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 23,
-              "value": 2,
+              "effect_type": 11,
+              "value": 3,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -92387,12 +91998,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BATON",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 0,
-                "value": 1,
+                "value": 3,
                 "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "target_player": "BOTH",
+                  "is_ge": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -92401,51 +92015,21 @@
                 "value": 2
               },
               {
-                "op": "COUNT_ENERGY",
+                "op": "ADD_BLADES",
                 "frame_index": 2,
-                "value": 7,
+                "value": 3,
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
-                "op": "ENERGY_CHARGE",
-                "frame_index": 4,
-                "value": 2,
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "is_wait": 1
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 231,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 112
-            },
-            {
-              "type": 213,
-              "value": 7,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-009-P+"
@@ -92457,8 +92041,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 16,
-      "synergy_flags": 4,
+      "ability_flags": 8,
+      "synergy_flags": 0,
       "cost_flags": 0
     },
     "4564": {
@@ -92495,8 +92079,8 @@
           "trigger": 6,
           "effects": [
             {
-              "effect_type": 23,
-              "value": 2,
+              "effect_type": 11,
+              "value": 3,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -92505,12 +92089,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BATON",
+                "op": "COUNT_SUCCESS",
                 "frame_index": 0,
-                "value": 1,
+                "value": 3,
                 "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "target_player": "BOTH",
+                  "is_ge": 1
+                },
+                "slot": {
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -92519,51 +92106,21 @@
                 "value": 2
               },
               {
-                "op": "COUNT_ENERGY",
+                "op": "ADD_BLADES",
                 "frame_index": 2,
-                "value": 7,
+                "value": 3,
                 "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
-                "op": "ENERGY_CHARGE",
-                "frame_index": 4,
-                "value": 2,
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "is_wait": 1
+                  "target_slot": "CONTEXT"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 231,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 112
-            },
-            {
-              "type": 213,
-              "value": 7,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!S-pb1-009-R"
@@ -92575,8 +92132,8 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 16,
-      "synergy_flags": 4,
+      "ability_flags": 8,
+      "synergy_flags": 0,
       "cost_flags": 0
     },
     "16771": {
@@ -94705,15 +94262,8 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 10,
-              "value": 0,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -94722,24 +94272,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
+                "op": "DRAW",
+                "value": 1,
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "CONTEXT"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
+                "op": "BOTTOM_DECK",
+                "value": 1,
+                "attr": {},
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "HAND"
                 },
                 "frame_index": 1
               },
@@ -94800,15 +94345,8 @@
           "trigger": 1,
           "effects": [
             {
-              "effect_type": 58,
-              "value": 3,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
               "effect_type": 10,
-              "value": 0,
+              "value": 1,
               "target": 0,
               "params": {},
               "is_optional": false
@@ -94817,24 +94355,19 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "value": 3,
-                "attr": {
-                  "is_optional": 1
-                },
+                "op": "DRAW",
+                "value": 1,
                 "slot": {
-                  "target_slot": "HAND"
+                  "target_slot": "CONTEXT"
                 },
                 "frame_index": 0
               },
               {
-                "op": "DRAW",
-                "value": 0,
-                "attr": {
-                  "compare_accumulated": 1
-                },
+                "op": "BOTTOM_DECK",
+                "value": 1,
+                "attr": {},
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "HAND"
                 },
                 "frame_index": 1
               },
@@ -99505,77 +99038,14 @@
       "units": "CatChu!",
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 65,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 27,
-              "value": 0,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "STAGE"
-                }
-              },
-              {
-                "op": "NEGATE_EFFECT",
-                "frame_index": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "zone_mask": "ALL"
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 0
               }
             ]
           },
@@ -99591,8 +99061,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 4,
+      "semantic_flags": 0,
+      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -99626,77 +99096,14 @@
       "units": "CatChu!",
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 65,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 27,
-              "value": 0,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "STAGE"
-                }
-              },
-              {
-                "op": "NEGATE_EFFECT",
-                "frame_index": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "zone_mask": "ALL"
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 0
               }
             ]
           },
@@ -99712,8 +99119,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 4,
+      "semantic_flags": 0,
+      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -99747,77 +99154,14 @@
       "units": "CatChu!",
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした場合、自分の控え室から『Liella!』のカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 65,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 27,
-              "value": 0,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MEMBER",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "STAGE"
-                }
-              },
-              {
-                "op": "NEGATE_EFFECT",
-                "frame_index": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "group_enabled": 1,
-                  "group_id": "LIELLA",
-                  "zone_mask": "ALL"
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 0
               }
             ]
           },
@@ -99833,8 +99177,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 4,
+      "semantic_flags": 0,
+      "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -109649,40 +108993,6 @@
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp5-001-AR"
-        },
-        {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
-          "trigger": 7,
-          "effects": [
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!SP-bp5-001-AR"
         }
       ],
       "img_path": "cards_webp/PL!SP-bp5-001-AR.webp",
@@ -109690,7 +109000,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 3,
+      "semantic_flags": 1,
       "ability_flags": 2049,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -109939,40 +109249,6 @@
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp5-001-R+"
-        },
-        {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
-          "trigger": 7,
-          "effects": [
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!SP-bp5-001-R+"
         }
       ],
       "img_path": "cards_webp/PL!SP-bp5-001-AR.webp",
@@ -109980,7 +109256,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 3,
+      "semantic_flags": 1,
       "ability_flags": 2049,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -110229,40 +109505,6 @@
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp5-001-P"
-        },
-        {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
-          "trigger": 7,
-          "effects": [
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!SP-bp5-001-P"
         }
       ],
       "img_path": "cards_webp/PL!SP-bp5-001-AR.webp",
@@ -110270,7 +109512,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 3,
+      "semantic_flags": 1,
       "ability_flags": 2049,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -110519,40 +109761,6 @@
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!SP-bp5-001-SEC"
-        },
-        {
-          "raw_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。\n・カードを1枚引く。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
-          "trigger": 7,
-          "effects": [
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 0,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 1
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!SP-bp5-001-SEC"
         }
       ],
       "img_path": "cards_webp/PL!SP-bp5-001-AR.webp",
@@ -110560,7 +109768,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 3,
+      "semantic_flags": 1,
       "ability_flags": 2049,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -124293,21 +123501,65 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_BLADES",
+                "op": "IN_SUCCESS_PILE",
                 "frame_index": 0,
-                "value": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
                 }
               },
               {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 3
+              },
+              {
+                "op": "COUNT_STAGE",
+                "frame_index": 2,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "MUSE"
+                },
+                "slot": {
+                  "target_slot": "STAGE_2",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "ADD_BLADES",
+                "frame_index": 4,
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "MUSE"
+                },
+                "slot": {
+                  "target_slot": "STAGE_2"
+                }
+              },
+              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 5
               }
             ]
           },
           "costs": [],
-          "conditions": [],
+          "conditions": [
+            {
+              "type": 203,
+              "value": 1,
+              "params": {},
+              "is_negated": false,
+              "attr": 16
+            }
+          ],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp4-020-L"
@@ -134550,8 +133802,11 @@
                 "op": "COUNT_BLADES",
                 "frame_index": 1,
                 "value": 6,
+                "attr": {
+                  "target_player": "SELF"
+                },
                 "slot": {
-                  "target_slot": "STAGE_0",
+                  "target_slot": "CONTEXT",
                   "comparison": "GE"
                 }
               },

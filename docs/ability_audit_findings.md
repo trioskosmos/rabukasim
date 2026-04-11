@@ -138,23 +138,6 @@ From `interpreter/mod.rs` line 24, the following handlers are used:
 - `handle_energy` - For PAY_ENERGY
 - `handle_member_state` - For PLAY_MEMBER_FROM_HAND
 
-### Opcode Coverage Clarification
-The generated opcode list includes several existing comparison/condition opcodes that may cover some of the cases previously flagged as "missing engine support":
-- `C_COUNT_HAND` (204)
-- `C_COUNT_DISCARD` (205)
-- `C_COUNT_GROUP` (208)
-- `C_COST_COMPARE` (241)
-- `C_BLADE_COMPARE` (242)
-- `C_HEART_COMPARE` (243)
-- `C_OPPONENT_HAND_DIFF` (219)
-
-These suggest that abilities involving hand comparison, member-cost comparison, blade count checks, and similar comparisons should be re-examined before deciding to add new opcodes.
-
-However, the following gaps still appear to be real and likely require new runtime support or new frame semantics:
-- Unique discard name/group counting
-- Turn-based counters
-- Zone movement tracking (bottom-deck, discard-to-hand, deck-to-discard mill)
-
 ### Missing Frame Types Detected
 Based on mismatches found:
 1. **DECK_TOP_TO_DISCARD** - For milling from deck (Ability #7, #10)
@@ -1258,6 +1241,32 @@ Based on audit findings, the following opcodes need test coverage:
 - `test_suite/ability_tests.rs` - Add tests for new opcodes
 - `test_suite/meta_rule_tests.rs` - Expand META_RULE tests
 - `test_suite/conditional_tests.rs` - New file for condition testing
+
+---
+
+## Verified Correct Abilities
+
+**File**: `data/verified_correct_abilities.json`
+
+Based on the manual audit, **52 abilities** have been verified as CORRECT. These serve as ground truth for automated verification tools.
+
+### Verified by Pattern Type
+
+| Pattern Type | Count | Examples |
+|--------------|-------|----------|
+| Draw/Discard | 7 | Draw 1/discard 1, draw 2/discard 2, variable draw |
+| Baton | 7 | Baton draw/discard, baton + energy, baton + recovery |
+| Conditional | 6 | If energy≥X, if cost≥X, if stage count |
+| Recovery | 5 | From discard, group-filtered, cost-filtered |
+| Energy | 5 | Activate, charge, pay costs |
+| Tap | 5 | Self tap, opponent tap, blade count filters |
+| Look/Choose | 4 | Look at N, choose 1, rest discard |
+| Position | 2 | Center check, left/right side |
+| Modal | 2 | SELECT_MODE branching |
+| YELL | 1 | META_RULE abilities |
+| Complex | 8 | Multi-condition, compound effects |
+
+**Total**: 52 verified correct abilities (used as ground truth)
 
 ---
 
