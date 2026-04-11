@@ -1266,7 +1266,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -1557,7 +1557,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -6092,7 +6092,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "params": {
                   "raw_cond": "REVEALED_IS_LIVE"
@@ -6205,7 +6205,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "params": {
                   "raw_cond": "REVEALED_IS_LIVE"
@@ -6287,7 +6287,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "attr": {
                   "no_abilities": 1
@@ -6556,7 +6556,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "attr": {
                   "no_abilities": 1
@@ -8058,7 +8058,7 @@
                 "value": 1
               },
               {
-                "op": "SCORE_CHECK",
+                "op": "SCORE_COMPARE",
                 "frame_index": 2,
                 "value": 1,
                 "slot": {
@@ -8205,7 +8205,7 @@
                 "value": 1
               },
               {
-                "op": "SCORE_CHECK",
+                "op": "SCORE_COMPARE",
                 "frame_index": 2,
                 "value": 1,
                 "slot": {
@@ -8923,7 +8923,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -9680,7 +9680,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -9819,7 +9819,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -9958,7 +9958,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -12899,7 +12899,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "params": {
                   "raw_cond": "ADDED_CARD_GROUP_HASUNOSORA"
@@ -15207,7 +15207,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 1
               },
@@ -15470,7 +15470,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 1
               },
@@ -17831,10 +17831,13 @@
                 "value": 6
               },
               {
-                "op": "OPPONENT_TAP_COST_LE4",
+                "op": "TAP_OPPONENT",
                 "frame_index": 6,
                 "attr": {
-                  "once_per_turn": 1
+                  "once_per_turn": 1,
+                  "cost_enabled": 1,
+                  "cost_le": 1,
+                  "max_cost": 4
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -18097,10 +18100,13 @@
                 "value": 6
               },
               {
-                "op": "OPPONENT_TAP_COST_LE4",
+                "op": "TAP_OPPONENT",
                 "frame_index": 6,
                 "attr": {
-                  "once_per_turn": 1
+                  "once_per_turn": 1,
+                  "cost_enabled": 1,
+                  "cost_le": 1,
+                  "max_cost": 4
                 },
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -18397,7 +18403,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -18510,7 +18516,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -22267,7 +22273,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "POSITION_LEFT_SIDE"
@@ -22279,7 +22285,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "MOVED_THIS_TURN"
@@ -22652,7 +22658,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "POSITION_LEFT_SIDE"
@@ -22664,7 +22670,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "MOVED_THIS_TURN"
@@ -25672,7 +25678,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "value": 1,
                 "slot": {
@@ -25768,7 +25774,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "value": 1,
                 "slot": {
@@ -27779,7 +27785,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 9,
                 "value": 2,
                 "slot": {
@@ -27991,7 +27997,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 9,
                 "value": 2,
                 "slot": {
@@ -28203,7 +28209,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 9,
                 "value": 2,
                 "slot": {
@@ -28415,7 +28421,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 9,
                 "value": 2,
                 "slot": {
@@ -28742,7 +28748,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "unit_enabled": 1,
@@ -28809,7 +28815,7 @@
                 "value": 5
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "DISCARDED_IS_MEMBER"
@@ -28922,7 +28928,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "unit_enabled": 1,
@@ -28989,7 +28995,7 @@
                 "value": 5
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "DISCARDED_IS_MEMBER"
@@ -29102,7 +29108,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "unit_enabled": 1,
@@ -29169,7 +29175,7 @@
                 "value": 5
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "DISCARDED_IS_MEMBER"
@@ -29282,7 +29288,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "unit_enabled": 1,
@@ -29349,7 +29355,7 @@
                 "value": 5
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "DISCARDED_IS_MEMBER"
@@ -30566,7 +30572,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "PHASE_CHECK",
+                "op": "MAIN_PHASE",
                 "frame_index": 0,
                 "attr": {
                   "phase": "MAIN"
@@ -32634,7 +32640,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "value": 10,
                 "params": {
@@ -32764,7 +32770,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "value": 10,
                 "params": {
@@ -32894,7 +32900,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "value": 10,
                 "params": {
@@ -33738,7 +33744,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -33877,7 +33883,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -34016,7 +34022,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -34308,7 +34314,7 @@
                 "frame_index": 0
               },
               {
-                "op": "CHECK_ALL_MEMBERS",
+                "op": "HAS_MEMBER",
                 "value": 3,
                 "attr": {},
                 "frame_index": 1
@@ -34782,7 +34788,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "GROUP_FILTER",
                 "frame_index": 4,
                 "attr": {
                   "group_enabled": 1,
@@ -40956,7 +40962,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 3,
                 "slot": {
@@ -40970,7 +40976,7 @@
                 "value": 1
               },
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -41115,7 +41121,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 3,
                 "slot": {
@@ -41129,7 +41135,7 @@
                 "value": 1
               },
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -41274,7 +41280,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 3,
                 "slot": {
@@ -41288,7 +41294,7 @@
                 "value": 1
               },
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -41433,7 +41439,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 3,
                 "slot": {
@@ -41447,7 +41453,7 @@
                 "value": 1
               },
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -44351,7 +44357,7 @@
                 }
               },
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 4,
                 "value": 1,
                 "attr": {
@@ -44472,7 +44478,7 @@
                 }
               },
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 4,
                 "value": 1,
                 "attr": {
@@ -45445,7 +45451,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 6
               },
@@ -45463,7 +45469,7 @@
                 "value": 4
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 6,
                 "value": 8
               },
@@ -45484,7 +45490,7 @@
                 "value": 3
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 9,
                 "value": 25
               },
@@ -45690,7 +45696,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 6
               },
@@ -45708,7 +45714,7 @@
                 "value": 4
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 6,
                 "value": 8
               },
@@ -45729,7 +45735,7 @@
                 "value": 3
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 9,
                 "value": 25
               },
@@ -45935,7 +45941,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 6
               },
@@ -45953,7 +45959,7 @@
                 "value": 4
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 6,
                 "value": 8
               },
@@ -45974,7 +45980,7 @@
                 "value": 3
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 9,
                 "value": 25
               },
@@ -46180,7 +46186,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 3,
                 "value": 6
               },
@@ -46198,7 +46204,7 @@
                 "value": 4
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 6,
                 "value": 8
               },
@@ -46219,7 +46225,7 @@
                 "value": 3
               },
               {
-                "op": "JUMP_IF_NOT_EQUAL",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 9,
                 "value": 25
               },
@@ -46520,7 +46526,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -46541,7 +46547,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -46562,7 +46568,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -46657,7 +46663,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -46678,7 +46684,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -46699,7 +46705,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -47320,7 +47326,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -47731,7 +47737,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -49066,7 +49072,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -49186,7 +49192,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -49316,7 +49322,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_ENERGY",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 15,
                 "attr": {
@@ -49485,7 +49491,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_ENERGY",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 15,
                 "attr": {
@@ -49654,7 +49660,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_ENERGY",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 15,
                 "attr": {
@@ -49823,7 +49829,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_ENERGY",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 15,
                 "attr": {
@@ -52300,11 +52306,14 @@
                 }
               },
               {
-                "op": "IS_SELF_TAP",
+                "op": "IS_TAPPED",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
                   "comparison": "GE"
+                },
+                "attr": {
+                  "target_player": "SELF"
                 }
               },
               {
@@ -53267,7 +53276,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_MOST_HEARTS",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -53353,7 +53362,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_MOST_HEARTS",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -53439,7 +53448,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_MOST_HEARTS",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -53959,7 +53968,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4"
@@ -54079,7 +54088,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4"
@@ -54199,7 +54208,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4"
@@ -54732,7 +54741,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CANNOT_ACTIVATE",
+                "op": "PREVENT_ACTIVATE",
                 "frame_index": 0,
                 "attr": {
                   "phase": "ACTIVE"
@@ -54831,7 +54840,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CANNOT_ACTIVATE",
+                "op": "PREVENT_ACTIVATE",
                 "frame_index": 0,
                 "attr": {
                   "phase": "ACTIVE"
@@ -54930,7 +54939,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CANNOT_ACTIVATE",
+                "op": "PREVENT_ACTIVATE",
                 "frame_index": 0,
                 "attr": {
                   "phase": "ACTIVE"
@@ -55029,7 +55038,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
@@ -55171,7 +55180,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
@@ -55313,7 +55322,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
@@ -55455,7 +55464,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
@@ -55898,7 +55907,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -56037,7 +56046,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -56176,7 +56185,7 @@
                 "value": 3
               },
               {
-                "op": "MOVE_TO_HAND",
+                "op": "ADD_TO_HAND",
                 "frame_index": 6,
                 "value": 1,
                 "slot": {
@@ -56594,7 +56603,7 @@
                 "value": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "value": 0,
                 "params": {
@@ -56624,7 +56633,7 @@
                 "frame_index": 6
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 0,
                 "params": {
@@ -56731,7 +56740,7 @@
                 "value": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "value": 0,
                 "params": {
@@ -56761,7 +56770,7 @@
                 "frame_index": 6
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 0,
                 "params": {
@@ -56868,7 +56877,7 @@
                 "value": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "value": 0,
                 "params": {
@@ -56898,7 +56907,7 @@
                 "frame_index": 6
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 0,
                 "params": {
@@ -56986,7 +56995,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -57038,7 +57047,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -57122,7 +57131,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -57174,7 +57183,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -57258,7 +57267,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -57310,7 +57319,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -57394,7 +57403,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -57446,7 +57455,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -57711,7 +57720,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 4,
                 "slot": {
@@ -58461,7 +58470,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 2,
                 "slot": {
@@ -58612,7 +58621,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 2,
                 "slot": {
@@ -58728,11 +58737,14 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_ENERGY_UNDER_MEMBER",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 2,
+                "attr": {
+                  "is_le": 0
+                },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "UNDER_MEMBER",
                   "comparison": "GE"
                 }
               },
@@ -58745,9 +58757,6 @@
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
                 "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
                 "slot": {
                   "target_slot": "CONTEXT"
                 }
@@ -58844,11 +58853,14 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_ENERGY_UNDER_MEMBER",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
                 "value": 2,
+                "attr": {
+                  "is_le": 0
+                },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "UNDER_MEMBER",
                   "comparison": "GE"
                 }
               },
@@ -58861,9 +58873,6 @@
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
                 "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
                 "slot": {
                   "target_slot": "CONTEXT"
                 }
@@ -59141,7 +59150,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_NOT_MOVED",
+                "op": "HAS_MOVED",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -59191,7 +59200,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -59318,7 +59327,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_NOT_MOVED",
+                "op": "HAS_MOVED",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -59368,7 +59377,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -59799,7 +59808,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_ALL_HEART_TYPES",
+                "op": "COUNT_BLADE_HEART_TYPES",
                 "frame_index": 0,
                 "attr": {
                   "heart_types": [
@@ -59895,7 +59904,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_ALL_HEART_TYPES",
+                "op": "COUNT_BLADE_HEART_TYPES",
                 "frame_index": 0,
                 "attr": {
                   "heart_types": [
@@ -60816,7 +60825,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -60942,7 +60951,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_ENERGY_UNDER_MEMBER",
+                "op": "PLACE_ENERGY_UNDER_MEMBER",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -66559,7 +66568,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "params": {
                   "raw_cond": "REVEALED_COST_LE9_MEMBER"
@@ -66970,7 +66979,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "params": {
                   "raw_cond": "REVEALED_COST_LE9_MEMBER"
@@ -68320,7 +68329,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
@@ -68337,7 +68346,7 @@
                 "value": 5
               },
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -68367,7 +68376,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6
               },
               {
@@ -68433,7 +68442,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
@@ -68450,7 +68459,7 @@
                 "value": 5
               },
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -68480,7 +68489,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6
               },
               {
@@ -70429,7 +70438,7 @@
                 "frame_index": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "value": 2,
                 "slot": {
@@ -70438,7 +70447,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -70446,7 +70455,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 1,
                 "slot": {
@@ -70604,7 +70613,7 @@
                 "frame_index": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "value": 2,
                 "slot": {
@@ -70613,7 +70622,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -70621,7 +70630,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 1,
                 "slot": {
@@ -70779,7 +70788,7 @@
                 "frame_index": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "value": 2,
                 "slot": {
@@ -70788,7 +70797,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -70796,7 +70805,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 1,
                 "slot": {
@@ -70954,7 +70963,7 @@
                 "frame_index": 4
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 5,
                 "value": 2,
                 "slot": {
@@ -70963,7 +70972,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 6,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -70971,7 +70980,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 7,
                 "value": 1,
                 "slot": {
@@ -72284,7 +72293,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -72292,7 +72301,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -72378,7 +72387,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -72386,7 +72395,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -73220,7 +73229,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "REDUCE_YELL_COUNT",
@@ -73307,7 +73316,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "REDUCE_YELL_COUNT",
@@ -74815,7 +74824,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -75178,7 +75187,7 @@
               },
               {
                 "op": "MOVE_MEMBER",
-                "frame_index": 4
+                "frame_index": 3
               }
             ]
           },
@@ -76492,12 +76501,12 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 6,
+                "frame_index": 8,
                 "value": 1
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 9
               }
             ]
           },
@@ -76639,12 +76648,12 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 6,
+                "frame_index": 8,
                 "value": 1
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 9
               }
             ]
           },
@@ -76786,12 +76795,12 @@
               },
               {
                 "op": "JUMP",
-                "frame_index": 6,
+                "frame_index": 8,
                 "value": 1
               },
               {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 9
               }
             ]
           },
@@ -78964,7 +78973,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 4,
                 "slot": {
@@ -81274,7 +81283,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 0,
                 "value": 3,
                 "attr": {
@@ -81361,7 +81370,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_SUCCESS",
+                "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 0,
                 "value": 3,
                 "attr": {
@@ -82124,7 +82133,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_REVEALED_LIVE",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "attr": {
                   "once_per_turn": 1
@@ -84658,7 +84667,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_CARDS",
+                "op": "COUNT_HAND",
                 "frame_index": 0,
                 "attr": {
                   "group_enabled": 1,
@@ -84758,7 +84767,7 @@
                 }
               },
               {
-                "op": "CANNOT_LIVE",
+                "op": "PREVENT_SET_TO_SUCCESS_PILE",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -84839,7 +84848,7 @@
                 }
               },
               {
-                "op": "CANNOT_LIVE",
+                "op": "PREVENT_SET_TO_SUCCESS_PILE",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -85322,7 +85331,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_IN_SET",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
                 "attr": {
                   "values": [
@@ -85432,7 +85441,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_IN_SET",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
                 "attr": {
                   "values": [
@@ -85542,7 +85551,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_IN_SET",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
                 "attr": {
                   "values": [
@@ -85652,7 +85661,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_NOT_IN_SET",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 2,
                 "attr": {
                   "values": [
@@ -85740,7 +85749,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IN_CENTER",
+                "op": "IS_CENTER",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -85823,7 +85832,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IN_CENTER",
+                "op": "IS_CENTER",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -88140,7 +88149,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "PAY_ENERGY_OPTIONAL",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -88270,7 +88279,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "PAY_ENERGY_OPTIONAL",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -88400,7 +88409,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "PAY_ENERGY_OPTIONAL",
+                "op": "PAY_ENERGY",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -88868,10 +88877,14 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_HIGHEST_COST_CENTER",
+                "op": "COST_CHECK",
                 "frame_index": 0,
+                "attr": {
+                  "is_center": 1,
+                  "is_highest": 1
+                },
                 "slot": {
-                  "target_slot": "STAGE_0",
+                  "target_slot": "STAGE",
                   "comparison": "GE"
                 }
               },
@@ -88884,11 +88897,11 @@
                 "op": "ADD_HEARTS",
                 "frame_index": 2,
                 "value": 1,
-                "attr": {
-                  "heart_type": "HEART03"
-                },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -88954,10 +88967,14 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_HIGHEST_COST_CENTER",
+                "op": "COST_CHECK",
                 "frame_index": 0,
+                "attr": {
+                  "is_center": 1,
+                  "is_highest": 1
+                },
                 "slot": {
-                  "target_slot": "STAGE_0",
+                  "target_slot": "STAGE",
                   "comparison": "GE"
                 }
               },
@@ -88970,11 +88987,11 @@
                 "op": "ADD_HEARTS",
                 "frame_index": 2,
                 "value": 1,
-                "attr": {
-                  "heart_type": "HEART03"
-                },
                 "slot": {
                   "target_slot": "CONTEXT"
+                },
+                "params": {
+                  "heart_type": 3
                 }
               },
               {
@@ -93709,7 +93726,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 3,
                 "attr": {
@@ -93799,7 +93816,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 3,
                 "attr": {
@@ -94751,7 +94768,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_COST",
+                "op": "CALC_SUM_COST",
                 "frame_index": 0,
                 "attr": {
                   "target_player": "SELF",
@@ -94841,7 +94858,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SUM_COST",
+                "op": "CALC_SUM_COST",
                 "frame_index": 0,
                 "attr": {
                   "target_player": "SELF",
@@ -95159,7 +95176,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IS_SELF_APPEAR_OR_MOVE",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -95303,7 +95320,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IS_SELF_APPEAR_OR_MOVE",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -95447,7 +95464,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IS_SELF_APPEAR_OR_MOVE",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -95591,7 +95608,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IS_SELF_APPEAR_OR_MOVE",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -96059,7 +96076,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "POSITION_RIGHT_SIDE"
@@ -96071,7 +96088,7 @@
                 "value": 1
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 2,
                 "params": {
                   "raw_cond": "MOVED_THIS_TURN"
@@ -96337,7 +96354,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -98471,13 +98488,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_SELF_MOVE_OR_ENERGY",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "attr": {
                   "once_per_turn": 1
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -98571,13 +98588,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_SELF_MOVE_OR_ENERGY",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "attr": {
                   "once_per_turn": 1
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -98671,13 +98688,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_SELF_MOVE_OR_ENERGY",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "attr": {
                   "once_per_turn": 1
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -98771,13 +98788,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "CHECK_SELF_MOVE_OR_ENERGY",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
                 "attr": {
                   "once_per_turn": 1
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -101894,7 +101911,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_LIVE_CARDS",
+                "op": "COUNT_LIVE_ZONE",
                 "frame_index": 0,
                 "value": 8,
                 "attr": {
@@ -102087,7 +102104,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "COUNT_MOVED_STAGE",
@@ -102340,7 +102357,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_MOVED_STAGE",
+                "op": "HAS_MOVED",
                 "frame_index": 0,
                 "value": 1,
                 "attr": {
@@ -102825,7 +102842,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_ENERGY_DECK",
+                "op": "MOVE_TO_DECK",
                 "frame_index": 0,
                 "value": 2,
                 "attr": {
@@ -102951,7 +102968,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_ENERGY_DECK",
+                "op": "MOVE_TO_DECK",
                 "frame_index": 0,
                 "value": 2,
                 "attr": {
@@ -107943,7 +107960,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -108805,7 +108822,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -109184,10 +109201,14 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IN_SUCCESS_PILE",
+                "op": "IS_IN_DISCARD",
                 "frame_index": 0,
+                "attr": {
+                  "zone": "SUCCESS_PILE"
+                },
                 "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
                 }
               },
               {
@@ -109198,14 +109219,12 @@
               {
                 "op": "COUNT_STAGE",
                 "frame_index": 2,
-                "value": 1,
                 "attr": {
-                  "target_player": "SELF",
                   "group_enabled": 1,
                   "group_id": "MUSE"
                 },
                 "slot": {
-                  "target_slot": "STAGE_2",
+                  "target_slot": "STAGE_CENTER",
                   "comparison": "GE"
                 }
               },
@@ -109218,13 +109237,8 @@
                 "op": "ADD_BLADES",
                 "frame_index": 4,
                 "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "MUSE"
-                },
                 "slot": {
-                  "target_slot": "STAGE_2"
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -109939,7 +109953,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 14,
                 "value": 3,
                 "slot": {
@@ -110041,7 +110055,7 @@
                 }
               },
               {
-                "op": "INCREASE_HEART_REQ",
+                "op": "INCREASE_HEART_COST",
                 "frame_index": 1,
                 "value": 1,
                 "attr": {
@@ -111422,7 +111436,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_YELL_SCORE",
+                "op": "SUM_VALUE",
                 "frame_index": 0,
                 "attr": {
                   "per_score": 1
@@ -111679,7 +111693,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_CARDS",
+                "op": "COUNT_HAND",
                 "frame_index": 0,
                 "attr": {
                   "card_type": "MEMBER",
@@ -112004,23 +112018,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IDENTITY_CHANGE",
-                "frame_index": 0,
-                "attr": {
-                  "groups": [
-                    "SUZURI_BOUQUET",
-                    "DOLL_CHESTRA",
-                    "MIRAKURA_PARK"
-                  ],
-                  "all_zones": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 0
               }
             ]
           },
@@ -112702,7 +112701,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 4,
                 "value": 0,
                 "params": {
@@ -112781,23 +112780,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IDENTITY_CHANGE",
-                "frame_index": 0,
-                "attr": {
-                  "groups": [
-                    "SUZURI_BOUQUET",
-                    "DOLL_CHESTRA",
-                    "MIRAKURA_PARK"
-                  ],
-                  "all_zones": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 0
               }
             ]
           },
@@ -112814,7 +112798,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 0,
                 "params": {
@@ -112823,7 +112807,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "value": 0,
                 "params": {
@@ -113407,7 +113391,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "attr": {
                   "card_type": "LIVE"
@@ -113526,23 +113510,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "IDENTITY_CHANGE",
-                "frame_index": 0,
-                "attr": {
-                  "groups": [
-                    "SUZURI_BOUQUET",
-                    "DOLL_CHESTRA",
-                    "MIRAKURA_PARK"
-                  ],
-                  "all_zones": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 0
               }
             ]
           },
@@ -114367,7 +114336,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "card_type": "LIVE"
@@ -114448,7 +114417,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "card_type": "LIVE"
@@ -114567,7 +114536,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -115224,7 +115193,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "params": {
                   "raw_cond": "FIRST_TURN_LIVE_PHASE"
@@ -115531,7 +115500,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -115767,7 +115736,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "value": 4,
                 "slot": {
@@ -115807,7 +115776,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -115900,7 +115869,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 1,
                 "value": 3,
                 "slot": {
@@ -116082,7 +116051,7 @@
                 }
               },
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 3,
                 "value": 1,
                 "attr": {
@@ -116302,13 +116271,13 @@
                 "value": 0,
                 "params": {
                   "raw_cond": "KEYWORD_ENERGY",
-                  "FILTER": "GROUP=2"
+                  "FILTER": "GROUP=NIJIGASAKI"
                 }
               },
               {
                 "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
-                "value": 2
+                "value": 3
               },
               {
                 "op": "BOOST_SCORE",
@@ -116319,30 +116288,8 @@
                 }
               },
               {
-                "op": "META_RULE",
-                "frame_index": 3,
-                "value": 0,
-                "params": {
-                  "raw_cond": "KEYWORD_MEMBER",
-                  "FILTER": "GROUP=2"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
-                "op": "BOOST_SCORE",
-                "frame_index": 5,
-                "value": 2,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 3
               }
             ]
           },
@@ -116479,7 +116426,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "attr": {
                   "group_enabled": 1,
@@ -116788,7 +116735,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_YELL_SCORE",
+                "op": "SUM_VALUE",
                 "frame_index": 0,
                 "attr": {
                   "per_score": 1
@@ -117757,7 +117704,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_CARDS",
+                "op": "COUNT_HAND",
                 "frame_index": 0,
                 "attr": {
                   "heart_type": "NONE",
@@ -117769,7 +117716,7 @@
                 }
               },
               {
-                "op": "JUMP_IF_TRUE",
+                "op": "JUMP_IF_FALSE",
                 "frame_index": 1,
                 "value": 2
               },
@@ -117855,17 +117802,18 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_BLADE_HEART_CARDS",
+                "op": "GROUP_FILTER",
                 "frame_index": 0,
-                "value": 2,
                 "attr": {
                   "is_le": 1,
-                  "once_per_turn": 1
+                  "once_per_turn": 1,
+                  "filter_has_blade_heart": 1
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "REVEALED",
                   "comparison": "LE"
-                }
+                },
+                "value": 2
               },
               {
                 "op": "JUMP_IF_FALSE",
@@ -117873,34 +117821,19 @@
                 "value": 1
               },
               {
-                "op": "MOVE_REVEALED_TO_DISCARD",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 2,
                 "attr": {
                   "target_player": "SELF",
                   "is_optional": 1
                 },
                 "slot": {
-                  "target_slot": "DISCARD",
-                  "source_zone": "REVEALED"
-                }
-              },
-              {
-                "op": "LOSE_BLADE_HEARTS",
-                "frame_index": 3,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "REPEAT_YELL",
-                "frame_index": 4,
-                "slot": {
-                  "target_slot": "CONTEXT"
+                  "target_slot": "REVEALED"
                 }
               },
               {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
@@ -118495,7 +118428,7 @@
                 "value": 1
               },
               {
-                "op": "REMOVE_HEARTS",
+                "op": "LOSE_EXCESS_HEARTS",
                 "frame_index": 2,
                 "attr": {
                   "heart_type": "SURPLUS",
@@ -118694,7 +118627,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "NOP",
+                "op": "RETURN",
                 "frame_index": 0,
                 "slot": {
                   "target_slot": "STAGE_0",
@@ -121106,7 +121039,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_UNIQUE_NAMES",
+                "op": "GROUP_FILTER",
                 "frame_index": 0,
                 "attr": {
                   "card_type": "MEMBER",
@@ -121523,7 +121456,7 @@
                 "value": 1
               },
               {
-                "op": "COUNT_CARDS",
+                "op": "COUNT_HAND",
                 "frame_index": 2,
                 "value": 1,
                 "attr": {
@@ -122333,7 +122266,7 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_YELL_SCORE",
+                "op": "SUM_VALUE",
                 "frame_index": 0,
                 "attr": {
                   "per_score": 1
