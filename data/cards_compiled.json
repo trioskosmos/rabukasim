@@ -2929,77 +2929,19 @@
       "units": "lilywhite",
       "abilities": [
         {
-          "raw_text": "{{toujyou.png|登場}}自分のステージにいるメンバー1人につき、カードを1枚引く。その後、手札を1枚控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 10,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "raw_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。",
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
-                "frame_index": 0,
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 2
-              },
-              {
-                "op": "DRAW",
-                "frame_index": 2,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "zone_mask": "Guest+Friend"
-                },
-                "slot": {
-                  "target_slot": "STAGE_1",
-                  "source_zone": "HAND",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 0
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 203,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-bp3-004-P"
@@ -3110,8 +3052,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 5,
+      "semantic_flags": 0,
+      "ability_flags": 4,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -17076,81 +17018,18 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "COUNT_STAGE",
-                "frame_index": 2,
-                "attr": {
-                  "unit_enabled": 1
-                },
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 4,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 0
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 203,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-003-P+"
@@ -17161,7 +17040,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
+      "semantic_flags": 0,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -17197,81 +17076,18 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 51,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 81,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 3
-              },
-              {
-                "op": "COUNT_STAGE",
-                "frame_index": 2,
-                "attr": {
-                  "unit_enabled": 1
-                },
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
-                "op": "ACTIVATE_ENERGY",
-                "frame_index": 4,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 0
               }
             ]
           },
           "costs": [],
-          "conditions": [
-            {
-              "type": 203,
-              "value": 0,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
+          "conditions": [],
           "is_once_per_turn": false,
           "requires_selection": false,
           "card_no": "PL!-pb1-003-R"
@@ -17282,7 +17098,7 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
+      "semantic_flags": 0,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
@@ -22562,125 +22378,6 @@
       "draw_icons": 0,
       "semantic_flags": 1,
       "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "126": {
-      "card_id": 126,
-      "card_no": "PL!-sd1-007-SD",
-      "name": "東條 希",
-      "cost": 7,
-      "hearts": [
-        1,
-        0,
-        1,
-        0,
-        0,
-        1,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ],
-      "blades": 1,
-      "original_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。",
-      "original_text_en": "",
-      "groups": "ラブライブ！",
-      "units": "lilywhite",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 5,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 10,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 5,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DECK_TOP",
-                  "dest_zone": "DISCARD"
-                }
-              },
-              {
-                "op": "DISCARDED_CARDS",
-                "frame_index": 1,
-                "value": 1,
-                "attr": {
-                  "card_type": "LIVE"
-                },
-                "slot": {
-                  "target_slot": "STAGE_0",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 2,
-                "value": 1
-              },
-              {
-                "op": "DRAW",
-                "frame_index": 3,
-                "value": 1,
-                "slot": {
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 4
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [
-            {
-              "type": 309,
-              "value": 1,
-              "params": {},
-              "is_negated": false,
-              "attr": 0
-            }
-          ],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!-sd1-007-SD"
-        }
-      ],
-      "img_path": "cards_webp/PL!-sd1-007-SD.webp",
-      "rare": "SD",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 1,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -43868,57 +43565,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "zone_mask": "ALL",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 0
               }
             ]
           },
@@ -44012,8 +43665,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 12,
+      "semantic_flags": 0,
+      "ability_flags": 8,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -44048,57 +43701,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "zone_mask": "ALL",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 0
               }
             ]
           },
@@ -44192,8 +43801,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 12,
+      "semantic_flags": 0,
+      "ability_flags": 8,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -44228,57 +43837,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "zone_mask": "ALL",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 0
               }
             ]
           },
@@ -44372,8 +43937,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 12,
+      "semantic_flags": 0,
+      "ability_flags": 8,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -44408,57 +43973,13 @@
       "abilities": [
         {
           "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 15,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            }
-          ],
+          "trigger": 2,
+          "effects": [],
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "RECOVER_LIVE",
-                "frame_index": 2,
-                "value": 1,
-                "attr": {
-                  "zone_mask": "ALL",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 0
               }
             ]
           },
@@ -44552,8 +44073,8 @@
       "ability_text": "",
       "volume_icons": 0,
       "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 12,
+      "semantic_flags": 0,
+      "ability_flags": 8,
       "synergy_flags": 0,
       "cost_flags": 0
     },
@@ -78295,466 +77816,6 @@
       "volume_icons": 0,
       "draw_icons": 0,
       "semantic_flags": 0,
-      "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "419": {
-      "card_id": 419,
-      "card_no": "PL!S-bp2-005-P",
-      "name": "渡辺 曜",
-      "cost": 13,
-      "hearts": [
-        0,
-        2,
-        0,
-        2,
-        2,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0
-      ],
-      "blades": 3,
-      "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-      "original_text_en": "",
-      "groups": "ラブライブ！サンシャイン!!",
-      "units": "CYaRon！",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 7,
-                "reveal": 1,
-                "choose_count": 3
-              },
-              "target": 0,
-              "params": {
-                "choose_count": 3
-              },
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
-                "value": {
-                  "count": 7,
-                  "reveal": 1,
-                  "choose_count": 3
-                },
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "DECK_TOP"
-                },
-                "params": {
-                  "choose_count": 3
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 3
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!S-bp2-005-P"
-        }
-      ],
-      "img_path": "cards_webp/PL!S-bp2-005-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "4515": {
-      "card_id": 4515,
-      "card_no": "PL!S-bp2-005-R+",
-      "name": "渡辺 曜",
-      "cost": 13,
-      "hearts": [
-        0,
-        2,
-        0,
-        2,
-        2,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0
-      ],
-      "blades": 3,
-      "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-      "original_text_en": "",
-      "groups": "ラブライブ！サンシャイン!!",
-      "units": "CYaRon！",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 7,
-                "reveal": 1,
-                "choose_count": 3
-              },
-              "target": 0,
-              "params": {
-                "choose_count": 3
-              },
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
-                "value": {
-                  "count": 7,
-                  "reveal": 1,
-                  "choose_count": 3
-                },
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "DECK_TOP"
-                },
-                "params": {
-                  "choose_count": 3
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 3
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!S-bp2-005-R+"
-        }
-      ],
-      "img_path": "cards_webp/PL!S-bp2-005-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "8611": {
-      "card_id": 8611,
-      "card_no": "PL!S-bp2-005-P+",
-      "name": "渡辺 曜",
-      "cost": 13,
-      "hearts": [
-        0,
-        2,
-        0,
-        2,
-        2,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0
-      ],
-      "blades": 3,
-      "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-      "original_text_en": "",
-      "groups": "ラブライブ！サンシャイン!!",
-      "units": "CYaRon！",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 7,
-                "reveal": 1,
-                "choose_count": 3
-              },
-              "target": 0,
-              "params": {
-                "choose_count": 3
-              },
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
-                "value": {
-                  "count": 7,
-                  "reveal": 1,
-                  "choose_count": 3
-                },
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "DECK_TOP"
-                },
-                "params": {
-                  "choose_count": 3
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 3
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!S-bp2-005-P+"
-        }
-      ],
-      "img_path": "cards_webp/PL!S-bp2-005-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
-      "ability_flags": 0,
-      "synergy_flags": 0,
-      "cost_flags": 0
-    },
-    "12707": {
-      "card_id": 12707,
-      "card_no": "PL!S-bp2-005-SEC",
-      "name": "渡辺 曜",
-      "cost": 13,
-      "hearts": [
-        0,
-        2,
-        0,
-        2,
-        2,
-        0,
-        0
-      ],
-      "blade_hearts": [
-        0,
-        0,
-        0,
-        1,
-        0,
-        0,
-        0
-      ],
-      "blades": 3,
-      "original_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-      "original_text_en": "",
-      "groups": "ラブライブ！サンシャイン!!",
-      "units": "CYaRon！",
-      "abilities": [
-        {
-          "raw_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
-          "trigger": 1,
-          "effects": [
-            {
-              "effect_type": 58,
-              "value": 1,
-              "target": 0,
-              "params": {},
-              "is_optional": false
-            },
-            {
-              "effect_type": 41,
-              "value": {
-                "count": 7,
-                "reveal": 1,
-                "choose_count": 3
-              },
-              "target": 0,
-              "params": {
-                "choose_count": 3
-              },
-              "is_optional": false
-            }
-          ],
-          "frame_program": {
-            "frames": [
-              {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
-                "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
-                "value": {
-                  "count": 7,
-                  "reveal": 1,
-                  "choose_count": 3
-                },
-                "attr": {
-                  "is_optional": 1
-                },
-                "slot": {
-                  "target_slot": "HAND",
-                  "remainder_zone": "DISCARD",
-                  "source_zone": "DECK_TOP"
-                },
-                "params": {
-                  "choose_count": 3
-                }
-              },
-              {
-                "op": "RETURN",
-                "frame_index": 3
-              }
-            ]
-          },
-          "costs": [],
-          "conditions": [],
-          "is_once_per_turn": false,
-          "requires_selection": false,
-          "card_no": "PL!S-bp2-005-SEC"
-        }
-      ],
-      "img_path": "cards_webp/PL!S-bp2-005-P.webp",
-      "rare": "P",
-      "ability_text": "",
-      "volume_icons": 0,
-      "draw_icons": 0,
-      "semantic_flags": 1,
       "ability_flags": 0,
       "synergy_flags": 0,
       "cost_flags": 0
