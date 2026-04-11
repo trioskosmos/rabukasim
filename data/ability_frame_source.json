@@ -5048,78 +5048,8 @@
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 8
-        },
-        {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
-          "value": 6
-        },
-        {
-          "op": "LOOK_AND_CHOOSE",
-          "frame_index": 4,
-          "value": {
-            "count": 5
-          },
-          "attr": {
-            "target_player": "SELF",
-            "card_type": "MEMBER",
-            "group_enabled": 1,
-            "group_id": "MUSE",
-            "value_enabled": 1,
-            "value_threshold": 9,
-            "is_cost_type": 1,
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DECK_TOP"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
-          "value": 3
-        },
-        {
-          "op": "MOVE_TO_HAND",
-          "frame_index": 6,
-          "value": 1,
-          "slot": {
-            "target_slot": "HAND",
-            "source_zone": "CONTEXT"
-          }
-        },
-        {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 7,
-          "value": 1,
-          "slot": {
-            "remainder_zone": "DISCARD",
-            "source_zone": "STAGE",
-            "dest_zone": "DISCARD"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 8
+          "frame_index": 0
         }
       ],
       "card_refs": [
@@ -5129,7 +5059,7 @@
           "db": "member_db",
           "card_id": 651,
           "name": "絢瀬絵里",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!-bp5-002-R",
@@ -5137,7 +5067,7 @@
           "db": "member_db",
           "card_id": 4747,
           "name": "絢瀬絵里",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!-bp5-002-P",
@@ -5145,7 +5075,7 @@
           "db": "member_db",
           "card_id": 8843,
           "name": "絢瀬絵里",
-          "trigger": 1
+          "trigger": 2
         }
       ]
     },
