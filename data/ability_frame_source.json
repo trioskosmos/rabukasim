@@ -3067,6 +3067,22 @@
           "frame_index": 4
         }
       ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "ON_PLAY baton ability: If baton touched from 優木せつ菜, draw 2 and discard 2 from hand",
+          "Frame 0: BATON checks if baton touched from specific character",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: DRAW with value=2 - draw 2 cards",
+          "Frame 3: MOVE_TO_DISCARD with value=2, zone_mask=Guest+Friend - discard 2 cards from hand to discard",
+          "2 card variants share this pattern (優木せつ菜 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}「優木せつ菜」からバトンタッチして登場した場合": "Frame 0: BATON check for specific character",
+          "カードを2枚引き": "Frame 2: DRAW with value=2",
+          "手札を2枚控え室に置く": "Frame 3: MOVE_TO_DISCARD with value=2, source_zone=HAND, dest_zone=DISCARD, zone_mask=Guest+Friend"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!N-pb1-019-P+",
@@ -3138,6 +3154,22 @@
           "frame_index": 4
         }
       ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "ON_PLAY baton ability: If baton touched from エマ・ヴェルデ, draw 2 and discard 2 from hand",
+          "Frame 0: BATON checks if baton touched from specific character",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: DRAW with value=2 - draw 2 cards",
+          "Frame 3: MOVE_TO_DISCARD with value=2, zone_mask=Guest+Friend - discard 2 cards from hand to discard",
+          "2 card variants share this pattern (エマ・ヴェルデ variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}「エマ・ヴェルデ」からバトンタッチして登場した場合": "Frame 0: BATON check for specific character",
+          "カードを2枚引き": "Frame 2: DRAW with value=2",
+          "手札を2枚控え室に置く": "Frame 3: MOVE_TO_DISCARD with value=2, source_zone=HAND, dest_zone=DISCARD, zone_mask=Guest+Friend"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!N-pb1-020-P+",
@@ -7576,6 +7608,23 @@
           "frame_index": 5
         }
       ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "LIVE_START conditional ability: If baton touched from Liella and have 7+ energy, place 2 energy cards tapped",
+          "Frame 0: BATON with unit_id=LIELLA - checks if baton touched from Liella member",
+          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
+          "Frame 2: COUNT_ENERGY with value=7, comparison=GE - checks if energy >= 7",
+          "Frame 3: JUMP_IF_FALSE skips if energy < 7",
+          "Frame 4: ENERGY_CHARGE with value=2, is_wait=1 - place 2 energy cards from energy deck in tapped (wait) state",
+          "4 card variants share this pattern (all 葉月 恋 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており": "Frame 0: BATON with unit_id=LIELLA",
+          "かつ自分のエネルギーが7枚以上ある場合": "Frame 2: COUNT_ENERGY with value=7, comparison=GE",
+          "自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く": "Frame 4: ENERGY_CHARGE with value=2, is_wait=1"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!SP-bp2-005-P",
