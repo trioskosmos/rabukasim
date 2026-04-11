@@ -14,6 +14,7 @@ import re
 import unicodedata
 from typing import Any, Dict, List, Optional
 
+from ..models.ability import Ability
 from ..models.generated_enums import AbilityCostType, ConditionType, EffectType, TargetType, TriggerType
 
 
@@ -177,6 +178,251 @@ def extract_semantic_simple(text: str) -> Dict[str, Any]:
             result["with"].update(params)
     
     return result
+
+
+def split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
+    """Split authored ability text into trigger-sized sections when multiple abilities share a card."""
+    if not raw_text:
+        return []
+
+    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
+    if not lines:
+        return []
+
+    trigger_line = re.compile(r"^\{\{[^}]+\}\}")
+    sections: list[list[str]] = []
+    current: list[str] = []
+
+    for line in lines:
+        if trigger_line.match(line) and current:
+            sections.append(current)
+            current = [line]
+        else:
+            current.append(line)
+
+    if current:
+        sections.append(current)
+
+    return ["\n".join(section).strip() for section in sections if section]
+
+
+def select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str, Any]) -> str:
+    """Select the most specific authored text for an ability before cost inference."""
+    entry_text = str(
+        entry.get("raw_text", "")
+        or entry.get("primary_text_jp", "")
+        or entry.get("primary_text_en", "")
+        or ""
+    ).strip()
+    if entry_text:
+        return entry_text
+
+    sections = split_raw_text_into_ability_sections(raw_text)
+    if sections:
+        if 0 <= ability_index < len(sections):
+            return sections[ability_index]
+        if len(sections) == 1:
+            return sections[0]
+
+    return raw_text
+
+
+def infer_trigger_id_from_text(text: str) -> int:
+    """Infer a trigger enum value from the authored text markers."""
+    semantic_form = extract_semantic_form_from_text(text)
+    markers = semantic_form.get("trigger_markers", [])
+    if not isinstance(markers, list):
+        markers = []
+    marker = str(markers[0]) if markers else ""
+    trigger_map = {
+        "登場": TriggerType.ON_PLAY,
+        "起動": TriggerType.ACTIVATED,
+        "常時": TriggerType.CONSTANT,
+        "アピール": TriggerType.ON_PLAY,
+        "メイン": TriggerType.ACTIVATED,
+        "ターン開始": TriggerType.TURN_START,
+        "ターン終了": TriggerType.TURN_END,
+        "ライブ開始時": TriggerType.ON_LIVE_START,
+        "自動": TriggerType.ON_PLAY,
+        "ライブ成功時": TriggerType.ON_LIVE_SUCCESS,
+    }
+    trigger = trigger_map.get(marker, TriggerType.ON_PLAY)
+    return int(trigger)
+
+
+def build_ability_from_text(card_no: str, raw_text: str, ability_index: int) -> Ability:
+    """Build a runtime Ability object directly from authored text."""
+    ability_text = select_ability_raw_text(raw_text, ability_index, {})
+    semantic_form = extract_semantic_form_from_text(ability_text)
+    trigger_id = infer_trigger_id_from_text(ability_text)
+    frames = semantic_form_to_frame_program(semantic_form).get("frames", [])
+    if not isinstance(frames, list):
+        frames = []
+    return Ability(
+        raw_text=ability_text,
+        trigger=TriggerType(trigger_id),
+        effects=[],
+        frame_program={"frames": frames},
+        semantic_form=semantic_form,
+        costs=[],
+        conditions=[],
+        is_once_per_turn=False,
+        requires_selection=False,
+        card_no=card_no,
+    )
+
+_OPTIONAL_DISCARD_RE = re.compile(r"^手札を(?P<count>\d+)枚控え室に置いてもよい$")
+_OPTIONAL_DISCARD_LIMIT_RE = _OPTIONAL_DISCARD_RE
+_DISCARD_HAND_RE = re.compile(r"^手札を(?P<count>\d+)枚控え室に置く$")
+_PLAY_MEMBER_FROM_HAND_RE = re.compile(r"^手札から(?P<count>\d+)枚?の?メンバーカードをライブに出す$")
+_DRAW_AND_MOVE_BOTTOM_RE = re.compile(r"^デッキの上からカードを(?P<draw_count>\d+)枚見て、その中から(?P<move_count>\d+)枚をデッキの下に置く$")
+_ADD_TO_HAND_FROM_DISCARD_RE = re.compile(r"^控え室から(?P<count>\d+)枚手札に加える$")
+_ACTIVATE_ENERGY_RE = re.compile(r"^(?:E|エネルギー)(?:(?P<count>\d+)枚?)?(?:を)?アクティブに(?:する|してもよい)$")
+_DISCARD_TO_BOTTOM_RE = re.compile(r"^(?:残りを)?控え室に置く$")
+_PER_MEMBER_DRAW_RE = re.compile(r"^.+メンバー(?P<count>\d+)人につき、カードを(?P<draw_count>\d+)枚引く$")
+_PER_MEMBER_DRAW_RE2 = _PER_MEMBER_DRAW_RE
+_DISCARD_SPECIFIC_CARD_RE = _DISCARD_HAND_RE
+_BOTH_PLAYERS_RE = re.compile(r"^(?:\u81ea\u5206\u3068\u76f8\u624b\u306f(?:\u305d\u308c\u305e\u308c)?|\u53cc\u65b9|\u4e21\u8005\u306f)")
+_LOOK_AND_REVEAL_RE = re.compile(r"^\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u3092(?P<count>\d+)\u679a\u898b\u308b$")
+_COMPOUND_COST_RE = re.compile(r"^(?:(?P<count>\d+)\u679a)?(?:\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092)?\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044$")
+_MOVE_MEMBER_TO_DISCARD_RE = re.compile(r"^(?:.*(?:\u30a6\u30a7\u30a4\u30c8\u306b\u3059\u308b|\u63a7\u3048\u5ba4\u306b\u7f6e\u304f).*)$")
+_CHOOSE_PLAYER_RE = re.compile(r"^(?:\u76f8\u624b|\u81ea\u5206|\u81ea\u5206\u3068\u76f8\u624b)$")
+_COMPLEX_REORDER_RE = re.compile(r"^(?:\u597d\u304d\u306a\u9806\u756a\u3067\u30c7\u30c3\u30ad\u306e\u4e0a\u306b\u7f6e\u304d|\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u3092\u4e26\u3079\u66ff\u3048\u308b)$")
+_TURN_LIMIT_ENERGY_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*)$")
+_TURN_LIMIT_DISCARD_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u624b\u672d\u3092(?P<count>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f.*)$")
+_TURN_LIMIT_TAP_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u30a6\u30a7\u30a4\u30c8\u306b\u3059\u308b.*)$")
+_TURN_LIMIT_MEMBER_LEAVE_STAGE_RE = re.compile(r"^(?:.*\u30b9\u30c6\u30fc\u30b8\u3092\u96e2\u308c\u305f\u3068\u304d.*)$")
+_TURN_LIMIT_ENERGY_DISCARD_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u624b\u672d\u3092(?P<count>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f.*)$")
+_POSITION_CHANGE_RE = re.compile(r"^(?:\u30dd\u30b8\u30b7\u30e7\u30f3\u30c1\u30a7\u30f3\u30b8(?:.*)?|\u4f4d\u7f6e\u3092\u5909\u3048\u308b(?:.*)?)$")
+_LIVE_SUCCESS_TRIGGER_RE = re.compile(r"^\u30e9\u30a4\u30d6\u6210\u529f\u6642$")
+_CENTER_PREFIX_RE = re.compile(r"^(?:\u30bb\u30f3\u30bf\u30fc|\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30bb\u30f3\u30bf\u30fc)$")
+_LIVE_SUCCESS_DRAW_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*\u30ab\u30fc\u30c9\u3092(?P<count>\d+)\u679a\u5f15\u304f.*)$")
+_LIVE_SUCCESS_CHOOSE_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*)$")
+_LIVE_SUCCESS_DISCARD_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*\u63a7\u3048\u5ba4\u306b\u7f6e\u304f.*)$")
+_LIVE_SUCCESS_ADD_TO_HAND_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*\u624b\u672d\u306b\u52a0\u3048\u308b.*)$")
+_LIVE_SUCCESS_ENERGY_TO_STAGE_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*\u30a6\u30a7\u30a4\u30c8\u72b6\u614b\u3067\u7f6e\u304f.*)$")
+_OPPONENT_TAP_ACTIVE_RE = re.compile(r"^(?:.*\u76f8\u624b\u306e\u30b9\u30c6\u30fc\u30b8.*\u30e1\u30f3\u30d0\u30fc(?P<count>\d+)?\u4eba.*\u30a6\u30a7\u30a4\u30c8\u306b\u3059\u308b.*|.*\u76f8\u624b.*\u30a6\u30a7\u30a4\u30c8\u306b\u3059\u308b.*)$")
+_ENERGY_TO_MEMBER_RE = re.compile(r"^(?:.*\u30a8\u30cd\u30eb\u30ae\u30fc\u30ab\u30fc\u30c9\u3092(?P<count>\d+)\u679a\u30a6\u30a7\u30a4\u30c8\u72b6\u614b\u3067\u7f6e\u304f.*)$")
+_GAIN_BLADE_DURATION_RE2 = re.compile(r"^(?!)")
+_ACTIVATE_ABILITY_RE = re.compile(r"^(?!)")
+_ACTIVATE_ALL_MEMBERS_AND_ENERGY_RE = re.compile(r"^(?!)")
+_ACTIVATE_ALL_MEMBERS_RE = re.compile(r"^(?!)")
+_ACTIVATE_GAIN_BLADE_RE = re.compile(r"^(?!)")
+_ACTIVATE_MEMBER_GROUP_RE = re.compile(r"^(?!)")
+_ADD_CHOSEN_CARD_TO_HAND_RE = re.compile(r"^(?!)")
+_ADD_TO_HAND_AND_DISCARD_REMAINDER_RE = re.compile(r"^(?!)")
+_ADD_TO_HAND_EQUAL_COUNT_RE = re.compile(r"^(?!)")
+_ADD_TO_HAND_LIVE_PLACE_RE = re.compile(r"^(?!)")
+_AREA_ACTIVATE_ENERGY_RE = re.compile(r"^(?!)")
+_AREA_CONDITIONAL_DRAW_RE = re.compile(r"^(?!)")
+_AREA_CONDITIONAL_RE = re.compile(r"^(?!)")
+_AREA_DRAW_DISCARD_RE = re.compile(r"^(?!)")
+_BOTH_PLAYERS_PLAY_MEMBER_COST_RE = re.compile(r"^(?!)")
+_BOTH_PLAYERS_PLAY_MEMBER_RE = re.compile(r"^(?!)")
+_CARD_IDENTITY_RULE_RE = re.compile(r"^(?!)")
+_CENTER_ACTIVATE_ALL_RE = re.compile(r"^(?!)")
+_CENTER_TURN_LIMIT_COMPOUND_RE = re.compile(r"^(?!)")
+_CENTER_TURN_LIMIT_TAP_RE = re.compile(r"^(?!)")
+_CHOICE_ACTIVATE_ENERGY_RE = re.compile(r"^(?!)")
+_CHOOSE_CARDS_DIFFERENT_NAMES_RE = re.compile(r"^(?!)")
+_CHOOSE_CARD_COST_LIMIT_RE = re.compile(r"^(?!)")
+_CHOOSE_CARD_GROUP_RE = re.compile(r"^(?!)")
+_CHOOSE_LIVE_CARD_RE = re.compile(r"^(?!)")
+_CHOOSE_MEMBER_COST_GROUP_RE = re.compile(r"^(?!)")
+_CHOOSE_MEMBER_COST_RE = re.compile(r"^(?!)")
+_CHOOSE_MEMBER_FROM_STAGE_RE = re.compile(r"^(?!)")
+_CHOOSE_MEMBER_GROUP_RE = re.compile(r"^(?!)")
+_CHOOSE_QUESTION_RE = re.compile(r"^(?!)")
+_CHOOSE_SPECIFIC_CARD_RE = re.compile(r"^(?!)")
+_COMPLEX_CONDITIONAL_WHEN_RE = re.compile(r"^(?!)")
+_CONDITIONAL_AREA_RESTRICTION_RE = re.compile(r"^(?!)")
+_CONDITIONAL_ENERGY_PAYMENT_RE = re.compile(r"^(?!)")
+_CONDITIONAL_NOT_BATON_TOUCH_RE = re.compile(r"^(?!)")
+_DISCARD_EXCEPT_RE = re.compile(r"^(?!)")
+_DISCARD_OPPONENT_TOP_RE = re.compile(r"^(?!)")
+_DISCARD_TO_TOP_OPTIONAL_RE = re.compile(r"^(?!)")
+_DISCARD_TO_TOP_OPTIONAL_SIMPLE_RE = re.compile(r"^(?!)")
+_DISCARD_TO_TOP_ORDER_RE = re.compile(r"^(?!)")
+_DISCARD_TO_TOP_RE = re.compile(r"^(?!)")
+_DISCARD_WITHOUT_BLADE_HEART_RE = re.compile(r"^(?!)")
+_DISTRIBUTE_CARDS_RE = re.compile(r"^(?!)")
+_DISTRIBUTE_TWO_RE = re.compile(r"^(?!)")
+_DRAW_OPTIONAL_RE = re.compile(r"^(?!)")
+_ENERGY_PAY_LIMIT_RE = re.compile(r"^(?!)")
+_GAIN_BLADE_DURATION_RE = re.compile(r"^(?!)")
+_HEART_COST_REDUCTION_PER_MEMBER_RE = re.compile(r"^(?!)")
+_HEART_SELECTION_OR_RE = re.compile(r"^(?!)")
+_LOOK_AND_CHOOSE_GROUP_RE = re.compile(r"^(?!)")
+_LOOK_OPPONENT_DECK_MULTI_RE = re.compile(r"^(?!)")
+_LOOK_OPPONENT_DECK_RE = re.compile(r"^(?!)")
+_MOVE_MEMBERS_ANY_AREA_RE = re.compile(r"^(?!)")
+_MOVE_TO_AREA_RE = re.compile(r"^(?!)")
+_MULTI_AREA_MARKER_RE = re.compile(r"^(?!)")
+_NEGATE_ABILITY_RE = re.compile(r"^(?!)")
+_NO_LIVE_CARD_DISCARD_RE = re.compile(r"^(?!)")
+_OPPONENT_CHOOSE_MEMBER_EXCEPT_RE = re.compile(r"^(?!)")
+_OPPONENT_DISCARD_LIVE_RE = re.compile(r"^(?!)")
+_OPPONENT_DISCARD_TO_BOTTOM_RE = re.compile(r"^(?!)")
+_OPPONENT_GAIN_BLADE_RE = re.compile(r"^(?!)")
+_OPPONENT_TAP_ALL_COST_LIMIT_RE = re.compile(r"^(?!)")
+_OPPONENT_TAP_BLADE_COUNT_RE = re.compile(r"^(?!)")
+_OPPONENT_TAP_COST_EXACT_RE = re.compile(r"^(?!)")
+_OR_CONDITIONAL_RE = re.compile(r"^(?!)")
+_PER_ENERGY_DRAW_RE = re.compile(r"^(?!)")
+_PER_MEMBER_ENERGY_RE = re.compile(r"^(?!)")
+_PER_MEMBER_HEART_GAIN_RE = re.compile(r"^(?!)")
+_PER_MEMBER_LOOK_RE = re.compile(r"^(?!)")
+_PLACE_CARD_AT_POSITION_RE = re.compile(r"^(?!)")
+_PLAY_MEMBER_CONDITIONAL_RE = re.compile(r"^(?!)")
+_PLAY_MEMBER_COST_LIMIT_AREA_RE = re.compile(r"^(?!)")
+_PLAY_MEMBER_COST_LIMIT_RE = re.compile(r"^(?!)")
+_PLAY_MEMBER_FROM_HAND_COST_RE = re.compile(r"^(?!)")
+_PLAY_MEMBER_OPTIONAL_RE = re.compile(r"^(?!)")
+_POSITION_CHANGE_OPPONENT_RE = re.compile(r"^(?!)")
+_REDUCE_HEART_COST_RE = re.compile(r"^(?!)")
+_REPEAT_PROCEDURE_RE = re.compile(r"^(?!)")
+_RESPAWN_MEMBER_RE = re.compile(r"^(?!)")
+_REVEAL_ALL_DISCARD_RE = re.compile(r"^(?!)")
+_REVEAL_AND_PLACE_GAIN_BLADE_RE = re.compile(r"^(?!)")
+_REVEAL_GROUP_OPTIONAL_RE = re.compile(r"^(?!)")
+_REVEAL_HAND_TO_OPPONENT_RE = re.compile(r"^(?!)")
+_REVEAL_LIVE_OPTIONAL_RE = re.compile(r"^(?!)")
+_REVEAL_LIVE_TO_BOTTOM_RE = re.compile(r"^(?!)")
+_REVEAL_TOP_RE = re.compile(r"^(?!)")
+_REVEAL_UNTIL_LIVE_RE = re.compile(r"^(?!)")
+_SCORE_CONDITIONAL_RE = re.compile(r"^(?!)")
+_SCORE_MODIFICATION_RE = re.compile(r"^(?!)")
+_SCORE_PER_HEART_RE = re.compile(r"^(?!)")
+_SCORE_PER_LIVE_CARD_RE = re.compile(r"^(?!)")
+_SCORE_PER_MEMBER_NAME_RE = re.compile(r"^(?!)")
+_SCORE_PER_MEMBER_RE = re.compile(r"^(?!)")
+_SEQUENTIAL_ADD_TO_HAND_GROUP_RE = re.compile(r"^(?!)")
+_SEQUENTIAL_ADD_TO_HAND_RE = re.compile(r"^(?!)")
+_SEQUENTIAL_CHOOSE_AREA_RE = re.compile(r"^(?!)")
+_SEQUENTIAL_PLACE_CARD_RE = re.compile(r"^(?!)")
+_SEQUENTIAL_REVEAL_TOP_RE = re.compile(r"^(?!)")
+_SUCCESS_LIVE_PLACE_DISCARD_RE = re.compile(r"^(?!)")
+_TAP_GROUP_NAME_RE = re.compile(r"^(?!)")
+_TAP_GROUP_NAME_SIMPLE_RE = re.compile(r"^(?!)")
+_TAP_GROUP_OPTIONAL_RE = re.compile(r"^(?!)")
+_TAP_GROUP_SIMPLE_RE = re.compile(r"^(?!)")
+_TAP_OPPONENT_COST_LIMIT_RE = re.compile(r"^(?!)")
+_TAP_OPTIONAL_RE = re.compile(r"^(?!)")
+_TURN_COUNT_CONDITIONAL_RE = re.compile(r"^(?!)")
+_TURN_LIMIT_COMPLEX_CONDITIONAL_RE = re.compile(r"^(?!)")
+_TURN_LIMIT_COMPOUND_CHOICE_RE = re.compile(r"^(?!)")
+_TURN_LIMIT_DECK_TO_DISCARD_RE = re.compile(r"^(?!)")
+_TURN_LIMIT_EEE_RE = re.compile(r"^(?!)")
+_TURN_LIMIT_ENERGY_TO_MEMBER_RE = re.compile(r"^(?!)")
+_DISCARD_SAME_UNIT_RE = re.compile(r"^(?!)")
+_DISCARD_SAME_GROUP_RE = re.compile(r"^(?!)")
+_DISCARD_SPECIFIC_CARDS_RE = re.compile(r"^(?!)")
+_DISCARD_SPECIFIC_CARDS_SIMPLE_RE = re.compile(r"^(?!)")
+_DISCARD_SPECIFIC_MEMBER_RE = re.compile(r"^(?!)")
+_DISCARD_TOP_OPTIONAL_RE = re.compile(r"^(?!)")
+_DISCARD_TO_BOTTOM_OPTIONAL_RE = re.compile(r"^(?!)")
+_HEART_SELECTION_RE = re.compile(r"^heart(?P<count>\d+)(?:\s*heart(?P=count))*.*$")
+_COLOR_SELECTION_RE = re.compile(r"^heart(?P<count>\d+)(?:.*)$")
 
 _CONDITION_OPCODE_MAP = {
     "HAS_MEMBER": ConditionType.HAS_MEMBER,
@@ -389,6 +635,22 @@ def _coerce_group_id(group_id: object) -> int:
             return int(normalized)
         return _GROUP_ID_MAP.get(normalized, 0)
     return 0
+
+
+def extract_heart_color_sequence(text: str) -> list[int]:
+    """Extract heart color sequence from text (e.g., heart1 heart2 -> [1, 2])."""
+    if not text:
+        return []
+    
+    colors = []
+    # Match patterns like heart1, heart2, etc.
+    matches = re.findall(r"heart(\d+)", text)
+    for match in matches:
+        try:
+            colors.append(int(match))
+        except (ValueError, TypeError):
+            pass
+    return colors
 
 
 def _normalize_authored_text(text: str) -> str:
@@ -692,18 +954,18 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _DISCARD_TO_BOTTOM_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 0)
         runtime = _semantic_runtime_frame(
-            "MOVE_TO_DECK",
+            "MOVE_TO_DISCARD",
             value=count,
-            slot={"source_zone": "DISCARD", "dest_zone": "DECK_BOTTOM"},
+            slot={"source_zone": "CONTEXT", "dest_zone": "DISCARD"},
         )
         operation = _semantic_operation(
             kind="effect",
-            code=f"move_to_deck_bottom({count})",
+            code=f"discard_remainder({count})",
             matched_text=body,
             runtime=runtime,
-            notes={"count": count, "source_zone": "DISCARD", "dest_zone": "DECK_BOTTOM"},
+            notes={"count": count, "source_zone": "CONTEXT", "dest_zone": "DISCARD"},
         )
         return operation, marker
 
@@ -753,9 +1015,9 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
     if match := _LOOK_AND_REVEAL_RE.fullmatch(compact):
         count = int(match.group("count"))
         runtime = _semantic_runtime_frame(
-            "LOOK_AND_CHOOSE",
+            "LOOK_DECK",
             value=count,
-            slot={},
+            slot={"source_zone": "DECK_TOP"},
         )
         operation = _semantic_operation(
             kind="effect",
@@ -767,7 +1029,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _COMPOUND_COST_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=1,
@@ -1020,7 +1282,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _OPPONENT_TAP_ACTIVE_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1130,7 +1392,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _LIVE_SUCCESS_CHOOSE_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "CHOOSE_OPTION",
             value=count,
@@ -1161,7 +1423,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _CENTER_TURN_LIMIT_TAP_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1177,7 +1439,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _CENTER_TURN_LIMIT_COMPOUND_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=1,
@@ -1455,7 +1717,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _OPPONENT_TAP_BLADE_COUNT_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1590,7 +1852,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_OPTIONAL_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1688,7 +1950,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_GROUP_OPTIONAL_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1863,7 +2125,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _OPPONENT_TAP_COST_EXACT_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -1911,7 +2173,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_OPPONENT_COST_LIMIT_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -2028,7 +2290,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_GROUP_SIMPLE_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -2176,7 +2438,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_GROUP_NAME_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -2400,7 +2662,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _TAP_GROUP_NAME_SIMPLE_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -2879,7 +3141,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
         return operation, marker
 
     if match := _OPPONENT_TAP_BLADE_CONDITIONAL_RE.fullmatch(compact):
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -3993,7 +4255,7 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
 
     if match := _TARGET_OPPONENT_WAIT_RE.fullmatch(compact):
         cost = int(match.group("cost"))
-        count = int(match.group("count"))
+        count = int(match.groupdict().get("count") or 1)
         runtime = _semantic_runtime_frame(
             "TAP_MEMBER",
             value=count,
@@ -4173,6 +4435,28 @@ def semantic_form_to_frame_program(semantic_form: dict[str, Any]) -> dict[str, A
                 frames.extend([dict(frame) for frame in nested_frames if isinstance(frame, dict)])
             else:
                 frames.append(dict(runtime))
+
+    # Insert JUMP_IF_FALSE after SELECT_MEMBER when followed by effects that need a target
+    # This handles cases like Q196 where the effect should be skipped if no member is selected
+    i = 0
+    while i < len(frames) - 1:
+        frame = frames[i]
+        next_frame = frames[i + 1]
+        op = str(frame.get("op", frame.get("opcode", ""))).upper()
+        next_op = str(next_frame.get("op", next_frame.get("opcode", ""))).upper()
+        
+        # If SELECT_MEMBER is followed by an effect that needs a target (ADD_BLADES, ADD_HEARTS, etc.)
+        # insert JUMP_IF_FALSE to skip the effect if selection failed
+        if op == "SELECT_MEMBER" and next_op in {"ADD_BLADES", "ADD_HEARTS", "ACTIVATE_MEMBER"}:
+            # Insert JUMP_IF_FALSE that skips the next frame if selection failed
+            jump_frame = {
+                "op": "JUMP_IF_FALSE",
+                "value": 1,  # Skip 1 frame (the next effect)
+                "frame_index": i + 1,
+            }
+            frames.insert(i + 1, jump_frame)
+            i += 1  # Skip the jump frame we just inserted
+        i += 1
 
     if frames and str(frames[-1].get("op", frames[-1].get("opcode", ""))).upper() != "RETURN":
         frames.append({"op": "RETURN"})

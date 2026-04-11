@@ -17305,7 +17305,17 @@
           "name": "小原鞠莉",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Duplicate of ability 188 - optional tap self, then tap 1 opponent cost≤4 member",
+          "6 cards share this pattern"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする": "Frames 0-3: SET_TAPPED + JUMP_IF_FALSE + SELECT_MEMBER + MOVE_MEMBER"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
@@ -17404,7 +17414,20 @@
           "name": "園田海未",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart01/03/06, gain selected heart per success live card",
+          "Frame 0: COLOR_SELECT with color_mask=RED|GREEN|ANY",
+          "Frame 1: ADD_HEARTS with compare_accumulated=1, remainder_zone=SUCCESS_PILE, is_dynamic=1, heart_type=SELECTED",
+          "5 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る": "Frame 1: ADD_HEARTS with dynamic based on SUCCESS_PILE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る。",
@@ -17462,7 +17485,21 @@
           "name": "園田海未",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "Frame 2: ADD_HEARTS missing target selection for '自分のステージにいるこのメンバー以外のメンバー1人'",
+          "Text specifies targeting a specific member (not this member), but frame just adds hearts without targeting"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバー1人は、{{heart_01.png|heart01}}を得る": "Frame 2: ADD_HEARTS (ISSUE: missing target selection)"
+        },
+        "required_frames": [
+          "ADD_HEARTS should target specific member (not this member)"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る。",
@@ -17547,7 +17584,21 @@
           "name": "大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "Frame 2: ADD_HEARTS missing target selection for group-matched member",
+          "Text says 'これにより控え室に置いたカードと同じグループ名を持つメンバー1人' but frame doesn't target specific member"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る": "Frame 2: ADD_HEARTS (ISSUE: missing group filter and target selection)"
+        },
+        "required_frames": [
+          "ADD_HEARTS should target member with same group as discarded card"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚アクティブにする。",
@@ -17671,7 +17722,21 @@
           "name": "澁谷かのん",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "Frame 0: PAY_ENERGY but text says 'このメンバーをウェイトにするか、手札を1枚控え室に置く'",
+          "Should use SELECT_MODE with two options instead of PAY_ENERGY"
+        ],
+        "text_mapping": {
+          "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く": "ISSUE: Frame 0 uses PAY_ENERGY instead of SELECT_MODE",
+          "エネルギーを1枚アクティブにする": "Missing ACTIVATE_ENERGY frame"
+        },
+        "required_frames": [
+          "Should use SELECT_MODE with two options: SET_TAPPED or MOVE_TO_DISCARD, then ACTIVATE_ENERGY"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。",
@@ -17750,7 +17815,19 @@
           "name": "嵐 千砂都",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Activate all Liella members and all energy",
+          "Frame 0: ACTIVATE_MEMBER with group_id=LIELLA, value=99",
+          "Frame 1: ACTIVATE_ENERGY with value=99",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする": "Frames 0-1: ACTIVATE_MEMBER + ACTIVATE_ENERGY"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のすべてのメンバーをウェイトにする。",
@@ -17835,7 +17912,21 @@
           "name": "桜内梨子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If left and right side members have same cost, tap all opponent members with blade≤3",
+          "Frame 0: SYNC_COST",
+          "Frame 1: JUMP_IF_FALSE",
+          "Frame 2: TAP_OPPONENT with filter=BLADE_LE3",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合": "Frame 0: SYNC_COST",
+          "相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のすべてのメンバーをウェイトにする": "Frame 2: TAP_OPPONENT with filter=BLADE_LE3"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
@@ -17942,7 +18033,22 @@
           "name": "夕霧綴理",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, gain blade per live card in stage",
+          "Frame 0: PAY_ENERGY with is_optional=1",
+          "Frame 2: SUM_VALUE",
+          "Frame 3: GROUP_FILTER",
+          "Frame 5: ADD_BLADES with compare_accumulated=1, remainder_zone=STAGE, is_dynamic=1",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY with is_optional=1",
+          "ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る": "Frame 5: ADD_BLADES with dynamic based on STAGE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
@@ -18036,7 +18142,22 @@
           "name": "桜坂しずく",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, select heart color, gain that heart",
+          "Frame 0: PAY_ENERGY with is_optional=1",
+          "Frame 2: COLOR_SELECT with is_optional=1",
+          "Frame 3: ADD_HEARTS with heart_type=SELECTED",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY with is_optional=1",
+          "好きなハートの色を1つ指定する": "Frame 2: COLOR_SELECT",
+          "ライブ終了時まで、そのハートを1つ得る": "Frame 3: ADD_HEARTS with heart_type=SELECTED"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージのエリアすべてにメンバーが登場している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -18168,7 +18289,24 @@
           "name": "大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "Frame 0: SELECT_MEMBER missing group_id=MUSE filter",
+          "Frame 4: ADD_HEARTS has is_optional=1 but should not be optional (effect is guaranteed after paying cost)",
+          "Frame 4: ADD_HEARTS has target_player=BOTH but text says '自分のステージ' (should be SELF)"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}『μ's』のメンバー1人をウェイトにしてもよい": "Frame 0: SELECT_MEMBER (ISSUE: missing group_id=MUSE)",
+          "ライブ終了時まで、{{heart_03.png|heart03}}{{heart_03.png|heart03}}を得る": "Frame 4: ADD_HEARTS (ISSUE: has is_optional=1, target_player=BOTH should be SELF)"
+        },
+        "required_frames": [
+          "SELECT_MEMBER should have group_id=MUSE",
+          "ADD_HEARTS should not have is_optional=1",
+          "ADD_HEARTS should have target_player=SELF"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}『μ's』のメンバー1人をウェイトにしてもよい：ライブ終了時まで、{{heart_03.png|heart03}}{{heart_03.png|heart03}}を得る。",
@@ -18264,7 +18402,21 @@
           "name": "小泉花陽",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "Frame 0: HAS_KEYWORD with char_id_1=LANZHU but text says 'このターン、自分のステージにメンバーが2回以上登場している場合'",
+          "Wrong condition - should check for 2+ member plays this turn, not LANZHU character"
+        ],
+        "text_mapping": {
+          "このターン、自分のステージにメンバーが2回以上登場している場合": "ISSUE: Frame 0 uses HAS_KEYWORD with char_id_1=LANZHU instead of checking play count",
+          "ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る": "Frame 2: BOOST_SCORE"
+        },
+        "required_frames": [
+          "Should use PLAY_COUNT or similar to check for 2+ member plays this turn"
+        ]
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
@@ -18347,7 +18499,18 @@
           "name": "宮下 愛",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional position change this member",
+          "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい": "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
@@ -18421,7 +18584,17 @@
           "name": "若菜四季",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Duplicate of ability 200 - optional position change",
+          "6 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい": "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}カードを1枚引く。相手のステージにいるコスト9以下のメンバーを1人までウェイトにする。",
@@ -18470,7 +18643,7 @@
           "frame_index": 2,
           "value": 1,
           "attr": {
-            "target_player": "BOTH",
+            "target_player": "OPPONENT",
             "is_optional": 1
           },
           "slot": {
@@ -18479,41 +18652,8 @@
           }
         },
         {
-          "op": "COUNT_STAGE",
-          "frame_index": 3,
-          "attr": {
-            "target_player": "OPPONENT",
-            "is_tapped": 1
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 4,
-          "value": 1
-        },
-        {
-          "op": "RECOVER_MEMBER",
-          "frame_index": 5,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI",
-            "zone_mask": "ALL",
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DISCARD"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -18549,7 +18689,22 @@
           "name": "朝香果林",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Draw 1, optionally tap 1 opponent cost≤9 member",
+          "Fixed: Removed extra frames (COUNT_STAGE, JUMP_IF_FALSE, RECOVER_MEMBER)",
+          "Frame 0: DRAW",
+          "Frame 1: SELECT_MEMBER with cost≤9, target_player=OPPONENT",
+          "Frame 2: MOVE_MEMBER with is_optional=1, is_wait=1",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "カードを1枚引く": "Frame 0: DRAW",
+          "相手のステージにいるコスト9以下のメンバーを1人までウェイトにする": "Frames 1-2: SELECT_MEMBER + MOVE_MEMBER with is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る。",
@@ -18633,7 +18788,20 @@
           "name": "鬼塚夏美",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Gain blade per 2 cards in hand",
+          "Frame 0: COUNT_HAND",
+          "Frame 2: DIV_VALUE with value=2",
+          "Frame 3: ADD_BLADES",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る": "Frames 0-3: COUNT_HAND + DIV_VALUE + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札のライブカードを1枚公開し、デッキの一番下に置いてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
@@ -18672,13 +18840,18 @@
           "value": 3
         },
         {
-          "op": "SUM_VALUE",
-          "frame_index": 2
+          "op": "REVEAL_CARDS",
+          "frame_index": 2,
+          "value": 1
         },
         {
-          "op": "JUMP_IF_FALSE",
+          "op": "MOVE_TO_DECK",
           "frame_index": 3,
-          "value": 1
+          "value": 1,
+          "slot": {
+            "remainder_zone": "DECK_BOTTOM",
+            "dest_zone": "DECK"
+          }
         },
         {
           "op": "LOOK_REORDER_DISCARD",
@@ -18726,7 +18899,20 @@
           "name": "国木田花丸",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional reveal live card from hand and put at deck bottom, then look at top 2",
+          "Fixed: Added REVEAL_CARDS and MOVE_TO_DECK frames",
+          "Removed unnecessary SUM_VALUE and JUMP_IF_FALSE",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札のライブカードを1枚公開し、デッキの一番下に置いてもよい": "Frames 0-3: SELECT_CARDS + REVEAL_CARDS + MOVE_TO_DECK",
+          "自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く": "Frame 4: LOOK_REORDER_DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札のライブカードを1枚控え室に置いてもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
@@ -18747,8 +18933,34 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "COLOR_SELECT",
+          "op": "SELECT_CARDS",
           "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "card_type": "LIVE",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "COLOR_SELECT",
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "target_player": "SELF"
@@ -18759,7 +18971,7 @@
         },
         {
           "op": "ADD_HEARTS",
-          "frame_index": 1,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -18770,7 +18982,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -18806,7 +19018,20 @@
           "name": "ミア・テイラー",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard live card, select heart color, gain that heart",
+          "Fixed: Added SELECT_CARDS and MOVE_TO_DISCARD frames",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札のライブカードを1枚控え室に置いてもよい": "Frames 0-2: SELECT_CARDS + MOVE_TO_DISCARD",
+          "好きなハートの色を1つ指定する": "Frame 3: COLOR_SELECT",
+          "ライブ終了時まで、そのハートを1つ得る": "Frame 4: ADD_HEARTS with heart_type=SELECTED"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る。",
@@ -18866,7 +19091,7 @@
             "target_slot": "STAGE_0"
           },
           "params": {
-            "heart_type": 2
+            "heart_type": "SELECTED"
           }
         },
         {
@@ -18907,7 +19132,20 @@
           "name": "渡辺 曜",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard, select heart03/04/05, give selected heart to played this turn non-Aqours members",
+          "Fixed: Changed heart_type from 2 to SELECTED",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ": "Frame 2: COLOR_SELECT",
+          "ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る": "Frame 3: ADD_HEARTS with heart_type=SELECTED, group_id=OTHER, keyword=PLAYED_THIS_TURN"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：これにより控え室に置いたカードがメンバーカードの場合、控え室に置いたカードと同じ名前を持つメンバー1人は、ライブ終了時まで、{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}を得る。",
@@ -18928,14 +19166,15 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "MOVE_TO_DISCARD",
+          "op": "SELECT_CARDS",
           "frame_index": 0,
           "value": 1,
           "attr": {
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "HAND"
+            "target_slot": "HAND",
+            "source_zone": "HAND"
           }
         },
         {
@@ -18946,9 +19185,8 @@
         {
           "op": "NOP",
           "frame_index": 2,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
+          "params": {
+            "raw_cond": "DISCARDED_IS_MEMBER"
           }
         },
         {
@@ -18966,6 +19204,9 @@
           "slot": {
             "target_slot": "CONTEXT",
             "source_zone": "STAGE"
+          },
+          "params": {
+            "special_id": "Same Name As Discarded"
           }
         },
         {
@@ -19025,7 +19266,20 @@
           "name": "百生 吟子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard, if member card, give heart04+blade to member with same name",
+          "Fixed: Added proper condition check for member card and name matching",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: SELECT_CARDS with is_optional=1",
+          "これにより控え室に置いたカードがメンバーカードの場合": "Frame 2: NOP with raw_cond=DISCARDED_IS_MEMBER",
+          "控え室に置いたカードと同じ名前を持つメンバー1人は、ライブ終了時まで、{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}を得る": "Frames 4-6: SELECT_MEMBER + ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
@@ -19079,17 +19333,19 @@
           "value": 3
         },
         {
-          "op": "SUM_VALUE",
-          "frame_index": 4
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
-          "value": 1
+          "op": "COLOR_SELECT",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
         },
         {
           "op": "ADD_HEARTS",
-          "frame_index": 6,
+          "frame_index": 5,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19100,7 +19356,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -19136,7 +19392,21 @@
           "name": "藤島 慈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If other members on stage, optional discard, select heart, gain that heart",
+          "Fixed: Added COLOR_SELECT frame, removed unnecessary SUM_VALUE frames",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにほかのメンバーがいる場合": "Frame 0: COUNT_STAGE with special_id=Not Self",
+          "手札を1枚控え室に置いてもよい": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
+          "好きなハートの色を1つ指定する": "Frame 4: COLOR_SELECT",
+          "ライブ終了時まで、そのハートを1つ得る": "Frame 5: ADD_HEARTS with heart_type=SELECTED"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚まで控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -19157,29 +19427,31 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SELECT_MEMBER",
+          "op": "SELECT_CARDS",
           "frame_index": 0,
-          "value": 1,
+          "value": 2,
           "attr": {
-            "target_player": "SELF",
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "STAGE"
+            "target_slot": "HAND",
+            "source_zone": "HAND"
           }
         },
         {
-          "op": "ADD_BLADES",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
           "value": 2,
           "attr": {
-            "target_player": "SELF",
             "compare_accumulated": 1
           },
           "slot": {
-            "target_slot": "STAGE_1",
-            "remainder_zone": "STAGE",
+            "remainder_zone": "CONTEXT",
             "is_dynamic": 1
           },
           "params": {
@@ -19191,7 +19463,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -19227,7 +19499,19 @@
           "name": "松浦果南",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard up to 2, gain 2 blades per discarded card",
+          "Fixed: Changed SELECT_MEMBER to SELECT_CARDS, fixed dynamic calculation",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚まで控え室に置いてもよい": "Frame 0: SELECT_CARDS with value=2, is_optional=1",
+          "ライブ終了時まで、これによって控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES with compare_accumulated=1, dynamic based on CONTEXT"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のステージにいるこのメンバー以外のウェイト状態のメンバー1人をアクティブにする。そうした場合、ライブ終了時まで、これによりアクティブにしたメンバーと、このメンバーは、それぞれ{{heart_04.png|heart04}}を得る。",
@@ -19301,7 +19585,7 @@
           "value": 1,
           "attr": {
             "card_type": "MEMBER",
-            "is_optional": 1
+            "is_optional": 0
           },
           "slot": {
             "target_slot": "CONTEXT"
@@ -19362,7 +19646,20 @@
           "name": "エマ・ヴェルデ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2, activate tapped non-self member, give heart04 to both",
+          "Fixed: Removed is_optional=1 from ADD_HEARTS (effect is guaranteed after cost)",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with value=2, is_optional=1",
+          "自分のステージにいるこのメンバー以外のウェイト状態のメンバー1人をアクティブにする": "Frames 2-3: SELECT_MEMBER + ACTIVATE_MEMBER",
+          "そうした場合、ライブ終了時まで、これによりアクティブにしたメンバーと、このメンバーは、それぞれ{{heart_04.png|heart04}}を得る": "Frames 6-7: ADD_HEARTS + ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
@@ -19508,7 +19805,26 @@
           "name": "天王寺璃奈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional move 2 member cards to deck bottom, effect based on total cost",
+          "Frame 0: SELECT_CARDS",
+          "Frame 1: MOVE_TO_DECK to DECK_BOTTOM",
+          "Frame 3: CALC_SUM_COST",
+          "Frame 4-6: Check cost=6, DRAW",
+          "Frame 7-9: Check cost=8, ADD_HEARTS with all=true",
+          "Frame 10-12: Check cost=25, GRANT_ABILITY",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい": "Frames 0-1: SELECT_CARDS + MOVE_TO_DECK",
+          "それらのカードのコストの合計が、6の場合、カードを1枚引く": "Frames 3-6: CALC_SUM_COST + check cost=6 + DRAW",
+          "合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る": "Frames 7-9: check cost=8 + ADD_HEARTS with all=true",
+          "合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る": "Frames 10-12: check cost=25 + GRANT_ABILITY"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
@@ -19592,7 +19908,20 @@
           "name": "優木せつ菜",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If success live counts equal, gain heart02x2",
+          "Frame 0: NOP with raw_cond=SUCCESS_LIVE_COUNT_EQUAL_OPPONENT",
+          "Frame 2: ADD_HEARTS with heart_type=2, value=2",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合": "Frame 0: NOP with raw_cond",
+          "ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る": "Frame 2: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを1枚引き、ライブ終了時まで、自分のステージにいるメンバーは{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
@@ -19626,20 +19955,11 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 5
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
           "value": 3
         },
         {
           "op": "DRAW",
-          "frame_index": 4,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19647,7 +19967,7 @@
         },
         {
           "op": "SELECT_MEMBER",
-          "frame_index": 5,
+          "frame_index": 3,
           "value": 99,
           "attr": {
             "target_player": "SELF"
@@ -19659,7 +19979,7 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 6,
+          "frame_index": 4,
           "value": 2,
           "slot": {
             "target_slot": "STAGE_1"
@@ -19667,7 +19987,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -19703,7 +20023,20 @@
           "name": "上原歩夢",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional place energy under member, draw 1, give blade x2 to all stage members",
+          "Fixed: Removed unnecessary SUM_VALUE and JUMP_IF_FALSE frames",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい": "Frame 0: PLACE_ENERGY_UNDER_MEMBER with is_optional=1",
+          "そうした場合、カードを1枚引き": "Frame 2: DRAW",
+          "ライブ終了時まで、自分のステージにいるメンバーは{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 3-4: SELECT_MEMBER + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない場合、このメンバーはセンターエリア以外にポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
@@ -19724,33 +20057,29 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "IS_CENTER",
-          "frame_index": 0,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
           "op": "SELECT_MEMBER",
-          "frame_index": 1,
+          "frame_index": 0,
           "value": 1,
           "attr": {
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "params": {
+            "filter": "BLADE_GE5"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
+          "frame_index": 1,
           "value": 1
         },
         {
           "op": "MOVE_MEMBER",
-          "frame_index": 3,
+          "frame_index": 2,
           "value": 99,
           "attr": {
             "target_player": "SELF"
@@ -19760,12 +20089,12 @@
             "source_zone": "STAGE"
           },
           "params": {
-            "destination": "POSITION_CHANGE"
+            "destination": "POSITION_CHANGE_NON_CENTER"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -19801,7 +20130,19 @@
           "name": "星空凛",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If no Muse member with 5+ blades on stage, position change to non-center",
+          "Fixed: Added group_id=MUSE, blade filter, changed IS_CENTER to proper check",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない場合": "Frame 0: SELECT_MEMBER with group_id=MUSE, filter=BLADE_GE5",
+          "このメンバーはセンターエリア以外にポジションチェンジする": "Frame 2: MOVE_MEMBER with destination=POSITION_CHANGE_NON_CENTER"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以上いる場合、ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る。",
@@ -19883,7 +20224,20 @@
           "name": "ウィーン・マルガレーテ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If other members on stage, reduce yell count by 8",
+          "Frame 0: COUNT_STAGE with special_id=Not Self",
+          "Frame 2: REDUCE_YELL_COUNT with value=8",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにこのメンバー以外のメンバーが1人以上いる場合": "Frame 0: COUNT_STAGE with special_id=Not Self",
+          "ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る": "Frame 2: REDUCE_YELL_COUNT with value=8"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
@@ -19991,7 +20345,22 @@
           "name": "三船栞子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select Nijigasaki live card, if same name in success pile, gain heart04",
+          "Frame 0: SELECT_LIVE with group_id=NIJIGASAKI",
+          "Frame 1: SUCCESS_PILE_COUNT with special_id=Same Name",
+          "Frame 3: ADD_HEARTS with heart_type=3",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ": "Frame 0: SELECT_LIVE with group_id=NIJIGASAKI",
+          "それと同じカード名のカードが自分の成功ライブカード置き場にある場合": "Frame 1: SUCCESS_PILE_COUNT with special_id=Same Name",
+          "ライブ終了時まで、{{heart_04.png|heart04}}を得る": "Frame 3: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードがある場合、手札を1枚控え室に置いてもよい。そうした場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。",
@@ -20039,23 +20408,15 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 3
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 4
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
           "value": 1
         },
         {
           "op": "RECOVER_LIVE",
-          "frame_index": 6,
+          "frame_index": 4,
           "value": 1,
           "attr": {
             "group_enabled": 1,
+            "group_id": "MUSE",
             "zone_mask": "ALL"
           },
           "slot": {
@@ -20065,7 +20426,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -20101,7 +20462,20 @@
           "name": "園田海未",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If success live exists, optional discard, recover Muse live card",
+          "Fixed: Added group_id=MUSE to RECOVER_LIVE, removed unnecessary SUM_VALUE frames",
+          "4 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分の成功ライブカード置き場にカードがある場合": "Frame 0: COUNT_SUCCESS_LIVE",
+          "手札を1枚控え室に置いてもよい": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
+          "そうした場合、自分の控え室から『μ's』のライブカードを1枚手札に加える": "Frame 4: RECOVER_LIVE with group_id=MUSE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
@@ -20131,31 +20505,19 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 3
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
           "value": 1
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 4,
+          "frame_index": 2,
           "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -20183,7 +20545,19 @@
           "name": "大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, gain blade",
+          "Fixed: Removed is_optional from ADD_BLADES, removed unnecessary SUM_VALUE frames",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY with value=2, is_optional=1",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
@@ -20300,7 +20674,25 @@
           "name": "徒町 小鈴",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard Dollchestra card, select Dollchestra member, set cost to selected-1, if cost>=10 gain heart05",
+          "Frame 0: MOVE_TO_DISCARD with unit_id=DOLLCHESTRA",
+          "Frame 2: SELECT_MEMBER with unit_id=DOLLCHESTRA",
+          "Frame 3: META_RULE with SET_SOURCE_COST_FROM_SELECTED_MINUS",
+          "Frame 4: NOP with raw_cond=SOURCE_MEMBER_COST_GE, value=10",
+          "Frame 6: ADD_HEARTS with heart_type=4",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with unit_id=DOLLCHESTRA",
+          "自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ": "Frame 2: SELECT_MEMBER",
+          "ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる": "Frame 3: META_RULE",
+          "これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る": "Frames 4-6: check cost>=10 + ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の同じグループ名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る。",
@@ -20380,7 +20772,20 @@
           "name": "安養寺 姫芽",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2 same-group cards, gain heart01x2",
+          "Frame 0: MOVE_TO_DISCARD with special_id=Selected Discard Group",
+          "Frame 2: ADD_HEARTS with heart_type=0, value=2",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札の同じグループ名を持つカード2枚を控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with special_id",
+          "ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る": "Frame 2: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これによりライブカードを控え室に置いた場合、さらにカードを1枚引く。",
@@ -20400,8 +20805,24 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "ADD_BLADES",
+          "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -20409,7 +20830,7 @@
         },
         {
           "op": "GROUP_FILTER",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "card_type": "LIVE"
@@ -20420,17 +20841,21 @@
           }
         },
         {
-          "op": "NOP",
-          "frame_index": 2,
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 5,
           "value": 1,
           "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
+            "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -20458,7 +20883,20 @@
           "name": "ウィーン・マルガレーテ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard, gain blade, if live discarded, draw 1",
+          "Fixed: Added MOVE_TO_DISCARD and DRAW frames",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES",
+          "これによりライブカードを控え室に置いた場合、さらにカードを1枚引く": "Frames 3-5: GROUP_FILTER + check + DRAW"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす。",
@@ -20478,9 +20916,11 @@
         {
           "op": "COUNT_STAGE",
           "frame_index": 0,
+          "value": 2,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "keyword": "BATON_TOUCHED_THIS_TURN"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -20514,7 +20954,19 @@
           "name": "眩耀夜行",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If 2+ baton-touched Hasunosora members, reduce heart req by heart04",
+          "Fixed: Added keyword=BATON_TOUCHED_THIS_TURN to COUNT_STAGE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合": "Frame 0: COUNT_STAGE with keyword=BATON_TOUCHED_THIS_TURN",
+          "このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす": "Frame 2: REDUCE_HEART_REQ"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす。",
@@ -20534,9 +20986,11 @@
         {
           "op": "COUNT_STAGE",
           "frame_index": 0,
+          "value": 2,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "keyword": "BATON_TOUCHED_THIS_TURN"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -20570,7 +21024,19 @@
           "name": "Mirage Voyage",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If 2+ baton-touched Hasunosora members, reduce heart req by heart01",
+          "Fixed: Added keyword=BATON_TOUCHED_THIS_TURN to COUNT_STAGE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合": "Frame 0: COUNT_STAGE with keyword=BATON_TOUCHED_THIS_TURN",
+          "このカードを成功させるための必要ハートを{{heart_01.png|heart01}}減らす": "Frame 2: REDUCE_HEART_REQ"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_01.png|heart01}}減らす。",
@@ -20626,7 +21092,22 @@
           "name": "ココン東西",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard top deck card up to 4 times, gain blade each time, if live discarded tap self",
+          "Complex loop structure with JUMP frames for repeat functionality",
+          "Frames implement the repeat mechanic correctly",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のデッキの一番上のカードを控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES",
+          "これにより控え室に置いたカードがライブカードの場合、このメンバーをウェイトにする": "Frames 3-4: DISCARDED_CARDS + check",
+          "自分はこの手順をさらに4回まで繰り返してもよい": "Loop structure with JUMP frames"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを控え室に置いてもよい。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これにより控え室に置いたカードがライブカードの場合、このメンバーをウェイトにする。自分はこの手順をさらに4回まで繰り返してもよい。",
@@ -20875,7 +21356,20 @@
           "name": "鬼塚夏美",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If 2+ success live cards, draw 1",
+          "Frame 0: COUNT_SUCCESS_LIVE with value=2",
+          "Frame 2: DRAW",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のライブカード置き場にカードが2枚以上ある場合": "Frame 0: COUNT_SUCCESS_LIVE",
+          "カードを1枚引く": "Frame 2: DRAW"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のライブカード置き場にカードが2枚以上ある場合、カードを1枚引く。",
@@ -20946,7 +21440,20 @@
           "name": "西木野真姫",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self, tap opponent member with exactly 4 blades",
+          "Frame 0: SET_TAPPED with is_optional=1",
+          "Frame 2: TAP_OPPONENT with filter=BLADE_EQ4",
+          "3 cards share this pattern"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにしてもよい": "Frame 0: SET_TAPPED with is_optional=1",
+          "相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする": "Frame 2: TAP_OPPONENT with filter=BLADE_EQ4"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
@@ -20966,14 +21473,13 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SET_TAPPED",
+          "op": "NOP",
           "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
+          "params": {
+            "raw_cond": "OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4"
           },
-          "slot": {
-            "target_slot": "CONTEXT"
+          "attr": {
+            "once_per_turn": 1
           }
         },
         {
@@ -20982,17 +21488,11 @@
           "value": 1
         },
         {
-          "op": "TAP_OPPONENT",
+          "op": "DRAW",
           "frame_index": 2,
           "value": 1,
-          "attr": {
-            "target_player": "OPPONENT"
-          },
           "slot": {
-            "target_slot": "STAGE_2"
-          },
-          "params": {
-            "filter": "BLADE_EQ4"
+            "target_slot": "CONTEXT"
           }
         },
         {
@@ -21025,7 +21525,21 @@
           "name": "朝香果林",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Auto trigger: when opponent cost≤4 member becomes tapped by your effect, draw 1",
+          "Fixed: Changed from wrong IS_CENTER/MOVE_MEMBER frames to correct auto-trigger frames",
+          "Frame 0: NOP with raw_cond=OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4, once_per_turn=1",
+          "Frame 2: DRAW",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以下のメンバーがウェイト状態になったとき": "Frame 0: NOP with raw_cond",
+          "カードを1枚引く": "Frame 2: DRAW"
+        }
+      }
     },
     {
       "primary_text_jp": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以下のメンバーがウェイト状態になったとき、カードを1枚引く。",
@@ -21111,7 +21625,18 @@
           "name": "西木野真姫",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Constant: gain heart06 per tapped opponent member",
+          "Frame 0: ADD_HEARTS with target_player=OPPONENT, is_tapped=1, compare_accumulated=1",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{heart_06.png|heart06}}を得る": "Frame 0: ADD_HEARTS with dynamic based on tapped opponent members"
+        }
+      }
     },
     {
       "primary_text_jp": "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{heart_06.png|heart06}}を得る。",
@@ -21130,29 +21655,31 @@
       "trigger": "CONSTANT",
       "frames": [
         {
-          "op": "ADD_HEARTS",
+          "op": "COLOR_SELECT",
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "target_player": "OPPONENT",
-            "is_tapped": 1,
-            "compare_accumulated": 1
+            "target_player": "SELF"
           },
           "slot": {
-            "remainder_zone": "STAGE",
-            "is_dynamic": 1
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "TRANSFORM_HEART",
+          "frame_index": 1,
+          "value": 7,
+          "attr": {
+            "target_player": "SELF",
+            "color_mask": 14
           },
-          "params": {
-            "scalar_dynamic": {
-              "base_value": 1,
-              "divisor": 1
-            },
-            "heart_type": 2
+          "slot": {
+            "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -21172,7 +21699,19 @@
           "name": "絢瀬絵里",
           "trigger": 6
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart01/03/04, change member's heart to selected",
+          "Fixed: Changed from SELECT_MODE placeholder to COLOR_SELECT + TRANSFORM_HEART",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる": "Frame 1: TRANSFORM_HEART with color_mask=14 (heart01|03|04)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
@@ -21190,47 +21729,31 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SELECT_MODE",
+          "op": "COLOR_SELECT",
           "frame_index": 0,
-          "value": 3,
-          "option_names": [
-            "選択肢1",
-            "選択肢2"
-          ]
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
         },
         {
-          "op": "JUMP",
+          "op": "TRANSFORM_HEART",
           "frame_index": 1,
-          "value": 2
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 2,
-          "value": 2
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 3,
-          "value": 2
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 4,
-          "value": 3
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 5,
-          "value": 2
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 6,
-          "value": 1
+          "value": 7,
+          "attr": {
+            "target_player": "SELF",
+            "color_mask": 52
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -21242,7 +21765,19 @@
           "name": "中須かすみ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart02/05/06, change member's heart to selected",
+          "Fixed: Changed from SELECT_MODE placeholder to COLOR_SELECT + TRANSFORM_HEART",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_02.png|heart02}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる": "Frame 1: TRANSFORM_HEART with color_mask=52 (heart02|05|06)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_02.png|heart02}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
@@ -21312,7 +21847,20 @@
           "name": "桜坂しずく",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, transform all hearts to heart04",
+          "Frame 0: PAY_ENERGY with value=2, is_optional=1",
+          "Frame 2: TRANSFORM_HEART with color_mask=8 (heart04)",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる": "Frame 2: TRANSFORM_HEART"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える。",
@@ -21335,23 +21883,18 @@
           "frame_index": 0,
           "value": 2,
           "attr": {
-            "is_optional": 1,
-            "target_player": "SELF"
+            "is_optional": 1
           }
         },
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 2
+          "value": 1
         },
         {
-          "op": "TRANSFORM_HEART",
+          "op": "ENERGY_CHARGE",
           "frame_index": 2,
-          "value": 7,
-          "attr": {
-            "target_player": "SELF",
-            "color_mask": 8
-          },
+          "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
           }
@@ -21378,7 +21921,19 @@
           "name": "松浦果南",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, energy charge 1",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く": "Frame 2: ENERGY_CHARGE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
@@ -21407,28 +21962,23 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 3
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
           "value": 1
         },
         {
-          "op": "ENERGY_CHARGE",
-          "frame_index": 4,
-          "value": 1,
+          "op": "RETURN",
+          "frame_index": 2
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 3,
+          "value": 2,
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "HAND"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -21448,7 +21998,19 @@
           "name": "平安名すみれ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Unless pay 2 energy, discard 2 from hand",
+          "Fixed: Changed from SELECT_MODE placeholder to proper PAY_ENERGY check",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払わないかぎり": "Frames 0-2: PAY_ENERGY check",
+          "自分の手札を2枚控え室に置く": "Frame 3: MOVE_TO_DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払わないかぎり、自分の手札を2枚控え室に置く。",
@@ -21539,7 +22101,20 @@
           "name": "澁谷かのん",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, gain blade",
+          "Frame 0: PAY_ENERGY with value=1, is_optional=1",
+          "Frame 2: ADD_BLADES",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
@@ -21600,7 +22175,20 @@
           "name": "上原歩夢",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, energy charge 1",
+          "Frame 0: PAY_ENERGY with value=1, is_optional=1",
+          "Frame 2: ENERGY_CHARGE",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く": "Frame 2: ENERGY_CHARGE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
@@ -21632,17 +22220,31 @@
           "value": 1
         },
         {
-          "op": "ENERGY_CHARGE",
+          "op": "SELECT_CARDS",
           "frame_index": 2,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "MEMBER"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "MOVE_TO_DECK",
+          "frame_index": 3,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT",
-            "is_wait": 1
+            "dest_zone": "DECK",
+            "remainder_zone": "DECK_TOP"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -21662,7 +22264,19 @@
           "name": "聖澤悠奈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, select 2 member cards from discard, put on deck top",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "自分の控え室にあるメンバーカード2枚を好きな順番でデッキの一番上に置く": "Frames 2-3: SELECT_CARDS + MOVE_TO_DECK"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分の控え室にあるメンバーカード2枚を好きな順番でデッキの一番上に置く。",
@@ -21681,53 +22295,40 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "PAY_ENERGY",
+          "op": "NOP",
           "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
+          "params": {
+            "raw_cond": "POSITION_LEFT_SIDE"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 4
+          "value": 1
         },
         {
-          "op": "SUM_VALUE",
-          "frame_index": 2
+          "op": "NOP",
+          "frame_index": 2,
+          "params": {
+            "raw_cond": "MOVED_THIS_TURN"
+          }
         },
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 2
+          "value": 1
         },
         {
-          "op": "SELECT_CARDS",
+          "op": "ADD_BLADES",
           "frame_index": 4,
           "value": 2,
-          "attr": {
-            "target_player": "SELF",
-            "card_type": "MEMBER"
-          },
           "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DISCARD"
-          }
-        },
-        {
-          "op": "MOVE_TO_DECK",
-          "frame_index": 5,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT",
-            "dest_zone": "DECK",
-            "remainder_zone": "DECK_TOP"
+            "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -21747,7 +22348,20 @@
           "name": "桂城 泉",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Left side only: if moved this turn, gain blade x2",
+          "Fixed: Changed from HAS_KEYWORD(LANZHU) to proper POSITION_LEFT_SIDE check",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}【左サイド】": "Frame 0: NOP with raw_cond=POSITION_LEFT_SIDE",
+          "このターン、このメンバーがエリアを移動している場合": "Frame 2: NOP with raw_cond=MOVED_THIS_TURN",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 4: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}【左サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（この能力は左サイドエリアにいる場合のみ発動する。）",
@@ -21765,28 +22379,32 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "HAS_KEYWORD",
-          "frame_index": 0,
-          "attr": {
-            "char_id_1": "LANZHU"
-          }
-        },
-        {
           "op": "NOP",
-          "frame_index": 1,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
+          "frame_index": 0,
+          "params": {
+            "raw_cond": "POSITION_RIGHT_SIDE"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "NOP",
           "frame_index": 2,
+          "params": {
+            "raw_cond": "MOVED_THIS_TURN"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -21794,7 +22412,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -21806,7 +22424,20 @@
           "name": "桜小路きな子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Right side only: if moved this turn, gain blade x2",
+          "Fixed: Changed from HAS_KEYWORD(LANZHU) to proper POSITION_RIGHT_SIDE check",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}【右サイド】": "Frame 0: NOP with raw_cond=POSITION_RIGHT_SIDE",
+          "このターン、このメンバーがエリアを移動している場合": "Frame 2: NOP with raw_cond=MOVED_THIS_TURN",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 4: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}【右サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（この能力は右サイドエリアにいる場合のみ発動する。）",
@@ -21827,7 +22458,8 @@
           "op": "HAS_KEYWORD",
           "frame_index": 0,
           "attr": {
-            "char_id_1": "LANZHU"
+            "char_id_1": "LANZHU",
+            "keyword": "THIS_TURN"
           }
         },
         {
@@ -21865,7 +22497,19 @@
           "name": "鬼塚夏美",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If blade-less member card moved from success pile to discard this turn, draw 1, gain heart03+05+06",
+          "Fixed: Added keyword=THIS_TURN to COUNT_DISCARD",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "このターン、ブレードハートを持たないメンバーカードが自分のライブカード置き場から控え室に置かれている場合": "Frame 0: COUNT_DISCARD with keyword=THIS_TURN, has_blade_heart=1",
+          "カードを1枚引き、ライブ終了時まで、{{heart_03.png|heart03}}{{heart_05.png|heart05}}{{heart_06.png|heart06}}を得る": "Frames 2-5: DRAW + ADD_HEARTS x3"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このターン、ブレードハートを持たないメンバーカードが自分のライブカード置き場から控え室に置かれている場合、カードを1枚引き、ライブ終了時まで、{{heart_03.png|heart03}}{{heart_05.png|heart05}}{{heart_06.png|heart06}}を得る。",
@@ -21964,7 +22608,18 @@
           "name": "天王寺璃奈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Activate 2 energy",
+          "Frame 0: ACTIVATE_ENERGY with value=2",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}エネルギーを2枚アクティブにする": "Frame 0: ACTIVATE_ENERGY"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}エネルギーを2枚アクティブにする。",
@@ -22012,7 +22667,21 @@
           "name": "米女メイ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2 same-unit cards, gain heart04x2 + blade x2",
+          "Frame 0: MOVE_TO_DISCARD with same_unit_discard=true",
+          "Frame 1: ADD_HEARTS with heart_type=3, value=2",
+          "Frame 2: ADD_BLADES with value=2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札の同じユニット名を持つカード2枚を控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with same_unit_discard",
+          "ライブ終了時まで、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 1-2: ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -22079,7 +22748,21 @@
           "name": "日野下花帆",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2 same-unit cards, gain heart05x2 + blade x2",
+          "Frame 0: MOVE_TO_DISCARD with same_unit_discard=true",
+          "Frame 1: ADD_HEARTS with heart_type=3, value=2",
+          "Frame 2: ADD_BLADES with value=2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札の同じユニット名を持つカード2枚を控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with same_unit_discard",
+          "ライブ終了時まで、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 1-2: ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -22099,35 +22782,23 @@
         {
           "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
-          "value": 2,
+          "value": 1,
           "attr": {
-            "target_player": "SELF",
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "STAGE_1",
-            "source_zone": "HAND",
-            "dest_zone": "DISCARD"
-          },
-          "params": {
-            "same_unit_discard": true
+            "target_slot": "HAND"
           }
         },
         {
-          "op": "ADD_HEARTS",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 2,
-          "slot": {
-            "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": 3
-          }
+          "value": 1
         },
         {
           "op": "ADD_BLADES",
           "frame_index": 2,
-          "value": 2,
+          "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
           }
@@ -22146,7 +22817,19 @@
           "name": "村野さやか",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, gain blade",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
@@ -22219,7 +22902,21 @@
           "name": "宮下 愛",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, other stage members gain blade",
+          "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "Frame 2: SELECT_MEMBER with value=99",
+          "Frame 3: ADD_BLADES",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、自分のステージにいるほかのメンバーは{{icon_blade.png|ブレード}}を得る": "Frames 2-3: SELECT_MEMBER + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるほかのメンバーは{{icon_blade.png|ブレード}}を得る。",
@@ -22251,12 +22948,25 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "COUNT_SUCCESS_LIVE",
+          "frame_index": 2,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
           "value": 2
         },
         {
           "op": "SELECT_MEMBER",
-          "frame_index": 2,
-          "value": 99,
+          "frame_index": 4,
+          "value": 1,
           "attr": {
             "target_player": "SELF"
           },
@@ -22267,15 +22977,27 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 3,
-          "value": 1,
+          "frame_index": 5,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF",
+            "compare_accumulated": 1
+          },
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "STAGE_1",
+            "remainder_zone": "STAGE",
+            "is_dynamic": 1
+          },
+          "params": {
+            "scalar_dynamic": {
+              "base_value": 2,
+              "divisor": 1
+            }
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -22295,7 +23017,19 @@
           "name": "高坂穂乃果",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, gain blade x2 per success live card",
+          "Fixed: Removed unnecessary SUM_VALUE frame",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 2-5: COUNT_SUCCESS_LIVE + SELECT_MEMBER + ADD_BLADES with dynamic"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -22400,7 +23134,23 @@
           "name": "西木野真姫",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, select heart color, give to non-self Nijigasaki member",
+          "Frame 0: MOVE_TO_DISCARD with is_optional=1",
+          "Frame 2: COLOR_SELECT",
+          "Frame 3: SELECT_MEMBER with group_id=NIJIGASAKI, special_id=Not Self",
+          "Frame 4: ADD_HEARTS with heart_type=SELECTED",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "好きなハートの色を1つ指定する": "Frame 2: COLOR_SELECT",
+          "ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハートを1つ得る": "Frames 3-4: SELECT_MEMBER + ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：好きなハートの色を1つ指定する。ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハートを1つ得る。",
@@ -22432,48 +23182,19 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 3
+          "value": 1
         },
         {
-          "op": "COLOR_SELECT",
+          "op": "LOOK_REORDER_DISCARD",
           "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF"
-          },
+          "value": 3,
           "slot": {
             "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "SELECT_MEMBER",
-          "frame_index": 3,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI",
-            "special_id": "Not Self"
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "STAGE"
-          }
-        },
-        {
-          "op": "ADD_HEARTS",
-          "frame_index": 4,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": "SELECTED"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -22493,7 +23214,19 @@
           "name": "中須かすみ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, look at top 3, reorder/discard",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く": "Frame 2: LOOK_REORDER_DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
@@ -22505,79 +23238,6 @@
           "card_examples": [
             "PL!HS-bp2-003-P | 乙宗 梢 (ab#0)",
             "PL!HS-bp2-003-R | 乙宗 梢 (ab#0)"
-          ]
-        }
-      ],
-      "trigger_id": 2,
-      "trigger": "LIVE_START",
-      "frames": [
-        {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 3
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
-          "value": 1
-        },
-        {
-          "op": "LOOK_REORDER_DISCARD",
-          "frame_index": 4,
-          "value": 3,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 5
-        }
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!HS-bp2-003-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 190,
-          "name": "乙宗 梢",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!HS-bp2-003-R",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4286,
-          "name": "乙宗 梢",
-          "trigger": 2
-        }
-      ]
-    },
-    {
-      "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く。",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く。",
-          "en": "",
-          "card_examples": [
-            "PL!-bp3-007-P | 東條 希 (ab#0)",
-            "PL!-bp3-007-R | 東條 希 (ab#0)"
           ]
         }
       ],
@@ -22601,12 +23261,132 @@
           "value": 1
         },
         {
-          "op": "SUM_VALUE",
-          "frame_index": 2
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 3
+          },
+          "attr": {
+            "reveal": 1,
+            "dest_discard": 1,
+            "remainder_zone": "DISCARD"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
         },
         {
           "op": "RETURN",
           "frame_index": 3
+        }
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!HS-bp2-003-P",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 190,
+          "name": "乙宗 梢",
+          "trigger": 2
+        },
+        {
+          "card_no": "PL!HS-bp2-003-R",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 4286,
+          "name": "乙宗 梢",
+          "trigger": 2
+        }
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2, look at top 3, add 1 to hand, put 1 on top, discard 1",
+          "Fixed: Changed from incomplete frames to LOOK_AND_CHOOSE",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く": "Frame 2: LOOK_AND_CHOOSE"
+        }
+      }
+    },
+    {
+      "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く。",
+      "primary_text_en": "",
+      "source_ability_texts": [
+        {
+          "jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く。",
+          "en": "",
+          "card_examples": [
+            "PL!-bp3-007-P | 東條 希 (ab#0)",
+            "PL!-bp3-007-R | 東條 希 (ab#0)"
+          ]
+        }
+      ],
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
+      "frames": [
+        {
+          "op": "SELECT_MODE",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "LOOK_DECK",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 3,
+          "value": 2
+        },
+        {
+          "op": "LOOK_DECK",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 6,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -22626,7 +23406,20 @@
           "name": "東條 希",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select self or opponent, look at top deck card, optionally discard",
+          "Fixed: Changed from SELECT_MODE placeholder to proper player selection",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手を選ぶ": "Frame 0: SELECT_MODE",
+          "自分は、そのプレイヤーのデッキの一番上のカードを見る": "Frames 2-5: LOOK_DECK based on selection",
+          "自分はそのカードを控え室に置いてもよい": "Frame 6: MOVE_TO_DISCARD with is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの一番上のカードを見る。自分はそのカードを控え室に置いてもよい。",
@@ -22695,7 +23488,21 @@
           "name": "中須かすみ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select self or opponent, recover up to 2 member cards to deck bottom",
+          "Frame 0: SELECT_MODE",
+          "Frame 3: RECOVER_MEMBER with target_player=SELF",
+          "Frame 5: RECOVER_MEMBER with target_player=OPPONENT",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手を選ぶ": "Frame 0: SELECT_MODE",
+          "自分は、そのプレイヤーの控え室にあるメンバーカードを2枚まで、好きな順番でデッキの一番下に置く": "Frames 3-6: RECOVER_MEMBER based on selection"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
@@ -22714,16 +23521,64 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "LOOK_REORDER_DISCARD",
+          "op": "SELECT_MODE",
           "frame_index": 0,
           "value": 2,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "LOOK_DECK",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 3,
+          "value": 2
+        },
+        {
+          "op": "LOOK_DECK",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 6,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -22743,7 +23598,20 @@
           "name": "小原鞠莉",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select self or opponent, look at top deck card, optionally discard",
+          "Fixed: Changed from SELECT_MODE placeholder to proper player selection with LOOK_DECK",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手を選ぶ": "Frame 0: SELECT_MODE",
+          "自分は、そのプレイヤーのデッキの一番上のカードを見る": "Frames 2-5: LOOK_DECK based on selection",
+          "自分はそのカードを控え室に置いてもよい": "Frame 6: MOVE_TO_DISCARD with is_optional=1"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーの控え室にあるメンバーカードを2枚まで、好きな順番でデッキの一番下に置く。",
@@ -22765,62 +23633,50 @@
           "op": "SELECT_MODE",
           "frame_index": 0,
           "value": 2,
-          "option_names": [
-            "選択肢1",
-            "選択肢2"
-          ]
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 2,
-          "value": 2
-        },
-        {
-          "op": "RECOVER_MEMBER",
-          "frame_index": 3,
-          "value": 2,
           "attr": {
-            "target_player": "SELF",
-            "zone_mask": "ALL",
-            "is_optional": 1
+            "target_player": "SELF"
           },
           "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DISCARD"
+            "target_slot": "CONTEXT"
           }
         },
         {
-          "op": "JUMP",
-          "frame_index": 4,
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
           "value": 3
         },
         {
-          "op": "RECOVER_MEMBER",
-          "frame_index": 5,
+          "op": "LOOK_REORDER_DISCARD",
+          "frame_index": 2,
           "value": 2,
-          "attr": {
-            "target_player": "OPPONENT",
-            "zone_mask": "ALL",
-            "is_optional": 1
-          },
           "slot": {
-            "target_slot": "STAGE_2",
-            "source_zone": "DISCARD"
+            "target_slot": "CONTEXT"
           }
         },
         {
           "op": "JUMP",
-          "frame_index": 6,
+          "frame_index": 3,
+          "value": 2
+        },
+        {
+          "op": "LOOK_REORDER_DISCARD",
+          "frame_index": 4,
+          "value": 2,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "STAGE_2"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
           "value": 1
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -22840,7 +23696,19 @@
           "name": "三船栞子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select self or opponent, look at top 2 cards, reorder/discard",
+          "Fixed: Added SELECT_MODE for player selection",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手を選ぶ": "Frame 0: SELECT_MODE",
+          "自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く": "Frames 2-5: LOOK_REORDER_DISCARD based on selection"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
@@ -22918,7 +23786,21 @@
           "name": "SUKI for you, DREAM for you!",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select self or opponent, recover up to 2 member cards to deck bottom",
+          "Frame 0: SELECT_MODE",
+          "Frame 3: RECOVER_MEMBER with target_player=SELF",
+          "Frame 5: RECOVER_MEMBER with target_player=OPPONENT",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手を選ぶ": "Frame 0: SELECT_MODE",
+          "自分は、そのプレイヤーの控え室にあるメンバーカードを2枚まで、好きな順番でデッキの一番下に置く": "Frames 3-6: RECOVER_MEMBER based on selection"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る。その中から1枚までをデッキの上に置き、残りを控え室に置く。その後、自分のデッキの一番上のカードを1枚公開する。これによりライブカードを公開した場合、このカードのスコアを+１する。",
@@ -22982,7 +23864,22 @@
           "name": "ツナガルコネクト",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select Aqours member, if 6+ blades, boost score +1",
+          "Frame 0: SELECT_MEMBER with group_id=AQOURS",
+          "Frame 1: COUNT_BLADES with value=6",
+          "Frame 3: BOOST_SCORE",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいる『Aqours』のメンバー1人を選ぶ": "Frame 0: SELECT_MEMBER",
+          "そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上場合": "Frame 1: COUNT_BLADES",
+          "このカードのスコアを+１する": "Frame 3: BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。",
@@ -23001,11 +23898,16 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SCORE_COMPARE",
+          "op": "COUNT_STAGE",
           "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI"
+          },
           "slot": {
             "target_slot": "STAGE_0",
-            "comparison": "GT"
+            "comparison": "GE"
           }
         },
         {
@@ -23014,7 +23916,7 @@
           "value": 1
         },
         {
-          "op": "DRAW",
+          "op": "LOOK_REORDER_DISCARD",
           "frame_index": 2,
           "value": 1,
           "slot": {
@@ -23022,8 +23924,33 @@
           }
         },
         {
+          "op": "REVEAL_CARDS",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "NOP",
+          "frame_index": 4,
+          "params": {
+            "raw_cond": "REVEALED_IS_LIVE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 6,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -23043,7 +23970,20 @@
           "name": "高坂穂乃果",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If Nijigasaki members on stage, look at top 1, if live revealed boost score",
+          "Fixed: Changed from NOP+BOOST_SCORE to proper implementation",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る": "Frames 0-2: COUNT_STAGE + LOOK_REORDER_DISCARD",
+          "その中から1枚までをデッキの上に置き、残りを控え室に置く。その後、自分のデッキの一番上のカードを1枚公開する": "Frames 2-3: LOOK_REORDER_DISCARD + REVEAL_CARDS",
+          "これによりライブカードを公開した場合、このカードのスコアを+１する": "Frames 4-6: check live revealed + BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを2枚引き、自分の手札を1枚デッキの一番上に置く。",
@@ -23127,7 +24067,20 @@
           "name": "天王寺璃奈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If stage cost total < opponent, draw 1",
+          "Frame 0: SCORE_COMPARE with comparison=GT",
+          "Frame 2: DRAW",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいるメンバーのコストの合計が相手より低い場合": "Frame 0: SCORE_COMPARE",
+          "カードを1枚引く": "Frame 2: DRAW"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーを1人までアクティブにする。",
@@ -23189,7 +24142,21 @@
           "name": "高坂穂乃果",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If stage cost total < opponent, draw 2, put 1 from hand on deck top",
+          "Frame 0: SCORE_COMPARE with comparison=GE",
+          "Frame 2: DRAW with value=2",
+          "Frame 4: MOVE_TO_DECK to DECK_TOP",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいるメンバーのコストの合計が相手より低い場合": "Frame 0: SCORE_COMPARE",
+          "カードを2枚引き、自分の手札を1枚デッキの一番上に置く": "Frames 2-4: DRAW + SELECT_CARDS + MOVE_TO_DECK"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを公開する。公開したカードがコスト9以下のメンバーカードの場合、公開したカードを手札に加え、このメンバーはポジションチェンジする。それ以外の場合、公開したカードを控え室に置く。",
@@ -23302,7 +24269,19 @@
           "name": "朝香果林",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional activate 1 tapped member",
+          "Frame 0: SELECT_MEMBER with is_tapped=1, is_optional=1",
+          "Frame 1: ACTIVATE_MEMBER",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいるメンバーを1人までアクティブにする": "Frames 0-1: SELECT_MEMBER + ACTIVATE_MEMBER"
+        }
+      }
     },
     {
       "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -23354,8 +24333,11 @@
           }
         },
         {
-          "op": "RETURN",
-          "frame_index": 5
+          "op": "NOP",
+          "frame_index": 5,
+          "params": {
+            "raw_cond": "REVEALED_COST_LE9_MEMBER"
+          }
         }
       ],
       "card_refs": [
@@ -23375,7 +24357,20 @@
           "name": "国木田花丸",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Reveal top deck card, if cost≤9 member add to hand and position change, else discard",
+          "Fixed: Changed HAS_KEYWORD(LANZHU) to proper cost≤9 member check",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "自分のデッキの一番上のカードを公開する": "Frame 0: LOOK_DECK",
+          "公開したカードがコスト9以下のメンバーカード場合、公開したカードを手札に加え、このメンバーはポジションチェンジする": "Frames 1-4: check + ADD_TO_HAND + MOVE_MEMBER",
+          "それ以外の場合、公開したカードを控え室に置く": "Frames 5-7: check + MOVE_TO_DISCARD"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_02.png|heart02}}か{{heart_06.png|heart06}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
@@ -23393,20 +24388,29 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "COLOR_SELECT",
+          "op": "PAY_ENERGY",
           "frame_index": 0,
-          "value": 1,
+          "value": 2,
           "attr": {
-            "target_player": "SELF",
-            "color_mask": "RED|YELLOW|ANY"
-          },
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -23418,7 +24422,19 @@
           "name": "鐘 嵐珠",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, gain blade x2",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "2 cards share this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_02.png|heart02}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動しているすべてのメンバーは、選んだハートを1つ得る。",
@@ -23448,14 +24464,15 @@
           }
         },
         {
-          "op": "ADD_HEARTS",
+          "op": "TRANSFORM_HEART",
           "frame_index": 1,
-          "value": 1,
+          "value": 7,
+          "attr": {
+            "target_player": "SELF",
+            "color_mask": 35
+          },
           "slot": {
             "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": 0
           }
         },
         {
@@ -23472,7 +24489,19 @@
           "name": "MIRACLE NEW STORY",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart01/02/06, change member's heart to selected",
+          "Fixed: Added TRANSFORM_HEART frame",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_01.png|heart01}}か{{heart_02.png|heart02}}か{{heart_06.png|heart06}}のうち1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる": "Frame 1: TRANSFORM_HEART with color_mask=35 (heart01|02|06)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち1つを選ぶ。ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
@@ -23495,15 +24524,39 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "color_mask": "GREEN|BLUE|PURPLE"
+            "color_mask": "RED|YELLOW|ANY"
           },
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
+          "op": "SELECT_MEMBER",
+          "frame_index": 1,
+          "value": 99,
+          "attr": {
+            "target_player": "SELF",
+            "keyword": "MOVED_THIS_TURN"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE"
+          }
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": "SELECTED"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -23515,7 +24568,19 @@
           "name": "三船栞子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart01/02/06, give to all members who moved this turn",
+          "Fixed: Added SELECT_MEMBER with keyword=MOVED_THIS_TURN",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_01.png|heart01}}か{{heart_02.png|heart02}}か{{heart_06.png|heart06}}のうち、1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動しているすべてのメンバーは、選んだハートを1つ得る": "Frames 1-2: SELECT_MEMBER with keyword + ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
@@ -23538,21 +24603,22 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "color_mask": "BLUE|PURPLE|ANY"
+            "color_mask": "GREEN|BLUE|PURPLE"
           },
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
-          "op": "ADD_HEARTS",
+          "op": "TRANSFORM_HEART",
           "frame_index": 1,
-          "value": 1,
+          "value": 7,
+          "attr": {
+            "target_player": "SELF",
+            "color_mask": 28
+          },
           "slot": {
             "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": 3
           }
         },
         {
@@ -23569,7 +24635,19 @@
           "name": "絢瀬絵里",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart03/04/05, change member's heart to selected",
+          "Fixed: Added TRANSFORM_HEART frame",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる": "Frame 1: TRANSFORM_HEART with color_mask=28 (heart03|04|05)"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -23587,24 +24665,42 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "PAY_ENERGY",
+          "op": "COLOR_SELECT",
           "frame_index": 0,
-          "value": 6,
+          "value": 1,
           "attr": {
-            "is_optional": 1
+            "target_player": "SELF",
+            "color_mask": "BLUE|PURPLE|ANY"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
           }
         },
         {
-          "op": "JUMP_IF_FALSE",
+          "op": "COUNT_SUCCESS_LIVE",
           "frame_index": 1,
-          "value": 1
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
         },
         {
-          "op": "ADD_BLADES",
+          "op": "ADD_HEARTS",
           "frame_index": 2,
-          "value": 3,
+          "value": 1,
+          "attr": {
+            "compare_accumulated": 1
+          },
           "slot": {
-            "target_slot": "CONTEXT"
+            "remainder_zone": "STAGE",
+            "is_dynamic": 1
+          },
+          "params": {
+            "scalar_dynamic": {
+              "base_value": 1,
+              "divisor": 1
+            },
+            "heart_type": "SELECTED"
           }
         },
         {
@@ -23621,7 +24717,19 @@
           "name": "園田海未&津島善子&天王寺璃奈",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select heart04/05/06, gain selected heart per success live card",
+          "Fixed: Added COUNT_SUCCESS_LIVE and dynamic calculation",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ": "Frame 0: COLOR_SELECT",
+          "ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る": "Frames 1-2: COUNT_SUCCESS_LIVE + ADD_HEARTS with dynamic"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
@@ -23688,7 +24796,20 @@
           "name": "三船栞子",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 6 energy, gain blade x3",
+          "Frame 0: PAY_ENERGY with value=6, is_optional=1",
+          "Frame 2: ADD_BLADES with value=3",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージに『虹ヶ咲』のメンバーがいる場合、このカードのスコアを+１する。\n(エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)",
@@ -23716,41 +24837,22 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 4
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "COUNT_STAGE",
-          "frame_index": 3,
-          "value": 1,
-          "attr": {
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 4,
           "value": 1
         },
         {
-          "op": "BOOST_SCORE",
-          "frame_index": 5,
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 3
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -23762,7 +24864,19 @@
           "name": "Butterfly",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, gain heart04",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{heart_04.png|heart04}}を得る": "Frame 2: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、以下から1つを選ぶ。\n・自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登場させる。\n・このカードの必要ハートを{{heart_06.png|heart06}}減らす。",
@@ -23793,15 +24907,12 @@
           "value": 3
         },
         {
-          "op": "HAS_MEMBER",
+          "op": "COUNT_STAGE",
           "frame_index": 2,
           "value": 1,
           "attr": {
-            "unit_enabled": 1,
-            "unit_id": "EDEL_NOTE",
-            "value_enabled": 1,
-            "value_threshold": 9,
-            "is_cost_type": 1
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -23814,52 +24925,8 @@
           "value": 1
         },
         {
-          "op": "SELECT_MODE",
+          "op": "BOOST_SCORE",
           "frame_index": 4,
-          "value": 2,
-          "slot": {
-            "target_slot": "CONTEXT"
-          },
-          "option_names": [
-            "自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登",
-            "このカードの必要ハートを{{heart_06.png|heart06}}減らす。"
-          ]
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 5,
-          "value": 1
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 6,
-          "value": 2
-        },
-        {
-          "op": "PLAY_MEMBER_FROM_DISCARD",
-          "frame_index": 7,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "EDEL_NOTE",
-            "value_enabled": 1,
-            "value_threshold": 4,
-            "is_le": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DISCARD"
-          }
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 8,
-          "value": 2
-        },
-        {
-          "op": "REDUCE_HEART_REQ",
-          "frame_index": 9,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -23867,7 +24934,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 10
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -23879,7 +24946,19 @@
           "name": "Retrofuture",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 2 energy, if Nijigasaki on stage boost score +1",
+          "Fixed: Corrected mismatched frame_verification",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "自分のステージに『虹ヶ咲』のメンバーがいる場合、このカードのスコアを+１する": "Frames 2-4: COUNT_STAGE + BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を2つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
@@ -23942,7 +25021,19 @@
           "name": "鬼塚冬毬",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay up to 2 energy, gain blade per energy paid",
+          "Fixed: Corrected mismatched frame_verification",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を2つまで支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES with dynamic"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
@@ -24000,7 +25091,19 @@
           "name": "大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, gain heart01",
+          "Fixed: Corrected mismatched frame_verification",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{heart_01.png|heart01}}を得る": "Frame 2: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
@@ -24058,7 +25161,19 @@
           "name": "澁谷かのん",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, gain heart02",
+          "Fixed: Corrected mismatched frame_verification",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、{{heart_02.png|heart02}}を得る": "Frame 2: ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、{{heart_01.png|heart01}}{{icon_blade.png|ブレード}}を得る。",
@@ -24139,7 +25254,21 @@
           "name": "大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, non-self Hasunosora member gains heart01 + blade",
+          "Frame 0: PAY_ENERGY",
+          "Frame 2: SELECT_MEMBER with group_id=HASUNOSORA, special_id=Not Self",
+          "Frames 3-4: ADD_HEARTS + ADD_BLADES",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、{{heart_01.png|heart01}}{{icon_blade.png|ブレード}}を得る": "Frames 2-4: SELECT_MEMBER + ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『虹ヶ咲』のメンバーは{{icon_blade.png|ブレード}}を得る。",
@@ -24167,20 +25296,11 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 4
-        },
-        {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
           "value": 2
         },
         {
           "op": "SELECT_MEMBER",
-          "frame_index": 4,
+          "frame_index": 2,
           "value": 99,
           "attr": {
             "target_player": "SELF",
@@ -24195,7 +25315,7 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 5,
+          "frame_index": 3,
           "value": 1,
           "slot": {
             "target_slot": "STAGE_1"
@@ -24203,7 +25323,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -24215,7 +25335,19 @@
           "name": "上原歩夢",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, other Nijigasaki members gain blade",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "ライブ終了時まで、自分のステージにいるほかの『虹ヶ咲』のメンバーは{{icon_blade.png|ブレード}}を得る": "Frames 2-3: SELECT_MEMBER + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージに『蓮ノ空』のメンバー1人を含むメンバーが2人以上おり、かつそれらのメンバーのユニット名がそれぞれ異なる場合、このカードのスコアを+１する。",
@@ -24302,7 +25434,24 @@
           "name": "Dream Believers（104期Ver.）",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional pay 1 energy, if Hasunosora member + 2+ members with unique unit names, boost score",
+          "Frame 0: PAY_ENERGY",
+          "Frame 2: HAS_MEMBER with group_id=HASUNOSORA",
+          "Frame 3: COUNT_STAGE with value=2",
+          "Frame 4: NOP with raw_cond=UNIQUE_UNIT_NAMES_COUNT, MIN=2",
+          "Frame 6: BOOST_SCORE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい": "Frame 0: PAY_ENERGY",
+          "自分のステージに『蓮ノ空』のメンバー1人を含むメンバーが2人以上おり、かつそれらのメンバーのユニット名がそれぞれ異なる場合": "Frames 2-4: HAS_MEMBER + COUNT_STAGE + NOP check",
+          "このカードのスコアを+１する": "Frame 6: BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このゲームの1ターン目のライブフェイズの場合、このカードのスコアを+１し、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
@@ -24322,10 +25471,8 @@
         {
           "op": "NOP",
           "frame_index": 0,
-          "value": 1,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
+          "params": {
+            "raw_cond": "FIRST_TURN_LIVE_PHASE"
           }
         },
         {
@@ -24367,7 +25514,20 @@
           "name": "Rise Up High!",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If 1st turn live phase, boost score +1, Nijigasaki member gains blade",
+          "Fixed: Added raw_cond=FIRST_TURN_LIVE_PHASE to NOP",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "このゲームの1ターン目のライブフェイズの場合": "Frame 0: NOP with raw_cond=FIRST_TURN_LIVE_PHASE",
+          "このカードのスコアを+１し": "Frame 2: BOOST_SCORE",
+          "ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は、{{icon_blade.png|ブレード}}を得る": "Frame 3: ADD_BLADES with group_id=NIJIGASAKI"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このターン、自分の『虹ヶ咲』のカードの効果によってウェイト状態の自分のエネルギーをアクティブにしていた場合、このカードのスコアを+１する。さらに、自分の『虹ヶ咲』のカードの効果によって自分のステージにいるウェイト状態のメンバーもアクティブにしていた場合、代わりにスコアを+２する。",
@@ -24450,7 +25610,21 @@
           "name": "Cara Tesoro",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If Nijigasaki effect activated energy this turn, boost +1. If also activated member, boost +2 instead",
+          "Frame 0: HAS_KEYWORD with group_id=NIJIGASAKI, keyword_energy=1",
+          "Frame 3: HAS_KEYWORD with group_id=NIJIGASAKI, keyword_member=1",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "このターン、自分の『虹ヶ咲』のカードの効果によってウェイト状態の自分のエネルギーをアクティブにしていた場合": "Frame 0: HAS_KEYWORD with keyword_energy",
+          "このカードのスコアを+１する": "Frame 2: BOOST_SCORE",
+          "さらに、自分の『虹ヶ咲』のカードの効果によって自分のステージにいるウェイト状態のメンバーもアクティブにしていた場合、代わりにスコアを+２する": "Frames 3-5: HAS_KEYWORD + BOOST_SCORE with value=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：ライブ終了時まで、自分のセンターエリアにいる『μ's』のメンバーは、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -24519,7 +25693,21 @@
           "name": "絢瀬絵里",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self, center area μ's members gain blade x2",
+          "Frame 0: SET_TAPPED with is_optional=1",
+          "Frame 2: SELECT_MEMBER with area_idx=2 (center)",
+          "Frame 3: ADD_BLADES with value=2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにしてもよい": "Frame 0: SET_TAPPED",
+          "ライブ終了時まで、自分のセンターエリアにいる『μ's』のメンバーは、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 2-3: SELECT_MEMBER with area_idx=2 + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：ライブ終了時まで、自分のセンターエリアにいる『μ's』のメンバーは、{{icon_blade.png|ブレード}}を得る。",
@@ -24537,15 +25725,14 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "MOVE_MEMBER",
+          "op": "SET_TAPPED",
           "frame_index": 0,
           "value": 1,
           "attr": {
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "CONTEXT",
-            "is_wait": 1
+            "target_slot": "CONTEXT"
           }
         },
         {
@@ -24562,7 +25749,8 @@
             "group_enabled": 1
           },
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "CONTEXT",
+            "area_idx": 2
           }
         },
         {
@@ -24579,7 +25767,19 @@
           "name": "小泉花陽",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional tap self, center area μ's members gain blade",
+          "Fixed: Changed MOVE_MEMBER to SET_TAPPED, added area_idx=2 to ADD_BLADES",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "このメンバーをウェイトにしてもよい": "Frame 0: SET_TAPPED",
+          "ライブ終了時まで、自分のセンターエリアにいる『μ's』のメンバーは、{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES with area_idx=2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}アクティブ状態の自分のエネルギーがある場合、このカードのスコアを+１する。",
@@ -24632,7 +25832,19 @@
           "name": "DAISUKI FULL POWER",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If active energy exists, boost score +1",
+          "Frame 0: COUNT_ENERGY",
+          "Frame 2: BOOST_SCORE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "アクティブ状態の自分のエネルギーがある場合、このカードのスコアを+１する": "Frames 0-2: COUNT_ENERGY + BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}カードを1枚引いてもよい。そうした場合、手札2枚を好きな順番でデッキの上に置く。",
@@ -24696,7 +25908,20 @@
           "name": "黒澤ダイヤ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional draw 1, then put 2 from hand on deck top",
+          "Frame 0: DRAW with is_optional=1",
+          "Frames 1-2: SELECT_CARDS + MOVE_TO_DECK to DECK_TOP",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "カードを1枚引いてもよい": "Frame 0: DRAW",
+          "そうした場合、手札2枚を好きな順番でデッキの上に置く": "Frames 1-2: SELECT_CARDS + MOVE_TO_DECK"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}は、すべて[青ブレード]になる。",
@@ -24738,7 +25963,18 @@
           "name": "VIVID WORLD",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Transform pink/red/yellow/green/purple/ALL blades to blue",
+          "Frame 0: TRANSFORM_COLOR with value=4 (blue)",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}は、すべて[青ブレード]になる": "Frame 0: TRANSFORM_COLOR"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、{{icon_b_all.png|ALLブレード}}は、すべて[紫ブレード]になる。",
@@ -24780,7 +26016,18 @@
           "name": "Dazzling Game",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Transform pink/red/yellow/green/blue/ALL blades to purple",
+          "Frame 0: TRANSFORM_COLOR with value=5 (purple)",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、{{icon_b_all.png|ALLブレード}}は、すべて[紫ブレード]になる": "Frame 0: TRANSFORM_COLOR"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「澁谷かのん」「ウィーン・マルガレーテ」「鬼塚冬毬」のうちのメンバー1人と、これにより選んだメンバー以外の『Liella!』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
@@ -24857,7 +26104,21 @@
           "name": "Dazzling Game",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select Kanon/Margarete/Tomari, and other Liella member, both gain blade",
+          "Frame 0: SELECT_MEMBER with char_ids",
+          "Frame 1: SELECT_MEMBER with group_id=LIELLA, special_id=Not Selected",
+          "Frames 2-3: ADD_BLADES x2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいる、「澁谷かのん」「ウィーン・マルガレーテ」「鬼塚冬毬」のうちのメンバー1人と": "Frame 0: SELECT_MEMBER",
+          "これにより選んだメンバー以外の『Liella!』のメンバー1人は、{{icon_blade.png|ブレード}}を得る": "Frames 1-3: SELECT_MEMBER + ADD_BLADES x2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
@@ -24875,19 +26136,29 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "ADD_BLADES",
+          "op": "SELECT_MEMBER",
           "frame_index": 0,
-          "value": 1,
+          "value": 99,
           "attr": {
-            "target_player": "SELF"
+            "target_player": "SELF",
+            "keyword": "MOVED_THIS_TURN"
           },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE"
+          }
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 1,
+          "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -24899,7 +26170,18 @@
           "name": "SELF CONTROL!!",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Members who moved this turn gain blade",
+          "Fixed: Added keyword=MOVED_THIS_TURN to SELECT_MEMBER",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る": "Frames 0-1: SELECT_MEMBER with keyword + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる「澁谷かのん」1人は{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を、「唐可可」1人は{{heart_01.png|heart01}}{{icon_blade.png|ブレード}}を得る。",
@@ -24994,7 +26276,22 @@
           "name": "Tiny Stars",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Kanon gains heart05+blade, Keke gains heart01+blade",
+          "Frame 0: SELECT_MEMBER with char_id=KANON",
+          "Frames 1-2: ADD_HEARTS(heart05) + ADD_BLADES",
+          "Frame 3: SELECT_MEMBER with char_id=KEKE",
+          "Frames 4-5: ADD_HEARTS(heart01) + ADD_BLADES",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "自分のステージにいる「澁谷かのん」1人は{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を": "Frames 0-2: SELECT_MEMBER(KANON) + ADD_HEARTS + ADD_BLADES",
+          "「唐可可」1人は{{heart_01.png|heart01}}{{icon_blade.png|ブレード}}を得る": "Frames 3-5: SELECT_MEMBER(KEKE) + ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『Aqours』のメンバーは{{icon_blade.png|ブレード}}を得る。",
@@ -25038,7 +26335,18 @@
           "name": "Jump up HIGH!!",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Aqours members gain blade",
+          "Frame 0: ADD_BLADES with group_id=AQOURS",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分のステージにいる『Aqours』のメンバーは{{icon_blade.png|ブレード}}を得る": "Frame 0: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『μ's』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
@@ -25081,7 +26389,18 @@
           "name": "小夜啼鳥恋詩",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "μ's member gains blade",
+          "Frame 0: ADD_BLADES with group_id=MUSE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分のステージにいる『μ's』のメンバー1人は、{{icon_blade.png|ブレード}}を得る": "Frame 0: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする。",
@@ -25138,7 +26457,19 @@
           "name": "ジョーショーキリュー",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select Hasunosora member, transform all hearts to heart01",
+          "Frame 0: SELECT_MEMBER with group_id=HASUNOSORA",
+          "Frame 1: TRANSFORM_HEART with color_mask=1 (heart01)",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする": "Frames 0-1: SELECT_MEMBER + TRANSFORM_HEART"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる。",
@@ -25192,7 +26523,19 @@
           "name": "Special Color",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Select center area Liella member, blades become 3",
+          "Frame 0: SELECT_MEMBER with group_id=LIELLA, area_idx=2",
+          "Frame 1: TRANSFORM_BLADES with value=3",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる": "Frames 0-1: SELECT_MEMBER + TRANSFORM_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい：ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+３する。」を得る。\n（手札のこのカードもこの効果で控え室に置ける。）",
@@ -25250,7 +26593,20 @@
           "name": "上原歩夢&澁谷かのん&日野下花帆",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard Ayumu/Kanon/Kaho (any 3), gain constant boost score +3",
+          "Frame 0: MOVE_TO_DISCARD with char_ids, value=3, is_optional=1",
+          "Frame 2: BOOST_SCORE with value=3",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+３する。」を得る": "Frame 2: BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。\n（手札のこのカードもこの効果で控え室に置ける。）",
@@ -25278,8 +26634,8 @@
             "is_optional": 1
           },
           "slot": {
-            "target_slot": "DISCARD",
-            "source_zone": "DISCARD"
+            "target_slot": "CONTEXT",
+            "source_zone": "HAND"
           }
         },
         {
@@ -25333,7 +26689,19 @@
           "name": "渡辺 曜&鬼塚夏美&大沢瑠璃乃",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard You/Natsumi/Rurino (any), gain blade per discarded",
+          "Fixed: Changed source_zone from DISCARD to HAND",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい": "Frame 0: SELECT_CARDS from HAND",
+          "ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る": "Frames 2-4: SUM_VALUE + ADD_BLADES with dynamic"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『Aqours』のカードを1枚公開してもよい：これにより公開したカードをデッキの一番上か一番下に置き、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
@@ -25351,12 +26719,10 @@
       "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "REVEAL_CARDS",
+          "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "group_enabled": 1,
-            "group_id": "AQOURS",
             "is_optional": 1
           },
           "slot": {
@@ -25366,61 +26732,34 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 7
+          "value": 1
         },
         {
-          "op": "SELECT_MODE",
+          "op": "COLOR_SELECT",
           "frame_index": 2,
-          "value": 2,
-          "option_names": [
-            "選択肢1",
-            "選択肢2"
-          ]
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 3,
-          "value": 1
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 4,
-          "value": 2
-        },
-        {
-          "op": "MOVE_TO_DECK",
-          "frame_index": 5,
           "value": 1,
-          "slot": {
-            "dest_zone": "DECK",
-            "remainder_zone": "DECK_TOP"
-          }
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 6,
-          "value": 1
-        },
-        {
-          "op": "MOVE_TO_DECK",
-          "frame_index": 7,
-          "value": 1,
-          "slot": {
-            "dest_zone": "DECK",
-            "remainder_zone": "DECK_BOTTOM"
-          }
-        },
-        {
-          "op": "ADD_BLADES",
-          "frame_index": 8,
-          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "color_mask": "RED|GREEN|ANY"
+          },
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
+          "op": "ADD_HEARTS",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": "SELECTED"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 9
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -25432,7 +26771,19 @@
           "name": "黒澤ルビィ",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, select heart01/03/06, gain selected",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る": "Frames 2-3: COLOR_SELECT + ADD_HEARTS"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『蓮ノ空』のカードを2枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハートを2つ得る。",
@@ -25452,10 +26803,8 @@
         {
           "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
-          "value": 2,
+          "value": 1,
           "attr": {
-            "group_enabled": 1,
-            "group_id": "HASUNOSORA",
             "is_optional": 1
           },
           "slot": {
@@ -25465,49 +26814,19 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 3
+          "value": 1
         },
         {
-          "op": "COLOR_SELECT",
+          "op": "ADD_BLADES",
           "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "color_mask": "RED|BLUE|PURPLE|ANY"
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "SELECT_MEMBER",
-          "frame_index": 3,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "HASUNOSORA",
-            "special_id": "Not Self"
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "STAGE"
-          }
-        },
-        {
-          "op": "ADD_HEARTS",
-          "frame_index": 4,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": 0
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -25519,7 +26838,19 @@
           "name": "桂城 泉",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, gain blade x2",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい：ライブ終了時まで、自分のステージのメンバー1人は、これにより控え室に置いたカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
@@ -25588,7 +26919,21 @@
           "name": "Link to the FUTURE（104期Ver.）",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 1, discard top 3, recover A-RISE member to hand",
+          "Frame 0: MOVE_TO_DISCARD from HAND",
+          "Frame 2: MOVE_TO_DISCARD from DECK_TOP",
+          "Frame 3: RECOVER_MEMBER with group_id=ARISE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を1枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "自分のデッキの上からカードを3枚控え室に置く。その後、自分の控え室から『A-RISE』のメンバーカードを1枚手札に加える": "Frames 2-3: MOVE_TO_DISCARD + RECOVER_MEMBER"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。",
@@ -25608,7 +26953,7 @@
         {
           "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
-          "value": 1,
+          "value": 2,
           "attr": {
             "is_optional": 1
           },
@@ -25619,43 +26964,19 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 4
+          "value": 1
         },
         {
-          "op": "SUM_VALUE",
-          "frame_index": 2
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
-          "value": 2
-        },
-        {
-          "op": "COLOR_SELECT",
-          "frame_index": 4,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "color_mask": "RED|GREEN|ANY"
-          },
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 5,
           "slot": {
             "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "ADD_HEARTS",
-          "frame_index": 5,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          },
-          "params": {
-            "heart_type": "SELECTED"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -25667,7 +26988,19 @@
           "name": "南 ことり",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2, gain blade x5",
+          "Fixed: Removed unnecessary SUM_VALUE frames",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -25731,7 +27064,21 @@
           "name": "朝香果林",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2, select member, gain blade x3",
+          "Frame 0: MOVE_TO_DISCARD",
+          "Frame 2: SELECT_MEMBER",
+          "Frame 3: ADD_BLADES with value=3",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frames 2-3: SELECT_MEMBER + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚控え室に置く。その後、自分の控え室から『A-RISE』のメンバーカードを1枚手札に加える。",
@@ -25792,8 +27139,11 @@
           }
         },
         {
-          "op": "RETURN",
-          "frame_index": 4
+          "op": "NOP",
+          "frame_index": 4,
+          "params": {
+            "raw_cond": "ADDED_CARD_GROUP_HASUNOSORA"
+          }
         }
       ],
       "card_refs": [
@@ -25805,7 +27155,20 @@
           "name": "高坂穂乃果",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Optional discard 2, look at top 5, optionally add member to hand. If Hasunosora added, gain heart05+blade",
+          "Fixed: Changed NOP check to verify added card was Hasunosora",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "手札を2枚控え室に置いてもよい": "Frame 0: MOVE_TO_DISCARD",
+          "自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい": "Frames 2-3: LOOK_DECK + ADD_TO_HAND",
+          "これにより『蓮ノ空』のカードを手札に加えた場合、ライブ終了時まで、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る": "Frames 4-7: NOP check + ADD_HEARTS + ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -25869,7 +27232,22 @@
           "name": "嵐 千砂都",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "Ask opponent to choose, effects based on choice",
+          "Frame 0: SELECT_MODE with is_opponent=1",
+          "Frames 3-4: DRAW x2",
+          "Frames 6-7: ADD_BLADES x2 (self + opponent)",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "相手に何が好き？と聞く": "Frame 0: SELECT_MODE with is_opponent=1",
+          "回答があなたの場合、自分と相手はカードを1枚引く": "Frames 3-4: DRAW x2",
+          "回答がそれ以外の場合、ライブ終了時まで、自分と相手のステージにいるメンバーは{{icon_blade.png|ブレード}}を得る": "Frames 6-7: ADD_BLADES x2"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
@@ -25936,7 +27314,20 @@
           "name": "Oh,Love&Peace!",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If self has member with higher cost than all opponent members, gain blade x2",
+          "Frame 0: HAS_MEMBER with target_player=OPPONENT",
+          "Frame 2: ADD_BLADES with value=2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "相手のステージにいるすべてのメンバーのそれぞれのコストよりコストが高いメンバーが自分のステージにいる場合": "Frame 0: HAS_MEMBER",
+          "ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る": "Frame 2: ADD_BLADES"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。これにより『蓮ノ空』のカードを手札に加えた場合、ライブ終了時まで、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。",
@@ -26043,7 +27434,20 @@
           "name": "村野さやか",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If opponent has tapped member, reduce heart req by 2",
+          "Frame 0: SELECT_MEMBER with target_player=OPPONENT, is_tapped=1",
+          "Frame 2: REDUCE_HEART_REQ with value=2",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "相手のステージにウェイト状態のメンバーがいる場合": "Frame 0: SELECT_MEMBER with is_tapped=1",
+          "このカードを成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}減らす": "Frame 2: REDUCE_HEART_REQ"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}相手に何が好き？と聞く。\n回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの場合、自分と相手は手札を1枚控え室に置く。\n回答があなたの場合、自分と相手はカードを1枚引く。\n回答がそれ以外の場合、ライブ終了時まで、自分と相手のステージにいるメンバーは{{icon_blade.png|ブレード}}を得る。",
@@ -26138,7 +27542,22 @@
           "name": "愛♡スクリ～ム！",
           "trigger": 2
         }
-      ]
+      ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "If 2+ success live cards AND 3+ unique name members, boost score +1",
+          "Frame 0: COUNT_SUCCESS_LIVE with value=2",
+          "Frame 1: NOP with value=3 (unique name check)",
+          "Frame 3: BOOST_SCORE",
+          "1 card shares this pattern"
+        ],
+        "text_mapping": {
+          "自分か相手の成功ライブカード置き場にカードが2枚以上あり": "Frame 0: COUNT_SUCCESS_LIVE",
+          "かつ自分のステージに名前の異なるメンバーが3人以上いる場合": "Frame 1: NOP with unique name check",
+          "このカードのスコアを+１する": "Frame 3: BOOST_SCORE"
+        }
+      }
     },
     {
       "primary_text_jp": "{{live_start.png|ライブ開始時}}相手のステージにいるすべてのメンバーのそれぞれのコストよりコストが高いメンバーが自分のステージにいる場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",

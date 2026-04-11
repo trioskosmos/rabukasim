@@ -38,9 +38,11 @@ from ..models.ability import (
 from ..models.card import EnergyCard, LiveCard, MemberCard
 from ..models.enums import CHAR_MAP
 from .semantic_processor import (
+    build_ability_from_text,
     populate_semantic_from_frames as _populate_semantic_from_frames,
     populate_semantic_from_text as _populate_semantic_from_text,
     semantic_form_to_frame_program,
+    select_ability_raw_text as _select_ability_raw_text,
 )
 
 # Worker-local adapters (initialized once per process)
@@ -226,54 +228,34 @@ def compile_cards(
 
     # Prepare worker arguments
     worker_args = []
-    processed_keys = set()
-    
     # We must determine IDs in the main process to ensure consistency
     # (especially since next_logic_id/variant_idx tracking is stateful)
     for key in sorted_keys:
-        if key in processed_keys:
-            continue
-            
         item = raw_data[key]
-        processed_keys.add(key)
-        
-        # Collect variants from rare_list
-        variants = [{"card_no": key, "data": item}]
-        if "rare_list" in item and isinstance(item["rare_list"], list):
-            for r in item["rare_list"]:
-                v_no = r.get("card_no")
-                if v_no and v_no != key:
-                    if v_no in sorted_keys:
-                        processed_keys.add(v_no)
-                    v_item = item.copy()
-                    v_item.update(r)
-                    variants.append({"card_no": v_no, "data": v_item})
-                    
-        for v in variants:
-            v_key = v["card_no"]
-            v_data = v["data"]
-            
-            # Use normalized key for lookup to match character variants
-            norm_v_key = SparseSourceManager._normalize_card_no(v_key)
-            existing_id = existing_id_mapping.get(norm_v_key)
-            logical_id = 0
-            v_idx = 0
-            
-            if existing_id is None:
-                v_name = str(v_data.get("name", "Unknown"))
-                v_ability = str(v_data.get("ability", ""))
-                logic_key = (v_name, v_ability)
-                
-                if logic_key not in logical_id_map:
-                    logical_id_map[logic_key] = next_logic_id
-                    logic_id_to_variant_count[next_logic_id] = 0
-                    next_logic_id += 1
-                
-                logical_id = logical_id_map[logic_key]
-                v_idx = logic_id_to_variant_count[logical_id]
-                logic_id_to_variant_count[logical_id] += 1
-                
-            worker_args.append((v_key, v_data, export_profile, existing_id, logical_id, v_idx))
+        v_key = key
+        v_data = item
+
+        # Use normalized key for lookup to match character variants
+        norm_v_key = SparseSourceManager._normalize_card_no(v_key)
+        existing_id = existing_id_mapping.get(norm_v_key)
+        logical_id = 0
+        v_idx = 0
+
+        if existing_id is None:
+            v_name = str(v_data.get("name", "Unknown"))
+            v_ability = str(v_data.get("ability", ""))
+            logic_key = (v_name, v_ability)
+
+            if logic_key not in logical_id_map:
+                logical_id_map[logic_key] = next_logic_id
+                logic_id_to_variant_count[next_logic_id] = 0
+                next_logic_id += 1
+
+            logical_id = logical_id_map[logic_key]
+            v_idx = logic_id_to_variant_count[logical_id]
+            logic_id_to_variant_count[logical_id] += 1
+
+        worker_args.append((v_key, v_data, export_profile, existing_id, logical_id, v_idx))
 
     # Execute in parallel
     try:
@@ -680,53 +662,6 @@ def _semantic_entry_is_complete(entry: dict[str, Any]) -> bool:
     return unmatched_clause_count == 0
 
 
-def _split_raw_text_into_ability_sections(raw_text: str) -> list[str]:
-    """Split authored ability text into trigger-sized sections when multiple abilities share a card."""
-    if not raw_text:
-        return []
-
-    lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-    if not lines:
-        return []
-
-    trigger_line = re.compile(r"^\{\{[^}]+\}\}")
-    sections: list[list[str]] = []
-    current: list[str] = []
-
-    for line in lines:
-        if trigger_line.match(line) and current:
-            sections.append(current)
-            current = [line]
-        else:
-            current.append(line)
-
-    if current:
-        sections.append(current)
-
-    return ["\n".join(section).strip() for section in sections if section]
-
-
-def _select_ability_raw_text(raw_text: str, ability_index: int, entry: dict[str, Any]) -> str:
-    """Select the most specific authored text for an ability before cost inference."""
-    entry_text = str(
-        entry.get("raw_text", "")
-        or entry.get("primary_text_jp", "")
-        or entry.get("primary_text_en", "")
-        or ""
-    ).strip()
-    if entry_text:
-        return entry_text
-
-    sections = _split_raw_text_into_ability_sections(raw_text)
-    if sections:
-        if 0 <= ability_index < len(sections):
-            return sections[ability_index]
-        if len(sections) == 1:
-            return sections[0]
-
-    return raw_text
-
-
 def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
     """
     Resolve abilities for a card from the sparse YAML index.
@@ -761,6 +696,11 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
         if selected_entry is None:
             if used_sparse:
                 break
+            ability_text = _select_ability_raw_text(raw_text, ab_idx, data)
+            if ability_text.strip():
+                abilities.append(build_ability_from_text(card_no, raw_text, ab_idx))
+                used_sparse = True
+                continue
             continue
 
         abilities.append(

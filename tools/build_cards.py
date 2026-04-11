@@ -57,7 +57,7 @@ def print_status(message, is_done=False):
 def main():
     args = parse_args()
 
-    output_path = Path("data/cards_compiled.json")
+    output_path = ROOT_DIR / "data" / "cards_compiled.json"
     result = prepare_runtime(
         quiet=args.quiet,
         sync_assets=args.sync_launcher_assets,
