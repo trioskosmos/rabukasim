@@ -8111,19 +8111,6 @@
       ]
     },
     {
-      "primary_text_jp": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-      "primary_text_en": "",
-      "source_ability_texts": [
-        {
-          "jp": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "en": "",
-          "card_examples": [
-            "PL!N-bp3-006-P | 近江彼方 (ab#0)",
-            "PL!N-bp3-006-R | 近江彼方 (ab#0)"
-          ]
-        }
-    },
-    {
       "op": "SET_TAPPED",
       "frame_index": 2,
       "value": 1,
