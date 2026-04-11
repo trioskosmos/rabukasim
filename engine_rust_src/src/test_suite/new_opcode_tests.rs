@@ -479,8 +479,8 @@ fn test_condition_cost_compare() {
     };
 
     let bytecode = vec![
-        // Frame 0: Check if player stage cost > opponent stage cost
-        C_COST_COMPARE, 0, 1, 0, 0,
+        // Frame 0: Check if player stage cost > opponent stage cost at slot 0 (stage[0])
+        C_COST_COMPARE, 0, 1, 0, 1,
         // Frame 1: Jump 1 frame if condition is false (skip draw)
         O_JUMP_IF_FALSE, 1, 0, 0, 0,
         // Frame 2: Draw 1 card (executes only if condition passed)
