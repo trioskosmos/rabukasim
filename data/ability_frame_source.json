@@ -1388,7 +1388,7 @@
         }
       ],
       "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SET_TAPPED",
@@ -1443,7 +1443,7 @@
           "db": "member_db",
           "card_id": 19,
           "name": "東條 希",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!-PR-009-PR",
@@ -1451,7 +1451,7 @@
           "db": "member_db",
           "card_id": 21,
           "name": "矢澤にこ",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!N-bp3-017-N",
@@ -1459,7 +1459,7 @@
           "db": "member_db",
           "card_id": 284,
           "name": "宮下 愛",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!N-bp3-023-N",
