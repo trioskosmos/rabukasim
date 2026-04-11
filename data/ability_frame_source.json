@@ -3368,78 +3368,46 @@
           ]
         }
       ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "LOOK_AND_CHOOSE",
-          "frame_index": 2,
-          "value": {
-            "count": 7,
-            "reveal": 1
-          },
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND",
-            "remainder_zone": "DISCARD",
-            "source_zone": "DECK_TOP"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 0
         }
       ],
       "card_refs": [
         {
-          "card_no": "PL!S-bp2-005-P",
+          "card_no": "PL!N-bp1-003-P",
           "ability_index": 0,
           "db": "member_db",
-          "card_id": 419,
-          "name": "渡辺 曜",
-          "trigger": 1
+          "card_id": 236,
+          "name": "桜坂しずく",
+          "trigger": 2
         },
         {
-          "card_no": "PL!S-bp2-005-R+",
+          "card_no": "PL!N-bp1-003-R+",
           "ability_index": 0,
           "db": "member_db",
-          "card_id": 4515,
-          "name": "渡辺 曜",
-          "trigger": 1
+          "card_id": 4332,
+          "name": "桜坂しずく",
+          "trigger": 2
         },
         {
-          "card_no": "PL!S-bp2-005-P+",
+          "card_no": "PL!N-bp1-003-P+",
           "ability_index": 0,
           "db": "member_db",
-          "card_id": 8611,
-          "name": "渡辺 曜",
-          "trigger": 1
+          "card_id": 8428,
+          "name": "桜坂しずく",
+          "trigger": 2
         },
         {
-          "card_no": "PL!S-bp2-005-SEC",
+          "card_no": "PL!N-bp1-003-SEC",
           "ability_index": 0,
           "db": "member_db",
-          "card_id": 12707,
-          "name": "渡辺 曜",
-          "trigger": 1
+          "card_id": 12524,
+          "name": "桜坂しずく",
+          "trigger": 2
         }
       ]
     },
@@ -3458,41 +3426,12 @@
           ]
         }
       ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 1
-        },
-        {
-          "op": "RECOVER_LIVE",
-          "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "zone_mask": "ALL",
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "HAND",
-            "source_zone": "DISCARD"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 0
         }
       ],
       "card_refs": [
@@ -3502,7 +3441,7 @@
           "db": "member_db",
           "card_id": 236,
           "name": "桜坂しずく",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!N-bp1-003-R+",
@@ -3510,7 +3449,7 @@
           "db": "member_db",
           "card_id": 4332,
           "name": "桜坂しずく",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!N-bp1-003-P+",
@@ -3518,7 +3457,7 @@
           "db": "member_db",
           "card_id": 8428,
           "name": "桜坂しずく",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!N-bp1-003-SEC",
@@ -3526,7 +3465,7 @@
           "db": "member_db",
           "card_id": 12524,
           "name": "桜坂しずく",
-          "trigger": 1
+          "trigger": 2
         }
       ]
     },
