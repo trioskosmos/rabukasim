@@ -7782,52 +7782,12 @@
           ]
         }
       ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SET_TAPPED",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 3
-        },
-        {
-          "op": "COUNT_STAGE",
-          "frame_index": 2,
-          "attr": {
-            "unit_enabled": 1
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
-          "value": 1
-        },
-        {
-          "op": "ACTIVATE_ENERGY",
-          "frame_index": 4,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 0
         }
       ],
       "card_refs": [
@@ -7837,7 +7797,7 @@
           "db": "member_db",
           "card_id": 88,
           "name": "南ことり",
-          "trigger": 1
+          "trigger": 2
         },
         {
           "card_no": "PL!-pb1-003-R",
@@ -7845,7 +7805,7 @@
           "db": "member_db",
           "card_id": 4184,
           "name": "南ことり",
-          "trigger": 1
+          "trigger": 2
         }
       ]
     },
