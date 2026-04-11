@@ -8122,43 +8122,17 @@
             "PL!N-bp3-006-R | 近江彼方 (ab#0)"
           ]
         }
-      ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
-      "frames": [
-        {
-          "op": "SET_TAPPED",
-          "frame_index": 0,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "RETURN",
-          "frame_index": 1
-        }
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!N-bp3-006-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 274,
-          "name": "近江彼方",
-          "trigger": 1
-        },
-        {
-          "card_no": "PL!N-bp3-006-R",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4370,
-          "name": "近江彼方",
-          "trigger": 1
-        }
-      ]
     },
     {
+      "op": "SET_TAPPED",
+      "frame_index": 2,
+      "value": 1,
+      "attr": {
+        "is_optional": 1
+      },
+      "slot": {
+        "target_slot": "CONTEXT"
+      }
       "primary_text_jp": "{{toujyou.png|登場}}カードを1枚引く。その後、登場したエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。",
       "primary_text_en": "",
       "source_ability_texts": [
