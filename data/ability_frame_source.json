@@ -2850,6 +2850,25 @@
           "frame_index": 5
         }
       ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "ON_PLAY center ability: If baton touched from 2 Liella members, draw 2 and play cost≤4 Liella from discard",
+          "Frame 0: HAS_KEYWORD placeholder for center check",
+          "Frame 1: BATON checks if baton touched from 2 Liella members (group_enabled, group_id=LIELLA)",
+          "Frame 2: JUMP_IF_FALSE skips if condition not met",
+          "Frame 3: DRAW with value=2 - draw 2 cards",
+          "Frame 4: PLAY_MEMBER_FROM_DISCARD with group=LIELLA, cost≤4, is_baton_slot=1 - play from discard to empty stage area",
+          "Uses is_reveal_until_live for special timing",
+          "4 card variants share this pattern (all 平安名すみれ ab#1 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}{{center.png|センター}}": "Center position requirement",
+          "『Liella!』のメンバー2人からバトンタッチして登場している場合": "Frame 1: BATON with group_id=LIELLA, value=2",
+          "カードを2枚引き": "Frame 3: DRAW with value=2",
+          "自分の控え室にあるコスト4以下の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる": "Frame 4: PLAY_MEMBER_FROM_DISCARD with group=LIELLA, value_threshold=4, is_le=1, is_cost_type=1, source_zone=DISCARD, is_baton_slot=1"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!SP-bp4-004-P",
@@ -2944,6 +2963,23 @@
           "frame_index": 5
         }
       ],
+      "frame_verification": {
+        "verified": true,
+        "notes": [
+          "ON_PLAY optional ability: If on left side area, pay 2 energy to draw 2",
+          "Frame 0: SELECT_MEMBER with area_idx=0 - checks if member is on left side area (STAGE area 0)",
+          "Frame 1: JUMP_IF_FALSE skips to RETURN if not on left side",
+          "Frame 2: PAY_ENERGY with is_optional=1 - pay 2 energy",
+          "Frame 3: JUMP_IF_FALSE skips to RETURN if not paid",
+          "Frame 4: DRAW with value=2 - draw 2 cards",
+          "4 card variants share this pattern (all 唐 可可 variants)"
+        ],
+        "text_mapping": {
+          "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい": "Frame 2: PAY_ENERGY with value=2, is_optional=1",
+          "ステージの左サイドエリアに登場しているなら": "Frame 0: SELECT_MEMBER with area_idx=0 (left side area)",
+          "カードを2枚引く": "Frame 4: DRAW with value=2"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!SP-bp1-002-P",
@@ -14692,7 +14728,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -14845,7 +14881,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SET_TAPPED",
@@ -14961,7 +14997,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -15056,7 +15092,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -15117,7 +15153,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -15202,7 +15238,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -15326,7 +15362,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ACTIVATE_MEMBER",
@@ -15405,7 +15441,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SYNC_COST",
@@ -15490,7 +15526,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -15597,7 +15633,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -15691,7 +15727,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -15823,7 +15859,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -15919,7 +15955,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -16002,7 +16038,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_MEMBER",
@@ -16076,7 +16112,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "DRAW",
@@ -16204,7 +16240,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_HAND",
@@ -16288,7 +16324,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_CARDS",
@@ -16381,7 +16417,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -16461,7 +16497,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -16562,7 +16598,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -16680,7 +16716,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -16791,7 +16827,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -16882,7 +16918,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -17017,7 +17053,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_CARDS",
@@ -17163,7 +17199,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -17247,7 +17283,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PLACE_ENERGY_UNDER_MEMBER",
@@ -17358,7 +17394,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "IS_CENTER",
@@ -17456,7 +17492,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -17538,7 +17574,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_LIVE",
@@ -17646,7 +17682,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -17755,7 +17791,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -17837,7 +17873,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -17954,7 +17990,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -18034,7 +18070,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ADD_BLADES",
@@ -18110,7 +18146,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -18166,7 +18202,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -18222,7 +18258,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -18280,7 +18316,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -18529,7 +18565,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -18600,7 +18636,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SET_TAPPED",
@@ -18678,7 +18714,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "IS_CENTER",
@@ -18824,7 +18860,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -18894,7 +18930,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -18965,7 +19001,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -19031,7 +19067,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -19101,7 +19137,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -19192,7 +19228,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -19253,7 +19289,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -19315,7 +19351,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -19399,7 +19435,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -19458,7 +19494,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -19518,7 +19554,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_DISCARD",
@@ -19617,7 +19653,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ACTIVATE_ENERGY",
@@ -19664,7 +19700,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -19731,7 +19767,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -19799,7 +19835,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -19872,7 +19908,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -19948,7 +19984,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -20053,7 +20089,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -20146,7 +20182,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -20219,7 +20255,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -20279,7 +20315,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -20348,7 +20384,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "LOOK_REORDER_DISCARD",
@@ -20396,7 +20432,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -20492,7 +20528,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -20571,7 +20607,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -20635,7 +20671,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -20696,7 +20732,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -20780,7 +20816,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -20842,7 +20878,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "LOOK_DECK",
@@ -20955,7 +20991,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21027,7 +21063,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -21070,7 +21106,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -21124,7 +21160,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -21167,7 +21203,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COLOR_SELECT",
@@ -21221,7 +21257,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21273,7 +21309,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21340,7 +21376,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21414,7 +21450,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21531,7 +21567,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21594,7 +21630,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21652,7 +21688,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21710,7 +21746,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21791,7 +21827,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21867,7 +21903,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -21954,7 +21990,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -22019,7 +22055,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -22102,7 +22138,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SET_TAPPED",
@@ -22171,7 +22207,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_MEMBER",
@@ -22231,7 +22267,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_ENERGY",
@@ -22284,7 +22320,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "DRAW",
@@ -22348,7 +22384,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "TRANSFORM_COLOR",
@@ -22390,7 +22426,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "TRANSFORM_COLOR",
@@ -22432,7 +22468,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -22509,7 +22545,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ADD_BLADES",
@@ -22551,7 +22587,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -22646,7 +22682,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ADD_BLADES",
@@ -22690,7 +22726,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "ADD_BLADES",
@@ -22733,7 +22769,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -22790,7 +22826,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -22844,7 +22880,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -22902,7 +22938,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_CARDS",
@@ -22985,7 +23021,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "REVEAL_CARDS",
@@ -23084,7 +23120,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23171,7 +23207,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23240,7 +23276,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23319,7 +23355,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23383,7 +23419,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23457,7 +23493,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23521,7 +23557,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23588,7 +23624,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -23695,7 +23731,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MODE",
@@ -23790,7 +23826,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -23845,7 +23881,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -23902,7 +23938,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -23964,7 +24000,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_GROUP",
@@ -24027,7 +24063,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_ENERGY",
@@ -24080,7 +24116,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_ENERGY",
@@ -24133,7 +24169,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -24186,7 +24222,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -24282,7 +24318,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -24356,7 +24392,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -24478,7 +24514,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -24573,7 +24609,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -24630,7 +24666,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_GROUP",
@@ -24698,7 +24734,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -24816,7 +24852,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "REDUCE_HEART_REQ",
@@ -24866,7 +24902,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -24927,7 +24963,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -24971,7 +25007,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -25028,7 +25064,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -25085,7 +25121,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -25167,7 +25203,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "BOOST_SCORE",
@@ -25217,7 +25253,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -25282,7 +25318,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -25358,7 +25394,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "TOTAL_BLADES",
@@ -25411,7 +25447,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "TOTAL_BLADES",
@@ -25463,7 +25499,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -25516,7 +25552,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -25569,7 +25605,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "BOOST_SCORE",
@@ -25622,7 +25658,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -25680,7 +25716,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_GROUP",
@@ -25753,7 +25789,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -25813,7 +25849,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -25988,7 +26024,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -26045,7 +26081,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -26107,7 +26143,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -26165,7 +26201,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_ENERGY_EXACT",
@@ -26228,7 +26264,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -26286,7 +26322,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -26378,7 +26414,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -26494,7 +26530,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -26571,7 +26607,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -26650,7 +26686,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -26706,7 +26742,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -26761,7 +26797,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SYNC_COST",
@@ -26818,7 +26854,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -26894,7 +26930,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_LIVE_ZONE",
@@ -26963,7 +26999,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "REDUCE_HEART_REQ",
@@ -27016,7 +27052,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -27076,7 +27112,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -27132,7 +27168,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -27237,7 +27273,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "NOP",
@@ -27314,7 +27350,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -27369,7 +27405,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "BOOST_SCORE",
@@ -27438,7 +27474,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
       {
         "op": "COUNT_SUCCESS_LIVE",
@@ -27496,7 +27532,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SCORE_TOTAL_CHECK",
@@ -27571,7 +27607,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "BOOST_SCORE",
@@ -27629,7 +27665,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -27682,7 +27718,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -27747,7 +27783,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -27910,7 +27946,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE_SCORE",
@@ -27981,7 +28017,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -28046,7 +28082,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -28098,7 +28134,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -28156,7 +28192,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_DISCARD",
@@ -28213,7 +28249,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "SELECT_CARDS",
@@ -28300,7 +28336,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "COUNT_DISCARD",
@@ -28387,7 +28423,7 @@
         }
       ],
       "trigger_id": 2,
-      "trigger": "ON_LIVE_START",
+      "trigger": "LIVE_START",
       "frames": [
         {
           "op": "LOOK_AND_CHOOSE",
