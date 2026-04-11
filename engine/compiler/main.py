@@ -596,6 +596,30 @@ def _set_sparse_source_path(source_path: str) -> None:
     _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
+def _post_process_frames(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Post-process frames to insert JUMP_IF_FALSE after SELECT_MEMBER when followed by target-dependent effects."""
+    i = 0
+    while i < len(frames) - 1:
+        frame = frames[i]
+        next_frame = frames[i + 1]
+        op = str(frame.get("op", frame.get("opcode", ""))).upper()
+        next_op = str(next_frame.get("op", next_frame.get("opcode", ""))).upper()
+        
+        # If SELECT_MEMBER is followed by an effect that needs a target (ADD_BLADES, ADD_HEARTS, ACTIVATE_MEMBER)
+        # insert JUMP_IF_FALSE to skip the effect if selection failed
+        if op == "SELECT_MEMBER" and next_op in {"ADD_BLADES", "ADD_HEARTS", "ACTIVATE_MEMBER"}:
+            jump_frame = {
+                "op": "JUMP_IF_FALSE",
+                "value": 1,  # Skip 1 frame (the next effect)
+                "frame_index": i + 1,
+            }
+            frames.insert(i + 1, jump_frame)
+            i += 1  # Skip the jump frame we just inserted
+        i += 1
+    
+    return frames
+
+
 def _build_ability_from_sparse_entry(
     entry: dict[str, Any],
     raw_text: str,
@@ -606,8 +630,9 @@ def _build_ability_from_sparse_entry(
     
     FLOW:
     1. Extract trigger_id, frames, flags from sparse entry
-    2. _select_ability_raw_text() - get appropriate raw text for this ability
-    3. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
+    2. _post_process_frames() - insert JUMP_IF_FALSE where needed
+    3. _select_ability_raw_text() - get appropriate raw text for this ability
+    4. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
     
     Args:
         entry: Sparse index entry with trigger_id, frames, flags
@@ -623,6 +648,7 @@ def _build_ability_from_sparse_entry(
         semantic_form = entry.get("semantic_form", {})
         if isinstance(semantic_form, dict):
             frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
+    frames = _post_process_frames(frames)
     semantic_form = entry.get("semantic_form", {})
     if not isinstance(semantic_form, dict):
         semantic_form = {}

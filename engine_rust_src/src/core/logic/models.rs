@@ -1405,6 +1405,7 @@ impl AbilityFrame {
             "HAS_LIVE_CARD" => C_HAS_LIVE_CARD,
             "COUNT_SUCCESS_LIVE" => C_COUNT_SUCCESS_LIVE,
             "SCORE_COMPARE" => C_SCORE_COMPARE,
+            "COST_COMPARE" => C_COST_COMPARE,
             "COUNT_HEARTS" => C_COUNT_HEARTS,
             "COUNT_BLADES" => C_COUNT_BLADES,
             "OPPONENT_ENERGY_DIFF" => C_OPPONENT_ENERGY_DIFF,

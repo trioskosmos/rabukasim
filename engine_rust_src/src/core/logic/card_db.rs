@@ -552,6 +552,12 @@ impl CardDatabase {
                             let pick = (v >> 8) & 0xFF;
                             let inferred_choice_count = if pick > 0 {
                                 pick as u8
+                            } else if let Some(params) = frame.params.as_object() {
+                                params
+                                    .get("choose_count")
+                                    .or_else(|| params.get("CHOOSE_COUNT"))
+                                    .and_then(parse_u8_value)
+                                    .unwrap_or(1)
                             } else {
                                 let effect_pick = ab
                                     .effects
