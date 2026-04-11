@@ -380,7 +380,11 @@ pub fn handle_activate_energy(
     ctx: &mut AbilityContext,
     frame_data: &AbilityFrameComponents<'_>,
 ) -> HandlerResult {
-    let v = frame_data.value;
+    let v = if frame_data.compare_accumulated() || frame_data.is_dynamic() {
+        ctx.v_accumulated.max(0) as i32
+    } else {
+        frame_data.value
+    };
     let p_idx = ctx.player_id as usize;
     let mut count = 0;
     let mut group_bits = 0u32;

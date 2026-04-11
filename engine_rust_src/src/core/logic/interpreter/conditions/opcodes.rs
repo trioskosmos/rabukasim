@@ -706,6 +706,14 @@ fn check_condition_with_parts(
             let count = resolve_count(state, db, op, attr, slot, ctx, depth);
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
+        C_COUNT_LIVE_HEARTS => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
+        C_COUNT_SUCCESS_LIVE_SCORE => {
+            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+        }
         C_TYPE_CHECK => {
             let check_val = semantic.resolved_filter_value(val);
             let card_id = player

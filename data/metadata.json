@@ -221,7 +221,9 @@
         "SUM_VALUE": 312,
         "IS_WAIT": 313,
         "ON_ABILITY_RESOLVE": 314,
-        "TARGET_MEMBER_HAS_NO_HEARTS": 315
+        "TARGET_MEMBER_HAS_NO_HEARTS": 315,
+        "COUNT_LIVE_HEARTS": 316,
+        "COUNT_SUCCESS_LIVE_SCORE": 317
     },
     "costs": {
         "ENERGY": 1,

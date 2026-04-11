@@ -1,4 +1,5 @@
 use crate::core::logic::constants::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::CardFilter;
 use crate::core::logic::models::{AbilityFrameComponents, SemanticCountZone};
 use crate::core::enums::TriggerType;
@@ -31,6 +32,23 @@ fn count_zone_len(cards: &[i32]) -> i32 {
 
 fn count_dense_zone_len(cards: &[i32]) -> i32 {
     cards.len() as i32
+}
+
+fn sum_matching_live_required_hearts(
+    required_hearts: &[u8; 7],
+    color_mask: u8,
+    heart_req_reductions: &HeartBoard,
+) -> i32 {
+    let mut total = 0;
+    for color_idx in 0..7 {
+        if color_mask != 0 && (color_mask & (1u8 << color_idx)) == 0 {
+            continue;
+        }
+        total += (required_hearts[color_idx] as i32
+            - heart_req_reductions.get_color_count(color_idx) as i32)
+            .max(0);
+    }
+    total
 }
 
 fn count_unique_groups_in_cards(
@@ -481,6 +499,37 @@ fn resolve_count_components(
 
     if frame.opcode == C_COUNT_LIVE_ZONE {
         resolve_live_zone_count(state, db, frame, ctx)
+    } else if frame.opcode == C_COUNT_LIVE_HEARTS {
+        let color_mask = frame.filter.color_mask;
+        let mut total = 0;
+        for (slot_idx, &id) in player.live_zone.iter().enumerate().filter(|(_, &id)| id >= 0) {
+            if state.card_matches_filter_with_struct(
+                db,
+                id,
+                Some((p_idx as u8, slot_idx as i16)),
+                &frame.filter,
+                ctx,
+            ) {
+                if let Some(live) = db.get_live(id) {
+                    total += sum_matching_live_required_hearts(
+                        &live.required_hearts,
+                        color_mask,
+                        &player.heart_req_reductions,
+                    );
+                }
+            }
+        }
+        total
+    } else if frame.opcode == C_COUNT_SUCCESS_LIVE_SCORE {
+        let mut total = 0;
+        for &cid in &player.success_lives {
+            if let Some(live) = db.get_live(cid) {
+                if live.score as i32 == frame.value {
+                    total += 1;
+                }
+            }
+        }
+        total
     } else if is_structured_zone_count(frame) {
         resolve_structured_zone_count(state, db, frame, ctx)
     } else {

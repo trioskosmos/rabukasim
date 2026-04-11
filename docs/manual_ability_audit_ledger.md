@@ -1,0 +1,630 @@
+# Manual Ability Audit Ledger
+
+Date: 2026-04-11
+
+This is the per-ability final-result ledger for `data/ability_frame_source.json`.
+Each line records the final audit result I reached after reviewing the text and frame shape.
+
+Total abilities: 612
+
+## Summary
+- OK: 25
+- LIKELY OK: 567
+- REVIEW: 0
+- FIX: 0
+- ENGINE GAP: 6
+- MISSING: 14
+
+## Per Ability
+- [000] `ON_REVEAL` | `PL!S-bp2-004-P, PL!S-bp2-004-R` | **ENGINE GAP** | {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置い... | Uses META_RULE placeholder frames.
+- [001] `ON_PLAY` | `PL!HS-bp1-010-N, PL!HS-bp1-014-N, PL!N-bp1-014-N` | **OK** | {{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。 | Verified frame/text match.
+- [002] `LIVE_START` | `PL!S-bp5-013-N` | **MISSING** | {{live_start.png|ライブ開始時}}自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_04.png|hea... | LIVE_START heart_04 threshold and end-of-live gain not implemented.
+- [003] `ON_PLAY` | `PL!-sd1-011-SD, PL!-sd1-012-SD, PL!-sd1-016-SD` | **OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え... | Verified frame/text match.
+- [004] `ON_PLAY` | `PL!HS-bp1-005-P, PL!HS-bp1-005-R` | **OK** | {{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。 | Verified frame/text match.
+- [005] `ON_PLAY` | `PL!HS-bp5-011-N` | **OK** | {{toujyou.png|登場}}カードを1枚引く。 | Verified frame/text match.
+- [006] `LIVE_START` | `PL!HS-bp5-013-N` | **OK** | {{live_start.png|ライブ開始時}}自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの場合、ライブ終了時... | Verified frame/text match.
+- [007] `ACTIVATED` | `PL!N-bp5-014-N, PL!N-sd1-009-SD` | **OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | Verified frame/text match.
+- [008] `ON_PLAY` | `PL!S-bp5-014-N, PL!S-sd1-017-SD, PL!S-sd1-018-SD` | **OK** | {{toujyou.png|登場}}カードを1枚引き、手札を1枚デッキの一番下に置く。 | Verified frame/text match.
+- [009] `ON_PLAY` | `PL!S-bp5-015-N` | **OK** | {{toujyou.png|登場}}自分のデッキの上からカードを10枚控え室に置く。 | Verified frame/text match.
+- [010] `ON_PLAY` | `PL!N-pb1-013-P+, PL!N-pb1-013-R` | **OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札から... | Verified frame/text match.
+- [011] `ON_PLAY` | `PL!N-pb1-015-P+, PL!N-pb1-015-R` | **OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札から... | Verified frame/text match.
+- [012] `ON_PLAY` | `PL!N-pb1-017-P+, PL!N-pb1-017-R` | **OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札から... | Verified frame/text match.
+- [013] `ON_PLAY` | `PL!N-pb1-023-P+, PL!N-pb1-023-R` | **OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：手札から... | Verified frame/text match.
+- [014] `ON_PLAY` | `PL!N-bp1-002-P, PL!N-bp1-002-R+, PL!N-bp1-002-P+` | **OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く... | Verified frame/text match.
+- [015] `ON_PLAY` | `PL!S-bp2-008-P, PL!S-bp2-008-R+, PL!S-bp2-008-P+` | **OK** | {{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。 | Verified frame/text match.
+- [016] `ON_PLAY` | `PL!SP-bp2-013-N, PL!SP-bp2-014-N, PL!SP-bp2-018-N` | **OK** | {{toujyou.png|登場}}自分の控え室からカードを1枚までデッキの一番上に置く。 | Verified frame/text match.
+- [017] `LIVE_START` | `PL!-PR-007-PR, PL!-PR-009-PR, PL!N-bp3-017-N` | **OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる... | Verified frame/text match.
+- [018] `ON_PLAY` | `PL!HS-bp1-006-P, PL!HS-bp1-006-R+, PL!HS-bp1-006-P+` | **OK** | {{toujyou.png|登場}}カードを2枚引き、手札を1枚控え室に置く。 | Verified frame/text match.
+- [019] `ON_PLAY` | `PL!SP-PR-004-PR, PL!SP-PR-006-PR, PL!SP-PR-013-PR` | **OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。 | Verified frame/text match.
+- [020] `LIVE_START` | `PL!SP-bp2-019-N, PL!-bp3-018-N, PL!N-bp3-022-N` | **OK** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番で... | Verified frame/text match.
+- [021] `ON_PLAY` | `PL!N-PR-005-PR, PL!N-PR-007-PR, PL!N-PR-011-PR` | **OK** | {{toujyou.png|登場}}カードを2枚引き、手札を2枚控え室に置く。 | Verified frame/text match.
+- [022] `ON_PLAY` | `PL!HS-PR-001-PR, PL!HS-PR-002-PR, PL!HS-PR-005-PR` | **OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え... | Verified frame/text match.
+- [023] `ON_PLAY` | `PL!S-PR-013-PR, PL!S-PR-019-PR` | **OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え... | Verified frame/text match.
+- [024] `ON_PLAY` | `PL!N-bp3-005-P, PL!N-bp3-005-R+, PL!N-bp3-005-P+` | **OK** | {{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。 | Verified frame/text match.
+- [025] `ON_PLAY` | `PL!SP-bp4-011-P, PL!SP-bp4-011-R+, PL!SP-bp4-011-P+` | **OK** | {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレー... | Verified frame/text match.
+- [026] `ON_PLAY` | `PL!SP-bp5-001-AR, PL!SP-bp5-001-R+, PL!SP-bp5-001-P` | **OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい... | Verified frame/text match.
+- [027] `ON_PLAY` | `PL!SP-bp4-004-P, PL!SP-bp4-004-R+, PL!SP-bp4-004-P+` | **LIKELY OK** | {{toujyou.png|登場}}{{center.png|センター}}『Liella!』のメンバー2人からバトンタッチして登場している場合、... | No explicit verification issue recorded.
+- [028] `ON_PLAY` | `PL!SP-bp1-002-P, PL!SP-bp1-002-R+, PL!SP-bp1-002-P+` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ステージ... | No explicit verification issue recorded.
+- [029] `ON_PLAY` | `PL!N-pb1-019-P+, PL!N-pb1-019-R` | **LIKELY OK** | {{toujyou.png|登場}}「優木せつ菜」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。 | No explicit verification issue recorded.
+- [030] `ON_PLAY` | `PL!N-pb1-020-P+, PL!N-pb1-020-R` | **LIKELY OK** | {{toujyou.png|登場}}「エマ・ヴェルデ」からバトンタッチして登場した場合、カードを2枚引き、手札を2枚控え室に置く。 | No explicit verification issue recorded.
+- [031] `LIVE_START` | `PL!N-bp1-003-P, PL!N-bp1-003-R+, PL!N-bp1-003-P+` | **MISSING** | {{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分の... | LIVE_START baton-touch plus energy charge missing.
+- [032] `ON_PLAY` | `PL!SP-bp4-008-P, PL!SP-bp4-008-R+, PL!SP-bp4-008-P+` | **LIKELY OK** | {{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [033] `ON_PLAY` | `PL!SP-bp4-008-P, PL!SP-bp4-008-R+, PL!SP-bp4-008-P+` | **LIKELY OK** | {{toujyou.png|登場}}【左サイド】カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [034] `ON_PLAY` | `PL!HS-bp2-007-P, PL!HS-bp2-007-R+, PL!HS-bp2-007-P+` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した場合、自分の控え室から『... | No explicit verification issue recorded.
+- [035] `ON_PLAY` | `PL!HS-bp1-001-P, PL!HS-bp1-001-R, PL!N-sd1-008-RM` | **LIKELY OK** | {{toujyou.png|登場}}エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [036] `ON_PLAY` | `PL!SP-bp2-006-P, PL!SP-bp2-006-R+, PL!SP-bp2-006-P+` | **LIKELY OK** | {{toujyou.png|登場}}バトンタッチして登場した場合、このバトンタッチで控え室に置かれた『Liella!』のメンバーカードを1枚手札... | No explicit verification issue recorded.
+- [037] `ON_PLAY` | `PL!S-bp3-003-P, PL!S-bp3-003-R+, PL!S-bp3-003-P+` | **LIKELY OK** | {{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。 | No explicit verification issue recorded.
+- [038] `ON_PLAY` | `PL!HS-bp2-005-P, PL!HS-bp2-005-R+, PL!HS-bp2-005-P+` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、自分の控え室から『みらくらぱーく！... | No explicit verification issue recorded.
+- [039] `LIVE_START` | `PL!N-bp1-003-P, PL!N-bp1-003-R+, PL!N-bp1-003-P+` | **MISSING** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png... | Top-7 look-and-choose by heart filters missing.
+- [040] `LIVE_START` | `PL!N-bp1-003-P, PL!N-bp1-003-R+, PL!N-bp1-003-P+` | **MISSING** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。 | Recover 'Nijigasaki' live card from discard missing.
+- [041] `ON_PLAY` | `PL!S-bp5-001-AR, PL!S-bp5-001-R+, PL!S-bp5-001-P` | **LIKELY OK** | {{toujyou.png|登場}}能力を持たないメンバーからバトンタッチして登場した場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [042] `ON_PLAY` | `PL!N-bp4-007-P, PL!N-bp4-007-R+, PL!N-bp4-007-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [043] `ON_PLAY` | `PL!SP-bp1-007-P, PL!SP-bp1-007-R+, PL!SP-bp1-007-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [044] `ON_PLAY` | `PL!SP-bp2-001-P, PL!SP-bp2-001-R+, PL!SP-bp2-001-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時... | No explicit verification issue recorded.
+- [045] `ON_PLAY` | `PL!-bp3-004-P, PL!-bp3-004-R+, PL!-bp3-004-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバー1人につき、カードを1枚引く。その後、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [046] `ON_PLAY` | `PL!-bp3-009-P, PL!-bp3-009-R+, PL!-bp3-009-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにコスト13以上のメンバーがいる場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [047] `ON_PLAY` | `PL!HS-bp5-001-AR, PL!HS-bp5-001-R+, PL!HS-bp5-001-P` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{ic... | No explicit verification issue recorded.
+- [048] `ON_PLAY` | `PL!N-bp4-010-P, PL!N-bp4-010-R+, PL!N-bp4-010-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい。そうした場合、自分の控... | No explicit verification issue recorded.
+- [049] `ON_PLAY` | `PL!-bp4-005-P, PL!-bp4-005-R+, PL!-bp4-005-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [050] `ON_PLAY` | `PL!HS-bp2-002-P, PL!HS-bp2-002-R+, PL!HS-bp2-002-P+` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカードを2枚まで手札に加える。 | No explicit verification issue recorded.
+- [051] `LIVE_START` | `PL!SP-bp5-015-N` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる... | No explicit verification issue recorded.
+- [052] `ON_PLAY` | `PL!SP-pb1-006-P+, PL!SP-pb1-006-R` | **LIKELY OK** | {{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{... | No explicit verification issue recorded.
+- [053] `ON_PLAY` | `PL!SP-bp1-012-N, PL!SP-sd1-008-SD, PL!SP-sd1-017-SD` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のデッキの上からカードを3枚見る。その中から1... | No explicit verification issue recorded.
+- [054] `ON_PLAY` | `PL!S-bp5-009-AR, PL!S-bp5-009-R, PL!S-bp5-009-P` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『SaintSnow』のカードを1... | No explicit verification issue recorded.
+- [055] `ON_PLAY` | `PL!-bp5-007-AR, PL!-bp5-007-R, PL!-bp5-007-P` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーよりコストが低いメンバーからバトンタッチして登場した場合、自分と相手はそれぞれ自身の手札の枚数が... | No explicit verification issue recorded.
+- [056] `ON_PLAY` | `PL!S-bp5-006-AR, PL!S-bp5-006-R, PL!S-bp5-006-P` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から... | No explicit verification issue recorded.
+- [057] `ON_PLAY` | `PL!SP-bp5-008-AR, PL!SP-bp5-008-R, PL!SP-bp5-008-P` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から... | No explicit verification issue recorded.
+- [058] `LIVE_START` | `PL!-bp5-002-AR, PL!-bp5-002-R, PL!-bp5-002-P` | **MISSING** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から... | Optional wait + top-5 choose '?'s' member missing.
+- [059] `ON_PLAY` | `PL!HS-bp5-008-AR, PL!HS-bp5-008-R, PL!HS-bp5-008-P` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から... | No explicit verification issue recorded.
+- [060] `ON_PLAY` | `PL!N-bp5-009-AR, PL!N-bp5-009-R, PL!N-bp5-009-P` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から... | No explicit verification issue recorded.
+- [061] `ON_PLAY` | `PL!S-PR-016-PR, PL!S-PR-020-PR, PL!S-PR-021-PR` | **LIKELY OK** | {{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。 | No explicit verification issue recorded.
+- [062] `ON_PLAY` | `PL!-PR-005-PR, PL!-PR-006-PR, PL!-PR-008-PR` | **LIKELY OK** | {{toujyou.png|登場}}以下から1つを選ぶ。 ・カードを1枚引き、手札を1枚控え室に置く。 ・相手のステージにいるすべてのコスト2以... | No explicit verification issue recorded.
+- [063] `ON_PLAY` | `PL!S-bp5-004-AR, PL!S-bp5-004-R, PL!S-bp5-004-P` | **LIKELY OK** | {{toujyou.png|登場}}以下から1つを選ぶ。 ・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時... | No explicit verification issue recorded.
+- [064] `ON_PLAY` | `PL!N-bp5-011-AR, PL!N-bp5-011-R, PL!N-bp5-011-P` | **LIKELY OK** | {{toujyou.png|登場}}以下から1つを選ぶ。 ・自分の控え室にカード名が異なるライブカードが3枚以上ある場合、自分の控え室からライブ... | No explicit verification issue recorded.
+- [065] `ON_PLAY` | `PL!S-bp5-003-AR, PL!S-bp5-003-R, PL!S-bp5-003-P` | **LIKELY OK** | {{toujyou.png|登場}}手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい：自分の控え室から、これにより控え... | No explicit verification issue recorded.
+- [066] `ON_PLAY` | `PL!HS-bp5-016-N, PL!N-bp4-005-P, PL!N-bp4-005-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイ... | No explicit verification issue recorded.
+- [067] `ON_PLAY` | `PL!S-pb1-013-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04... | No explicit verification issue recorded.
+- [068] `ON_PLAY` | `PL!S-pb1-014-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_02... | No explicit verification issue recorded.
+- [069] `ON_PLAY` | `PL!S-pb1-015-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_05... | No explicit verification issue recorded.
+- [070] `ON_PLAY` | `PL!SP-bp5-007-AR, PL!SP-bp5-007-R, PL!SP-bp5-007-P` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から各グループ名につき1枚ずつ公... | No explicit verification issue recorded.
+- [071] `ON_PLAY` | `PL!HS-bp5-007-AR, PL!HS-bp5-007-R, PL!HS-bp5-007-P` | **LIKELY OK** | {{toujyou.png|登場}}手札を2枚控え室に置いてもよい：自分の控え室から『EdelNote』のライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [072] `ON_PLAY` | `PL!SP-bp5-010-AR, PL!SP-bp5-010-R, PL!SP-bp5-010-P` | **LIKELY OK** | {{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジションチェンジする。(センターにいるメンバーを今い... | No explicit verification issue recorded.
+- [073] `ON_PLAY` | `PL!SP-PR-003-PR, PL!SP-PR-007-PR, PL!SP-PR-010-PR` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギーが7枚以上ある場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [074] `ON_PLAY` | `PL!-bp5-005-AR, PL!-bp5-005-R, PL!-bp5-005-P` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、自分のエネルギーデッキから、エネルギー... | No explicit verification issue recorded.
+- [075] `ON_PLAY` | `PL!N-pb1-012-P+, PL!N-pb1-012-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにこのメンバー以外のコスト11のメンバーが登場したとき、自分... | No explicit verification issue recorded.
+- [076] `ON_PLAY` | `PL!N-pb1-005-P+, PL!N-pb1-005-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。 | No explicit verification issue recorded.
+- [077] `ON_PLAY` | `PL!-pb1-015-P+, PL!-pb1-015-R` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメン... | No explicit verification issue recorded.
+- [078] `ON_PLAY` | `PL!-pb1-002-P+, PL!-pb1-002-R+, PL!-pb1-002-R` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：自分のステージにいる... | No explicit verification issue recorded.
+- [079] `ON_PLAY` | `PL!-pb1-004-P+, PL!-pb1-004-R` | **LIKELY OK** | {{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア... | No explicit verification issue recorded.
+- [080] `ON_PLAY` | `PL!S-bp2-006-P, PL!S-bp2-006-R` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energ... | No explicit verification issue recorded.
+- [081] `ON_PLAY` | `PL!SP-bp2-005-P, PL!SP-bp2-005-R` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のデ... | No explicit verification issue recorded.
+- [082] `ON_PLAY` | `PL!N-bp4-006-P, PL!N-bp4-006-R` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の手... | No explicit verification issue recorded.
+- [083] `ON_PLAY` | `PL!HS-bp2-009-P, PL!HS-bp2-009-R` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『みらくらぱーく！』の... | No explicit verification issue recorded.
+- [084] `ON_PLAY` | `PL!N-pb1-022-P+, PL!N-pb1-022-R` | **LIKELY OK** | {{toujyou.png|登場}}「三船栞子」からバトンタッチして登場した場合、カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [085] `ON_PLAY` | `PL!N-pb1-014-P+, PL!N-pb1-014-R` | **LIKELY OK** | {{toujyou.png|登場}}「中須かすみ」からバトンタッチして登場した場合、カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [086] `ON_PLAY` | `PL!SP-pb1-011-P+, PL!SP-pb1-011-R` | **LIKELY OK** | {{toujyou.png|登場}}「鬼塚冬毬」以外の『Liella!』のメンバー1人をステージから控え室に置いてもよい：自分の控え室から、これ... | No explicit verification issue recorded.
+- [087] `ON_PLAY` | `PL!SP-bp4-003-P, PL!SP-bp4-003-R` | **LIKELY OK** | {{toujyou.png|登場}}【左サイド】【右サイド】カードを2枚引き、手札を2枚控え室に置く。（この能力は左サイドエリアか右サイドエリア... | No explicit verification issue recorded.
+- [088] `ON_PLAY` | `PL!HS-bp2-008-P, PL!HS-bp2-008-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーよりコストが低い『DOLLCHESTRA』のメンバーからバトンタッチして登場した場合、ライブ終了... | No explicit verification issue recorded.
+- [089] `ON_PLAY` | `PL!-bp5-222-P+, PL!-bp5-222-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から... | No explicit verification issue recorded.
+- [090] `ON_PLAY` | `PL!-pb1-017-P+, PL!-pb1-017-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：カードを1枚引く。その後、このメンバーが『Printemps』のメンバー... | No explicit verification issue recorded.
+- [091] `ON_PLAY` | `PL!-bp5-333-P+, PL!-bp5-333-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト9以下のメンバー1人をウェイトにする。 | No explicit verification issue recorded.
+- [092] `LIVE_START` | `PL!-pb1-003-P+, PL!-pb1-003-R` | **MISSING** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギ... | Printemps-based energy activation missing.
+- [093] `ON_PLAY` | `PL!SP-bp4-002-P, PL!SP-bp4-002-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを4枚見る。その中から必要ハートの合計が8以上... | No explicit verification issue recorded.
+- [094] `ON_PLAY` | `PL!-bp3-003-P, PL!-bp3-003-R` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト... | No explicit verification issue recorded.
+- [095] `ON_PLAY` | `PL!SP-pb1-008-P+, PL!SP-pb1-008-R` | **LIKELY OK** | {{toujyou.png|登場}}カードを1枚引く。その後、登場したエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。... | No explicit verification issue recorded.
+- [096] `ON_PLAY` | `PL!SP-bp1-008-P, PL!SP-bp1-008-R` | **LIKELY OK** | {{toujyou.png|登場}}カードを1枚引く。自分のステージに「米女メイ」がいる場合、さらにカードを1枚引く。 | No explicit verification issue recorded.
+- [097] `ON_PLAY` | `PL!HS-bp2-011-N, PL!HS-bp2-011-PR` | **LIKELY OK** | {{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。 | No explicit verification issue recorded.
+- [098] `ON_PLAY` | `PL!-pb1-008-P+, PL!-pb1-008-R` | **LIKELY OK** | {{toujyou.png|登場}}メンバーを3人までウェイトにしてもよい：これによりウェイト状態にしたメンバー1人につき、カードを1枚引く。 | No explicit verification issue recorded.
+- [099] `ON_PLAY` | `PL!N-pb1-010-P+, PL!N-pb1-010-R` | **LIKELY OK** | {{toujyou.png|登場}}以下から1つを選ぶ。 ・エネルギーを1枚アクティブにする。 ・自分の控え室にある『虹ヶ咲』のライブカードを2... | No explicit verification issue recorded.
+- [100] `ON_PLAY` | `PL!N-bp1-011-P, PL!N-bp1-011-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自分のデッキの一番上のカードを公開し続ける。そ... | No explicit verification issue recorded.
+- [101] `ON_PLAY` | `PL!-bp3-002-P, PL!-bp3-002-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイ... | No explicit verification issue recorded.
+- [102] `ON_PLAY` | `PL!N-pb1-001-P+, PL!N-pb1-001-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のステージにこのメンバー以外のコスト11のメンバーがいる場合、自分の控え... | No explicit verification issue recorded.
+- [103] `ON_PLAY` | `PL!N-bp1-009-P, PL!N-bp1-009-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からメンバ... | No explicit verification issue recorded.
+- [104] `ON_PLAY` | `PL!N-pb1-028-N, PL!N-pb1-035-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを2枚見る。その中から1枚を手札に加え、残りを控え... | No explicit verification issue recorded.
+- [105] `ON_PLAY` | `PL!-pb1-016-P+, PL!-pb1-016-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『lilywhite』のカー... | No explicit verification issue recorded.
+- [106] `ON_PLAY` | `PL!N-bp3-012-P, PL!N-bp3-012-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中から『虹ヶ咲』のカードを1枚公開... | No explicit verification issue recorded.
+- [107] `ON_PLAY` | `PL!S-bp3-004-P, PL!S-bp3-004-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からメンバーカードを1枚公開して... | No explicit verification issue recorded.
+- [108] `ON_PLAY` | `PL!SP-bp1-005-P, PL!SP-bp1-005-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のカードを... | No explicit verification issue recorded.
+- [109] `ON_PLAY` | `PL!SP-bp2-007-P, PL!SP-bp2-007-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『Liella!』のメンバー... | No explicit verification issue recorded.
+- [110] `ON_PLAY` | `PL!HS-bp1-009-P, PL!HS-bp1-009-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『みらくらぱーく！』のカード... | No explicit verification issue recorded.
+- [111] `ON_PLAY` | `PL!-sd1-015-SD, PL!HS-bp2-010-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して... | No explicit verification issue recorded.
+- [112] `ON_PLAY` | `PL!-bp3-010-N, PL!HS-bp1-011-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手... | No explicit verification issue recorded.
+- [113] `ON_PLAY` | `PL!S-bp3-009-P, PL!S-bp3-009-R` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを6枚見る。その中から『Aqours』のメンバーカ... | No explicit verification issue recorded.
+- [114] `ON_PLAY` | `PL!N-bp5-019-N, PL!N-bp5-022-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [115] `ON_PLAY` | `PL!N-bp3-011-P, PL!N-bp3-011-R` | **LIKELY OK** | {{toujyou.png|登場}}相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持... | No explicit verification issue recorded.
+- [116] `ON_PLAY` | `PL!-pb1-009-P+, PL!-pb1-009-R` | **LIKELY OK** | {{toujyou.png|登場}}相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が1つ以下のメンバー1人をウェ... | No explicit verification issue recorded.
+- [117] `ON_PLAY` | `PL!S-pb1-001-P+, PL!S-pb1-001-R` | **LIKELY OK** | {{toujyou.png|登場}}相手の手札の枚数が自分より2枚以上多い場合、自分の控え室からライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [118] `ON_PLAY` | `PL!-bp4-009-P, PL!-bp4-009-R` | **LIKELY OK** | {{toujyou.png|登場}}相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。 | No explicit verification issue recorded.
+- [119] `ON_PLAY` | `PL!S-pb1-002-P+, PL!S-pb1-002-R` | **LIKELY OK** | {{toujyou.png|登場}}相手は手札からライブカードを1枚控え室に置いてもよい。そうしなかった場合、ライブ終了時まで、「{{jyouj... | No explicit verification issue recorded.
+- [120] `ON_PLAY` | `PL!-pb1-018-P+, PL!-pb1-018-R` | **LIKELY OK** | {{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカードを1枚、メンバーのいないエリアにウェイト状... | No explicit verification issue recorded.
+- [121] `ON_PLAY` | `PL!SP-pb1-005-P+, PL!SP-pb1-005-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。 | No explicit verification issue recorded.
+- [122] `ON_PLAY` | `PL!N-pb1-002-P+, PL!N-pb1-002-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギー置き場にあるエネルギー2枚をこのメンバーの下に置いてもよい。 | No explicit verification issue recorded.
+- [123] `ON_PLAY` | `PL!-pb1-012-P+, PL!-pb1-012-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいる『Printemps』のメンバーを1人までアクティブにする。 | No explicit verification issue recorded.
+- [124] `ON_PLAY` | `PL!-bp3-005-P, PL!-bp3-005-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるすべてのメンバーをアクティブにする。 | No explicit verification issue recorded.
+- [125] `ON_PLAY` | `PL!N-pb1-008-P+, PL!N-pb1-008-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバー1人か、エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [126] `ON_PLAY` | `PL!SP-pb1-003-P+, PL!SP-pb1-003-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーが『5yncri5e!』のみの場合、自分と対戦相手は、センターエリアのメンバーを... | No explicit verification issue recorded.
+- [127] `ON_PLAY` | `PL!SP-bp4-001-P, PL!SP-bp4-001-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合、自分のエネル... | No explicit verification issue recorded.
+- [128] `ON_PLAY` | `PL!S-bp3-010-N, PL!S-bp3-011-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーを1人までアクティブにする。 | No explicit verification issue recorded.
+- [129] `ON_PLAY` | `PL!HS-bp2-006-P, PL!HS-bp2-006-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。 | No explicit verification issue recorded.
+- [130] `ON_PLAY` | `PL!SP-pb1-009-P+, PL!SP-pb1-009-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにほかの『5yncri5e!』のメンバーがいる場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [131] `ON_PLAY` | `PL!N-bp1-004-P, PL!N-bp1-004-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにほかの『虹ヶ咲』のメンバーがいる場合、エネルギーを1枚アクティブにする。 | No explicit verification issue recorded.
+- [132] `ON_PLAY` | `PL!-pb1-011-P+, PL!-pb1-011-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる場合、相手のステージにいるコスト4以下のメン... | No explicit verification issue recorded.
+- [133] `ON_PLAY` | `PL!N-pb1-021-P+, PL!N-pb1-021-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよ... | No explicit verification issue recorded.
+- [134] `ON_PLAY` | `PL!N-pb1-016-P+, PL!N-pb1-016-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい... | No explicit verification issue recorded.
+- [135] `ON_PLAY` | `PL!N-pb1-018-P+, PL!N-pb1-018-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい... | No explicit verification issue recorded.
+- [136] `ON_PLAY` | `PL!N-pb1-024-P+, PL!N-pb1-024-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい。... | No explicit verification issue recorded.
+- [137] `ON_PLAY` | `PL!HS-PR-021-PR, PL!HS-PR-021-RM` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}... | No explicit verification issue recorded.
+- [138] `ON_PLAY` | `PL!HS-PR-019-PR, PL!HS-PR-019-RM` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}... | No explicit verification issue recorded.
+- [139] `ON_PLAY` | `PL!HS-bp1-008-P, PL!HS-bp1-008-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [140] `ON_PLAY` | `PL!SP-bp2-002-P, PL!SP-bp2-002-R` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中からコスト11以上のカードを1枚公開して手札に加えてもよい。残り... | No explicit verification issue recorded.
+- [141] `ON_PLAY` | `PL!-bp4-016-N, PL!-bp5-015-N` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [142] `ON_PLAY` | `PL!-bp4-006-P, PL!-bp4-006-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。... | No explicit verification issue recorded.
+- [143] `ON_PLAY` | `PL!-bp4-004-P, PL!-bp4-004-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [144] `ON_PLAY` | `PL!-bp4-007-P, PL!-bp4-007-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{... | No explicit verification issue recorded.
+- [145] `ON_PLAY` | `PL!-pb1-005-P+, PL!-pb1-005-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にカードがある場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [146] `ON_PLAY` | `PL!-pb1-006-P+, PL!-pb1-006-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上に置く。その後、相手のステージにウェイト状態... | No explicit verification issue recorded.
+- [147] `ON_PLAY` | `PL!SP-bp2-011-P, PL!SP-bp2-011-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選... | No explicit verification issue recorded.
+- [148] `ON_PLAY` | `PL!N-bp3-003-P, PL!N-bp3-003-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png... | No explicit verification issue recorded.
+- [149] `ON_PLAY` | `LL-bp4-001-R+` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキの上からカードを5枚見る。その中から「絢瀬絵... | No explicit verification issue recorded.
+- [150] `ON_PLAY` | `PL!SP-sd1-007-SD` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控... | No explicit verification issue recorded.
+- [151] `ON_PLAY` | `PL!SP-sd1-009-SD` | **LIKELY OK** | {{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーが9枚以上ある場合、自分のデッキの... | No explicit verification issue recorded.
+- [152] `ON_PLAY` | `PL!HS-sd1-005-SD` | **LIKELY OK** | {{toujyou.png|登場}}「徒町小鈴」以外の『蓮ノ空』のメンバーからバトンタッチして登場した場合、自分の控え室からライブカードを1枚手... | No explicit verification issue recorded.
+- [153] `ON_PLAY` | `PL!N-bp4-023-N` | **LIKELY OK** | {{toujyou.png|登場}}『虹ヶ咲」のメンバー1人をウェイトにしてもよい：カードを1枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [154] `ON_PLAY` | `PL!SP-bp5-014-N` | **LIKELY OK** | {{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [155] `ON_PLAY` | `PL!SP-bp4-013-N` | **LIKELY OK** | {{toujyou.png|登場}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリア... | No explicit verification issue recorded.
+- [156] `ON_PLAY` | `PL!HS-bp2-014-N` | **LIKELY OK** | {{toujyou.png|登場}}カードを1枚引く。ライブ終了時まで、自分はライブできない。 | No explicit verification issue recorded.
+- [157] `ON_PLAY` | `PL!SP-sd1-004-SD` | **LIKELY OK** | {{toujyou.png|登場}}ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。 | No explicit verification issue recorded.
+- [158] `ON_PLAY` | `PL!SP-sd1-002-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札からコスト4以下の『Liella!』のメンバーカードを1枚ステージに登場させてもよい。 （この効果で既に... | No explicit verification issue recorded.
+- [159] `ON_PLAY` | `PL!HS-sd1-004-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札の『蓮ノ空』のカードを1枚控え室に置いてもよい：自分の控え室からメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [160] `ON_PLAY` | `PL!-sd1-006-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える。そうした... | No explicit verification issue recorded.
+- [161] `ON_PLAY` | `PL!-bp5-014-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを4枚見る。その中からハートに{{heart_05... | No explicit verification issue recorded.
+- [162] `ON_PLAY` | `PL!SP-pb1-017-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『5yncri5e!』のカー... | No explicit verification issue recorded.
+- [163] `ON_PLAY` | `PL!SP-pb1-015-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『CatChu!』のカードを... | No explicit verification issue recorded.
+- [164] `ON_PLAY` | `PL!SP-pb1-016-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『KALEIDOSCORE』... | No explicit verification issue recorded.
+- [165] `ON_PLAY` | `PL!SP-bp5-013-N` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中から『SunnyPassion』... | No explicit verification issue recorded.
+- [166] `ON_PLAY` | `PL!S-sd1-002-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『Aqours』のカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [167] `ON_PLAY` | `PL!HS-sd1-014-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『蓮ノ空』のカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [168] `ON_PLAY` | `PL!S-sd1-006-SD` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室からコスト2以下の『Aqours』のメンバーカードを1枚、メンバ... | No explicit verification issue recorded.
+- [169] `ON_PLAY` | `PL!-bp5-013-N` | **LIKELY OK** | {{toujyou.png|登場}}相手のステージにいるコスト4以下のメンバー1人をウェイトにする。 | No explicit verification issue recorded.
+- [170] `ON_PLAY` | `PL!SP-sd1-001-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギー6枚につき、カードを1枚引く。 | No explicit verification issue recorded.
+- [171] `ON_PLAY` | `PL!N-bp3-013-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを2枚引く。... | No explicit verification issue recorded.
+- [172] `ON_PLAY` | `PL!HS-sd1-006-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージに「大沢瑠璃乃」か「百生吟子」か「徒町小鈴」がいる場合、エネルギーを1枚アクティブにし、自分の... | No explicit verification issue recorded.
+- [173] `ON_PLAY` | `PL!S-bp5-010-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある... | No explicit verification issue recorded.
+- [174] `ON_PLAY` | `PL!S-bp5-011-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_05.png|heart05}}が合計5つ以上ある... | No explicit verification issue recorded.
+- [175] `ON_PLAY` | `PL!N-bp5-021-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え室からライブカード1枚を自分のデッキの一番上... | No explicit verification issue recorded.
+- [176] `ON_PLAY` | `PL!HS-bp2-016-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く... | No explicit verification issue recorded.
+- [177] `ON_PLAY` | `PL!HS-sd1-013-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_05.png|heart05}}... | No explicit verification issue recorded.
+- [178] `ON_PLAY` | `PL!S-sd1-013-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。 | No explicit verification issue recorded.
+- [179] `LIVE_START` | `PL!-bp3-004-P` | **MISSING** | {{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。 | Mill 5 then draw-if-live-card missing.
+- [180] `ON_PLAY` | `PL!S-sd1-003-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『Aqours』のライブカードを1枚公開して手札に加えてもよ... | No explicit verification issue recorded.
+- [181] `ON_PLAY` | `PL!-sd1-004-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残... | No explicit verification issue recorded.
+- [182] `ON_PLAY` | `PL!N-sd1-001-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『虹ヶ咲』のライブカードを1枚まで公開して手札に加えてもよい... | No explicit verification issue recorded.
+- [183] `ON_PLAY` | `PL!-sd1-001-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [184] `ON_PLAY` | `PL!-sd1-003-SD` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [185] `ON_PLAY` | `LL-bp1-001-R+` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室からメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [186] `ON_PLAY` | `PL!N-bp4-021-N` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室にあるカード1枚をデッキの一番上に置いてもよい。 | No explicit verification issue recorded.
+- [187] `ON_PLAY` | `PL!HS-bp2-017-N` | **LIKELY OK** | {{toujyou.png|登場}}自分の控え室にカードが10枚以上ある場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [188] `ON_LIVE_START` | `PL!-bp4-010-N, PL!HS-PR-018-PR, PL!HS-PR-018-RM` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_bl... | No explicit verification issue recorded.
+- [189] `ON_LIVE_START` | `PL!-PR-007-PR, PL!-PR-009-PR, PL!N-bp3-017-N` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる... | No explicit verification issue recorded.
+- [190] `ON_LIVE_START` | `PL!-bp3-011-N, PL!-bp3-012-N, PL!-bp3-012-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03... | No explicit verification issue recorded.
+- [191] `ON_LIVE_START` | `PL!-bp4-013-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるこのメンバー以外のメンバ... | No explicit verification issue recorded.
+- [192] `ON_LIVE_START` | `PL!HS-bp5-003-AR, PL!HS-bp5-003-R+, PL!HS-bp5-003-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、これにより控え室に置いたカードと同じグループ... | No explicit verification issue recorded.
+- [193] `ON_LIVE_START` | `PL!SP-bp5-001-AR, PL!SP-bp5-001-R+, PL!SP-bp5-001-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにするか、手札を1枚控え室に置く：エネルギーを1枚ア... | No explicit verification issue recorded.
+- [194] `ON_LIVE_START` | `PL!SP-bp5-003-AR, PL!SP-bp5-003-R+, PL!SP-bp5-003-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバー... | No explicit verification issue recorded.
+- [195] `ON_LIVE_START` | `PL!S-bp5-002-AR, PL!S-bp5-002-R+, PL!S-bp5-002-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメン... | No explicit verification issue recorded.
+- [196] `ON_LIVE_START` | `PL!HS-bp1-004-P, PL!HS-bp1-004-R+, PL!HS-bp1-004-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のライブ中のカ... | No explicit verification issue recorded.
+- [197] `ON_LIVE_START` | `PL!N-bp1-003-P, PL!N-bp1-003-R+, PL!N-bp1-003-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライ... | No explicit verification issue recorded.
+- [198] `ON_LIVE_START` | `PL!HS-bp2-005-P, PL!HS-bp2-005-R+, PL!HS-bp2-005-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージのエリアすべてにメンバ... | No explicit verification issue recorded.
+- [199] `ON_LIVE_START` | `PL!-bp3-008-P, PL!-bp3-008-R+, PL!-bp3-008-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}『μ's』のメンバー1人をウェイトにしてもよい：ライブ終了時まで、{{heart_03.png... | No explicit verification issue recorded.
+- [200] `ON_LIVE_START` | `PL!N-bp3-005-P, PL!N-bp3-005-R+, PL!N-bp3-005-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyo... | No explicit verification issue recorded.
+- [201] `ON_LIVE_START` | `PL!SP-bp4-008-P, PL!SP-bp4-008-R+, PL!SP-bp4-008-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させ... | No explicit verification issue recorded.
+- [202] `ON_LIVE_START` | `PL!N-bp4-004-P, PL!N-bp4-004-R+, PL!N-bp4-004-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}カードを1枚引く。相手のステージにいるコスト9以下のメンバーを1人までウェイトにする。 | No explicit verification issue recorded.
+- [203] `ON_LIVE_START` | `PL!SP-bp2-009-P, PL!SP-bp2-009-R+, PL!SP-bp2-009-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る。 | No explicit verification issue recorded.
+- [204] `ON_LIVE_START` | `PL!S-bp2-007-P, PL!S-bp2-007-R+, PL!S-bp2-007-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札のライブカードを1枚公開し、デッキの一番下に置いてもよい：自分のデッキの上からカードを2枚... | No explicit verification issue recorded.
+- [205] `ON_LIVE_START` | `PL!N-bp4-011-P, PL!N-bp4-011-R+, PL!N-bp4-011-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札のライブカードを1枚控え室に置いてもよい：好きなハートの色を1つ指定する。ライブ終了時まで... | No explicit verification issue recorded.
+- [206] `ON_LIVE_START` | `PL!S-bp5-005-AR, PL!S-bp5-005-R+, PL!S-bp5-005-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_03.png|heart03}}か{{hear... | No explicit verification issue recorded.
+- [207] `ON_LIVE_START` | `PL!HS-bp2-007-P, PL!HS-bp2-007-R+, PL!HS-bp2-007-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：これにより控え室に置いたカードがメンバーカードの場合、控え室に... | No explicit verification issue recorded.
+- [208] `ON_LIVE_START` | `PL!HS-bp1-006-P, PL!HS-bp1-006-R+, PL!HS-bp1-006-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、好きなハートの色を1... | No explicit verification issue recorded.
+- [209] `ON_LIVE_START` | `PL!S-bp3-003-P, PL!S-bp3-003-R+, PL!S-bp3-003-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚まで控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いたカード1枚につ... | No explicit verification issue recorded.
+- [210] `ON_LIVE_START` | `PL!N-bp3-008-P, PL!N-bp3-008-R+, PL!N-bp3-008-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のステージにいるこのメンバー以外のウェイト状態のメンバー1... | No explicit verification issue recorded.
+- [211] `ON_LIVE_START` | `PL!N-bp3-009-P, PL!N-bp3-009-R+, PL!N-bp3-009-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコス... | No explicit verification issue recorded.
+- [212] `ON_LIVE_START` | `PL!N-bp5-007-AR, PL!N-bp5-007-R+, PL!N-bp5-007-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{hear... | No explicit verification issue recorded.
+- [213] `ON_LIVE_START` | `PL!N-bp3-001-P, PL!N-bp3-001-R+, PL!N-bp3-001-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カー... | No explicit verification issue recorded.
+- [214] `ON_LIVE_START` | `PL!-bp4-005-P, PL!-bp4-005-R+, PL!-bp4-005-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバ... | No explicit verification issue recorded.
+- [215] `ON_LIVE_START` | `PL!SP-bp2-010-P, PL!SP-bp2-010-R+, PL!SP-bp2-010-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以上いる場合、ライブ終了時まで、エールによって... | No explicit verification issue recorded.
+- [216] `ON_LIVE_START` | `PL!N-bp4-010-P, PL!N-bp4-010-R+, PL!N-bp4-010-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライ... | No explicit verification issue recorded.
+- [217] `ON_LIVE_START` | `PL!-bp3-004-P, PL!-bp3-004-R+, PL!-bp3-004-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードがある場合、手札を1枚控え室に置いてもよい。そうした場合、... | No explicit verification issue recorded.
+- [218] `ON_LIVE_START` | `PL!HS-PR-001-PR, PL!HS-PR-002-PR, PL!HS-PR-005-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [219] `ON_LIVE_START` | `PL!HS-bp5-005-AR, PL!HS-bp5-005-R, PL!HS-bp5-005-P` | **ENGINE GAP** | {{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DO... | Uses META_RULE placeholder frames.
+- [220] `ON_LIVE_START` | `PL!HS-bp5-006-AR, PL!HS-bp5-006-R, PL!HS-bp5-006-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の同じグループ名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_... | No explicit verification issue recorded.
+- [221] `ON_LIVE_START` | `PL!SP-PR-009-PR, PL!SP-PR-011-PR, PL!SP-PR-012-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}... | No explicit verification issue recorded.
+- [222] `ON_LIVE_START` | `PL!HS-bp2-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合... | No explicit verification issue recorded.
+- [223] `ON_LIVE_START` | `PL!HS-bp2-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合... | No explicit verification issue recorded.
+- [224] `ON_LIVE_START` | `PL!HS-bp2-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合... | No explicit verification issue recorded.
+- [225] `ON_LIVE_START` | `PL!SP-bp5-009-AR, PL!SP-bp5-009-R, PL!SP-bp5-009-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを控え室に置いてもよい。そうした場合、ライブ終了時まで、{{ico... | No explicit verification issue recorded.
+- [226] `ON_LIVE_START` | `PL!-bp5-006-AR, PL!-bp5-006-R, PL!-bp5-006-P` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブカード置き場にカードが2枚以上ある場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [227] `ON_LIVE_START` | `PL!N-bp5-004-AR, PL!N-bp5-004-R, PL!N-bp5-004-P` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる... | No explicit verification issue recorded.
+- [228] `ON_LIVE_START` | `PL!-pb1-015-P+, PL!-pb1-015-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以... | No explicit verification issue recorded.
+- [229] `CONSTANT` | `PL!-pb1-002-P+, PL!-pb1-002-R` | **LIKELY OK** | {{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{heart_06.png|heart06}}を得る。 | No explicit verification issue recorded.
+- [230] `ON_LIVE_START` | `PL!N-bp3-014-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03... | No explicit verification issue recorded.
+- [231] `ON_LIVE_START` | `PL!N-bp3-015-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_02.png|heart02}}か{{heart_05.png|heart05... | No explicit verification issue recorded.
+- [232] `ON_LIVE_START` | `PL!S-pb1-003-P+, PL!S-pb1-003-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [233] `ON_LIVE_START` | `PL!SP-pb1-004-P+, PL!SP-pb1-004-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [234] `ON_LIVE_START` | `PL!SP-pb1-001-P+, PL!SP-pb1-001-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払わない... | No explicit verification issue recorded.
+- [235] `ON_LIVE_START` | `PL!N-bp1-001-P, PL!N-bp1-001-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_bl... | No explicit verification issue recorded.
+- [236] `ON_LIVE_START` | `PL!SP-bp5-222-P+, PL!SP-bp5-222-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のエネルギーデッキから、エネルギ... | No explicit verification issue recorded.
+- [237] `ON_LIVE_START` | `PL!HS-PR-020-PR, PL!HS-PR-023-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分の控え室にあるメンバーカード2枚... | No explicit verification issue recorded.
+- [238] `ON_LIVE_START` | `PL!SP-bp4-017-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}【左サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon... | No explicit verification issue recorded.
+- [239] `ON_LIVE_START` | `PL!SP-bp4-020-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}【右サイド】このターン、このメンバーがエリアを移動している場合、ライブ終了時まで、{{icon... | No explicit verification issue recorded.
+- [240] `ON_LIVE_START` | `PL!N-pb1-009-P+, PL!N-pb1-009-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このターン、ブレードハートを持たないメンバーカードが自分のライブカード置き場から控え室に置かれ... | No explicit verification issue recorded.
+- [241] `ON_LIVE_START` | `PL!SP-pb1-007-P+, PL!SP-pb1-007-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [242] `ON_LIVE_START` | `PL!HS-PR-016-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_... | No explicit verification issue recorded.
+- [243] `ON_LIVE_START` | `PL!HS-PR-017-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の同じユニット名を持つカード2枚を控え室に置いてもよい：ライブ終了時まで、{{heart_... | No explicit verification issue recorded.
+- [244] `ON_LIVE_START` | `PL!N-bp1-005-P, PL!N-bp1-005-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}... | No explicit verification issue recorded.
+- [245] `ON_LIVE_START` | `PL!-pb1-010-P+, PL!-pb1-010-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるほかのメンバーは{{ic... | No explicit verification issue recorded.
+- [246] `ON_LIVE_START` | `PL!-bp3-006-P, PL!-bp3-006-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚... | No explicit verification issue recorded.
+- [247] `ON_LIVE_START` | `PL!N-bp3-002-P, PL!N-bp3-002-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：好きなハートの色を1つ指定する。ライブ終了時まで、自分のステー... | No explicit verification issue recorded.
+- [248] `ON_LIVE_START` | `PL!HS-bp2-003-P, PL!HS-bp2-003-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から好きな枚数を好... | No explicit verification issue recorded.
+- [249] `ON_LIVE_START` | `PL!-bp3-007-P, PL!-bp3-007-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加... | No explicit verification issue recorded.
+- [250] `ON_LIVE_START` | `PL!N-bp4-002-P, PL!N-bp4-002-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの一番上のカードを見る。自分はそのカードを控え... | No explicit verification issue recorded.
+- [251] `ON_LIVE_START` | `PL!S-pb1-008-P+, PL!S-pb1-008-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数... | No explicit verification issue recorded.
+- [252] `ON_LIVE_START` | `PL!N-bp3-010-P, PL!N-bp3-010-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーの控え室にあるメンバーカードを2枚まで、好きな順番でデ... | No explicit verification issue recorded.
+- [253] `ON_LIVE_START` | `PL!S-bp2-019-L, PL!S-bp3-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_bl... | No explicit verification issue recorded.
+- [254] `ON_LIVE_START` | `PL!N-bp3-028-L, PL!N-bp3-028-SECL` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る。その... | No explicit verification issue recorded.
+- [255] `ON_LIVE_START` | `PL!-bp4-001-P, PL!-bp4-001-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [256] `ON_LIVE_START` | `PL!N-bp4-009-P, PL!N-bp4-009-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを2枚引き、自分の手札を1... | No explicit verification issue recorded.
+- [257] `ON_LIVE_START` | `PL!-bp3-001-P, PL!-bp3-001-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーを1人までアクティブにする。 | No explicit verification issue recorded.
+- [258] `ON_LIVE_START` | `PL!N-pb1-004-P+, PL!N-pb1-004-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを公開する。公開したカードがコスト9以下のメンバーカードの場合、公... | No explicit verification issue recorded.
+- [259] `ON_LIVE_START` | `PL!S-PR-013-PR, PL!S-PR-019-PR` | **LIKELY OK** | {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え... | No explicit verification issue recorded.
+- [260] `ON_LIVE_START` | `PL!N-pb1-036-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_02.png|heart02... | No explicit verification issue recorded.
+- [261] `ON_LIVE_START` | `PL!SP-bp5-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_02.png|heart02... | No explicit verification issue recorded.
+- [262] `ON_LIVE_START` | `PL!N-pb1-034-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_03.png|heart03}}か{{heart_04.png|heart04... | No explicit verification issue recorded.
+- [263] `ON_LIVE_START` | `PL!-bp5-011-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{heart_04.png|heart04}}か{{heart_05.png|heart05... | No explicit verification issue recorded.
+- [264] `ON_LIVE_START` | `LL-bp3-001-R+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{ico... | No explicit verification issue recorded.
+- [265] `ON_LIVE_START` | `PL!N-sd1-010-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [266] `ON_LIVE_START` | `PL!N-bp1-028-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [267] `ON_LIVE_START` | `PL!HS-bp5-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [268] `ON_LIVE_START` | `PL!SP-bp4-022-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を2つまで支払ってもよい：ライブ終了時まで、支払った... | No explicit verification issue recorded.
+- [269] `ON_LIVE_START` | `PL!HS-PR-029-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_0... | No explicit verification issue recorded.
+- [270] `ON_LIVE_START` | `PL!SP-bp4-012-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_0... | No explicit verification issue recorded.
+- [271] `ON_LIVE_START` | `PL!HS-sd1-003-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにい... | No explicit verification issue recorded.
+- [272] `ON_LIVE_START` | `PL!N-sd1-001-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにい... | No explicit verification issue recorded.
+- [273] `ON_LIVE_START` | `PL!HS-bp5-017-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージに『蓮ノ空』のメンバー... | No explicit verification issue recorded.
+- [274] `ON_LIVE_START` | `PL!N-bp4-029-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このゲームの1ターン目のライブフェイズの場合、このカードのスコアを+１し、ライブ終了時まで、自... | No explicit verification issue recorded.
+- [275] `ON_LIVE_START` | `PL!N-pb1-037-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このターン、自分の『虹ヶ咲』のカードの効果によってウェイト状態の自分のエネルギーをアクティブに... | No explicit verification issue recorded.
+- [276] `ON_LIVE_START` | `PL!-bp4-011-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：ライブ終了時まで、自分のセンターエリアにいる『μ's』のメ... | No explicit verification issue recorded.
+- [277] `ON_LIVE_START` | `PL!-bp4-017-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：ライブ終了時まで、自分のセンターエリアにいる『μ's』のメ... | No explicit verification issue recorded.
+- [278] `ON_LIVE_START` | `PL!SP-bp4-028-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}アクティブ状態の自分のエネルギーがある場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [279] `ON_LIVE_START` | `PL!S-sd1-004-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}カードを1枚引いてもよい。そうした場合、手札2枚を好きな順番でデッキの上に置く。 | No explicit verification issue recorded.
+- [280] `ON_LIVE_START` | `PL!N-bp4-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[... | No explicit verification issue recorded.
+- [281] `ON_LIVE_START` | `PL!SP-bp4-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカードが持つ[桃ブレード]、[赤ブレード]、[... | No explicit verification issue recorded.
+- [282] `ON_LIVE_START` | `PL!SP-bp4-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「澁谷かのん」「ウィーン・マルガレーテ」「鬼塚冬毬」の... | No explicit verification issue recorded.
+- [283] `ON_LIVE_START` | `PL!S-bp5-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_... | No explicit verification issue recorded.
+- [284] `ON_LIVE_START` | `PL!SP-bp1-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる「澁谷かのん」1人は{{heart_05.png|hea... | No explicit verification issue recorded.
+- [285] `ON_LIVE_START` | `PL!S-sd1-022-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『Aqours』のメンバーは{{icon_blade.p... | No explicit verification issue recorded.
+- [286] `ON_LIVE_START` | `PL!-bp4-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『μ's』のメンバー1人は、{{icon_blade.p... | No explicit verification issue recorded.
+- [287] `ON_LIVE_START` | `PL!HS-bp5-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{he... | No explicit verification issue recorded.
+- [288] `ON_LIVE_START` | `PL!SP-bp4-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{... | No explicit verification issue recorded.
+- [289] `ON_LIVE_START` | `LL-bp1-001-R+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置い... | No explicit verification issue recorded.
+- [290] `ON_LIVE_START` | `LL-bp2-001-R+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時... | No explicit verification issue recorded.
+- [291] `ON_LIVE_START` | `PL!S-sd1-009-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の『Aqours』のカードを1枚公開してもよい：これにより公開したカードをデッキの一番上か... | No explicit verification issue recorded.
+- [292] `ON_LIVE_START` | `PL!HS-sd1-008-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の『蓮ノ空』のカードを2枚控え室に置いてもよい：{{heart_01.png|heart0... | No explicit verification issue recorded.
+- [293] `ON_LIVE_START` | `PL!HS-sd1-020-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい：ライブ終了時まで、自分のステー... | No explicit verification issue recorded.
+- [294] `ON_LIVE_START` | `PL!-sd1-003-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{hear... | No explicit verification issue recorded.
+- [295] `ON_LIVE_START` | `PL!N-sd1-004-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}... | No explicit verification issue recorded.
+- [296] `ON_LIVE_START` | `PL!-bp5-010-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚控え室に置く。その後、自分の控... | No explicit verification issue recorded.
+- [297] `ON_LIVE_START` | `PL!SP-sd1-003-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}... | No explicit verification issue recorded.
+- [298] `ON_LIVE_START` | `PL!-bp3-026-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：ライブ終了時まで、自分のステージにいるメンバー1人は、{{ic... | No explicit verification issue recorded.
+- [299] `ON_LIVE_START` | `PL!HS-sd1-002-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカード... | No explicit verification issue recorded.
+- [300] `ON_LIVE_START` | `LL-PR-004-PR` | **LIKELY OK** | {{live_start.png|ライブ開始時}}相手に何が好き？と聞く。 回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの場合... | No explicit verification issue recorded.
+- [301] `ON_LIVE_START` | `PL!S-bp5-016-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}相手のステージにいるすべてのメンバーのそれぞれのコストよりコストが高いメンバーが自分のステージ... | No explicit verification issue recorded.
+- [302] `ON_LIVE_START` | `PL!-pb1-030-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}相手のステージにウェイト状態のメンバーがいる場合、このカードを成功させるための必要ハートを{{... | No explicit verification issue recorded.
+- [303] `ON_LIVE_START` | `PL!N-bp5-027-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分か相手の成功ライブカード置き場にカードが2枚以上あり、かつ自分のステージに名前の異なるメン... | No explicit verification issue recorded.
+- [304] `ON_LIVE_START` | `PL!SP-bp1-026-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の、ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる場合、このカー... | No explicit verification issue recorded.
+- [305] `ON_LIVE_START` | `PL!SP-bp1-027-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のエネルギーが12枚以上ある場合、このカードのスコアを+１する。 (エールをすべて行った後... | No explicit verification issue recorded.
+- [306] `ON_LIVE_START` | `PL!SP-sd1-026-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のエネルギーが9枚以上ある場合、このカードのスコアを+１する。 (エールをすべて行った後、... | No explicit verification issue recorded.
+- [307] `ON_LIVE_START` | `PL!N-bp5-028-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる場... | No explicit verification issue recorded.
+- [308] `ON_LIVE_START` | `PL!N-bp5-029-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデッキの上からカードを4枚公開する。自分はそれ... | No explicit verification issue recorded.
+- [309] `ON_LIVE_START` | `PL!HS-bp2-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに「徒町小鈴」が登場しており、かつ「徒町小鈴」よりコストの大きい「村野さやか」が... | No explicit verification issue recorded.
+- [310] `ON_LIVE_START` | `PL!-bp5-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに『A-RISE』のメンバーがいる場合、以下から1つを選ぶ。 ・ウェイト状態のメ... | No explicit verification issue recorded.
+- [311] `ON_LIVE_START` | `PL!S-bp5-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに『Aqours』のメンバーと『SaintSnow』のメンバーがいて、かつそれら... | No explicit verification issue recorded.
+- [312] `ON_LIVE_START` | `PL!HS-bp5-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに『みらくらぱーく！』のメンバーが3人以上いる場合、このカードのスコアを+１する... | No explicit verification issue recorded.
+- [313] `ON_LIVE_START` | `PL!HS-sd1-018-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに『蓮ノ空』のメンバーが3人以上いて、かつ自分の控え室にカード名に「DreamB... | No explicit verification issue recorded.
+- [314] `ON_LIVE_START` | `PL!HS-bp2-019-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに『蓮ノ空』のメンバーがいる場合、このカードを成功させるための必要ハートは、{{... | No explicit verification issue recorded.
+- [315] `ON_LIVE_START` | `PL!-bp5-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる{{heart_01.png|heart01}}と{{heart_06.p... | No explicit verification issue recorded.
+- [316] `ON_LIVE_START` | `PL!SP-pb1-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバ... | No explicit verification issue recorded.
+- [317] `ON_LIVE_START` | `PL!S-pb1-019-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|h... | No explicit verification issue recorded.
+- [318] `ON_LIVE_START` | `PL!S-pb1-020-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_04.png|h... | No explicit verification issue recorded.
+- [319] `ON_LIVE_START` | `PL!SP-bp5-026-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Liella!』のメンバーが持つハートの総数が11以上の場合、このカード... | No explicit verification issue recorded.
+- [320] `ON_LIVE_START` | `PL!-pb1-028-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Printemps』のメンバーをアクティブにする。これによりウェイト状態... | No explicit verification issue recorded.
+- [321] `ON_LIVE_START` | `PL!N-bp1-027-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}... | No explicit verification issue recorded.
+- [322] `ON_LIVE_START` | `PL!N-bp3-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバー1人の下にあるエネルギーカードを、好きな枚数エネルギーデッキに置い... | No explicit verification issue recorded.
+- [323] `ON_LIVE_START` | `PL!-bp4-020-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが『μ's』のみの場合、自分のステージにいるメンバー1人をポジショ... | No explicit verification issue recorded.
+- [324] `ON_LIVE_START` | `PL!N-sd1-028-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以... | No explicit verification issue recorded.
+- [325] `ON_LIVE_START` | `PL!-bp3-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以... | No explicit verification issue recorded.
+- [326] `ON_LIVE_START` | `PL!N-bp5-026-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}... | No explicit verification issue recorded.
+- [327] `ON_LIVE_START` | `PL!N-bp5-015-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}... | No explicit verification issue recorded.
+- [328] `ON_LIVE_START` | `PL!HS-bp2-020-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを+２する。 | No explicit verification issue recorded.
+- [329] `ON_LIVE_START` | `PL!N-bp5-013-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart... | No explicit verification issue recorded.
+- [330] `ON_LIVE_START` | `LL-bp5-002-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが3人以上いる場合、ライブ終了時まで、自分の... | No explicit verification issue recorded.
+- [331] `ON_LIVE_START` | `PL!HS-bp5-020-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにコスト10以上の『蓮ノ空』のメンバーが2人以上いる場合、このカードのスコアを+... | No explicit verification issue recorded.
+- [332] `ON_LIVE_START` | `PL!-bp5-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにメンバーが1人以上いる場合、自分と相手はカードを1枚引き、手札を1枚控え室に置... | No explicit verification issue recorded.
+- [333] `ON_LIVE_START` | `PL!N-pb1-042-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに同じ名前の『虹ヶ咲』のメンバーが2人以上いる場合、このカードを成功させるための... | No explicit verification issue recorded.
+- [334] `ON_LIVE_START` | `PL!HS-bp5-018-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに名前とコストが両方ともそれぞれ異なるメンバーが3人以上いる場合、このカードのス... | No explicit verification issue recorded.
+- [335] `ON_LIVE_START` | `PL!SP-pb1-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚ま... | No explicit verification issue recorded.
+- [336] `ON_LIVE_START` | `PL!SP-pb1-023-L` | **ENGINE GAP** | {{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメンバーが2人以上いる場合、エネルギーを6枚ま... | Uses META_RULE placeholder frames.
+- [337] `ON_LIVE_START` | `PL!SP-pb1-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージに名前の異なる『KALEIDOSCORE』のメンバーが2人以上いる場合、このカー... | No explicit verification issue recorded.
+- [338] `ON_LIVE_START` | `PL!N-bp4-031-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて、かつそれらのコストの合計が20以上の... | No explicit verification issue recorded.
+- [339] `ON_LIVE_START` | `PL!S-bp3-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージのセンターエリアにコスト9以上の『Aqours』のメンバーがいる場合、以下から1... | No explicit verification issue recorded.
+- [340] `ON_LIVE_START` | `PL!HS-bp2-026-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージの右サイドエリアに「大沢瑠璃乃」が、左サイドエリアに「安養寺姫芽」が、センターエ... | No explicit verification issue recorded.
+- [341] `ON_LIVE_START` | `PL!SP-bp4-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージの左サイドエリアにいる『Liella!』のメンバーが{{heart_02.png... | No explicit verification issue recorded.
+- [342] `ON_LIVE_START` | `PL!-bp4-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のセンターエリアに{{icon_blade.png|ブレード}}を9つ以上持つ『μ's』の... | No explicit verification issue recorded.
+- [343] `ON_LIVE_START` | `PL!-bp5-020-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のセンターエリアに『μ's』のメンバーがいる場合、そのメンバーが持つ{{heart_03.... | No explicit verification issue recorded.
+- [344] `ON_LIVE_START` | `PL!SP-bp4-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメ... | No explicit verification issue recorded.
+- [345] `ON_LIVE_START` | `PL!-bp3-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメンバー1人につき、1枚公開する。それらの中に... | No explicit verification issue recorded.
+- [346] `ON_LIVE_START` | `PL!S-bp2-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある... | No explicit verification issue recorded.
+- [347] `ON_LIVE_START` | `PL!HS-bp5-019-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブカード置き場にあるこのカード以外の『蓮ノ空』のカード1枚につき、このカードの必要ハ... | No explicit verification issue recorded.
+- [348] `ON_LIVE_START` | `PL!S-bp5-017-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_05.png|hea... | No explicit verification issue recorded.
+- [349] `ON_LIVE_START` | `PL!-bp3-019-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブ中の『μ's』のカードが2枚以上ある場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [350] `ON_LIVE_START` | `PL!N-bp1-029-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブ中のカードが3枚以上ある場合、このカードのスコアを+２する。 (エールをすべて行っ... | No explicit verification issue recorded.
+- [351] `LIVE_START` | `PL!-bp4-014-N` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{l... | No explicit verification issue recorded.
+- [352] `ON_LIVE_START` | `PL!N-pb1-039-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場かライブ中のライブカードの中に、必要ハートに含まれる{{heart... | No explicit verification issue recorded.
+- [353] `ON_LIVE_START` | `PL!N-pb1-038-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場かライブ中のライブカードの中に、必要ハートに含まれる{{heart... | No explicit verification issue recorded.
+- [354] `ON_LIVE_START` | `PL!-bp5-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードのスコアを+２し、必要ハートを{... | No explicit verification issue recorded.
+- [355] `ON_LIVE_START` | `PL!-sd1-022-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{... | No explicit verification issue recorded.
+- [356] `ON_LIVE_START` | `PL!-bp4-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、このカードを成功させるた... | No explicit verification issue recorded.
+- [357] `ON_LIVE_START` | `PL!N-bp4-027-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード名が「EMOTION」のカード1枚につき、このカードの... | No explicit verification issue recorded.
+- [358] `ON_LIVE_START` | `PL!-bp3-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードが2枚以上ある場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [359] `ON_LIVE_START` | `PL!S-bp2-025-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードが2枚以上ある場合、ライブ終了時まで、自分のステージにいる... | No explicit verification issue recorded.
+- [360] `ON_LIVE_START` | `PL!-bp3-024-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードがある場合、{{heart_01.png|heart01}... | No explicit verification issue recorded.
+- [361] `ON_LIVE_START` | `PL!N-bp3-026-L` | **MISSING** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にスコアが１か５のカードがある場合、このカードのスコアを+１する。... | Score 1-or-5 success-pile check missing.
+- [362] `ON_LIVE_START` | `PL!-pb1-029-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場のカードが0枚で、かつ自分のステージにいるメンバーが『lilywh... | No explicit verification issue recorded.
+- [363] `ON_LIVE_START` | `PL!SP-bp2-023-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の成功ライブカード置き場のカード枚数が相手より少ない場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [364] `ON_LIVE_START` | `PL!-sd1-009-SD` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の控え室に『μ's』のカードが25枚以上ある場合、ライブ終了時まで、「{{jyouji.p... | No explicit verification issue recorded.
+- [365] `ON_LIVE_START` | `PL!HS-bp2-022-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の控え室に『スリーズブーケ』のライブカードが3枚以上ある場合、このカードのスコアを+１する... | No explicit verification issue recorded.
+- [366] `ON_LIVE_START` | `PL!S-bp3-021-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の控え室にあるメンバーカード1枚をデッキの一番上に置いてもよい。そうした場合、ライブ終了時... | No explicit verification issue recorded.
+- [367] `ON_LIVE_START` | `PL!N-bp4-028-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分の控え室にカード名の異なる『虹ヶ咲』のライブカードが4枚以上ある場合、このカードのスコアを... | No explicit verification issue recorded.
+- [368] `ON_LIVE_START` | `LL-bp4-001-R+` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキの上からカードを5枚見る。その中から「絢瀬絵... | No explicit verification issue recorded.
+- [369] `ON_LIVE_SUCCESS` | `PL!-bp5-001-AR, PL!-bp5-001-R+, PL!-bp5-001-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した... | No explicit verification issue recorded.
+- [370] `ON_LIVE_SUCCESS` | `PL!HS-PR-027-PR, PL!N-PR-021-PR, PL!SP-PR-016-PR` | **LIKELY OK** | {{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：エールにより公開された自分のカードの中から、コスト2以下の... | No explicit verification issue recorded.
+- [371] `ON_LIVE_SUCCESS` | `PL!SP-bp2-009-P, PL!SP-bp2-009-R+, PL!SP-bp2-009-P+` | **LIKELY OK** | {{live_success.png|ライブ成功時}}カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [372] `ON_LIVE_SUCCESS` | `PL!S-bp2-008-P, PL!S-bp2-008-R+, PL!S-bp2-008-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_... | No explicit verification issue recorded.
+- [373] `ON_LIVE_SUCCESS` | `LL-bp5-001-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいる... | No explicit verification issue recorded.
+- [374] `ON_LIVE_SUCCESS` | `PL!-bp3-025-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このターン、自分が余剰ハートを持たない場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [375] `ON_LIVE_SUCCESS` | `PL!N-bp3-030-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に{{icon_b_all.png|ALLブレード}... | No explicit verification issue recorded.
+- [376] `ON_LIVE_SUCCESS` | `PL!S-bp5-022-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開されている自分のライブカードの枚数が、エールにより公開されている相手のライ... | No explicit verification issue recorded.
+- [377] `ON_LIVE_SUCCESS` | `PL!N-bp5-012-AR, PL!N-bp5-012-R+, PL!N-bp5-012-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、自分のエネルギーデッキから、このメンバーの下にあるエ... | No explicit verification issue recorded.
+- [378] `ON_LIVE_SUCCESS` | `PL!N-bp5-007-AR, PL!N-bp5-007-R+, PL!N-bp5-007-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分が余剰ハートを1つ以上持っている場合、カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [379] `ON_LIVE_SUCCESS` | `PL!N-bp4-007-P, PL!N-bp4-007-R+, PL!N-bp4-007-P+` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く... | No explicit verification issue recorded.
+- [380] `ON_LIVE_SUCCESS` | `PL!N-bp4-011-P, PL!N-bp4-011-R+, PL!N-bp4-011-P+` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のデッキの上からカードを5枚控え室に置く。その後、自分の控え室にカード名の異なる『虹ヶ... | No explicit verification issue recorded.
+- [381] `ON_LIVE_SUCCESS` | `PL!N-bp5-016-N, PL!N-bp5-023-N, PL!S-sd1-014-SD` | **LIKELY OK** | {{live_success.png|ライブ成功時}}カードを1枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [382] `ON_LIVE_SUCCESS` | `PL!N-bp5-010-AR, PL!N-bp5-010-R, PL!N-bp5-010-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分が余剰ハートを持たない場合、ライブの合計スコアを+１する。自分が余剰ハートを2つ以上持... | No explicit verification issue recorded.
+- [383] `ON_LIVE_SUCCESS` | `PL!N-bp5-006-AR, PL!N-bp5-006-R, PL!N-bp5-006-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにこのメンバー以外のメンバーがいる場合、このメンバーをウェイトにする。 | No explicit verification issue recorded.
+- [384] `ON_LIVE_SUCCESS` | `PL!S-bp5-007-AR, PL!S-bp5-007-R, PL!S-bp5-007-P` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のデッキの上からカードを4枚見る。その中からハートに{{heart_04.png|he... | No explicit verification issue recorded.
+- [385] `ON_LIVE_SUCCESS` | `PL!S-pb1-003-P+, PL!S-pb1-003-R` | **LIKELY OK** | {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払っても... | No explicit verification issue recorded.
+- [386] `ON_LIVE_SUCCESS` | `PL!SP-pb1-001-P+, PL!SP-pb1-001-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{i... | No explicit verification issue recorded.
+- [387] `ON_LIVE_SUCCESS` | `PL!SP-pb1-004-P+, PL!SP-pb1-004-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{i... | No explicit verification issue recorded.
+- [388] `ON_LIVE_SUCCESS` | `PL!S-pb1-022-L, PL!S-pb1-022-L+` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このターン、ライブに勝利するプレイヤーを決定するとき、自分と相手のライブの合計スコアが同じ... | No explicit verification issue recorded.
+- [389] `ON_LIVE_SUCCESS` | `PL!N-pb1-012-P+, PL!N-pb1-012-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [390] `ON_LIVE_SUCCESS` | `PL!SP-bp4-006-P, PL!SP-bp4-006-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に、名前が異なる『Liella!』のメンバーカードが... | No explicit verification issue recorded.
+- [391] `ON_LIVE_SUCCESS` | `PL!S-pb1-007-P+, PL!S-pb1-007-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分のエネルギーデ... | No explicit verification issue recorded.
+- [392] `ON_LIVE_SUCCESS` | `PL!S-bp3-005-P, PL!S-bp3-005-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの枚数が、相手がエールによって公開したカードの枚数より少... | No explicit verification issue recorded.
+- [393] `ON_LIVE_SUCCESS` | `PL!S-bp3-002-P, PL!S-bp3-002-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、このカードを手札に加えてもよい。この能力は、このカー... | No explicit verification issue recorded.
+- [394] `ON_LIVE_SUCCESS` | `PL!N-bp4-003-P, PL!N-bp4-003-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [395] `ON_LIVE_SUCCESS` | `PL!N-bp4-001-P, PL!N-bp4-001-R` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のエネルギーが相手より少ない場合、自分のエネルギーデッキから、エネルギーカードを1枚ウ... | No explicit verification issue recorded.
+- [396] `ON_LIVE_SUCCESS` | `PL!SP-bp2-024-L, PL!SP-bp2-024-SECL` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分の手札の枚数が相手より多い場合、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [397] `ON_LIVE_SUCCESS` | `PL!S-pb1-019-L` | **LIKELY OK** | {{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|h... | No explicit verification issue recorded.
+- [398] `ON_LIVE_SUCCESS` | `PL!SP-bp5-025-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}{{icon_energy.png|E}}を好きな数支払ってもよい：これにより支払った{{... | No explicit verification issue recorded.
+- [399] `ON_LIVE_SUCCESS` | `PL!SP-bp5-020-N` | **LIKELY OK** | {{live_success.png|ライブ成功時}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。 | No explicit verification issue recorded.
+- [400] `ON_LIVE_SUCCESS` | `PL!N-bp5-026-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このカードのスコアが３の場合、自分の控え室にある『虹ヶ咲』のカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [401] `ON_LIVE_SUCCESS` | `PL!S-bp3-019-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このターン、エールにより公開された自分のカードの中にブレードハートを持たないカードが0枚の... | No explicit verification issue recorded.
+- [402] `ON_LIVE_SUCCESS` | `PL!N-bp3-027-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このターン、自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持... | No explicit verification issue recorded.
+- [403] `ON_LIVE_SUCCESS` | `PL!S-bp2-022-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}このターン、自分のデッキがリフレッシュしていた場合、このカードのスコアを+２する。 | No explicit verification issue recorded.
+- [404] `ON_LIVE_SUCCESS` | `PL!N-bp4-025-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分の『虹ヶ咲』のメンバーカードが持つハートの中に{{heart_0... | No explicit verification issue recorded.
+- [405] `ON_LIVE_SUCCESS` | `PL!S-sd1-019-SD` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『Aqours』のライブカードを1枚手札に加え... | No explicit verification issue recorded.
+- [406] `ON_LIVE_SUCCESS` | `PL!HS-bp1-021-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『蓮ノ空』のライブカードを1枚手札に加える。 ... | No explicit verification issue recorded.
+- [407] `ON_LIVE_SUCCESS` | `PL!S-bp2-021-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚までデッキの一番下に置く。 | No explicit verification issue recorded.
+- [408] `ON_LIVE_SUCCESS` | `PL!SP-PR-018-PR` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に『Liella!』のカードが7枚以上ある場合、自分... | No explicit verification issue recorded.
+- [409] `ON_LIVE_SUCCESS` | `PL!HS-bp1-022-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に『蓮ノ空』のメンバーカードが10枚以上ある場合、こ... | No explicit verification issue recorded.
+- [410] `ON_LIVE_SUCCESS` | `PL!SP-bp4-026-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に名前が異なる『Liella!』のメンバーカードが5... | No explicit verification issue recorded.
+- [411] `ON_LIVE_SUCCESS` | `PL!S-pb1-024-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}カードを2枚引き、手札を2枚控え室に置く。 | No explicit verification issue recorded.
+- [412] `ON_LIVE_SUCCESS` | `PL!N-bp1-026-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、エールにより公開された自分のカードの中から、『虹ヶ咲... | No explicit verification issue recorded.
+- [413] `ON_LIVE_SUCCESS` | `PL!SP-bp1-023-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、自分のエネルギーデッキから、エネルギーカードを1枚ウ... | No explicit verification issue recorded.
+- [414] `ON_LIVE_SUCCESS` | `PL!HS-bp1-023-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高く、かつ自分のステージに『蓮ノ空』のメンバーがいる場合、自分... | No explicit verification issue recorded.
+- [415] `ON_LIVE_SUCCESS` | `PL!N-bp4-030-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}以下から1つを選ぶ。自分の成功ライブカード置き場に『虹ヶ咲』のカードがある場合、代わりに1... | No explicit verification issue recorded.
+- [416] `ON_LIVE_SUCCESS` | `PL!N-bp4-030-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}以下から1つを選ぶ。自分の成功ライブカード置き場に『虹ヶ咲』のカードがある場合、代わりに1... | No explicit verification issue recorded.
+- [417] `ON_LIVE_SUCCESS` | `PL!-pb1-031-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：エールにより公開された自分のカードの中から、『μ's』のメ... | No explicit verification issue recorded.
+- [418] `ON_LIVE_SUCCESS` | `PL!SP-bp5-023-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分か相手の成功ライブカード置き場にカードが2枚以上あり、かつエールにより公開された自分の... | No explicit verification issue recorded.
+- [419] `ON_LIVE_SUCCESS` | `PL!S-bp5-019-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分か相手の成功ライブカード置き場にカードが2枚以上ある場合、エールにより公開された自分の... | No explicit verification issue recorded.
+- [420] `ON_LIVE_SUCCESS` | `PL!-bp4-023-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分が余剰ハートに{{heart_01.png|heart01}}を1つ以上持つ場合、カー... | No explicit verification issue recorded.
+- [421] `ON_LIVE_SUCCESS` | `PL!S-bp5-020-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分が余剰ハートを3つ以上持っている場合、それらをすべて失い、このカードのスコアを+１する... | No explicit verification issue recorded.
+- [422] `ON_LIVE_SUCCESS` | `PL!SP-bp4-026-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のエネルギーが11枚以上ある場合、カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [423] `ON_LIVE_SUCCESS` | `PL!SP-bp5-027-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置いてもよい。そうした場合... | No explicit verification issue recorded.
+- [424] `ON_LIVE_SUCCESS` | `PL!HS-PR-028-PR` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージに、元々持つハートの数より多い数のハートを持つメンバーがいる場合、カードを1... | No explicit verification issue recorded.
+- [425] `ON_LIVE_SUCCESS` | `PL!SP-bp2-025-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異な... | No explicit verification issue recorded.
+- [426] `ON_LIVE_SUCCESS` | `PL!SP-bp1-024-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージに「澁谷かのん」と「唐可可」がいる場合、カードを1枚引く。 (必要ハートを確... | No explicit verification issue recorded.
+- [427] `ON_LIVE_SUCCESS` | `PL!HS-sd1-017-SD` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージに『蓮ノ空』のメンバーがいる場合、カードを1枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [428] `ON_LIVE_SUCCESS` | `PL!S-sd1-020-SD` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバー1人につき、カードを1枚引く。その後、これに... | No explicit verification issue recorded.
+- [429] `ON_LIVE_SUCCESS` | `PL!S-pb1-021-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_05.png... | No explicit verification issue recorded.
+- [430] `ON_LIVE_SUCCESS` | `PL!N-bp3-031-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにいるウェイト状態のメンバー1人につき、このカードのスコアを+１する。 | No explicit verification issue recorded.
+- [431] `ON_LIVE_SUCCESS` | `PL!SP-bp4-027-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにいるメンバーが『Liella!』のみの場合、自分のステージにいるメンバーを... | No explicit verification issue recorded.
+- [432] `ON_LIVE_SUCCESS` | `PL!-bp3-026-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハート... | No explicit verification issue recorded.
+- [433] `ON_LIVE_SUCCESS` | `PL!-pb1-030-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる場合、自分の控え室から『B... | No explicit verification issue recorded.
+- [434] `ON_LIVE_SUCCESS` | `PL!SP-bp4-025-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のステージのセンターエリアにいる『Liella!』のメンバーが、このターン中に移動して... | No explicit verification issue recorded.
+- [435] `ON_LIVE_SUCCESS` | `PL!-sd1-019-SD` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、... | No explicit verification issue recorded.
+- [436] `ON_LIVE_SUCCESS` | `PL!-pb1-032-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分の成功ライブカード置き場に『μ's』のカードがある場合、カードを1枚引く。 | No explicit verification issue recorded.
+- [437] `ON_LIVE_SUCCESS` | `LL-bp5-002-L` | **LIKELY OK** | {{live_success.png|ライブ成功時}}自分の控え室にある、自分のステージにいるすべてのメンバーと異なるグループ名を持つカード1枚... | No explicit verification issue recorded.
+- [438] `CONSTANT` | `PL!-bp4-005-P, PL!-bp4-005-R+, PL!-bp4-005-P+` | **LIKELY OK** | {{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。 | No explicit verification issue recorded.
+- [439] `CONSTANT` | `PL!-bp4-007-P, PL!-bp4-007-R` | **LIKELY OK** | {{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{... | No explicit verification issue recorded.
+- [440] `CONSTANT` | `PL!-pb1-004-P+, PL!-pb1-004-R` | **LIKELY OK** | {{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア... | No explicit verification issue recorded.
+- [441] `CONSTANT` | `PL!-pb1-013-P+, PL!-pb1-013-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [442] `CONSTANT` | `PL!HS-bp1-003-P, PL!HS-bp1-003-R+, PL!HS-bp1-003-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.p... | No explicit verification issue recorded.
+- [443] `CONSTANT` | `PL!N-bp3-009-P, PL!N-bp3-009-R+, PL!N-bp3-009-P+` | **LIKELY OK** | {{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコス... | No explicit verification issue recorded.
+- [444] `CONSTANT` | `PL!N-bp4-012-P, PL!N-bp4-012-R` | **LIKELY OK** | {{jyouji.png|常時}}相手の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、ライブの合計スコアを+１する。 | No explicit verification issue recorded.
+- [445] `CONSTANT` | `PL!N-bp5-002-AR, PL!N-bp5-002-R, PL!N-bp5-002-P` | **LIKELY OK** | {{jyouji.png|常時}}自分と相手のステージの中で、このメンバーがほかのすべてのメンバーより多くのハートを持つかぎり、ライブの合計スコ... | No explicit verification issue recorded.
+- [446] `CONSTANT` | `PL!N-pb1-002-P+, PL!N-pb1-002-R` | **LIKELY OK** | {{jyouji.png|常時}}このメンバーの下にエネルギーカードが2枚以上置かれているかぎり、ライブの合計スコアを+１する。 (メンバーがス... | No explicit verification issue recorded.
+- [447] `CONSTANT` | `PL!S-bp3-001-P, PL!S-bp3-001-R+, PL!S-bp3-001-P+` | **LIKELY OK** | {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ... | No explicit verification issue recorded.
+- [448] `CONSTANT` | `PL!S-bp5-008-AR, PL!S-bp5-008-R, PL!S-bp5-008-P` | **LIKELY OK** | {{jyouji.png|常時}}相手の余剰ハートが2つ以上あるかぎり、自分のライブの合計スコアを+１する。 | No explicit verification issue recorded.
+- [449] `CONSTANT` | `PL!SP-bp5-111-P+, PL!SP-bp5-111-R, PL!SP-bp5-222-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。 | No explicit verification issue recorded.
+- [450] `CONSTANT` | `PL!SP-pb1-002-P+, PL!SP-pb1-002-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーが12枚以上ある場合、ライブの合計スコアを+１する。 | No explicit verification issue recorded.
+- [451] `CONSTANT` | `PL!HS-bp2-002-P, PL!HS-bp2-002-R+, PL!HS-bp2-002-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード... | No explicit verification issue recorded.
+- [452] `CONSTANT` | `PL!S-bp2-001-P, PL!S-bp2-001-R` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカードが1枚以上ある場合、{{... | No explicit verification issue recorded.
+- [453] `CONSTANT` | `PL!S-pb1-005-P+, PL!S-pb1-005-R` | **LIKELY OK** | {{jyouji.png|常時}}相手のエネルギーが自分より多い場合、{{icon_blade.png|ブレード}}{{icon_blade.p... | No explicit verification issue recorded.
+- [454] `CONSTANT` | `PL!S-pb1-009-P+, PL!S-pb1-009-R` | **LIKELY OK** | {{jyouji.png|常時}}自分と相手の成功ライブカード置き場にカードが合計3枚以上ある場合、{{icon_blade.png|ブレード}... | No explicit verification issue recorded.
+- [455] `CONSTANT` | `PL!SP-bp4-005-P, PL!SP-bp4-005-R+, PL!SP-bp4-005-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade... | No explicit verification issue recorded.
+- [456] `CONSTANT` | `PL!SP-bp4-009-P, PL!SP-bp4-009-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるメンバーのコストの合計が相手より低いかぎり、{{icon_blade.png|ブレード}}... | No explicit verification issue recorded.
+- [457] `CONSTANT` | `PL!HS-PR-010-PR, PL!HS-PR-011-PR, PL!HS-PR-012-PR` | **ENGINE GAP** | (必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。) | Uses META_RULE placeholder frames.
+- [458] `CONSTANT` | `PL!-bp4-018-N` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高いかぎり、{{icon_blade.png|... | No explicit verification issue recorded.
+- [459] `CONSTANT` | `PL!HS-bp5-007-AR, PL!HS-bp5-007-R, PL!HS-bp5-007-P` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png... | No explicit verification issue recorded.
+- [460] `CONSTANT` | `PL!N-pb1-001-P+, PL!N-pb1-001-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_... | No explicit verification issue recorded.
+- [461] `CONSTANT` | `PL!N-pb1-004-P+, PL!N-pb1-004-R` | **LIKELY OK** | {{jyouji.png|常時}}このターンにこのメンバーが移動していないかぎり、{{icon_blade.png|ブレード}}{{icon_b... | No explicit verification issue recorded.
+- [462] `CONSTANT` | `PL!SP-bp4-003-P, PL!SP-bp4-003-R` | **LIKELY OK** | {{jyouji.png|常時}}{{center.png|センター}}{{icon_blade.png|ブレード}}{{icon_blade.... | No explicit verification issue recorded.
+- [463] `CONSTANT` | `PL!-bp3-002-P, PL!-bp3-002-R` | **LIKELY OK** | {{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon_blade.png|ブレード}}を得る。 | No explicit verification issue recorded.
+- [464] `CONSTANT` | `PL!-sd1-001-SD` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。 | No explicit verification issue recorded.
+- [465] `CONSTANT` | `PL!HS-bp2-006-P, PL!HS-bp2-006-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき、{{icon_blade.png|ブレード... | No explicit verification issue recorded.
+- [466] `CONSTANT` | `PL!N-pb1-011-P+, PL!N-pb1-011-R` | **LIKELY OK** | {{jyouji.png|常時}}このメンバーの下にあるエネルギーカード1枚につき、{{icon_blade.png|ブレード}}を得る。 | No explicit verification issue recorded.
+- [467] `CONSTANT` | `PL!-bp5-003-AR, PL!-bp5-003-R+, PL!-bp5-003-P` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}を得... | No explicit verification issue recorded.
+- [468] `CONSTANT` | `PL!SP-bp2-004-P, PL!SP-bp2-004-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが最も大きいコストを持つ場合、{{heart_... | No explicit verification issue recorded.
+- [469] `CONSTANT` | `PL!SP-bp5-012-N` | **LIKELY OK** | {{jyouji.png|常時}}自分のライブカード置き場に必要ハートの合計が8以上の『Liella!』のライブカードがあるかぎり、{{hear... | No explicit verification issue recorded.
+- [470] `CONSTANT` | `PL!HS-bp5-018-L` | **MISSING** | {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。 | Triple-group static type treatment missing.
+- [471] `CONSTANT` | `PL!N-bp5-006-AR, PL!N-bp5-006-R, PL!N-bp5-006-P` | **MISSING** | {{jyouji.png|常時}}このメンバーは自分のアクティブフェイズにアクティブにしない。 | Prevent active phase activation missing.
+- [472] `CONSTANT` | `PL!SP-bp1-001-P, PL!SP-bp1-001-R` | **MISSING** | {{jyouji.png|常時}}自分のステージにほかのメンバーがいない場合、自分はライブできない。 | Prevent live if no other member missing.
+- [473] `CONSTANT` | `PL!HS-bp5-002-AR, PL!HS-bp5-002-R+, PL!HS-bp5-002-P` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにコストがそれぞれ異なるメンバーが3人以上いるかぎり、{{heart_05.png|heart0... | No explicit verification issue recorded.
+- [474] `CONSTANT` | `PL!N-PR-020-PR, PL!S-PR-037-PR` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{heart_05.png|heart05}}{{i... | No explicit verification issue recorded.
+- [475] `LIVE_START` | `PL!-bp4-002-P, PL!-bp4-002-R+, ` | **LIKELY OK** | {{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_succ... | No explicit verification issue recorded.
+- [476] `CONSTANT` | `PL!SP-bp5-016-N` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{heart_06.png|heart06}}{{heart_06.... | No explicit verification issue recorded.
+- [477] `CONSTANT` | `PL!SP-bp4-004-P, PL!SP-bp4-004-R+, PL!SP-bp4-004-P+` | **LIKELY OK** | {{jyouji.png|常時}}このカードのプレイに際し、2人のメンバーとバトンタッチしてもよい。 | No explicit verification issue recorded.
+- [478] `CONSTANT` | `PL!SP-bp5-003-AR, PL!SP-bp5-003-R+, PL!SP-bp5-003-P` | **LIKELY OK** | {{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。 | No explicit verification issue recorded.
+- [479] `CONSTANT` | `PL!HS-bp5-016-N` | **LIKELY OK** | {{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{heart_06.png|heart06}}を... | No explicit verification issue recorded.
+- [480] `CONSTANT` | `PL!N-pb1-007-P+, PL!N-pb1-007-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01.png|heart01}}、{{heart... | No explicit verification issue recorded.
+- [481] `CONSTANT` | `PL!SP-bp4-021-N` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーが相手より多いかぎり、{{heart_06.png|heart06}}を得る。 | No explicit verification issue recorded.
+- [482] `CONSTANT` | `PL!SP-bp2-010-P, PL!SP-bp2-010-R+, PL!SP-bp2-010-P+` | **LIKELY OK** | {{jyouji.png|常時}}相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png... | No explicit verification issue recorded.
+- [483] `CONSTANT` | `PL!S-bp5-001-AR, PL!S-bp5-001-R+, PL!S-bp5-001-P` | **LIKELY OK** | {{jyouji.png|常時}}能力を持たないメンバーカードを自分の手札から登場させるためのコストは1減る。 | No explicit verification issue recorded.
+- [484] `CONSTANT` | `PL!N-bp4-007-P, PL!N-bp4-007-R+, PL!N-bp4-007-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{hea... | No explicit verification issue recorded.
+- [485] `CONSTANT` | `PL!N-bp1-012-P, PL!N-bp1-012-R+, PL!N-bp1-012-P+` | **LIKELY OK** | {{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all... | No explicit verification issue recorded.
+- [486] `CONSTANT` | `PL!SP-bp5-011-AR, PL!SP-bp5-011-R, PL!SP-bp5-011-P` | **LIKELY OK** | {{jyouji.png|常時}}{{center.png|センター}}{{heart_03.png|heart03}}{{heart_03.p... | No explicit verification issue recorded.
+- [487] `CONSTANT` | `PL!SP-bp5-011-AR, PL!SP-bp5-011-R, PL!SP-bp5-011-P` | **LIKELY OK** | {{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{... | No explicit verification issue recorded.
+- [488] `CONSTANT` | `PL!SP-bp5-011-AR, PL!SP-bp5-011-R, PL!SP-bp5-011-P` | **LIKELY OK** | {{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{... | No explicit verification issue recorded.
+- [489] `CONSTANT` | `PL!S-PR-029-PR, PL!S-PR-030-PR, PL!S-PR-031-PR` | **LIKELY OK** | {{jyouji.png|常時}}自分か相手のステージにコスト13以上のメンバーがいる場合、{{icon_blade.png|ブレード}}{{i... | No explicit verification issue recorded.
+- [490] `CONSTANT` | `PL!HS-bp5-004-AR, PL!HS-bp5-004-R, PL!HS-bp5-004-P` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき、{{icon_blade.png... | No explicit verification issue recorded.
+- [491] `CONSTANT` | `PL!-bp5-008-AR, PL!-bp5-008-R, PL!-bp5-008-P` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、{{heart_03.png|he... | No explicit verification issue recorded.
+- [492] `CONSTANT` | `PL!-bp4-020-L` | **LIKELY OK** | {{jyouji.png|常時}}このカードが自分の成功ライブカード置き場にあるかぎり、自分のセンターエリアにいる『μ's』のメンバーは{{ic... | No explicit verification issue recorded.
+- [493] `CONSTANT` | `PL!HS-sd1-005-SD` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージに「村野さやか」か「百生吟子」か「安養寺姫芽」がいるかぎり、{{icon_blade.png|ブ... | No explicit verification issue recorded.
+- [494] `CONSTANT` | `PL!-bp5-333-P+, PL!-bp5-333-R` | **LIKELY OK** | {{jyouji.png|常時}}このメンバーがウェイト状態であるかぎり、{{heart_05.png|heart05}}を得る。 | No explicit verification issue recorded.
+- [495] `CONSTANT` | `PL!SP-bp1-004-P, PL!SP-bp1-004-R` | **LIKELY OK** | {{jyouji.png|常時}}ステージのセンターエリアにいる場合、{{icon_blade.png|ブレード}}{{icon_blade.p... | No explicit verification issue recorded.
+- [496] `CONSTANT` | `PL!SP-pb1-010-P+, PL!SP-pb1-010-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のエネルギーが10枚以上ある場合、ステージにいるこのメンバーのコストを+４する。 | No explicit verification issue recorded.
+- [497] `CONSTANT` | `PL!-bp5-111-P+, PL!-bp5-111-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいるこのメンバー以外の『A-RISE』のメンバー1人につき、{{heart_05.png|he... | No explicit verification issue recorded.
+- [498] `CONSTANT` | `PL!N-pb1-008-P+, PL!N-pb1-008-R` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり、手札にあるこのメンバーカードのコストは2減る。 | No explicit verification issue recorded.
+- [499] `CONSTANT` | `PL!-pb1-014-P+, PL!-pb1-014-R` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場に『lilywhite』のカードがある場合、手札にあるこのメンバーカードのコストは... | No explicit verification issue recorded.
+- [500] `CONSTANT` | `PL!-bp4-008-P, PL!-bp4-008-R` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、ステージにいるこのメンバーのコスト... | No explicit verification issue recorded.
+- [501] `CONSTANT` | `PL!-pb1-004-P+, PL!-pb1-004-R` | **LIKELY OK** | {{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア... | No explicit verification issue recorded.
+- [502] `CONSTANT` | `PL!-bp4-019-L` | **LIKELY OK** | {{jyouji.png|常時}}このカードが自分の成功ライブカード置き場にあり、かつ自分のステージに『μ's』のメンバーがいるかぎり、自分の成... | No explicit verification issue recorded.
+- [503] `CONSTANT` | `PL!S-bp2-024-L` | **LIKELY OK** | {{jyouji.png|常時}}このカードは成功ライブカード置き場に置くことができない。 | No explicit verification issue recorded.
+- [504] `CONSTANT` | `LL-bp2-001-R+` | **LIKELY OK** | {{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。 | No explicit verification issue recorded.
+- [505] `CONSTANT` | `PL!HS-bp2-020-L` | **ENGINE GAP** | {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。 | Uses META_RULE placeholder frames.
+- [506] `CONSTANT` | `PL!HS-sd1-020-SD` | **ENGINE GAP** | {{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う。 | Uses META_RULE placeholder frames.
+- [507] `CONSTANT` | `LL-bp2-001-R+` | **LIKELY OK** | {{jyouji.png|常時}}手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる。 | No explicit verification issue recorded.
+- [508] `CONSTANT` | `PL!HS-sd1-004-SD` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージに「日野下花帆」か「徒町小鈴」か「安養寺姫芽」がいるかぎり、{{heart_04.png|hea... | No explicit verification issue recorded.
+- [509] `CONSTANT` | `PL!SP-bp5-017-N` | **LIKELY OK** | {{jyouji.png|常時}}自分のステージにいる『Liella!』のメンバーがこのターンにエリアを移動しているかぎり、手札にあるこのメンバ... | No explicit verification issue recorded.
+- [510] `CONSTANT` | `PL!S-bp3-016-N` | **LIKELY OK** | {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、ステージにいるこのメンバーのコストを+１する。 | No explicit verification issue recorded.
+- [511] `ACTIVATED` | `PL!-PR-003-PR` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.... | No explicit verification issue recorded.
+- [512] `ACTIVATED` | `PL!-PR-004-PR` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_01.... | No explicit verification issue recorded.
+- [513] `ACTIVATED` | `PL!-bp4-003-P, PL!-bp4-003-R, PL!-pb1-024-N` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [514] `ACTIVATED` | `PL!-bp5-009-AR, PL!-bp5-009-R, PL!-bp5-009-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_06.... | No explicit verification issue recorded.
+- [515] `ACTIVATED` | `PL!N-bp1-012-P, PL!N-bp1-012-R+, PL!N-bp1-012-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [516] `ACTIVATED` | `PL!SP-bp5-111-P+, PL!SP-bp5-111-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー2枚をエネルギーデッキに置く：自分の控え室にあるライブカードを1... | No explicit verification issue recorded.
+- [517] `ACTIVATED` | `PL!-pb1-019-N, PL!-pb1-025-N, PL!-sd1-002-SD` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [518] `ACTIVATED` | `PL!N-sd1-005-PRproteinbar, PL!N-sd1-005-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『虹ヶ咲』のメンバーカードを1枚手... | No explicit verification issue recorded.
+- [519] `ACTIVATED` | `PL!-PR-012-PR, PL!S-PR-038-PR, PL!SP-PR-017-PR` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：カードを1枚引く。 | No explicit verification issue recorded.
+- [520] `ACTIVATED` | `PL!HS-bp1-007-P, PL!HS-bp1-007-R, PL!N-bp1-006-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [521] `ACTIVATED` | `PL!HS-bp1-019-L, PL!HS-bp1-019-SECL, PL!N-sd1-025-SD` | **MISSING** | (エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。) | Score accumulation from score icons missing.
+- [522] `ACTIVATED` | `PL!SP-bp1-003-P, PL!SP-bp1-003-R+, PL!SP-bp1-003-P+` | **MISSING** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計... | Public hand-cost threshold ability missing.
+- [523] `ACTIVATED` | `PL!N-pb1-006-P+, PL!N-pb1-006-R` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをウェイトにする：エネルギーを1枚アクティブにする。 | No explicit verification issue recorded.
+- [524] `LIVE_START` | `PL!SP-bp2-001-N, PL!SP-bp2-001-R+, PL!SP-bp2-001-P+` | **MISSING** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい... | Dual ability block is entirely unimplemented.
+- [525] `ACTIVATED` | `PL!N-bp3-004-P, PL!N-bp3-004-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：自分の控え室から『虹ヶ... | No explicit verification issue recorded.
+- [526] `ACTIVATED` | `PL!N-pb1-011-P+, PL!N-pb1-011-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：自分の... | No explicit verification issue recorded.
+- [527] `ACTIVATED` | `PL!N-sd1-007-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『虹ヶ咲』のライブカードを1枚手札... | No explicit verification issue recorded.
+- [528] `ACTIVATED` | `PL!S-bp3-006-P, PL!S-bp3-006-R+, PL!S-bp3-006-P+` | **LIKELY OK** | {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1... | No explicit verification issue recorded.
+- [529] `ACTIVATED` | `PL!S-bp3-001-P, PL!S-bp3-001-R+, PL!S-bp3-001-P+` | **LIKELY OK** | {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ... | No explicit verification issue recorded.
+- [530] `ACTIVATED` | `PL!-bp5-004-AR, PL!-bp5-004-R+, PL!-bp5-004-P` | **LIKELY OK** | {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.... | No explicit verification issue recorded.
+- [531] `ACTIVATED` | `PL!N-bp1-002-P, PL!N-bp1-002-R+, PL!N-bp1-002-P+` | **LIKELY OK** | {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：この... | No explicit verification issue recorded.
+- [532] `ACTIVATED` | `PL!HS-bp1-004-P, PL!HS-bp1-004-R+, PL!HS-bp1-004-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [533] `ACTIVATED` | `PL!HS-bp5-001-AR, PL!HS-bp5-001-R+, PL!HS-bp5-001-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [534] `ACTIVATED` | `PL!-bp5-003-AR, PL!-bp5-003-R+, PL!-bp5-003-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [535] `ACTIVATED` | `PL!HS-bp5-002-AR, PL!HS-bp5-002-R+, PL!HS-bp5-002-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [536] `ACTIVATED` | `PL!S-bp5-111-P+, PL!S-bp5-111-R, PL!S-bp5-222-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーを『Aqours』... | No explicit verification issue recorded.
+- [537] `ACTIVATED` | `PL!HS-bp1-003-P, PL!HS-bp1-003-R+, PL!HS-bp1-003-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の... | No explicit verification issue recorded.
+- [538] `ACTIVATED` | `PL!-bp3-009-P, PL!-bp3-009-R+, PL!-bp3-009-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：{{heart_01.png|heart01... | No explicit verification issue recorded.
+- [539] `ACTIVATED` | `PL!-bp3-001-P, PL!-bp3-001-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを1枚引き、手札を1枚控え室に置く。（... | No explicit verification issue recorded.
+- [540] `ACTIVATED` | `PL!SP-bp1-009-P, PL!SP-bp1-009-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：カードを1枚引き、手札を1枚控... | No explicit verification issue recorded.
+- [541] `ACTIVATED` | `PL!-bp3-008-P, PL!-bp3-008-R+, PL!-bp3-008-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：自分の控え室から『μ's』のライブカードを1... | No explicit verification issue recorded.
+- [542] `ACTIVATED` | `PL!N-bp3-008-P, PL!N-bp3-008-R+, PL!N-bp3-008-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする：カードを1枚引... | No explicit verification issue recorded.
+- [543] `ACTIVATED` | `PL!N-bp5-012-AR, PL!N-bp5-012-R+, PL!N-bp5-012-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：カードを1枚... | No explicit verification issue recorded.
+- [544] `ACTIVATED` | `PL!SP-bp5-005-AR, PL!SP-bp5-005-R+, PL!SP-bp5-005-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：ライブ終了時まで、これにより控え室... | No explicit verification issue recorded.
+- [545] `ACTIVATED` | `PL!SP-bp2-006-P, PL!SP-bp2-006-R+, PL!SP-bp2-006-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『Liella!』のメンバーカードを1枚控え室に置く：... | No explicit verification issue recorded.
+- [546] `ACTIVATED` | `PL!N-bp1-006-P, PL!N-bp1-006-R+, PL!N-bp1-006-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが... | No explicit verification issue recorded.
+- [547] `ACTIVATED` | `PL!-bp4-002-P, PL!-bp4-002-R+, PL!-bp4-002-P+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『μ's』のライブカードを1枚手札... | No explicit verification issue recorded.
+- [548] `ACTIVATED` | `PL!SP-bp5-002-AR, PL!SP-bp5-002-R+, PL!SP-bp5-002-P` | **LIKELY OK** | {{kidou.png|起動}}【左サイド】{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを3枚引き、手札を2枚控え... | No explicit verification issue recorded.
+- [549] `ACTIVATED` | `PL!HS-bp1-002-P, PL!HS-bp1-002-R, PL!HS-bp1-002-RM` | **LIKELY OK** | {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから... | No explicit verification issue recorded.
+- [550] `ACTIVATED` | `PL!N-bp5-008-AR, PL!N-bp5-008-R, PL!N-bp5-008-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：エネルギーを... | No explicit verification issue recorded.
+- [551] `ACTIVATED` | `PL!SP-bp5-006-AR, PL!SP-bp5-006-R, PL!SP-bp5-006-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジす... | No explicit verification issue recorded.
+- [552] `ACTIVATED` | `PL!N-bp5-003-AR, PL!N-bp5-003-R, PL!N-bp5-003-P` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカー... | No explicit verification issue recorded.
+- [553] `ACTIVATED` | `PL!N-PR-003-PR, PL!N-PR-008-PR, PL!N-PR-010-PR` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札をすべて公開する：自分のステージにほかのメンバーがおり、かつこれにより... | No explicit verification issue recorded.
+- [554] `ACTIVATED` | `PL!-pb1-001-P+, PL!-pb1-001-R` | **LIKELY OK** | {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1... | No explicit verification issue recorded.
+- [555] `ACTIVATED` | `PL!N-pb1-003-P+, PL!N-pb1-003-R` | **LIKELY OK** | {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に... | No explicit verification issue recorded.
+- [556] `ACTIVATED` | `PL!N-bp3-007-P, PL!N-bp3-007-R` | **LIKELY OK** | {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控... | No explicit verification issue recorded.
+- [557] `ACTIVATED` | `PL!SP-bp1-010-P, PL!SP-bp1-010-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [558] `ACTIVATED` | `PL!S-sd1-005-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [559] `ACTIVATED` | `PL!S-sd1-007-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から{{icon_score.png|... | No explicit verification issue recorded.
+- [560] `ACTIVATED` | `PL!-pb1-013-P+, PL!-pb1-013-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [561] `ACTIVATED` | `PL!HS-bp2-001-P, PL!HS-bp2-001-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [562] `ACTIVATED` | `PL!SP-bp4-010-P, PL!SP-bp4-010-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}このメンバーをウェイトにする：自... | No explicit verification issue recorded.
+- [563] `ACTIVATED` | `PL!SP-bp2-008-P, PL!SP-bp2-008-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーがいるエリアとは別... | No explicit verification issue recorded.
+- [564] `ACTIVATED` | `PL!S-bp3-007-P, PL!S-bp3-007-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分か相手を選ぶ。自分は、その... | No explicit verification issue recorded.
+- [565] `ACTIVATED` | `PL!N-bp1-008-P, PL!N-bp1-008-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札のメンバーカードを1枚控え室に置く：自分の控え室から、これにより控え室... | No explicit verification issue recorded.
+- [566] `ACTIVATED` | `PL!S-pb1-006-P+, PL!S-pb1-006-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札のライブカードを1枚公開する：相手は手札を1枚控え室に置いてもよい。そ... | No explicit verification issue recorded.
+- [567] `ACTIVATED` | `PL!-bp5-111-P+, PL!-bp5-111-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：ウェイト状態のメンバー1人をアクティブにする。これ... | No explicit verification issue recorded.
+- [568] `ACTIVATED` | `PL!N-bp4-008-P, PL!N-bp4-008-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：エネルギー1枚か『虹ヶ咲』のメンバー1人をアクティ... | No explicit verification issue recorded.
+- [569] `ACTIVATED` | `PL!-pb1-007-P+, PL!-pb1-007-R` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメン... | No explicit verification issue recorded.
+- [570] `ACTIVATED` | `PL!S-bp3-008-P, PL!S-bp3-008-R` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。それがスコア6以上の『A... | No explicit verification issue recorded.
+- [571] `ACTIVATED` | `PL!SP-bp5-020-N` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [572] `ACTIVATED` | `PL!SP-sd1-011-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [573] `ACTIVATED` | `PL!-sd1-008-SD` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.pn... | No explicit verification issue recorded.
+- [574] `ACTIVATED` | `LL-bp3-001-R+` | **LIKELY OK** | {{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚を... | No explicit verification issue recorded.
+- [575] `ACTIVATED` | `PL!SP-bp5-021-N` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分のエネルギーが6枚以上ある場合、自分のエネルギーデッキから、エネルギ... | No explicit verification issue recorded.
+- [576] `ACTIVATED` | `PL!SP-bp4-018-N` | **LIKELY OK** | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室から『Liella!』のカードを1枚手札に加える。 | No explicit verification issue recorded.
+- [577] `ACTIVATED` | `PL!HS-bp2-018-N` | **LIKELY OK** | {{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E... | No explicit verification issue recorded.
+- [578] `ON_LEAVES` | `PL!N-bp5-005-AR, PL!N-bp5-005-R+, PL!N-bp5-005-P` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』... | No explicit verification issue recorded.
+- [579] `ON_LEAVES` | `PL!HS-bp5-003-AR, PL!HS-bp5-003-R+, PL!HS-bp5-003-P` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、メンバー1人をポジションチェンジさせてもよい。 | No explicit verification issue recorded.
+- [580] `ON_LEAVES` | `PL!-PR-001-PR, PL!-PR-002-PR` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、メンバー1人をアクティブにしてもよい。 | No explicit verification issue recorded.
+- [581] `ON_LEAVES` | `PL!S-bp2-002-P, PL!S-bp2-002-R` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、手札を1枚控え室に置いてもよい。そうした場合、自分の控え室から『... | No explicit verification issue recorded.
+- [582] `ON_LEAVES` | `PL!HS-sd1-001-SD` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがコスト10以上の『蓮ノ空』のメンバーとバトンタッチして控え室に置かれた とき、エネルギーを2枚アク... | No explicit verification issue recorded.
+- [583] `ON_LEAVES` | `PL!HS-bp2-015-N` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、カードを2枚引き、手札を1枚控え室に置く。 | No explicit verification issue recorded.
+- [584] `ON_LEAVES` | `PL!HS-bp2-012-N` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、自分のデッキの上からカードを5枚見る。その中からメンバーカードを... | No explicit verification issue recorded.
+- [585] `ON_LEAVES` | `PL!HS-bp2-013-N` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、自分のデッキの上からカードを5枚見る。その中からライブカードを1... | No explicit verification issue recorded.
+- [586] `ON_REVEAL` | `PL!N-bp5-001-AR, PL!N-bp5-001-R+, PL!N-bp5-001-P` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードが持つブレードハー... | No explicit verification issue recorded.
+- [587] `ON_REVEAL` | `PL!-bp5-004-AR, PL!-bp5-004-R+, PL!-bp5-004-P` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードの中にブレードハー... | No explicit verification issue recorded.
+- [588] `ON_REVEAL` | `PL!S-bp2-007-P, PL!S-bp2-007-R+, PL!S-bp2-007-P+` | **LIKELY OK** | {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合... | No explicit verification issue recorded.
+- [589] `ON_REVEAL` | `PL!S-bp2-003-P, PL!S-bp2-003-R` | **LIKELY OK** | {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、ライブ終了時まで、［緑ハー... | No explicit verification issue recorded.
+- [590] `ON_REVEAL` | `PL!SP-bp2-020-N` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないと... | No explicit verification issue recorded.
+- [591] `ON_REVEAL` | `PL!SP-bp2-021-N` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないと... | No explicit verification issue recorded.
+- [592] `ON_REVEAL` | `PL!SP-bp2-015-N` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないと... | No explicit verification issue recorded.
+- [593] `ON_REVEAL` | `PL!S-sd1-001-SD` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、ライブ終了時まで、エールにより公開された自分のカード... | No explicit verification issue recorded.
+- [594] `ON_REVEAL` | `PL!S-bp3-020-L` | **LIKELY OK** | {{jidou.png|自動}}［ターン1回］エールにより自分のカードを1枚以上公開したとき、それらのカードの中にブレードハートを持つカードが2... | No explicit verification issue recorded.
+- [595] `ON_POSITION_CHANGE` | `PL!SP-bp5-004-AR, PL!SP-bp5-004-R+, PL!SP-bp5-004-P` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギ... | No explicit verification issue recorded.
+- [596] `ON_POSITION_CHANGE` | `PL!SP-bp4-011-P, PL!SP-bp4-011-R+, PL!SP-bp4-011-P+` | **LIKELY OK** | {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレー... | No explicit verification issue recorded.
+- [597] `ON_POSITION_CHANGE` | `PL!S-bp5-222-P+, PL!S-bp5-222-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、エネルギーを2枚アクティブにする。 | No explicit verification issue recorded.
+- [598] `ON_POSITION_CHANGE` | `PL!SP-bp2-003-P, PL!SP-bp2-003-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分のエネルギーデッキから、エネルギー... | No explicit verification issue recorded.
+- [599] `ON_POSITION_CHANGE` | `PL!SP-bp4-007-P, PL!SP-bp4-007-R` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、自分の控え室から、スコア3以下の『Li... | No explicit verification issue recorded.
+- [600] `ON_POSITION_CHANGE` | `PL!S-bp5-111-P+, PL!S-bp5-111-R` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがエリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の... | No explicit verification issue recorded.
+- [601] `ON_POSITION_CHANGE` | `PL!SP-pb1-006-P+, PL!SP-pb1-006-R` | **LIKELY OK** | {{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{... | No explicit verification issue recorded.
+- [602] `ON_POSITION_CHANGE` | `PL!HS-bp5-014-N` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、ライブ終了時まで、{{icon_bla... | No explicit verification issue recorded.
+- [603] `ON_POSITION_CHANGE` | `PL!N-bp4-026-L` | **LIKELY OK** | {{jidou.png|自動}}このカードが表向きでライブカード置き場に置かれたとき、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー... | No explicit verification issue recorded.
+- [604] `ON_POSITION_CHANGE` | `PL!SP-pb1-020-N` | **LIKELY OK** | {{jidou.png|自動}}このメンバーがエリアを移動するたび、カードを1枚引く。 (対戦相手のカードの効果でも発動する。) | No explicit verification issue recorded.
+- [605] `ON_POSITION_CHANGE` | `PL!SP-bp4-016-N` | **LIKELY OK** | {{jidou.png|自動}}カードの効果によって自分のエネルギー置き場にエネルギーカードが置かれるたび、ライブ終了時まで、{{heart_0... | No explicit verification issue recorded.
+- [606] `ON_POSITION_CHANGE` | `PL!N-bp4-026-L` | **LIKELY OK** | {{jidou.png|自動}}自分のメインフェイズにこのカードが控え室から手札に加えられたとき、自分の手札からカード名が「DIVE!」のライブ... | No explicit verification issue recorded.
+- [607] `ON_ABILITY_RESOLVE` | `PL!N-bp5-030-L` | **LIKELY OK** | {{jidou.png|自動}}自分のステージにいるメンバーの{{live_start.png|ライブ開始時}}能力が解決するたび、そのメンバー... | No explicit verification issue recorded.
+- [608] `ON_ABILITY_RESOLVE` | `PL!N-bp5-030-L` | **LIKELY OK** | {{jidou.png|自動}}自分のステージにいるメンバーの{{live_success.png|ライブ成功時}}能力が解決するたび、カードを... | No explicit verification issue recorded.
+- [609] `ON_MOVE_TO_DISCARD` | `PL!SP-bp5-005-AR, PL!SP-bp5-005-R+, PL!SP-bp5-005-P` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に... | No explicit verification issue recorded.
+- [610] `ON_MEMBER_TAP` | `PL!-pb1-015-P+, PL!-pb1-015-R` | **LIKELY OK** | {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメン... | No explicit verification issue recorded.
+- [611] `ON_MEMBER_TAP` | `PL!N-bp4-018-N` | **LIKELY OK** | {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、このメンバーがアクティブ状態からウェイト状態にな... | No explicit verification issue recorded.
