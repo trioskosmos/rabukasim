@@ -7608,23 +7608,6 @@
           "frame_index": 5
         }
       ],
-      "frame_verification": {
-        "verified": true,
-        "notes": [
-          "LIVE_START conditional ability: If baton touched from Liella and have 7+ energy, place 2 energy cards tapped",
-          "Frame 0: BATON with unit_id=LIELLA - checks if baton touched from Liella member",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: COUNT_ENERGY with value=7, comparison=GE - checks if energy >= 7",
-          "Frame 3: JUMP_IF_FALSE skips if energy < 7",
-          "Frame 4: ENERGY_CHARGE with value=2, is_wait=1 - place 2 energy cards from energy deck in tapped (wait) state",
-          "4 card variants share this pattern (all 葉月 恋 variants)"
-        ],
-        "text_mapping": {
-          "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており": "Frame 0: BATON with unit_id=LIELLA",
-          "かつ自分のエネルギーが7枚以上ある場合": "Frame 2: COUNT_ENERGY with value=7, comparison=GE",
-          "自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く": "Frame 4: ENERGY_CHARGE with value=2, is_wait=1"
-        }
-      },
       "card_refs": [
         {
           "card_no": "PL!SP-bp2-005-P",
@@ -28539,7 +28522,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -28611,7 +28594,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -28677,7 +28660,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "DRAW",
@@ -28765,7 +28748,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -28893,7 +28876,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -28945,7 +28928,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -28997,7 +28980,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -29049,7 +29032,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -29104,7 +29087,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -29184,7 +29167,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -29278,7 +29261,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "ENERGY_CHARGE",
@@ -29354,7 +29337,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -29449,7 +29432,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "DRAW",
@@ -29521,7 +29504,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -29614,7 +29597,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -29672,7 +29655,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "LOOK_DECK",
@@ -29743,7 +29726,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "RECOVER_LIVE",
@@ -29795,7 +29778,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -29865,7 +29848,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -29938,7 +29921,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -29995,7 +29978,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "RECOVER_MEMBER",
@@ -30049,7 +30032,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30117,7 +30100,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -30181,7 +30164,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30246,7 +30229,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30318,7 +30301,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -30379,7 +30362,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "OPPONENT_ENERGY_DIFF",
@@ -30441,7 +30424,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_HAND",
@@ -30501,7 +30484,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "ENERGY_CHARGE",
@@ -30540,7 +30523,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -30603,7 +30586,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "PAY_ENERGY",
@@ -30658,7 +30641,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30716,7 +30699,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30768,7 +30751,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -30835,7 +30818,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "DECK_REFRESHED",
@@ -30887,7 +30870,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -30944,7 +30927,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "GROUP_FILTER",
@@ -30989,7 +30972,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SELECT_CARDS",
@@ -31035,7 +31018,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "MOVE_TO_DECK",
@@ -31079,7 +31062,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -31137,7 +31120,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HAS_KEYWORD",
@@ -31193,7 +31176,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -31251,7 +31234,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "DRAW",
@@ -31304,7 +31287,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -31362,7 +31345,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -31414,7 +31397,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SCORE_COMPARE",
@@ -31479,7 +31462,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -31552,7 +31535,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -31650,7 +31633,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
@@ -31711,7 +31694,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -31776,7 +31759,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -31843,7 +31826,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HAS_EXCESS_HEART",
@@ -31895,7 +31878,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -31948,7 +31931,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_ENERGY",
@@ -32015,7 +31998,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "TRANSFORM_COLOR",
@@ -32067,7 +32050,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -32119,7 +32102,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -32164,7 +32147,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -32232,7 +32215,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HAS_MEMBER",
@@ -32302,7 +32285,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "DRAW",
@@ -32378,7 +32361,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_HEARTS",
@@ -32446,7 +32429,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "BOOST_SCORE",
@@ -32497,7 +32480,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_STAGE",
@@ -32579,7 +32562,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "HEART_LEAD",
@@ -32631,7 +32614,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "NOP",
@@ -32695,7 +32678,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "SELECT_MEMBER",
@@ -32753,7 +32736,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "LOOK_DECK",
@@ -32808,7 +32791,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "COUNT_SUCCESS_LIVE",
@@ -32864,7 +32847,7 @@
         }
       ],
       "trigger_id": 3,
-      "trigger": "ON_LIVE_SUCCESS",
+      "trigger": "LIVE_SUCCESS",
       "frames": [
         {
           "op": "ADD_TO_HAND",
@@ -45375,6 +45358,20 @@
           "op": "RETURN",
           "frame_index": 5
         }
+      ],
+      "card_refs": [
+        {
+          "card_no": "PL!N-bp4-018-N",
+          "ability_index": 0,
+          "db": "member_db",
+          "card_id": 312,
+          "name": "近江彼方",
+          "trigger": 14
+        }
+      ]
+    }
+  ]
+}
       ],
       "card_refs": [
         {
