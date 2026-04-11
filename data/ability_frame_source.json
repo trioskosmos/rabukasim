@@ -5037,17 +5037,10 @@
           ]
         }
       ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "SET_TAPPED",
-          "frame_index": 0,
-          "value": 1,
-          "attr": {
-            "is_optional": 1
-          },
-          "slot": {
           "op": "RETURN",
           "frame_index": 0
         }
