@@ -13572,60 +13572,22 @@
           ]
         }
       ],
-      "trigger_id": 1,
-      "trigger": "ON_PLAY",
+      "trigger_id": 2,
+      "trigger": "LIVE_START",
       "frames": [
         {
-          "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
-          "value": 5,
-          "attr": {
-            "target_player": "SELF"
-          },
-          "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "DECK_TOP",
-            "dest_zone": "DISCARD"
-          }
-        },
-        {
-          "op": "DISCARDED_CARDS",
-          "frame_index": 1,
-          "value": 1,
-          "attr": {
-            "card_type": "LIVE"
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
-          "value": 1
-        },
-        {
-          "op": "DRAW",
-          "frame_index": 3,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 0
         }
       ],
       "card_refs": [
         {
-          "card_no": "PL!-sd1-007-SD",
+          "card_no": "PL!-bp3-004-P",
           "ability_index": 0,
           "db": "member_db",
-          "card_id": 126,
-          "name": "東條 希",
-          "trigger": 1
+          "card_id": 353,
+          "name": "エマ・ヴェルデ",
+          "trigger": 2
         }
       ]
     },
