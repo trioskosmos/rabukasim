@@ -262,12 +262,34 @@
           ]
         }
       ],
-      "trigger_id": 2,
-      "trigger": "LIVE_START",
+      "trigger_id": 1,
+      "trigger": "ON_PLAY",
       "frames": [
         {
+          "op": "DRAW",
+          "frame_index": 0,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "STAGE_1",
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 0
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -277,7 +299,7 @@
           "db": "member_db",
           "card_id": 808,
           "name": "黒澤ダイヤ",
-          "trigger": 2
+          "trigger": 1
         }
       ]
     },
@@ -471,6 +493,11 @@
           "frame_index": 0
         },
         {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
           "op": "DRAW",
           "value": 0,
           "attr": {
@@ -479,11 +506,11 @@
           "slot": {
             "target_slot": "CONTEXT"
           },
-          "frame_index": 1
+          "frame_index": 2
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -556,46 +583,32 @@
           ]
         }
       ],
-      "trigger_id": 2,
-      "trigger": "LIVE_START",
+      "trigger_id": 1,
+      "trigger": "ON_PLAY",
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
           "value": 3,
-          "attr": {
-            "target_player": "SELF"
-          },
+          "attr": {},
           "slot": {
-            "target_slot": "DISCARD",
-            "source_zone": "DECK"
+            "target_slot": "HAND"
           },
           "frame_index": 0
         },
         {
-          "op": "CHECK_ALL_MEMBERS",
-          "value": 3,
-          "attr": {},
+          "op": "DRAW",
+          "value": 0,
+          "attr": {
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
           "frame_index": 1
         },
         {
-          "op": "JUMP_IF_FALSE",
-          "value": 1,
-          "frame_index": 2
-        },
-        {
-          "op": "ADD_BLADES",
-          "value": 2,
-          "attr": {
-            "duration": "LIVE_END"
-          },
-          "slot": {
-            "target_slot": "SELF"
-          },
-          "frame_index": 3
-        },
-        {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -605,7 +618,7 @@
           "db": "member_db",
           "card_id": 704,
           "name": "徒町 小鈴",
-          "trigger": 2
+          "trigger": 1
         }
       ]
     },
@@ -622,40 +635,32 @@
           ]
         }
       ],
-      "trigger_id": 4,
-      "trigger": "ACTIVATED",
+      "trigger_id": 1,
+      "trigger": "ON_PLAY",
       "frames": [
         {
-          "op": "PAY_ENERGY",
-          "value": 2,
-          "attr": {},
-          "frame_index": 0
-        },
-        {
           "op": "MOVE_TO_DISCARD",
-          "value": 1,
+          "value": 3,
           "attr": {},
           "slot": {
             "target_slot": "HAND"
           },
+          "frame_index": 0
+        },
+        {
+          "op": "DRAW",
+          "value": 0,
+          "attr": {
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
           "frame_index": 1
         },
         {
-          "op": "RECOVER_LIVE",
-          "value": 1,
-          "attr": {
-            "group_enabled": 1,
-            "group_id": 2
-          },
-          "slot": {
-            "target_slot": "HAND",
-            "source_zone": "DISCARD"
-          },
-          "frame_index": 2
-        },
-        {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -665,7 +670,7 @@
           "db": "member_db",
           "card_id": 764,
           "name": "中須かすみ",
-          "trigger": 4
+          "trigger": 1
         },
         {
           "card_no": "PL!N-sd1-009-SD",
@@ -673,7 +678,7 @@
           "db": "member_db",
           "card_id": 377,
           "name": "天王寺璃奈",
-          "trigger": 4
+          "trigger": 1
         }
       ]
     },
@@ -695,19 +700,22 @@
       "trigger": "ON_PLAY",
       "frames": [
         {
-          "op": "DRAW",
-          "value": 1,
+          "op": "MOVE_TO_DISCARD",
+          "value": 3,
+          "attr": {},
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "HAND"
           },
           "frame_index": 0
         },
         {
-          "op": "BOTTOM_DECK",
-          "value": 1,
-          "attr": {},
+          "op": "DRAW",
+          "value": 0,
+          "attr": {
+            "compare_accumulated": 1
+          },
           "slot": {
-            "target_slot": "HAND"
+            "target_slot": "CONTEXT"
           },
           "frame_index": 1
         },
@@ -760,19 +768,27 @@
       "frames": [
         {
           "op": "MOVE_TO_DISCARD",
-          "value": 10,
-          "attr": {
-            "target_player": "SELF"
-          },
+          "value": 3,
+          "attr": {},
           "slot": {
-            "target_slot": "DISCARD",
-            "source_zone": "DECK"
+            "target_slot": "HAND"
           },
           "frame_index": 0
         },
         {
-          "op": "RETURN",
+          "op": "DRAW",
+          "value": 0,
+          "attr": {
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
           "frame_index": 1
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
         }
       ],
       "card_refs": [
@@ -3279,7 +3295,8 @@
           "op": "COUNT_STAGE",
           "frame_index": 3,
           "attr": {
-            "special_id": "Not Self"
+            "special_id": "Not Self",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -3287,8 +3304,13 @@
           }
         },
         {
-          "op": "SUM_VALUE",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 5,
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GT"
@@ -3296,12 +3318,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
+          "frame_index": 6,
           "value": 1
         },
         {
           "op": "RECOVER_MEMBER",
-          "frame_index": 6,
+          "frame_index": 7,
           "value": 1,
           "attr": {
             "unit_enabled": 1,
@@ -3315,7 +3337,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 8
         }
       ],
       "card_refs": [
@@ -3895,6 +3917,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -3989,7 +4014,8 @@
           "attr": {
             "value_enabled": 1,
             "value_threshold": 13,
-            "is_cost_type": 1
+            "is_cost_type": 1,
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -5552,10 +5578,6 @@
           "frame_index": 9
         }
       ],
-      "option_names": [
-        "カードを1枚引き、手札を1枚控え室に置く",
-        "相手のコスト2以下のメンバーをウェイトにする"
-      ],
       "card_refs": [
         {
           "card_no": "PL!-PR-005-PR",
@@ -5657,10 +5679,6 @@
           "op": "RETURN",
           "frame_index": 7
         }
-      ],
-      "option_names": [
-        "『Aqours』のメンバー1人はブレードを得る",
-        "『SaintSnow』のメンバーをポジションチェンジ"
       ],
       "card_refs": [
         {
@@ -5781,10 +5799,6 @@
           "op": "RETURN",
           "frame_index": 10
         }
-      ],
-      "option_names": [
-        "カード名が異なるライブカードを1枚回収",
-        "グループ名が異なるライブカードを2枚回収"
       ],
       "card_refs": [
         {
@@ -6602,6 +6616,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -6803,7 +6820,8 @@
           "value": 4,
           "attr": {
             "unit_enabled": 1,
-            "unit_id": "BIBI"
+            "unit_id": "BIBI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -7781,7 +7799,8 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "zone_mask": "Guest+Friend"
+            "zone_mask": "Guest+Friend",
+            "is_optional": 1
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -7790,8 +7809,13 @@
           }
         },
         {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 6,
+          "value": 1
+        },
+        {
           "op": "RETURN",
-          "frame_index": 6
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -7920,7 +7944,8 @@
           "op": "COUNT_STAGE",
           "frame_index": 2,
           "attr": {
-            "unit_enabled": 1
+            "unit_enabled": 1,
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -8242,7 +8267,8 @@
           "frame_index": 1,
           "value": 1,
           "attr": {
-            "char_id_1": "MEI"
+            "char_id_1": "MEI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -10473,7 +10499,8 @@
           "value": 7,
           "attr": {
             "group_enabled": 1,
-            "group_id": "LIELLA"
+            "group_id": "LIELLA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -10538,7 +10565,8 @@
           "value": 3,
           "attr": {
             "group_enabled": 1,
-            "group_id": "LIELLA"
+            "group_id": "LIELLA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -10546,8 +10574,13 @@
           }
         },
         {
-          "op": "COUNT_ENERGY",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "COUNT_ENERGY",
+          "frame_index": 2,
           "value": 7,
           "slot": {
             "target_slot": "STAGE_0",
@@ -10556,12 +10589,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "ENERGY_CHARGE",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT",
@@ -10570,7 +10603,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -10746,7 +10779,8 @@
           "attr": {
             "group_enabled": 1,
             "group_id": 12,
-            "special_id": "Not Self"
+            "special_id": "Not Self",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -10812,7 +10846,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -11261,8 +11296,7 @@
           "frame_index": 0,
           "value": 3,
           "attr": {
-            "target_player": "SELF",
-            "is_optional": 1
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -11275,7 +11309,8 @@
           "frame_index": 1,
           "value": 4,
           "attr": {
-            "zone_mask": "ALL"
+            "zone_mask": "ALL",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -11359,7 +11394,8 @@
           "frame_index": 1,
           "value": 3,
           "attr": {
-            "card_type": "MEMBER"
+            "card_type": "MEMBER",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -11367,8 +11403,13 @@
           }
         },
         {
-          "op": "NOP",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "NOP",
+          "frame_index": 3,
           "value": 1,
           "slot": {
             "target_slot": "STAGE_0",
@@ -11377,7 +11418,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -11833,7 +11874,9 @@
           "value": 1,
           "attr": {
             "is_tapped": 1,
-            "target_player": "OPPONENT"
+            "target_player": "OPPONENT",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -12326,7 +12369,8 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "zone_mask": "Guest+Friend"
+            "zone_mask": "Guest+Friend",
+            "is_optional": 1
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -12335,8 +12379,13 @@
           }
         },
         {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -13656,8 +13705,7 @@
           "frame_index": 0,
           "value": 3,
           "attr": {
-            "target_player": "SELF",
-            "is_optional": 1
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -13670,7 +13718,8 @@
           "frame_index": 1,
           "value": 4,
           "attr": {
-            "zone_mask": "ALL"
+            "zone_mask": "ALL",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -15077,6 +15126,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -15278,15 +15330,15 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
-          "op": "COUNT_STAGE",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 4,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
+          "value": 1
         },
         {
           "op": "COUNT_STAGE",
@@ -15294,27 +15346,51 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
-          "op": "SUM_VALUE",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 6,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GT"
-          }
+          "value": 1
         },
         {
-          "op": "SUM_VALUE",
+          "op": "COUNT_STAGE",
           "frame_index": 7,
           "slot": {
             "target_slot": "STAGE_0",
+            "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 8,
+          "value": 1
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 9,
+          "slot": {
+            "target_slot": "STAGE_0",
             "comparison": "GT"
           }
         },
         {
           "op": "SUM_VALUE",
-          "frame_index": 8,
+          "frame_index": 10,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GT"
+          }
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 11,
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GT"
@@ -15322,7 +15398,7 @@
         },
         {
           "op": "NOP",
-          "frame_index": 9,
+          "frame_index": 12,
           "value": 2,
           "slot": {
             "target_slot": "STAGE_0",
@@ -15331,7 +15407,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 10
+          "frame_index": 13
         }
       ],
       "card_refs": [
@@ -15393,7 +15469,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "is_optional": 1
+            "is_optional": 1,
+            "group_id": "MUSE"
           }
         },
         {
@@ -16249,7 +16326,8 @@
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "special_id": "Not Self"
+            "special_id": "Not Self",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -16935,7 +17013,9 @@
           "frame_index": 1,
           "value": 1,
           "attr": {
-            "group_enabled": 1
+            "group_enabled": 1,
+            "target_player": "SELF",
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -17024,7 +17104,8 @@
           "op": "COUNT_STAGE",
           "frame_index": 0,
           "attr": {
-            "special_id": "Not Self"
+            "special_id": "Not Self",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -17619,8 +17700,13 @@
           }
         },
         {
-          "op": "NOP",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "NOP",
+          "frame_index": 3,
           "value": 1,
           "slot": {
             "target_slot": "STAGE_0",
@@ -17629,7 +17715,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -17679,7 +17765,8 @@
           "frame_index": 0,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -17735,7 +17822,8 @@
           "frame_index": 0,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -17791,7 +17879,8 @@
           "frame_index": 0,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -19231,8 +19320,13 @@
           }
         },
         {
-          "op": "ADD_HEARTS",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19243,7 +19337,7 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19251,7 +19345,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -19298,8 +19392,13 @@
           }
         },
         {
-          "op": "ADD_HEARTS",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19310,7 +19409,7 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -19318,7 +19417,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -20051,11 +20150,8 @@
           "op": "COUNT_BLADES",
           "frame_index": 1,
           "value": 6,
-          "attr": {
-            "target_player": "SELF"
-          },
           "slot": {
-            "target_slot": "CONTEXT",
+            "target_slot": "STAGE_0",
             "comparison": "GE"
           }
         },
@@ -20904,7 +21000,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -21436,11 +21533,19 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
-          "op": "NOP",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "NOP",
+          "frame_index": 5,
           "value": 0,
           "params": {
             "raw_cond": "UNIQUE_UNIT_NAMES_COUNT",
@@ -21449,12 +21554,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
+          "frame_index": 6,
           "value": 1
         },
         {
           "op": "BOOST_SCORE",
-          "frame_index": 6,
+          "frame_index": 7,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -21462,7 +21567,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 8
         }
       ],
       "card_refs": [
@@ -21661,7 +21766,8 @@
           "value": 99,
           "attr": {
             "target_player": "SELF",
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -21977,7 +22083,9 @@
             "target_player": "SELF",
             "char_id_1": "KANON",
             "char_id_2": "MARGARETE",
-            "char_id_3": "TOMARI"
+            "char_id_3": "TOMARI",
+            "group_enabled": 1,
+            "group_id": "LIELLA"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -22328,7 +22436,7 @@
       "trigger": "ON_LIVE_START",
       "frames": [
         {
-          "op": "SELECT_MEMBER",
+          "op": "COUNT_STAGE",
           "frame_index": 0,
           "value": 1,
           "attr": {
@@ -22337,22 +22445,31 @@
             "group_id": "LIELLA"
           },
           "slot": {
-            "target_slot": "CONTEXT",
-            "source_zone": "STAGE",
-            "area_idx": 2
+            "target_slot": "STAGE_2",
+            "comparison": "GE"
           }
         },
         {
-          "op": "TRANSFORM_BLADES",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "TRANSFORM_BLADES",
+          "frame_index": 2,
           "value": 3,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA"
+          },
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "STAGE_2"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -23669,6 +23786,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -24033,7 +24153,8 @@
           "value": 20,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HAS_GROUP_AQOURS_OR_SAINT_SNOW"
+            "group_id": "HAS_GROUP_AQOURS_OR_SAINT_SNOW",
+            "target_player": "SELF"
           },
           "params": {
             "raw_cond": "STAGE_TOTAL_COST_GE",
@@ -24104,7 +24225,8 @@
           "value": 3,
           "attr": {
             "unit_enabled": 1,
-            "unit_id": "MIRA_CRA_PARK"
+            "unit_id": "MIRA_CRA_PARK",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -24228,7 +24350,8 @@
           "frame_index": 0,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -24392,7 +24515,9 @@
           "frame_index": 0,
           "attr": {
             "unit_enabled": 1,
-            "unit_id": "SYNCRISE"
+            "unit_id": "SYNCRISE",
+            "target_player": "SELF",
+            "check_moved_this_turn": 1
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -24400,8 +24525,13 @@
           }
         },
         {
-          "op": "REDUCE_HEART_REQ",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "REDUCE_HEART_REQ",
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -24419,7 +24549,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -24611,7 +24741,8 @@
           "frame_index": 0,
           "attr": {
             "is_tapped": 1,
-            "unit_enabled": 1
+            "unit_enabled": 1,
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -24807,7 +24938,9 @@
           "frame_index": 0,
           "value": 4,
           "attr": {
-            "group_enabled": 1
+            "group_enabled": 1,
+            "target_player": "SELF",
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -24824,7 +24957,9 @@
           "frame_index": 2,
           "value": 1,
           "attr": {
-            "target_player": "SELF"
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -25282,7 +25417,8 @@
             "group_id": "HASUNOSORA",
             "value_enabled": 1,
             "value_threshold": 10,
-            "is_cost_type": 1
+            "is_cost_type": 1,
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -25340,6 +25476,11 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           }
         },
         {
@@ -25406,6 +25547,11 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           }
         },
         {
@@ -25449,11 +25595,21 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           }
         },
         {
-          "op": "NOP",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 14,
+          "value": 1
+        },
+        {
+          "op": "NOP",
+          "frame_index": 15,
           "value": 3,
           "slot": {
             "target_slot": "STAGE_0",
@@ -25466,12 +25622,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 15,
+          "frame_index": 16,
           "value": 1
         },
         {
           "op": "BOOST_SCORE",
-          "frame_index": 16,
+          "frame_index": 17,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -25479,7 +25635,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 17
+          "frame_index": 18
         }
       ],
       "card_refs": [
@@ -25514,7 +25670,8 @@
           "value": 2,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -25755,7 +25912,8 @@
           "attr": {
             "unique_names": 1,
             "unit_enabled": 1,
-            "unit_id": "KALEIDOSCORE"
+            "unit_id": "KALEIDOSCORE",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -25820,7 +25978,8 @@
           "value": 4,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -25828,8 +25987,13 @@
           }
         },
         {
-          "op": "SCORE_COMPARE",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "SCORE_COMPARE",
+          "frame_index": 3,
           "value": 20,
           "slot": {
             "target_slot": "STAGE_0",
@@ -25838,12 +26002,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": 1
         },
         {
           "op": "DRAW",
-          "frame_index": 4,
+          "frame_index": 5,
           "value": 3,
           "slot": {
             "target_slot": "CONTEXT"
@@ -25851,7 +26015,7 @@
         },
         {
           "op": "SELECT_CARDS",
-          "frame_index": 5,
+          "frame_index": 6,
           "value": 3,
           "slot": {
             "source_zone": "HAND",
@@ -25860,7 +26024,7 @@
         },
         {
           "op": "MOVE_TO_DECK",
-          "frame_index": 6,
+          "frame_index": 7,
           "value": 3,
           "slot": {
             "dest_zone": "DECK",
@@ -25869,7 +26033,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 8
         }
       ],
       "card_refs": [
@@ -25939,7 +26103,9 @@
           "frame_index": 5,
           "value": 1,
           "attr": {
-            "target_player": "SELF"
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "AQOURS"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -26014,7 +26180,8 @@
           "op": "GROUP_FILTER",
           "frame_index": 0,
           "attr": {
-            "char_id_1": "RURINO"
+            "char_id_1": "RURINO",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -26022,21 +26189,16 @@
           }
         },
         {
-          "op": "GROUP_FILTER",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "attr": {
-            "char_id_1": "HIME"
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
+          "value": 1
         },
         {
           "op": "GROUP_FILTER",
           "frame_index": 2,
           "attr": {
-            "char_id_1": "MEGU"
+            "char_id_1": "HIME",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -26049,8 +26211,25 @@
           "value": 1
         },
         {
-          "op": "BOOST_SCORE",
+          "op": "GROUP_FILTER",
           "frame_index": 4,
+          "attr": {
+            "char_id_1": "MEGU",
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 5,
+          "value": 1
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 6,
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
@@ -26058,7 +26237,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -26096,7 +26275,8 @@
             "group_id": "LIELLA",
             "value_enabled": 1,
             "value_threshold": 3,
-            "color_mask": "YELLOW"
+            "color_mask": "YELLOW",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -26171,7 +26351,9 @@
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "group_enabled": 1
+            "group_enabled": 1,
+            "target_player": "SELF",
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -26340,6 +26522,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -26433,7 +26618,9 @@
           "frame_index": 2,
           "value": 99,
           "attr": {
-            "target_player": "SELF"
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "AQOURS"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -26655,6 +26842,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -27302,7 +27492,8 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -27331,7 +27522,8 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -27363,7 +27555,8 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -27466,7 +27659,8 @@
           "value": 4,
           "attr": {
             "unit_enabled": 1,
-            "unit_id": "LILY_WHITE"
+            "unit_id": "LILY_WHITE",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -27576,7 +27770,8 @@
           "attr": {
             "group_enabled": 1,
             "group_id": "MUSE",
-            "zone_mask": "ALL"
+            "zone_mask": "ALL",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -28157,7 +28352,8 @@
           "attr": {
             "unique_names": 1,
             "group_enabled": 1,
-            "group_id": "AQOURS"
+            "group_id": "AQOURS",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -28165,10 +28361,18 @@
           }
         },
         {
-          "op": "GROUP_FILTER",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 2,
           "attr": {
-            "card_type": "LIVE"
+            "card_type": "LIVE",
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "AQOURS"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -28176,8 +28380,13 @@
           }
         },
         {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
           "op": "SUM_VALUE",
-          "frame_index": 2,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "STAGE_0",
@@ -28186,7 +28395,7 @@
         },
         {
           "op": "SUM_VALUE",
-          "frame_index": 3,
+          "frame_index": 5,
           "value": 3,
           "slot": {
             "target_slot": "STAGE_0",
@@ -28195,11 +28404,11 @@
         },
         {
           "op": "SUM_VALUE",
-          "frame_index": 4
+          "frame_index": 6
         },
         {
           "op": "NOP",
-          "frame_index": 5,
+          "frame_index": 7,
           "value": 2,
           "slot": {
             "target_slot": "STAGE_0",
@@ -28208,7 +28417,7 @@
         },
         {
           "op": "NOP",
-          "frame_index": 6,
+          "frame_index": 8,
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
@@ -28216,7 +28425,7 @@
         },
         {
           "op": "NOP",
-          "frame_index": 7,
+          "frame_index": 9,
           "value": 1,
           "slot": {
             "target_slot": "STAGE_0",
@@ -28225,7 +28434,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 8
+          "frame_index": 10
         }
       ],
       "card_refs": [
@@ -28848,8 +29057,7 @@
           "value": 1,
           "attr": {
             "target_player": "SELF",
-            "zone_mask": "Guest+Friend",
-            "is_optional": 1
+            "zone_mask": "Guest+Friend"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -29006,6 +29214,9 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
@@ -29455,7 +29666,8 @@
           "attr": {
             "card_type": "LIVE",
             "group_enabled": 1,
-            "group_id": "LIELLA"
+            "group_id": "LIELLA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -30168,7 +30380,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -30278,7 +30491,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -30336,7 +30550,8 @@
           "attr": {
             "card_type": "LIVE",
             "group_enabled": 1,
-            "group_id": "AQOURS"
+            "group_id": "AQOURS",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -30813,7 +31028,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -31106,7 +31322,8 @@
           "frame_index": 1,
           "value": 1,
           "attr": {
-            "card_type": "LIVE"
+            "card_type": "LIVE",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_1",
@@ -31507,7 +31724,8 @@
             "unique_names": 1,
             "char_id_1": "KANON",
             "char_id_2": "MARGARETE",
-            "char_id_3": "TOMARI"
+            "char_id_3": "TOMARI",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -31550,19 +31768,8 @@
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "char_id_1": "KANON"
-          },
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "COUNT_STAGE",
-          "frame_index": 1,
-          "value": 1,
-          "attr": {
-            "char_id_1": "KEKE"
+            "char_id_1": "KANON",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -31571,12 +31778,30 @@
         },
         {
           "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "COUNT_STAGE",
           "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "char_id_1": "KEKE",
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "DRAW",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -31584,7 +31809,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -31893,8 +32118,13 @@
           }
         },
         {
-          "op": "SUM_VALUE",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 2,
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "EQ"
@@ -31902,10 +32132,12 @@
         },
         {
           "op": "COUNT_STAGE",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 1,
           "attr": {
-            "target_player": "SELF"
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -31914,12 +32146,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": 2
         },
         {
           "op": "FORMATION_CHANGE",
-          "frame_index": 4,
+          "frame_index": 5,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -31931,7 +32163,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -32077,16 +32309,17 @@
       "trigger": "ON_LIVE_SUCCESS",
       "frames": [
         {
-          "op": "SELECT_MEMBER",
+          "op": "COUNT_STAGE",
           "frame_index": 0,
           "value": 1,
           "attr": {
+            "target_player": "SELF",
             "group_enabled": 1,
-            "group_id": "LIELLA"
+            "group_id": "LIELLA",
+            "check_moved_this_turn": 1
           },
           "slot": {
-            "target_slot": "STAGE_0",
-            "area_idx": 2,
+            "target_slot": "STAGE_2",
             "comparison": "GE"
           }
         },
@@ -33201,59 +33434,45 @@
       "trigger": "CONSTANT",
       "frames": [
         {
-          "op": "COUNT_SUCCESS",
+          "op": "BATON",
           "frame_index": 0,
-          "value": 0,
+          "value": 1,
           "attr": {
-            "target_player": "SELF",
-            "is_eq": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
+            "group_enabled": 1,
+            "group_id": "LIELLA"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 5
+          "value": 2
         },
         {
-          "op": "COUNT_SUCCESS",
+          "op": "COUNT_ENERGY",
           "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "target_player": "OPPONENT",
-            "is_ge": 1
-          },
+          "value": 7,
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
           }
         },
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 3
-        },
-        {
-          "op": "ADD_BLADES",
-          "frame_index": 4,
-          "value": 3,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
-          "op": "JUMP",
-          "frame_index": 5,
           "value": 1
         },
         {
-          "op": "NOP",
-          "frame_index": 6
+          "op": "ENERGY_CHARGE",
+          "frame_index": 4,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -33369,15 +33588,12 @@
       "trigger": "CONSTANT",
       "frames": [
         {
-          "op": "COUNT_SUCCESS",
+          "op": "BATON",
           "frame_index": 0,
-          "value": 3,
+          "value": 1,
           "attr": {
-            "target_player": "BOTH",
-            "is_ge": 1
-          },
-          "slot": {
-            "target_slot": "CONTEXT"
+            "group_enabled": 1,
+            "group_id": "LIELLA"
           }
         },
         {
@@ -33386,16 +33602,31 @@
           "value": 2
         },
         {
-          "op": "ADD_BLADES",
+          "op": "COUNT_ENERGY",
           "frame_index": 2,
-          "value": 3,
+          "value": 7,
           "slot": {
-            "target_slot": "CONTEXT"
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "ENERGY_CHARGE",
+          "frame_index": 4,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -35809,52 +36040,16 @@
       "trigger": "CONSTANT",
       "frames": [
         {
-          "op": "IN_SUCCESS_PILE",
+          "op": "ADD_BLADES",
           "frame_index": 0,
+          "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
           }
         },
         {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 1,
-          "value": 3
-        },
-        {
-          "op": "COUNT_STAGE",
-          "frame_index": 2,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "MUSE"
-          },
-          "slot": {
-            "target_slot": "STAGE_2",
-            "comparison": "GE"
-          }
-        },
-        {
-          "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
-          "value": 1
-        },
-        {
-          "op": "ADD_BLADES",
-          "frame_index": 4,
-          "value": 1,
-          "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "MUSE"
-          },
-          "slot": {
-            "target_slot": "STAGE_2"
-          }
-        },
-        {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 1
         }
       ],
       "card_refs": [
@@ -36407,7 +36602,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "MUSE"
+            "group_id": "MUSE",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -38029,46 +38225,103 @@
           ]
         }
       ],
-      "trigger_id": 2,
-      "trigger": "LIVE_START",
+      "trigger_id": 7,
+      "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SELECT_MODE",
+          "frame_index": 0,
+          "value": 2
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 2,
+          "value": 2
+        },
+        {
+          "op": "SET_TAPPED",
+          "frame_index": 3,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
+          "value": 2
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 6,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 7,
+          "value": 2
+        },
+        {
+          "op": "ACTIVATE_ENERGY",
+          "frame_index": 8,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 0
+          "frame_index": 9
         }
       ],
       "card_refs": [
         {
-          "card_no": "PL!SP-bp2-001-N",
-          "ability_index": 0,
+          "card_no": "PL!SP-bp5-001-AR",
+          "ability_index": 2,
           "db": "member_db",
-          "card_id": 523,
+          "card_id": 854,
           "name": "澁谷かのん",
-          "trigger": 2
+          "trigger": 7
         },
         {
-          "card_no": "PL!SP-bp2-001-R+",
-          "ability_index": 0,
+          "card_no": "PL!SP-bp5-001-R+",
+          "ability_index": 2,
           "db": "member_db",
-          "card_id": 4623,
+          "card_id": 4950,
           "name": "澁谷かのん",
-          "trigger": 2
+          "trigger": 7
         },
         {
-          "card_no": "PL!SP-bp2-001-P+",
-          "ability_index": 0,
+          "card_no": "PL!SP-bp5-001-P",
+          "ability_index": 2,
           "db": "member_db",
-          "card_id": 8719,
+          "card_id": 9046,
           "name": "澁谷かのん",
-          "trigger": 2
+          "trigger": 7
         },
         {
-          "card_no": "PL!SP-bp2-001-SEC",
-          "ability_index": 0,
+          "card_no": "PL!SP-bp5-001-SEC",
+          "ability_index": 2,
           "db": "member_db",
-          "card_id": 12815,
+          "card_id": 13142,
           "name": "澁谷かのん",
-          "trigger": 2
+          "trigger": 7
         }
       ]
     },
@@ -39711,9 +39964,7 @@
           "op": "MOVE_TO_DISCARD",
           "frame_index": 0,
           "value": 3,
-          "attr": {
-            "is_optional": 1
-          },
+          "attr": {},
           "slot": {
             "source_zone": "DECK_TOP"
           }
@@ -39862,13 +40113,11 @@
           "frame_index": 0
         },
         {
-          "op": "COUNT_STAGE",
+          "op": "HAS_KEYWORD",
           "frame_index": 1,
           "value": 1,
           "attr": {
-            "target_player": "SELF",
-            "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "char_id_1": "LANZHU"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -40517,13 +40766,22 @@
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
+          },
+          "attr": {
+            "target_player": "SELF"
           }
         },
         {
-          "op": "GROUP_FILTER",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 2,
           "attr": {
-            "card_type": "LIVE"
+            "card_type": "LIVE",
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -40532,12 +40790,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "LOOK_AND_CHOOSE",
-          "frame_index": 3,
+          "frame_index": 4,
           "value": {
             "count": 5,
             "reveal": 1
@@ -40554,7 +40812,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -41670,7 +41928,10 @@
           "attr": {
             "unit_enabled": 1,
             "unit_id": "LILY_WHITE",
-            "special_id": "Not Self"
+            "special_id": "Not Self",
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -42856,7 +43117,8 @@
           "value": 3,
           "attr": {
             "card_type": "MEMBER",
-            "has_blade_heart": 1
+            "has_blade_heart": 1,
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "STAGE_0",

@@ -1,0 +1,89 @@
+# Ability Frame Fixes Report
+
+Total abilities analyzed: 614
+Abilities modified: 66
+Total fixes applied: 81
+
+## Fixes Applied
+
+- PL!HS-bp1-005-P#Ab0: Added JUMP_IF_FALSE after optional MOVE_TO_DISCARD
+- PL!HS-bp5-013-N#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!N-bp5-014-N#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!S-bp5-014-N#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!S-bp5-015-N#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!HS-bp2-005-P#Ab0: Frame 3 - Added target_player: SELF for own stage check
+- PL!-bp3-004-P#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp3-009-P#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!N-pb1-012-P+#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-pb1-002-P+#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-pb1-002-P+#Ab0: Frame 0 - GROUP_FILTER with value=4 but text says 'only' - needs COUNT_STAGE+SUM_VALUE pattern
+- PL!-pb1-003-P+#Ab0: Frame 2 - Added target_player: SELF for own stage check
+- PL!SP-bp1-008-P#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!SP-pb1-003-P+#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-bp4-001-P#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-bp4-001-P#Ab0: Frame 0 - GROUP_FILTER with value=3 but text says 'only' - needs COUNT_STAGE+SUM_VALUE pattern
+- PL!SP-pb1-009-P+#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!N-bp1-004-P#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-PR-019-PR#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!HS-PR-019-PR#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!HS-bp1-008-P#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!HS-sd1-013-SD#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!HS-sd1-013-SD#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!HS-bp1-004-P#Ab1: Frame 3 - Added target_player: SELF for own stage check
+- PL!HS-bp2-005-P#Ab1: Frame 3 - Added target_player: SELF for own stage check
+- PL!HS-bp2-005-P#Ab1: Frame 4 - Added target_player: SELF for own stage check
+- PL!HS-bp2-005-P#Ab1: Frame 5 - Added target_player: SELF for own stage check
+- PL!HS-bp1-006-P#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp4-005-P#Ab2: Frame 1 - Added target_player: SELF for own stage check
+- PL!SP-bp2-010-P#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp2-021-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp2-023-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp2-025-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-PR-016-PR#Ab0: Added JUMP_IF_FALSE after optional MOVE_TO_DISCARD
+- PL!HS-PR-017-PR#Ab0: Added JUMP_IF_FALSE after optional MOVE_TO_DISCARD
+- PL!N-bp1-028-L#Ab0: Frame 3 - Added target_player: SELF for own stage check
+- PL!HS-bp5-017-L#Ab0: Frame 3 - Added target_player: SELF for own stage check
+- PL!N-bp5-028-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!S-bp5-023-L#Ab0: Frame 2 - Added target_player: SELF for own stage check
+- PL!HS-bp5-021-L#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp2-019-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-pb1-025-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-pb1-025-L#Ab0: Added check_moved_this_turn flag for movement check
+- PL!-pb1-028-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp4-020-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp4-020-L#Ab0: Frame 0 - GROUP_FILTER with value=4 but text says 'only' - needs COUNT_STAGE+SUM_VALUE pattern
+- PL!HS-bp5-020-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp5-021-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp5-021-L#Ab0: Frame 8 - Added target_player: SELF for own stage check
+- PL!-bp5-021-L#Ab0: Frame 13 - Added target_player: SELF for own stage check
+- PL!N-pb1-042-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-pb1-024-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!N-bp4-031-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!HS-bp2-026-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp2-026-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!HS-bp2-026-L#Ab0: Frame 2 - Added target_player: SELF for own stage check
+- PL!SP-bp4-024-L#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp4-022-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp3-022-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!N-bp1-029-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-pb1-029-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!-sd1-009-SD#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!S-bp2-008-P#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!S-bp2-008-P#Ab1: Frame 1 - Added target_player: SELF for own stage check
+- PL!N-bp5-016-N#Ab0: Frame 1 - Removed incorrect is_optional from mandatory cost
+- PL!N-bp5-006-AR#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-bp4-006-P#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!N-bp3-027-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!N-bp4-025-L#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!S-sd1-019-SD#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!HS-bp1-023-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!SP-bp5-023-L#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!SP-bp2-025-L#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-bp1-024-L#Ab1: Frame 0 - Added target_player: SELF for own stage check
+- PL!SP-bp1-024-L#Ab1: Frame 1 - Added target_player: SELF for own stage check
+- PL!-bp4-019-L#Ab0: Frame 2 - Added target_player: SELF for own stage check
+- PL!SP-bp5-005-AR#Ab0: Frame 0 - Removed incorrect is_optional from mandatory cost
+- PL!N-PR-003-PR#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!N-PR-003-PR#Ab0: Frame 1 - Added target_player: SELF for own stage check
+- PL!-pb1-007-P+#Ab0: Frame 0 - Added target_player: SELF for own stage check
+- PL!-bp5-004-AR#Ab1: Frame 0 - Added target_player: SELF for own stage check
