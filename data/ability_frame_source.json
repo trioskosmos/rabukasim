@@ -52,6 +52,23 @@
           "frame_index": 3
         }
       ],
+      "frame_verification": {
+        "verified": false,
+        "issues": [
+          "All frames use META_RULE placeholders - not executable",
+          "Frame 0: raw_cond YELL_PILE_CONTAINS with FILTER=TYPE=LIVE checks if revealed cards contain live cards",
+          "Frame 1: raw_effect DISCARD_YELL_PILE should discard all revealed cards (optional via is_optional)",
+          "Frame 2: raw_effect RE_YELL should redo the yell if cards were discarded",
+          "Missing: Actual implementation of yell pile tracking, live card detection, and re-yell logic"
+        ],
+        "text_mapping": {
+          "エールにより公開された自分のカードの中にライブカードがないとき": "Condition check in Frame 0 - checks if yell pile has 0 live cards",
+          "それらのカードをすべて控え室に置いてもよい": "Frame 1 - optional discard of yell pile cards (DISCARD_YELL_PILE placeholder)",
+          "1枚以上のカードが控え室に置かれた場合": "Implicit in Frame 2 trigger - should check if discard happened",
+          "そのエールで得たブレードハートを失い": "Not implemented - need to track and remove hearts from yell",
+          "もう一度エールを行う": "Frame 2 - RE_YELL placeholder, should trigger new yell action"
+        }
+      },
       "card_refs": [
         {
           "card_no": "PL!S-bp2-004-P",
@@ -2238,7 +2255,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "相手のステージにいるコスト4以下のメンバー1人をウェイトにする。",
+            "カードを1枚引く。"
+          ]
         },
         {
           "op": "JUMP",
@@ -2461,7 +2482,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 6
+          "value": 4
         },
         {
           "op": "PAY_ENERGY",
@@ -2474,7 +2495,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 4
+          "value": 2
         },
         {
           "op": "DRAW",
@@ -4303,50 +4324,85 @@
           "en": "",
           "card_examples": [
             "PL!N-bp5-004-AR | 朝香果林 (ab#0)",
-            "PL!N-bp5-004-R | 朝香果林 (ab#0)",
-            "PL!N-bp5-004-P | 朝香果林 (ab#0)"
           ]
-        }
-      ],
-      "trigger_id": 2,
-      "trigger": "LIVE_START",
-      "frames": [
-        {
-          "op": "RETURN",
-          "frame_index": 0
-        }
-      ],
-      "card_refs": [
-        {
-          "card_no": "PL!N-bp5-004-AR",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 754,
-          "name": "朝香果林",
-          "trigger": 2
         },
         {
-          "card_no": "PL!N-bp5-004-R",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 4850,
-          "name": "朝香果林",
-          "trigger": 2
-        },
-        {
-          "card_no": "PL!N-bp5-004-P",
-          "ability_index": 0,
-          "db": "member_db",
-          "card_id": 8946,
-          "name": "朝香果林",
-          "trigger": 2
-        }
-      ]
-    },
-    {
-      "primary_text_jp": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
-      "primary_text_en": "",
-      "source_ability_texts": [
+          "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+          "primary_text_en": "",
+          "source_ability_texts": [
+            {
+              "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "en": "",
+              "card_examples": [
+                "PL!N-bp5-004-AR | 朝香果林 (ab#0)",
+                "PL!N-bp5-004-R | 朝香果林 (ab#0)",
+                "PL!N-bp5-004-P | 朝香果林 (ab#0)"
+              ]
+            }
+          ],
+          "trigger_id": 2,
+          "trigger": "LIVE_START",
+          "frames": [
+            {
+              "op": "SET_TAPPED",
+              "frame_index": 0,
+              "value": 1,
+              "attr": {
+                "is_optional": 1
+              },
+              "slot": {
+                "target_slot": "CONTEXT"
+              }
+            },
+            {
+              "op": "JUMP_IF_FALSE",
+              "frame_index": 1,
+              "value": 3
+            },
+            {
+              "op": "TAP_OPPONENT",
+              "frame_index": 2,
+              "value": 1,
+              "attr": {
+                "target_player": "OPPONENT"
+              },
+              "slot": {
+                "target_slot": "STAGE_2"
+              },
+              "params": {
+                "filter": "BLADE_EQ4"
+              }
+            },
+            {
+              "op": "RETURN",
+              "frame_index": 3
+            }
+          ],
+          "card_refs": [
+            {
+              "card_no": "PL!N-bp5-004-AR",
+              "ability_index": 0,
+              "db": "member_db",
+              "card_id": 754,
+              "name": "朝香果林",
+              "trigger": 2
+            },
+            {
+              "card_no": "PL!N-bp5-004-R",
+              "ability_index": 0,
+              "db": "member_db",
+              "card_id": 4850,
+              "name": "朝香果林",
+              "trigger": 2
+            },
+            {
+              "card_no": "PL!N-bp5-004-P",
+              "ability_index": 0,
+              "db": "member_db",
+              "card_id": 8946,
+              "name": "朝香果林",
+              "trigger": 2
+            }
         {
           "jp": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
           "en": "",
@@ -4975,7 +5031,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 8
+          "value": 7
         },
         {
           "op": "MOVE_TO_DISCARD",
@@ -4991,7 +5047,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 6
+          "value": 5
         },
         {
           "op": "LOOK_AND_CHOOSE",
@@ -5101,7 +5157,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 1,
-          "value": 8
+          "value": 7
         },
         {
           "op": "MOVE_TO_DISCARD",
@@ -5117,7 +5173,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 3,
-          "value": 6
+          "value": 5
         },
         {
           "op": "LOOK_AND_CHOOSE",
@@ -5273,7 +5329,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "カードを1枚引き、手札を1枚控え室に置く。",
+            "相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。"
+          ]
         },
         {
           "op": "JUMP",
@@ -5398,7 +5458,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{ico",
+            "自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを"
+          ]
         },
         {
           "op": "JUMP",
@@ -5527,7 +5591,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "自分の控え室にカード名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを1枚手札",
+            "自分の控え室にグループ名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを2枚手"
+          ]
         },
         {
           "op": "JUMP",
@@ -8173,7 +8241,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "エネルギーを1枚アクティブにする。",
+            "自分の控え室にある『虹ヶ咲』のライブカードを2枚まで好きな順番でデッキの上に置く。"
+          ]
         },
         {
           "op": "JUMP",
@@ -8223,6 +8295,10 @@
             "dest_zone": "DECK",
             "remainder_zone": "DECK_TOP"
           }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -9741,7 +9817,11 @@
           "value": 2,
           "slot": {
             "is_opponent": 1
-          }
+          },
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -10128,7 +10208,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -14488,7 +14572,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -18089,7 +18177,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 3
+          "value": 3,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -18155,7 +18247,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 3
+          "value": 3,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -18358,7 +18454,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -19532,7 +19632,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -19645,7 +19749,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -20696,7 +20804,11 @@
           "value": 2,
           "slot": {
             "target_slot": "CONTEXT"
-          }
+          },
+          "option_names": [
+            "自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登",
+            "このカードの必要ハートを{{heart_06.png|heart06}}減らす。"
+          ]
         },
         {
           "op": "JUMP",
@@ -22244,7 +22356,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -22935,7 +23051,11 @@
           "value": 2,
           "slot": {
             "is_opponent": 1
-          }
+          },
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -23606,7 +23726,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "ウェイト状態のメンバー1人をアクティブにし、ライブ終了時まで、そのメンバーは{{icon_blade",
+            "相手のステージにいる元々持つ{{icon_blade.png|ブレード}}が3つ以下のメンバー1人を"
+          ]
         },
         {
           "op": "JUMP",
@@ -23944,7 +24068,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 4
+          "value": 4,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -25623,7 +25751,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}",
+            "相手のステージにいるコスト4以下のメンバー1人をウェイトにする。"
+          ]
         },
         {
           "op": "JUMP",
@@ -26980,7 +27112,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 3
+          "value": 3,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -30658,7 +30794,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 2,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+            "自分の控え室からメンバーカードを1枚手札に加える。"
+          ]
         },
         {
           "op": "JUMP",
@@ -36999,8 +37139,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF"
@@ -37013,7 +37165,7 @@
         },
         {
           "op": "RECOVER_LIVE",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "zone_mask": "ALL"
@@ -37025,7 +37177,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -37488,8 +37640,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "DRAW",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -37497,7 +37661,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -38220,8 +38384,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "REDUCE_COST",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -38234,7 +38410,7 @@
         },
         {
           "op": "SELECT_MEMBER",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "target_player": "OPPONENT",
@@ -38250,7 +38426,7 @@
         },
         {
           "op": "MOVE_MEMBER",
-          "frame_index": 2,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT",
@@ -38259,7 +38435,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -38395,8 +38571,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RECOVER_LIVE",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -38412,7 +38600,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -38469,8 +38657,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RECOVER_LIVE",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "zone_mask": "ALL",
@@ -38484,7 +38684,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -38761,8 +38961,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "MOVE_MEMBER",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 99,
           "attr": {
             "target_player": "SELF",
@@ -38778,7 +38990,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -38835,8 +39047,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RECOVER_MEMBER",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "group_enabled": 1,
@@ -38854,7 +39078,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -38913,7 +39137,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 3
+          "value": 3,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -39104,8 +39332,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "DRAW",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -39113,7 +39353,7 @@
         },
         {
           "op": "MOVE_TO_DISCARD",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -39127,7 +39367,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 2
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -40107,8 +40347,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF"
@@ -40121,7 +40373,7 @@
         },
         {
           "op": "SELECT_CARDS",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -40135,7 +40387,7 @@
         },
         {
           "op": "PAY_ENERGY_DYNAMIC",
-          "frame_index": 2,
+          "frame_index": 4,
           "value": 0,
           "attr": {
             "is_optional": 1
@@ -40146,12 +40398,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 3,
+          "frame_index": 5,
           "value": 1
         },
         {
           "op": "RECOVER_LIVE",
-          "frame_index": 4,
+          "frame_index": 6,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -40164,7 +40416,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 5
+          "frame_index": 7
         }
       ],
       "card_refs": [
@@ -40333,7 +40585,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 4,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -40415,8 +40671,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "DRAW",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -40424,7 +40692,7 @@
         },
         {
           "op": "SELECT_MEMBER",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -40438,7 +40706,7 @@
         },
         {
           "op": "ADD_BLADES",
-          "frame_index": 2,
+          "frame_index": 4,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -40446,7 +40714,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -40561,18 +40829,30 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "COUNT_ENERGY",
           "value": 10,
           "slot": {
             "target_slot": "STAGE_0",
             "comparison": "GE"
           },
-          "frame_index": 0
+          "frame_index": 2
         },
         {
           "op": "JUMP_IF_FALSE",
           "value": 1,
-          "frame_index": 1
+          "frame_index": 3
         },
         {
           "op": "INCREASE_COST",
@@ -40580,11 +40860,11 @@
           "slot": {
             "target_slot": "CONTEXT"
           },
-          "frame_index": 2
+          "frame_index": 4
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 5
         }
       ],
       "card_refs": [
@@ -40622,8 +40902,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RECOVER_LIVE",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "group_enabled": 1,
@@ -40637,7 +40929,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -40713,8 +41005,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "REVEAL_CARDS",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "HAND"
@@ -40722,17 +41026,17 @@
         },
         {
           "op": "TYPE_CHECK",
-          "frame_index": 1,
+          "frame_index": 3,
           "value": 1
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 2,
+          "frame_index": 4,
           "value": 1
         },
         {
           "op": "GRANT_ABILITY",
-          "frame_index": 3,
+          "frame_index": 5,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -40740,7 +41044,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 4
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -40842,8 +41146,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "ENERGY_CHARGE",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT",
@@ -40852,7 +41168,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -41105,7 +41421,11 @@
           "value": 2,
           "slot": {
             "is_opponent": 1
-          }
+          },
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -41271,7 +41591,11 @@
         {
           "op": "SELECT_MODE",
           "frame_index": 0,
-          "value": 2
+          "value": 2,
+          "option_names": [
+            "選択肢1",
+            "選択肢2"
+          ]
         },
         {
           "op": "JUMP",
@@ -41548,8 +41872,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "DRAW",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "is_optional": 1
@@ -41560,7 +41896,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -41590,8 +41926,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "ENERGY_CHARGE",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -41599,7 +41947,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
@@ -41629,8 +41977,20 @@
       "trigger": "ACTIVATED",
       "frames": [
         {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "MOVE_TO_DISCARD",
-          "frame_index": 0,
+          "frame_index": 2,
           "value": 10,
           "attr": {
             "target_player": "SELF"
@@ -41643,7 +42003,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 1
+          "frame_index": 3
         }
       ],
       "card_refs": [
