@@ -502,6 +502,19 @@ impl ResponseController for GameState {
     fn handle_response(&mut self, db: &CardDatabase, action: i32) -> Result<(), String> {
         let decoded_action = DecodedAction::decode(action);
         let response_origin = crate::core::logic::interpreter::suspension::capture_response_origin(self);
+        if self.debug.debug_mode {
+            eprintln!(
+                "[RESP_DBG] phase={:?} action={} decoded={:?} pending={} top={}",
+                self.phase,
+                action,
+                decoded_action,
+                self.interaction_stack.len(),
+                self.interaction_stack
+                    .last()
+                    .map(crate::core::logic::interpreter::logging::describe_pending_interaction)
+                    .unwrap_or_else(|| "none".to_string())
+            );
+        }
         
         // ANTI-SOFTLOCK: Detect Response phase loops and break them
         if self.phase == Phase::Response && matches!(decoded_action, DecodedAction::Pass) {
@@ -1507,26 +1520,52 @@ impl ResponseController for GameState {
                 return Ok(());
             }
 
-            // Consume the answered prompt using the shared stack/phase helper.
-            crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
-
-            let semantic_frames = if cid == -1 {
-                Some(vec![
-                    crate::core::logic::models::AbilityFrame {
-                        opcode: pending_effect_opcode,
-                        value: pending_ctx.v_remaining as i32,
-                        attr: pending_filter_attr,
-                        ..Default::default()
-                    },
-                    crate::core::logic::models::AbilityFrame::new_return(),
-                ])
+            let select_cards_resume_frames = if pending_effect_opcode
+                == crate::core::generated_constants::O_SELECT_CARDS
+            {
+                self.interaction_stack.last().and_then(|pending| {
+                    crate::core::logic::ability_patterns::pending_live_ability(db, pending)
+                        .or_else(|| {
+                            crate::core::logic::ability_patterns::pending_member_ability(
+                                db,
+                                pending.card_id,
+                                pending.ctx.ability_index,
+                            )
+                        })
+                        .map(|ability| ability.resolved_frames().to_vec())
+                })
             } else {
                 None
             };
 
-            if let Some(frames) = semantic_frames {
+            // Consume the answered prompt using the shared stack/phase helper.
+            crate::core::logic::interpreter::suspension::finish_pending_interaction(self);
+
+            let mut cid = cid;
+            if pending_effect_opcode == crate::core::generated_constants::O_SELECT_CARDS
+                && cid >= 0
+            {
+                if !ctx.selected_cards.contains(&cid) {
+                    ctx.selected_cards.push(cid);
+                }
+                ctx.target_card_id = cid;
+            }
+
+            if let Some(frames) = select_cards_resume_frames {
+                if self.debug.debug_mode {
+                    eprintln!(
+                        "[RESP_DBG] resume_select_cards pc={} choice_idx={} selected={} frames={}",
+                        ctx.program_counter,
+                        choice_idx,
+                        ctx.target_card_id,
+                        frames.len()
+                    );
+                }
                 let _ = crate::core::logic::interpreter::resolve_semantic_frames(
-                    self, db, &frames, &ctx,
+                    self,
+                    db,
+                    frames.as_slice(),
+                    &ctx,
                 );
             } else {
                 if let Some(member) = db.get_member(cid) {

@@ -629,16 +629,50 @@ fn check_condition_with_parts(
                 if let Some(group_id) = semantic.semantic_group_id(val) {
                     let group_id = group_id as u64;
                     let mask = player.activated_energy_group_mask;
-                    return (mask & (1 << group_id)) != 0;
+                    let passed = (mask & (1 << group_id)) != 0;
+                    if state.debug.debug_mode {
+                        eprintln!(
+                            "[COND_HAS_KEYWORD] kind=energy group={} mask={:#x} passed={}",
+                            group_id,
+                            mask,
+                            passed
+                        );
+                    }
+                    return passed;
                 }
-                return player.activated_energy_group_mask != 0;
+                let passed = player.activated_energy_group_mask != 0;
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[COND_HAS_KEYWORD] kind=energy group=any mask={:#x} passed={}",
+                        player.activated_energy_group_mask,
+                        passed
+                    );
+                }
+                return passed;
             }
             if semantic.requests_keyword_member() {
                 if let Some(group_id) = semantic.semantic_group_id(val) {
                     let group_id = group_id as u64;
-                    return (player.activated_member_group_mask & (1 << group_id)) != 0;
+                    let passed = (player.activated_member_group_mask & (1 << group_id)) != 0;
+                    if state.debug.debug_mode {
+                        eprintln!(
+                            "[COND_HAS_KEYWORD] kind=member group={} mask={:#x} passed={}",
+                            group_id,
+                            player.activated_member_group_mask,
+                            passed
+                        );
+                    }
+                    return passed;
                 }
-                return player.activated_member_group_mask != 0;
+                let passed = player.activated_member_group_mask != 0;
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[COND_HAS_KEYWORD] kind=member group=any mask={:#x} passed={}",
+                        player.activated_member_group_mask,
+                        passed
+                    );
+                }
+                return passed;
             }
 
             let mut res = false;
@@ -849,14 +883,6 @@ fn check_condition_with_parts(
             total >= val as u32
         }
         C_COST_COMPARE => {
-            let slot_idx = if area_val >= 1 && area_val <= 3 {
-                Some((area_val - 1) as usize)
-            } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                Some(ctx.area_idx as usize)
-            } else {
-                None
-            };
-
             let compare_slot = |cards: &[i32], idx: usize| -> i32 {
                 cards
                     .get(idx)
@@ -867,12 +893,28 @@ fn check_condition_with_parts(
                     .unwrap_or(0)
             };
 
-            let Some(idx) = slot_idx else {
-                return false;
+            let (self_cost, opp_cost) = if area_val >= 1 && area_val <= 3 {
+                let idx = (area_val - 1) as usize;
+                (compare_slot(&player.stage, idx), compare_slot(&opponent.stage, idx))
+            } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
+                let idx = ctx.area_idx as usize;
+                (compare_slot(&player.stage, idx), compare_slot(&opponent.stage, idx))
+            } else {
+                let self_total = player
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, _)| compare_slot(&player.stage, idx))
+                    .sum::<i32>();
+                let opp_total = opponent
+                    .stage
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, _)| compare_slot(&opponent.stage, idx))
+                    .sum::<i32>();
+                (self_total, opp_total)
             };
 
-            let self_cost = compare_slot(&player.stage, idx);
-            let opp_cost = compare_slot(&opponent.stage, idx);
             self_cost > opp_cost
         }
         C_BLADE_COMPARE => {
@@ -901,6 +943,17 @@ fn check_condition_with_parts(
             } else {
                 hearts.get_total_count() as i32
             };
+            if state.debug.debug_mode || std::env::var("TRACE_HEART_COMPARE").is_ok() {
+                eprintln!(
+                    "[DEBUG_HEART_COMPARE] slot={}, color_idx={}, hearts={:?}, count={}, val={}, mode={:?}",
+                    slot,
+                    color_idx,
+                    hearts.to_array(),
+                    count,
+                    val,
+                    semantic.comparison_mode()
+                );
+            }
             if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
                 count <= val
             } else {
@@ -1022,7 +1075,7 @@ fn check_condition_with_parts(
         ),
         312 => {
             if val == 0 && slot == 0 {
-                ctx.v_accumulated as i32 > 0
+                ctx.v_accumulated as i32 >= 0
             } else {
                 compare_i32(ctx.v_accumulated as i32, val, slot)
             }

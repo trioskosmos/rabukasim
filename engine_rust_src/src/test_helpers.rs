@@ -1,5 +1,6 @@
 use crate::core::enums::Zone;
 use crate::core::generated_layout::*;
+use crate::core::hearts::HeartBoard;
 use crate::core::logic::card_db::CardDatabase;
 use crate::core::logic::constants::FILTER_IS_OPTIONAL;
 use crate::core::logic::models::{AbilityFrame, FrameProgram};
@@ -628,44 +629,6 @@ pub fn load_real_db() -> &'static CardDatabase {
                     eprintln!("[DEBUG] Successfully loaded database from: {}", path);
                     // Add common test cards that might be missing from real DB
                     add_common_test_cards(&mut db);
-                    if let Some(live) = db.lives.get_mut(&358) {
-                        if let Some(ability) = live.abilities.get_mut(0) {
-                            if let Some(program) = ability.frame_program.as_mut() {
-                                if program.frames.len() >= 7 {
-                                    let energy_check = program.frames[0].clone();
-                                    let mut energy_jump = program.frames[1].clone();
-                                    energy_jump.value = 6;
-
-                                    let mut member_check = program.frames[3].clone();
-                                    member_check.opcode = crate::core::generated_constants::C_HAS_KEYWORD;
-                                    member_check.value = 0;
-
-                                    let mut member_jump = program.frames[4].clone();
-                                    member_jump.value = 2;
-
-                                    let mut boost_two = program.frames[5].clone();
-                                    boost_two.opcode = crate::core::generated_constants::O_BOOST_SCORE;
-                                    boost_two.value = 2;
-
-                                    let mut boost_one = program.frames[2].clone();
-                                    boost_one.opcode = crate::core::generated_constants::O_BOOST_SCORE;
-                                    boost_one.value = 1;
-
-                                    let return_frame = program.frames[6].clone();
-                                    program.frames = vec![
-                                        energy_check,
-                                        energy_jump,
-                                        member_check,
-                                        member_jump,
-                                        boost_two,
-                                        return_frame,
-                                        boost_one,
-                                        AbilityFrame::new_return(),
-                                    ];
-                                }
-                            }
-                        }
-                    }
                     return db;
                 }
             }
@@ -748,12 +711,14 @@ pub fn create_test_db() -> CardDatabase {
             for i in 3000..3501 {
                 let mut hearts = [0u8; 7];
                 hearts[0] = 1;
+                let hearts_board = HeartBoard::from_array(&hearts);
                 let m = MemberCard {
                     card_id: i,
                     card_no: format!("GEN-M-{}", i),
                     name: format!("Mem {}", i),
                     cost: 1,
                     hearts,
+                    hearts_board,
                     groups: vec![1],
                     ..Default::default()
                 };
@@ -768,6 +733,7 @@ pub fn create_test_db() -> CardDatabase {
             energy.card_id = 2000;
             energy.name = "Test Energy".to_string();
             energy.hearts[0] = 1;
+            energy.hearts_board = HeartBoard::from_array(&energy.hearts);
             db.members.insert(2000, energy.clone());
             let eid = (2000 & LOGIC_ID_MASK) as usize;
             if eid < db.members_vec.len() {
@@ -953,6 +919,7 @@ pub fn add_card(
     groups: Vec<u8>,
     abilities: Vec<(TriggerType, AbilityLogic, Vec<Condition>)>,
 ) {
+    let mut m = db.get_member(cid).cloned().unwrap_or_default();
     let mut abs = Vec::new();
     for (t, logic, c) in abilities {
         let frame_program = match logic {
@@ -969,14 +936,17 @@ pub fn add_card(
             ..Default::default()
         });
     }
-    let m = MemberCard {
-        card_id: cid,
-        card_no: no.to_string(),
-        name: no.to_string(),
-        groups,
-        abilities: abs,
-        ..Default::default()
-    };
+    m.card_id = cid;
+    m.card_no = no.to_string();
+    m.name = no.to_string();
+    m.groups = groups;
+    m.abilities = abs;
+    if m.hearts_board.0 == 0 {
+        m.hearts_board = HeartBoard::from_array(&m.hearts);
+    }
+    if m.blade_hearts_board.0 == 0 {
+        m.blade_hearts_board = HeartBoard::from_array(&m.blade_hearts);
+    }
     db.members.insert(cid, m.clone());
     let lid = (cid & LOGIC_ID_MASK) as usize;
     if lid < db.members_vec.len() {

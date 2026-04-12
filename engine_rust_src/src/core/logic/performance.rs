@@ -1621,6 +1621,17 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
             // Use bit 7 for "broad trigger done"
             if (state.live_result_processed_mask[p] & 0x80) == 0 {
                 state.live_result_processed_mask[p] |= 0x80;
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[DEBUG_LIVE_SUCCESS] player={} success={} score={} processed_mask={:#x} energy_deck={} energy_zone={}",
+                        p,
+                        p_success,
+                        state.players[p].score,
+                        state.live_result_processed_mask[p],
+                        state.players[p].energy_deck.len(),
+                        state.players[p].energy_zone.len()
+                    );
+                }
 
                 if !state.ui.silent {
                     state.log(format!("Rule 11.5, Rule 11.5.1, Rule 11.5.2: Broadcasting [ライブ成功時] (On Live Success) triggers for player {}.", p));
@@ -1628,6 +1639,14 @@ pub fn do_live_result(state: &mut GameState, db: &CardDatabase) {
                 }
                 let bonus_before_triggers = state.players[p].live_score_bonus;
                 state.trigger_event(db, TriggerType::OnLiveSuccess, p, -1, -1, 0, -1);
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[DEBUG_LIVE_SUCCESS] queued OnLiveSuccess for player={} pending={} phase={:?}",
+                        p,
+                        state.core.trigger_queue.len(),
+                        state.phase
+                    );
+                }
                 state.process_trigger_queue(db);
                 let bonus_delta = state.players[p].live_score_bonus - bonus_before_triggers;
                 if bonus_delta != 0 {

@@ -142,6 +142,10 @@ pub fn resolve_select_cards(
             ) {
                 return HandlerResult::Suspend;
             }
+        } else {
+            ctx.choice_index = -1;
+            ctx.v_remaining = -1;
+            finish_pending_interaction(state);
         }
     }
 

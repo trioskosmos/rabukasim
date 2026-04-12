@@ -441,9 +441,6 @@ pub fn handle_pay_energy_dynamic(
         use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
         if ctx.choice_index == -1 {
-            if total_cost == 0 {
-                return HandlerResult::SetCond(true);
-            }
             let available = (0..state.players[p_idx].energy_zone.len())
                 .filter(|&i| !state.players[p_idx].is_energy_tapped(i))
                 .count();

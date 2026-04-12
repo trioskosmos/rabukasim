@@ -280,6 +280,14 @@ fn is_pure_nop(frame_data: &AbilityFrameComponents<'_>) -> bool {
         && frame_data.params.is_none()
 }
 
+fn is_pure_return(frame_data: &AbilityFrameComponents<'_>) -> bool {
+    frame_data.opcode == O_RETURN
+        && frame_data.value == 0
+        && frame_data.filter == CardFilter::default()
+        && frame_data.slot == DecodedSlot::default()
+        && frame_data.params.is_none()
+}
+
 fn log_frame_step(
     state: &mut GameState,
     db: &CardDatabase,
@@ -368,6 +376,47 @@ fn log_condition_result(
         b_log.push(cond_desc.clone());
     }
     state.trace_internal(&cond_desc);
+}
+
+fn log_handler_transition(
+    state: &mut GameState,
+    db: &CardDatabase,
+    ctx: &AbilityContext,
+    frame_data: &AbilityFrameComponents<'_>,
+    ip: usize,
+    result: &handlers::HandlerResult,
+    advance_effect: bool,
+) {
+    if !state.debug.debug_mode {
+        return;
+    }
+
+    let result_desc = match result {
+        handlers::HandlerResult::Continue => "Continue".to_string(),
+        handlers::HandlerResult::SetCond(value) => format!("SetCond({})", value),
+        handlers::HandlerResult::Suspend => "Suspend".to_string(),
+        handlers::HandlerResult::Return => "Return".to_string(),
+        handlers::HandlerResult::Branch(target) => format!("Branch({})", target),
+        handlers::HandlerResult::BranchToFrames(frames) => {
+            let opcodes = frames
+                .iter()
+                .map(|frame| logging::get_opcode_name(frame.opcode()).to_string())
+                .collect::<Vec<_>>()
+                .join(",");
+            format!("BranchToFrames(len={}, ops=[{}])", frames.len(), opcodes)
+        }
+    };
+
+    let line = format!(
+        "FRAME_FLOW: ip={:<3} result={} advance={} {} {}",
+        ip,
+        result_desc,
+        advance_effect,
+        logging::describe_frame_semantics(frame_data, ctx, db),
+        logging::describe_context(ctx)
+    );
+    eprintln!("[DEBUG] {}", line);
+    state.trace_internal(&line);
 }
 
 pub fn resolve_ability(
@@ -474,15 +523,18 @@ pub fn resolve_semantic_frames(
         let frame = &frames[effect_idx];
         let frame_data = frame.components();
         let ip = effect_idx;
-        if state.debug.debug_mode && !state.ui.silent {
+        if state.debug.debug_mode {
             eprintln!(
-                "[FRAME_DBG] ip={} opcode={} value={} optional={} filter_attr={:#x} slot={}",
+                "[FRAME_DBG] ip={} opcode={} value={} optional={} filter_attr={:#x} slot={} choice={} v_rem={} selected={}",
                 ip,
                 frame_data.opcode,
                 frame_data.value,
                 frame_data.filter.is_optional,
                 frame_data.resolved_filter_attr(),
-                frame_data.slot.to_raw()
+                frame_data.slot.to_raw(),
+                ctx.choice_index,
+                ctx.v_remaining,
+                ctx.selected_cards.len()
             );
         }
 
@@ -501,18 +553,8 @@ pub fn resolve_semantic_frames(
             effect_idx += 1;
             continue;
         }
-        if frame_data.opcode == O_RETURN {
-            if !state.ui.silent {
-                state.log("Instruction sequence finished (Return).".to_string());
-                if let Some(ref mut set) = state.debug.executed_opcodes {
-                    set.insert(frame_data.opcode);
-                }
-            }
-            break;
-        }
-
-        // HEADLESS OPTIMIZATION: Skip debug output in silent mode
-        if state.debug.debug_mode && !state.ui.silent {
+        // HEADLESS OPTIMIZATION: Keep debug output even in silent tests when debug mode is enabled.
+        if state.debug.debug_mode {
             println!(
                 "[DEBUG RESOLVE] {}",
                 logging::describe_frame_semantics(&frame_data, &ctx, db)
@@ -584,6 +626,21 @@ pub fn resolve_semantic_frames(
             continue;
         }
 
+        if frame_data.opcode == O_RETURN && is_pure_return(&frame_data) {
+            if !state.ui.silent {
+                state.log("Instruction sequence finished (Return).".to_string());
+                if let Some(ref mut set) = state.debug.executed_opcodes {
+                    set.insert(frame_data.opcode);
+                }
+            }
+            break;
+        } else if frame_data.opcode == O_RETURN && state.debug.debug_mode {
+            eprintln!(
+                "[DEBUG] structured RETURN continues: {}",
+                logging::describe_frame_semantics(&frame_data, &ctx, db)
+            );
+        }
+
         if frame_data.opcode == O_JUMP {
             if !state.ui.silent {
                 state.log("Unconditional jump executed.".to_string());
@@ -611,6 +668,17 @@ pub fn resolve_semantic_frames(
         }
 
         if !cond {
+            if state.debug.debug_mode {
+                eprintln!(
+                    "[COND_SKIP] effect_idx={} opcode={} choice={} v_rem={} cond={} branch_has_conditions={}",
+                    effect_idx,
+                    frame_data.opcode,
+                    ctx.choice_index,
+                    ctx.v_remaining,
+                    cond,
+                    branch_has_conditions
+                );
+            }
             if branch_has_conditions && next_condition_block_starts_here(frames, effect_idx + 1) {
                 cond = true;
                 branch_has_conditions = false;
@@ -622,7 +690,18 @@ pub fn resolve_semantic_frames(
         let mut advance_effect = true;
         
         // Execute frame directly using handler dispatch
-        match dispatch(state, db, &mut ctx, &frame_data, effect_idx, frames) {
+        let handler_result = dispatch(state, db, &mut ctx, &frame_data, effect_idx, frames);
+        let advance_effect_hint = !matches!(handler_result, HandlerResult::Branch(_));
+        log_handler_transition(
+            state,
+            db,
+            &ctx,
+            &frame_data,
+            effect_idx,
+            &handler_result,
+            advance_effect_hint,
+        );
+        match handler_result {
             HandlerResult::Continue => {}
             HandlerResult::SetCond(new_cond) => cond = new_cond,
             HandlerResult::Suspend => return Ok(()),
@@ -772,8 +851,8 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
             let _ = resolve_ability(state, db, ability, &ctx);
             
-            // If the ability suspended for player choice, transition to Response phase
-            if !state.interaction_stack.is_empty() && state.phase != Phase::Response {
+            // Set phase to Response when processing triggers (even if no interaction pending)
+            if state.phase != Phase::Response {
                 state.phase = Phase::Response;
             }
 

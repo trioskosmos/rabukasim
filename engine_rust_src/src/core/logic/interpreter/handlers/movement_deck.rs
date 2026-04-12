@@ -52,6 +52,18 @@ pub fn handle_deck_zones(
     frame_idx: usize,
 ) -> HandlerResult {
     let op = frame_data.opcode;
+    if state.debug.debug_mode && op == O_SELECT_CARDS {
+        eprintln!(
+            "[SELECT_CARDS_ROUTE] ip={} choice_index={} v_remaining={} source_card_id={} ability_card_id={} filter_attr={:#x} slot={:?}",
+            frame_idx,
+            ctx.choice_index,
+            ctx.v_remaining,
+            ctx.source_card_id,
+            ctx.ability_card_id,
+            frame_data.resolved_filter_attr(),
+            frame_data.slot
+        );
+    }
     let v = frame_data.value;
     let a = frame_data.resolved_filter_attr() as i64;
     let s = frame_data.slot.to_raw();

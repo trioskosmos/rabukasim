@@ -117,16 +117,12 @@ pub fn handle_select_mode(
     }
 
     if let Some(new_frames) = ability.and_then(|ability| {
-        (!ability.has_authored_frame_program())
-            .then(|| {
-                ability.get_modal_effects(choice).map(|effects| {
-                    effects
-                        .iter()
-                        .map(AbilityFrame::from_effect)
-                        .collect::<Vec<_>>()
-                })
-            })
-            .flatten()
+        ability.get_modal_effects(choice).map(|effects| {
+            effects
+                .iter()
+                .map(AbilityFrame::from_effect)
+                .collect::<Vec<_>>()
+        })
     }) {
         ctx.choice_index = -1;
         return HandlerResult::BranchToFrames(std::sync::Arc::new(new_frames));
@@ -144,8 +140,39 @@ pub fn handle_select_mode(
         return HandlerResult::Branch(frame_idx + 1);
     }
 
-    let target_effect_idx =
+    let mut target_effect_idx =
         frame_idx + 2 + choice + frames[target_frame_index].value() as usize;
+
+    if let Some(target_frame) = frames.get(target_effect_idx) {
+        if target_frame.opcode() == O_JUMP
+            && target_effect_idx + 1 < frames.len()
+            && !matches!(
+                frames[target_effect_idx + 1].opcode(),
+                O_JUMP | O_JUMP_IF_FALSE | O_RETURN
+            )
+        {
+            target_effect_idx += 1;
+        }
+    }
+
+    if state.debug.debug_mode {
+        let table_opcode = frames[target_frame_index].opcode();
+        let target_opcode = frames
+            .get(target_effect_idx)
+            .map(|frame| frame.opcode())
+            .unwrap_or(-1);
+        eprintln!(
+            "[SELECT_MODE_FLOW] frame_idx={} choice={} table_idx={} table_op={} table_value={} target_idx={} target_op={} total_frames={}",
+            frame_idx,
+            choice,
+            target_frame_index,
+            table_opcode,
+            frames[target_frame_index].value(),
+            target_effect_idx,
+            target_opcode,
+            frames.len()
+        );
+    }
 
     ctx.choice_index = -1;
     HandlerResult::Branch(target_effect_idx)

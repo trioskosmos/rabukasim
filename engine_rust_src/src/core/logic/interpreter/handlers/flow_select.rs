@@ -37,30 +37,32 @@ pub fn handle_select_ops(
     };
     let resolved_filter_attr = raw_filter_attr;
     let _real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER { op } else { frame_data.opcode };
-    let next_frame = if op == O_SELECT_MEMBER {
+    let next_frame_opcode = if op == O_SELECT_MEMBER {
         db.get_member(ctx.source_card_id)
             .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
             .or_else(|| {
                 db.get_live(ctx.source_card_id)
                     .and_then(|card| card.abilities.get(ctx.ability_index.max(0) as usize))
             })
-            .and_then(|ability| ability.get_frame(frame_idx + 1))
+            .and_then(|ability| {
+                ability
+                    .resolved_frames()
+                    .iter()
+                    .skip(frame_idx + 1)
+                    .find(|frame| !matches!(frame.opcode(), O_JUMP | O_JUMP_IF_FALSE | O_NOP))
+                    .map(|frame| frame.opcode())
+            })
     } else {
         None
     };
-    let legacy_move_member_follow_up = next_frame
-        .as_ref()
-        .map(|next| {
-            matches!(
-                next.opcode(),
-                O_MOVE_MEMBER | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD
-            )
-        })
-        .unwrap_or(false);
+    let legacy_move_member_follow_up = matches!(
+        next_frame_opcode,
+        Some(op) if matches!(op, O_MOVE_MEMBER | O_PLAY_MEMBER_FROM_HAND | O_PLAY_MEMBER_FROM_DISCARD)
+    );
     let mut effective_slot_info = slot_info;
     if op == O_SELECT_MEMBER {
-        if let Some(next) = next_frame.as_ref() {
-            effective_slot_info.source_zone = match next.opcode() {
+        if let Some(next_opcode) = next_frame_opcode {
+            effective_slot_info.source_zone = match next_opcode {
                 O_PLAY_MEMBER_FROM_HAND => crate::core::enums::Zone::Hand,
                 O_PLAY_MEMBER_FROM_DISCARD => crate::core::enums::Zone::Discard,
                 _ => effective_slot_info.source_zone,
@@ -145,12 +147,15 @@ pub fn handle_select_ops(
         } else {
             resolve_target_player(effective_slot_info, filter_attr, p_idx)
         };
+        let waiting_only_select = matches!(next_frame_opcode, Some(O_ACTIVATE_MEMBER))
+            && effective_slot_info.source_zone == crate::core::enums::Zone::Stage;
         let matching_cards = |target_player: usize| -> Vec<i32> {
             cards_for_source_zone(state, target_player, effective_slot_info.source_zone)
                 .iter()
                 .enumerate()
-                .filter_map(|(_slot_idx, &cid)| {
+                .filter_map(|(slot_idx, &cid)| {
                     if cid >= 0
+                        && (!waiting_only_select || state.players[target_player].is_tapped(slot_idx))
                         && state.card_matches_filter_with_ctx(
                             db,
                             cid,
@@ -167,8 +172,8 @@ pub fn handle_select_ops(
         };
 
         if state.debug.debug_mode && op == O_SELECT_MEMBER {
-            eprintln!(
-                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} raw_slot={} raw_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?}",
+                eprintln!(
+                "[SELECT_DBG] source={} player={} target_player={} source_zone={:?} raw_slot={} raw_attr=0x{:x} normalized_filter=0x{:x} targeted_cost={} choice_index={} v={} next_frame={:?} waiting_only_select={}",
                 ctx.source_card_id,
                 p_idx,
                 select_member_target_player,
@@ -179,7 +184,8 @@ pub fn handle_select_ops(
                 is_targeted_select_member_cost,
                 ctx.choice_index,
                 v,
-                next_frame.as_ref().map(|frame| frame.opcode())
+                next_frame_opcode,
+                waiting_only_select
             );
         }
 

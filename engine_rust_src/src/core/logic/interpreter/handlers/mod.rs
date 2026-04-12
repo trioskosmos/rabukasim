@@ -58,6 +58,18 @@ pub fn dispatch(
     frames: &[AbilityFrame],
 ) -> HandlerResult {
     let op = frame_data.opcode;
+    if state.debug.debug_mode && op == O_SELECT_CARDS {
+        eprintln!(
+            "[DISPATCH_SELECT_CARDS] frame_idx={} choice_index={} v_remaining={} source_card_id={} ability_card_id={} filter_attr={:#x} slot={:?}",
+            frame_idx,
+            ctx.choice_index,
+            ctx.v_remaining,
+            ctx.source_card_id,
+            ctx.ability_card_id,
+            frame_data.resolved_filter_attr(),
+            frame_data.slot
+        );
+    }
 
     // FLAT DISPATCH: Direct opcode-to-handler mapping
     match op {

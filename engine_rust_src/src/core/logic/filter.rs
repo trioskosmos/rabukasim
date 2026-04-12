@@ -292,10 +292,9 @@ impl CardFilter {
                 .map(|attr| Self::from_attr(attr as u64))
                 .or_else(|| number.as_u64().map(Self::from_attr)),
             Value::Object(object) => {
-                let mut filter =
+                let filter =
                     serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
                 if filter != Self::default() {
-                    filter.is_enabled = true;
                     Some(filter)
                 } else {
                     None
@@ -808,30 +807,20 @@ impl CardFilter {
             value_threshold: ((attr >> A_STANDARD_VALUE_THRESHOLD_SHIFT)
                 & A_STANDARD_VALUE_THRESHOLD_MASK) as u8,
             is_le: ((attr >> A_STANDARD_IS_LE_SHIFT) & A_STANDARD_IS_LE_MASK) != 0,
-            is_cost_type: ((attr >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK)
-                != 0,
+            is_cost_type: ((attr >> A_STANDARD_IS_COST_TYPE_SHIFT) & A_STANDARD_IS_COST_TYPE_MASK) != 0,
             color_mask: ((attr >> A_STANDARD_COLOR_MASK_SHIFT) & A_STANDARD_COLOR_MASK_MASK) as u8,
             char_id_1: ((attr >> A_STANDARD_CHAR_ID_1_SHIFT) & A_STANDARD_CHAR_ID_1_MASK) as u8,
             char_id_2: ((attr >> A_STANDARD_CHAR_ID_2_SHIFT) & A_STANDARD_CHAR_ID_2_MASK) as u8,
-            char_id_3: if unit_enabled {
-                0
-            } else {
-                ((attr >> A_STANDARD_UNIT_ID_SHIFT) & A_STANDARD_UNIT_ID_MASK) as u8
-            },
+            char_id_3: 0,
             zone_mask: ((attr >> A_STANDARD_ZONE_MASK_SHIFT) & A_STANDARD_ZONE_MASK_MASK) as u8,
             special_id: ((attr >> A_STANDARD_SPECIAL_ID_SHIFT) & A_STANDARD_SPECIAL_ID_MASK) as u8,
             is_setsuna: ((attr >> A_STANDARD_IS_SETSUNA_SHIFT) & A_STANDARD_IS_SETSUNA_MASK) != 0,
             compare_accumulated: ((attr >> A_STANDARD_COMPARE_ACCUMULATED_SHIFT)
                 & A_STANDARD_COMPARE_ACCUMULATED_MASK)
                 != 0,
-            is_optional: ((attr >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK)
-                != 0,
-            keyword_energy: ((attr >> A_STANDARD_KEYWORD_ENERGY_SHIFT)
-                & A_STANDARD_KEYWORD_ENERGY_MASK)
-                != 0,
-            keyword_member: ((attr >> A_STANDARD_KEYWORD_MEMBER_SHIFT)
-                & A_STANDARD_KEYWORD_MEMBER_MASK)
-                != 0,
+            is_optional: ((attr >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0,
+            keyword_energy: ((attr >> A_STANDARD_KEYWORD_ENERGY_SHIFT) & A_STANDARD_KEYWORD_ENERGY_MASK) != 0,
+            keyword_member: ((attr >> A_STANDARD_KEYWORD_MEMBER_SHIFT) & A_STANDARD_KEYWORD_MEMBER_MASK) != 0,
         }
     }
 

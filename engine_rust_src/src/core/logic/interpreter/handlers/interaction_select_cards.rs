@@ -20,6 +20,20 @@ pub fn handle_select_cards(
     frame_data: &AbilityFrameComponents<'_>,
     instr_ip: usize,
 ) -> HandlerResult {
+    if state.debug.debug_mode {
+        eprintln!(
+            "[SELECT_CARDS_ENTRY] ip={} choice_index={} v_remaining={} trigger={:?} source_card_id={} ability_card_id={} frame_value={} frame_slot={:?} frame_filter={:#x}",
+            instr_ip,
+            ctx.choice_index,
+            ctx.v_remaining,
+            ctx.trigger_type,
+            ctx.source_card_id,
+            ctx.ability_card_id,
+            frame_data.value,
+            frame_data.slot,
+            frame_data.resolved_filter_attr()
+        );
+    }
     let v = frame_data.value;
     let filter = frame_data
         .params
@@ -139,13 +153,25 @@ pub fn handle_select_cards(
                 state.players[p_idx].looked_cards.push(cid);
             }
         }
+        if state.debug.debug_mode {
+            eprintln!(
+                "[SELECT_CARDS_DBG] opcode={} choice_type={:?} source_zone={:?} looked_cards={:?} optional={} variable={} v={} filter_attr={:#x}",
+                frame_data.opcode,
+                spec.choice_type(),
+                spec.source_zone,
+                state.players[p_idx].looked_cards,
+                is_optional,
+                is_variable_selection,
+                v,
+                a as u64
+            );
+        }
 
         if state.players[p_idx].looked_cards.is_empty() && !is_optional {
             return HandlerResult::Continue;
         }
 
-        if matches!(
-            suspend_choice(
+        let suspended = suspend_choice(
                 state,
                 db,
                 ctx,
@@ -160,9 +186,17 @@ pub fn handle_select_cards(
                 } else {
                     v as i16
                 },
-            ),
-            HandlerResult::Suspend
-        ) {
+            );
+        if state.debug.debug_mode {
+            eprintln!(
+                "[SELECT_CARDS_DBG] suspend_result={:?} phase_after={:?} cp_after={} looked_cards_after={:?}",
+                suspended,
+                state.phase,
+                state.current_player,
+                state.players[p_idx].looked_cards
+            );
+        }
+        if matches!(suspended, HandlerResult::Suspend) {
             return HandlerResult::Suspend;
         }
     }

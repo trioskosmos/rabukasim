@@ -107,14 +107,37 @@ pub fn handle_recovery(
     } else {
         normalized_source_zone(slot_info.source_zone)
     };
-    let zone_cards = collect_zone_cards(state, p_idx, source_zone);
-    let candidate_cards = zone_cards.clone();
     let real_op = if op == O_RECOVER_LIVE || op == O_RECOVER_MEMBER {
         op
     } else {
         frame_data.opcode
     };
+    let zone_cards = collect_zone_cards(state, p_idx, source_zone);
+    let candidate_cards = zone_cards.clone();
+    let selected_live_for_recovery = if real_op == O_RECOVER_LIVE {
+        ctx.selected_cards
+            .iter()
+            .rev()
+            .copied()
+            .find(|cid| db.get_live(*cid).is_some())
+    } else {
+        None
+    };
     let use_name_filter = recovery_uses_same_name_filter(db, ctx, frame_data, frame_idx);
+    if state.debug.debug_mode {
+        eprintln!(
+            "[RECOVERY_DBG] start op={} real_op={} source_zone={:?} candidate_cards={:?} selected_live={:?} looked_cards_before={:?} choice_index={} v_remaining={} filter_attr={:#x}",
+            op,
+            real_op,
+            source_zone,
+            candidate_cards,
+            selected_live_for_recovery,
+            state.players[p_idx].looked_cards,
+            ctx.choice_index,
+            ctx.v_remaining,
+            frame_data.raw_attr
+        );
+    }
 
     // Handle "same name" style recovery when the frame has no explicit filter.
     let mut handled_same_name = false;
@@ -164,7 +187,15 @@ pub fn handle_recovery(
         state.players[p_idx].looked_cards.clear();
         let candidate_iter: Vec<i32> = if real_op == O_RECOVER_LIVE {
             let mut prioritized_candidates = candidate_cards.clone();
+            if let Some(selected_live) = selected_live_for_recovery {
+                prioritized_candidates.retain(|&cid| cid != selected_live);
+                prioritized_candidates.insert(0, selected_live);
+            }
             prioritized_candidates.sort_by_key(|cid| db.get_live(*cid).is_none());
+            if let Some(selected_live) = selected_live_for_recovery {
+                prioritized_candidates.retain(|&cid| cid != selected_live);
+                prioritized_candidates.insert(0, selected_live);
+            }
             prioritized_candidates
         } else {
             let mut prioritized_candidates = candidate_cards.clone();
@@ -187,6 +218,16 @@ pub fn handle_recovery(
             {
                 state.players[p_idx].looked_cards.push(*cid);
             }
+        }
+        if state.debug.debug_mode {
+            eprintln!(
+                "[RECOVERY_DBG] populated looked_cards={:?} candidate_iter={:?} type={} ignore_attr={} source_zone={:?}",
+                state.players[p_idx].looked_cards,
+                candidate_iter,
+                if real_op == O_RECOVER_LIVE { "live" } else { "member" },
+                ignore_attr_filter,
+                source_zone
+            );
         }
         if state.players[p_idx].looked_cards.is_empty()
             && matches!(source_zone, Zone::Discard)
@@ -250,6 +291,16 @@ pub fn handle_recovery(
     if choice >= 0 && (choice as usize) < state.players[p_idx].looked_cards.len() {
         let cid = state.players[p_idx].looked_cards[choice as usize];
         if cid != -1 {
+            if state.debug.debug_mode {
+                eprintln!(
+                    "[RECOVERY_DBG] applying choice={} cid={} hand_before={} discard_before={} energy_before={}",
+                    choice,
+                    cid,
+                    state.players[p_idx].hand.len(),
+                    state.players[p_idx].discard.len(),
+                    state.players[p_idx].energy_zone.len()
+                );
+            }
             state.players[p_idx].looked_cards[choice as usize] = -1;
             state.players[p_idx].gain_hand_card(cid);
             ctx.selected_cards.push(cid);
@@ -276,6 +327,15 @@ pub fn handle_recovery(
         }
     }
 
+    if state.debug.debug_mode {
+        eprintln!(
+            "[RECOVERY_DBG] end hand={:?} discard={:?} looked_cards={:?} energy_zone={:?}",
+            state.players[p_idx].hand,
+            state.players[p_idx].discard,
+            state.players[p_idx].looked_cards,
+            state.players[p_idx].energy_zone
+        );
+    }
     state.players[p_idx].looked_cards.clear();
     HandlerResult::Continue
 }

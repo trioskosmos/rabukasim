@@ -1794,7 +1794,25 @@ impl AbilityFrame {
         }
 
         match opcode_key.as_str() {
-            "RETURN" => AbilityFrame { opcode: O_RETURN, ..Default::default() },
+            "RETURN" => {
+                if !params.is_null() {
+                    eprintln!(
+                        "[FRAME_LOAD] preserving RETURN frame params={} value={} attr={:#x} slot={}",
+                        params,
+                        value,
+                        filter.to_attr() | filter_passthrough,
+                        slot.to_raw()
+                    );
+                }
+                Self::with_raw_parts(
+                    O_RETURN,
+                    value,
+                    filter.to_attr() | filter_passthrough,
+                    slot.to_raw(),
+                    is_cost,
+                    params,
+                )
+            }
             "DRAW" => Self::with_components(O_DRAW, value, CardFilter::default(), slot, is_cost, params),
             "RECOVER_LIVE" => Self::with_raw_parts(
                 O_RECOVER_LIVE,
@@ -2823,7 +2841,16 @@ impl Ability {
         let mut cursor = select_mode_idx + 1 + branch_table_len;
         for option_idx in 0..option_count.max(branch_table_len) {
             let start = cursor;
-            while cursor < frames.len() && !matches!(frames[cursor].opcode(), O_JUMP | O_RETURN) {
+            let mut saw_body_frame = false;
+            while cursor < frames.len() {
+                let opcode = frames[cursor].opcode();
+                if matches!(opcode, O_JUMP) {
+                    break;
+                }
+                if opcode == O_RETURN && saw_body_frame {
+                    break;
+                }
+                saw_body_frame = true;
                 cursor += 1;
             }
 
@@ -3249,6 +3276,27 @@ mod tests {
         let components = frame.components();
         assert!(components.counts_unique_groups());
         assert!(!components.counts_unique_names());
+    }
+
+    #[test]
+    fn return_frames_preserve_authored_params() {
+        let frame = AbilityFrame::from_json_value(&json!({
+            "opcode": "RETURN",
+            "value": 0,
+            "params": {
+                "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+            }
+        }));
+
+        let components = frame.components();
+        assert_eq!(components.opcode, O_RETURN);
+        assert_eq!(
+            components
+                .params
+                .and_then(|params| params.get("raw_cond"))
+                .and_then(|value| value.as_str()),
+            Some("SUCCESS_LIVE_COUNT_EQUAL_OPPONENT")
+        );
     }
 
     #[test]

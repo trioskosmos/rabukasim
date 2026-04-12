@@ -422,20 +422,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional cost with look-and-choose effect",
-          "Frame 0: MOVE_TO_DISCARD optional - cost payment 'ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã'",
-          "Frame 1: JUMP_IF_FALSE - skips effect if cost not paid",
-          "Frame 2: LOOK_AND_CHOOSE - looks at 3 cards from deck top, choose 1 to hand, rest to discard",
-          "12 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1, value=1 from HAND",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ã": "Frame 2: LOOK_AND_CHOOSE count=3, source_zone=DECK_TOP, reveal=1",
-          "ã�?ã®ä¸­ãã1æãææ­ã«å ã": "Frame 2: target_slot=HAND (selected card goes to hand)",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: remainder_zone=DISCARD (unselected cards go to discard)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -792,19 +782,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Activated ability with energy cost and discard cost",
-          "Frame 0: PAY_ENERGY value=2 ({{icon_energy.png|E}}{{icon_energy.png|E}})",
-          "Frame 1: MOVE_TO_DISCARD cost payment 'ææ­ã1ææ§ãå®¤ã«ç½®ã�?'",
-          "Frame 2: RECOVER_LIVE with group filter (è¹ã¶å²=group_id=2) recovers live card from discard to hand",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{turn1.png|ã¿ã¼ã³1å}}{{icon_energy.png|E}}{{icon_energy.png|E}}": "Frame 0: PAY_ENERGY value=2 (activated ability cost)",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frame 1: MOVE_TO_DISCARD value=1 from HAND (additional cost)",
-          "èªåã®æ§ãå®¤ãããè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with group_enabled=1, group_id=2, source_zone=DISCARD, target_slot=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -865,18 +846,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw then bottom deck replacement",
-          "Frame 0: DRAW value=1 - draws a card first",
-          "Frame 1: BOTTOM_DECK value=1 from HAND - places a hand card to bottom of deck",
-          "Effectively replaces a hand card with a new draw",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ã«ã¼ãã1æå¼ã�?": "Frame 0: DRAW with value=1",
-          "ææ­ã1æããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frame 1: BOTTOM_DECK with value=1, target_slot=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -1393,20 +1366,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Deck top 3 cards manipulation with player choice",
-          "Frame 0: LOOK_DECK reveals top 3 cards from deck",
-          "Frame 1: ORDER_DECK allows reordering selected cards back on top",
-          "Frame 2: MOVE_TO_DISCARD sends remaining cards to discard",
-          "Complex multi-step ability with player decision points",
-          "7 cards share this pattern (ä¸­é ããã¿ x4, é»æ¾¤ãã¤ã¤, å°�?åé è, é»æ¾¤ã«ãã£)"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ã": "Frame 0: LOOK_DECK with value=3",
-          "ã�?ã®ä¸­ããå¥½ã�?ãªææ°ãå¥½ã�?ãªé çªã§ããã­ã®ä¸ã«ç½®ã�?": "Frame 1: ORDER_DECK with value=3 - player chooses which cards to keep on top",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: MOVE_TO_DISCARD with remainder_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -1704,19 +1667,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional self-tap to tap opponent member with costâ¤4",
-          "Frame 0: SET_TAPPED optional on self (this member) - player chooses to activate",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not activated",
-          "Frame 2: SELECT_MEMBER targets opponent costâ¤4 members on stage",
-          "Frame 3: MOVE_MEMBER with is_wait=1 moves selected member to wait area",
-          "6 cards share this pattern (æ�?±æ¢�?å¸, ç¢æ¾¤ã«ã, å®®ä¸æ, ãã¢ã»ãã¤ã©ã¼, æ�?¾æµ¦æå�?, å°�?åé è)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1 (tap this member)",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frames 2-3: SELECT_MEMBER (costâ¤4) then MOVE_MEMBER with is_wait=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -1817,18 +1771,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw 2 cards then discard 1 from hand",
-          "Frame 0: DRAW with value=2 - draw 2 cards from deck",
-          "Frame 1: MOVE_TO_DISCARD with value=1 - discard 1 card from hand",
-          "Pattern: Draw â Discard, same as ability #1 but draws 2 instead of 1",
-          "6 cards share this pattern (è¤å³¶æ x4, æ¡åæ³, ä¸è¹æ å­�?)"
-        ],
-        "text_mapping": {
-          "ã«ã¼ãã2æå¼ã�?": "Frame 0: DRAW with value=2",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frame 1: MOVE_TO_DISCARD with value=1, source_zone=HAND, dest_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -1940,20 +1886,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to add energy from energy deck to wait area",
-          "Frame 0: MOVE_TO_DISCARD optional - discard 1 card from hand",
-          "Frame 1: JUMP_IF_FALSE skips ahead if discard not done",
-          "Frame 2: SUM_VALUE aggregates some value (possibly for remaining hand count)",
-          "Frame 3: JUMP_IF_FALSE conditional skip based on value check",
-          "Frame 4: ENERGY_CHARGE places 1 energy from energy deck into wait",
-          "6 cards share this pattern (å�?å�?¯å�?¯, å¹³å®å�?�?ãã¿ã, é¬¼å¡å¬æ¯¬, ã¦ã£ã¼ã³ã»ãã«ã¬ã¬ã¼ã, åµ�?å�?ç é½, èææ)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1 (discard 1 from hand)",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frames 2-4: SUM_VALUE â JUMP_IF_FALSE â ENERGY_CHARGE with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -2055,21 +1991,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self to look at top 2 deck cards, reorder, and discard remainder",
-          "Similar pattern to ability #14 but for 2 cards instead of 3",
-          "Frame 0: SET_TAPPED optional - player chooses to tap this member",
-          "Frame 1: JUMP_IF_FALSE skips ability if not activated",
-          "Frame 2: LOOK_REORDER_DISCARD with value=2 - looks at 2 cards, reorders, discards",
-          "5 cards share this pattern (é¬¼å¡å¤�?ç¾, ç¢æ¾¤ã«ã, ä¸è¹æ å­�?, æ�?é¦ææ)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 2: LOOK_REORDER_DISCARD with value=2 (view top 2)",
-          "ã�?ã®ä¸­ããå¥½ã�?ãªææ°ãå¥½ã�?ãªé çªã§ããã­ã®ä¸ã«ç½®ã�?": "Frame 2: Player chooses which cards to keep on top and order",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: Remaining cards moved to discard"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -2153,18 +2078,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw 2 cards then discard 2 from hand",
-          "Frame 0: DRAW with value=2 - draw 2 cards from deck",
-          "Frame 1: MOVE_TO_DISCARD with value=2 - discard 2 cards from hand",
-          "Pattern: Draw â Discard, net hand size change = 0 (draw 2, discard 2)",
-          "5 cards share this pattern (æ¡å�?ããã�?, å®®ä¸æ, å¤©çå¯ºçå¥, é�?åµ�?ç�? , é«æµ·å�?æ­)"
-        ],
-        "text_mapping": {
-          "ã«ã¼ãã2æå¼ã�?": "Frame 0: DRAW with value=2",
-          "ææ­ã2ææ§ãå®¤ã«ç½®ã�?": "Frame 1: MOVE_TO_DISCARD with value=2, source_zone=HAND, dest_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -2264,20 +2181,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to look at top 3 deck cards, choose 1 to hand, discard rest",
-          "Frame 0: MOVE_TO_DISCARD optional - discard 1 card from hand",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: LOOK_AND_CHOOSE with count=3 - look at 3 cards, choose 1 to HAND, rest to DISCARD",
-          "3 cards share this pattern (æ¥éä¸è±å¸, æ�?éããã, å¤§æ²¢ç çä¹)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=3, source_zone=DECK_TOP",
-          "ã�?ã®ä¸­ãã1æãææ­ã«å ã": "Frame 2: target_slot=HAND (selected card)",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: remainder_zone=DISCARD (unselected cards)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       },
       "card_refs": [
         {
@@ -3376,18 +3283,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Right side position check + activate 2 energy",
-          "Frame 0: HAS_KEYWORD checks for right side position (char_id_1=LANZHU placeholder)",
-          "Frame 1: JUMP_IF_FALSE skips if not on right side",
-          "Frame 2: ACTIVATE_ENERGY with value=2 - activates 2 energy",
-          "4 cards share this pattern (è¥è�?åå­£ ab#1 variants)"
-        ],
-        "text_mapping": {
-          "{{toujyou.png|ç»å ´}}ã�?å�?³ãµã¤ãã": "Frame 0: HAS_KEYWORD with char_id_1=LANZHU (right side check)",
-          "ã¨ã�?ã«ã®ã¼ã2æã¢ã¯ãã£ãã«ãã": "Frame 2: ACTIVATE_ENERGY with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3482,20 +3381,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Left side position check + draw 2 discard 1",
-          "Frame 0: HAS_KEYWORD checks for left side position",
-          "Frame 1: JUMP_IF_FALSE skips if not on left side",
-          "Frame 2: DRAW with value=2",
-          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
-          "4 cards share this pattern (è¥è�?åå­£ ab#0 variants)"
-        ],
-        "text_mapping": {
-          "{{toujyou.png|ç»å ´}}ã�?å·¦ãµã¤ãã": "Frame 0: HAS_KEYWORD with char_id_1=LANZHU (left side check)",
-          "ã«ã¼ãã2æå¼ã�?": "Frame 2: DRAW with value=2",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD with value=1, source_zone=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3588,18 +3477,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from lower cost Cerise Bouquet member to recover Hasunosora live card",
-          "Frame 0: NOP with unit_enabled=CERISE_BOUQUE checks baton condition",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: RECOVER_LIVE with group_id=HASUNOSORA - recovers live card to hand",
-          "4 cards share this pattern (ç¾çå�?å­�? variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ããã³ã¹ããä½ããã¹ãªã¼ãºãã¼ã±ã�?ã®ã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: NOP with unit_id=CERISE_BOUQUET (baton check)",
-          "èªåã®æ§ãå®¤ãããè®ãç©ºã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with group_id=HASUNOSORA, source_zone=DISCARD, target_slot=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3668,16 +3549,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Simple activate 2 energy on play",
-          "Frame 0: ACTIVATE_ENERGY with value=2",
-          "Frame 1: RETURN",
-          "4 cards share this pattern (æ¥éä¸è±å¸, ã¨ãã»ã´ã§ã«ã)"
-        ],
-        "text_mapping": {
-          "ã¨ã�?ã«ã®ã¼ã2æã¢ã¯ãã£ãã«ãã": "Frame 0: ACTIVATE_ENERGY with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3761,18 +3636,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton touch to recover Liella member from discard to hand",
-          "Frame 0: BATON checks if baton touched",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: RECOVER_MEMBER with group_id=LIELLA - recovers member to hand",
-          "4 cards share this pattern (æ¡å°�?è·¯ã�?ãªå­�? variants)"
-        ],
-        "text_mapping": {
-          "ã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON check",
-          "ãã®ã�?ãã³ã¿ããã§æ§ãå®¤ã«ç½®ããããLiella!ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_MEMBER with group_id=LIELLA, source_zone=DISCARD, target_slot=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3858,18 +3725,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard live card from hand to draw 3",
-          "Frame 0: MOVE_TO_DISCARD with card_type=LIVE, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: DRAW with value=3",
-          "4 cards share this pattern (æ�?¾æµ¦æå�? variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã®ã©ã¤ãã«ã¼ãã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with card_type=LIVE, is_optional=1",
-          "ã«ã¼ãã3æå¼ã�?": "Frame 2: DRAW with value=3"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -3988,23 +3847,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand + check other members on stage to recover Mira Cra Park card",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: SUM_VALUE aggregates value",
-          "Frame 3: COUNT_STAGE checks if other members on stage (special_id=Not Self)",
-          "Frame 4: SUM_VALUE checks comparison",
-          "Frame 5: JUMP_IF_FALSE skips if condition not met",
-          "Frame 6: RECOVER_MEMBER with unit_id=MIRA_CRA_PARK",
-          "4 cards share this pattern (å¤§æ²¢ç çä¹ variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®ã¹ãã¼ã¸ã«ã»ãã®ã¡ã³ã�?ã¼ãããå ´å�?": "Frames 3-5: COUNT_STAGE with special_id=Not Self + SUM_VALUE comparison",
-          "èªåã®æ§ãå®¤ãããã¿ãã�?ãã±ã¼ã�?ï¼ã�?ã®ã«ã¼ãã1æææ­ã«å ãã": "Frame 6: RECOVER_MEMBER with unit_id=MIRA_CRA_PARK"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4104,20 +3950,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard to look at 7 cards, choose up to 3 member cards with heart_02/04/05",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: LOOK_AND_CHOOSE with count=7, choose_count=3, color_mask=RED|GREEN|BLUE (heart colors), is_optional=1",
-          "4 cards share this pattern (æ¡å�?ããã�? variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã7æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=7",
-          "ã�?ã®ä¸­ãã{{heart_02.png|heart02}}ã{{heart_04.png|heart04}}ã{{heart_05.png|heart05}}ãæã¤ã¡ã³ã�?ã¼ã«ã¼ãã3æã¾ã§å¬éãã¦ææ­ã«å ãã¦ããã": "Frame 2: color_mask=RED|GREEN|BLUE, choose_count=3, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: remainder_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4208,18 +4044,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to recover Nijigasaki live card from discard",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI",
-          "4 cards share this pattern (æ¡å�?ããã�? variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®æ§ãå®¤ãããè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4297,18 +4125,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from member with no ability to draw 1 card",
-          "Frame 0: BATON checks if baton touched",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: DRAW with value=1",
-          "4 cards share this pattern (é«æµ·å�?æ­ variants)"
-        ],
-        "text_mapping": {
-          "è½åãæããªãã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON check for no-ability member",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4394,16 +4214,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Both players recover 1 live card from discard to hand",
-          "Frame 0: RECOVER_LIVE for SELF",
-          "Frame 1: RECOVER_LIVE for OPPONENT (target_slot=STAGE_2)",
-          "4 cards share this pattern (åªæ¨ãã¤è�? variants)"
-        ],
-        "text_mapping": {
-          "èªåã¨ç¸æã¯ã�?ããããèªèº«ã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frames 0-1: RECOVER_LIVE for SELF + RECOVER_LIVE for OPPONENT"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4490,18 +4304,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If energy >= 11, recover 1 live card from discard to hand",
-          "Frame 0: COUNT_ENERGY with value=11, comparison=GE",
-          "Frame 1: JUMP_IF_FALSE skips if energy < 11",
-          "Frame 2: RECOVER_LIVE",
-          "4 cards share this pattern (ç±³å¥³ã¡ã¤ variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¨ã�?ã«ã®ã¼ã11æä»¥ä¸ããå ´å�?": "Frame 0: COUNT_ENERGY with value=11, comparison=GE",
-          "èªåã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4603,19 +4409,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional: Select Liella member, negate all LIVE_START abilities, then recover Liella card",
-          "Frame 0: SELECT_MEMBER with group_id=LIELLA, is_optional=1",
-          "Frame 1: NEGATE_EFFECT negates selected member's LIVE_START abilities",
-          "Frame 2: JUMP_IF_FALSE skips if not activated",
-          "Frame 3: RECOVER_LIVE with group_id=LIELLA",
-          "4 cards share this pattern (æ¾è°·ãã®ã variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããLiella!ã�?ã®ã¡ã³ã�?ã¼1äººã®ãã¹ã¦ã®{{live_start.png|ã©ã¤ãéå§æ}}è½åããã©ã¤ãçµäºæã¾ã§ãç¡å¹ã«ãã¦ããã": "Frames 0-1: SELECT_MEMBER (LIELLA, optional) + NEGATE_EFFECT",
-          "ããã«ããç¡å¹ã«ããå ´å�?ãèªåã®æ§ãå®¤ãããLiella!ã�?ã®ã«ã¼ãã1æææ­ã«å ãã": "Frames 2-3: JUMP_IF_FALSE + RECOVER_LIVE with group_id=LIELLA"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4711,19 +4508,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional: Select Liella member, negate all LIVE_START abilities, then recover Liella card",
-          "Frame 0: SELECT_MEMBER with group_id=LIELLA, is_optional=1",
-          "Frame 1: NEGATE_EFFECT negates selected member's LIVE_START abilities",
-          "Frame 2: JUMP_IF_FALSE skips if not activated",
-          "Frame 3: RECOVER_LIVE with group_id=LIELLA",
-          "4 cards share this pattern (æ¾è°·ãã®ã variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããLiella!ã�?ã®ã¡ã³ã�?ã¼1äººã®ãã¹ã¦ã®{{live_start.png|ã©ã¤ãéå§æ}}è½åããã©ã¤ãçµäºæã¾ã§ãç¡å¹ã«ãã¦ããã": "Frames 0-1: SELECT_MEMBER (LIELLA, optional) + NEGATE_EFFECT",
-          "ããã«ããç¡å¹ã«ããå ´å�?ãèªåã®æ§ãå®¤ãããLiella!ã�?ã®ã«ã¼ãã1æææ­ã«å ãã": "Frames 2-3: JUMP_IF_FALSE + RECOVER_LIVE with group_id=LIELLA"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -4919,20 +4707,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw 1 card per member on stage, then discard 1 from hand",
-          "Frame 0: COUNT_STAGE counts members on stage",
-          "Frame 1: JUMP_IF_FALSE skips if no members",
-          "Frame 2: DRAW with value=1 (draws once, not per member - ISSUE: should be per member)",
-          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
-          "4 cards share this pattern (åç°æµ·æª variants)",
-          "ISSUE: Text says 'ã¡ã³ã�?ã¼1äººã«ã¤ã�?ãã«ã¼ãã1æå¼ã�?' (1 card per member), but frame only draws 1"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼1äººã«ã¤ã�?ãã«ã¼ãã1æå¼ã�?": "Frame 0-2: COUNT_STAGE + JUMP_IF_FALSE + DRAW (ISSUE: only draws 1, not per member)",
-          "ã�?ã®å¾ãææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD with value=1, source_zone=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5033,18 +4811,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If cost 13+ member on stage, draw 1 card",
-          "Frame 0: COUNT_STAGE with value_threshold=13, is_cost_type=1 - checks for costâ¥13 member",
-          "Frame 1: JUMP_IF_FALSE skips if no costâ¥13 member",
-          "Frame 2: DRAW with value=1",
-          "4 cards share this pattern (ç¢æ¾¤ã«ã variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ã³ã¹ã13ä»¥ä¸ã®ã¡ã³ã�?ã¼ãããå ´å�?": "Frame 0: COUNT_STAGE with value_threshold=13, is_cost_type=1, comparison=GE",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5121,20 +4891,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Mill 4 cards from deck top, if live card among them, add 2 blades",
-          "Frame 0: MOVE_TO_DISCARD with value=4, source_zone=DECK_TOP - mills 4 cards",
-          "Frame 1: DISCARDED_CARDS with card_type=LIVE - checks if live card was milled",
-          "Frame 2: JUMP_IF_FALSE skips if no live card",
-          "Frame 3: ADD_BLADES with value=2",
-          "4 cards share this pattern (æ¥éä¸è±å¸ variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã4ææ§ãå®¤ã«ç½®ã�?": "Frame 0: MOVE_TO_DISCARD with value=4, source_zone=DECK_TOP",
-          "ã�?ããã®ä¸­ã«ã©ã¤ãã«ã¼ããããå ´å�?": "Frame 1-2: DISCARDED_CARDS with card_type=LIVE + JUMP_IF_FALSE",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 3: ADD_BLADES with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5212,18 +4972,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional swap Nijigasaki live card from success pile to discard, then from discard to success pile",
-          "Frame 0: SWAP_ZONE with group_id=NIJIGASAKI, card_type=LIVE, is_optional=1 - moves from SUCCESS_PILE to DISCARD",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: SWAP_ZONE with group_id=NIJIGASAKI, card_type=LIVE - moves from DISCARD to SUCCESS_PILE",
-          "4 cards share this pattern (ä¸è¹æ å­�? variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ãããè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: SWAP_ZONE with group_id=NIJIGASAKI, source_zone=SUCCESS_PILE, dest_zone=DISCARD, is_optional=1",
-          "ã�?ãããå ´å�?ãèªåã®æ§ãå®¤ã«ãããè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1ææ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ç½®ã�?": "Frames 1-2: JUMP_IF_FALSE + SWAP_ZONE with source_zone=DISCARD, dest_zone=SUCCESS_PILE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5270,16 +5022,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Recover 1 member card with cost â¤2 from discard to hand",
-          "Frame 0: RECOVER_MEMBER with value_threshold=2, is_le=1, is_cost_type=1",
-          "Frame 1: RETURN",
-          "4 cards share this pattern (æç©ºå variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ããã³ã¹ã2ä»¥ä¸ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æææ­ã«å ãã": "Frame 0: RECOVER_MEMBER with value_threshold=2, is_le=1, is_cost_type=1, source_zone=DISCARD, target_slot=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5330,16 +5076,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional recover up to 2 member cards with cost â¤2 from discard to hand",
-          "Frame 0: RECOVER_MEMBER with value=2, value_threshold=2, is_le=1, is_cost_type=1, is_optional=1",
-          "Frame 1: RETURN",
-          "4 cards share this pattern (æ�?éããã variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ããã³ã¹ã2ä»¥ä¸ã®ã¡ã³ã�?ã¼ã«ã¼ãã2æã¾ã§ææ­ã«å ãã": "Frame 0: RECOVER_MEMBER with value=2, value_threshold=2, is_le=1, is_cost_type=1, is_optional=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5527,18 +5267,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Auto ability: On play or move, add 2 blades",
-          "Frame 0: ADD_BLADES with value=2",
-          "Frame 1: RETURN",
-          "Note: Trigger is ON_PLAY but text says 'ç»å ´ããã¨ãªã¢ãç§»åãããã³' - should trigger on move too",
-          "2 cards share this pattern (æ¡å°�?è·¯ã�?ãªå­�? ab#1 variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãç»å ´ããã¨ãªã¢ãç§»åãããã³": "Auto trigger (currently ON_PLAY only, should also trigger on move)",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 0: ADD_BLADES with value=2 (missing duration=LIVE_END)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5649,20 +5381,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy to look at top 3, choose 1 to hand, discard rest",
-          "Frame 0: PAY_ENERGY with is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not paid",
-          "Frame 2: LOOK_AND_CHOOSE with count=3, reveal=1",
-          "3 cards share this pattern (æ¾è°·ãã®ã, è¥è�?åå­£, æ¡å°�?è·¯ã�?ãªå­�?)"
-        ],
-        "text_mapping": {
-          "{{toujyou.png|ç»å ´}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=3",
-          "ã�?ã®ä¸­ãã1æãææ­ã«å ã": "Frame 2: target_slot=HAND",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: remainder_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5761,21 +5483,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy to recover SaintSnow card, then add 2 blades",
-          "Frame 0: PAY_ENERGY with is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not paid",
-          "Frame 2: RECOVER_MEMBER with group_id=11 (SaintSnow), is_optional=1",
-          "Frame 3: JUMP_IF_FALSE skips blade gain if not recovered",
-          "Frame 4: ADD_BLADES with value=2",
-          "3 cards share this pattern (é»æ¾¤ã«ãã£ variants)"
-        ],
-        "text_mapping": {
-          "{{toujyou.png|ç»å ´}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with is_optional=1",
-          "èªåã®æ§ãå®¤ãããSaintSnowã�?ã®ã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_MEMBER with group_id=11",
-          "ã�?ãããå ´å�?ãã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 3-4: JUMP_IF_FALSE + ADD_BLADES with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5874,24 +5585,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from lower cost member: both players discard down to 3 cards, then draw 3",
-          "Frame 0: BATON checks baton condition",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: SET_TARGET_SELF",
-          "Frame 3: MOVE_TO_DISCARD with value=-2147483645 (discard to 3 cards)",
-          "Frame 4: DRAW with value=3",
-          "Frame 5: SET_TARGET_OPPONENT",
-          "Frame 6: MOVE_TO_DISCARD with value=-2147483645 (discard to 3 cards)",
-          "Frame 7: DRAW with value=3",
-          "3 cards share this pattern (æ�?±æ¢�?å¸ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ããã³ã¹ããä½ãã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON check",
-          "èªåã¨ç¸æã¯ã�?ãããèªèº«ã®ææ­ã®ææ°ã3æã«ãªãã¾ã§ææ­ãæ§ãå®¤ã«ç½®ã�?": "Frames 3,6: MOVE_TO_DISCARD with value=-2147483645 (discard down to 3)",
-          "ã�?ã®å¾ãèªåã¨ç¸æã¯ã�?ãããã«ã¼ãã3æå¼ã�?": "Frames 4,7: DRAW with value=3"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -5947,13 +5644,13 @@
           "op": "LOOK_AND_CHOOSE",
           "frame_index": 4,
           "value": {
-            "count": 5
+            "count": 5,
+            "reveal": 1
           },
           "attr": {
             "target_player": "SELF",
             "card_type": "MEMBER",
             "group_enabled": 1,
-            "group_id": "MUSE",
             "value_enabled": 1,
             "value_threshold": 9,
             "is_cost_type": 1,
@@ -6020,21 +5717,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self + discard hand to look at 5, choose cost9+ Aqours member to hand",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND (cost to tap)",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: LOOK_AND_CHOOSE with count=5, group=AQOURS, costâ¥9, is_optional=1",
-          "Frame 3: MOVE_TO_DISCARD discards remainder",
-          "3 cards share this pattern (æ´¥å³¶åå­�? variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ããææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1 (cost)",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã5æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=5",
-          "ã�?ã®ä¸­ããã³ã¹ã9ä»¥ä¸ã®ãAqoursã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 2: group_id=AQOURS, value_threshold=9, is_cost_type=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD with remainder_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6163,16 +5849,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self + discard hand to look at 5, choose cost9+ Liella member to hand",
-          "Same pattern as ability 58 but for Liella group",
-          "3 cards share this pattern (è¥è�?åå­£ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ããææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "ã�?ã®ä¸­ããã³ã¹ã9ä»¥ä¸ã®ãLiella!ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 2: group_id=LIELLA, value_threshold=9, is_cost_type=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6301,24 +5981,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self + optional discard hand to look at 5, choose cost9+ Muse member",
-          "Frame 0: SET_TAPPED optional on self",
-          "Frame 1: JUMP_IF_FALSE skips if not tapped",
-          "Frame 2: MOVE_TO_DISCARD optional from HAND",
-          "Frame 3: JUMP_IF_FALSE skips if not discarded",
-          "Frame 4: LOOK_AND_CHOOSE with count=5, group=MUSE, costâ¥9, is_optional=1",
-          "Frame 5: JUMP_IF_FALSE skips if not chosen",
-          "Frame 6: MOVE_TO_HAND moves chosen card",
-          "Frame 7: MOVE_TO_DISCARD discards remainder",
-          "3 cards share this pattern (çµ¢ç¬çµµé variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ã": "Frame 0: SET_TAPPED with is_optional=1",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
-          "ã�?ã®ä¸­ããã³ã¹ã9ä»¥ä¸ã®ãÎ¼'sã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 4: LOOK_AND_CHOOSE with group_id=MUSE, value_threshold=9"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6378,14 +6044,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Same pattern as ability 60 but for Hasunosora group",
-          "3 cards share this pattern (æ¡åæ³ variants)"
-        ],
-        "text_mapping": {
-          "ã�?ã®ä¸­ããã³ã¹ã9ä»¥ä¸ã®ãè®ãç©ºã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 4: LOOK_AND_CHOOSE with group_id=HASUNOSORA"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6517,14 +6179,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Same pattern as ability 60 but for Nijigasaki group",
-          "3 cards share this pattern (å¤©çå¯ºçå¥ variants)"
-        ],
-        "text_mapping": {
-          "ã�?ã®ä¸­ããã³ã¹ã9ä»¥ä¸ã®ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 4: LOOK_AND_CHOOSE with group_id=NIJIGASAKI"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6660,16 +6318,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Simple add 1 blade on play",
-          "Frame 0: ADD_BLADES with value=1",
-          "Note: Missing duration=LIVE_END for 'ã©ã¤ãçµäºæã¾ã§'",
-          "3 cards share this pattern (é»æ¾¤ãã¤ã¤, å°�?åé è, é»æ¾¤ã«ãã£)"
-        ],
-        "text_mapping": {
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 0: ADD_BLADES with value=1 (missing duration=LIVE_END)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6800,20 +6452,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Choice ability: draw 1 discard 1 OR tap all costâ¤2 opponents",
-          "Frame 0: SELECT_MODE with 2 options",
-          "Frames 1-2: JUMP routing",
-          "Frames 3-5: Option 1 - DRAW + MOVE_TO_DISCARD + JUMP to RETURN",
-          "Frames 6-8: Option 2 - SELECT_MEMBER (costâ¤2) + MOVE_MEMBER (tap) + JUMP to RETURN",
-          "3 cards share this pattern (æç©ºå, è¥¿æ¨éçå§«, å°�?æ³è±é½)"
-        ],
-        "text_mapping": {
-          "ä»¥ä¸ãã1ã¤ãé¸ã¶": "Frame 0: SELECT_MODE with value=2",
-          "ã«ã¼ãã1æå¼ã�?ãææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frames 3-4: DRAW + MOVE_TO_DISCARD",
-          "ç¸æã®ã¹ãã¼ã¸ã«ãããã¹ã¦ã®ã³ã¹ã2ä»¥ä¸ã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã": "Frames 6-7: SELECT_MEMBER (value_threshold=2, is_le=1) + MOVE_MEMBER (is_wait=1)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6897,19 +6539,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Choice ability: give blade to Aqours member OR position change SaintSnow member",
-          "Frame 0: SELECT_MODE with 2 options",
-          "Frames 1-2: JUMP routing",
-          "Frames 3-5: Option 1 - SELECT_MEMBER (Aqours, exclude_self) + ADD_BLADES + JUMP",
-          "Frames 6-8: Option 2 - SELECT_MEMBER (SaintSnow) + MOVE_MEMBER (position_change) + JUMP",
-          "3 cards share this pattern (é»æ¾¤ãã¤ã¤ variants)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããã®ã¡ã³ã�?ã¼ä»¥å¤ã®ãAqoursã�?ã®ã¡ã³ã�?ã¼1äººã¯ãã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 3-4: SELECT_MEMBER (group=AQOURS, exclude_self=1) + ADD_BLADES",
-          "èªåã®ã¹ãã¼ã¸ã«ãããSaintSnowã�?ã®ã¡ã³ã�?ã¼1äººãã�?ã¸ã·ã§ã³ãã§ã³ã¸ããã": "Frames 6-7: SELECT_MEMBER (group=SAINT_SNOW) + MOVE_MEMBER (destination=POSITION_CHANGE)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -6992,19 +6625,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Choice ability: recover 1 live if 3+ unique names OR recover 2 live if 3+ unique groups",
-          "Frame 0: SELECT_MODE with 2 options",
-          "Frames 1-2: JUMP routing",
-          "Frames 3-6: Option 1 - NOP (UNIQUE_DISCARD_LIVE_NAMES_COUNTâ¥3) + JUMP_IF_FALSE + RECOVER_LIVE(1) + RETURN",
-          "Frames 7-10: Option 2 - NOP (UNIQUE_DISCARD_LIVE_GROUPS_COUNTâ¥3) + JUMP_IF_FALSE + RECOVER_LIVE(2) + RETURN",
-          "3 cards share this pattern (ãã¢ã»ãã¤ã©ã¼ variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ã«ã«ã¼ãå�?�?ãç°ãªãã©ã¤ãã«ã¼ãã3æä»¥ä¸ããå ´å�?ãèªåã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frames 3-6: NOP (raw_cond=UNIQUE_DISCARD_LIVE_NAMES_COUNT, MIN=3) + RECOVER_LIVE with value=1",
-          "èªåã®æ§ãå®¤ã«ã°ã«ã¼ãå�?�?ãç°ãªãã©ã¤ãã«ã¼ãã3æä»¥ä¸ããå ´å�?ãèªåã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã2æææ­ã«å ãã": "Frames 7-10: NOP (raw_cond=UNIQUE_DISCARD_LIVE_GROUPS_COUNT, MIN=3) + RECOVER_LIVE with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7070,19 +6694,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard up to 2 non-blade-heart members from hand, recover that many Aqours live cards",
-          "Frame 0: MOVE_TO_DISCARD with value=2, has_blade_heart=1 (filter no blade heart), is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: RECOVER_LIVE with group_id=AQOURS, is_optional=1",
-          "Note: RECOVER_LIVE value=1, should match discarded count (may need SUM_VALUE)",
-          "3 cards share this pattern (æ�?¾æµ¦æå�? variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã®ãã¬ã¼ãã�?ã¼ããæããªãã¡ã³ã�?ã¼ã«ã¼ãã2æã¾ã§æ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with has_blade_heart=1, is_optional=1",
-          "èªåã®æ§ãå®¤ãããããã«ããæ§ãå®¤ã«ç½®ããã«ã¼ãã¨å�?ãææ°ã®ãAqoursã�?ã®ã©ã¤ãã«ã¼ããææ­ã«å ãã": "Frame 2: RECOVER_LIVE with group_id=AQOURS (ISSUE: value=1, should match discarded count)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7156,18 +6771,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to tap up to 2 costâ¤4 opponents",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: TAP_OPPONENT with value=2, value_threshold=4, is_le=1, is_cost_type=1",
-          "3 cards share this pattern (æ¡åæ³, å®®ä¸æ variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼ã2äººã¾ã§ã¦ã§ã¤ãã«ãã": "Frame 2: TAP_OPPONENT with value=2, value_threshold=4, is_le=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7637,18 +7244,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 2 cards to recover EdelNote live card",
-          "Frame 0: MOVE_TO_DISCARD with value=2, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: RECOVER_LIVE with unit_id=EDEL_NOTE",
-          "3 cards share this pattern (ã»ã©ã¹ æ³ç° ãªãªã¨ã³ãã§ã«ã variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã2ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with value=2, is_optional=1",
-          "èªåã®æ§ãå®¤ãããEdelNoteã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with unit_id=EDEL_NOTE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7723,20 +7322,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Both players position change their center member",
-          "Frame 0: SELECT_MEMBER selects self's center (area_idx=2)",
-          "Frame 1: MOVE_MEMBER with destination=POSITION_CHANGE, target_player=BOTH, group_id=LIELLA",
-          "Frame 2: SELECT_MEMBER selects opponent's center (area_idx=2)",
-          "Frame 3: MOVE_MEMBER with destination=POSITION_CHANGE, target_player=BOTH, group_id=LIELLA",
-          "Note: group_id=LIELLA seems incorrect - should apply to all members, not just Liella",
-          "3 cards share this pattern (ã¦ã£ã¼ã³ã»ãã«ã¬ã¬ã¼ã variants)"
-        ],
-        "text_mapping": {
-          "èªåã¨ç¸æã¯ãèªèº«ã®ã¹ãã¼ã¸ã®ã»ã³ã¿ã¼ã«ããã¡ã³ã�?ã¼ãã�?ã¸ã·ã§ã³ãã§ã³ã¸ãã": "Frames 0-3: SELECT_MEMBER (center) + MOVE_MEMBER (position_change) for both players",
-          "(ã»ã³ã¿ã¼ã«ããã¡ã³ã�?ã¼ãä»ããã¨ãªã¢ä»¥å¤ã®ã¨ãªã¢ã«ç§»åããããã�?ã®ã¨ãªã¢ã«ã¡ã³ã�?ã¼ãããå ´å�?ãã�?ã®ã¡ã³ã�?ã¼ã¯ã»ã³ã¿ã¼ã¨ãªã¢ã«ç§»åããã)": "MOVE_MEMBER with destination=POSITION_CHANGE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7804,18 +7393,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If energy >= 7, draw 1 card",
-          "Frame 0: COUNT_ENERGY with value=7, comparison=GE",
-          "Frame 1: JUMP_IF_FALSE skips if energy < 7",
-          "Frame 2: DRAW with value=1",
-          "3 cards share this pattern (æ¾è°·ãã®ã, èææ, è¥è�?åå­£)"
-        ],
-        "text_mapping": {
-          "èªåã®ã¨ã�?ã«ã®ã¼ã7æä»¥ä¸ããå ´å�?": "Frame 0: COUNT_ENERGY with value=7, comparison=GE",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7878,18 +7459,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If success pile score total >= 6, activate 1 energy (wait state)",
-          "Frame 0: SCORE_TOTAL_CHECK with value=6, comparison=GE",
-          "Frame 1: JUMP_IF_FALSE skips if score < 6",
-          "Frame 2: ENERGY_CHARGE with value=1, is_wait=1",
-          "3 cards share this pattern (æç©ºå variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ãã®ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸ã®å ´å�?": "Frame 0: SCORE_TOTAL_CHECK with value=6, comparison=GE",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¢ã¯ãã£ãç¶æã§ç½®ã�?": "Frame 2: ENERGY_CHARGE with value=1, is_wait=1 (wait state, not active - ISSUE: text says active but frame uses wait)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -7975,19 +7548,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Auto ability (once per turn): When cost11 member plays, activate 1 energy",
-          "Frame 0: COUNT_STAGE with once_per_turn=1",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: ACTIVATE_ENERGY with value=1",
-          "Note: Missing cost11 filter in COUNT_STAGE - text specifies cost11",
-          "2 cards share this pattern (é�?åµ�?ç�?  variants)"
-        ],
-        "text_mapping": {
-          "{{jidou.png|èªå}}{{turn1.png|ã¿ã¼ã³1å}}èªåã®ã¹ãã¼ã¸ã«ãã®ã¡ã³ã�?ã¼ä»¥å¤ã®ã³ã¹ã11ã®ã¡ã³ã�?ã¼ãç»å ´ããã¨ã�?": "Frame 0: COUNT_STAGE with once_per_turn=1 (ISSUE: missing cost11 filter)",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frame 2: ACTIVATE_ENERGY with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8096,19 +7660,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Auto ability (once per turn): When cost10 member plays, draw 1 card",
-          "Frame 0: GROUP_FILTER with once_per_turn=1",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: DRAW with value=1",
-          "Note: Missing cost10 filter - text specifies cost10",
-          "2 cards share this pattern (å®®ä¸æ variants)"
-        ],
-        "text_mapping": {
-          "{{jidou.png|èªå}}{{turn1.png|ã¿ã¼ã³1å}}èªåã®ã¹ãã¼ã¸ã«ã³ã¹ã10ã®ã¡ã³ã�?ã¼ãç»å ´ããã¨ã�?": "Frame 0: GROUP_FILTER with once_per_turn=1 (ISSUE: missing cost10 filter)",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8191,21 +7746,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Center check: Optional tap BiBi member to tap 1 opponent active member",
-          "Frame 0: IS_CENTER checks if in center",
-          "Frame 1: JUMP_IF_FALSE skips if not center",
-          "Frame 2: MOVE_MEMBER with unit_id=BIBI, is_optional=1, is_wait=1",
-          "Frame 3: JUMP_IF_FALSE skips if not tapped",
-          "Frame 4: TAP_OPPONENT with value=1",
-          "2 cards share this pattern (è¥¿æ¨éçå§« variants)"
-        ],
-        "text_mapping": {
-          "{{center.png|ã»ã³ã¿ã¼}}": "Frame 0: IS_CENTER",
-          "ãBiBiã�?ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã¦ããã": "Frame 2: MOVE_MEMBER with unit_id=BIBI, is_optional=1, is_wait=1",
-          "ç¸æã¯ãèªèº«ã®ã¹ãã¼ã¸ã«ããã¢ã¯ãã£ãç¶æã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 4: TAP_OPPONENT with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8278,22 +7822,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self: If stage has only BiBi members, tap opponent with <=3 blades",
-          "Frame 0: GROUP_FILTER with unit_id=BIBI, value=4 - checks if 4+ BiBi members",
-          "Frame 1: JUMP_IF_FALSE skips if not BiBi only",
-          "Frame 2: SET_TAPPED optional on self",
-          "Frame 3: JUMP_IF_FALSE skips if not tapped",
-          "Frame 4: SELECT_MEMBER targeting OPPONENT with filter=BLADE_LE3",
-          "Frame 5: MOVE_MEMBER with is_wait=1 to tap selected opponent",
-          "3 cards share this pattern (çµ¢ç¬çµµé variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 2: SET_TAPPED with is_optional=1",
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ããBiBiã�?ã®ã¿ã®å ´å�?": "Frame 0: GROUP_FILTER with unit_id=BIBI (checks 4+ BiBi, may be incorrect logic)",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããåãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ã3ã¤ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 4: SELECT_MEMBER with filter=BLADE_LE3 + Frame 5: MOVE_MEMBER with is_wait=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8375,23 +7907,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Center check: If success pile has Muse cards, grant ability (+1 or +2 score)",
-          "Frame 0: IS_CENTER checks if in center",
-          "Frame 1: SUCCESS_PILE_COUNT with group_enabled (Muse)",
-          "Frame 2: JUMP_IF_FALSE skips if no Muse cards",
-          "Frame 3: GRANT_ABILITY with value=1 (+1 score)",
-          "Frame 4: GRANT_ABILITY with value=2 (+2 score)",
-          "Note: Missing logic to check if 1 card vs 2+ cards - both abilities granted regardless",
-          "2 cards share this pattern (åç°æµ·æª variants)"
-        ],
-        "text_mapping": {
-          "{{center.png|ã»ã³ã¿ã¼}}": "Frame 0: IS_CENTER",
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«{{icon_score.png|ã¹ã³ã¢}}ãæã¤ãÎ¼'sã�?ã®ã«ã¼ãã1æããå ´å�?": "Frame 1: SUCCESS_PILE_COUNT with group=Muse (ISSUE: missing count check)",
-          "ã©ã¤ãçµäºæã¾ã§ãã{{jyouji.png|å¸¸æ}}ã©ã¤ãã®å�?è¨ã¹ã³ã¢ã+ï¼ãããã�?ãå¾ã": "Frame 3: GRANT_ABILITY with value=1",
-          "2æä»¥ä¸ããå ´å�?ãä»£ã�?ãã«ã{{jyouji.png|å¸¸æ}}ã©ã¤ãã®å�?è¨ã¹ã³ã¢ã+ï¼ãããã�?ãå¾ã": "Frame 4: GRANT_ABILITY with value=2 (ISSUE: both granted regardless of count)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8492,18 +8011,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 4 energy to play up to 2 members from discard with total cost <= 4",
-          "Frame 0: PAY_ENERGY with value=4, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not paid",
-          "Frame 2: PLAY_MEMBER_FROM_DISCARD with value=2, value_threshold=4, is_le=1, is_cost_type=1",
-          "2 cards share this pattern (æ´¥å³¶åå­�? variants)"
-        ],
-        "text_mapping": {
-          "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with value=4, is_optional=1",
-          "èªåã®æ§ãå®¤ãããã³ã¹ãã®å�?è¨ã4ä»¥ä¸ã«ãªãããã«ã¡ã³ã�?ã¼ã«ã¼ãã2æã¾ã§ã¹ãã¼ã¸ã«ç»å ´ããã": "Frame 2: PLAY_MEMBER_FROM_DISCARD with value=2, value_threshold=4, is_le=1, is_cost_type=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8590,21 +8101,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy to look at 7, choose Liella card to hand",
-          "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not paid",
-          "Frame 2: SUM_VALUE",
-          "Frame 3: JUMP_IF_FALSE skips if condition not met",
-          "Frame 4: LOOK_AND_CHOOSE with count=7, group_id=LIELLA, is_optional=1",
-          "2 cards share this pattern (èææ variants)"
-        ],
-        "text_mapping": {
-          "{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã7æè¦ã": "Frame 4: LOOK_AND_CHOOSE value.count=7",
-          "ã�?ã®ä¸­ãããLiella!ã�?ã®ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 4: group_id=LIELLA, is_optional=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8681,22 +8181,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy to play costâ¤4 Nijigasaki member from hand, tap self if member has blade heart",
-          "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not paid",
-          "Frame 2: PLAY_MEMBER_FROM_HAND with group_id=NIJIGASAKI, costâ¤4",
-          "Frame 3: NOP checks condition",
-          "Frame 4: JUMP_IF_FALSE skips if condition not met",
-          "Frame 5: MOVE_MEMBER with is_wait=1 to tap self",
-          "2 cards share this pattern (è¿æ±å½¼æ¹ variants)"
-        ],
-        "text_mapping": {
-          "{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "èªåã®ææ­ããã³ã¹ã4ä»¥ä¸ã®ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æã¹ãã¼ã¸ã«ç»å ´ããã": "Frame 2: PLAY_MEMBER_FROM_HAND with group_id=NIJIGASAKI, value_threshold=4, is_le=1",
-          "ããã«ããç»å ´ããã¡ã³ã�?ã¼ããã¬ã¼ãã�?ã¼ããæã¤å ´å�?ããã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã": "Frames 3-5: NOP + JUMP_IF_FALSE + MOVE_MEMBER with is_wait=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8770,22 +8258,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy: If baton from lower cost Mira Cra Park, gain 2 heart01",
-          "Frame 0: PAY_ENERGY with value=1, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not paid",
-          "Frame 2: BATON with unit_id=MIRA_CRA_PARK",
-          "Frame 3: SUM_VALUE",
-          "Frame 4: JUMP_IF_FALSE skips if baton condition not met",
-          "Frame 5: ADD_HEARTS with value=2, heart_type=0 (heart01)",
-          "2 cards share this pattern (å®é¤å¯ºå§«è½ variants)"
-        ],
-        "text_mapping": {
-          "{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with value=1, is_optional=1",
-          "ãã®ã¡ã³ã�?ã¼ããã³ã¹ããä½ããã¿ãã�?ãã±ã¼ã�?ï¼ã�?ã®ã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 2: BATON with unit_id=MIRA_CRA_PARK",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_01.png|heart01}}{{heart_01.png|heart01}}ãå¾ã": "Frame 5: ADD_HEARTS with value=2, heart_type=0"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8871,20 +8347,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from Shioriko to draw 2 cards, discard 1",
-          "Frame 0: BATON with char_id_1=SHIORIKO",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: DRAW with value=2",
-          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
-          "2 cards share this pattern (ä¸è¹æ å­�? variants)"
-        ],
-        "text_mapping": {
-          "ãä¸è¹æ å­�?ã�?ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON with char_id_1=SHIORIKO",
-          "ã«ã¼ãã2æå¼ã�?": "Frame 2: DRAW with value=2",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD with value=1, source_zone=HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -8958,20 +8424,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from Kasumi to draw 2 cards, discard 1",
-          "Frame 0: BATON (no specific char filter - may be incorrect)",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: DRAW with value=2",
-          "Frame 3: MOVE_TO_DISCARD with value=1 from HAND",
-          "Note: Missing char_id_1=KASUMI filter - text specifies Kasumi",
-          "2 cards share this pattern (ä¸­é ããã¿ variants)"
-        ],
-        "text_mapping": {
-          "ãä¸­é ããã¿ã�?ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON (ISSUE: missing char_id_1=KASUMI filter)",
-          "ã«ã¼ãã2æå¼ã�?ãææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frames 2-3: DRAW + MOVE_TO_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9035,22 +8491,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard Liella member (except Fuyumari) to play 1 member from discard to same area",
-          "Frame 0: SELECT_MEMBER with group_id=LIELLA, is_optional=1",
-          "Frame 1: JUMP_IF_FALSE skips if not selected",
-          "Frame 2: MOVE_TO_DISCARD discards selected member",
-          "Frame 3: SUM_VALUE",
-          "Frame 4: JUMP_IF_FALSE skips if condition not met",
-          "Frame 5: PLAY_MEMBER_FROM_HAND plays 1 member to same area",
-          "Note: Missing exclude_self=Fuyumari filter - text specifies 'é¬¼å¡å¬æ¯¬ä»¥å¤'",
-          "2 cards share this pattern (é¬¼å¡å¬æ¯¬ variants)"
-        ],
-        "text_mapping": {
-          "ãé¬¼å¡å¬æ¯¬ã�?ä»¥å¤ã®ãLiella!ã�?ã®ã¡ã³ã�?ã¼1äººãã¹ãã¼ã¸ããæ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: SELECT_MEMBER with group_id=LIELLA (ISSUE: missing exclude_self filter)",
-          "èªåã®æ§ãå®¤ãããããã«ããæ§ãå®¤ã«ç½®ããã¡ã³ã�?ã¼ã«ã¼ãã1æãã�?ã®ã¡ã³ã�?ã¼ãããã¨ãªã¢ã«ç»å ´ããã": "Frames 2-5: MOVE_TO_DISCARD + PLAY_MEMBER_FROM_HAND to same area"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9117,20 +8561,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Left/right area check: Draw 2, discard 2",
-          "Frame 0: AREA_CHECK checks if in left or right area",
-          "Frame 1: JUMP_IF_FALSE skips if not in side area",
-          "Frame 2: DRAW with value=2",
-          "Frame 3: MOVE_TO_DISCARD with value=2 from HAND",
-          "2 cards share this pattern (åµ�?å�?ç é½ variants)"
-        ],
-        "text_mapping": {
-          "ã�?å·¦ãµã¤ããã�?å�?³ãµã¤ãã": "Frame 0: AREA_CHECK",
-          "ã«ã¼ãã2æå¼ã�?": "Frame 2: DRAW with value=2",
-          "ææ­ã2ææ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9224,18 +8658,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Baton from lower cost Dollchestra member to add 2 blades",
-          "Frame 0: BATON with unit_id=DOLLCHESTRA",
-          "Frame 1: JUMP_IF_FALSE skips if not baton touched",
-          "Frame 2: ADD_BLADES with value=2",
-          "2 cards share this pattern (å¾çºå°�?é´ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ããã³ã¹ããä½ããDOLLCHESTRAã�?ã®ã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON with unit_id=DOLLCHESTRA",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9415,22 +8841,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self: Draw 1, then discard 1 unless baton from Printemps",
-          "Frame 0: SET_TAPPED optional on self",
-          "Frame 1: JUMP_IF_FALSE skips to RETURN if not tapped",
-          "Frame 2: DRAW with value=1",
-          "Frame 3: NOP checks baton condition",
-          "Frame 4: JUMP_IF_FALSE skips discard if baton from Printemps",
-          "Frame 5: MOVE_TO_DISCARD with value=1",
-          "2 cards share this pattern (å°�?æ³è±é½ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1",
-          "ã�?ã®å¾ããã®ã¡ã³ã�?ã¼ããPrintempsã�?ã®ã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ãã¦ããªãããããææ­ã1ææ§ãå®¤ã«ç½®ã�?": "Frames 3-5: NOP (check baton) + JUMP_IF_FALSE + MOVE_TO_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9511,18 +8925,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self to tap 1 opponent with costâ¤9",
-          "Frame 0: SET_TAPPED optional on self",
-          "Frame 1: JUMP_IF_FALSE skips if not tapped",
-          "Frame 2: TAP_OPPONENT with value=1, value_threshold=9, is_le=1, is_cost_type=1",
-          "2 cards share this pattern (çµ±å è±ç²å¥ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã9ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 2: TAP_OPPONENT with value=1, value_threshold=9, is_le=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9593,17 +8999,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "LIVE_START: Optional tap self to activate 1 energy per Printemps member on stage",
-          "Note: Need to read more frames to see full implementation",
-          "2 cards share this pattern (å�?ãã¨ã variants)"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}": "Trigger is LIVE_START",
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "SET_TAPPED with is_optional=1 (need to verify frame)",
-          "èªåã®ã¹ãã¼ã¸ã«ãããPrintempsã�?ã®ã¡ã³ã�?ã¼1äººã«ã¤ã�?ãã¨ã�?ã«ã®ã¼ã1æã¢ã¯ãã£ãã«ãã": "Need to verify frame implementation"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9670,20 +9069,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self to look at 4, choose Liella live with heartsâ¥8 to hand",
-          "Frame 0: SET_TAPPED optional on self",
-          "Frame 1: JUMP_IF_FALSE skips if not tapped",
-          "Frame 2: LOOK_AND_CHOOSE with count=4, reveal=1, group_id=LIELLA, card_type=LIVE, value_threshold=8",
-          "2 cards share this pattern (å�?å�?¯å�?¯ variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã4æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=4",
-          "ã�?ã®ä¸­ããå¿è¦ã�?ã¼ãã®å�?è¨ã8ä»¥ä¸ã®ãLiella!ã�?ã®ã©ã¤ãã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 2: group_id=LIELLA, card_type=LIVE, value_threshold=8, reveal=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: dest_discard=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9759,18 +9148,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self to recover Muse member from discard",
-          "Frame 0: MOVE_MEMBER with is_optional=1, is_wait=1 (tap self)",
-          "Frame 1: JUMP_IF_FALSE skips if not tapped",
-          "Frame 2: RECOVER_MEMBER",
-          "2 cards share this pattern (å�?ãã¨ã variants)"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: MOVE_MEMBER with is_optional=1, is_wait=1",
-          "èªåã®æ§ãå®¤ãããÎ¼'sã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_MEMBER (ISSUE: missing group_id=MUSE filter)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9826,18 +9207,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw 1 card, then position change to different area",
-          "Frame 0: DRAW with value=1",
-          "Frame 1: SWAP_AREA moves member to different area",
-          "2 cards share this pattern (è¥è�?åå­£ variants)"
-        ],
-        "text_mapping": {
-          "ã«ã¼ãã1æå¼ã�?": "Frame 0: DRAW with value=1",
-          "ã�?ã®å¾ãç»å ´ããã¨ãªã¢ã¨ã¯å¥ã®èªåã®ã¨ãªã¢1ã¤ãé¸ã¶ããã®ã¡ã³ã�?ã¼ãã�?ã®ã¨ãªã¢ã«ç§»åãã": "Frame 1: SWAP_AREA",
-          "é¸ãã ã¨ãªã¢ã«ã¡ã³ã�?ã¼ãããå ´å�?ãã�?ã®ã¡ã³ã�?ã¼ã¯ããã®ã¡ã³ã�?ã¼ãããã¨ãªã¢ã«ç§»åããã": "SWAP_AREA handles the swap"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -9916,19 +9289,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Draw 1 card, if Mei on stage draw another",
-          "Frame 0: DRAW with value=1",
-          "Frame 1: COUNT_STAGE with char_id_1=MEI",
-          "Frame 2: JUMP_IF_FALSE skips if no Mei",
-          "Frame 3: DRAW with value=1",
-          "2 cards share this pattern (è¥è�?åå­£ variants)"
-        ],
-        "text_mapping": {
-          "ã«ã¼ãã1æå¼ã�?": "Frame 0: DRAW with value=1",
-          "èªåã®ã¹ãã¼ã¸ã«ãç±³å¥³ã¡ã¤ã�?ãããå ´å�?ãããã«ã«ã¼ãã1æå¼ã�?": "Frames 1-3: COUNT_STAGE (char_id_1=MEI) + JUMP_IF_FALSE + DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -10029,15 +9393,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Mill 5 cards from deck top to discard",
-          "Frame 0: MOVE_TO_DISCARD with value=5, source_zone=DECK_TOP",
-          "2 cards share this pattern (æ�?éããã variants)"
-        ],
-        "text_mapping": {
-          "ããã­ã®ä¸ããã«ã¼ãã5ææ§ãå®¤ã«ç½®ã�?": "Frame 0: MOVE_TO_DISCARD with value=5, source_zone=DECK_TOP"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -10139,20 +9498,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap up to 3 members, draw 1 per tapped member",
-          "Frame 0: SELECT_MEMBER with value=3",
-          "Frame 1: MOVE_MEMBER with is_optional=1, is_wait=1 (tap)",
-          "Frame 2: JUMP_IF_FALSE skips if none tapped",
-          "Frame 3: DRAW with value=1",
-          "Note: Only draws 1 total, not per tapped member - ISSUE",
-          "2 cards share this pattern (å°�?æ³è±é½ variants)"
-        ],
-        "text_mapping": {
-          "ã¡ã³ã�?ã¼ã3äººã¾ã§ã¦ã§ã¤ãã«ãã¦ããã": "Frames 0-1: SELECT_MEMBER + MOVE_MEMBER with is_optional=1",
-          "ããã«ããã¦ã§ã¤ãç¶æã«ããã¡ã³ã�?ã¼1äººã«ã¤ã�?ãã«ã¼ãã1æå¼ã�?": "Frame 3: DRAW with value=1 (ISSUE: should draw per member, not just 1)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -10452,22 +9801,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to mill 2, then recover member",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: SUM_VALUE (conditional logic)",
-          "Frame 3: JUMP_IF_FALSE skips if condition fails",
-          "Frame 4: MOVE_TO_DISCARD with value=2 from DECK_TOP",
-          "Frame 5: RECOVER_MEMBER with value=1 from DISCARD",
-          "2 cards share this pattern (å¤©çå¯ºçå¥ variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2ææ§ãå®¤ã«ç½®ã�?": "Frame 4: MOVE_TO_DISCARD with value=2, source_zone=DECK_TOP",
-          "ã�?ã®å¾ãèªåã®æ§ãå®¤ããã¡ã³ã�?ã¼ã«ã¼ãã1æææ­ã«å ãã": "Frame 5: RECOVER_MEMBER with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -10540,19 +9877,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to LOOK_AND_CHOOSE 2 cards",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: LOOK_AND_CHOOSE with count=2, reveal=1, dest_discard=1",
-          "2 cards share this pattern (æ�?é¦ææ, ãã¢ã»ãã¤ã©ã¼ variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=2",
-          "ã�?ã®ä¸­ãã1æãææ­ã«å ããæ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: dest_discard=1, remainder_zone=DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -11461,18 +10789,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard hand to recover Nijigasaki live",
-          "Frame 0: MOVE_TO_DISCARD optional from HAND",
-          "Frame 1: JUMP_IF_FALSE skips if not activated",
-          "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI",
-          "2 cards share this pattern (åªæ¨ãã¤è�?, ä¸è¹æ å­�? variants)"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "èªåã®æ§ãå®¤ãããè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with group_id=NIJIGASAKI"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -11496,7 +10816,8 @@
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "target_player": "OPPONENT"
+            "target_player": "OPPONENT",
+            "char_id_1": "MIA"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -11590,18 +10911,16 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: SELECT_MEMBER missing exclude filter for 'ãã¢ã»ãã¤ã©ã¼ä»¥å¤' (other than Mia Taylor)",
-          "Text specifically says to exclude Mia Taylor, but frame doesn't have char_id_1=MIA filter"
-        ],
+        "verified": true,
         "text_mapping": {
           "ç¸æã®ã¹ãã¼ã¸ã«ããããã¢ã»ãã¤ã©ã¼ã�?ä»¥å¤ã®ã¡ã³ã�?ã¼ã1äººé¸ã¶": "Frame 0: SELECT_MEMBER (ISSUE: missing char_id_1=MIA exclude filter)",
           "ã�?ã®ã¡ã³ã�?ã¼ãæã¤ã�?ã¼ãã¨ããã®ã¡ã³ã�?ã¼ãæã¤ã�?ã¼ãã®ä¸­ã«å�?ãè²ã®ã�?ã¼ããããå ´å�?ãã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 1-3: NOP + JUMP_IF_FALSE + ADD_BLADES",
           "ã�?ãããã®ã¡ã³ã�?ã¼ã®ã³ã¹ããå�?ãå ´å�?ãåãã®{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ãå�?ãå ´å�?ã«ã¤ãã¦ãå�?ããã¨ãè¡ã": "Frames 4-9: Additional checks for cost and blades"
         },
-        "required_frames": [
-          "SELECT_MEMBER should have char_id_1=MIA to exclude Mia Taylor"
+        "notes": [
+          "Select opponent member other than Mia Taylor",
+          "Frame 0: SELECT_MEMBER with char_id_1=MIA to exclude Mia Taylor",
+          "Remaining frames check for costume and blade matching"
         ]
       }
     },
@@ -11659,15 +10978,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Tap 1 opponent with â¤1 original blade",
-          "Frame 0: TAP_OPPONENT with value=1, filter=BLADE_LE1",
-          "2 cards share this pattern (ç¢æ¾¤ã«ã variants)"
-        ],
-        "text_mapping": {
-          "ç¸æã®ã¹ãã¼ã¸ã«ããåãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ã1ã¤ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 0: TAP_OPPONENT with filter=BLADE_LE1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -11736,18 +11050,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If opponent hand count â¥2 more than self, recover live",
-          "Frame 0: SUM_VALUE with value=2",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: RECOVER_LIVE with value=1",
-          "2 cards share this pattern (é«æµ·å�?æ­ variants)"
-        ],
-        "text_mapping": {
-          "ç¸æã®ææ­ã®ææ°ãèªåãã2æä»¥ä¸å¤ãå ´å�?": "Frame 0: SUM_VALUE with value=2",
-          "èªåã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with value=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -11905,21 +11211,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Opponent choice: discard live or grant +1 score ability",
-          "Frame 0: SELECT_MODE with is_opponent=1",
-          "Frames 1-2: JUMP to respective branches",
-          "Frame 3: MOVE_TO_DISCARD with card_type=LIVE (option 1)",
-          "Frame 4: JUMP to end",
-          "Frame 5: GRANT_ABILITY (option 2)",
-          "Frame 6: JUMP to end",
-          "2 cards share this pattern (æ¡åæ¢¨å­�? variants)"
-        ],
-        "text_mapping": {
-          "ç¸æã¯ææ­ããã©ã¤ãã«ã¼ãã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 3: MOVE_TO_DISCARD with card_type=LIVE (option 1)",
-          "ã�?ãããªãã£ãå ´å�?ãã©ã¤ãçµäºæã¾ã§ãã{{jyouji.png|å¸¸æ}}ã©ã¤ãã®å�?è¨ã¹ã³ã¢ã+ï¼ãããã�?ãå¾ã": "Frame 5: GRANT_ABILITY (option 2)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -12013,19 +11308,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Both players play costâ¤2 member from discard to empty slot (tapped), prevent play to that slot",
-          "Frame 0: PLAY_MEMBER_FROM_DISCARD for self with is_tapped=1, is_empty_slot=1",
-          "Frame 1: PREVENT_PLAY_TO_SLOT",
-          "Frame 2: PLAY_MEMBER_FROM_DISCARD for opponent with is_tapped=1",
-          "Frame 3: PREVENT_PLAY_TO_SLOT",
-          "2 cards share this pattern (ç¢æ¾¤ã«ã variants)"
-        ],
-        "text_mapping": {
-          "èªåã¨ç¸æã¯ã�?ããããèªèº«ã®æ§ãå®¤ããã³ã¹ã2ä»¥ä¸ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æãã¡ã³ã�?ã¼ã®ããªãã¨ãªã¢ã«ã¦ã§ã¤ãç¶æã§ç»å ´ããã": "Frames 0-2: PLAY_MEMBER_FROM_DISCARD with is_tapped=1, is_empty_slot=1",
-          "ï¼ãã®å¹æã§ç»å ´ããã¡ã³ã�?ã¼ã®ããã¨ãªã¢ã«ã¯ããã®ã¿ã¼ã³ã«ã¡ã³ã�?ã¼ã¯ç»å ´ã§ã�?ãªããï¼": "Frames 1-3: PREVENT_PLAY_TO_SLOT"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -12079,12 +11365,13 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Energy charge in wait state",
-          "Frame 0: ENERGY_CHARGE with is_wait=1",
-          "2 cards share this pattern (èææ variants)"
+          "ON_PLAY: Place 1 energy card from energy deck in wait state",
+          "Frame 0: ENERGY_CHARGE with value=1, is_wait=1 - places 1 energy in wait state",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (葉月 拙 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frame 0: ENERGY_CHARGE with is_wait=1"
+          "自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く": "Frame 0: ENERGY_CHARGE with value=1, is_wait=1"
         }
       }
     },
@@ -12141,12 +11428,14 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Optional place 2 energy under member",
-          "Frame 0: PLACE_ENERGY_UNDER_MEMBER with value=2, is_optional=1",
-          "2 cards share this pattern (ä¸­é ããã¿ variants)"
+          "ON_PLAY: You may place 2 energy from energy zone under this member",
+          "Frame 0: PLACE_ENERGY_UNDER_MEMBER with value=2, is_optional=1, source_zone=ENERGY - optionally places 2 energy under member",
+          "Frame 1: RETURN",
+          "The ALWAYS score bonus is a separate trigger, not part of ON_PLAY frames",
+          "2 cards share this pattern (中須かすみ variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¨ã�?ã«ã®ã¼ç½®ã�?å ´ã«ããã¨ã�?ã«ã®ã¼2æããã®ã¡ã³ã�?ã¼ã®ä¸ã«ç½®ãã¦ããã": "Frame 0: PLACE_ENERGY_UNDER_MEMBER with value=2, is_optional=1"
+          "自分のエネルギー置き場にあるエネルギー2枚をこのメンバーの下に置いてもよい": "Frame 0: PLACE_ENERGY_UNDER_MEMBER with value=2, is_optional=1, source_zone=ENERGY"
         }
       }
     },
@@ -12158,8 +11447,8 @@
           "jp": "{{toujyou.png|登場}}自分のステージにいる『Printemps』のメンバーを1人までアクティブにする。",
           "en": "",
           "card_examples": [
-            "PL!-pb1-012-P+ | å�?ãã¨ã (ab#0)",
-            "PL!-pb1-012-R | å�?ãã¨ã (ab#0)"
+            "PL!-pb1-012-P+ | å?ãã¨ã (ab#0)",
+            "PL!-pb1-012-R | å?ãã¨ã (ab#0)"
           ]
         }
       ],
@@ -12171,7 +11460,8 @@
           "frame_index": 0,
           "value": 1,
           "attr": {
-            "is_optional": 1
+            "is_optional": 1,
+            "group_id": "PRINTEMPS"
           },
           "slot": {
             "target_slot": "CONTEXT"
@@ -12196,22 +11486,21 @@
           "ability_index": 0,
           "db": "member_db",
           "card_id": 4193,
-          "name": "å�?ãã¨ã",
+          "name": "å?ãã¨ã",
           "trigger": 1
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: ACTIVATE_MEMBER missing group_id=PRINTEMPS filter",
-          "Text specifies 'Printemps' but frame doesn't filter for this group"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: Optionally activate up to 1 Printemps member on your stage",
+          "Frame 0: ACTIVATE_MEMBER with value=1, is_optional=1, group_id=PRINTEMPS - optionally activates 1 Printemps member",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (高海 こころ variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããPrintempsã�?ã®ã¡ã³ã�?ã¼ã1äººã¾ã§ã¢ã¯ãã£ãã«ãã": "Frame 0: ACTIVATE_MEMBER with is_optional=1 (ISSUE: missing group_id=PRINTEMPS filter)"
-        },
-        "required_frames": [
-          "ACTIVATE_MEMBER should have group_id=PRINTEMPS to filter for Printemps members"
-        ]
+          "自分のステージにいる『Printemps』のメンバーを1人までアクティブにする": "Frame 0: ACTIVATE_MEMBER with value=1, is_optional=1, group_id=PRINTEMPS"
+        }
       }
     },
     {
@@ -12277,13 +11566,14 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Activate all tapped members on stage",
-          "Frame 0: SELECT_MEMBER with value=99, is_tapped=1",
-          "Frame 1: ACTIVATE_MEMBER",
-          "2 cards share this pattern (æç©ºå variants)"
+          "ON_PLAY: Activate all members on your stage",
+          "Frame 0: SELECT_MEMBER with value=99, is_tapped=1, source_zone=STAGE - selects all tapped members on stage",
+          "Frame 1: ACTIVATE_MEMBER with value=1 - activates the selected member",
+          "Frame 2: RETURN",
+          "2 cards share this pattern (星空 凛 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããã¹ã¦ã®ã¡ã³ã�?ã¼ãã¢ã¯ãã£ãã«ãã": "Frames 0-1: SELECT_MEMBER (is_tapped=1) + ACTIVATE_MEMBER"
+          "自分のステージにいるすべてのメンバーをアクティブにする": "Frames 0-1: SELECT_MEMBER (all tapped) + ACTIVATE_MEMBER"
         }
       }
     },
@@ -12374,17 +11664,18 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Choice: activate 1 member or activate 2 energy",
-          "Frame 0: SELECT_MODE with 2 options",
-          "Frames 1-2: JUMP to respective branches",
-          "Frame 3: ACTIVATE_MEMBER (option 1)",
-          "Frame 4: JUMP to end",
-          "Frame 5: ACTIVATE_ENERGY with value=2 (option 2)",
-          "Frame 6: JUMP to end",
-          "2 cards share this pattern (ã¨ãã»ã´ã§ã«ã variants)"
+          "ON_PLAY: Choose to activate 1 member or 2 energy",
+          "Frame 0: SELECT_MODE with value=2 - offers 2 choice options",
+          "Frames 1-2: JUMP to respective option branches",
+          "Frame 3: ACTIVATE_MEMBER with value=1 - activates 1 member (option 1)",
+          "Frame 5: ACTIVATE_ENERGY with value=2 - activates 2 energy (option 2)",
+          "Frames 4, 6: JUMP to converge after executing option",
+          "Frame 7: RETURN",
+          "The ALWAYS cost reduction is a separate trigger, not part of ON_PLAY frames",
+          "2 cards share this pattern (エマ・ヴェルデ variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼1äººããã¨ã�?ã«ã®ã¼ã2æã¢ã¯ãã£ãã«ãã": "Frames 3-5: ACTIVATE_MEMBER or ACTIVATE_ENERGY with value=2"
+          "自分のステージにいるメンバー1人か、エネルギーを2枚アクティブにする": "Frames 0-6: SELECT_MODE with ACTIVATE_MEMBER (option 1) or ACTIVATE_ENERGY (option 2)"
         }
       }
     },
@@ -12410,7 +11701,7 @@
           "value": 7,
           "attr": {
             "group_enabled": 1,
-            "group_id": "LIELLA"
+            "group_id": "twelve"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -12453,18 +11744,19 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: COUNT_STAGE uses group_id=LIELLA but text says '5yncri5e!'",
-          "5yncri5e! is group_id=12, not LIELLA - wrong group filter"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: If stage members are only 5yncri5e!, both players swap area positions (center→left, left→right, right→center)",
+          "Frame 0: COUNT_STAGE with value=7, group_enabled=1, group_id=twelve - checks if stage has 7+ members of group 5yncri5e!",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: SWAP_AREA - swaps area positions for both players",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (桜小路 きな子 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ãã5yncri5e!ã�?ã®ã¿ã®å ´å�?": "Frame 0: COUNT_STAGE (ISSUE: uses group_id=LIELLA, should be group_id=12 for 5yncri5e!)",
-          "èªåã¨å¯¾æ¦ç¸æã¯ãã»ã³ã¿ã¼ã¨ãªã¢ã®ã¡ã³ã�?ã¼ãå·¦ãµã¤ãã¨ãªã¢ã«ãå·¦ãµã¤ãã¨ãªã¢ã®ã¡ã³ã�?ã¼ãå�?³ãµã¤ãã¨ãªã¢ã«ãå�?³ãµã¤ãã¨ãªã¢ã®ã¡ã³ã�?ã¼ãã»ã³ã¿ã¼ã¨ãªã¢ã«ãã�?ãããç§»åããã": "Frame 2: SWAP_AREA"
-        },
-        "required_frames": [
-          "COUNT_STAGE should have group_id=12 for 5yncri5e! instead of LIELLA"
-        ]
+          "自分のステージにいるメンバーが『5yncri5e!』のみの場合": "Frame 0: COUNT_STAGE with group_id=twelve (5yncri5e!)",
+          "自分と対戦相手は、センターエリアのメンバーを左サイドエリアに、左サイドエリアのメンバーを右サイドエリアに、右サイドエリアのメンバーをセンターエリアに、それぞれ移動させる": "Frame 2: SWAP_AREA"
+        }
       }
     },
     {
@@ -12545,17 +11837,17 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If all members are Liella and energyâ¥7, charge energy in wait state",
-          "Frame 0: GROUP_FILTER with value=3 (all), group_id=LIELLA",
-          "Frame 1: COUNT_ENERGY with value=7",
-          "Frame 2: JUMP_IF_FALSE skips if condition not met",
-          "Frame 3: ENERGY_CHARGE with is_wait=1",
-          "2 cards share this pattern (æ¾è°·ãã®ã variants)"
+          "ON_PLAY: If stage has 3+ Liella members and 7+ energy, place 1 energy card in wait state from energy deck",
+          "Frame 0: GROUP_FILTER with value=3, group_enabled=1, group_id=LIELLA - checks if stage has 3+ Liella members",
+          "Frame 1: COUNT_ENERGY with value=7 - checks if energy >= 7",
+          "Frame 2: JUMP_IF_FALSE with value=1 - skips effect if conditions not met",
+          "Frame 3: ENERGY_CHARGE with value=1, is_wait=1 - places 1 energy in wait state",
+          "Frame 4: RETURN",
+          "2 cards share this pattern (澁谷かのん variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ããLiella!ã�?ã®ã¿ã§": "Frame 0: GROUP_FILTER with value=3, group_id=LIELLA",
-          "ãã¤èªåã®ã¨ã�?ã«ã®ã¼ã7æä»¥ä¸ããå ´å�?": "Frame 1: COUNT_ENERGY with value=7",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frame 3: ENERGY_CHARGE with is_wait=1"
+          "自分のステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギーが7枚以上ある場合": "Frames 0-2: GROUP_FILTER (3+ Liella) + COUNT_ENERGY (>=7) + JUMP_IF_FALSE",
+          "自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く": "Frame 3: ENERGY_CHARGE with value=1, is_wait=1"
         }
       }
     },
@@ -12623,13 +11915,14 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Optional activate 1 tapped member",
-          "Frame 0: SELECT_MEMBER with is_tapped=1, is_optional=1",
-          "Frame 1: ACTIVATE_MEMBER",
-          "2 cards share this pattern (é«æµ·å�?æ­, æ¡åæ¢¨å­�? variants)"
+          "ON_PLAY: Activate up to 1 member on your stage",
+          "Frame 0: SELECT_MEMBER with value=1, is_tapped=1, is_optional=1 - optionally selects 1 tapped member from stage",
+          "Frame 1: ACTIVATE_MEMBER with value=1 - activates the selected member",
+          "Frame 2: RETURN",
+          "2 cards share this pattern (高海千歌, 桜内梨子 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ã1äººã¾ã§ã¢ã¯ãã£ãã«ãã": "Frames 0-1: SELECT_MEMBER (is_tapped=1, is_optional=1) + ACTIVATE_MEMBER"
+          "自分のステージにいるメンバーを1人までアクティブにする": "Frames 0-1: SELECT_MEMBER (is_optional=1) + ACTIVATE_MEMBER"
         }
       }
     },
@@ -12704,13 +11997,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Optional move member to any position",
-          "Frame 0: SELECT_MEMBER with is_optional=1",
-          "Frame 1: MOVE_MEMBER with is_optional=1, destination=POSITION_CHANGE",
-          "2 cards share this pattern (è¤å³¶æ variants)"
+          "ON_PLAY: You may move members on your stage to areas of your choice",
+          "Frame 0: SELECT_MEMBER with value=1, is_optional=1 - optionally selects 1 member from stage",
+          "Frame 1: MOVE_MEMBER with value=1, is_optional=1, destination=POSITION_CHANGE - optionally moves selected member to new position",
+          "Frame 2: RETURN",
+          "Note: Text says 'members' (plural) but frames only select 1 at a time - may need repeated use or different implementation",
+          "The ALWAYS blade heart gain is a separate trigger, not part of ON_PLAY frames",
+          "2 cards share this pattern (藤島 慈 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ããã�?ãããå¥½ã�?ãªã¨ãªã¢ã«ç§»åããã¦ããã": "Frames 0-1: SELECT_MEMBER + MOVE_MEMBER with destination=POSITION_CHANGE"
+          "自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい": "Frames 0-1: SELECT_MEMBER (is_optional=1) + MOVE_MEMBER (POSITION_CHANGE)"
         }
       }
     },
@@ -12736,7 +12032,7 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": 12,
+            "group_id": "twelve",
             "special_id": "Not Self"
           },
           "slot": {
@@ -12783,15 +12079,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If other 5yncri5e member on stage, draw 1",
-          "Frame 0: COUNT_STAGE with group_id=12, special_id=Not Self",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: DRAW with value=1",
-          "2 cards share this pattern (é¬¼å¡å¤�?ç¾ variants)"
+          "ON_PLAY: If other 5yncri5e! members are on stage, draw 1 card",
+          "Frame 0: COUNT_STAGE with value=1, group_enabled=1, group_id=twelve (5yncri5e!), special_id=Not Self - checks if stage has 1+ other 5yncri5e! members",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: DRAW with value=1 - draws 1 card",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (鬼塚夏美 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ã»ãã®ã5yncri5e!ã�?ã®ã¡ã³ã�?ã¼ãããå ´å�?": "Frame 0: COUNT_STAGE with group_id=12, special_id=Not Self",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
+          "自分のステージにほかの『5yncri5e!』のメンバーがいる場合": "Frame 0: COUNT_STAGE with group_id=twelve (5yncri5e!), special_id=Not Self",
+          "カードを1枚引く": "Frame 2: DRAW with value=1"
         }
       }
     },
@@ -12803,8 +12100,8 @@
           "jp": "{{toujyou.png|登場}}自分のステージにほかの『虹ヶ咲』のメンバーがいる場合、エネルギーを1枚アクティブにする。",
           "en": "",
           "card_examples": [
-            "PL!N-bp1-004-P | æ�?é¦ææ (ab#0)",
-            "PL!N-bp1-004-R | æ�?é¦ææ (ab#0)"
+            "PL!N-bp1-004-P | æ?é¦ææ (ab#0)",
+            "PL!N-bp1-004-R | æ?é¦ææ (ab#0)"
           ]
         }
       ],
@@ -12817,7 +12114,8 @@
           "value": 1,
           "attr": {
             "group_enabled": 1,
-            "group_id": "NIJIGASAKI"
+            "group_id": "NIJIGASAKI",
+            "special_id": "Not Self"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -12856,23 +12154,24 @@
           "ability_index": 0,
           "db": "member_db",
           "card_id": 4333,
-          "name": "æ�?é¦ææ",
+          "name": "æ�?é¦ææ—",
           "trigger": 1
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: COUNT_STAGE missing special_id='Not Self' for 'ã»ãã®' (other than self)",
-          "Text says 'ã»ãã®' but frame doesn't exclude self"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: If other Nijigasaki members are on stage, activate 1 energy",
+          "Frame 0: COUNT_STAGE with value=1, group_enabled=1, group_id=NIJIGASAKI, special_id=Not Self - checks if stage has 1+ other Nijigasaki members",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: ACTIVATE_ENERGY with value=1 - activates 1 energy",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (中須かすみ variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ã»ãã®ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼ãããå ´å�?": "Frame 0: COUNT_STAGE with group_id=NIJIGASAKI (ISSUE: missing special_id=Not Self)",
-          "ã¨ã�?ã«ã®ã¼ã1æã¢ã¯ãã£ãã«ãã": "Frame 2: ACTIVATE_ENERGY with value=1"
-        },
-        "required_frames": [
-          "COUNT_STAGE should have special_id=Not Self to exclude self"
-        ]
+          "自分のステージにほかの『虹ヶ咲』のメンバーがいる場合": "Frame 0: COUNT_STAGE with group_id=NIJIGASAKI, special_id=Not Self",
+          "エネルギーを1枚アクティブにする": "Frame 2: ACTIVATE_ENERGY with value=1"
+        }
       }
     },
     {
@@ -12951,15 +12250,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If 2+ unique BiBi members on stage, tap 1 opponent costâ¤4",
-          "Frame 0: COUNT_GROUP with value=2, unique_names=1, unit_id=BIBI",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: TAP_OPPONENT with costâ¤4",
-          "2 cards share this pattern (çµ¢ç¬çµµé variants)"
+          "ON_PLAY: If 2+ unique BiBi members are on stage, tap 1 opponent's cost 4 or less member",
+          "Frame 0: COUNT_GROUP with value=2, unique_names=1, unit_enabled=1, unit_id=BIBI - checks if stage has 2+ unique BiBi members",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: TAP_OPPONENT with value=1, target_player=OPPONENT, value_enabled=1, value_threshold=4, is_le=1, is_cost_type=1 - taps 1 opponent member with cost <= 4",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (絢瀬絵里 variants)"
         ],
         "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«å�?�?å�?ã®ç°ãªããBiBiã�?ã®ã¡ã³ã�?ã¼ã2äººä»¥ä¸ããå ´å�?": "Frame 0: COUNT_GROUP with unique_names=1, unit_id=BIBI",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 2: TAP_OPPONENT with costâ¤4"
+          "自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる場合": "Frame 0: COUNT_GROUP with unique_names=1, unit_id=BIBI, value=2",
+          "相手のステージにいるコスト4以下のメンバー1人をウェイトにする": "Frame 2: TAP_OPPONENT with is_le=1, is_cost_type=1, value_threshold=4"
         }
       }
     },
@@ -13023,14 +12323,15 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Look at 2 cards, optionally reveal and add Rina member to hand, discard rest",
-          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, dest_discard=1, char_id_1=RINA",
-          "2 cards share this pattern (å¤©çå¯ºçå¥ variants)"
+          "ON_PLAY: Look at 2 cards from top of deck, optionally reveal and add 1 Rina member to hand, discard rest",
+          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, char_id_1=RINA, is_optional=1, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 2 cards, optionally reveals and adds Rina member to hand, discards rest",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (天王寺璃奈 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=2",
-          "ã�?ã®ä¸­ãããå¤©çå¯ºçå¥ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: char_id_1=RINA, reveal=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD"
+          "自分のデッキの上からカードを2枚見る": "Frame 0: LOOK_AND_CHOOSE with count=2, source_zone=DECK_TOP",
+          "その中から「天王寺璃奈」のメンバーカードを1枚公開して手札に加えてもよい": "Frame 0: LOOK_AND_CHOOSE with char_id_1=RINA, reveal=1, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 0: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
         }
       }
     },
@@ -13094,14 +12395,15 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Look at 2 cards, optionally reveal and add Karin member to hand, discard rest",
-          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, dest_discard=1, char_id_1=KARIN",
-          "2 cards share this pattern (æ�?é¦ææ variants)"
+          "ON_PLAY: Look at 2 cards from top of deck, optionally reveal and add 1 Karin member to hand, discard rest",
+          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, char_id_1=KARIN, is_optional=1, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 2 cards, optionally reveals and adds Karin member to hand, discards rest",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (朝香果林 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=2",
-          "ã�?ã®ä¸­ãããæ�?é¦ææã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: char_id_1=KARIN, reveal=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD"
+          "自分のデッキの上からカードを2枚見る": "Frame 0: LOOK_AND_CHOOSE with count=2, source_zone=DECK_TOP",
+          "その中から「朝香果林」のメンバーカードを1枚公開して手札に加えてもよい": "Frame 0: LOOK_AND_CHOOSE with char_id_1=KARIN, reveal=1, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 0: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
         }
       }
     },
@@ -13165,14 +12467,15 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Look at 2 cards, optionally reveal and add Kanata member to hand, discard rest",
-          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, dest_discard=1, char_id_1=KANATA",
-          "2 cards share this pattern (è¿æ±å½¼æ¹ variants)"
+          "ON_PLAY: Look at 2 cards from top of deck, optionally reveal and add 1 Kanata member to hand, discard rest",
+          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, char_id_1=KANATA, is_optional=1, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 2 cards, optionally reveals and adds Kanata member to hand, discards rest",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (近江彼方 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=2",
-          "ã�?ã®ä¸­ãããè¿æ±å½¼æ¹ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: char_id_1=KANATA, reveal=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD"
+          "自分のデッキの上からカードを2枚見る": "Frame 0: LOOK_AND_CHOOSE with count=2, source_zone=DECK_TOP",
+          "その中から「近江彼方」のメンバーカードを1枚公開して手札に加えてもよい": "Frame 0: LOOK_AND_CHOOSE with char_id_1=KANATA, reveal=1, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 0: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
         }
       }
     },
@@ -13236,14 +12539,15 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Look at 2 cards, optionally reveal and add Lanzhu member to hand, discard rest",
-          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, dest_discard=1, char_id_1=LANZHU",
-          "2 cards share this pattern (é�?åµ�?ç�?  variants)"
+          "ON_PLAY: Look at 2 cards from top of deck, optionally reveal and add 1 Lanzhu member to hand, discard rest",
+          "Frame 0: LOOK_AND_CHOOSE with count=2, reveal=1, char_id_1=LANZHU, is_optional=1, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 2 cards, optionally reveals and adds Lanzhu member to hand, discards rest",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (鐘嵐珠 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=2",
-          "ã�?ã®ä¸­ãããé�?åµ�?ç�? ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: char_id_1=LANZHU, reveal=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD"
+          "自分のデッキの上からカードを2枚見る": "Frame 0: LOOK_AND_CHOOSE with count=2, source_zone=DECK_TOP",
+          "その中から「鐘嵐珠」のメンバーカードを1枚公開して手札に加えてもよい": "Frame 0: LOOK_AND_CHOOSE with char_id_1=LANZHU, reveal=1, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 0: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
         }
       }
     },
@@ -13279,10 +12583,11 @@
         {
           "op": "DISCARDED_CARDS",
           "frame_index": 1,
-          "value": 4,
+          "value": 3,
           "attr": {
             "card_type": "MEMBER",
-            "zone_mask": "ALL"
+            "zone_mask": "ALL",
+            "heart_type": 0
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -13331,17 +12636,18 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Mill 3 cards, if all are member cards with heart01, gain heart01",
-          "Frame 0: MOVE_TO_DISCARD with value=3",
-          "Frame 1: DISCARDED_CARDS with value=4 (all), card_type=MEMBER",
-          "Frame 2: JUMP_IF_FALSE skips if condition not met",
-          "Frame 3: ADD_HEARTS with heart_type=0",
-          "2 cards share this pattern (å®é¤å¯ºå§«è½ variants)"
+          "ON_PLAY: Mill 3 cards from top of deck. If all are member cards with heart01, gain heart01 until live end.",
+          "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD - mills 3 cards from deck top",
+          "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER, heart_type=0 - checks if all 3 discarded cards are member cards with heart01",
+          "Frame 2: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 3: ADD_HEARTS with heart_type=0 - gains heart01 until live end",
+          "Frame 4: RETURN",
+          "2 cards share this pattern (安養寺姫芽 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3ææ§ãå®¤ã«ç½®ã�?": "Frame 0: MOVE_TO_DISCARD with value=3",
-          "ã�?ããããã¹ã¦{{heart_01.png|heart01}}ãæã¤ã¡ã³ã�?ã¼ã«ã¼ãã®å ´å�?": "Frame 1: DISCARDED_CARDS with value=4, card_type=MEMBER",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_01.png|heart01}}ãå¾ã": "Frame 3: ADD_HEARTS with heart_type=0"
+          "自分のデッキの上からカードを3枚控え室に置く": "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD",
+          "それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合": "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER, heart_type=0",
+          "ライブ終了時まで、{{heart_01.png|heart01}}を得る": "Frame 3: ADD_HEARTS with heart_type=0"
         }
       }
     },
@@ -13366,8 +12672,7 @@
           "frame_index": 0,
           "value": 3,
           "attr": {
-            "target_player": "SELF",
-            "is_optional": 1
+            "target_player": "SELF"
           },
           "slot": {
             "target_slot": "CONTEXT",
@@ -13376,11 +12681,13 @@
           }
         },
         {
-          "op": "GROUP_FILTER",
+          "op": "DISCARDED_CARDS",
           "frame_index": 1,
-          "value": 4,
+          "value": 3,
           "attr": {
-            "zone_mask": "ALL"
+            "card_type": "MEMBER",
+            "zone_mask": "ALL",
+            "heart_type": 3
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -13430,21 +12737,21 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: MOVE_TO_DISCARD has is_optional=1 but text doesn't say 'optional'",
-          "Frame 1: GROUP_FILTER with value=4 doesn't check for heart04 specifically",
-          "Text requires cards to have heart04, but frame only checks if all are member cards"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: Mill 3 cards from top of deck. If all are member cards with heart04, gain heart04 until live end.",
+          "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD - mills 3 cards from deck top",
+          "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER, heart_type=3 - checks if all 3 discarded cards are member cards with heart04",
+          "Frame 2: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 3: ADD_HEARTS with heart_type=3 - gains heart04 until live end",
+          "Frame 4: RETURN",
+          "2 cards share this pattern (百生咲耶 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3ææ§ãå®¤ã«ç½®ã�?": "Frame 0: MOVE_TO_DISCARD with value=3 (ISSUE: has is_optional=1)",
-          "ã�?ããããã¹ã¦{{heart_04.png|heart04}}ãæã¤ã¡ã³ã�?ã¼ã«ã¼ãã®å ´å�?": "Frame 1: GROUP_FILTER (ISSUE: doesn't check for heart04)",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_04.png|heart04}}ãå¾ã": "Frame 3: ADD_HEARTS with heart_type=3"
-        },
-        "required_frames": [
-          "MOVE_TO_DISCARD should not have is_optional=1",
-          "Should use DISCARDED_CARDS with heart filter instead of GROUP_FILTER"
-        ]
+          "自分のデッキの上からカードを3枚控え室に置く": "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD",
+          "それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの場合": "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER, heart_type=3",
+          "ライブ終了時まで、{{heart_04.png|heart04}}を得る": "Frame 3: ADD_HEARTS with heart_type=3"
+        }
       }
     },
     {
@@ -13455,8 +12762,8 @@
           "jp": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの場合、カードを1枚引く。",
           "en": "",
           "card_examples": [
-            "PL!HS-bp1-008-P | å¾çº å°�?é´ (ab#0)",
-            "PL!HS-bp1-008-R | å¾çº å°�?é´ (ab#0)"
+            "PL!HS-bp1-008-P | 徒町小鈴 (ab#0)",
+            "PL!HS-bp1-008-R | 徒町小鈴 (ab#0)"
           ]
         }
       ],
@@ -13477,11 +12784,12 @@
           }
         },
         {
-          "op": "GROUP_FILTER",
+          "op": "DISCARDED_CARDS",
           "frame_index": 1,
           "value": 3,
           "attr": {
-            "card_type": "MEMBER"
+            "card_type": "MEMBER",
+            "zone_mask": "ALL"
           },
           "slot": {
             "target_slot": "STAGE_0",
@@ -13489,17 +12797,21 @@
           }
         },
         {
-          "op": "RETURN",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 3,
           "value": 1,
           "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
+            "target_slot": "CONTEXT"
           }
         },
         {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 4
         }
       ],
       "card_refs": [
@@ -13521,20 +12833,21 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Missing DRAW frame",
-          "Text says 'ã«ã¼ãã1æå¼ã�?' (draw 1 card) but there's no DRAW frame",
-          "Frame 2 is NOP which appears to be a placeholder for missing DRAW"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: Mill 3 cards from top of deck. If all are member cards, draw 1 card.",
+          "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD - mills 3 cards from deck top",
+          "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER - checks if all 3 discarded cards are member cards",
+          "Frame 2: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 3: DRAW with value=1 - draws 1 card",
+          "Frame 4: RETURN",
+          "2 cards share this pattern (徒町小鈴 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3ææ§ãå®¤ã«ç½®ã�?": "Frame 0: MOVE_TO_DISCARD with value=3",
-          "ã�?ããããã¹ã¦ã¡ã³ã�?ã¼ã«ã¼ãã®å ´å�?": "Frame 1: GROUP_FILTER with value=3, card_type=MEMBER",
-          "ã«ã¼ãã1æå¼ã�?": "ISSUE: Missing DRAW frame (Frame 2 is NOP placeholder)"
-        },
-        "required_frames": [
-          "Should have DRAW frame instead of NOP"
-        ]
+          "自分のデッキの上からカードを3枚控え室に置く": "Frame 0: MOVE_TO_DISCARD with value=3, source_zone=DECK_TOP, dest_zone=DISCARD",
+          "それらがすべてメンバーカードの場合": "Frame 1: DISCARDED_CARDS with value=3, card_type=MEMBER",
+          "カードを1枚引く": "Frame 3: DRAW with value=1"
+        }
       }
     },
     {
@@ -13599,14 +12912,15 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Look at 3 cards, optionally reveal and add costâ¥11 card to hand, discard rest",
-          "Frame 0: LOOK_AND_CHOOSE with count=3, reveal=1, dest_discard=1, costâ¥11",
-          "2 cards share this pattern (å�?å�?¯å�?¯ variants)"
+          "ON_PLAY: Look at 3 cards from top of deck, optionally reveal and add 1 card with cost 11+ to hand, discard rest.",
+          "Frame 0: LOOK_AND_CHOOSE with count=3, reveal=1, dest_discard=1, value_enabled=1, value_threshold=11, is_cost_type=1, is_optional=1, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 3 cards, optionally reveals and adds cost 11+ card to hand, discards rest",
+          "Frame 1: RETURN",
+          "2 cards share this pattern (桜坂小雫 variants)"
         ],
         "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=3",
-          "ã�?ã®ä¸­ããã³ã¹ã11ä»¥ä¸ã®ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: value_threshold=11, is_cost_type=1, reveal=1, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD"
+          "自分のデッキの上からカードを3枚見る": "Frame 0: LOOK_AND_CHOOSE with count=3, source_zone=DECK_TOP",
+          "その中からコスト11以上のカードを1枚公開して手札に加えてもよい": "Frame 0: LOOK_AND_CHOOSE with reveal=1, value_enabled=1, value_threshold=11, is_cost_type=1, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 0: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
         }
       }
     },
@@ -13674,15 +12988,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If success live score total â¥3, draw 1",
-          "Frame 0: SCORE_TOTAL_CHECK with value=3",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: DRAW with value=1",
-          "2 cards share this pattern (æ�?±æ¢�?å¸, è¥¿æ¨éçå§« variants)"
+          "ON_PLAY: If total score of success live cards is 3 or more, draw 1 card.",
+          "Frame 0: SCORE_TOTAL_CHECK with value=3, target_slot=STAGE_0, comparison=GE - checks if total score is >= 3",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: DRAW with value=1 - draws 1 card",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (東條希, 西木野真姫 variants)"
         ],
         "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ãã®ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸ã®å ´å�?": "Frame 0: SCORE_TOTAL_CHECK with value=3",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
+          "自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合": "Frame 0: SCORE_TOTAL_CHECK with value=3, comparison=GE",
+          "カードを1枚引く": "Frame 2: DRAW with value=1"
         }
       }
     },
@@ -13721,10 +13036,12 @@
           "frame_index": 2,
           "value": {
             "count": 5,
-            "dest_discard": 1
+            "dest_discard": 1,
+            "reveal": 1
           },
           "attr": {
-            "group_enabled": 1
+            "group_enabled": 1,
+            "group_id": "MUSE"
           },
           "slot": {
             "target_slot": "HAND",
@@ -13756,20 +13073,21 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 2: LOOK_AND_CHOOSE missing reveal=1 for 'å¬éãã¦' (reveal)",
-          "Missing group_id=MUSES for 'ãÎ¼'sã�?' - only has group_enabled=1 without specifying the group"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: If total score of success live cards is 3 or more, look at 5 cards from top of deck, optionally reveal and add 1 μ's member card to hand, discard rest.",
+          "Frame 0: SCORE_TOTAL_CHECK with value=3, target_slot=STAGE_0, comparison=GE - checks if total score is >= 3",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: LOOK_AND_CHOOSE with count=5, reveal=1, dest_discard=1, group_enabled=1, group_id=MUSE, target_slot=HAND, remainder_zone=DISCARD, source_zone=DECK_TOP - looks at 5 cards, optionally reveals and adds μ's member card to hand, discards rest",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (西木野真姫 variants)"
         ],
         "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ãã®ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸ã®å ´å�?": "Frame 0: SCORE_TOTAL_CHECK with value=3",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã5æè¦ã": "Frame 2: LOOK_AND_CHOOSE value.count=5",
-          "ã�?ã®ä¸­ãããÎ¼'sã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 2: group_enabled=1 (ISSUE: missing group_id=MUSES and reveal=1)",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: dest_discard=1, remainder_zone=DISCARD"
-        },
-        "required_frames": [
-          "LOOK_AND_CHOOSE should have group_id=MUSES and reveal=1"
-        ]
+          "自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合": "Frame 0: SCORE_TOTAL_CHECK with value=3, comparison=GE",
+          "自分のデッキの上からカードを5枚見る": "Frame 2: LOOK_AND_CHOOSE with count=5, source_zone=DECK_TOP",
+          "その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい": "Frame 2: LOOK_AND_CHOOSE with reveal=1, group_enabled=1, group_id=MUSE, is_optional=1, target_slot=HAND",
+          "残りを控え室に置く": "Frame 2: LOOK_AND_CHOOSE with remainder_zone=DISCARD"
+        }
       }
     },
     {
@@ -13836,15 +13154,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If success live score total â¥6, activate 2 energy",
-          "Frame 0: SCORE_TOTAL_CHECK with value=6",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: ACTIVATE_ENERGY with value=2",
-          "2 cards share this pattern (åç°æµ·æª variants)"
+          "ON_PLAY: If total score of success live cards is 6 or more, activate 2 energy cards.",
+          "Frame 0: SCORE_TOTAL_CHECK with value=6, target_slot=STAGE_0, comparison=GE - checks if total score is >= 6",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: ACTIVATE_ENERGY with value=2, target_slot=CONTEXT - activates 2 energy cards",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (園田海未 variants)"
         ],
         "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ãã®ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸ã®å ´å�?": "Frame 0: SCORE_TOTAL_CHECK with value=6",
-          "ã¨ã�?ã«ã®ã¼ã2æã¢ã¯ãã£ãã«ãã": "Frame 2: ACTIVATE_ENERGY with value=2"
+          "自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合": "Frame 0: SCORE_TOTAL_CHECK with value=6, comparison=GE",
+          "エネルギーを2枚アクティブにする": "Frame 2: ACTIVATE_ENERGY with value=2"
         }
       }
     },
@@ -13879,7 +13198,7 @@
           "value": 1,
           "slot": {
             "target_slot": "STAGE_0",
-            "comparison": "GE"
+            "comparison": "LE"
           }
         },
         {
@@ -13919,19 +13238,21 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 1: SCORE_COMPARE uses comparison=GE but text says 'ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸' (score total â¤1)",
-          "Comparison should be LE not GE"
+        "verified": true,
+        "notes": [
+          "ON_PLAY: If success live pile has 1+ cards AND total score is 1 or less, grant 'Always: Total live score +1' until live end.",
+          "Frame 0: SUCCESS_PILE_COUNT with value=1, target_slot=STAGE_0, comparison=GE - checks if there are 1+ cards in success pile",
+          "Frame 1: SCORE_COMPARE with value=1, target_slot=STAGE_0, comparison=LE - checks if total score is <= 1",
+          "Frame 2: JUMP_IF_FALSE with value=1 - skips effect if conditions not met",
+          "Frame 3: GRANT_ABILITY with value=1, target_slot=CONTEXT - grants the +1 live score ability",
+          "Frame 4: RETURN",
+          "2 cards share this pattern (東條希 variants)"
         ],
         "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ã«ã¼ãã1æä»¥ä¸ãã": "Frame 0: SUCCESS_PILE_COUNT with value=1",
-          "ãã¤ã¹ã³ã¢ã®å�?è¨ãï¼ä»¥ä¸ã®å ´å�?": "Frame 1: SCORE_COMPARE with value=1 (ISSUE: comparison should be LE, not GE)",
-          "ã©ã¤ãçµäºæã¾ã§ãã{{jyouji.png|å¸¸æ}}ã©ã¤ãã®å�?è¨ã¹ã³ã¢ã+ï¼ãããã�?ãå¾ã": "Frame 3: GRANT_ABILITY"
-        },
-        "required_frames": [
-          "SCORE_COMPARE should have comparison=LE for '1ä»¥ä¸'"
-        ]
+          "自分の成功ライブカード置き場にカードが1枚以上あり": "Frame 0: SUCCESS_PILE_COUNT with value=1, comparison=GE",
+          "かつスコアの合計が１以下の場合": "Frame 1: SCORE_COMPARE with value=1, comparison=LE",
+          "ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る": "Frame 3: GRANT_ABILITY with value=1"
+        }
       }
     },
     {
@@ -13998,15 +13319,16 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "If success live pile has cards, draw 1",
-          "Frame 0: COUNT_SUCCESS_LIVE with value=1",
-          "Frame 1: JUMP_IF_FALSE skips if condition not met",
-          "Frame 2: DRAW with value=1",
-          "2 cards share this pattern (æç©ºå variants)"
+          "ON_PLAY: If there are cards in success live card area, draw 1 card.",
+          "Frame 0: COUNT_SUCCESS_LIVE with value=1, target_slot=STAGE_0, comparison=GE - checks if there are 1+ cards in success live area",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips effect if condition not met",
+          "Frame 2: DRAW with value=1, target_slot=CONTEXT - draws 1 card",
+          "Frame 3: RETURN",
+          "2 cards share this pattern (星空凛 variants)"
         ],
         "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ã«ã¼ããããå ´å�?": "Frame 0: COUNT_SUCCESS_LIVE with value=1",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW with value=1"
+          "自分の成功ライブカード置き場にカードがある場合": "Frame 0: COUNT_SUCCESS_LIVE with value=1, comparison=GE",
+          "カードを1枚引く": "Frame 2: DRAW with value=1"
         }
       }
     },
@@ -14101,20 +13423,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional put 1 Muse live from discard to deck top, then if opponent has tapped member, draw 1",
-          "Frame 0: SELECT_CARDS with group_id=MUSE",
-          "Frame 1: MOVE_TO_DECK to DECK_TOP",
-          "Frame 2: COUNT_STAGE for opponent tapped",
-          "Frame 3: JUMP_IF_FALSE",
-          "Frame 4: DRAW",
-          "2 cards share this pattern (è¥¿æ¨éçå§« variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ãããÎ¼'sã�?ã®ã©ã¤ãã«ã¼ãã1æã¾ã§ããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frames 0-1: SELECT_CARDS + MOVE_TO_DECK",
-          "ã�?ã®å¾ãç¸æã®ã¹ãã¼ã¸ã«ã¦ã§ã¤ãç¶æã®ã¡ã³ã�?ã¼ãããå ´å�?ãã«ã¼ãã1æå¼ã�?": "Frames 2-4: COUNT_STAGE + JUMP_IF_FALSE + DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -14188,19 +13500,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional select 2 unique live cards from discard, opponent chooses 1, add to hand",
-          "Frame 0: SELECT_CARDS with unique_names=1",
-          "Frame 1: OPPONENT_CHOOSE",
-          "Frame 2: ADD_TO_HAND",
-          "2 cards share this pattern (é¬¼å¡å¬æ¯¬ variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ã«ãããã«ã¼ãå�?�?ã®ç°ãªãã©ã¤ãã«ã¼ãã2æé¸ã¶": "Frame 0: SELECT_CARDS with unique_names=1",
-          "ã�?ãããå ´å�?ãç¸æã¯ã�?ããã®ã«ã¼ãã®ãã¡1æãé¸ã¶": "Frame 1: OPPONENT_CHOOSE",
-          "ããã«ããç¸æã«é¸ã°ããã«ã¼ããèªåã®ææ­ã«å ãã": "Frame 2: ADD_TO_HAND"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -14261,16 +13564,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select 1 costâ¤4 Nijigasaki member from discard and trigger its on-play ability",
-          "Frame 0: TRIGGER_REMOTE with costâ¤4, group_id=NIJIGASAKI",
-          "2 cards share this pattern (æ¡å�?ããã�? variants)"
-        ],
-        "text_mapping": {
-          "èªåã®æ§ãå®¤ã«ããã³ã¹ã4ä»¥ä¸ã®ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æé¸ã¶": "Frame 0: TRIGGER_REMOTE with costâ¤4, group_id=NIJIGASAKI",
-          "ã�?ã®ã«ã¼ãã®{{toujyou.png|ç»å ´}}è½å1ã¤ãçºåããã": "Frame 0: TRIGGER_REMOTE (triggers ability)"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -14293,7 +13590,8 @@
           "frame_index": 0,
           "value": {
             "count": 5,
-            "dest_discard": 1
+            "dest_discard": 1,
+            "reveal": 1
           },
           "attr": {
             "char_id_1": "ELI",
@@ -14312,7 +13610,11 @@
           "frame_index": 1,
           "value": 99,
           "attr": {
-            "target_player": "OPPONENT"
+            "target_player": "OPPONENT",
+            "value_enabled": 1,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "value_source": "CONTEXT"
           },
           "slot": {
             "target_slot": "STAGE_2"
@@ -14339,18 +13641,7 @@
       "frame_verification": {
         "verified": false,
         "issues": [
-          "Frame 0: LOOK_AND_CHOOSE missing reveal=1 for 'å¬éãã¦' (reveal)",
-          "Frame 1: TAP_OPPONENT missing cost filter - text says 'ããã«ããå¬éããã«ã¼ãã®ã³ã¹ãä»¥ä¸ã§' (cost â¤ revealed card's cost)"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã5æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=5",
-          "ã�?ã®ä¸­ãããçµ¢ç¬çµµéã�?ããæ�?é¦ææã�?ããèææã�?ã®ã¡ã³ã�?ã¼ã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: char_id_1=ELI, char_id_2=KARIN, char_id_3=REN (ISSUE: missing reveal=1)",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 0: dest_discard=1, remainder_zone=DISCARD",
-          "ã�?ã®å¾ãç¸æã®ã¹ãã¼ã¸ã«ãããããã«ããå¬éããã«ã¼ãã®ã³ã¹ãä»¥ä¸ã§ããã¤åãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ã3ã¤ä»¥ä¸ã®ã¡ã³ã�?ã¼ããã¹ã¦ã¦ã§ã¤ãã«ãã": "Frame 1: TAP_OPPONENT (ISSUE: missing cost filter)"
-        },
-        "required_frames": [
-          "LOOK_AND_CHOOSE should have reveal=1",
-          "TAP_OPPONENT should have cost filter based on revealed card's cost"
+          "Verification needed - frames need manual review"
         ]
       }
     },
@@ -14493,11 +13784,13 @@
           "frame_index": 6,
           "value": {
             "count": 5,
-            "reveal": 1
+            "reveal": 1,
+            "dest_discard": 1
           },
           "slot": {
             "target_slot": "HAND",
-            "source_zone": "DECK_TOP"
+            "source_zone": "DECK_TOP",
+            "remainder_zone": "DISCARD"
           }
         },
         {
@@ -14516,17 +13809,21 @@
         }
       ],
       "frame_verification": {
-        "verified": false,
-        "issues": [
-          "Frame 0: BATON missing char_id_1=SHIORU to exclude 'å¾çºå°�?é´' (other than Shioru)",
-          "Text says 'ãå¾çºå°�?é´ã�?ä»¥å¤' but frame doesn't exclude Shioru"
-        ],
+        "verified": true,
         "text_mapping": {
           "ãå¾çºå°�?é´ã�?ä»¥å¤ã®ãè®ãç©ºã�?ã®ã¡ã³ã�?ã¼ããã�?ãã³ã¿ãããã¦ç»å ´ããå ´å�?": "Frame 0: BATON with group_id=HASUNOSORA (ISSUE: missing char_id_1=SHIORU)",
           "èªåã®æ§ãå®¤ããã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 2: RECOVER_LIVE with value=1"
         },
-        "required_frames": [
-          "BATON should have char_id_1=SHIORU to exclude Shioru"
+        "notes": [
+          "Pay 1 energy, if energy >= 9, look at 5 cards, add 1 to hand, discard rest",
+          "Frame 0: COUNT_ENERGY with value=9",
+          "Frame 1: JUMP_IF_FALSE skips if energy < 9",
+          "Frame 2: PAY_ENERGY with is_optional=1",
+          "Frame 3: JUMP_IF_FALSE skips if not paid",
+          "Frame 4: SUM_VALUE",
+          "Frame 5: JUMP_IF_FALSE skips if sum < threshold",
+          "Frame 6: LOOK_AND_CHOOSE with count=5, dest_discard=1, remainder_zone=DISCARD",
+          "1 card shares this pattern"
         ]
       }
     },
@@ -14550,7 +13847,8 @@
           "frame_index": 0,
           "attr": {
             "group_enabled": 1,
-            "group_id": "HASUNOSORA"
+            "group_id": "HASUNOSORA",
+            "char_id_1": "SHIORU"
           }
         },
         {
@@ -14588,12 +13886,10 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Optional tap 1 Nijigasaki member, then draw 1 and discard 1 from hand",
-          "Frame 0: SELECT_MEMBER with group_id=NIJIGASAKI",
-          "Frame 1: MOVE_MEMBER with is_optional=1, is_wait=1",
-          "Frame 2: JUMP_IF_FALSE skips if not activated",
-          "Frame 3: DRAW with value=1",
-          "Frame 4: MOVE_TO_DISCARD from hand"
+          "If baton touched from non-Shioru member, recover 1 live card from discard",
+          "Frame 0: BATON with char_id_1=SHIORU to exclude Shioru",
+          "Frame 1: JUMP_IF_FALSE skips if condition not met",
+          "Frame 2: RECOVER_LIVE_CARD with value=1"
         ],
         "text_mapping": {
           "ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã¦ããã": "Frames 0-1: SELECT_MEMBER + MOVE_MEMBER with is_optional=1, is_wait=1",
@@ -16635,7 +15931,6 @@
           "attr": {
             "card_type": "LIVE",
             "group_enabled": 1,
-            "group_id": "MUSE",
             "is_optional": 1
           },
           "slot": {
@@ -16661,16 +15956,7 @@
       "frame_verification": {
         "verified": false,
         "issues": [
-          "Frame 0: LOOK_AND_CHOOSE missing dest_discard=1 and remainder_zone=DISCARD",
-          "Text says 'æ®ããæ§ãå®¤ã«ç½®ã�?' but frame doesn't handle this"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã5æè¦ã": "Frame 0: LOOK_AND_CHOOSE value.count=5, reveal=1",
-          "ã�?ã®ä¸­ãããÎ¼'sã�?ã®ã©ã¤ãã«ã¼ãã1æå¬éãã¦ææ­ã«å ãã¦ããã": "Frame 0: group_id=MUSE, is_optional=1",
-          "æ®ããæ§ãå®¤ã«ç½®ã�?": "ISSUE: Frame 0 missing dest_discard=1, remainder_zone=DISCARD"
-        },
-        "required_frames": [
-          "LOOK_AND_CHOOSE should have dest_discard=1, remainder_zone=DISCARD"
+          "Verification needed - frames need manual review"
         ]
       }
     },
@@ -17047,18 +16333,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy at live start to gain 2 blades until end",
-          "Frame 0: PAY_ENERGY with is_optional=1",
-          "Frame 1: JUMP_IF_FALSE",
-          "Frame 2: ADD_BLADES with value=2",
-          "12 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES with value=2"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -17221,19 +16499,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self, then tap 1 opponent costâ¤4 member",
-          "Frame 0: SET_TAPPED with is_optional=1",
-          "Frame 1: JUMP_IF_FALSE",
-          "Frame 2: SELECT_MEMBER with costâ¤4, target_player=OPPONENT",
-          "Frame 3: MOVE_MEMBER with is_wait=1",
-          "6 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frames 2-3: SELECT_MEMBER + MOVE_MEMBER with costâ¤4"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -17353,14 +16622,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Duplicate of ability 188 - optional tap self, then tap 1 opponent costâ¤4 member",
-          "6 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ãããï¼ç¸æã®ã¹ãã¼ã¸ã«ããã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frames 0-3: SET_TAPPED + JUMP_IF_FALSE + SELECT_MEMBER + MOVE_MEMBER"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -17462,17 +16727,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select heart01/03/06, gain selected heart per success live card",
-          "Frame 0: COLOR_SELECT with color_mask=RED|GREEN|ANY",
-          "Frame 1: ADD_HEARTS with compare_accumulated=1, remainder_zone=SUCCESS_PILE, is_dynamic=1, heart_type=SELECTED",
-          "5 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{heart_01.png|heart01}}ã{{heart_03.png|heart03}}ã{{heart_06.png|heart06}}ã®ãã¡ã1ã¤ãé¸ã¶": "Frame 0: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ã1æã«ã¤ã�?ãé¸ãã ã�?ã¼ãã1ã¤å¾ã": "Frame 1: ADD_HEARTS with dynamic based on SUCCESS_PILE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -17863,16 +17121,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Activate all Liella members and all energy",
-          "Frame 0: ACTIVATE_MEMBER with group_id=LIELLA, value=99",
-          "Frame 1: ACTIVATE_ENERGY with value=99",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{center.png|ã»ã³ã¿ã¼}}èªåã®ã¹ãã¼ã¸ã«ãããã¹ã¦ã®ãLiella!ã�?ã®ã¡ã³ã�?ã¼ã¨ãèªåã®ãã¹ã¦ã®ã¨ã�?ã«ã®ã¼ãã¢ã¯ãã£ãã«ãã": "Frames 0-1: ACTIVATE_MEMBER + ACTIVATE_ENERGY"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -17960,18 +17212,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If left and right side members have same cost, tap all opponent members with bladeâ¤3",
-          "Frame 0: SYNC_COST",
-          "Frame 1: JUMP_IF_FALSE",
-          "Frame 2: TAP_OPPONENT with filter=BLADE_LE3",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã®å�?³ãµã¤ãã¨ãªã¢ã¨å·¦ãµã¤ãã¨ãªã¢ã«ããã¡ã³ã�?ã¼ã®ã³ã¹ããå�?ãå ´å�?": "Frame 0: SYNC_COST",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããåãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ã3ã¤ä»¥ä¸ã®ãã¹ã¦ã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã": "Frame 2: TAP_OPPONENT with filter=BLADE_LE3"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18081,19 +17325,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy, gain blade per live card in stage",
-          "Frame 0: PAY_ENERGY with is_optional=1",
-          "Frame 2: SUM_VALUE",
-          "Frame 3: GROUP_FILTER",
-          "Frame 5: ADD_BLADES with compare_accumulated=1, remainder_zone=STAGE, is_dynamic=1",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ã©ã¤ãä¸­ã®ã«ã¼ã1æã«ã¤ã�?ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 5: ADD_BLADES with dynamic based on STAGE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18190,19 +17425,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy, select heart color, gain that heart",
-          "Frame 0: PAY_ENERGY with is_optional=1",
-          "Frame 2: COLOR_SELECT with is_optional=1",
-          "Frame 3: ADD_HEARTS with heart_type=SELECTED",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with is_optional=1",
-          "å¥½ã�?ãªã�?ã¼ãã®è²ã1ã¤æå®ãã": "Frame 2: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãã�?ã®ã�?ã¼ãã1ã¤å¾ã": "Frame 3: ADD_HEARTS with heart_type=SELECTED"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18547,15 +17773,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional position change this member",
-          "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}ãã®ã¡ã³ã�?ã¼ãã�?ã¸ã·ã§ã³ãã§ã³ã¸ãã¦ããã": "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18632,14 +17853,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Duplicate of ability 200 - optional position change",
-          "6 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}ãã®ã¡ã³ã�?ã¼ãã�?ã¸ã·ã§ã³ãã§ã³ã¸ãã¦ããã": "Frame 0: MOVE_MEMBER with destination=POSITION_CHANGE, is_optional=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18836,17 +18053,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Gain blade per 2 cards in hand",
-          "Frame 0: COUNT_HAND",
-          "Frame 2: DIV_VALUE with value=2",
-          "Frame 3: ADD_BLADES",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ææ­2æã«ã¤ã�?ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 0-3: COUNT_HAND + DIV_VALUE + ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -18947,17 +18157,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional reveal live card from hand and put at deck bottom, then look at top 2",
-          "Fixed: Added REVEAL_CARDS and MOVE_TO_DECK frames",
-          "Removed unnecessary SUM_VALUE and JUMP_IF_FALSE",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã®ã©ã¤ãã«ã¼ãã1æå¬éããããã­ã®ä¸çªä¸ã«ç½®ãã¦ããã": "Frames 0-3: SELECT_CARDS + REVEAL_CARDS + MOVE_TO_DECK",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ããã�?ã®ä¸­ããå¥½ã�?ãªææ°ãå¥½ã�?ãªé çªã§ããã­ã®ä¸ã«ç½®ã�?ãæ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 4: LOOK_REORDER_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19066,17 +18269,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard live card, select heart color, gain that heart",
-          "Fixed: Added SELECT_CARDS and MOVE_TO_DISCARD frames",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã®ã©ã¤ãã«ã¼ãã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frames 0-2: SELECT_CARDS + MOVE_TO_DISCARD",
-          "å¥½ã�?ãªã�?ã¼ãã®è²ã1ã¤æå®ãã": "Frame 3: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãã�?ã®ã�?ã¼ãã1ã¤å¾ã": "Frame 4: ADD_HEARTS with heart_type=SELECTED"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19180,17 +18376,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard, select heart03/04/05, give selected heart to played this turn non-Aqours members",
-          "Fixed: Changed heart_type from 2 to SELECTED",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "{{heart_03.png|heart03}}ã{{heart_04.png|heart04}}ã{{heart_05.png|heart05}}ã®ãã¡ã1ã¤ãé¸ã¶": "Frame 2: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ã¹ãã¼ã¸ã«ãããã®ã¿ã¼ã³ã«ç»å ´ããã¡ã³ã�?ã¼ã®ãã¡ããAqoursã�?ä»¥å¤ã®ãã¹ã¦ã®ã¡ã³ã�?ã¼ã¯é¸ãã ã�?ã¼ãã1ã¤å¾ã": "Frame 3: ADD_HEARTS with heart_type=SELECTED, group_id=OTHER, keyword=PLAYED_THIS_TURN"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19314,17 +18503,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard, if member card, give heart04+blade to member with same name",
-          "Fixed: Added proper condition check for member card and name matching",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: SELECT_CARDS with is_optional=1",
-          "ããã«ããæ§ãå®¤ã«ç½®ããã«ã¼ããã¡ã³ã�?ã¼ã«ã¼ãã®å ´å�?": "Frame 2: NOP with raw_cond=DISCARDED_IS_MEMBER",
-          "æ§ãå®¤ã«ç½®ããã«ã¼ãã¨å�?ãå�?�?å�?ãæã¤ã¡ã³ã�?ã¼1äººã¯ãã©ã¤ãçµäºæã¾ã§ã{{heart_04.png|heart04}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 4-6: SELECT_MEMBER + ADD_HEARTS + ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19440,18 +18622,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If other members on stage, optional discard, select heart, gain that heart",
-          "Fixed: Added COLOR_SELECT frame, removed unnecessary SUM_VALUE frames",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ã»ãã®ã¡ã³ã�?ã¼ãããå ´å�?": "Frame 0: COUNT_STAGE with special_id=Not Self",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
-          "å¥½ã�?ãªã�?ã¼ãã®è²ã1ã¤æå®ãã": "Frame 4: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãã�?ã®ã�?ã¼ãã1ã¤å¾ã": "Frame 5: ADD_HEARTS with heart_type=SELECTED"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19547,16 +18721,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard up to 2, gain 2 blades per discarded card",
-          "Fixed: Changed SELECT_MEMBER to SELECT_CARDS, fixed dynamic calculation",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã2æã¾ã§æ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: SELECT_CARDS with value=2, is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ãããã«ãã£ã¦æ§ãå®¤ã«ç½®ããã«ã¼ã1æã«ã¤ã�?ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES with compare_accumulated=1, dynamic based on CONTEXT"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19694,17 +18862,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 2, activate tapped non-self member, give heart04 to both",
-          "Fixed: Removed is_optional=1 from ADD_HEARTS (effect is guaranteed after cost)",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã2ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with value=2, is_optional=1",
-          "èªåã®ã¹ãã¼ã¸ã«ãããã®ã¡ã³ã�?ã¼ä»¥å¤ã®ã¦ã§ã¤ãç¶æã®ã¡ã³ã�?ã¼1äººãã¢ã¯ãã£ãã«ãã": "Frames 2-3: SELECT_MEMBER + ACTIVATE_MEMBER",
-          "ã�?ãããå ´å�?ãã©ã¤ãçµäºæã¾ã§ãããã«ããã¢ã¯ãã£ãã«ããã¡ã³ã�?ã¼ã¨ããã®ã¡ã³ã�?ã¼ã¯ãã�?ããã{{heart_04.png|heart04}}ãå¾ã": "Frames 6-7: ADD_HEARTS + ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19853,23 +19014,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional move 2 member cards to deck bottom, effect based on total cost",
-          "Frame 0: SELECT_CARDS",
-          "Frame 1: MOVE_TO_DECK to DECK_BOTTOM",
-          "Frame 3: CALC_SUM_COST",
-          "Frame 4-6: Check cost=6, DRAW",
-          "Frame 7-9: Check cost=8, ADD_HEARTS with all=true",
-          "Frame 10-12: Check cost=25, GRANT_ABILITY",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "æ§ãå®¤ã«ããã¡ã³ã�?ã¼ã«ã¼ã2æãå¥½ã�?ãªé çªã§ããã­ã®ä¸çªä¸ã«ç½®ãã¦ããã": "Frames 0-1: SELECT_CARDS + MOVE_TO_DECK",
-          "ã�?ããã®ã«ã¼ãã®ã³ã¹ãã®å�?è¨ãã6ã®å ´å�?ãã«ã¼ãã1æå¼ã�?": "Frames 3-6: CALC_SUM_COST + check cost=6 + DRAW",
-          "å�?è¨ã8ã®å ´å�?ãã©ã¤ãçµäºæã¾ã§ã{{icon_all.png|ã�?ã¼ã}}ãå¾ã": "Frames 7-9: check cost=8 + ADD_HEARTS with all=true",
-          "å�?è¨ã25ã®å ´å�?ãã©ã¤ãçµäºæã¾ã§ãã{{jyouji.png|å¸¸æ}}ã©ã¤ãã®å�?è¨ã¹ã³ã¢ã+ï¼ãããã�?ãå¾ã": "Frames 10-12: check cost=25 + GRANT_ABILITY"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -19956,17 +19104,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If success live counts equal, gain heart02x2",
-          "Frame 0: NOP with raw_cond=SUCCESS_LIVE_COUNT_EQUAL_OPPONENT",
-          "Frame 2: ADD_HEARTS with heart_type=2, value=2",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã¨ç¸æã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ãã®ææ°ãå�?ãå ´å�?": "Frame 0: NOP with raw_cond",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_02.png|heart02}}{{heart_02.png|heart02}}ãå¾ã": "Frame 2: ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20071,17 +19212,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional place energy under member, draw 1, give blade x2 to all stage members",
-          "Fixed: Removed unnecessary SUM_VALUE and JUMP_IF_FALSE frames",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¨ã�?ã«ã®ã¼ç½®ã�?å ´ã«ããã¨ã�?ã«ã®ã¼1æããã®ã¡ã³ã�?ã¼ã®ä¸ã«ç½®ãã¦ããã": "Frame 0: PLACE_ENERGY_UNDER_MEMBER with is_optional=1",
-          "ã�?ãããå ´å�?ãã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ã¯{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 3-4: SELECT_MEMBER + ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20178,16 +19312,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If no Muse member with 5+ blades on stage, position change to non-center",
-          "Fixed: Added group_id=MUSE, blade filter, changed IS_CENTER to proper check",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«{{icon_blade.png|ãã¬ã¼ã}}ã5ã¤ä»¥ä¸æã¤ãÎ¼'sã�?ã®ã¡ã³ã�?ã¼ãããªãå ´å�?": "Frame 0: SELECT_MEMBER with group_id=MUSE, filter=BLADE_GE5",
-          "ãã®ã¡ã³ã�?ã¼ã¯ã»ã³ã¿ã¼ã¨ãªã¢ä»¥å¤ã«ã�?ã¸ã·ã§ã³ãã§ã³ã¸ãã": "Frame 2: MOVE_MEMBER with destination=POSITION_CHANGE_NON_CENTER"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20272,17 +19400,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If other members on stage, reduce yell count by 8",
-          "Frame 0: COUNT_STAGE with special_id=Not Self",
-          "Frame 2: REDUCE_YELL_COUNT with value=8",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãã®ã¡ã³ã�?ã¼ä»¥å¤ã®ã¡ã³ã�?ã¼ã1äººä»¥ä¸ããå ´å�?": "Frame 0: COUNT_STAGE with special_id=Not Self",
-          "ã©ã¤ãçµäºæã¾ã§ãã¨ã¼ã«ã«ãã£ã¦å¬éãããèªåã®ã«ã¼ãã®ææ°ã8ææ¸ã": "Frame 2: REDUCE_YELL_COUNT with value=8"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20393,19 +19514,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select Nijigasaki live card, if same name in success pile, gain heart04",
-          "Frame 0: SELECT_LIVE with group_id=NIJIGASAKI",
-          "Frame 1: SUCCESS_PILE_COUNT with special_id=Same Name",
-          "Frame 3: ADD_HEARTS with heart_type=3",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã©ã¤ãä¸­ã®ãè¹ã¶å²ã�?ã®ã©ã¤ãã«ã¼ãã1æé¸ã¶": "Frame 0: SELECT_LIVE with group_id=NIJIGASAKI",
-          "ã�?ãã¨å�?ãã«ã¼ãå�?�?ã®ã«ã¼ããèªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããå ´å�?": "Frame 1: SUCCESS_PILE_COUNT with special_id=Same Name",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_04.png|heart04}}ãå¾ã": "Frame 3: ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20510,17 +19622,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If success live exists, optional discard, recover Muse live card",
-          "Fixed: Added group_id=MUSE to RECOVER_LIVE, removed unnecessary SUM_VALUE frames",
-          "4 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ã«ã¼ããããå ´å�?": "Frame 0: COUNT_SUCCESS_LIVE",
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 2: MOVE_TO_DISCARD with is_optional=1",
-          "ã�?ãããå ´å�?ãèªåã®æ§ãå®¤ãããÎ¼'sã�?ã®ã©ã¤ãã«ã¼ãã1æææ­ã«å ãã": "Frame 4: RECOVER_LIVE with group_id=MUSE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20593,16 +19698,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy, gain blade",
-          "Fixed: Removed is_optional from ADD_BLADES, removed unnecessary SUM_VALUE frames",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20722,22 +19821,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard Dollchestra card, select Dollchestra member, set cost to selected-1, if cost>=10 gain heart05",
-          "Frame 0: MOVE_TO_DISCARD with unit_id=DOLLCHESTRA",
-          "Frame 2: SELECT_MEMBER with unit_id=DOLLCHESTRA",
-          "Frame 3: META_RULE with SET_SOURCE_COST_FROM_SELECTED_MINUS",
-          "Frame 4: NOP with raw_cond=SOURCE_MEMBER_COST_GE, value=10",
-          "Frame 6: ADD_HEARTS with heart_type=4",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã®ãDOLLCHESTRAã�?ã®ã«ã¼ãã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with unit_id=DOLLCHESTRA",
-          "èªåã®ã¹ãã¼ã¸ã«ãããDOLLCHESTRAã�?ã®ã¡ã³ã�?ã¼1äººãé¸ã¶": "Frame 2: SELECT_MEMBER",
-          "ã©ã¤ãçµäºæã¾ã§ããã®ã¡ã³ã�?ã¼ã®ã³ã¹ãã¯ãé¸ãã ã¡ã³ã�?ã¼ãåãæã¤ã³ã¹ããã1ä½ãå¤ã«ç­ãã�?ãªã": "Frame 3: META_RULE",
-          "ããã«ãããã®ã«ã¼ãã®ã³ã¹ãã10ä»¥ä¸ã«ãªã£ãå ´å�?ãã©ã¤ãçµäºæã¾ã§ã{{heart_05.png|heart05}}ãå¾ã": "Frames 4-6: check cost>=10 + ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20820,17 +19907,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 2 same-group cards, gain heart01x2",
-          "Frame 0: MOVE_TO_DISCARD with special_id=Selected Discard Group",
-          "Frame 2: ADD_HEARTS with heart_type=0, value=2",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã®å�?ãã°ã«ã¼ãå�?�?ãæã¤ã«ã¼ã2æãæ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with special_id",
-          "ã©ã¤ãçµäºæã¾ã§ã{{heart_01.png|heart01}}{{heart_01.png|heart01}}ãå¾ã": "Frame 2: ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -20931,17 +20011,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard, gain blade, if live discarded, draw 1",
-          "Fixed: Added MOVE_TO_DISCARD and DRAW frames",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES",
-          "ããã«ããã©ã¤ãã«ã¼ããæ§ãå®¤ã«ç½®ããå ´å�?ãããã«ã«ã¼ãã1æå¼ã�?": "Frames 3-5: GROUP_FILTER + check + DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21140,19 +20213,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard top deck card up to 4 times, gain blade each time, if live discarded tap self",
-          "Complex loop structure with JUMP frames for repeat functionality",
-          "Frames implement the repeat mechanic correctly",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸çªä¸ã®ã«ã¼ããæ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "ã�?ãããå ´å�?ãã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES",
-          "ããã«ããæ§ãå®¤ã«ç½®ããã«ã¼ããã©ã¤ãã«ã¼ãã®å ´å�?ããã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã": "Frames 3-4: DISCARDED_CARDS + check",
-          "èªåã¯ãã®æé ãããã«4åã¾ã§ç¹°ãè¿ãã¦ããã": "Loop structure with JUMP frames"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21404,17 +20468,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If 2+ success live cards, draw 1",
-          "Frame 0: COUNT_SUCCESS_LIVE with value=2",
-          "Frame 2: DRAW",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ã«ã¼ãã2æä»¥ä¸ããå ´å�?": "Frame 0: COUNT_SUCCESS_LIVE",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21488,17 +20545,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional tap self, tap opponent member with exactly 4 blades",
-          "Frame 0: SET_TAPPED with is_optional=1",
-          "Frame 2: TAP_OPPONENT with filter=BLADE_EQ4",
-          "3 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ãã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãã«ãã¦ããã": "Frame 0: SET_TAPPED with is_optional=1",
-          "ç¸æã®ã¹ãã¼ã¸ã«ããåãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã®æ°ãã¡ããã©4ã¤ã®ã¡ã³ã�?ã¼1äººãã¦ã§ã¤ãã«ãã": "Frame 2: TAP_OPPONENT with filter=BLADE_EQ4"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21573,18 +20623,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Auto trigger: when opponent costâ¤4 member becomes tapped by your effect, draw 1",
-          "Fixed: Changed from wrong IS_CENTER/MOVE_MEMBER frames to correct auto-trigger frames",
-          "Frame 0: NOP with raw_cond=OPPONENT_MEMBER_TAPPED_BY_YOUR_EFFECT_COST_LE4, once_per_turn=1",
-          "Frame 2: DRAW",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{jidou.png|èªå}}{{turn1.png|ã¿ã¼ã³1å}}èªåã®ã«ã¼ãã®å¹æã«ãã£ã¦ãç¸æã®ã¹ãã¼ã¸ã«ããã¢ã¯ãã£ãç¶æã®ã³ã¹ã4ä»¥ä¸ã®ã¡ã³ã�?ã¼ãã¦ã§ã¤ãç¶æã«ãªã£ãã¨ã�?": "Frame 0: NOP with raw_cond",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21673,15 +20715,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Constant: gain heart06 per tapped opponent member",
-          "Frame 0: ADD_HEARTS with target_player=OPPONENT, is_tapped=1, compare_accumulated=1",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{jyouji.png|å¸¸æ}}ç¸æã®ã¹ãã¼ã¸ã«ããã¦ã§ã¤ãç¶æã®ã¡ã³ã�?ã¼1äººã«ã¤ã�?ã{{heart_06.png|heart06}}ãå¾ã": "Frame 0: ADD_HEARTS with dynamic based on tapped opponent members"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21895,17 +20932,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy, transform all hearts to heart04",
-          "Frame 0: PAY_ENERGY with value=2, is_optional=1",
-          "Frame 2: TRANSFORM_HEART with color_mask=8 (heart04)",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "ã©ã¤ãçµäºæã¾ã§ããã®ã¡ã³ã�?ã¼ãåãæã¤ã�?ã¼ãã¯ãã¹ã¦{{heart_04.png|heart04}}ã«ãªã": "Frame 2: TRANSFORM_HEART"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -21969,16 +20999,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy, energy charge 1",
-          "Fixed: Removed unnecessary SUM_VALUE frames",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frame 2: ENERGY_CHARGE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22046,16 +21070,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Unless pay 2 energy, discard 2 from hand",
-          "Fixed: Changed from SELECT_MODE placeholder to proper PAY_ENERGY check",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã�?ãªãããã": "Frames 0-2: PAY_ENERGY check",
-          "èªåã®ææ­ã2ææ§ãå®¤ã«ç½®ã�?": "Frame 3: MOVE_TO_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22149,17 +21167,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy, gain blade",
-          "Frame 0: PAY_ENERGY with value=1, is_optional=1",
-          "Frame 2: ADD_BLADES",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22223,17 +21234,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy, energy charge 1",
-          "Frame 0: PAY_ENERGY with value=1, is_optional=1",
-          "Frame 2: ENERGY_CHARGE",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "èªåã®ã¨ã�?ã«ã®ã¼ããã­ãããã¨ã�?ã«ã®ã¼ã«ã¼ãã1æã¦ã§ã¤ãç¶æã§ç½®ã�?": "Frame 2: ENERGY_CHARGE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22312,16 +21316,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 1 energy, select 2 member cards from discard, put on deck top",
-          "Fixed: Removed unnecessary SUM_VALUE frames",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "èªåã®æ§ãå®¤ã«ããã¡ã³ã�?ã¼ã«ã¼ã2æãå¥½ã�?ãªé çªã§ããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frames 2-3: SELECT_CARDS + MOVE_TO_DECK"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22545,16 +21543,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If blade-less member card moved from success pile to discard this turn, draw 1, gain heart03+05+06",
-          "Fixed: Added keyword=THIS_TURN to COUNT_DISCARD",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ãã®ã¿ã¼ã³ããã¬ã¼ãã�?ã¼ããæããªãã¡ã³ã�?ã¼ã«ã¼ããèªåã®ã©ã¤ãã«ã¼ãç½®ã�?å ´ããæ§ãå®¤ã«ç½®ããã¦ããå ´å�?": "Frame 0: COUNT_DISCARD with keyword=THIS_TURN, has_blade_heart=1",
-          "ã«ã¼ãã1æå¼ã�?ãã©ã¤ãçµäºæã¾ã§ã{{heart_03.png|heart03}}{{heart_05.png|heart05}}{{heart_06.png|heart06}}ãå¾ã": "Frames 2-5: DRAW + ADD_HEARTS x3"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22656,15 +21648,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Activate 2 energy",
-          "Frame 0: ACTIVATE_ENERGY with value=2",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}ã¨ã�?ã«ã®ã¼ã2æã¢ã¯ãã£ãã«ãã": "Frame 0: ACTIVATE_ENERGY"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22865,16 +21852,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 1, gain blade",
-          "Fixed: Removed unnecessary SUM_VALUE frames",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -22950,18 +21931,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 1, other stage members gain blade",
-          "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "Frame 2: SELECT_MEMBER with value=99",
-          "Frame 3: ADD_BLADES",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ã¹ãã¼ã¸ã«ããã»ãã®ã¡ã³ã�?ã¼ã¯{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 2-3: SELECT_MEMBER + ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23065,16 +22038,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 1, gain blade x2 per success live card",
-          "Fixed: Removed unnecessary SUM_VALUE frame",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®æ�?åã©ã¤ãã«ã¼ãç½®ã�?å ´ã«ããã«ã¼ã1æã«ã¤ã�?ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frames 2-5: COUNT_SUCCESS_LIVE + SELECT_MEMBER + ADD_BLADES with dynamic"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23182,20 +22149,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 1, select heart color, give to non-self Nijigasaki member",
-          "Frame 0: MOVE_TO_DISCARD with is_optional=1",
-          "Frame 2: COLOR_SELECT",
-          "Frame 3: SELECT_MEMBER with group_id=NIJIGASAKI, special_id=Not Self",
-          "Frame 4: ADD_HEARTS with heart_type=SELECTED",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD",
-          "å¥½ã�?ãªã�?ã¼ãã®è²ã1ã¤æå®ãã": "Frame 2: COLOR_SELECT",
-          "ã©ã¤ãçµäºæã¾ã§ãèªåã®ã¹ãã¼ã¸ã«ãããã®ã¡ã³ã�?ã¼ä»¥å¤ã®ãè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼1äººã¯ãã�?ã®ã�?ã¼ãã1ã¤å¾ã": "Frames 3-4: SELECT_MEMBER + ADD_HEARTS"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23262,16 +22219,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 1, look at top 3, reorder/discard",
-          "Fixed: Removed unnecessary SUM_VALUE frames",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã1ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ããã�?ã®ä¸­ããå¥½ã�?ãªææ°ãå¥½ã�?ãªé çªã§ããã­ã®ä¸ã«ç½®ã�?ãæ®ããæ§ãå®¤ã«ç½®ã�?": "Frame 2: LOOK_REORDER_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23346,16 +22297,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional discard 2, look at top 3, add 1 to hand, put 1 on top, discard 1",
-          "Fixed: Changed from incomplete frames to LOOK_AND_CHOOSE",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "ææ­ã2ææ§ãå®¤ã«ç½®ãã¦ããã": "Frame 0: MOVE_TO_DISCARD",
-          "èªåã®ããã­ã®ä¸ããã«ã¼ãã3æè¦ããã�?ã®ä¸­ãã1æãææ­ã«å ãã1æãããã­ã®ä¸ã«ç½®ã�?ã1æãæ§ãå®¤ã«ç½®ã�?": "Frame 2: LOOK_AND_CHOOSE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23544,18 +22489,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select self or opponent, recover up to 2 member cards to deck bottom",
-          "Frame 0: SELECT_MODE",
-          "Frame 3: RECOVER_MEMBER with target_player=SELF",
-          "Frame 5: RECOVER_MEMBER with target_player=OPPONENT",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåãç¸æãé¸ã¶": "Frame 0: SELECT_MODE",
-          "èªåã¯ãã�?ã®ãã¬ã¤ã¤ã¼ã®æ§ãå®¤ã«ããã¡ã³ã�?ã¼ã«ã¼ãã2æã¾ã§ãå¥½ã�?ãªé çªã§ããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frames 3-6: RECOVER_MEMBER based on selection"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23654,17 +22591,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select self or opponent, look at top deck card, optionally discard",
-          "Fixed: Changed from SELECT_MODE placeholder to proper player selection with LOOK_DECK",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåãç¸æãé¸ã¶": "Frame 0: SELECT_MODE",
-          "èªåã¯ãã�?ã®ãã¬ã¤ã¤ã¼ã®ããã­ã®ä¸çªä¸ã®ã«ã¼ããè¦ã": "Frames 2-5: LOOK_DECK based on selection",
-          "èªåã¯ã�?ã®ã«ã¼ããæ§ãå®¤ã«ç½®ãã¦ããã": "Frame 6: MOVE_TO_DISCARD with is_optional=1"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23752,16 +22682,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select self or opponent, look at top 2 cards, reorder/discard",
-          "Fixed: Added SELECT_MODE for player selection",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåãç¸æãé¸ã¶": "Frame 0: SELECT_MODE",
-          "èªåã¯ãã�?ã®ãã¬ã¤ã¤ã¼ã®ããã­ã®ä¸ããã«ã¼ãã2æè¦ããã�?ã®ä¸­ããå¥½ã�?ãªææ°ãå¥½ã�?ãªé çªã§ããã­ã®ä¸ã«ç½®ã�?ãæ®ããæ§ãå®¤ã«ç½®ã�?": "Frames 2-5: LOOK_REORDER_DISCARD based on selection"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23842,18 +22766,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select self or opponent, recover up to 2 member cards to deck bottom",
-          "Frame 0: SELECT_MODE",
-          "Frame 3: RECOVER_MEMBER with target_player=SELF",
-          "Frame 5: RECOVER_MEMBER with target_player=OPPONENT",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåãç¸æãé¸ã¶": "Frame 0: SELECT_MODE",
-          "èªåã¯ãã�?ã®ãã¬ã¤ã¤ã¼ã®æ§ãå®¤ã«ããã¡ã³ã�?ã¼ã«ã¼ãã2æã¾ã§ãå¥½ã�?ãªé çªã§ããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frames 3-6: RECOVER_MEMBER based on selection"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -23920,19 +22836,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Select Aqours member, if 6+ blades, boost score +1",
-          "Frame 0: SELECT_MEMBER with group_id=AQOURS",
-          "Frame 1: COUNT_BLADES with value=6",
-          "Frame 3: BOOST_SCORE",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããAqoursã�?ã®ã¡ã³ã�?ã¼1äººãé¸ã¶": "Frame 0: SELECT_MEMBER",
-          "ã�?ã®ã¡ã³ã�?ã¼ãæã¤{{icon_blade.png|ãã¬ã¼ã}}ã6ã¤ä»¥ä¸å ´å�?": "Frame 1: COUNT_BLADES",
-          "ãã®ã«ã¼ãã®ã¹ã³ã¢ã+ï¼ãã": "Frame 3: BOOST_SCORE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24026,17 +22933,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If Nijigasaki members on stage, look at top 1, if live revealed boost score",
-          "Fixed: Changed from NOP+BOOST_SCORE to proper implementation",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ãããè¹ã¶å²ã�?ã®ã¡ã³ã�?ã¼1äººã«ã¤ã�?ãèªåã®ããã­ã®ä¸ããã«ã¼ãã1æè¦ã": "Frames 0-2: COUNT_STAGE + LOOK_REORDER_DISCARD",
-          "ã�?ã®ä¸­ãã1æã¾ã§ãããã­ã®ä¸ã«ç½®ã�?ãæ®ããæ§ãå®¤ã«ç½®ã�?ãã�?ã®å¾ãèªåã®ããã­ã®ä¸çªä¸ã®ã«ã¼ãã1æå¬éãã": "Frames 2-3: LOOK_REORDER_DISCARD + REVEAL_CARDS",
-          "ããã«ããã©ã¤ãã«ã¼ããå¬éããå ´å�?ããã®ã«ã¼ãã®ã¹ã³ã¢ã+ï¼ãã": "Frames 4-6: check live revealed + BOOST_SCORE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24123,17 +23023,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If stage cost total < opponent, draw 1",
-          "Frame 0: SCORE_COMPARE with comparison=GT",
-          "Frame 2: DRAW",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ã®ã³ã¹ãã®å�?è¨ãç¸æããä½ãå ´å�?": "Frame 0: SCORE_COMPARE",
-          "ã«ã¼ãã1æå¼ã�?": "Frame 2: DRAW"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24198,18 +23091,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "If stage cost total < opponent, draw 2, put 1 from hand on deck top",
-          "Frame 0: SCORE_COMPARE with comparison=GE",
-          "Frame 2: DRAW with value=2",
-          "Frame 4: MOVE_TO_DECK to DECK_TOP",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ã®ã³ã¹ãã®å�?è¨ãç¸æããä½ãå ´å�?": "Frame 0: SCORE_COMPARE",
-          "ã«ã¼ãã2æå¼ã�?ãèªåã®ææ­ã1æããã­ã®ä¸çªä¸ã«ç½®ã�?": "Frames 2-4: DRAW + SELECT_CARDS + MOVE_TO_DECK"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24325,16 +23210,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional activate 1 tapped member",
-          "Frame 0: SELECT_MEMBER with is_tapped=1, is_optional=1",
-          "Frame 1: ACTIVATE_MEMBER",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ã¹ãã¼ã¸ã«ããã¡ã³ã�?ã¼ã1äººã¾ã§ã¢ã¯ãã£ãã«ãã": "Frames 0-1: SELECT_MEMBER + ACTIVATE_MEMBER"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24413,17 +23292,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Reveal top deck card, if costâ¤9 member add to hand and position change, else discard",
-          "Fixed: Changed HAS_KEYWORD(LANZHU) to proper costâ¤9 member check",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "èªåã®ããã­ã®ä¸çªä¸ã®ã«ã¼ããå¬éãã": "Frame 0: LOOK_DECK",
-          "å¬éããã«ã¼ããã³ã¹ã9ä»¥ä¸ã®ã¡ã³ã�?ã¼ã«ã¼ãå ´å�?ãå¬éããã«ã¼ããææ­ã«å ãããã®ã¡ã³ã�?ã¼ã¯ã�?ã¸ã·ã§ã³ãã§ã³ã¸ãã": "Frames 1-4: check + ADD_TO_HAND + MOVE_MEMBER",
-          "ã�?ãä»¥å¤ã®å ´å�?ãå¬éããã«ã¼ããæ§ãå®¤ã«ç½®ã�?": "Frames 5-7: check + MOVE_TO_DISCARD"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -24478,16 +23350,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Optional pay 2 energy, gain blade x2",
-          "Fixed: Removed unnecessary SUM_VALUE frames",
-          "2 cards share this pattern"
-        ],
-        "text_mapping": {
-          "{{live_start.png|ã©ã¤ãéå§æ}}{{icon_energy.png|E}}{{icon_energy.png|E}}æ¯æã£ã¦ããã": "Frame 0: PAY_ENERGY",
-          "ã©ã¤ãçµäºæã¾ã§ã{{icon_blade.png|ãã¬ã¼ã}}{{icon_blade.png|ãã¬ã¼ã}}ãå¾ã": "Frame 2: ADD_BLADES"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -25629,8 +24495,9 @@
           "frame_index": 0,
           "value": 0,
           "params": {
-            "raw_cond": "KEYWORD_ENERGY",
-            "FILTER": "GROUP=NIJIGASAKI"
+            "raw_cond": "DID_ACTIVATE_ENERGY",
+            "FILTER": "GROUP=NIJIGASAKI",
+            "keyword_energy": true
           }
         },
         {
@@ -25647,8 +24514,30 @@
           }
         },
         {
+          "op": "META_RULE",
+          "frame_index": 3,
+          "params": {
+            "raw_cond": "DID_ACTIVATE_MEMBER",
+            "FILTER": "GROUP=NIJIGASAKI",
+            "keyword_member": true
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 2
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 5,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
           "op": "RETURN",
-          "frame_index": 3
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -33109,7 +31998,8 @@
           "frame_index": 0,
           "value": {
             "count": 5,
-            "dest_discard": 1
+            "dest_discard": 1,
+            "reveal": 1
           },
           "attr": {
             "char_id_1": "ELI",
@@ -33128,7 +32018,11 @@
           "frame_index": 1,
           "value": 99,
           "attr": {
-            "target_player": "OPPONENT"
+            "target_player": "OPPONENT",
+            "value_enabled": 1,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "value_source": "CONTEXT"
           },
           "slot": {
             "target_slot": "STAGE_2"
@@ -33153,14 +32047,9 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Trigger: LIVE_START",
-          "Text: {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分�?�デッキ�?�上�?�らカードを5枚見る。�??�?�中�?�ら「絢瀬絵里�?�?�「�?香果林�?�?�「葉月�?��?�?�メン�?ーカードを1枚公開...",
-          "Frames: 3 frame(s)",
-          "Frame 0: LOOK_AND_CHOOSE",
-          "Frame 1: TAP_OPPONENT",
-          "Frame 2: RETURN"
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
         ]
       }
     },
@@ -45948,7 +44837,7 @@
           }
         },
         {
-          "op": "PAY_ENERGY",
+          "op": "NOP",
           "frame_index": 1,
           "value": 1,
           "slot": {
@@ -47075,7 +45964,7 @@
           "frame_index": 0
         },
         {
-          "op": "PAY_ENERGY",
+          "op": "NOP",
           "frame_index": 1,
           "value": 1,
           "slot": {
@@ -47291,7 +46180,7 @@
           }
         },
         {
-          "op": "PAY_ENERGY",
+          "op": "NOP",
           "frame_index": 1,
           "value": 1,
           "slot": {
@@ -47546,7 +46435,8 @@
           "op": "LOOK_AND_CHOOSE",
           "frame_index": 4,
           "value": {
-            "count": 4
+            "count": 4,
+            "reveal": 1
           },
           "attr": {
             "target_player": "SELF"
@@ -47620,27 +46510,10 @@
         }
       ],
       "frame_verification": {
-        "verified": true,
-        "notes": [
-          "Trigger: ACTIVATED",
-          "Text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控�?�室�?�置�??：�?�れ�?�より控�?�室�?�置�?��?�カード�?�『μ's�?�?�カード�?�場�?��?自分�?�デッキ�?�上�?�らカードを4枚見る。�??�?�中�?�らカードを2枚手札�?�加�?�る。残りを控�?�室�?�置�??。『μ's�?�?�カード以外�?�場�?��?自分�?�控�?�室�?�らライブカードを1枚手札�?�加�?�る。",
-          "Frames appear correct with conditional logic",
-          "Frame 0: PAY_ENERGY - pays 2 energy",
-          "Frame 1: MOVE_TO_DISCARD - discards 1 card",
-          "Frame 2: DISCARDED_CARDS - checks if μ's",
-          "Frame 3: JUMP_IF_FALSE - jumps if not μ's",
-          "Frame 4: LOOK_AND_CHOOSE - looks at 4 cards, chooses 2",
-          "Frame 5: JUMP - jumps to return",
-          "Frame 6: RECOVER_LIVE - recovers live card",
-          "Frame 7: RETURN"
-        ],
-        "text_mapping": {
-          "Eを2枚：": "Frame 0: PAY_ENERGY",
-          "手札を1枚控�?�室�?�置�??": "Frame 1: MOVE_TO_DISCARD",
-          "μ's�?�カード�?�場�?�": "Frame 2-3: DISCARDED_CARDS + JUMP_IF_FALSE",
-          "デッキ�?�上�?�らカードを4枚見る�?2枚手札�?�加�?�る": "Frame 4: LOOK_AND_CHOOSE",
-          "μ's�?�カード以外�?�場�?�": "Frame 5-6: JUMP + RECOVER_LIVE"
-        }
+        "verified": false,
+        "issues": [
+          "Verification needed - frames need manual review"
+        ]
       }
     },
     {
@@ -49471,16 +48344,8 @@
           }
         },
         {
-          "op": "PAY_ENERGY",
-          "frame_index": 1,
-          "value": 1,
-          "slot": {
-            "target_slot": "CONTEXT"
-          }
-        },
-        {
           "op": "MOVE_TO_DISCARD",
-          "frame_index": 2,
+          "frame_index": 1,
           "value": 1,
           "attr": {
             "target_player": "SELF"
@@ -49493,7 +48358,7 @@
         },
         {
           "op": "SELECT_CARDS",
-          "frame_index": 3,
+          "frame_index": 2,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -49507,7 +48372,7 @@
         },
         {
           "op": "PAY_ENERGY_DYNAMIC",
-          "frame_index": 4,
+          "frame_index": 3,
           "value": 0,
           "params": {
             "source": "selected_live_score"
@@ -49515,12 +48380,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 5,
+          "frame_index": 4,
           "value": 1
         },
         {
           "op": "RECOVER_LIVE",
-          "frame_index": 6,
+          "frame_index": 5,
           "value": 1,
           "attr": {
             "target_player": "SELF",
@@ -49533,7 +48398,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 7
+          "frame_index": 6
         }
       ],
       "card_refs": [
@@ -49569,13 +48434,12 @@
           "Text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控�?�室�?�置�??：自分�?�控�?�室�?��?�るライブカードを1枚�?��?��?�??�?�カード�?�スコア�?�等�?��?�数�?�{{icon_energy.png|E}}を支払�?��?�もよ�?�。�??�?��?��?�場�?��?...",
           "Frames appear correct for dynamic energy payment",
           "Frame 0: SUM_VALUE - once per turn check",
-          "Frame 1: PAY_ENERGY - pays energy",
-          "Frame 2: MOVE_TO_DISCARD - discards 1 card",
-          "Frame 3: SELECT_CARDS - selects live card",
-          "Frame 4: PAY_ENERGY_DYNAMIC - pays energy equal to card score",
-          "Frame 5: JUMP_IF_FALSE - jumps if not paid",
-          "Frame 6: RECOVER_LIVE - recovers live card",
-          "Frame 7: RETURN"
+          "Frame 1: MOVE_TO_DISCARD - discards 1 card",
+          "Frame 2: SELECT_CARDS - selects live card",
+          "Frame 3: PAY_ENERGY_DYNAMIC - pays energy equal to card score",
+          "Frame 4: JUMP_IF_FALSE - jumps if not paid",
+          "Frame 5: RECOVER_LIVE - recovers live card",
+          "Frame 6: RETURN"
         ]
       }
     },

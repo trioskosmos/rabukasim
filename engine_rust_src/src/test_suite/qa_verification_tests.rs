@@ -268,8 +268,10 @@ mod tests {
             .join("../data/ability_frame_source.json");
         let source = std::fs::read_to_string(&source_path)
             .expect("expected authored ability_frame_source.json to be readable");
+        // Strip UTF-8 BOM if present
+        let source = source.strip_prefix('\u{feff}').unwrap_or(&source);
         let data: serde_json::Value =
-            serde_json::from_str(&source).expect("expected authored ability_frame_source.json to parse");
+            serde_json::from_str(source).expect("expected authored ability_frame_source.json to parse");
         let abilities = data
             .get("abilities")
             .and_then(|value| value.as_array())
@@ -316,8 +318,10 @@ mod tests {
             .join("../data/ability_frame_source.json");
         let source = std::fs::read_to_string(&source_path)
             .expect("expected authored ability_frame_source.json to be readable");
+        // Strip UTF-8 BOM if present
+        let source = source.strip_prefix('\u{feff}').unwrap_or(&source);
         let data: serde_json::Value =
-            serde_json::from_str(&source).expect("expected authored ability_frame_source.json to parse");
+            serde_json::from_str(source).expect("expected authored ability_frame_source.json to parse");
         let abilities = data
             .get("abilities")
             .and_then(|value| value.as_array())
@@ -1331,6 +1335,7 @@ mod tests {
     fn test_q203_niji_score_buff_requires_energy_activation_before_member_activation() {
         let mut db = load_real_db().clone();
         let mut state = create_test_state();
+        state.debug.debug_mode = true;
 
         let live_id = 358; // Cara Tesoro (Q203)
         let member_activator_id = 9903;
@@ -2824,6 +2829,7 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
+        state.debug.debug_mode = true;
         let setsuna_id = 4853; // PL!N-bp5-007-R+
 
         // 1. Setup: Setsuna on stage, both players have 0 successful lives.
@@ -3188,10 +3194,10 @@ mod tests {
         // 3. Verification: Action should NOT be legal.
         // The engine's can_pay_cost logic checks if DECK_TOP has enough cards.
         assert!(
-            actions.contains(&activation_action),
+            !actions.contains(&activation_action),
             // QA: Q234 | Q: 自分のデッキが2枚しかない状態でこの {{kidou.png|起動}} 能力のコストを支払えますか？
             // A: いいえ、できません。デッキが3枚以上必ず必要です。
-            "Q234: Kinako activation should be legal with the current authored frame"
+            "Q234: Kinako activation should not be legal without a hand card to discard"
         );
     }
 
@@ -3454,6 +3460,7 @@ mod tests {
         // A: エネルギーカードを1枚置きます。
         let db = load_real_db();
         let mut state = create_test_state();
+        state.debug.debug_mode = true;
         let lanju_id = db
             .id_by_no("PL!N-bp5-012-P")
             .expect("Q239: expected PL!N-bp5-012-P in the real DB");

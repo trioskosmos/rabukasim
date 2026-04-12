@@ -910,9 +910,12 @@ impl ResponseGenerator {
             }
             O_RECOVER_MEMBER | O_RECOVER_LIVE => {
                 let count = player.looked_cards.len();
+                let is_live_recovery = opcode == O_RECOVER_LIVE;
                 for i in 0..count {
                     let cid = player.looked_cards[i];
                     if cid != -1
+                        && ((is_live_recovery && db.get_live(cid).is_some())
+                            || (!is_live_recovery && db.get_member(cid).is_some()))
                         && state.card_matches_filter_with_ctx(db, cid, pi.filter_attr, &pi.ctx)
                     {
                         receiver.add_action((ACTION_BASE_CHOICE + i as i32) as usize);
@@ -998,6 +1001,18 @@ impl ResponseGenerator {
                 return;
             }
             O_SELECT_CARDS => {
+                if state.debug.debug_mode || env_flag_enabled("TRACE_SELECT_CARDS_FLOW") {
+                    eprintln!(
+                        "[SELECT_CARDS_FLOW] looked_cards={:?} filter_attr={:#x} choice_type={:?} effect_opcode={} target_slot={} source_zone={:?} trigger={:?}",
+                        player.looked_cards,
+                        pi.filter_attr,
+                        pi.choice_type,
+                        pi.effect_opcode,
+                        pi.target_slot,
+                        DecodedSlot::decode(pi.target_slot).source_zone,
+                        pi.ctx.trigger_type
+                    );
+                }
                 self.generate_look_and_choose_actions(db, p_idx, state, receiver, pi, abilities);
                 if (pi.filter_attr & crate::core::logic::interpreter::constants::FILTER_IS_OPTIONAL)
                     != 0
@@ -1224,8 +1239,57 @@ impl ResponseGenerator {
                 add_optional_done_if_available(receiver, pi);
             }
             ChoiceType::SelectStage => {
+                let requires_waiting_member = abilities
+                    .and_then(|abs| {
+                        let resolved_ab_idx = if pi.ability_index == -1 {
+                            abs.iter()
+                                .position(|ab| {
+                                    (ab.choice_flags
+                                        & (CHOICE_FLAG_LOOK
+                                            | CHOICE_FLAG_MODE
+                                            | CHOICE_FLAG_COLOR
+                                            | CHOICE_FLAG_ORDER))
+                                        != 0
+                                })
+                                .unwrap_or(0)
+                        } else {
+                            pi.ability_index as usize
+                        };
+                        abs.get(resolved_ab_idx)
+                    })
+                    .map(|ab| {
+                        let mut next_opcode = None;
+                        for frame_idx in
+                            (pi.ctx.program_counter as usize + 1)..ab.resolved_frames().len()
+                        {
+                            let opcode = ab.resolved_frames()[frame_idx].opcode();
+                            if matches!(opcode, O_JUMP | O_JUMP_IF_FALSE | O_NOP) {
+                                continue;
+                            }
+                            next_opcode = Some(opcode);
+                            break;
+                        }
+                        next_opcode == Some(O_ACTIVATE_MEMBER)
+                    })
+                    .unwrap_or(false);
+                if state.debug.debug_mode || env_flag_enabled("TRACE_SELECT_STAGE_FLOW") {
+                    eprintln!(
+                        "[SELECT_STAGE_FLOW] pc={} choice_type={:?} effect_opcode={} ab_idx={} requires_waiting_member={} target_slot={} filter=[{}] stage={:?}",
+                        pi.ctx.program_counter,
+                        pi.choice_type,
+                        pi.effect_opcode,
+                        pi.ability_index,
+                        requires_waiting_member,
+                        pi.target_slot,
+                        logging::describe_filter_bits(pi.filter_attr),
+                        player.stage
+                    );
+                }
                 for i in 0..STAGE_SLOT_COUNT {
                     let prevented = (player.prevent_play_to_slot_mask() & (1 << i)) != 0;
+                    if requires_waiting_member && !player.is_tapped(i) {
+                        continue;
+                    }
                     let legal = match pi.effect_opcode {
                         O_PLAY_MEMBER_FROM_HAND => {
                             !prevented && !player.is_moved(i)
@@ -1348,9 +1412,20 @@ impl ResponseGenerator {
         let filter_only = filter_attr & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
         let requires_waiting_member = abilities
             .and_then(|abs| ab_idx_real.and_then(|idx| abs.get(idx)))
-            .and_then(|ab| ab.get_frame(pi.ctx.program_counter as usize + 1))
-            .map(|frame| frame.opcode() == O_ACTIVATE_MEMBER)
+            .map(|ab| {
+                let mut next_opcode = None;
+                for frame_idx in (pi.ctx.program_counter as usize + 1)..ab.resolved_frames().len() {
+                    let opcode = ab.resolved_frames()[frame_idx].opcode();
+                    if matches!(opcode, O_JUMP | O_JUMP_IF_FALSE | O_NOP) {
+                        continue;
+                    }
+                    next_opcode = Some(opcode);
+                    break;
+                }
+                next_opcode == Some(O_ACTIVATE_MEMBER)
+            })
             .unwrap_or(false);
+
         let targeted_live_heart_bonus = pending_targeted_live_heart_bonus(db, pi).filter(|_| {
             pi.ctx.trigger_type == TriggerType::OnLiveStart
                 && matches!(
@@ -1421,6 +1496,20 @@ impl ResponseGenerator {
         let hand_cards = player.hand.as_slice();
         let discard_cards = player.discard.as_slice();
         let stage_cards = player.stage.as_slice();
+        if state.debug.debug_mode || env_flag_enabled("TRACE_SELECT_MEMBER_FLOW") {
+            eprintln!(
+                "[SELECT_MEMBER_FLOW] pc={} choice_type={:?} effect_opcode={} ab_idx={:?} target_player={} source_zone={:?} target_slot={} requires_waiting_member={} filter=[{}]",
+                pi.ctx.program_counter,
+                pi.choice_type,
+                pi.effect_opcode,
+                ab_idx_real,
+                target_player,
+                decoded_slot.source_zone,
+                target_slot,
+                requires_waiting_member,
+                logging::describe_filter_bits(filter_attr)
+            );
+        }
         let selected_target_keys = &pi.ctx.selected_target_keys;
         let has_selected_target_keys = !selected_target_keys.is_empty();
 

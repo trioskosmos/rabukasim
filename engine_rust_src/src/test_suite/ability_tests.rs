@@ -267,7 +267,7 @@ fn test_ability_64_kurosawa_dia_flavor_choice() {
         .expect("Card PL!S-bp5-004 should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = 64;
+    let ability_idx = 0;
     assert!(
         card.abilities.get(ability_idx).is_some(),
         "Card should have ability #64"
@@ -319,7 +319,7 @@ fn test_ability_64_option1_aqours_blade() {
         .expect("Card should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = 64;
+    let ability_idx = 0;
     assert!(
         card.abilities.get(ability_idx).is_some(),
         "Card should have ability #64"
@@ -349,7 +349,7 @@ fn test_ability_64_option2_saintsnow_position_change() {
         .expect("Card should exist");
 
     let card = db.get_member(card_id).unwrap();
-    let ability_idx = 64;
+    let ability_idx = 0;
     assert!(
         card.abilities.get(ability_idx).is_some(),
         "Card should have ability #64"

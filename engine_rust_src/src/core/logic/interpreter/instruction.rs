@@ -721,14 +721,20 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
                 special_id: raw
                     .special_id
                     .map(|v| {
+                        eprintln!("[DEBUG] Parsing special_id from value: {:?}", v);
                         if let Some(s) = v.as_str() {
-                            match s.to_uppercase().replace('_', " ").as_str() {
+                            let result = match s.to_uppercase().replace('_', " ").replace('-', " ').as_str() {
                                 "NOT MY" | "NOTMY" => 2,
                                 "NOT SELF" | "NOTSELF" => 3,
+                                "SAME NAME" | "SAMENAME" => 4,
                                 _ => 0,
-                            }
+                            };
+                            eprintln!("[DEBUG] special_id string '{}' -> {}", s, result);
+                            result
                         } else {
-                            v.as_u64().unwrap_or_default() as u8
+                            let result = v.as_u64().unwrap_or_default() as u8;
+                            eprintln!("[DEBUG] special_id number -> {}", result);
+                            result
                         }
                     })
                     .unwrap_or_default(),

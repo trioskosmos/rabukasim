@@ -2070,6 +2070,7 @@ mod tests {
 
         let db = load_real_db();
         let mut state = create_test_state();
+        state.debug.debug_mode = true;
         let setsuna_id = 4853; // PL!N-bp5-007-R+
 
         // 1. Setup: Setsuna on stage, both players have 0 successful lives.
@@ -2245,6 +2246,7 @@ mod tests {
         state.phase = Phase::Main;
         state.current_player = 0;
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.players[0].stage[0] = kaho_id;
         state.players[0].hand = vec![base_live_id].into();
         state.players[0].discard = vec![variant_live_id].into();
@@ -2697,6 +2699,7 @@ mod tests {
         state.phase = Phase::Main;
         state.current_player = 0;
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.players[0].stage[0] = shizuku_id;
         state.players[0].hand = vec![discard_cost_card].into();
         state.players[0].discard = vec![zero_score_live_id].into();
@@ -3243,6 +3246,7 @@ mod tests {
         // Test the core Q147 outcome: score-0 live moves to success pile after successful performance
         let mut state = create_test_state();
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.players[0].live_zone[0] = live_id;
         state.phase = Phase::LiveResult;
         state.current_player = 0;
@@ -3818,6 +3822,7 @@ mod tests {
 
         let mut state = create_test_state();
         state.ui.silent = true;
+        state.debug.debug_mode = true;
         state.players[0].live_zone[0] = live_id;
         state.players[0].stage[0] = arise_member;
         state.players[0].stage[1] = waiting_target;

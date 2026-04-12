@@ -168,7 +168,17 @@ fn try_build_prefilled_actions(
                 })
                 .and_then(|ability| {
                     ability
-                        .get_frame(ctx.program_counter as usize + 1)
+                        .resolved_frames()
+                        .iter()
+                        .skip(ctx.program_counter as usize + 1)
+                        .find(|frame| {
+                            !matches!(
+                                frame.opcode(),
+                                crate::core::generated_constants::O_JUMP
+                                    | crate::core::generated_constants::O_JUMP_IF_FALSE
+                                    | crate::core::generated_constants::O_NOP
+                            )
+                        })
                         .map(|frame| frame.opcode() == crate::core::generated_constants::O_ACTIVATE_MEMBER)
                 })
                 .unwrap_or(false);
@@ -485,6 +495,20 @@ pub fn suspend_interaction(
         decoded_slot.source_zone,
         crate::core::enums::Zone::Default | crate::core::enums::Zone::Stage
     );
+    if state.debug.debug_mode
+        && matches!(choice_type, ChoiceType::SelectCards | ChoiceType::SelectDiscardPlay)
+    {
+        eprintln!(
+            "[SUSP_SELECT_CARDS] op={} choice_type={:?} decoded_source={:?} has_only_pass={} final_actions={:?} filter_attr={:#x} v_remaining={}",
+            effect_opcode,
+            choice_type,
+            decoded_slot.source_zone,
+            has_only_pass,
+            final_actions,
+            filter_attr,
+            v_remaining
+        );
+    }
     if choice_type == ChoiceType::SelectMember && is_stage_member_prompt && has_only_pass {
         state.interaction_stack.pop();
         return false;
