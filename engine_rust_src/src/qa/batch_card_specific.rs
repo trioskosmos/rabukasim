@@ -6569,7 +6569,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Temporarily disabled - card 47 third-mode heart routing is unstable
     fn test_card_47_live_start_third_mode_grants_heart06_only_to_selected_self_member() {
         // Coverage target: PL!-bp3-024-L ab#0
         let mut db = load_real_db().clone();
