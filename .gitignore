@@ -116,6 +116,7 @@ Thumbs.db
 *_old.html
 tmp/
 target_tmp/
+temp_files/
 
 # Local/Agent Context
 .gemini/
