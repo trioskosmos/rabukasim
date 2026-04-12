@@ -85,7 +85,7 @@ where
             "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
             "ENERGY" => Some(Zone::Energy),
             "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
-            "YELL" => Some(Zone::Yell),
+            "YELL" | "YELL_PILE" => Some(Zone::Yell),
             _ => None,
         },
         Value::Number(number) => number
@@ -109,7 +109,7 @@ fn deserialize_zone_text(text: &str) -> Option<Zone> {
         "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
         "ENERGY" => Some(Zone::Energy),
         "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
-        "YELL" => Some(Zone::Yell),
+        "YELL" | "YELL_PILE" => Some(Zone::Yell),
         _ => None,
     }
 }
@@ -154,15 +154,16 @@ pub(crate) fn parse_comparison_value(value: &Value) -> Option<u8> {
 pub(crate) fn parse_remainder_zone_value(value: &Value) -> Option<u8> {
     value.as_u64().map(|value| value as u8).or_else(|| {
         value.as_str().and_then(|text| {
-            match text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_").as_str() {
-                "STAGE" => Some(203),
-                "HAND" => Some(204),
-                "SUCCESS_PILE" | "SUCCESS_LIVE" | "LIVE_AREA" => Some(218),
-                _ => deserialize_zone_text(text)
-                    .map(|zone| zone as u8)
-                    .or_else(|| text.trim().parse::<u8>().ok()),
-            }
-        })
+        match text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_").as_str() {
+            "STAGE" => Some(203),
+            "HAND" => Some(204),
+            "SUCCESS_PILE" | "SUCCESS_LIVE" | "LIVE_AREA" => Some(218),
+            "YELL_PILE" | "YELL" => Some(17),
+            _ => deserialize_zone_text(text)
+                .map(|zone| zone as u8)
+                .or_else(|| text.trim().parse::<u8>().ok()),
+        }
+    })
     })
 }
 

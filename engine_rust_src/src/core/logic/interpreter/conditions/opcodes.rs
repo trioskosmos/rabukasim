@@ -463,7 +463,24 @@ fn check_condition_with_parts(
             ctx.area_idx == 1
         }
         C_COUNT_HAND => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
+            let count = if slot == 48 || semantic.slot.target_slot == Zone::Yell as u8 || semantic.slot.source_zone == Zone::Yell {
+                state.players[p_idx]
+                    .yell_cards
+                    .iter()
+                    .filter(|&&cid| {
+                        cid >= 0
+                            && state.card_matches_filter_with_struct(
+                                db,
+                                cid,
+                                None,
+                                &semantic.filter,
+                                ctx,
+                            )
+                    })
+                    .count() as i32
+            } else {
+                resolve_count(state, db, op, attr, slot, ctx, depth)
+            };
             if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
         }
         C_COUNT_DISCARD => {

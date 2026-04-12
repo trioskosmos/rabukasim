@@ -2319,7 +2319,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Temporarily ignored: causes stack overflow due to deep recursion in game loop
     fn generate_v3_truth() {
         // Use a larger stack size (8MB) to avoid stack overflow during truth generation
         std::thread::Builder::new()

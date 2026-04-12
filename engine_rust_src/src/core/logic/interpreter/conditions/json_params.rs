@@ -143,7 +143,44 @@ fn resolved_condition_player(
                 ctx.player_id as usize
             }
         })
-        .unwrap_or(ctx.player_id as usize)
+        .unwrap_or_else(|| {
+            // If not in params, check if the filter_attr is being passed separately
+            // The caller should merge filter_attr into params or pass it explicitly
+            // For now, default to player_id
+            ctx.player_id as usize
+        })
+}
+
+fn resolved_condition_player_with_attr(
+    params: &serde_json::Map<String, serde_json::Value>,
+    ctx: &AbilityContext,
+    filter_attr: u64,
+) -> usize {
+    get_param_case_insensitive(params, "val")
+        .or_else(|| get_param_case_insensitive(params, "player"))
+        .and_then(|value| value.as_str())
+        .map(|value| value.to_ascii_uppercase())
+        .map(|value| {
+            if value == "OPPONENT" {
+                1 - ctx.player_id as usize
+            } else {
+                ctx.player_id as usize
+            }
+        })
+        .unwrap_or_else(|| {
+            // Check filter_attr for target_player (bits 0-1)
+            let target_player = (filter_attr & 0x3) as usize;
+            if target_player == 2 {
+                // 2 means both players
+                ctx.player_id as usize
+            } else if target_player == 1 {
+                // 1 means opponent
+                1 - ctx.player_id as usize
+            } else {
+                // 0 means self
+                ctx.player_id as usize
+            }
+        })
 }
 
 fn compare_count_thresholds(
@@ -319,7 +356,43 @@ pub fn evaluate_raw_condition(
             compare_count_thresholds(params, count)
         }
         "COUNT_STAGE" => {
-            let count = resolve_count(state, db, cond.condition_type as i32, cond.attr, 0, ctx, depth + 1);
+            let area = get_param_case_insensitive(params, "AREA")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            let filter_attr = resolved_filter_attr(params, cond.attr);
+            let attr = apply_area_semantics(filter_attr, area);
+            let match_filter_attr = condition_match_filter_attr(attr);
+            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
+            let count = if attr & FILTER_ANY_STAGE != 0 {
+                // For ANY_STAGE, count from both players
+                let mut count = 0;
+                for p_idx in 0..2 {
+                    for &cid in &state.players[p_idx].stage {
+                        if cid < 0 {
+                            continue;
+                        }
+                        if !has_filter_constraints
+                            || state.card_matches_filter_with_ctx(db, cid, match_filter_attr, ctx)
+                        {
+                            count += 1;
+                        }
+                    }
+                }
+                count
+            } else {
+                // Otherwise count from current player
+                let count = state.players[ctx.player_id as usize]
+                    .stage
+                    .iter()
+                    .copied()
+                    .filter(|&cid| cid >= 0)
+                    .filter(|&cid| {
+                        !has_filter_constraints
+                            || state.card_matches_filter_with_ctx(db, cid, match_filter_attr, ctx)
+                    })
+                    .count() as i32;
+                count
+            };
             compare_count_thresholds(params, count)
         }
         "COUNT_MOVED_STAGE" => {
@@ -786,8 +859,13 @@ pub fn evaluate_raw_condition(
             }
         }
         "UNIQUE_UNIT_NAMES_COUNT" => {
+            let filter_attr = resolved_filter_attr(params, cond.attr);
+            let target_player = resolved_condition_player(params, ctx);
             let mut units = std::collections::HashSet::<u8>::new();
-            for cid in filtered_stage_cards(state, db, cond, ctx, params) {
+            for &cid in &state.players[target_player].stage {
+                if cid < 0 {
+                    continue;
+                }
                 if let Some(unit_id) = db
                     .get_member(cid)
                     .and_then(|member| member.units.first().copied())

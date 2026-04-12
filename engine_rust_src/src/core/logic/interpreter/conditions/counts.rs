@@ -555,6 +555,8 @@ fn resolve_count_components(
             }
             C_COUNT_HAND => {
                 let (primary_player, secondary_player) = target_player_pair(&frame.filter, p_idx);
+                let count_from_yell = frame.slot.target_slot == Zone::Yell as u8
+                    || frame.slot.source_zone == Zone::Yell;
                 let count_zone = |cards: &[i32]| {
                     cards
                         .iter()
@@ -570,9 +572,33 @@ fn resolve_count_components(
                         })
                         .count() as i32
                 };
-                let mut total = count_zone(&state.players[primary_player].hand);
+                let yell_cards = |player_idx: usize| -> i32 {
+                    state.players[player_idx]
+                        .yell_cards
+                        .iter()
+                        .filter(|&&id| {
+                            id >= 0
+                                && state.card_matches_filter_with_struct(
+                                    db,
+                                    id,
+                                    None,
+                                    &frame.filter,
+                                    ctx,
+                                )
+                        })
+                        .count() as i32
+                };
+                let mut total = if count_from_yell {
+                    yell_cards(primary_player)
+                } else {
+                    count_zone(&state.players[primary_player].hand)
+                };
                 if let Some(other_player) = secondary_player {
-                    total += count_zone(&state.players[other_player].hand);
+                    total += if count_from_yell {
+                        yell_cards(other_player)
+                    } else {
+                        count_zone(&state.players[other_player].hand)
+                    };
                 }
                 total
             }

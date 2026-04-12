@@ -712,11 +712,28 @@ pub fn resolve_semantic_frames(
                 }
             }
             break;
-        } else if frame_data.opcode == O_RETURN && state.debug.debug_mode {
-            eprintln!(
-                "[DEBUG] structured RETURN continues: {}",
-                logging::describe_frame_semantics(&frame_data, &ctx, db)
-            );
+        } else if frame_data.opcode == O_RETURN {
+            // RETURN with params: evaluate condition and set cond flag
+            if is_condition_frame(&frame_data) {
+                let passed = if !cond {
+                    false
+                } else {
+                    conditions::check_condition_frame(state, db, &frame_data, &ctx, 0)
+                };
+                cond = cond
+                    && if frame_data.is_negated {
+                        !passed
+                    } else {
+                        passed
+                    };
+                if state.debug.debug_mode {
+                    eprintln!(
+                        "[DEBUG] RETURN with condition evaluated: passed={}, cond={}",
+                        passed, cond
+                    );
+                }
+            }
+            // Continue execution (RETURN with params doesn't break, it sets cond for next JUMP_IF_FALSE)
         }
 
         if frame_data.opcode == O_JUMP {
