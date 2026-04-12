@@ -326,7 +326,15 @@ fn handle_move_to_deck(
             }
         };
         let moved_cards: Vec<i32> = if !ctx.selected_cards.is_empty() {
-            ctx.selected_cards.iter().take(move_count).copied().collect()
+            ctx.selected_cards
+                .iter()
+                .rev()
+                .take(move_count)
+                .copied()
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect()
         } else {
             state.players[p_idx]
                 .looked_cards

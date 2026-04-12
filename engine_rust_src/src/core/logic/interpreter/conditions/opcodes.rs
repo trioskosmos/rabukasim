@@ -713,7 +713,18 @@ fn check_condition_with_parts(
         C_DECK_REFRESHED => {
             player.get_flag(crate::core::logic::player::PlayerState::FLAG_DECK_REFRESHED)
         }
-        C_HAS_MOVED => ctx.area_idx >= 0 && player.is_moved(ctx.area_idx as usize),
+        C_HAS_MOVED => {
+            let slot_idx = if semantic.slot.area_idx < 3 {
+                Some(semantic.slot.area_idx as usize)
+            } else if ctx.area_idx >= 0 && ctx.area_idx < 3 {
+                Some(ctx.area_idx as usize)
+            } else {
+                None
+            };
+            slot_idx
+                .map(|slot_idx| player.is_moved(slot_idx))
+                .unwrap_or(false)
+        }
         C_HAND_INCREASED => player.hand_increased_this_turn > 0,
         C_BATON => {
             let count_ok = if val > 0 {

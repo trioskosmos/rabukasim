@@ -1,6 +1,84 @@
-//! # Modular Semantic Frame Interpreter
+//! # Frame Interpreter
 //!
-//! This module decouples the monolithic interpreter into smaller, maintainable components.
+//! This module implements the frame-based ability interpreter. Abilities are executed
+//! as sequences of frames (not bytecode), with each frame representing a single operation.
+//!
+//! ## Execution Flow
+//!
+//! ```
+//! Ability.trigger fires
+//!   ↓
+//! FrameProgram loaded
+//!   ↓ [execute_frames()]
+//! Sequential frame execution:
+//!   - Check conditions (if any)
+//!   - Pay costs (if cost frame)
+//!   - Dispatch to handler (effect frame)
+//!   - Handle control flow (JUMP, RETURN)
+//!   ↓
+//! Ability complete or suspended for player input
+//! ```
+//!
+//! ## Frame Types
+//!
+//! 1. **Condition Frames**: Check if ability can activate
+//!    - Opcode ranges: CONDITION_START_1 to CONDITION_END_2
+//!    - Evaluated before ability execution
+//!    - Can be deferred if they appear after interactive prompts
+//!
+//! 2. **Cost Frames**: Resources required to use ability
+//!    - O_PAY_ENERGY, O_MOVE_TO_DISCARD (cost), O_TAP_MEMBER, etc.
+//!    - Marked with `is_cost: true`
+//!    - Must be paid before effect frames execute
+//!
+//! 3. **Effect Frames**: Actual ability effects
+//!    - O_DRAW, O_MOVE_MEMBER, O_BOOST_SCORE, etc.
+//!    - Dispatched to handlers in `handlers/` module
+//!
+//! 4. **Control Flow Frames**: Alter execution path
+//!    - O_JUMP, O_JUMP_IF_FALSE, O_RETURN
+//!    - Implement branching and early exit
+//!
+//! 5. **Selection Frames**: Require player input
+//!    - O_SELECT_MEMBER, O_LOOK_AND_CHOOSE, O_SELECT_MODE, etc.
+//!    - Cause suspension until player responds
+//!
+//! ## Suspension and Resumption
+//!
+//! When a frame requires player input (selection, choice), execution suspends:
+//!
+//! ```
+//! Frame requires input
+//!   ↓ [suspend_interaction()]
+//! GameState saved (interaction_stack)
+//!   ↓ [await player response]
+//! Player submits action
+//!   ↓ [restore_response_state()]
+//! Execution resumes from suspended frame
+//! ```
+//!
+//! ## Condition Prechecking
+//!
+//! Some conditions are checked before ability execution (precheck), others are deferred:
+//! - **Precheck**: Conditions that don't depend on player choices
+//! - **Deferred**: Conditions that appear after interactive prompts (CountBlades, CountHearts)
+//!
+//! ## Key Functions
+//!
+//! - `execute_frames()`: Main entry point for frame execution
+//! - `check_condition()`: Evaluate a single condition
+//! - `dispatch()`: Route effect frame to appropriate handler
+//! - `suspend_interaction()`: Pause execution for player input
+//! - `restore_response_state()`: Resume after player input
+//!
+//! ## Submodules
+//!
+//! - `conditions/`: Condition evaluation logic
+//! - `costs/`: Cost checking and payment
+//! - `handlers/`: Effect frame handlers (draw, move, score, etc.)
+//! - `instruction/`: Frame parsing and slot decoding
+//! - `suspension/`: State saving/restoration for interactions
+//! - `direct_executor/`: Simplified execution path for common cases
 
 pub mod conditions;
 pub mod constants;

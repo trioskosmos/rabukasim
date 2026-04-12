@@ -1,3 +1,56 @@
+//! # Ability Trigger System
+//!
+//! This module handles ability triggering and condition checking. When a game event
+//! occurs (playing a card, starting a live, turn start, etc.), abilities with matching
+//! triggers are queued for execution.
+//!
+//! ## Trigger Types
+//!
+//! Common trigger types:
+//! - `OnPlay`: When a member is played from hand to stage
+//! - `OnLiveStart`: When a live performance begins
+//! - `OnLiveSuccess`: When a live performance succeeds
+//! - `Activated`: When a member's activated ability is used
+//! - `TurnStart` / `TurnEnd`: Turn boundary triggers
+//! - `OnAbilityResolve` / `OnAbilitySuccess`: When another ability completes
+//!
+//! ## Trigger Flow
+//!
+//! ```
+//! Game Event (e.g., card played)
+//!   ↓ [trigger_abilities()]
+//! Scan all cards for matching triggers
+//!   ↓ [check trigger conditions]
+//! Condition satisfied?
+//!   ↓ Yes
+//! Queue ability in trigger_queue
+//!   ↓ [process_trigger_queue()]
+//! Execute ability frames
+//! ```
+//!
+//! ## Condition Prechecking
+//!
+//! Before an ability triggers, its conditions are checked:
+//! - **Precheck**: Conditions evaluated before trigger fires
+//! - **Deferred**: Conditions evaluated after player choices (CountBlades, CountHearts)
+//! - **Skip**: Conditions that shouldn't block triggering (None, SumValue, DiscardedCards)
+//!
+//! The `should_defer_trigger_condition_precheck()` function determines if a condition
+//! should be deferred based on whether it appears after interactive frames (selection, payment).
+//!
+//! ## Resolution Triggers
+//!
+//! Some triggers fire when another ability completes (OnAbilityResolve, OnAbilitySuccess).
+//! These use `resolution_trigger_matches_context()` to ensure they only fire for the
+//! correct trigger type (e.g., only after OnLiveSuccess, not after OnPlay).
+//!
+//! ## Key Functions
+//!
+//! - `trigger_abilities()`: Queue abilities matching a trigger type
+//! - `check_trigger_conditions()`: Verify all conditions are satisfied
+//! - `build_trigger_context()`: Create AbilityContext for trigger execution
+//! - `resolution_trigger_matches_context()`: Match resolution triggers to context
+
 use super::card_db::CardDatabase;
 use super::models::AbilityContext;
 use super::state::GameState;

@@ -1,3 +1,47 @@
+//! # Game State Structures and Serialization
+//!
+//! This module defines the core data structures for game state, player state,
+//! and action generation. These structures are highly serializable for save/load
+//! and network transmission.
+//!
+//! ## Key Structures
+//!
+//! ### GameState
+//! The complete game state including:
+//! - Both players' zones (Hand, Deck, Stage, Energy, Discard)
+//! - Current phase, turn count, current player
+//! - Interaction stack for suspended abilities
+//! - Trigger queue for pending ability activations
+//! - UI state (logs, execution tracking)
+//!
+//! ### Player
+//! Represents a single player's state:
+//! - `hand`: Cards in hand (up to 8)
+//! - `deck`: Draw pile (shuffled)
+//! - `stage`: Up to 3 member slots
+//! - `energy_zone`: Energy cards (up to 10)
+//! - `discard`: Discard pile
+//! - `success_lives`: Successfully performed live cards
+//! - `live_zone`: Active live cards
+//!
+//! ### Action Generation
+//! The `ActionReceiver` trait defines how actions are collected:
+//! - Implemented for `[bool]` (action mask)
+//! - Implemented for `Vec<usize>` (action list)
+//! - Used by action generation modules to collect legal actions
+//!
+//! ## Serialization
+//! All major structures implement `Serialize` and `Deserialize` for:
+//! - Save/load game states
+//! - Network transmission in multiplayer
+//! - Test fixture serialization
+//!
+//! ## Logging
+//! The `game_log!` macro provides deferred string formatting:
+//! - Only formats if state.ui.silent is false
+//! - Avoids string allocation in silent mode (performance)
+//! - Used throughout the engine for debug output
+
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 use serde::{Deserialize, Serialize};

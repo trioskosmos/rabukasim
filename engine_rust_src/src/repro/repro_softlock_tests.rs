@@ -1,36 +1,32 @@
 #[cfg(test)]
 mod tests {
-    use crate::core::enums::Phase;
-    use crate::core::generated_constants::ACTION_BASE_HAND_SELECT;
-    use crate::core::logic::*;
+    use crate::core::enums::{ChoiceType, Phase};
+    use crate::core::generated_constants::ACTION_BASE_CHOICE;
     use crate::test_helpers::*;
 
     #[test]
-    fn test_optional_interaction_actions_real_card() {
+    fn test_optional_interaction_actions_real_card_4442() {
         let db = load_real_db();
         let mut state = create_test_state();
 
-        // Card 122 (Kotori) has an optional LiveStart ability:
-        // "Put 1 hand to discard? Yes/No"
-        state.players[0].stage[0] = 122;
-        state.players[0].hand = vec![121].into(); // Needs 1 card to pay
+        // Card 4442 has a real optional PAY_ENERGY prompt in the play flow.
         state.phase = Phase::Main;
+        state.current_player = 0;
+        state.players[0].hand = vec![4442].into();
+        state.players[0].energy_zone = vec![
+            3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010, 3011, 3012, 3013, 3014,
+            3015,
+        ]
+        .into();
 
-        // Trigger the ability
-        let ctx = AbilityContext {
-            player_id: 0,
-            source_card_id: 122,
-            area_idx: 0,
-            ..Default::default()
-        };
-        state.trigger_abilities(&db, TriggerType::OnLiveStart, &ctx);
-        state.process_trigger_queue(&db);
+        state.play_member(&db, 0, 0).expect("play should succeed");
 
-        // The game should now be in Phase::Response with OPTIONAL interaction on stack
+        assert_eq!(state.phase, Phase::Response);
         assert_eq!(
-            state.phase,
-            Phase::Response,
-            "Should be in Response phase for optional choice"
+            state.interaction_stack
+                .last()
+                .map(|interaction| interaction.choice_type),
+            Some(ChoiceType::Optional)
         );
 
         // Check legal actions
@@ -46,8 +42,8 @@ mod tests {
             receiver
                 .actions
                 .iter()
-                .any(|action| *action >= ACTION_BASE_HAND_SELECT),
-            "A selectable hand-discard action must exist so the optional ability can be accepted"
+                .any(|action| *action == ACTION_BASE_CHOICE),
+            "A selectable accept action must exist so the optional ability can be accepted"
         );
     }
 

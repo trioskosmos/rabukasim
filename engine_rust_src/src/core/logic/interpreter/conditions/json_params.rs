@@ -2,6 +2,7 @@ use super::common::{
     condition_eval_cache_key, condition_eval_cache_lookup, condition_eval_cache_store,
     parse_condition_type, CONDITION_CHECK_MAX_DEPTH,
 };
+use super::counts::resolve_count;
 use super::opcodes::check_condition_opcode;
 use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
@@ -69,37 +70,28 @@ pub fn condition_from_clause(clause: &serde_json::Value) -> Condition {
     }
 }
 
+// Keys that should be excluded from filter merging when raw_cond is present
+// These are used for condition evaluation rather than filter constraints
+const RAW_COND_EXCLUDED_KEYS: &[&str] = &[
+    // Condition type identifiers
+    "raw_cond", "RAW_COND",
+    // Comparison operators
+    "MIN", "min", "MAX", "max", "EQ", "eq", "GE", "ge", "LE", "le",
+    // Counting and threshold parameters
+    "count", "COUNT", "threshold", "THRESHOLD", "value", "VALUE",
+    "heart_count", "HEART_COUNT", "min_count", "MIN_COUNT",
+    // Scope and keyword parameters (handled separately)
+    "player", "PLAYER", "keyword", "KEYWORD",
+];
+
 fn resolved_filter_attr(
     params: &serde_json::Map<String, serde_json::Value>,
     fallback_attr: u64,
 ) -> u64 {
     let mut filter_params = params.clone();
     if filter_params.contains_key("raw_cond") || filter_params.contains_key("RAW_COND") {
-        for key in [
-            "raw_cond",
-            "RAW_COND",
-            "MIN",
-            "min",
-            "MAX",
-            "max",
-            "EQ",
-            "eq",
-            "GE",
-            "ge",
-            "LE",
-            "le",
-            "count",
-            "COUNT",
-            "threshold",
-            "THRESHOLD",
-            "value",
-            "VALUE",
-            "heart_count",
-            "HEART_COUNT",
-            "min_count",
-            "MIN_COUNT",
-        ] {
-            filter_params.remove(key);
+        for key in RAW_COND_EXCLUDED_KEYS {
+            filter_params.remove(*key);
         }
     }
     let params_value = serde_json::Value::Object(filter_params);
@@ -108,6 +100,24 @@ fn resolved_filter_attr(
 
 fn condition_match_filter_attr(filter_attr: u64) -> u64 {
     filter_attr & !crate::core::logic::filter::FILTER_ANY_STAGE
+}
+
+// Helper function to count unique names from card IDs
+fn count_unique_names(card_ids: &[i32], db: &CardDatabase) -> i32 {
+    let unique_names: std::collections::HashSet<&str> = card_ids
+        .iter()
+        .filter_map(|&cid| {
+            db.get_member(cid).map(|m| m.name.as_str())
+                .or_else(|| db.get_live(cid).map(|l| l.name.as_str()))
+        })
+        .collect();
+    // If unique_names is empty but we have cards, fall back to counting cards
+    // This handles cases where card names aren't available in the test DB
+    if unique_names.is_empty() && !card_ids.is_empty() {
+        card_ids.len() as i32
+    } else {
+        unique_names.len() as i32
+    }
 }
 
 fn apply_area_semantics(attr: u64, area: &str) -> u64 {
@@ -126,10 +136,12 @@ fn resolved_condition_player(
         .or_else(|| get_param_case_insensitive(params, "player"))
         .and_then(|value| value.as_str())
         .map(|value| value.to_ascii_uppercase())
-        .map(|value| match value.as_str() {
-            "OPPONENT" => 1 - ctx.player_id as usize,
-            "BOTH" | "ALL" | "PLAYER" | "SELF" => ctx.player_id as usize,
-            _ => ctx.player_id as usize,
+        .map(|value| {
+            if value == "OPPONENT" {
+                1 - ctx.player_id as usize
+            } else {
+                ctx.player_id as usize
+            }
         })
         .unwrap_or(ctx.player_id as usize)
 }
@@ -140,10 +152,11 @@ fn compare_count_thresholds(
 ) -> bool {
     if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
         count == eq as i32
-    } else if let Some(ge) = get_param_case_insensitive(params, "GE").and_then(|v| v.as_i64()) {
+    } else if let Some(ge) = get_param_case_insensitive(params, "GE")
+        .or_else(|| get_param_case_insensitive(params, "MIN"))
+        .and_then(|v| v.as_i64())
+    {
         count >= ge as i32
-    } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
-        count >= min as i32
     } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
         count <= max as i32
     } else {
@@ -281,7 +294,12 @@ pub fn evaluate_raw_condition(
             let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
             let target_player = resolved_condition_player(params, ctx);
 
-            let count = state.players[target_player]
+            let use_unique_names = get_param_case_insensitive(params, "keyword")
+                .and_then(|v| v.as_str())
+                .map(|k| k.eq_ignore_ascii_case("COUNT_UNIQUE_NAMES") || k.eq_ignore_ascii_case("UNIQUE_NAMES"))
+                .unwrap_or(false);
+
+            let matching_cards: Vec<i32> = state.players[target_player]
                 .stage
                 .iter()
                 .copied()
@@ -290,95 +308,22 @@ pub fn evaluate_raw_condition(
                     !has_filter_constraints
                         || state.card_matches_filter_with_ctx(db, cid, match_filter_attr, ctx)
                 })
-                .count() as i32;
+                .collect();
+
+            let count = if use_unique_names {
+                count_unique_names(&matching_cards, db)
+            } else {
+                matching_cards.len() as i32
+            };
 
             compare_count_thresholds(params, count)
         }
         "COUNT_STAGE" => {
-            let mut filter_attr = resolved_filter_attr(params, cond.attr);
-
-            if let Some(area) = get_param_case_insensitive(params, "AREA")
-                .or_else(|| get_param_case_insensitive(params, "area"))
-                .and_then(|v| v.as_str())
-            {
-                filter_attr = apply_area_semantics(filter_attr, area);
-            }
-
-            let match_filter_attr = condition_match_filter_attr(filter_attr);
-            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
-            let match_filter = structured_filter_from_attr(match_filter_attr);
-            let target_player = resolved_condition_player(params, ctx);
-
-            let count_for_player = |player_idx: usize| {
-                state.players[player_idx]
-                    .stage
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, &cid)| cid >= 0)
-                    .filter(|(slot_idx, &cid)| {
-                        !has_filter_constraints
-                            || state.card_matches_filter_with_struct(
-                                db,
-                                cid,
-                                Some((player_idx as u8, *slot_idx as i16)),
-                                &match_filter,
-                                ctx,
-                            )
-                    })
-                    .count() as i32
-            };
-
-            let count = if (filter_attr & FILTER_ANY_STAGE) != 0 {
-                count_for_player(ctx.player_id as usize)
-                    + count_for_player(1 - ctx.player_id as usize)
-            } else {
-                count_for_player(target_player)
-            };
-
+            let count = resolve_count(state, db, cond.condition_type as i32, cond.attr, 0, ctx, depth + 1);
             compare_count_thresholds(params, count)
         }
         "COUNT_MOVED_STAGE" => {
-            let mut filter_attr = resolved_filter_attr(params, cond.attr);
-
-            if let Some(area) = get_param_case_insensitive(params, "AREA")
-                .or_else(|| get_param_case_insensitive(params, "area"))
-                .and_then(|v| v.as_str())
-            {
-                filter_attr = apply_area_semantics(filter_attr, area);
-            }
-
-            let match_filter_attr = condition_match_filter_attr(filter_attr);
-            let has_filter_constraints = has_structured_filter_constraints(match_filter_attr);
-            let match_filter = structured_filter_from_attr(match_filter_attr);
-            let target_player = resolved_condition_player(params, ctx);
-
-            let count_for_player = |player_idx: usize| {
-                state.players[player_idx]
-                    .stage
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, &cid)| cid >= 0)
-                    .filter(|(slot_idx, _)| state.players[player_idx].is_moved(*slot_idx))
-                    .filter(|(slot_idx, &cid)| {
-                        !has_filter_constraints
-                            || state.card_matches_filter_with_struct(
-                                db,
-                                cid,
-                                Some((player_idx as u8, *slot_idx as i16)),
-                                &match_filter,
-                                ctx,
-                            )
-                    })
-                    .count() as i32
-            };
-
-            let count = if (filter_attr & FILTER_ANY_STAGE) != 0 {
-                count_for_player(ctx.player_id as usize)
-                    + count_for_player(1 - ctx.player_id as usize)
-            } else {
-                count_for_player(target_player)
-            };
-
+            let count = resolve_count(state, db, cond.condition_type as i32, cond.attr, 0, ctx, depth + 1);
             compare_count_thresholds(params, count)
         }
         "ALL_MEMBERS" => {

@@ -141,13 +141,6 @@ name = "ultimate_benchmark"
 path = "benches/ultimate_benchmark.rs"
 harness = false
 
-[[test]]
-name = "export_hydrated_abilities"
-path = "tests/export_hydrated_abilities.rs"
-
-[[test]]
-name = "card_62_cost_increase_condition"
-path = "tests/card_62_cost_increase_condition.rs"
 
 [profile.dev]
 opt-level = 0
@@ -194,11 +187,3 @@ lto = false
 codegen-units = 256
 panic = 'abort'
 opt-level = 3
-
-[[test]]
-name = "qa_verification_tests"
-path = "tests/qa_verification_tests.rs"
-
-[[test]]
-name = "card574_self_discard"
-path = "tests/card574_self_discard.rs"

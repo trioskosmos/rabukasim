@@ -3,6 +3,43 @@
 //! This module defines the `GameState` struct, which is the heart of the engine.
 //! It manages players, zones (Hand, Deck, Stage, Energy, Discard), and the turn cycle.
 //!
+//! ## Game State Structure
+//!
+//! The `GameState` contains:
+//! - `players`: Array of 2 Player structs (each with Hand, Deck, Stage, Energy, Discard zones)
+//! - `phase`: Current game phase (Mulligan, Main, Live, Response, End)
+//! - `current_player`: Whose turn it is (0 or 1)
+//! - `turn_count`: Current turn number
+//! - `interaction_stack`: Stack of suspended interactions (for player choices)
+//! - `trigger_queue`: Queue of pending ability triggers
+//! - `ui`: UI state (logs, execution tracking, silent mode)
+//!
+//! ## Turn Cycle
+//!
+//! ```
+//! Mulligan Phase
+//!   ↓ [draw initial hands, allow mulligan]
+//! Main Phase (Player 0)
+//!   ↓ [play members, activate abilities]
+//! Live Phase (Player 0)
+//!   ↓ [set live cards, perform live, resolve effects]
+//! Main Phase (Player 1)
+//!   ↓ [play members, activate abilities]
+//! Live Phase (Player 1)
+//!   ↓ [set live cards, perform live, resolve effects]
+//! End Phase
+//!   ↓ [cleanup, energy reset, turn increment]
+//! Repeat
+//! ```
+//!
+//! ## Key Operations
+//!
+//! - `step()`: Execute one action (main entry point for game progression)
+//! - `trigger_abilities()`: Queue abilities matching a trigger type
+//! - `process_trigger_queue()`: Execute queued abilities in order
+//! - `sync_cached_stats()`: Recalculate board aura and cached attributes
+//! - `process_rule_checks()`: Apply Rule 10.5.3 (energy cleanup, score updates)
+//!
 //! ## Key Roles:
 //! - **State Management**: Holds 100% of the data needed to represent a point in time in a game.
 //! - **Turn Orchestration**: Manages `Phase` transitions (Main, Live, End) and turn switching.
@@ -14,6 +51,13 @@
 //! ## State-Action Integrity:
 //! The `GameState` is designed to be highly serializable. It works in tandem with
 //! the `interpreter` to resolve complex card effects while maintaining state consistency.
+//!
+//! ## Interaction Stack
+//!
+//! When an ability requires player input (selection, choice), the current execution
+//! state is pushed onto `interaction_stack`. After the player responds, the state is
+//! restored and execution resumes. This allows nested interactions (e.g., selecting
+//! a card, then selecting a target for an effect on that card).
 //!
 
 // use rand::SeedableRng;

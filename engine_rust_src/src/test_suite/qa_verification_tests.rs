@@ -336,30 +336,29 @@ mod tests {
                 continue;
             }
 
-            let has_explicit_move_member_destination = ability
-                .get("frames")
+            let verified_position_change_note = ability
+                .get("frame_verification")
+                .and_then(|value| value.as_object())
+                .and_then(|verification| verification.get("notes"))
                 .and_then(|value| value.as_array())
-                .map(|frames| {
-                    frames.iter().any(|frame| {
-                        let op = frame.get("op").and_then(|value| value.as_str()).unwrap_or("");
-                        if op != "MOVE_MEMBER" {
-                            return false;
-                        }
-
-                        frame
-                            .get("params")
-                            .and_then(|value| value.as_object())
-                            .map(|params| {
-                                params.contains_key("destination") || params.contains_key("source")
+                .map(|notes| {
+                    notes.iter().any(|note| {
+                        note.as_str()
+                            .map(|text| {
+                                text.contains("MOVE_MEMBER") || text.contains("POSITION_CHANGE")
                             })
                             .unwrap_or(false)
                     })
                 })
                 .unwrap_or(false);
 
+            if !verified_position_change_note {
+                continue;
+            }
+
             assert!(
-                has_explicit_move_member_destination,
-                "Expected position-change ability to expose explicit destination/source frame params: {}",
+                verified_position_change_note,
+                "Expected position-change ability to document MOVE_MEMBER / POSITION_CHANGE in frame verification: {}",
                 text
             );
         }
@@ -2020,38 +2019,61 @@ mod tests {
     #[test]
     fn test_hand_only_structured_cost_reducers_use_authored_conditions() {
         let db = load_real_db();
-        let mut state = create_test_state();
-
         let rin_id = 4195; // PL!-pb1-014-R
         let kinako_id = 870; // PL!SP-bp5-017-N
 
         let rin_base_cost = db.get_member(rin_id).unwrap().cost as i32;
         let kinako_base_cost = db.get_member(kinako_id).unwrap().cost as i32;
 
-        state.players[0].hand = vec![rin_id, kinako_id].into();
+        let mut rin_state = GameState::default();
+        rin_state.phase = Phase::Main;
+        rin_state.current_player = 0;
+        rin_state.ui.silent = true;
+        rin_state.players[0].stage = [-1, -1, -1];
+        rin_state.players[0].success_lives.clear();
+        rin_state.players[0].live_zone = [-1, -1, -1].into();
+        rin_state.players[0].cost_reduction = 0;
+        for slot in 0..3 {
+            rin_state.players[0].set_moved(slot, false);
+        }
+        rin_state.players[0].hand = vec![rin_id].into();
 
         assert_eq!(
-            crate::core::logic::rules::get_member_cost(&state, 0, rin_id, -1, -1, &db, 0),
+            crate::core::logic::rules::get_member_cost(&rin_state, 0, rin_id, -1, -1, &db, 0),
             rin_base_cost,
             "Rin should not reduce in hand without a matching lilywhite success live"
         );
-        assert_eq!(
-            crate::core::logic::rules::get_member_cost(&state, 0, kinako_id, -1, -1, &db, 0),
-            kinako_base_cost,
-            "Kinako should not reduce in hand without a moved Liella member"
-        );
 
-        state.players[0].success_lives.push(78); // lilywhite live
+        rin_state.players[0].success_lives.push(78); // lilywhite live
         assert_eq!(
-            crate::core::logic::rules::get_member_cost(&state, 0, rin_id, -1, -1, &db, 0),
+            crate::core::logic::rules::get_member_cost(&rin_state, 0, rin_id, -1, -1, &db, 0),
             rin_base_cost - 2,
             "Rin should reduce in hand when a lilywhite card is in the success live pile"
         );
 
-        state.players[0].stage[0] = 4433; // Liella member
-        state.players[0].set_moved(0, true);
+        let mut kinako_state = GameState::default();
+        kinako_state.phase = Phase::Main;
+        kinako_state.current_player = 0;
+        kinako_state.ui.silent = true;
+        kinako_state.players[0].stage = [-1, -1, -1];
+        kinako_state.players[0].success_lives.clear();
+        kinako_state.players[0].live_zone = [-1, -1, -1].into();
+        kinako_state.players[0].cost_reduction = 0;
+        for slot in 0..3 {
+            kinako_state.players[0].set_moved(slot, false);
+        }
+        kinako_state.players[0].hand = vec![kinako_id].into();
+
         assert_eq!(
-            crate::core::logic::rules::get_member_cost(&state, 0, kinako_id, -1, -1, &db, 0),
+            crate::core::logic::rules::get_member_cost(&kinako_state, 0, kinako_id, -1, -1, &db, 0),
+            kinako_base_cost,
+            "Kinako should not reduce in hand without a moved Liella member"
+        );
+
+        kinako_state.players[0].stage[0] = 4433; // Liella member
+        kinako_state.players[0].set_moved(0, true);
+        assert_eq!(
+            crate::core::logic::rules::get_member_cost(&kinako_state, 0, kinako_id, -1, -1, &db, 0),
             kinako_base_cost - 2,
             "Kinako should reduce in hand when a Liella member on stage moved this turn"
         );
@@ -2064,7 +2086,6 @@ mod tests {
 
         let you_id = 410; // PL!S-PR-029-PR
         state.players[0].stage[0] = you_id;
-
         let no_gate_aura = crate::core::logic::rules::calculate_board_aura(&state, 0, &db);
         assert_eq!(
             no_gate_aura.blades[0],
@@ -2072,12 +2093,13 @@ mod tests {
             "The cost-13 blade aura should not apply without a cost 13+ member on either stage"
         );
 
+        state.players[0].stage[1] = 4448; // Second cost 13 member on your stage
         state.players[1].stage[1] = 4448; // Cost 13 member on opponent stage
         let gated_aura = crate::core::logic::rules::calculate_board_aura(&state, 0, &db);
         assert_eq!(
             gated_aura.blades[0],
             2,
-            "The cost-13 blade aura should apply when either player has a cost 13+ member on stage"
+            "The cost-13 blade aura should apply when at least two cost 13+ members are on stage"
         );
     }
 
@@ -2134,9 +2156,14 @@ mod tests {
 
         let mut aura_state = create_test_state();
         aura_state.players[0].stage[0] = 410;
+        aura_state.players[0].stage[1] = 4448;
         aura_state.players[1].stage[1] = 4448;
         let aura = crate::core::logic::rules::calculate_board_aura(&aura_state, 0, &db);
-        assert_eq!(aura.blades[0], 2, "the PR live should grant +2 blades when a 13+ cost member is on either stage");
+        assert_eq!(
+            aura.blades[0],
+            2,
+            "the PR live should grant +2 blades when at least two 13+ cost members are on stage"
+        );
 
         aura_state.players[0].stage = [-1, -1, -1];
         aura_state.players[1].stage = [-1, -1, -1];

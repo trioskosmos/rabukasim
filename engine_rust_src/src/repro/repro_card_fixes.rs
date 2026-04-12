@@ -49,65 +49,61 @@ mod tests {
     fn test_pay_energy_high_cost_softlock_fix() {
         let db = load_real_db();
         let mut state = create_test_state();
+        state.ui.silent = true;
+        state.debug.debug_ignore_conditions = true;
 
-        // Generic member IDs for energy
-        state.players[0].energy_zone = vec![9, 10, 11].into();
-        state.players[0].tapped_energy_mask = 0;
+        let p_idx = 0;
+        state.core.players[p_idx].energy_zone = vec![3001, 3002, 3003, 3004, 3005, 3006].into();
+        state.core.players[p_idx].tapped_energy_mask = 0;
+        state.core.players[p_idx].stage[0] = 4684;
+        state.core.players[p_idx].live_zone[0] = 55001;
+        state.core.phase = Phase::PerformanceP1;
 
-        let mut ctx = AbilityContext {
-            player_id: 0,
-            ..Default::default()
-        };
-        ctx.v_remaining = 2;
-
-        state.phase = Phase::Response;
-        state.interaction_stack.push(PendingInteraction {
-            ctx: ctx.clone(),
-            card_id: -1, // TEST: FIXED - activate_ability_with_choice now handles -1
-            ability_index: -1,
-            effect_opcode: 64, // O_PAY_ENERGY
-            choice_type: crate::core::enums::ChoiceType::PayEnergy,
-            v_remaining: 2,
-            actions: Vec::new(),
-            ..Default::default()
-        });
-
-        // 1. Check legal actions
-        let mut receiver = TestActionReceiver::default();
-        state.generate_legal_actions(&db, 0, &mut receiver);
-
-        assert!(
-            receiver.actions.contains(&(ACTION_BASE_ENERGY + 0)),
-            "Action ID {} (Energy 0) missing!",
-            ACTION_BASE_ENERGY + 0
-        );
-        assert!(
-            receiver.actions.contains(&(ACTION_BASE_ENERGY + 1)),
-            "Action ID {} (Energy 1) missing!",
-            ACTION_BASE_ENERGY + 1
-        );
-        assert!(
-            receiver.actions.contains(&(ACTION_BASE_ENERGY + 2)),
-            "Action ID {} (Energy 2) missing!",
-            ACTION_BASE_ENERGY + 2
+        state.ui.performance_results.insert(
+            p_idx as u8,
+            serde_json::json!({
+                "success": true,
+                "lives": [
+                    {"passed": true, "score": 1, "slot_idx": 0}
+                ],
+                "note_icons": 0,
+                "total_score": 1
+            }),
         );
 
-        // 2. Pay 1st energy
+        state.do_live_result(&db);
+
+        assert!(
+            !state.core.interaction_stack.is_empty(),
+            "Expected a pending interaction for PAY_ENERGY"
+        );
+
+        let pi = state.core.interaction_stack.last().unwrap().clone();
+        assert_eq!(pi.effect_opcode, crate::core::logic::constants::O_PAY_ENERGY);
+
         state
-            .step(&db, ACTION_BASE_ENERGY + 0)
-            .expect("Step 1 failed");
+            .activate_ability_with_choice(
+                &db,
+                pi.ctx.area_idx as usize,
+                pi.ctx.ability_index as usize,
+                0,
+                -1,
+            )
+            .expect("Payment should succeed");
 
-        assert_eq!(state.phase, Phase::Response);
-        assert_eq!(state.interaction_stack.last().unwrap().v_remaining, 1);
-        assert!(state.players[0].is_energy_tapped(0));
+        for i in 0..6 {
+            assert!(
+                state.core.players[p_idx].is_energy_tapped(i),
+                "Energy {} should be tapped",
+                i
+            );
+        }
 
-        // 3. Pay 2nd energy
-        state
-            .step(&db, ACTION_BASE_ENERGY + 1)
-            .expect("Step 2 failed");
-
-        assert!(state.players[0].is_energy_tapped(0));
-        assert!(state.players[0].is_energy_tapped(1));
+        assert_eq!(
+            state.core.players[p_idx].live_score_bonus,
+            1,
+            "Card 4684 should register a +1 live score bonus after paying 6 energy"
+        );
     }
 
     #[test]

@@ -1,3 +1,56 @@
+//! # Game Rules and Cost Calculation
+//!
+//! This module implements the core game rules for cost calculation, board aura computation,
+//! and cost modifier application.
+//!
+//! ## Cost Calculation System
+//!
+//! Card costs are modified by various effects (cost reducers, cost increasers). The system
+//! tracks these modifications through:
+//!
+//! 1. **BoardAura**: Global effects that apply to all players/cards
+//!    - Blade bonuses (global blade additions)
+//!    - Heart bonuses (global heart additions)
+//!    - Slot-specific cost modifiers
+//!    - Heart requirement reductions/additions
+//!
+//! 2. **CachedCostModifier**: Specific cost modification from an ability
+//!    - `source_cid`: Card ID providing the modifier
+//!    - `amount`: Cost change amount (negative for reduction, positive for increase)
+//!    - `target_mask`: Which stage slots this applies to (bitmask for slots 0,1,2)
+//!    - `filter_mask`: Which cards this applies to (group, color, etc.)
+//!
+//! ## Cost Calculation Flow
+//!
+//! ```
+//! Base Card Cost
+//!   ↓ [apply BoardAura.slot_cost_modifiers]
+//!   ↓ [apply BoardAura.cost_modifiers (filtered by card)]
+//!   ↓ [check hand-only cost reducers]
+//! Final Cost
+//! ```
+//!
+//! ## Board Aura Computation
+//!
+//! `calculate_board_aura()` scans all cards on stage and collects:
+//! - Blade/heart bonuses from constant abilities
+//! - Cost modifiers from abilities with O_REDUCE_COST or O_INCREASE_COST
+//! - Heart requirement changes
+//!
+//! This is computed once per turn or when board state changes significantly.
+//!
+//! ## Hand-Only Cost Reducers
+//!
+//! Some cost reducers only apply to cards in hand (not on stage). These are identified
+//! by checking if the cost modification frame's source_zone is Zone::Hand.
+//!
+//! ## Helper Functions
+//!
+//! - `get_member_cost()`: Get final cost for a member card considering all modifiers
+//! - `calculate_cost_delta()`: Calculate cost change for a specific card
+//! - `calculate_board_aura()`: Compute global board-wide effects
+//! - `ability_has_hand_only_self_cost_modifier()`: Check if ability has hand-only cost reduction
+
 use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
 use crate::core::logic::interpreter::check_condition;
