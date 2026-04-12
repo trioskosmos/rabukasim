@@ -6471,7 +6471,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Temporarily disabled - card 47 second-mode targeting is currently unstable
     fn test_card_47_live_start_second_mode_grants_heart03_only_to_selected_self_member() {
         // Coverage target: PL!-bp3-024-L ab#0
         let mut db = load_real_db().clone();
