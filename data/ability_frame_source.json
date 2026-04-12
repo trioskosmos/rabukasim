@@ -30244,7 +30244,7 @@
         {
           "op": "JUMP_IF_FALSE",
           "frame_index": 9,
-          "value": 3
+          "value": 5
         },
         {
           "op": "SET_TARGET_SELF",
@@ -30285,13 +30285,13 @@
           }
         },
         {
-          "op": "RETURN",
+          "op": "JUMP_IF_FALSE",
           "frame_index": 14,
-          "value": 3,
-          "slot": {
-            "target_slot": "STAGE_0",
-            "comparison": "GE"
-          },
+          "value": 4
+        },
+        {
+          "op": "CHECK",
+          "frame_index": 15,
           "params": {
             "raw_cond": "UNIQUE_NAMES_COUNT",
             "MIN": 3
@@ -30299,12 +30299,12 @@
         },
         {
           "op": "JUMP_IF_FALSE",
-          "frame_index": 15,
-          "value": 1
+          "frame_index": 16,
+          "value": 2
         },
         {
           "op": "BOOST_SCORE",
-          "frame_index": 16,
+          "frame_index": 17,
           "value": 1,
           "slot": {
             "target_slot": "CONTEXT"
@@ -30312,7 +30312,7 @@
         },
         {
           "op": "RETURN",
-          "frame_index": 17
+          "frame_index": 18
         }
       ],
       "card_refs": [

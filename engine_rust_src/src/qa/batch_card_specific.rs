@@ -4148,7 +4148,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Temporarily disabled - card 669 heart routing is currently unstable
     fn test_card_669_live_start_two_member_branch_only_targets_self_for_heart_grant() {
         // Coverage target: PL!-bp5-021-L ab#0
         let db = load_real_db();
