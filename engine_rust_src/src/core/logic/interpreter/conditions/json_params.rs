@@ -426,21 +426,78 @@ pub fn evaluate_raw_condition(
             let energy_count = state.players[target_player].energy_zone.len() as i32;
             compare_count_thresholds(params, energy_count)
         }
-        "DID_ACTIVATE_ENERGY"
-        | "DID_ACTIVATE_ENERGY_BY_GROUP"
-        | "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT"
-        | "DID_ACTIVATE_MEMBER"
-        | "DID_ACTIVATE_MEMBER_BY_GROUP"
-        | "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => check_condition_opcode(
-            state,
-            db,
-            C_HAS_KEYWORD,
-            cond.value,
-            cond.attr,
-            cond.target_slot as i32,
-            ctx,
-            depth + 1,
-        ),
+        "DID_ACTIVATE_ENERGY" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_energy_group_mask != 0
+            }
+        }
+        "DID_ACTIVATE_ENERGY_BY_GROUP" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_energy_group_mask != 0
+            }
+        }
+        "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_energy_group_mask != 0
+            }
+        }
+        "DID_ACTIVATE_MEMBER" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_member_group_mask != 0
+            }
+        }
+        "DID_ACTIVATE_MEMBER_BY_GROUP" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_member_group_mask != 0
+            }
+        }
+        "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => {
+            let group_filter = get_param_case_insensitive(params, "FILTER")
+                .and_then(|v| v.as_str())
+                .and_then(|v| v.strip_prefix("GROUP="))
+                .and_then(|v| v.parse::<u8>().ok());
+            let target_player = ctx.player_id as usize;
+            if let Some(group_id) = group_filter {
+                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
+            } else {
+                state.players[target_player].activated_member_group_mask != 0
+            }
+        }
         "ALL_CARDS_MATCH" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
 

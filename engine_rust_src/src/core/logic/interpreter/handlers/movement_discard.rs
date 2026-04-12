@@ -173,8 +173,14 @@ pub fn handle_move_to_discard(
     }
 
     // Handle optional deck discard "no" choice
+    if is_optional && is_deck_zone(source_zone) && next_ctx.choice_index == 1 {
+        finish_pending_interaction(state);
+        return HandlerResult::Return;
+    }
+
+    // Handle optional deck discard "yes" choice - proceed with auto-discard
     if is_optional && is_deck_zone(source_zone) && next_ctx.choice_index == 0 {
-        next_ctx.choice_index = -1;
+        next_ctx.choice_index = -1; // Clear choice to trigger auto-discard path
     }
 
     // === Execute the discard ===

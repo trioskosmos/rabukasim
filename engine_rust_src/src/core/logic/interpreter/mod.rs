@@ -850,9 +850,15 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
                 state.log("Rule 9.5.4, Rule 9.6.2.4: Executing frame-level instructions for effect resolution.".to_string());
             }
             let _ = resolve_ability(state, db, ability, &ctx);
-            
-            // Set phase to Response when processing triggers (even if no interaction pending)
-            if state.phase != Phase::Response {
+
+            // Set phase to Response when processing triggers, but only if there are pending interactions
+            // Exception: Don't change phase when in Performance phase (Q33/Q37)
+            if state.phase != Phase::Response
+                && state.phase != Phase::PerformanceP1
+                && state.phase != Phase::PerformanceP2
+                && state.phase != Phase::LiveResult
+                && !state.interaction_stack.is_empty()
+            {
                 state.phase = Phase::Response;
             }
 

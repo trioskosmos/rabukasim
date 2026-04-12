@@ -206,12 +206,17 @@ pub fn handle_select_ops(
             if looked_cards.is_empty() {
                 if state.debug.debug_mode {
                     eprintln!(
-                        "[SELECT_DBG] no_candidates source={} target_player={} source_zone={:?} filter=0x{:x}",
+                        "[SELECT_DBG] no_candidates source={} target_player={} source_zone={:?} filter=0x{:x} is_optional={}",
                         ctx.source_card_id,
                         select_member_target_player,
                         effective_slot_info.source_zone,
-                        resolved_filter_attr
+                        resolved_filter_attr,
+                        frame_data.is_optional()
                     );
+                }
+                // If selection is optional and there are no candidates, skip it entirely
+                if frame_data.is_optional() {
+                    return HandlerResult::Continue;
                 }
                 return HandlerResult::Return;
             };

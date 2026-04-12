@@ -1616,6 +1616,18 @@ impl AbilityFrame {
             params
         };
         let mut filter = CardFilter::from_frame_json(payload, &options, &params);
+
+        // Process top-level `attr` field to extract flags like `is_optional`
+        if let Some(attr_obj) = frame.get("attr").and_then(|v| v.as_object()) {
+            // Enable the filter if there's a top-level attr field
+            filter.is_enabled = true;
+            if let Some(is_optional) = attr_obj.get("is_optional") {
+                if is_optional.as_bool().unwrap_or_else(|| is_optional.as_i64().map(|v| v != 0).unwrap_or(false)) {
+                    filter.is_optional = true;
+                }
+            }
+        }
+
         let filter_passthrough = [payload, &options, &params]
             .into_iter()
             .filter_map(|value| {
@@ -1877,16 +1889,12 @@ impl AbilityFrame {
                 if let Some((params_filter, _)) =
                     crate::core::logic::filter::filter_parts_from_params(Some(&params))
                 {
-                    filter = filter.with_overlay(&params_filter);
-                }
-                if params
-                    .get("filter")
-                    .and_then(|value| value.as_str())
-                    .map(|value| value.eq_ignore_ascii_case("COST_LE_REVEALED"))
-                    .unwrap_or(false)
-                {
-                    filter.is_enabled = true;
-                    filter.value_enabled = true;
+                    let mut filter = CardFilter::from_frame_json(payload, &options, &params);
+                    if let Some(attr_value) = frame.get("attr") {
+                        if let Some(attr_filter) = CardFilter::from_json_value(attr_value) {
+                            filter = filter.with_overlay(&attr_filter);
+                        }
+                    }
                     filter.value_threshold = 1;
                     filter.is_le = true;
                     filter.is_cost_type = true;

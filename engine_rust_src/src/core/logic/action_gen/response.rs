@@ -577,39 +577,16 @@ impl ResponseGenerator {
 
         match choice_type {
             ChoiceType::Optional => {
-                if pi.effect_opcode == O_MOVE_TO_DISCARD {
+                let should_offer_yes_no = pi.effect_opcode == O_PAY_ENERGY;
+                let is_optional_deck_discard = pi.effect_opcode == O_MOVE_TO_DISCARD && {
                     let decoded_slot =
                         crate::core::logic::interpreter::instruction::DecodedSlot::decode(
                             pi.target_slot,
                         );
-                    let is_hand_discard = decoded_slot.source_zone == crate::core::enums::Zone::Hand
-                        || decoded_slot.target_slot == crate::core::enums::Zone::Hand as u8
-                        || pi.target_slot == crate::core::enums::Zone::Hand as i32;
-
-                    if is_hand_discard {
-                        let masked_filter = pi.filter_attr
-                            & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK;
-                        add_cards_matching_filter(
-                            state,
-                            db,
-                            receiver,
-                            player.hand.as_slice(),
-                            masked_filter,
-                            &pi.ctx,
-                            ACTION_BASE_HAND_SELECT,
-                        );
-                        if optional_skip_is_available(pi) {
-                            add_optional_done(receiver);
-                        }
-                        if offer_optional_skip {
-                            receiver.add_action(0);
-                        }
-                        return;
-                    }
-                }
-
-                let should_offer_yes_no = pi.effect_opcode == O_PAY_ENERGY;
-                if should_offer_yes_no {
+                    let is_deck = matches!(decoded_slot.source_zone, crate::core::enums::Zone::Deck | crate::core::enums::Zone::DeckTop | crate::core::enums::Zone::DeckBottom);
+                    is_deck
+                };
+                if should_offer_yes_no || is_optional_deck_discard {
                     receiver.add_action((ACTION_BASE_CHOICE + 0) as usize); // Yes/Proceed
                     receiver.add_action((ACTION_BASE_CHOICE + 1) as usize); // No/Skip
                 }
