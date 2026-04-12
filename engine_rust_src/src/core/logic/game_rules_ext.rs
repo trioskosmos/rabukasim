@@ -391,19 +391,20 @@ impl GameState {
         filter: &CardFilter,
         ctx: &AbilityContext,
     ) -> bool {
-        if let Some(hit) = self.filter_cache_lookup(cid, 0, checked_slot, ctx) {
+        let filter_attr = filter.to_attr();
+        if let Some(hit) = self.filter_cache_lookup(cid, filter_attr, checked_slot, ctx) {
             return hit;
         }
         let result = self.card_matches_filter_with_ctx_internal(
             db,
             cid,
-            0,
+            filter_attr,
             Some(filter),
             ctx,
             false,
             checked_slot,
         );
-        self.filter_cache_store(cid, 0, checked_slot, ctx, result);
+        self.filter_cache_store(cid, filter_attr, checked_slot, ctx, result);
         result
     }
 

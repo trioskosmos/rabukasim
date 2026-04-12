@@ -6,8 +6,7 @@ use super::opcodes::check_condition_opcode;
 use crate::core::*;
 use crate::core::generated_constants::FILTER_ANY_STAGE;
 use crate::core::logic::filter::{
-    has_structured_filter_constraints, merge_filter_attr_with_params, structured_filter_attr,
-    structured_filter_from_attr,
+    has_structured_filter_constraints, merge_filter_attr_with_params, structured_filter_from_attr,
 };
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
@@ -108,7 +107,7 @@ fn resolved_filter_attr(
 }
 
 fn condition_match_filter_attr(filter_attr: u64) -> u64 {
-    structured_filter_attr(filter_attr)
+    filter_attr & !crate::core::logic::filter::FILTER_ANY_STAGE
 }
 
 fn apply_area_semantics(attr: u64, area: &str) -> u64 {

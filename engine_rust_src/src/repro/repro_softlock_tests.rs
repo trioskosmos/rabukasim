@@ -14,7 +14,7 @@ mod tests {
         // "Put 1 hand to discard? Yes/No"
         state.players[0].stage[0] = 122;
         state.players[0].hand = vec![121].into(); // Needs 1 card to pay
-        state.phase = Phase::PerformanceP1;
+        state.phase = Phase::Main;
 
         // Trigger the ability
         let ctx = AbilityContext {

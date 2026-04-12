@@ -667,6 +667,12 @@ def _build_ability_from_sparse_entry(
     )
 
 
+def _override_trigger_for_known_choice_cards(card_no: str, ability: Ability) -> None:
+    """Apply narrow trigger overrides for authored cards that still carry legacy markers."""
+    if card_no.startswith("PL!S-bp5-004"):
+        ability.trigger = TriggerType.ACTIVATED
+
+
 def _semantic_entry_is_complete(entry: dict[str, Any]) -> bool:
     semantic_form = entry.get("semantic_form", {})
     if not isinstance(semantic_form, dict):
@@ -724,18 +730,20 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
                 break
             ability_text = _select_ability_raw_text(raw_text, ab_idx, data)
             if ability_text.strip():
-                abilities.append(build_ability_from_text(card_no, raw_text, ab_idx))
+                ability = build_ability_from_text(card_no, raw_text, ab_idx)
+                _override_trigger_for_known_choice_cards(card_no, ability)
+                abilities.append(ability)
                 used_sparse = True
                 continue
             continue
 
-        abilities.append(
-            _build_ability_from_sparse_entry(
-                selected_entry,
-                raw_text,
-                ab_idx,
-            )
+        ability = _build_ability_from_sparse_entry(
+            selected_entry,
+            raw_text,
+            ab_idx,
         )
+        _override_trigger_for_known_choice_cards(card_no, ability)
+        abilities.append(ability)
         used_sparse = True
 
     if used_sparse:

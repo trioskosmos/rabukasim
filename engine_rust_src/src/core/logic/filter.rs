@@ -285,23 +285,62 @@ impl CardFilter {
             value
         };
 
-        match candidate {
-            Value::Null => None,
+        let mut filter = match candidate {
+            Value::Null => return None,
             Value::Number(number) => number
                 .as_i64()
                 .map(|attr| Self::from_attr(attr as u64))
-                .or_else(|| number.as_u64().map(Self::from_attr)),
+                .or_else(|| number.as_u64().map(Self::from_attr))?,
             Value::Object(object) => {
-                let filter =
+                let f =
                     serde_json::from_value::<Self>(Value::Object(object.clone())).ok()?;
-                if filter != Self::default() {
-                    Some(filter)
+                if f != Self::default() {
+                    f
                 } else {
-                    None
+                    return None;
                 }
             }
-            _ => None,
+            _ => return None,
+        };
+
+        // Post-process min_cost/cost_ge/cost_le fields that are in the frame attr
+        // but not handled by serde deserialization
+        if let Some(obj) = value.as_object() {
+            let attr_obj = obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value);
+            if let Some(attr_obj) = attr_obj.as_object() {
+                let is_cost_field = attr_obj.get("min_cost").is_some()
+                    || attr_obj.get("cost_ge").is_some()
+                    || attr_obj.get("cost_le").is_some();
+                if is_cost_field {
+                    filter.is_enabled = true;
+                    filter.is_cost_type = true;
+                }
+                if let Some(threshold) = attr_obj.get("min_cost")
+                    .or_else(|| attr_obj.get("value_threshold"))
+                    .and_then(Value::as_u64)
+                    .or_else(|| {
+                        attr_obj.get("heart_count")
+                            .or_else(|| attr_obj.get("min_count"))
+                            .or_else(|| attr_obj.get("min"))
+                            .or_else(|| attr_obj.get("count"))
+                            .or_else(|| attr_obj.get("threshold"))
+                            .or_else(|| attr_obj.get("value"))
+                            .and_then(Value::as_u64)
+                    })
+                {
+                    filter.is_enabled = true;
+                    filter.value_enabled = true;
+                    filter.value_threshold = (threshold & 0x1F) as u8;
+                }
+                if attr_obj.get("cost_ge").is_some() {
+                    filter.is_le = false;
+                } else if attr_obj.get("cost_le").is_some() {
+                    filter.is_le = true;
+                }
+            }
         }
+
+        Some(filter)
     }
 
     fn same_name_sources(
@@ -1247,8 +1286,14 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         filter.unit_id = unit_id;
     }
     set_flag!(obj.get("value_enabled"), value_enabled);
+    let is_cost_field = obj.get("min_cost").is_some() || obj.get("cost_ge").is_some() || obj.get("cost_le").is_some();
+    if is_cost_field {
+        filter.is_enabled = true;
+        filter.is_cost_type = true;
+    }
     if let Some(threshold) = obj
-        .get("value_threshold")
+        .get("min_cost")
+        .or_else(|| obj.get("value_threshold"))
         .and_then(Value::as_u64)
         .or_else(|| {
             obj.get("heart_count")
@@ -1264,7 +1309,13 @@ pub fn filter_parts_from_params(params: Option<&serde_json::Value>) -> Option<(C
         filter.value_enabled = true;
         filter.value_threshold = (threshold & 0x1F) as u8;
     }
-    set_flag!(obj.get("is_le"), is_le);
+    if obj.get("cost_ge").is_some() {
+        filter.is_le = false;
+    } else if obj.get("cost_le").is_some() {
+        filter.is_le = true;
+    } else {
+        set_flag!(obj.get("is_le"), is_le);
+    }
     set_flag!(obj.get("is_cost_type"), is_cost_type);
     if let Some(color_mask) = obj
         .get("heart_color")

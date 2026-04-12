@@ -798,6 +798,14 @@ impl ResponseController for GameState {
                 } else {
                     pending.card_id
                 };
+
+                // Handle -1 ability_index for cost payment operations (e.g., O_PAY_ENERGY)
+                // that don't require an actual card ability
+                if pending.ability_index < 0 || ability_card_id < 0 {
+                    // Skip ability lookup for cost payment operations
+                    return Ok(());
+                }
+
                 let ability_idx = usize::try_from(pending.ability_index).ok().ok_or_else(|| {
                     format!(
                         "Ability index {} not found on card {}",
@@ -1698,9 +1706,13 @@ impl ResponseController for GameState {
             .get(ab_idx)
             .ok_or_else(|| format!("Ability index {} not found on {}", ab_idx, card.name))?;
 
+        // Frame-backed abilities can be manually driven by the runtime even when
+        // the legacy trigger label is not `Activated`. Keep the strict gate only
+        // for cards that have no executable frame path at all.
         if !self.debug.debug_ignore_conditions
             && ab.trigger != TriggerType::Activated
             && self.phase != Phase::Response
+            && !ab.has_resolved_frames()
         {
             return Err("Not an activated ability".to_string());
         }

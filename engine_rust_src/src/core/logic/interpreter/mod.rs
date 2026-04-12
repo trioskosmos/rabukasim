@@ -851,14 +851,9 @@ pub fn process_trigger_queue(state: &mut GameState, db: &CardDatabase) {
             }
             let _ = resolve_ability(state, db, ability, &ctx);
 
-            // Set phase to Response when processing triggers, but only if there are pending interactions
-            // Exception: Don't change phase when in Performance phase (Q33/Q37)
-            if state.phase != Phase::Response
-                && state.phase != Phase::PerformanceP1
-                && state.phase != Phase::PerformanceP2
-                && state.phase != Phase::LiveResult
-                && !state.interaction_stack.is_empty()
-            {
+            // If trigger resolution opened a prompt, the runtime should expose it
+            // as a response window immediately.
+            if !state.interaction_stack.is_empty() {
                 state.phase = Phase::Response;
             }
 

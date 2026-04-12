@@ -93,12 +93,6 @@ fn decode_count_filter(attr: u64) -> CardFilter {
     if (attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0 && filter.target_player == 0 {
         filter.target_player = TARGET_PLAYER_BOTH as u8;
     }
-    if filter.value_enabled {
-        filter.value_enabled = false;
-        filter.value_threshold = 0;
-        filter.is_le = false;
-        filter.is_cost_type = false;
-    }
     filter
 }
 
@@ -540,15 +534,16 @@ fn resolve_count_components(
                 let count_zone = |cards: &[i32]| {
                     cards
                         .iter()
-                        .filter(|&&id| {
-                            id >= 0
-                                && state.card_matches_filter_with_struct(
-                                    db,
-                                    id,
-                                    None,
-                                    &frame.filter,
-                                    ctx,
-                                )
+                        .enumerate()
+                        .filter(|(_, &id)| id >= 0)
+                        .filter(|(_, &id)| {
+                            state.card_matches_filter_with_struct(
+                                db,
+                                id,
+                                None,
+                                &frame.filter,
+                                ctx,
+                            )
                         })
                         .count() as i32
                 };

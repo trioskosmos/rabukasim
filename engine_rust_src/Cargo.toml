@@ -131,6 +131,11 @@ name = "export_hydrated_abilities"
 path = "examples/export_hydrated_abilities.rs"
 test = false
 
+# [[bin]]
+# name = "quick_start"
+# path = "examples/quick_start.rs"
+# test = false
+
 [[bench]]
 name = "ultimate_benchmark"
 path = "benches/ultimate_benchmark.rs"

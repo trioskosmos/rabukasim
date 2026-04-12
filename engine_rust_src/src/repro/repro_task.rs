@@ -465,7 +465,8 @@ mod tests {
         let blades_with_11 = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (with cost 11): {}", blades_with_11);
 
-        // Verification 3: Add a cost 13 member.
+        // Verification 3: Add a second cost 13 member so the count reaches 2.
+        state.players[0].stage[1] = cost_13_cid;
         state.players[1].stage[0] = cost_13_cid; // On opponent stage
         let blades_with_13 = state.get_effective_blades(0, 0, &db, 0);
         println!("Blades (with cost 13): {}", blades_with_13);
