@@ -3,7 +3,34 @@
 //! This module provides a structured way to handle card filtering logic.
 //! The 64-bit filter attribute is decomposed into meaningful fields for clarity.
 //!
-//! BIT LAYOUT (synchronized with packed filter layout metadata):
+//! ## Dual Filter Model
+//!
+//! The runtime uses a dual model for card filtering:
+//!
+//! 1. **Structured `CardFilter`**: High-level typed fields (group, unit, color, etc.)
+//!    - Used for runtime logic and readability
+//!    - Easier to understand and modify
+//!
+//! 2. **Raw `attr` u64**: Packed bit representation for serialization and execution
+//!    - Used in `AbilityFrame` and frame execution
+//!    - Compact and fast for runtime operations
+//!    - Contains both structured filter bits AND passthrough compatibility flags
+//!
+//! ## Conversion Pattern
+//!
+//! ```
+//! AbilityFrame.attr (raw u64)
+//!   ↓ [CardFilter::from_raw()]
+//! CardFilter (structured)
+//!   ↓ [CardFilter::to_raw()]
+//! AbilityFrame.attr (raw u64)
+//! ```
+//!
+//! The "raw attr juggling" mentioned in the codebase refers to repeatedly merging
+//! and re-splitting these two representations. This is a known debt item that should
+//! be simplified by replacing passthrough bits with named compatibility flags.
+//!
+//! ## Bit Layout (synchronized with packed filter layout metadata)
 //! -----------------------------------------------------------------
 //! Bits 0-1:   Target Player (1=Self, 2=Opponent)
 //! Bits 2-3:   Card Type (1=Member, 2=Live)
@@ -24,7 +51,7 @@
 //! Bits 46-52: Character ID #2 (7 bits)
 //! Bits 53-55: Zone Mask
 //! Bits 56-58: Special ID
-//! Bit 59:     Setsuna flag
+//! Bit 59:     Setsuna flag (compatibility)
 //! Bit 60:     Compare Against Accumulated flag
 //! Bit 61:     Optional flag
 //! Bit 62:     Keyword: Activated Energy

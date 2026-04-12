@@ -1,14 +1,46 @@
 //! # LovecaSim Card Database
 //!
 //! This module defines the `CardDatabase` which acts as the source of truth for
-//! card statistics, images, and semantic frame instructions.
+//! card statistics, images, and executable frame programs.
+//!
+//! ## Data Flow
+//! ```
+//! cards.json (raw card data)
+//!   ↓ [Python compiler]
+//! cards_compiled.json (executable frame_program + semantic metadata)
+//!   ↓ [Rust loader]
+//! CardDatabase (in-memory runtime structures)
+//! ```
+//!
+//! ## Key Components
+//!
+//! ### 1. Loading (`from_json` / `from_value`)
+//! - Deserializes cards from `cards_compiled.json`
+//! - Each card already contains:
+//!   - `frame_program`: Executable ability frames (the primary execution model)
+//!   - `effects`, `conditions`, `costs`: Derived semantic metadata for compatibility
+//!   - `raw_text`: Original Japanese card text
+//!
+//! ### 2. Enrichment (`enrich_member_runtime_metadata` / `enrich_live_runtime_metadata`)
+//! After loading, each card is enriched with runtime-computed flags:
+//! - **Ability flags**: Effect categories (draw, search, recover, buff, etc.)
+//! - **Synergy flags**: Group, color, baton, center, life lead conditions
+//! - **Cost flags**: Discard, tap cost types
+//! - **Trigger masks**: Bitmask of which triggers the card uses
+//! - **Choice metadata**: Whether abilities require player selection
+//! - **Preparsed modifiers**: Cached modifier frames for fast cost calculation
+//!
+//! ### 3. Condition Derivation
+//! - Conditions are derived from `frame_program` using `derive_conditions_from_frame_program`
+//! - This extracts condition frames (opcode ranges CONDITION_START_1 to CONDITION_END_2)
+//! - Converts raw condition opcodes into structured `Condition` objects
 //!
 //! ## Key Roles:
 //! - **Centralized Card Data**: Stores `MemberCard` and `LiveCard` structures.
 //! - **Fast Lookups**: Implements a `card_no_to_id` mapping for O(1) lookups by
 //!   collector number (e.g., "LL-bp1-001").
-//! - **Data Integrity**: Ensures that card IDs are unique and that all referenced
-//!   metadata exists.
+//! - **Optimized Access**: Uses both HashMaps and indexed vectors for different access patterns.
+//! - **Legacy ID Support**: Maintains alias mapping for old card IDs.
 //!
 //! ## Design Strategy:
 //! The `CardDatabase` is typically loaded once at startup and shared across
