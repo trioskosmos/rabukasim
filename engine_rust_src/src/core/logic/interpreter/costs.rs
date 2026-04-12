@@ -4,12 +4,17 @@ use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, Cost, GameState, TriggerType};
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost: &Cost) -> i32 {
     let mut resolved_cost = cost.value;
     if let Some(params) = cost.params.as_object() {
-        let reduction = params
-            .get("REDUCTION")
-            .or_else(|| params.get("reduction"))
+        let reduction = get_param_case_insensitive(params, "reduction")
             .and_then(|value| value.as_str())
             .unwrap_or("");
         if reduction.eq_ignore_ascii_case("COUNT_GROUPS") {
@@ -53,8 +58,8 @@ fn dynamic_energy_cost_from_frame(
     }
 
     let params = comp.params?;
-    let source = params
-        .get("source")
+    let params_obj = params.as_object()?;
+    let source = get_param_case_insensitive(params_obj, "source")
         .and_then(|value| value.as_str())
         .unwrap_or("");
 
@@ -237,10 +242,7 @@ pub fn check_cost(
     let val = cost.value as usize;
     let mut attr: u64 = 0;
     if let Some(params) = cost.params.as_object() {
-        let get_param = |key: &str| -> Option<&serde_json::Value> {
-            params.get(key).or_else(|| params.get(&key.to_uppercase()))
-        };
-        if let Some(filter_str) = get_param("filter").and_then(|v| v.as_str()) {
+        if let Some(filter_str) = get_param_case_insensitive(params, "filter").and_then(|v| v.as_str()) {
             attr = map_filter_string_to_attr(filter_str);
         }
     }
@@ -408,10 +410,7 @@ pub fn pay_cost(
 ) -> bool {
     let mut attr = 0;
     if let Some(params) = cost.params.as_object() {
-        let get_param = |key: &str| -> Option<&serde_json::Value> {
-            params.get(key).or_else(|| params.get(&key.to_uppercase()))
-        };
-        if let Some(filter_str) = get_param("filter").and_then(|v| v.as_str()) {
+        if let Some(filter_str) = get_param_case_insensitive(params, "filter").and_then(|v| v.as_str()) {
             attr = map_filter_string_to_attr(filter_str);
         }
     }

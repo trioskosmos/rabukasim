@@ -93,6 +93,219 @@
       ]
     }
   ],
+  "frame_data_guidelines": {
+    "overview": "This section documents the structure and patterns for correct ability frame data in ability_frame_source.json",
+    "frame_structure": {
+      "required_fields": {
+        "op": "Operation code (string) - must match an opcode in this dictionary",
+        "frame_index": "Sequential integer index starting from 0 - determines execution order"
+      },
+      "optional_fields": {
+        "value": "Integer or object - meaning depends on operation (count, threshold, offset, etc.)",
+        "attr": "Object containing operation-specific attributes and flags",
+        "slot": "Object containing targeting and zone information",
+        "params": "Object containing additional operation parameters"
+      }
+    },
+    "execution_model": {
+      "sequential_execution": "Frames execute in order of frame_index unless redirected by jumps",
+      "termination": "Every ability MUST end with a RETURN operation (code 1)",
+      "jump_semantics": "JUMP and JUMP_IF_FALSE use value as forward offset (number of frames to skip)",
+      "conditional_logic": "Condition operations set a boolean flag that JUMP_IF_FALSE checks"
+    },
+    "optional_field_patterns": {
+      "is_optional": {
+        "purpose": "Marks an operation as player-choice optional (may choose 0)",
+        "usage": "Set attr.is_optional = 1 on selection/discard operations",
+        "pattern": "Optional operation -> JUMP_IF_FALSE(value=1) -> effect if taken -> RETURN",
+        "example": "MOVE_TO_DISCARD with is_optional=1 followed by JUMP_IF_FALSE value=1"
+      },
+      "once_per_turn": {
+        "purpose": "Restricts ability to once per turn activation",
+        "usage": "Set attr.once_per_turn = 1 on any frame (typically first or condition)",
+        "common_triggers": "Most often used with ON_PLAY, ACTIVATED, ON_REVEAL triggers"
+      },
+      "compare_accumulated": {
+        "purpose": "Links operation result to subsequent operation's value",
+        "usage": "Set attr.compare_accumulated = 1 to use previous operation's actual count",
+        "example": "Discard up to 3, then draw equal to actual discarded (see ability #5)"
+      },
+      "target_player": {
+        "purpose": "Specifies which player is affected",
+        "values": ["SELF", "OPPONENT"],
+        "default": "SELF if not specified"
+      },
+      "zone_mask": {
+        "purpose": "Filters cards by zone/area",
+        "common_values": ["Guest+Friend", "specific areas"],
+        "usage": "Combined with card_type or character filters"
+      }
+    },
+    "branching_and_jumps": {
+      "JUMP_IF_FALSE": {
+        "purpose": "Conditional forward jump based on previous condition check",
+        "value_meaning": "Number of frames to skip if condition is false",
+        "common_offsets": {
+          "1": "Skip next frame (most common - single optional effect)",
+          "2": "Skip two frames (optional cost with conditional effect)",
+          "3+": "Multi-frame conditional blocks"
+        },
+        "pattern": "CONDITION_CHECK -> JUMP_IF_FALSE(offset) -> [effects if true] -> RETURN",
+        "anti_pattern": "Never use negative offsets or jumps beyond ability bounds"
+      },
+      "JUMP": {
+        "purpose": "Unconditional forward jump",
+        "usage": "Rare in current data - mostly for complex multi-path abilities",
+        "value_meaning": "Number of frames to skip"
+      },
+      "condition_operations": [
+        "COUNT_STAGE", "COUNT_ENERGY", "COUNT_HAND", "COUNT_DISCARD",
+        "COUNT_HEARTS", "COUNT_LIVE_HEARTS", "HAS_MEMBER", "HAS_KEYWORD",
+        "SCORE_COMPARE", "TYPE_CHECK", "AREA_CHECK"
+      ]
+    },
+    "common_ability_patterns": {
+      "simple_mandatory": {
+        "pattern": "OP1 -> OP2 -> ... -> RETURN",
+        "example": "DRAW -> MOVE_TO_DISCARD -> RETURN (ability #1)",
+        "use_case": "Unconditional effects that always execute"
+      },
+      "optional_cost": {
+        "pattern": "PAY_ENERGY(optional) -> JUMP_IF_FALSE(1) -> effect -> RETURN",
+        "example": "PAY_ENERGY(is_optional=1) -> JUMP_IF_FALSE(2) -> SELECT_MEMBER -> PLAY_MEMBER_FROM_HAND -> RETURN (ability #10)",
+        "use_case": "Pay cost to get additional effect"
+      },
+      "conditional_effect": {
+        "pattern": "CONDITION -> JUMP_IF_FALSE(offset) -> effect -> RETURN",
+        "example": "COUNT_LIVE_HEARTS -> JUMP_IF_FALSE(1) -> ADD_HEARTS -> RETURN (ability #2)",
+        "use_case": "Effect only if condition met"
+      },
+      "optional_discard_linked": {
+        "pattern": "DISCARD(optional, max=N) -> DRAW(compare_accumulated=1) -> RETURN",
+        "example": "MOVE_TO_DISCARD(is_optional=1, value=3) -> DRAW(compare_accumulated=1) -> RETURN (ability #5)",
+        "use_case": "Discard up to N, draw equal to actual discarded"
+      },
+      "select_and_act": {
+        "pattern": "SELECT_* -> ACTION -> RETURN",
+        "example": "SELECT_MEMBER -> PLAY_MEMBER_FROM_HAND -> RETURN (ability #10)",
+        "use_case": "Player selects target, then operation acts on it"
+      },
+      "multi_condition": {
+        "pattern": "CONDITION1 -> JUMP_IF_FALSE -> CONDITION2 -> JUMP_IF_FALSE -> effect -> RETURN",
+        "use_case": "Multiple conditions must all be true"
+      }
+    },
+    "ability_capabilities": {
+      "can_do": [
+        "Draw cards from deck",
+        "Discard cards from hand/other zones",
+        "Move cards between zones",
+        "Add hearts/blades/resources",
+        "Activate members/energy",
+        "Select cards/members with filters",
+        "Check conditions on zones/cards",
+        "Modify costs and requirements",
+        "Grant additional abilities",
+        "Recover cards from discard",
+        "Look at and reorder deck",
+        "Boost scores",
+        "Transform hearts/blades/colors",
+        "Restrict opponent actions",
+        "Tap/untap members"
+      ],
+      "cannot_do": [
+        "Create cards from nothing (must move from existing zones)",
+        "Access opponent's hand directly (only through specific effects)",
+        "Modify game rules beyond ability scope",
+        "Execute loops or recursive calls (no backward jumps)",
+        "Access random number generation (deterministic only)",
+        "Modify frame data at runtime (static structure)",
+        "Skip mandatory RETURN (must terminate properly)",
+        "Use undefined opcodes (must be in this dictionary)"
+      ]
+    },
+    "frame_verification_best_practices": {
+      "text_mapping": {
+        "purpose": "Map Japanese text phrases to specific frame operations",
+        "format": "Object with Japanese text as key, frame description as value",
+        "importance": "Critical for validating that frames match ability text"
+      },
+      "notes": {
+        "purpose": "Document patterns, special cases, and verification status",
+        "content": ["Pattern descriptions", "Frame-by-frame explanations", "Cross-card pattern notes"],
+        "verified_flag": "Set verified: true only after manual review confirms correctness"
+      },
+      "issues": {
+        "purpose": "List problems found during verification",
+        "when_to_use": "When frames use META_RULE placeholders or need manual review",
+        "resolution": "Document what needs to be fixed"
+      }
+    },
+    "anti_patterns_and_common_mistakes": {
+      "missing_return": {
+        "issue": "Ability doesn't end with RETURN operation",
+        "consequence": "Execution will continue into next ability or crash",
+        "fix": "Always ensure final frame is RETURN"
+      },
+      "incorrect_jump_offset": {
+        "issue": "JUMP_IF_FALSE offset doesn't match actual frame count",
+        "consequence": "Skips wrong frames or jumps out of bounds",
+        "fix": "Count frames carefully - offset is number of frames to skip, not target index"
+      },
+      "optional_without_jump": {
+        "issue": "is_optional flag set but no JUMP_IF_FALSE follows",
+        "consequence": "Optional effect becomes mandatory or logic breaks",
+        "fix": "Always follow optional operations with JUMP_IF_FALSE"
+      },
+      "condition_without_jump": {
+        "issue": "Condition check operation without JUMP_IF_FALSE",
+        "consequence": "Condition result ignored, always executes effect",
+        "fix": "Condition operations must be followed by JUMP_IF_FALSE to be useful"
+      },
+      "wrong_slot_configuration": {
+        "issue": "slot.source_zone or slot.dest_zone doesn't match operation",
+        "consequence": "Operation fails or targets wrong cards",
+        "fix": "Verify zone names match operation's expected zones"
+      },
+      "missing_required_attributes": {
+        "issue": "Required attr/slot/params fields missing for operation",
+        "consequence": "Operation uses defaults or fails",
+        "fix": "Check opcode's attr_keys, slot_keys, params_keys in this dictionary"
+      }
+    },
+    "frame_index_consistency": {
+      "rule": "frame_index must be sequential integers starting from 0",
+      "example": "Frames should have frame_index: 0, 1, 2, 3, ...",
+      "enforcement": "Gaps or duplicates in frame_index will cause execution errors"
+    },
+    "value_field_semantics": {
+      "count": "Used for DRAW, MOVE_TO_DISCARD, SELECT_* - number of cards",
+      "threshold": "Used in conditions - comparison value (e.g., count >= 4)",
+      "offset": "Used in JUMP/JUMP_IF_FALSE - frames to skip",
+      "identifier": "Used for heart_type, group_id, character IDs",
+      "cost": "Used for PAY_ENERGY, cost thresholds",
+      "object": "Some operations use value as object (e.g., LOOK_AND_CHOOSE with {count, reveal})"
+    },
+    "slot_object_structure": {
+      "target_slot": "Where operation applies (CONTEXT, HAND, STAGE_0, STAGE_1, etc.)",
+      "source_zone": "Where cards come from (DECK, HAND, DISCARD, STAGE, etc.)",
+      "dest_zone": "Where cards go to (DECK, DISCARD, DECK_BOTTOM, etc.)",
+      "remainder_zone": "Where unselected cards go (for SELECT operations)",
+      "comparison": "Comparison operator for conditions (GE, GT, LE, LT, EQ, NE)",
+      "is_dynamic": "Flag for dynamic slot resolution"
+    },
+    "attr_object_common_keys": {
+      "target_player": "SELF or OPPONENT",
+      "is_optional": "1 if player can choose not to execute",
+      "once_per_turn": "1 if ability limited to once per turn",
+      "card_type": "Filter by card type (MEMBER, LIVE, etc.)",
+      "zone_mask": "Filter by zone/area",
+      "group_enabled/group_id": "Filter by idol group",
+      "value_enabled/value_threshold/is_le/is_cost_type": "Value-based filtering",
+      "duration": "Effect duration (LIVE_END, etc.)",
+      "compare_accumulated": "Link to previous operation's result"
+    }
+  },
   "families": {
     "activation": [
       "ACTIVATE_ENERGY",

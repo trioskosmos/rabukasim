@@ -1,5 +1,12 @@
 use serde_json::Value;
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 fn decode_heart_type_token(token: &str) -> Option<usize> {
     let trimmed = token.trim_matches(|ch: char| {
         ch == '"' || ch == '\'' || ch == '{' || ch == '}' || ch == '[' || ch == ']'
@@ -67,7 +74,7 @@ pub fn decode_heart_type_value(value: &Value) -> Option<usize> {
 pub fn decode_heart_type_from_params(params: Option<&Value>) -> Option<usize> {
     params
         .and_then(|value| value.as_object())
-        .and_then(|obj| obj.get("heart_type").or_else(|| obj.get("HEART_TYPE")))
+        .and_then(|obj| get_param_case_insensitive(obj, "heart_type"))
         .and_then(decode_heart_type_value)
 }
 

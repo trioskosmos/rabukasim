@@ -12,6 +12,13 @@ use crate::core::logic::performance::do_yell;
 use crate::core::logic::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 fn target_player_for_meta_rule(base_p: usize, slot_info: crate::core::logic::interpreter::instruction::DecodedSlot, target_slot: i32) -> usize {
     if slot_info.is_opponent || target_slot == 2 {
         1 - base_p
@@ -41,14 +48,14 @@ pub fn handle_meta_rule(
         .and_then(|value: &serde_json::Value| value.as_str());
     let rule_type = frame_data
         .params
-        .and_then(|p| p.get("type"))
-        .or_else(|| frame_data.params.and_then(|p| p.get("TYPE")))
+        .and_then(|p| p.as_object())
+        .and_then(|obj| get_param_case_insensitive(obj, "type"))
         .and_then(|value| value.as_str())
         .map(|value| value.to_ascii_uppercase());
     let rule_name = frame_data
         .params
-        .and_then(|p| p.get("rule"))
-        .or_else(|| frame_data.params.and_then(|p| p.get("RULE")))
+        .and_then(|p| p.as_object())
+        .and_then(|obj| get_param_case_insensitive(obj, "rule"))
         .and_then(|value| value.as_str())
         .map(|value| value.to_ascii_uppercase());
 
@@ -105,7 +112,8 @@ pub fn handle_meta_rule(
     } else if matches!(raw_effect, Some("SET_SOURCE_COST_FROM_SELECTED_MINUS")) {
         let delta = frame_data
             .params
-            .and_then(|params| params.get("offset").or_else(|| params.get("OFFSET")))
+            .and_then(|params| params.as_object())
+            .and_then(|obj| get_param_case_insensitive(obj, "offset"))
             .and_then(|value| value.as_i64())
             .unwrap_or(1) as i32;
         let Some(selected_cid) = ctx.selected_cards.last().copied() else {

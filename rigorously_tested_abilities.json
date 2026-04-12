@@ -1,0 +1,2328 @@
+{
+  "total_tested_cards": 61,
+  "total_abilities": 47,
+  "unique_cards_with_abilities": 34,
+  "frame_patterns": {
+    "MOVE_TO_DISCARD": 13,
+    "DRAW": 7,
+    "RETURN": 50,
+    "JUMP_IF_FALSE": 36,
+    "LOOK_AND_CHOOSE": 8,
+    "HAS_KEYWORD": 2,
+    "BATON": 2,
+    "PLAY_MEMBER_FROM_DISCARD": 5,
+    "ACTIVATE_ENERGY": 2,
+    "IS_CENTER": 3,
+    "MOVE_MEMBER": 3,
+    "TAP_OPPONENT": 4,
+    "PAY_ENERGY": 8,
+    "PLAY_MEMBER_FROM_HAND": 1,
+    "SET_TAPPED": 2,
+    "SUM_VALUE": 5,
+    "PREVENT_PLAY_TO_SLOT": 2,
+    "GROUP_FILTER": 5,
+    "COUNT_ENERGY": 1,
+    "ENERGY_CHARGE": 1,
+    "SCORE_TOTAL_CHECK": 2,
+    "ADD_BLADES": 5,
+    "ADD_HEARTS": 5,
+    "SELECT_MEMBER": 2,
+    "BOOST_SCORE": 3,
+    "COUNT_DISCARD": 1,
+    "COUNT_HEARTS": 1,
+    "COUNT_SUCCESS_LIVE": 1,
+    "COUNT_STAGE": 1,
+    "GRANT_ABILITY": 1,
+    "BATON_TOUCH_MOD": 2,
+    "INCREASE_COST": 1,
+    "RECOVER_LIVE": 3,
+    "RECOVER_MEMBER": 3,
+    "NOP": 1,
+    "SELECT_CARDS": 1,
+    "TAP_MEMBER": 1,
+    "JUMP": 1
+  },
+  "meta_rule_count": 0,
+  "raw_count": 1,
+  "abilities": [
+    {
+      "card_id": 170,
+      "card_no": "PL!HS-bp1-005-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "value": 3,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          },
+          "frame_index": 0
+        },
+        {
+          "op": "DRAW",
+          "value": 0,
+          "attr": {
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "frame_index": 1
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30923\u679a\u307e\u3067\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u3053\u308c\u306b\u3088\u308a\u7f6e\u3044\u305f\u679a\u6570\u5206\u30ab\u30fc\u30c9\u3092\u5f15\u304f\u3002",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 143,
+      "card_no": "PL!HS-PR-001-PR",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 3,
+            "reveal": 1
+          },
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "ability_condition_tests.rs",
+        "card_62_cost_increase_condition.rs",
+        "repro_bp4_001.rs",
+        "repro_bp4_001_baton_pass.rs",
+        "repro_bp4_004_double_baton.rs"
+      ]
+    },
+    {
+      "card_id": 144,
+      "card_no": "PL!HS-PR-002-PR",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 3,
+            "reveal": 1
+          },
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 560,
+      "card_no": "PL!SP-bp4-004-P",
+      "ability_index": 1,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "HAS_KEYWORD",
+          "frame_index": 0,
+          "attr": {
+            "char_id_1": "LANZHU"
+          }
+        },
+        {
+          "op": "BATON",
+          "frame_index": 1,
+          "value": 2,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "LIELLA"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 2,
+          "value": 2
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 3,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_DISCARD",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD",
+            "is_reveal_until_live": 1,
+            "is_baton_slot": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3053\u306e\u30ab\u30fc\u30c9\u306e\u30d7\u30ec\u30a4\u306b\u969b\u3057\u30012\u4eba\u306e\u30e1\u30f3\u30d0\u30fc\u3068\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u3082\u3088\u3044\u3002\n{{toujyou.png|\u767b\u5834}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eLiella!\u300f\u306e\u30e1\u30f3",
+      "tested_in": [
+        "c02_kanon_557.rs",
+        "repro_bp4_004_double_baton.rs"
+      ]
+    },
+    {
+      "card_id": 8752,
+      "card_no": "PL!SP-bp4-004-P+",
+      "ability_index": 1,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "HAS_KEYWORD",
+          "frame_index": 0,
+          "attr": {
+            "char_id_1": "LANZHU"
+          }
+        },
+        {
+          "op": "BATON",
+          "frame_index": 1,
+          "value": 2,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "LIELLA"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 2,
+          "value": 2
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 3,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_DISCARD",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD",
+            "is_reveal_until_live": 1,
+            "is_baton_slot": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3053\u306e\u30ab\u30fc\u30c9\u306e\u30d7\u30ec\u30a4\u306b\u969b\u3057\u30012\u4eba\u306e\u30e1\u30f3\u30d0\u30fc\u3068\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u3082\u3088\u3044\u3002\n{{toujyou.png|\u767b\u5834}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eLiella!\u300f\u306e\u30e1\u30f3",
+      "tested_in": [
+        "c01_sumire_8752.rs"
+      ]
+    },
+    {
+      "card_id": 166,
+      "card_no": "PL!HS-bp1-001-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "ACTIVATE_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u30a8\u30cd\u30eb\u30ae\u30fc\u30922\u679a\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b\u3002",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 100,
+      "card_no": "PL!-pb1-015-P+",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "IS_CENTER",
+          "frame_index": 0,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "MOVE_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "unit_enabled": 1,
+            "unit_id": "BIBI",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "TAP_OPPONENT",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "STAGE_2"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}/{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eBiBi\u300f\u306e\u30e1\u30f3\u30d0\u30fc1\u4eba\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u76f8\u624b\u306f\u3001\u81ea\u8eab\u306e\u30b9\u30c6\u30fc\u30b8\u306b",
+      "tested_in": [
+        "repro_catchu_q103.rs",
+        "repro_keke_live_filter.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 302,
+      "card_no": "PL!N-bp4-006-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_HAND",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "MEMBER",
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_empty_slot": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "MOVE_MEMBER",
+          "frame_index": 5,
+          "value": 1,
+          "attr": {
+            "target_player": "BOTH"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 6
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}{{icon_energy.png|E}}{{icon_energy.png|E}}\u652f\u6255\u3063\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u624b\u672d\u304b\u3089\u30b3\u30b9\u30c84\u4ee5\u4e0b\u306e\u300e\u8679\u30f6\u54b2\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u30b9\u30c6",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 102,
+      "card_no": "PL!-pb1-017-P+",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "SET_TAPPED",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 5,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "STAGE_1",
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 6
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u30ab\u30fc\u30c9\u30921\u679a\u5f15\u304f\u3002\u305d\u306e\u5f8c\u3001\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u300ePrintemps\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u304b\u3089\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u767b\u5834\u3057\u3066\u3044\u306a\u3044\u304b\u304e\u308a\u3001\u624b\u672d\u30921\u679a\u63a7\u3048",
+      "tested_in": [
+        "repro_kanon_4684.rs"
+      ]
+    },
+    {
+      "card_id": 558,
+      "card_no": "PL!SP-bp4-002-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "SET_TAPPED",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 4,
+            "reveal": 1,
+            "dest_discard": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "LIVE",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "value_enabled": 1,
+            "value_threshold": 8,
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30924\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u5fc5\u8981\u30cf\u30fc\u30c8\u306e\u5408\u8a08\u304c8\u4ee5\u4e0a\u306e\u300eLiella!\u300f\u306e\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0",
+      "tested_in": [
+        "repro_wait_bug.rs"
+      ]
+    },
+    {
+      "card_id": 101,
+      "card_no": "PL!-pb1-016-P+",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 4
+          },
+          "attr": {
+            "target_player": "SELF",
+            "unit_enabled": 1,
+            "unit_id": "LILY_WHITE",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30924\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300elilywhite\u300f\u306e\u30ab\u30fc\u30c9\u30921\u679a\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002",
+      "tested_in": [
+        "repro_count_success_live.rs",
+        "repro_kanon_4684.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 500,
+      "card_no": "PL!SP-bp1-005-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 2
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 4,
+          "value": {
+            "count": 5,
+            "reveal": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300eLiella!\u300f\u306e\u30ab\u30fc\u30c9\u30921\u679a\u307e\u3067\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 4199,
+      "card_no": "PL!-pb1-018-R",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "PLAY_MEMBER_FROM_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "value_enabled": 1,
+            "value_threshold": 2,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "is_tapped": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD",
+            "is_empty_slot": 1
+          }
+        },
+        {
+          "op": "PREVENT_PLAY_TO_SLOT",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_DISCARD",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT",
+            "value_enabled": 1,
+            "value_threshold": 2,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "is_tapped": 1
+          },
+          "slot": {
+            "target_slot": "STAGE_2",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "PREVENT_PLAY_TO_SLOT",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "STAGE_2"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u3068\u76f8\u624b\u306f\u305d\u308c\u305e\u308c\u3001\u81ea\u8eab\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30b3\u30b9\u30c82\u4ee5\u4e0b\u306e\u30e1\u30f3\u30d0\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u3001\u30e1\u30f3\u30d0\u30fc\u306e\u3044\u306a\u3044\u30a8\u30ea\u30a2\u306b\u30a6\u30a7\u30a4\u30c8\u72b6\u614b\u3067\u767b\u5834\u3055\u305b\u308b\u3002\uff08\u3053\u306e\u52b9\u679c\u3067\u767b\u5834\u3057\u305f\u30e1\u30f3\u30d0\u30fc\u306e\u3044\u308b\u30a8\u30ea\u30a2",
+      "tested_in": [
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 557,
+      "card_no": "PL!SP-bp4-001-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 0,
+          "value": 3,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "LIELLA"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "COUNT_ENERGY",
+          "frame_index": 1,
+          "value": 7,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "ENERGY_CHARGE",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306b\u3044\u308b\u30e1\u30f3\u30d0\u30fc\u304c\u300eLiella!\u300f\u306e\u307f\u3067\u3001\u304b\u3064\u81ea\u5206\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u304c7\u679a\u4ee5\u4e0a\u3042\u308b\u5834\u5408\u3001\u81ea\u5206\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u30c7\u30c3\u30ad\u304b\u3089\u3001\u30a8\u30cd\u30eb\u30ae\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u30a6\u30a7\u30a4\u30c8\u72b6\u614b\u3067\u7f6e\u304f",
+      "tested_in": [
+        "ability_condition_tests.rs",
+        "c01_sumire_8752.rs",
+        "c02_kanon_557.rs",
+        "repro_bp4_001.rs",
+        "repro_bp4_001_baton_pass.rs",
+        "repro_bp4_004_double_baton.rs"
+      ]
+    },
+    {
+      "card_id": 57,
+      "card_no": "PL!-bp4-004-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "SCORE_TOTAL_CHECK",
+          "frame_index": 0,
+          "value": 6,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ACTIVATE_ENERGY",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u30b9\u30b3\u30a2\u306e\u5408\u8a08\u304c6\u4ee5\u4e0a\u306e\u5834\u5408\u3001\u30a8\u30cd\u30eb\u30ae\u30fc\u30922\u679a\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 601,
+      "card_no": "PL!SP-pb1-017-N",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 5,
+            "reveal": 1,
+            "dest_discard": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "unit_enabled": 1,
+            "unit_id": "SYNCRISE",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DECK_TOP",
+            "remainder_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300e5yncri5e!\u300f\u306e\u30ab\u30fc\u30c9\u30921\u679a\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002",
+      "tested_in": [
+        "repro_card_selection.rs"
+      ]
+    },
+    {
+      "card_id": 370,
+      "card_no": "PL!N-sd1-001-SD",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 0,
+          "value": {
+            "count": 5,
+            "reveal": 1,
+            "dest_discard": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "LIVE",
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300e\u8679\u30f6\u54b2\u300f\u306e\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u307e\u3067\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 501,
+      "card_no": "PL!SP-bp1-006-P",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}{{icon_energy.png|E}}\u652f\u6255\u3063\u3066\u3082\u3088\u3044\uff1a\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{icon_blade.png|\u30d6\u30ec\u30fc\u30c9}}{{icon_blade.p",
+      "tested_in": [
+        "repro_kanon_4684.rs"
+      ]
+    },
+    {
+      "card_id": 169,
+      "card_no": "PL!HS-bp1-004-P",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 2
+        },
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 3,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 5,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "remainder_zone": "STAGE",
+            "is_dynamic": 1
+          },
+          "params": {
+            "scalar_dynamic": {
+              "base_value": 1,
+              "divisor": 1
+            }
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 6
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}{{turn1.png|\u30bf\u30fc\u30f31\u56de}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}\uff1a\u81ea",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 4853,
+      "card_no": "PL!N-bp5-007-R+",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "RETURN",
+          "frame_index": 0,
+          "params": {
+            "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 2
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u3068\u76f8\u624b\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u679a\u6570\u304c\u540c\u3058\u5834\u5408\u3001\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{heart_02.png|heart02}}{{heart_02",
+      "tested_in": [
+        "tmp_diag_q230.rs"
+      ]
+    },
+    {
+      "card_id": 143,
+      "card_no": "PL!HS-PR-001-PR",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "ability_condition_tests.rs",
+        "card_62_cost_increase_condition.rs",
+        "repro_bp4_001.rs",
+        "repro_bp4_001_baton_pass.rs",
+        "repro_bp4_004_double_baton.rs"
+      ]
+    },
+    {
+      "card_id": 144,
+      "card_no": "PL!HS-PR-002-PR",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 100,
+      "card_no": "PL!-pb1-015-P+",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "IS_CENTER",
+          "frame_index": 0,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          },
+          "attr": {
+            "once_per_turn": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "MOVE_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "unit_enabled": 1,
+            "unit_id": "BIBI",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "TAP_OPPONENT",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "STAGE_2"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}/{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eBiBi\u300f\u306e\u30e1\u30f3\u30d0\u30fc1\u4eba\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u76f8\u624b\u306f\u3001\u81ea\u8eab\u306e\u30b9\u30c6\u30fc\u30b8\u306b",
+      "tested_in": [
+        "repro_catchu_q103.rs",
+        "repro_keke_live_filter.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 568,
+      "card_no": "PL!SP-bp4-012-N",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 2
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}{{icon_energy.png|E}}\u652f\u6255\u3063\u3066\u3082\u3088\u3044\uff1a\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{heart_02.png|heart02}}\u3092\u5f97\u308b\u3002",
+      "tested_in": [
+        "mod.rs"
+      ]
+    },
+    {
+      "card_id": 370,
+      "card_no": "PL!N-sd1-001-SD",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "SELECT_MEMBER",
+          "frame_index": 2,
+          "value": 99,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "special_id": "Not Self"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE"
+          }
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "STAGE_1"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300e\u8679\u30f6\u54b2\u300f\u306e\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u307e\u3067\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 207,
+      "card_no": "PL!HS-bp2-020-L",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "unique_names": 1,
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "remainder_zone": "STAGE",
+            "is_dynamic": 1
+          },
+          "params": {
+            "scalar_dynamic": {
+              "base_value": 2,
+              "divisor": 1
+            }
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3059\u3079\u3066\u306e\u9818\u57df\u306b\u3042\u308b\u3053\u306e\u30ab\u30fc\u30c9\u306f\u300e\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1\u300f\u3001\u300eDOLLCHESTRA\u300f\u3001\u300e\u307f\u3089\u304f\u3089\u3071\u30fc\u304f\uff01\u300f\u3068\u3057\u3066\u6271\u3046\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 213,
+      "card_no": "PL!HS-bp2-026-L",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 0,
+          "attr": {
+            "char_id_1": "RURINO"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 1,
+          "attr": {
+            "char_id_1": "HIME"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 2,
+          "attr": {
+            "char_id_1": "MEGU"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 4,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u53f3\u30b5\u30a4\u30c9\u30a8\u30ea\u30a2\u306b\u300c\u5927\u6ca2\u7460\u7483\u4e43\u300d\u304c\u3001\u5de6\u30b5\u30a4\u30c9\u30a8\u30ea\u30a2\u306b\u300c\u5b89\u990a\u5bfa\u59eb\u82bd\u300d\u304c\u3001\u30bb\u30f3\u30bf\u30fc\u30a8\u30ea\u30a2\u306b\u300c\u85e4\u5cf6\u6148\u300d\u304c\u305d\u308c\u305e\u308c\u767b\u5834\u3057\u3066\u3044\u308b\u5834\u5408\u3001\u3053\u306e\u30ab\u30fc\u30c9\u306e",
+      "tested_in": [
+        "c02_kanon_557.rs"
+      ]
+    },
+    {
+      "card_id": 209,
+      "card_no": "PL!HS-bp2-022-L",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "COUNT_DISCARD",
+          "frame_index": 0,
+          "attr": {
+            "card_type": "LIVE",
+            "unit_enabled": 1,
+            "unit_id": "CERISE_BOUQUET"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u306b\u300e\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1\u300f\u306e\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u304c3\u679a\u4ee5\u4e0a\u3042\u308b\u5834\u5408\u3001\u3053\u306e\u30ab\u30fc\u30c9\u306e\u30b9\u30b3\u30a2\u3092+1\u3059\u308b\u3002",
+      "tested_in": [
+        "c02_kanon_557.rs"
+      ]
+    },
+    {
+      "card_id": 4853,
+      "card_no": "PL!N-bp5-007-R+",
+      "ability_index": 1,
+      "trigger": 3,
+      "trigger_id": 3,
+      "frames": [
+        {
+          "op": "COUNT_HEARTS",
+          "frame_index": 0,
+          "value": 1,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 3,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "STAGE_1",
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u3068\u76f8\u624b\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u679a\u6570\u304c\u540c\u3058\u5834\u5408\u3001\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{heart_02.png|heart02}}{{heart_02",
+      "tested_in": [
+        "tmp_diag_q230.rs"
+      ]
+    },
+    {
+      "card_id": 112,
+      "card_no": "PL!-pb1-032-L",
+      "ability_index": 0,
+      "trigger": 3,
+      "trigger_id": 3,
+      "frames": [
+        {
+          "op": "COUNT_SUCCESS_LIVE",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "group_enabled": 1
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_success.png|\u30e9\u30a4\u30d6\u6210\u529f\u6642}}\u81ea\u5206\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u300e\u03bc's\u300f\u306e\u30ab\u30fc\u30c9\u304c\u3042\u308b\u5834\u5408\u3001\u30ab\u30fc\u30c9\u30921\u679a\u5f15\u304f\u3002",
+      "tested_in": [
+        "c02_kanon_557.rs"
+      ]
+    },
+    {
+      "card_id": 168,
+      "card_no": "PL!HS-bp1-003-P",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "COUNT_STAGE",
+          "frame_index": 0,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "unique_names": 1,
+            "all_areas": 1
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "GRANT_ABILITY",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30a8\u30ea\u30a2\u3059\u3079\u3066\u306b\u300e\u84ee\u30ce\u7a7a\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u3066\u304a\u308a\u3001\u304b\u3064\u540d\u524d\u304c\u7570\u306a\u308b\u5834\u5408\u3001\u300c{{jyouji.png|\u5e38\u6642}}\u30e9\u30a4\u30d6\u306e\u5408\u8a08\u30b9\u30b3\u30a2\u3092+1\u3059\u308b\u3002\u300d\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 560,
+      "card_no": "PL!SP-bp4-004-P",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "BATON_TOUCH_MOD",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3053\u306e\u30ab\u30fc\u30c9\u306e\u30d7\u30ec\u30a4\u306b\u969b\u3057\u30012\u4eba\u306e\u30e1\u30f3\u30d0\u30fc\u3068\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u3082\u3088\u3044\u3002\n{{toujyou.png|\u767b\u5834}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eLiella!\u300f\u306e\u30e1\u30f3",
+      "tested_in": [
+        "c02_kanon_557.rs",
+        "repro_bp4_004_double_baton.rs"
+      ]
+    },
+    {
+      "card_id": 8752,
+      "card_no": "PL!SP-bp4-004-P+",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "BATON_TOUCH_MOD",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3053\u306e\u30ab\u30fc\u30c9\u306e\u30d7\u30ec\u30a4\u306b\u969b\u3057\u30012\u4eba\u306e\u30e1\u30f3\u30d0\u30fc\u3068\u30d0\u30c8\u30f3\u30bf\u30c3\u30c1\u3057\u3066\u3082\u3088\u3044\u3002\n{{toujyou.png|\u767b\u5834}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eLiella!\u300f\u306e\u30e1\u30f3",
+      "tested_in": [
+        "c01_sumire_8752.rs"
+      ]
+    },
+    {
+      "card_id": 864,
+      "card_no": "PL!SP-bp5-011-AR",
+      "ability_index": 1,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 0,
+          "value": 3,
+          "attr": {
+            "target_player": "BOTH"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 2
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3010\u5de6\u30b5\u30a4\u30c9\u3011{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "qa_verification_tests.rs"
+      ]
+    },
+    {
+      "card_id": 864,
+      "card_no": "PL!SP-bp5-011-AR",
+      "ability_index": 2,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 0,
+          "value": 3,
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "MEMBER"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 4
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3010\u5de6\u30b5\u30a4\u30c9\u3011{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "qa_verification_tests.rs"
+      ]
+    },
+    {
+      "card_id": 864,
+      "card_no": "PL!SP-bp5-011-AR",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 0,
+          "value": 3,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 2
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3010\u5de6\u30b5\u30a4\u30c9\u3011{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "qa_verification_tests.rs"
+      ]
+    },
+    {
+      "card_id": 62,
+      "card_no": "PL!-bp4-008-P",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "SCORE_TOTAL_CHECK",
+          "frame_index": 0,
+          "value": 6,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "INCREASE_COST",
+          "frame_index": 2,
+          "value": 3,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u30b9\u30b3\u30a2\u306e\u5408\u8a08\u304c6\u4ee5\u4e0a\u3067\u3042\u308b\u304b\u304e\u308a\u3001\u30b9\u30c6\u30fc\u30b8\u306b\u3044\u308b\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u306e\u30b3\u30b9\u30c8\u3092+3\u3059\u308b\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs",
+        "card_62_cost_increase_condition.rs"
+      ]
+    },
+    {
+      "card_id": 207,
+      "card_no": "PL!HS-bp2-020-L",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "RETURN",
+          "frame_index": 0
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3059\u3079\u3066\u306e\u9818\u57df\u306b\u3042\u308b\u3053\u306e\u30ab\u30fc\u30c9\u306f\u300e\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1\u300f\u3001\u300eDOLLCHESTRA\u300f\u3001\u300e\u307f\u3089\u304f\u3089\u3071\u30fc\u304f\uff01\u300f\u3068\u3057\u3066\u6271\u3046\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 124,
+      "card_no": "PL!-sd1-005-SD",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RECOVER_LIVE",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\uff1a\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u624b\u672d\u306b\u52a0\u3048\u308b\u3002",
+      "tested_in": [
+        "card574_self_discard.rs"
+      ]
+    },
+    {
+      "card_id": 724,
+      "card_no": "PL!HS-sd1-009-SD",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RECOVER_LIVE",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\uff1a\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u624b\u672d\u306b\u52a0\u3048\u308b\u3002",
+      "tested_in": [
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 121,
+      "card_no": "PL!-sd1-002-SD",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RECOVER_MEMBER",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\uff1a\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30e1\u30f3\u30d0\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u624b\u672d\u306b\u52a0\u3048\u308b\u3002",
+      "tested_in": [
+        "card574_self_discard.rs"
+      ]
+    },
+    {
+      "card_id": 574,
+      "card_no": "PL!SP-bp4-019-N",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RECOVER_MEMBER",
+          "frame_index": 1,
+          "value": 1,
+          "attr": {
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 2
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\uff1a\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30e1\u30f3\u30d0\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u624b\u672d\u306b\u52a0\u3048\u308b\u3002",
+      "tested_in": [
+        "card574_self_discard.rs"
+      ]
+    },
+    {
+      "card_id": 169,
+      "card_no": "PL!HS-bp1-004-P",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 0,
+          "attr": {
+            "once_per_turn": 1
+          }
+        },
+        {
+          "op": "NOP",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RECOVER_LIVE",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "zone_mask": "ALL",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}{{turn1.png|\u30bf\u30fc\u30f31\u56de}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}\uff1a\u81ea",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 168,
+      "card_no": "PL!HS-bp1-003-P",
+      "ability_index": 1,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 0,
+          "attr": {
+            "once_per_turn": 1
+          }
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RECOVER_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30a8\u30ea\u30a2\u3059\u3079\u3066\u306b\u300e\u84ee\u30ce\u7a7a\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u3066\u304a\u308a\u3001\u304b\u3064\u540d\u524d\u304c\u7570\u306a\u308b\u5834\u5408\u3001\u300c{{jyouji.png|\u5e38\u6642}}\u30e9\u30a4\u30d6\u306e\u5408\u8a08\u30b9\u30b3\u30a2\u3092+1\u3059\u308b\u3002\u300d\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 167,
+      "card_no": "PL!HS-bp1-002-P",
+      "ability_index": 0,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 0
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "SELECT_CARDS",
+          "frame_index": 3,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "value_enabled": 1,
+            "value_threshold": 15,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_DISCARD",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{kidou.png|\u8d77\u52d5}}{{icon_energy.png|E}}{{icon_energy.png|E}}\u3001\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\uff1a\u81ea\u5206\u306e\u63a7\u3048\u5ba4\u304b\u3089\u30b3\u30b9\u30c815\u4ee5\u4e0b\u306e\u300e\u84ee\u30ce\u7a7a\u300f",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 200,
+      "card_no": "PL!HS-bp2-013-N",
+      "ability_index": 0,
+      "trigger": 8,
+      "trigger_id": 8,
+      "frames": [
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 0,
+          "value": {
+            "count": 5,
+            "dest_discard": 1
+          },
+          "attr": {
+            "card_type": "LIVE",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jidou.png|\u81ea\u52d5}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u30b9\u30c6\u30fc\u30b8\u304b\u3089\u63a7\u3048\u5ba4\u306b\u7f6e\u304b\u308c\u305f\u3068\u304d\u3001\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002",
+      "tested_in": [
+        "repro_keke_live_filter.rs"
+      ]
+    },
+    {
+      "card_id": 100,
+      "card_no": "PL!-pb1-015-P+",
+      "ability_index": 2,
+      "trigger": 14,
+      "trigger_id": 14,
+      "frames": [
+        {
+          "op": "IS_CENTER",
+          "frame_index": 0,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "SELECT_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "BIBI",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "STAGE"
+          }
+        },
+        {
+          "op": "TAP_MEMBER",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "TAP_OPPONENT",
+          "frame_index": 4,
+          "value": 1,
+          "attr": {
+            "target_player": "OPPONENT"
+          },
+          "params": {
+            "filter": "ACTIVE"
+          },
+          "slot": {
+            "target_slot": "STAGE_2"
+          }
+        },
+        {
+          "op": "JUMP",
+          "frame_index": 5,
+          "value": 6
+        },
+        {
+          "op": "TAP_OPPONENT",
+          "frame_index": 6,
+          "attr": {
+            "once_per_turn": 1,
+            "cost_enabled": 1,
+            "cost_le": 1,
+            "max_cost": 4
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 7,
+          "value": 1
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 8,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 9
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}/{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}{{center.png|\u30bb\u30f3\u30bf\u30fc}}\u300eBiBi\u300f\u306e\u30e1\u30f3\u30d0\u30fc1\u4eba\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u76f8\u624b\u306f\u3001\u81ea\u8eab\u306e\u30b9\u30c6\u30fc\u30b8\u306b",
+      "tested_in": [
+        "repro_catchu_q103.rs",
+        "repro_keke_live_filter.rs",
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    }
+  ]
+}

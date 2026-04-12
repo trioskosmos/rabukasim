@@ -1584,92 +1584,48 @@ impl AbilityFrame {
         Self::first_field(value, keys).cloned().unwrap_or(Value::Null)
     }
 
+    fn parse_bool_from_value(value: &Value) -> bool {
+        value.as_bool()
+            .unwrap_or_else(|| value.as_i64().map(|v| v != 0).unwrap_or(false))
+    }
+
     fn zone_from_text(value: &str) -> Option<Zone> {
         match value.trim().to_ascii_uppercase().as_str() {
-            "HAND" | "CARD_HAND" => Some(Zone::Hand),
-            "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
+            "HAND" => Some(Zone::Hand),
+            "DISCARD" => Some(Zone::Discard),
             "STAGE" => Some(Zone::Stage),
             "DECK" => Some(Zone::Deck),
-            "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
-            "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
+            "DECK_TOP" => Some(Zone::DeckTop),
+            "DECK_BOTTOM" => Some(Zone::DeckBottom),
             "ENERGY" => Some(Zone::Energy),
-            "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
+            "LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
             _ => None,
         }
     }
 
     pub(crate) fn from_json_value(frame: &Value) -> Self {
-        if matches!(frame.as_str(), Some("Return" | "RETURN")) {
-            return AbilityFrame { opcode: O_RETURN, ..Default::default() };
-        }
-
         let semantic = frame.get("semantic").filter(|value| value.is_object());
-        let mut payload = semantic.unwrap_or(frame);
-        let mut kind = frame
+        let payload = semantic.unwrap_or(frame);
+        let kind = frame
             .get("kind")
             .and_then(|v| v.as_str())
             .or_else(|| frame.get("op").and_then(|v| v.as_str()))
             .unwrap_or("");
-        if kind.is_empty() {
-            if let Some(obj) = frame.as_object() {
-                if obj.len() == 1 {
-                    if let Some((key, value)) = obj.iter().next() {
-                        if value.is_object()
-                            || value.is_array()
-                            || value.is_string()
-                            || value.is_number()
-                        {
-                            kind = key.as_str();
-                            payload = value;
-                        }
-                    }
-                }
-            }
-        } else if semantic.is_none() {
-            if let Some(value) = frame.get(kind) {
-                if value.is_object() || value.is_array() || value.is_string() || value.is_number() {
-                    payload = value;
-                }
-            }
-        }
 
-        let opcode_name = Self::first_str(payload, &["opcode_name", "opcode", "op"])
-            .or_else(|| Self::first_str(frame, &["opcode_name", "opcode", "op"]))
-            .unwrap_or("");
-        let opcode_id = Self::first_i64(payload, &["opcode_id", "opcode", "op"])
-            .or_else(|| Self::first_i64(frame, &["opcode_id", "opcode"]))
-            .unwrap_or(0) as i32;
-        let value_json = Self::first_cloned_value(payload, &["value", "count", "rule_type", "params", "v"]);
-        let value = Self::first_i64(&value_json, &["value"])
-            .or_else(|| Self::first_i64(payload, &["count", "rule_type", "v"]))
-            .or_else(|| Self::first_i64(frame, &["value", "rule_type", "v"]))
-            .unwrap_or(0) as i32;
+        let opcode_name = Self::first_str(frame, &["opcode", "op", "opcode_name"]).unwrap_or("");
+        let opcode_id = Self::first_i64(frame, &["opcode", "opcode_id", "op"]).unwrap_or(0) as i32;
+        let value = Self::first_i64(frame, &["value", "count", "v", "rule_type"]).unwrap_or(0) as i32;
         let options = Self::first_cloned_value(frame, &["options"]);
-        let options = if options.is_null() {
-            Self::first_cloned_value(payload, &["options"])
-        } else {
-            options
-        };
-        let params = Self::first_cloned_value(payload, &["params"]);
+        let params = Self::first_cloned_value(frame, &["params"]);
         let params = if params.is_null() {
-            Self::first_cloned_value(frame, &["params"])
+            options.get("params").cloned().unwrap_or(Value::Null)
         } else {
             params
         };
-        let is_cost = payload
-            .get("is_cost")
-            .or_else(|| frame.get("is_cost"))
+        let is_cost = frame.get("is_cost")
             .or_else(|| params.get("is_cost"))
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
-        let params = if params.is_null() {
-            options
-                .get("params")
-                .cloned()
-                .unwrap_or(Value::Null)
-        } else {
-            params
-        };
         let mut filter = CardFilter::from_frame_json(payload, &options, &params);
 
         // Process top-level `attr` field to extract flags like `is_optional`
@@ -1677,7 +1633,7 @@ impl AbilityFrame {
             // Enable the filter if there's a top-level attr field
             filter.is_enabled = true;
             if let Some(is_optional) = attr_obj.get("is_optional") {
-                if is_optional.as_bool().unwrap_or_else(|| is_optional.as_i64().map(|v| v != 0).unwrap_or(false)) {
+                if Self::parse_bool_from_value(is_optional) {
                     filter.is_optional = true;
                 }
             }
@@ -1690,17 +1646,12 @@ impl AbilityFrame {
                     .map(|(_, extras)| extras)
             })
             .fold(0u64, |acc, extras| acc | extras);
-        let slot_value = payload
-            .get("slot")
-            .or_else(|| frame.get("slot"))
-            .cloned();
+        let slot_value = frame.get("slot").cloned();
         let slot = slot_value
             .clone()
             .and_then(|value| serde_json::from_value::<DecodedSlot>(value).ok())
             .unwrap_or_default();
-        let is_negated = payload
-            .get("is_negated")
-            .or_else(|| payload.get("negated"))
+        let is_negated = frame.get("is_negated")
             .or_else(|| frame.get("negated"))
             .and_then(|v| v.as_bool())
             .unwrap_or(false);
@@ -1737,37 +1688,22 @@ impl AbilityFrame {
                 slot.area_idx = area_idx as u8;
             }
             if let Some(is_opponent) = slot_obj.get("is_opponent") {
-                slot.is_opponent = is_opponent.as_bool().unwrap_or_else(|| {
-                    is_opponent.as_i64().map(|value| value != 0).unwrap_or(false)
-                });
+                slot.is_opponent = Self::parse_bool_from_value(is_opponent);
             }
             if let Some(is_reveal_until_live) = slot_obj.get("is_reveal_until_live") {
-                slot.is_reveal_until_live = is_reveal_until_live.as_bool().unwrap_or_else(|| {
-                    is_reveal_until_live
-                        .as_i64()
-                        .map(|value| value != 0)
-                        .unwrap_or(false)
-                });
+                slot.is_reveal_until_live = Self::parse_bool_from_value(is_reveal_until_live);
             }
             if let Some(is_baton_slot) = slot_obj.get("is_baton_slot") {
-                slot.is_baton_slot = is_baton_slot.as_bool().unwrap_or_else(|| {
-                    is_baton_slot.as_i64().map(|value| value != 0).unwrap_or(false)
-                });
+                slot.is_baton_slot = Self::parse_bool_from_value(is_baton_slot);
             }
             if let Some(is_empty_slot) = slot_obj.get("is_empty_slot") {
-                slot.is_empty_slot = is_empty_slot.as_bool().unwrap_or_else(|| {
-                    is_empty_slot.as_i64().map(|value| value != 0).unwrap_or(false)
-                });
+                slot.is_empty_slot = Self::parse_bool_from_value(is_empty_slot);
             }
             if let Some(is_wait) = slot_obj.get("is_wait") {
-                slot.is_wait = is_wait.as_bool().unwrap_or_else(|| {
-                    is_wait.as_i64().map(|value| value != 0).unwrap_or(false)
-                });
+                slot.is_wait = Self::parse_bool_from_value(is_wait);
             }
             if let Some(is_dynamic) = slot_obj.get("is_dynamic") {
-                slot.is_dynamic = is_dynamic.as_bool().unwrap_or_else(|| {
-                    is_dynamic.as_i64().map(|value| value != 0).unwrap_or(false)
-                });
+                slot.is_dynamic = Self::parse_bool_from_value(is_dynamic);
             }
         }
         if let Some(options_slot) = options.get("slot") {
@@ -1907,13 +1843,13 @@ impl AbilityFrame {
                     .unwrap_or("");
                 let value_payload = payload.get("value");
                 let structured_i64 = |key: &str| {
-                    payload.get(key).and_then(|v| v.as_i64())
-                        .or_else(|| params.get(key).and_then(|v| v.as_i64()))
+                    params.get(key).and_then(|v| v.as_i64())
+                        .or_else(|| payload.get(key).and_then(|v| v.as_i64()))
                         .or_else(|| value_payload.and_then(|v| v.get(key)).and_then(|v| v.as_i64()))
                 };
                 let structured_bool = |key: &str| {
-                    payload.get(key).and_then(|v| v.as_bool())
-                        .or_else(|| params.get(key).and_then(|v| v.as_bool()))
+                    params.get(key).and_then(|v| v.as_bool())
+                        .or_else(|| payload.get(key).and_then(|v| v.as_bool()))
                         .or_else(|| value_payload.and_then(|v| v.get(key)).and_then(|v| v.as_bool()))
                 };
                 let lac_count = structured_i64("count")
@@ -2041,13 +1977,7 @@ impl AbilityFrame {
         if let Some(source) = effect
             .params
             .as_object()
-            .and_then(|params| {
-                params
-                    .get("source")
-                    .or_else(|| params.get("SOURCE"))
-                    .or_else(|| params.get("from"))
-                    .or_else(|| params.get("FROM"))
-            })
+            .and_then(|params| params.get("source"))
             .and_then(|value| value.as_str())
             .and_then(Self::zone_from_text)
         {
@@ -2057,15 +1987,7 @@ impl AbilityFrame {
         if let Some(dest_zone) = effect
             .params
             .as_object()
-            .and_then(|params| {
-                params
-                    .get("destination")
-                    .or_else(|| params.get("DESTINATION"))
-                    .or_else(|| params.get("dest"))
-                    .or_else(|| params.get("DEST"))
-                    .or_else(|| params.get("to"))
-                    .or_else(|| params.get("TO"))
-            })
+            .and_then(|params| params.get("destination"))
             .and_then(|value| value.as_str())
             .and_then(Self::zone_from_text)
         {
@@ -2086,7 +2008,7 @@ impl AbilityFrame {
         if effect
             .params
             .as_object()
-            .and_then(|params| params.get("wait").or_else(|| params.get("WAIT")))
+            .and_then(|params| params.get("wait"))
             .and_then(|value| value.as_bool())
             .unwrap_or(false)
         {

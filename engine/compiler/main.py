@@ -39,8 +39,6 @@ from ..models.card import EnergyCard, LiveCard, MemberCard
 from ..models.enums import CHAR_MAP
 from .semantic_processor import (
     build_ability_from_text,
-    populate_semantic_from_frames as _populate_semantic_from_frames,
-    populate_semantic_from_text as _populate_semantic_from_text,
     semantic_form_to_frame_program,
     select_ability_raw_text as _select_ability_raw_text,
 )
@@ -107,7 +105,7 @@ def _card_has_ability_source(data: dict[str, Any]) -> bool:
     ) or bool(
         isinstance(data.get("frame_program"), dict)
         and data["frame_program"].get("frames")
-    ) or bool(str(data.get("pseudocode", "")).strip())
+    )
 
 
 def _process_card_worker(args):
@@ -346,8 +344,6 @@ def _resolve_img_path(data: dict) -> str:
     return raw_url
 
 
-COST_FLAG_TAP = 0x02
-
 # Flag Constants (Matching Rust engine)
 FLAG_DRAW = 1 << 0
 FLAG_SEARCH = 1 << 1
@@ -412,23 +408,13 @@ _SYNERGY_FLAG_MAP = {
 _COST_FLAG_MAP = {
     AbilityCostType.DISCARD_HAND: COST_FLAG_DISCARD,
     AbilityCostType.DISCARD_MEMBER: COST_FLAG_DISCARD,
-    AbilityCostType.TAP_SELF: COST_FLAG_TAP,
-    AbilityCostType.TAP_MEMBER: COST_FLAG_TAP,
+    AbilityCostType.TAP_SELF: 0x02,
+    AbilityCostType.TAP_MEMBER: 0x02,
 }
 
 # Load manual translations
 MANUAL_TRANSLATIONS_EN_PATH = "data/manual_translations_en.json"
 _manual_translations_en = {}
-
-
-def _load_translations_if_present(quiet: bool = False):
-    """Load manual translations from JSON file."""
-    global _manual_translations_en
-    if os.path.exists(MANUAL_TRANSLATIONS_EN_PATH):
-        if not quiet:
-            print(f"Loading manual English translations from {MANUAL_TRANSLATIONS_EN_PATH}")
-        with open(MANUAL_TRANSLATIONS_EN_PATH, "r", encoding="utf-8") as f:
-            _manual_translations_en = json.load(f)
 
 
 class SparseSourceManager:
@@ -643,15 +629,15 @@ def _build_ability_from_sparse_entry(
         Ability object ready for semantic population
     """
     trigger_id = _coerce_int(entry.get("trigger_id", 0))
-    frames = list(entry.get("frames", []) or [])
-    if not frames:
-        semantic_form = entry.get("semantic_form", {})
-        if isinstance(semantic_form, dict):
-            frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
-    frames = _post_process_frames(frames)
     semantic_form = entry.get("semantic_form", {})
     if not isinstance(semantic_form, dict):
         semantic_form = {}
+    
+    frames = list(entry.get("frames", []) or [])
+    if not frames:
+        frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
+    frames = _post_process_frames(frames)
+    
     ability_raw_text = str(entry.get("raw_text", "") or "").strip() or _select_ability_raw_text(raw_text, ability_index, entry)
     return Ability(
         raw_text=ability_raw_text,
@@ -671,27 +657,6 @@ def _override_trigger_for_known_choice_cards(card_no: str, ability: Ability) -> 
     """Apply narrow trigger overrides for authored cards that still carry legacy markers."""
     if card_no.startswith("PL!S-bp5-004"):
         ability.trigger = TriggerType.ACTIVATED
-
-
-def _semantic_entry_is_complete(entry: dict[str, Any]) -> bool:
-    semantic_form = entry.get("semantic_form", {})
-    if not isinstance(semantic_form, dict):
-        return False
-
-    coverage = semantic_form.get("coverage", {})
-    if not isinstance(coverage, dict):
-        return False
-
-    try:
-        unmatched_clause_count = int(coverage.get("unmatched_clause_count", 1) or 0)
-    except (TypeError, ValueError):
-        unmatched_clause_count = 1
-
-    operations = semantic_form.get("operations", [])
-    if not isinstance(operations, list) or not operations:
-        return False
-
-    return unmatched_clause_count == 0
 
 
 def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:

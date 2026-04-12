@@ -3,6 +3,13 @@ use crate::core::models::AbilityContext;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 #[path = "flow_meta_rule.rs"]
 mod flow_meta_rule;
 
@@ -18,7 +25,8 @@ pub fn handle_trigger_remote(
     let slot_info = frame_data.slot;
     let from_discard = frame_data
         .params
-        .and_then(|p| p.get("from"))
+        .and_then(|p| p.as_object())
+        .and_then(|obj| get_param_case_insensitive(obj, "from"))
         .and_then(|v: &serde_json::Value| v.as_str())
         .map(|s| s.eq_ignore_ascii_case("DISCARD"))
         .unwrap_or(false);

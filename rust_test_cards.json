@@ -1,0 +1,503 @@
+{
+  "card_to_tests": {
+    "008": [
+      "ability_condition_tests.rs"
+    ],
+    "1001": [
+      "ability_condition_tests.rs"
+    ],
+    "1002": [
+      "ability_condition_tests.rs"
+    ],
+    "143": [
+      "ability_condition_tests.rs",
+      "card_62_cost_increase_condition.rs",
+      "repro_bp4_001.rs",
+      "repro_bp4_001_baton_pass.rs",
+      "repro_bp4_004_double_baton.rs"
+    ],
+    "144": [
+      "ability_condition_tests.rs"
+    ],
+    "145": [
+      "ability_condition_tests.rs"
+    ],
+    "2000": [
+      "ability_condition_tests.rs"
+    ],
+    "302": [
+      "ability_condition_tests.rs"
+    ],
+    "370": [
+      "ability_condition_tests.rs"
+    ],
+    "500": [
+      "ability_condition_tests.rs"
+    ],
+    "55001": [
+      "ability_condition_tests.rs",
+      "card_62_cost_increase_condition.rs"
+    ],
+    "55002": [
+      "ability_condition_tests.rs",
+      "card_62_cost_increase_condition.rs"
+    ],
+    "557": [
+      "ability_condition_tests.rs",
+      "c01_sumire_8752.rs",
+      "c02_kanon_557.rs",
+      "repro_bp4_001.rs",
+      "repro_bp4_001_baton_pass.rs",
+      "repro_bp4_004_double_baton.rs"
+    ],
+    "57": [
+      "ability_condition_tests.rs"
+    ],
+    "62": [
+      "ability_condition_tests.rs",
+      "card_62_cost_increase_condition.rs"
+    ],
+    "113": [
+      "c01_sumire_8752.rs"
+    ],
+    "8752": [
+      "c01_sumire_8752.rs"
+    ],
+    "001": [
+      "c02_kanon_557.rs",
+      "repro_bp4_001.rs",
+      "repro_bp4_001_baton_pass.rs",
+      "repro_bp4_004_double_baton.rs",
+      "repro_card207_hasunosora_score.rs",
+      "repro_hime_rurino.rs",
+      "repro_kanon_4684.rs"
+    ],
+    "112": [
+      "c02_kanon_557.rs"
+    ],
+    "209": [
+      "c02_kanon_557.rs"
+    ],
+    "213": [
+      "c02_kanon_557.rs"
+    ],
+    "3000": [
+      "c02_kanon_557.rs",
+      "state_member_smoke.rs"
+    ],
+    "560": [
+      "c02_kanon_557.rs",
+      "repro_bp4_004_double_baton.rs"
+    ],
+    "121": [
+      "card574_self_discard.rs"
+    ],
+    "124": [
+      "card574_self_discard.rs"
+    ],
+    "574": [
+      "card574_self_discard.rs"
+    ],
+    "568": [
+      "mod.rs"
+    ],
+    "009": [
+      "qa_verification_tests.rs"
+    ],
+    "011": [
+      "qa_verification_tests.rs"
+    ],
+    "024": [
+      "qa_verification_tests.rs"
+    ],
+    "864": [
+      "qa_verification_tests.rs"
+    ],
+    "9999": [
+      "repro_bp4_001.rs",
+      "repro_bp4_001_baton_pass.rs",
+      "repro_bp4_004_double_baton.rs"
+    ],
+    "1": [
+      "repro_bp4_001_baton_pass.rs"
+    ],
+    "004": [
+      "repro_bp4_004_double_baton.rs"
+    ],
+    "002": [
+      "repro_card207_hasunosora_score.rs",
+      "repro_hime_rurino.rs",
+      "repro_wait_bug.rs"
+    ],
+    "020": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "166": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "167": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "168": [
+      "repro_card207_hasunosora_score.rs",
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "169": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "170": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "207": [
+      "repro_card207_hasunosora_score.rs"
+    ],
+    "2001": [
+      "repro_card_33_heart_selection.rs"
+    ],
+    "601": [
+      "repro_card_selection.rs"
+    ],
+    "8587": [
+      "repro_card_selection.rs"
+    ],
+    "003": [
+      "repro_catchu_q103.rs"
+    ],
+    "006": [
+      "repro_catchu_q103.rs"
+    ],
+    "023": [
+      "repro_catchu_q103.rs"
+    ],
+    "100": [
+      "repro_catchu_q103.rs",
+      "repro_keke_live_filter.rs",
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "101": [
+      "repro_count_success_live.rs",
+      "repro_kanon_4684.rs",
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "218": [
+      "repro_count_success_live.rs"
+    ],
+    "102": [
+      "repro_kanon_4684.rs"
+    ],
+    "501": [
+      "repro_kanon_4684.rs"
+    ],
+    "200": [
+      "repro_keke_live_filter.rs"
+    ],
+    "018": [
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "4199": [
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "724": [
+      "repro_pb1_018_exhaustive.rs"
+    ],
+    "1179": [
+      "repro_wait_bug.rs"
+    ],
+    "558": [
+      "repro_wait_bug.rs"
+    ],
+    "584": [
+      "repro_wait_bug.rs"
+    ],
+    "4853": [
+      "tmp_diag_q230.rs"
+    ]
+  },
+  "all_test_data": [
+    {
+      "card_ids": [
+        "008",
+        "1001",
+        "1002",
+        "143",
+        "144",
+        "145",
+        "2000",
+        "302",
+        "370",
+        "500",
+        "55001",
+        "55002",
+        "557",
+        "57",
+        "62"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "ability_condition_tests.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "113",
+        "557",
+        "8752"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "c01_sumire_8752.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "112",
+        "209",
+        "213",
+        "3000",
+        "557",
+        "560"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "c02_kanon_557.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "121",
+        "124",
+        "574"
+      ],
+      "ability_indices": [],
+      "file": "card574_self_discard.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "143",
+        "55001",
+        "55002",
+        "62"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "card_62_cost_increase_condition.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "568"
+      ],
+      "ability_indices": [],
+      "file": "mod.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "009",
+        "011",
+        "024",
+        "864"
+      ],
+      "ability_indices": [],
+      "file": "qa_verification_tests.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "143",
+        "557",
+        "9999"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "repro_bp4_001.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "1",
+        "143",
+        "557",
+        "9999"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "repro_bp4_001_baton_pass.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "004",
+        "143",
+        "557",
+        "560",
+        "9999"
+      ],
+      "ability_indices": [
+        "0",
+        "1"
+      ],
+      "file": "repro_bp4_004_double_baton.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "002",
+        "020",
+        "166",
+        "167",
+        "168",
+        "169",
+        "170",
+        "207"
+      ],
+      "ability_indices": [],
+      "file": "repro_card207_hasunosora_score.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "2001"
+      ],
+      "ability_indices": [],
+      "file": "repro_card_33_heart_selection.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "601",
+        "8587"
+      ],
+      "ability_indices": [],
+      "file": "repro_card_selection.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "003",
+        "006",
+        "023",
+        "100"
+      ],
+      "ability_indices": [],
+      "file": "repro_catchu_q103.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "101",
+        "218"
+      ],
+      "ability_indices": [],
+      "file": "repro_count_success_live.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "002"
+      ],
+      "ability_indices": [],
+      "file": "repro_hime_rurino.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "001",
+        "101",
+        "102",
+        "501"
+      ],
+      "ability_indices": [],
+      "file": "repro_kanon_4684.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "100",
+        "200"
+      ],
+      "ability_indices": [],
+      "file": "repro_keke_live_filter.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "018",
+        "100",
+        "101",
+        "168",
+        "4199",
+        "724"
+      ],
+      "ability_indices": [],
+      "file": "repro_pb1_018_exhaustive.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "002",
+        "1179",
+        "558",
+        "584"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "repro_wait_bug.rs",
+      "loads_database": true,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "3000"
+      ],
+      "ability_indices": [],
+      "file": "state_member_smoke.rs",
+      "loads_database": false,
+      "iterates_database": false
+    },
+    {
+      "card_ids": [
+        "4853"
+      ],
+      "ability_indices": [
+        "0"
+      ],
+      "file": "tmp_diag_q230.rs",
+      "loads_database": false,
+      "iterates_database": false
+    }
+  ]
+}

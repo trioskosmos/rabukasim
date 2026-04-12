@@ -1,0 +1,701 @@
+{
+  "total_working_abilities": 14,
+  "frame_patterns": {
+    "MOVE_TO_DISCARD": 3,
+    "JUMP_IF_FALSE": 13,
+    "LOOK_AND_CHOOSE": 3,
+    "RETURN": 16,
+    "PAY_ENERGY": 3,
+    "PLAY_MEMBER_FROM_HAND": 1,
+    "MOVE_MEMBER": 1,
+    "SET_TAPPED": 1,
+    "SUM_VALUE": 2,
+    "GROUP_FILTER": 1,
+    "COUNT_ENERGY": 1,
+    "ENERGY_CHARGE": 1,
+    "SCORE_TOTAL_CHECK": 2,
+    "ACTIVATE_ENERGY": 1,
+    "ADD_HEARTS": 1,
+    "ADD_BLADES": 1,
+    "BOOST_SCORE": 1,
+    "COUNT_HEARTS": 1,
+    "DRAW": 1,
+    "COUNT_STAGE": 1,
+    "GRANT_ABILITY": 1,
+    "INCREASE_COST": 1,
+    "RECOVER_MEMBER": 1
+  },
+  "opcode_sequences": {
+    "MOVE_TO_DISCARD -> JUMP_IF_FALSE -> LOOK_AND_CHOOSE -> RETURN": 1,
+    "PAY_ENERGY -> JUMP_IF_FALSE -> PLAY_MEMBER_FROM_HAND -> RETURN -> JUMP_IF_FALSE -> MOVE_MEMBER -> RETURN": 1,
+    "SET_TAPPED -> JUMP_IF_FALSE -> LOOK_AND_CHOOSE -> RETURN": 1,
+    "MOVE_TO_DISCARD -> JUMP_IF_FALSE -> SUM_VALUE -> JUMP_IF_FALSE -> LOOK_AND_CHOOSE -> RETURN": 1,
+    "GROUP_FILTER -> COUNT_ENERGY -> JUMP_IF_FALSE -> ENERGY_CHARGE -> RETURN": 1,
+    "SCORE_TOTAL_CHECK -> JUMP_IF_FALSE -> ACTIVATE_ENERGY -> RETURN": 1,
+    "RETURN -> JUMP_IF_FALSE -> ADD_HEARTS -> RETURN": 1,
+    "PAY_ENERGY -> JUMP_IF_FALSE -> ADD_BLADES -> RETURN": 1,
+    "BOOST_SCORE -> RETURN": 1,
+    "COUNT_HEARTS -> JUMP_IF_FALSE -> DRAW -> MOVE_TO_DISCARD -> RETURN": 1,
+    "COUNT_STAGE -> JUMP_IF_FALSE -> GRANT_ABILITY -> RETURN": 1,
+    "SCORE_TOTAL_CHECK -> JUMP_IF_FALSE -> INCREASE_COST -> RETURN": 1,
+    "RETURN": 1,
+    "SUM_VALUE -> PAY_ENERGY -> RECOVER_MEMBER -> RETURN": 1
+  },
+  "abilities": [
+    {
+      "card_id": 143,
+      "card_no": "PL!HS-PR-001-PR",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 3,
+            "reveal": 1
+          },
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "remainder_zone": "DISCARD",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "repro_bp4_001.rs"
+      ]
+    },
+    {
+      "card_id": 302,
+      "card_no": "PL!N-bp4-006-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 4
+        },
+        {
+          "op": "PLAY_MEMBER_FROM_HAND",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "MEMBER",
+            "group_enabled": 1,
+            "group_id": "NIJIGASAKI",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_empty_slot": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 4,
+          "value": 1
+        },
+        {
+          "op": "MOVE_MEMBER",
+          "frame_index": 5,
+          "value": 1,
+          "attr": {
+            "target_player": "BOTH"
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 6
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}{{icon_energy.png|E}}{{icon_energy.png|E}}\u652f\u6255\u3063\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u624b\u672d\u304b\u3089\u30b3\u30b9\u30c84\u4ee5\u4e0b\u306e\u300e\u8679\u30f6\u54b2\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u30b9\u30c6",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 558,
+      "card_no": "PL!SP-bp4-002-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "SET_TAPPED",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 2,
+          "value": {
+            "count": 4,
+            "reveal": 1,
+            "dest_discard": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "card_type": "LIVE",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "value_enabled": 1,
+            "value_threshold": 8,
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u3092\u30a6\u30a7\u30a4\u30c8\u306b\u3057\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30924\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u5fc5\u8981\u30cf\u30fc\u30c8\u306e\u5408\u8a08\u304c8\u4ee5\u4e0a\u306e\u300eLiella!\u300f\u306e\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u30921\u679a\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0",
+      "tested_in": [
+        "repro_wait_bug.rs"
+      ]
+    },
+    {
+      "card_id": 500,
+      "card_no": "PL!SP-bp1-005-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 0,
+          "value": 1,
+          "attr": {
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "HAND"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 3
+        },
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 2
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 3,
+          "value": 1
+        },
+        {
+          "op": "LOOK_AND_CHOOSE",
+          "frame_index": 4,
+          "value": {
+            "count": 5,
+            "reveal": 1
+          },
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "LIELLA",
+            "is_optional": 1
+          },
+          "slot": {
+            "target_slot": "CONTEXT",
+            "source_zone": "DECK_TOP"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 5
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30925\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u3089\u300eLiella!\u300f\u306e\u30ab\u30fc\u30c9\u30921\u679a\u307e\u3067\u516c\u958b\u3057\u3066\u624b\u672d\u306b\u52a0\u3048\u3066\u3082\u3088\u3044\u3002\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 557,
+      "card_no": "PL!SP-bp4-001-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "GROUP_FILTER",
+          "frame_index": 0,
+          "value": 3,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "LIELLA"
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "COUNT_ENERGY",
+          "frame_index": 1,
+          "value": 7,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 2,
+          "value": 1
+        },
+        {
+          "op": "ENERGY_CHARGE",
+          "frame_index": 3,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT",
+            "is_wait": 1
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306b\u3044\u308b\u30e1\u30f3\u30d0\u30fc\u304c\u300eLiella!\u300f\u306e\u307f\u3067\u3001\u304b\u3064\u81ea\u5206\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u304c7\u679a\u4ee5\u4e0a\u3042\u308b\u5834\u5408\u3001\u81ea\u5206\u306e\u30a8\u30cd\u30eb\u30ae\u30fc\u30c7\u30c3\u30ad\u304b\u3089\u3001\u30a8\u30cd\u30eb\u30ae\u30fc\u30ab\u30fc\u30c9\u30921\u679a\u30a6\u30a7\u30a4\u30c8\u72b6\u614b\u3067\u7f6e\u304f",
+      "tested_in": [
+        "repro_bp4_001.rs"
+      ]
+    },
+    {
+      "card_id": 57,
+      "card_no": "PL!-bp4-004-P",
+      "ability_index": 0,
+      "trigger": 1,
+      "trigger_id": 1,
+      "frames": [
+        {
+          "op": "SCORE_TOTAL_CHECK",
+          "frame_index": 0,
+          "value": 6,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ACTIVATE_ENERGY",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u81ea\u5206\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u30b9\u30b3\u30a2\u306e\u5408\u8a08\u304c6\u4ee5\u4e0a\u306e\u5834\u5408\u3001\u30a8\u30cd\u30eb\u30ae\u30fc\u30922\u679a\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs"
+      ]
+    },
+    {
+      "card_id": 4853,
+      "card_no": "PL!N-bp5-007-R+",
+      "ability_index": 0,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "RETURN",
+          "frame_index": 0,
+          "params": {
+            "raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_HEARTS",
+          "frame_index": 2,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF"
+          },
+          "slot": {
+            "target_slot": "CONTEXT"
+          },
+          "params": {
+            "heart_type": 2
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u3068\u76f8\u624b\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u679a\u6570\u304c\u540c\u3058\u5834\u5408\u3001\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{heart_02.png|heart02}}{{heart_02",
+      "tested_in": [
+        "tmp_diag_q230.rs"
+      ]
+    },
+    {
+      "card_id": 143,
+      "card_no": "PL!HS-PR-001-PR",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "is_optional": 1
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "ADD_BLADES",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{toujyou.png|\u767b\u5834}}\u624b\u672d\u30921\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u3044\u3066\u3082\u3088\u3044\uff1a\u81ea\u5206\u306e\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u30923\u679a\u898b\u308b\u3002\u305d\u306e\u4e2d\u304b\u30891\u679a\u3092\u624b\u672d\u306b\u52a0\u3048\u3001\u6b8b\u308a\u3092\u63a7\u3048\u5ba4\u306b\u7f6e\u304f\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb",
+      "tested_in": [
+        "repro_bp4_001.rs"
+      ]
+    },
+    {
+      "card_id": 207,
+      "card_no": "PL!HS-bp2-020-L",
+      "ability_index": 1,
+      "trigger": 2,
+      "trigger_id": 2,
+      "frames": [
+        {
+          "op": "BOOST_SCORE",
+          "frame_index": 0,
+          "value": 2,
+          "attr": {
+            "target_player": "SELF",
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "unique_names": 1,
+            "compare_accumulated": 1
+          },
+          "slot": {
+            "remainder_zone": "STAGE",
+            "is_dynamic": 1
+          },
+          "params": {
+            "scalar_dynamic": {
+              "base_value": 2,
+              "divisor": 1
+            }
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 1
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3059\u3079\u3066\u306e\u9818\u57df\u306b\u3042\u308b\u3053\u306e\u30ab\u30fc\u30c9\u306f\u300e\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1\u300f\u3001\u300eDOLLCHESTRA\u300f\u3001\u300e\u307f\u3089\u304f\u3089\u3071\u30fc\u304f\uff01\u300f\u3068\u3057\u3066\u6271\u3046\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 4853,
+      "card_no": "PL!N-bp5-007-R+",
+      "ability_index": 1,
+      "trigger": 3,
+      "trigger_id": 3,
+      "frames": [
+        {
+          "op": "COUNT_HEARTS",
+          "frame_index": 0,
+          "value": 1,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 2
+        },
+        {
+          "op": "DRAW",
+          "frame_index": 2,
+          "value": 2,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "MOVE_TO_DISCARD",
+          "frame_index": 3,
+          "value": 1,
+          "attr": {
+            "target_player": "SELF",
+            "zone_mask": "Guest+Friend"
+          },
+          "slot": {
+            "target_slot": "STAGE_1",
+            "source_zone": "HAND",
+            "dest_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 4
+        }
+      ],
+      "primary_text": "{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206\u3068\u76f8\u624b\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u679a\u6570\u304c\u540c\u3058\u5834\u5408\u3001\u30e9\u30a4\u30d6\u7d42\u4e86\u6642\u307e\u3067\u3001{{heart_02.png|heart02}}{{heart_02",
+      "tested_in": [
+        "tmp_diag_q230.rs"
+      ]
+    },
+    {
+      "card_id": 168,
+      "card_no": "PL!HS-bp1-003-P",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "COUNT_STAGE",
+          "frame_index": 0,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "unique_names": 1,
+            "all_areas": 1
+          },
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "GRANT_ABILITY",
+          "frame_index": 2,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30a8\u30ea\u30a2\u3059\u3079\u3066\u306b\u300e\u84ee\u30ce\u7a7a\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u3066\u304a\u308a\u3001\u304b\u3064\u540d\u524d\u304c\u7570\u306a\u308b\u5834\u5408\u3001\u300c{{jyouji.png|\u5e38\u6642}}\u30e9\u30a4\u30d6\u306e\u5408\u8a08\u30b9\u30b3\u30a2\u3092+1\u3059\u308b\u3002\u300d\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    },
+    {
+      "card_id": 62,
+      "card_no": "PL!-bp4-008-P",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "SCORE_TOTAL_CHECK",
+          "frame_index": 0,
+          "value": 6,
+          "slot": {
+            "target_slot": "STAGE_0",
+            "comparison": "GE"
+          }
+        },
+        {
+          "op": "JUMP_IF_FALSE",
+          "frame_index": 1,
+          "value": 1
+        },
+        {
+          "op": "INCREASE_COST",
+          "frame_index": 2,
+          "value": 3,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u6210\u529f\u30e9\u30a4\u30d6\u30ab\u30fc\u30c9\u7f6e\u304d\u5834\u306b\u3042\u308b\u30ab\u30fc\u30c9\u306e\u30b9\u30b3\u30a2\u306e\u5408\u8a08\u304c6\u4ee5\u4e0a\u3067\u3042\u308b\u304b\u304e\u308a\u3001\u30b9\u30c6\u30fc\u30b8\u306b\u3044\u308b\u3053\u306e\u30e1\u30f3\u30d0\u30fc\u306e\u30b3\u30b9\u30c8\u3092+3\u3059\u308b\u3002",
+      "tested_in": [
+        "ability_condition_tests.rs",
+        "card_62_cost_increase_condition.rs"
+      ]
+    },
+    {
+      "card_id": 207,
+      "card_no": "PL!HS-bp2-020-L",
+      "ability_index": 0,
+      "trigger": 6,
+      "trigger_id": 6,
+      "frames": [
+        {
+          "op": "RETURN",
+          "frame_index": 0
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u3059\u3079\u3066\u306e\u9818\u57df\u306b\u3042\u308b\u3053\u306e\u30ab\u30fc\u30c9\u306f\u300e\u30b9\u30ea\u30fc\u30ba\u30d6\u30fc\u30b1\u300f\u3001\u300eDOLLCHESTRA\u300f\u3001\u300e\u307f\u3089\u304f\u3089\u3071\u30fc\u304f\uff01\u300f\u3068\u3057\u3066\u6271\u3046\u3002\n{{live_start.png|\u30e9\u30a4\u30d6\u958b\u59cb\u6642}}\u81ea\u5206",
+      "tested_in": [
+        "repro_card207_hasunosora_score.rs"
+      ]
+    },
+    {
+      "card_id": 168,
+      "card_no": "PL!HS-bp1-003-P",
+      "ability_index": 1,
+      "trigger": 7,
+      "trigger_id": 7,
+      "frames": [
+        {
+          "op": "SUM_VALUE",
+          "frame_index": 0,
+          "attr": {
+            "once_per_turn": 1
+          }
+        },
+        {
+          "op": "PAY_ENERGY",
+          "frame_index": 1,
+          "value": 1,
+          "slot": {
+            "target_slot": "CONTEXT"
+          }
+        },
+        {
+          "op": "RECOVER_MEMBER",
+          "frame_index": 2,
+          "value": 1,
+          "attr": {
+            "group_enabled": 1,
+            "group_id": "HASUNOSORA",
+            "value_enabled": 1,
+            "value_threshold": 4,
+            "is_le": 1,
+            "is_cost_type": 1,
+            "zone_mask": "ALL"
+          },
+          "slot": {
+            "target_slot": "HAND",
+            "source_zone": "DISCARD"
+          }
+        },
+        {
+          "op": "RETURN",
+          "frame_index": 3
+        }
+      ],
+      "primary_text": "{{jyouji.png|\u5e38\u6642}}\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30a8\u30ea\u30a2\u3059\u3079\u3066\u306b\u300e\u84ee\u30ce\u7a7a\u300f\u306e\u30e1\u30f3\u30d0\u30fc\u304c\u767b\u5834\u3057\u3066\u304a\u308a\u3001\u304b\u3064\u540d\u524d\u304c\u7570\u306a\u308b\u5834\u5408\u3001\u300c{{jyouji.png|\u5e38\u6642}}\u30e9\u30a4\u30d6\u306e\u5408\u8a08\u30b9\u30b3\u30a2\u3092+1\u3059\u308b\u3002\u300d\u3092\u5f97\u308b\u3002\n",
+      "tested_in": [
+        "repro_pb1_018_exhaustive.rs"
+      ]
+    }
+  ]
+}

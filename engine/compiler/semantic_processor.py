@@ -271,6 +271,15 @@ def build_ability_from_text(card_no: str, raw_text: str, ability_index: int) -> 
         card_no=card_no,
     )
 
+# ============================================================================
+# EXPERIMENTAL PATTERNS
+# ============================================================================
+# Patterns marked with r"^(?!)" are experimental/placeholder patterns that
+# never match. They are reserved for future ability pattern implementation
+# and serve as documentation of intended functionality. These patterns use
+# a negative lookahead that always fails, preventing any accidental matches.
+# ============================================================================
+
 _OPTIONAL_DISCARD_RE = re.compile(r"^手札を(?P<count>\d+)枚控え室に置いてもよい$")
 _OPTIONAL_DISCARD_LIMIT_RE = _OPTIONAL_DISCARD_RE
 _DISCARD_HAND_RE = re.compile(r"^手札を(?P<count>\d+)枚控え室に置く$")
@@ -293,12 +302,12 @@ _COMPOUND_COST_RE = re.compile(r"^(?:(?P<count>\d+)\u679a)?(?:\u3053\u306e\u30e1
 _MOVE_MEMBER_TO_DISCARD_RE = re.compile(r"^(?!)")
 _CHOOSE_PLAYER_RE = re.compile(r"^(?:\u76f8\u624b|\u81ea\u5206|\u81ea\u5206\u3068\u76f8\u624b)$")
 _COMPLEX_REORDER_RE = re.compile(r"^(?:\u597d\u304d\u306a\u9806\u756a\u3067\u30c7\u30c3\u30ad\u306e\u4e0a\u306b\u7f6e\u304d|\u30c7\u30c3\u30ad\u306e\u4e0a\u304b\u3089\u30ab\u30fc\u30c9\u3092\u4e26\u3079\u66ff\u3048\u308b)$")
-_TURN_LIMIT_ENERGY_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*)$")
-_TURN_LIMIT_DISCARD_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u624b\u672d\u3092(?P<count>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f.*)$")
+_TURN_LIMIT_ENERGY_RE = re.compile(r"^\u30bf\u30fc\u30f3(?P<turn>\d+)\u56de(?:E+|\u30a8\u30cd\u30eb\u30ae\u30fc(?P<energy_count>\d+)\u679a?)\u652f\u6255\u3063\u3066\u3082\u3088\u3044$")
+_TURN_LIMIT_DISCARD_RE = re.compile(r"^\u30bf\u30fc\u30f3(?P<turn>\d+)\u56de(?:EE?\u624b\u672c\u3092(?P<count2>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f|\u624b\u672c\u3092(?P<count>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f)$")
 _TURN_LIMIT_TAP_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u30a6\u30a7\u30a4\u30c8\u306b\u3059\u308b.*)$")
 _TURN_LIMIT_MEMBER_LEAVE_STAGE_RE = re.compile(r"^(?:.*\u30b9\u30c6\u30fc\u30b8\u3092\u96e2\u308c\u305f\u3068\u304d.*)$")
 _TURN_LIMIT_ENERGY_DISCARD_RE = re.compile(r"^(?:\u30bf\u30fc\u30f31\u56de.*\u624b\u672d\u3092(?P<count>\d+)\u679a\u63a7\u3048\u5ba4\u306b\u7f6e\u304f.*)$")
-_POSITION_CHANGE_RE = re.compile(r"^(?:\u30dd\u30b8\u30b7\u30e7\u30f3\u30c1\u30a7\u30f3\u30b8(?:.*)?|\u4f4d\u7f6e\u3092\u5909\u3048\u308b(?:.*)?)$")
+_POSITION_CHANGE_RE = re.compile(r"^(?:ポジションチェンジ(?:.*)?|位置を変える(?:.*)?)$")
 _LIVE_SUCCESS_TRIGGER_RE = re.compile(r"^\u30e9\u30a4\u30d6\u6210\u529f\u6642$")
 _CENTER_PREFIX_RE = re.compile(r"^(?:\u30bb\u30f3\u30bf\u30fc|\u81ea\u5206\u306e\u30b9\u30c6\u30fc\u30b8\u306e\u30bb\u30f3\u30bf\u30fc)$")
 _LIVE_SUCCESS_DRAW_RE = re.compile(r"^(?:.*\u30e9\u30a4\u30d6\u6210\u529f\u6642.*\u30ab\u30fc\u30c9\u3092(?P<count>\d+)\u679a\u5f15\u304f.*)$")
@@ -3385,6 +3394,55 @@ def _extract_semantic_operation(clause: str) -> tuple[dict[str, Any] | None, str
             matched_text=body,
             runtime=runtime,
             notes={},
+        )
+        return operation, marker
+
+    if match := _TURN_LIMIT_ENERGY_RE.fullmatch(compact):
+        turn = int(match.group("turn"))
+        energy_text = match.group(0)
+        # Count E's or extract energy_count
+        e_count = len([c for c in energy_text if c == 'E'])
+        energy_count = match.groupdict().get("energy_count")
+        if energy_count:
+            energy_count = int(energy_count)
+        elif e_count > 0:
+            energy_count = e_count
+        else:
+            energy_count = 0
+        runtime = _semantic_runtime_frame(
+            "ENERGY_PAY",
+            value=energy_count,
+            slot={},
+            attr={"is_optional": 1, "turn_limit": turn},
+        )
+        operation = _semantic_operation(
+            kind="cost",
+            code=f"turn_limit_energy_pay({turn}, {energy_count})",
+            matched_text=body,
+            runtime=runtime,
+            notes={"turn_limit": turn, "energy_count": energy_count, "optional": True},
+        )
+        return operation, marker
+
+    if match := _TURN_LIMIT_DISCARD_RE.fullmatch(compact):
+        turn = int(match.group("turn"))
+        count = match.groupdict().get("count") or match.groupdict().get("count2")
+        if count:
+            count = int(count)
+        else:
+            count = 1
+        runtime = _semantic_runtime_frame(
+            "MOVE_TO_DISCARD",
+            value=count,
+            slot={"source_zone": "HAND"},
+            attr={"is_optional": 1, "turn_limit": turn},
+        )
+        operation = _semantic_operation(
+            kind="cost",
+            code=f"turn_limit_discard({turn}, {count})",
+            matched_text=body,
+            runtime=runtime,
+            notes={"turn_limit": turn, "count": count, "optional": True},
         )
         return operation, marker
 

@@ -9,6 +9,13 @@ use crate::core::enums::ChoiceType;
 use crate::core::{O_MOVE_TO_DISCARD, O_NOP};
 use super::super::HandlerResult;
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 fn prompt_ctx_for_target(ctx: &AbilityContext, target_player_idx: usize) -> AbilityContext {
     let mut prompt_ctx = ctx.clone();
     prompt_ctx.player_id = target_player_idx as u8;
@@ -127,7 +134,9 @@ pub fn handle_move_to_discard(
                 && source_ability(db, ctx).map(|ability| {
                     ability.effects.iter().any(|effect| {
                         effect.runtime_opcode == O_NOP
-                            && effect.params.get("raw_effect").and_then(|v| v.as_str()) == Some("TAP_SELF")
+                            && effect.params.as_object()
+                                .and_then(|obj| get_param_case_insensitive(obj, "raw_effect"))
+                                .and_then(|v| v.as_str()) == Some("TAP_SELF")
                     })
                 }).unwrap_or(false);
 

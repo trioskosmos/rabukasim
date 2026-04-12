@@ -1080,6 +1080,13 @@ impl CardFilter {
 
     /// Create CardFilter from authored frame JSON without accepting raw packed attrs.
     pub fn from_frame_json(payload: &Value, options: &Value, params: &Value) -> Self {
+        fn get_param_case_insensitive<'a>(
+            params: &'a serde_json::Map<String, serde_json::Value>,
+            key: &str,
+        ) -> Option<&'a serde_json::Value> {
+            params.get(key).or_else(|| params.get(&key.to_uppercase()))
+        }
+
         let parse_frame_filter = |value: &Value| {
             CardFilter::from_json_value(value).or_else(|| {
                 filter_parts_from_params(Some(value)).map(|(filter, _)| filter)
@@ -1096,25 +1103,47 @@ impl CardFilter {
             filter = filter.with_overlay(&params_filter);
         }
 
-        if options
-            .get("is_cost")
-            .or_else(|| options.get("is_cost_type"))
-            .or_else(|| params.get("is_cost_type"))
-            .and_then(|value| value.as_bool())
-            .unwrap_or(false)
-        {
+        let is_cost = options.as_object()
+            .and_then(|obj| get_param_case_insensitive(obj, "is_cost"))
+            .and_then(|v| v.as_bool())
+            .or_else(|| {
+                options.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "is_cost_type"))
+                    .and_then(|v| v.as_bool())
+            })
+            .or_else(|| {
+                params.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "is_cost_type"))
+                    .and_then(|v| v.as_bool())
+            })
+            .unwrap_or(false);
+
+        if is_cost {
             filter.is_enabled = true;
             filter.is_cost_type = true;
         }
 
-        if options
-            .get("optional")
-            .or_else(|| options.get("is_optional"))
-            .or_else(|| params.get("optional"))
-            .or_else(|| params.get("is_optional"))
-            .and_then(|value| value.as_bool())
-            .unwrap_or(false)
-        {
+        let is_optional = options.as_object()
+            .and_then(|obj| get_param_case_insensitive(obj, "optional"))
+            .and_then(|v| v.as_bool())
+            .or_else(|| {
+                options.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "is_optional"))
+                    .and_then(|v| v.as_bool())
+            })
+            .or_else(|| {
+                params.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "optional"))
+                    .and_then(|v| v.as_bool())
+            })
+            .or_else(|| {
+                params.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "is_optional"))
+                    .and_then(|v| v.as_bool())
+            })
+            .unwrap_or(false);
+
+        if is_optional {
             filter.is_enabled = true;
             filter.is_optional = true;
         }

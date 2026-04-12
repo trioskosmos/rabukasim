@@ -15,6 +15,13 @@ use crate::core::logic::interpreter::suspension::resolve_target_player;
 
 use crate::core::models::interpreter::resolve_target_slot;
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 #[path = "state_member_play.rs"]
 mod state_member_play;
 
@@ -97,8 +104,9 @@ pub fn handle_member_state(
             
             // Check if this is a select member choice
             let is_select_member_choice = frame_data.params.map_or(false, |params| {
-                params.get("FILTER").is_some()
-                    || params.get("filter").is_some()
+                params.as_object()
+                    .and_then(|obj| get_param_case_insensitive(obj, "filter"))
+                    .is_some()
                     || param_eq(params, "destination", "target")
                     || param_eq(params, "cost_type_name", "SELECT_MEMBER")
             });

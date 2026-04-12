@@ -14,6 +14,13 @@ use crate::core::logic::models::{AbilityFrameComponents, SemanticComparisonMode}
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+fn get_param_case_insensitive<'a>(
+    params: &'a serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<&'a serde_json::Value> {
+    params.get(key).or_else(|| params.get(&key.to_uppercase()))
+}
+
 /// Unified parameters for condition checking to reduce parameter passing complexity
 struct ConditionParams<'a> {
     state: &'a GameState,
@@ -156,7 +163,7 @@ fn compare_sync_cost(
     let filter = CardFilter::from_attr(attr);
     let area_override = params
         .and_then(|value| value.as_object())
-        .and_then(|params| params.get("area").or_else(|| params.get("AREA")))
+        .and_then(|params| get_param_case_insensitive(params, "area"))
         .and_then(|value| value.as_str())
         .map(|value| value.to_ascii_uppercase())
         .and_then(|value| match value.as_str() {

@@ -22,24 +22,15 @@ pub fn get_param_case_insensitive<'a>(
 pub fn comparison_mode_from_params(
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> Option<i32> {
-    if get_param_case_insensitive(params, "gt")
-        .or_else(|| get_param_case_insensitive(params, "greater_than"))
-        .is_some()
-    {
+    if get_param_case_insensitive(params, "gt").is_some() {
         Some(COMP_GT)
-    } else if get_param_case_insensitive(params, "lt")
-        .or_else(|| get_param_case_insensitive(params, "less_than"))
-        .is_some()
-    {
+    } else if get_param_case_insensitive(params, "lt").is_some() {
         Some(COMP_LT)
     } else if get_param_case_insensitive(params, "min").is_some() {
         Some(COMP_GE)
     } else if get_param_case_insensitive(params, "max").is_some() {
         Some(COMP_LE)
-    } else if get_param_case_insensitive(params, "eq")
-        .or_else(|| get_param_case_insensitive(params, "equal"))
-        .is_some()
-    {
+    } else if get_param_case_insensitive(params, "eq").is_some() {
         Some(COMP_EQ)
     } else {
         None
@@ -143,12 +134,7 @@ fn resolved_condition_player(
                 ctx.player_id as usize
             }
         })
-        .unwrap_or_else(|| {
-            // If not in params, check if the filter_attr is being passed separately
-            // The caller should merge filter_attr into params or pass it explicitly
-            // For now, default to player_id
-            ctx.player_id as usize
-        })
+        .unwrap_or_else(|| ctx.player_id as usize)
 }
 
 fn resolved_condition_player_with_attr(
@@ -264,7 +250,6 @@ pub fn evaluate_raw_condition(
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> bool {
     let Some(raw_cond) = get_param_case_insensitive(params, "raw_cond")
-        .or_else(|| get_param_case_insensitive(params, "RAW_COND"))
         .and_then(|v| v.as_str())
     else {
         return true;
@@ -276,14 +261,12 @@ pub fn evaluate_raw_condition(
         }
         "SOURCE_CARD_ID_EQUALS" => {
             let expected = get_param_case_insensitive(params, "card_id")
-                .or_else(|| get_param_case_insensitive(params, "CARD_ID"))
                 .and_then(|value| value.as_i64())
                 .unwrap_or(cond.value as i64) as i32;
             ctx.source_card_id == expected
         }
         "SOURCE_MEMBER_COST_GE" => {
             let threshold = get_param_case_insensitive(params, "min")
-                .or_else(|| get_param_case_insensitive(params, "MIN"))
                 .and_then(|value| value.as_i64())
                 .unwrap_or(cond.value as i64) as i32;
             let cost = state.get_member_cost(
@@ -636,18 +619,11 @@ pub fn evaluate_raw_condition(
                 })
                 .unwrap_or_default();
 
-            if let Some(eq) = get_param_case_insensitive(params, "EQ")
-                .or_else(|| get_param_case_insensitive(params, "EQUAL"))
-                .and_then(|v| v.as_i64())
-            {
+            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 live_score == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 live_score >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 live_score <= max as i32
             } else {
                 live_score > 0
@@ -664,9 +640,7 @@ pub fn evaluate_raw_condition(
                 &state.players[ctx.player_id as usize]
             };
 
-            let target_count = params
-                .get("heart_type")
-                .or_else(|| params.get("HEART_TYPE"))
+            let target_count = get_param_case_insensitive(params, "heart_type")
                 .and_then(decode_heart_type_value)
                 .filter(|&heart_type| heart_type < 7)
                 .map(|heart_type| target_player.excess_hearts_by_color[heart_type] as i32)
@@ -674,13 +648,9 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 target_count == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 target_count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 target_count <= max as i32
             } else {
                 target_count > 0
@@ -699,13 +669,9 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 target_hearts == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 target_hearts >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 target_hearts <= max as i32
             } else {
                 target_hearts > 0
@@ -713,7 +679,6 @@ pub fn evaluate_raw_condition(
         }
         "HEARTS_COUNT" => {
             let target_is_opponent = get_param_case_insensitive(params, "target")
-                .or_else(|| get_param_case_insensitive(params, "val"))
                 .and_then(|v| v.as_str())
                 .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
                 .unwrap_or(false);
@@ -739,10 +704,10 @@ pub fn evaluate_raw_condition(
                 .as_deref()
             {
                 Some("GT") => lhs > rhs,
-                Some("GE") | Some("GTE") => lhs >= rhs,
+                Some("GE") => lhs >= rhs,
                 Some("LT") => lhs < rhs,
-                Some("LE") | Some("LTE") => lhs <= rhs,
-                Some("EQ") | Some("EQUAL") => lhs == rhs,
+                Some("LE") => lhs <= rhs,
+                Some("EQ") => lhs == rhs,
                 _ => lhs > rhs.max(target_value),
             }
         }
@@ -763,9 +728,7 @@ pub fn evaluate_raw_condition(
                 .unwrap_or(false)
             {
                 player_yell_count > opponent_yell_count
-            } else if let Some(eq) =
-                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
-            {
+            } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 player_yell_count == eq as i32
             } else {
                 player_yell_count > 0
@@ -808,17 +771,11 @@ pub fn evaluate_raw_condition(
                 && get_param_case_insensitive(params, "MAX").is_none()
             {
                 !yell_cards.is_empty() && matching_count == yell_cards.len() as i32
-            } else if let Some(eq) =
-                get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64())
-            {
+            } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 matching_count == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 matching_count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 matching_count <= max as i32
             } else {
                 matching_count > 0
@@ -846,13 +803,9 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 count == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 count <= max as i32
             } else {
                 count > 0
@@ -926,13 +879,10 @@ pub fn evaluate_raw_condition(
         "STAGE_TOTAL_COST_GE" => {
             let target_player = resolved_condition_player(params, ctx);
             let filter_attr = get_param_case_insensitive(params, "FILTER")
-                .or_else(|| get_param_case_insensitive(params, "filter"))
                 .and_then(|value| value.as_u64())
                 .unwrap_or(cond.attr);
             let filter = crate::core::logic::filter::CardFilter::from_attr(filter_attr);
             let min_cost = get_param_case_insensitive(params, "MIN")
-                .or_else(|| get_param_case_insensitive(params, "min"))
-                .or_else(|| get_param_case_insensitive(params, "value"))
                 .and_then(|value| value.as_i64())
                 .unwrap_or(cond.value as i64) as i32;
             let mut total_cost = 0i32;
@@ -970,13 +920,9 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 unique_colors == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 unique_colors >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 unique_colors <= max as i32
             } else {
                 unique_colors > 0
@@ -995,7 +941,7 @@ pub fn evaluate_raw_condition(
                     if let Ok(gid) = part.strip_prefix("GROUP_ID=").unwrap_or("0").parse::<u8>() {
                         group_id = gid;
                     }
-                } else if part == "UNIQUE_NAMES" || part == "unique_names" {
+                } else if part == "UNIQUE_NAMES" {
                     check_unique_names = true;
                 }
             }
@@ -1029,13 +975,9 @@ pub fn evaluate_raw_condition(
 
             if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 count == eq as i32
-            } else if let Some(min) =
-                get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64())
-            {
+            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
                 count >= min as i32
-            } else if let Some(max) =
-                get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64())
-            {
+            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
                 count <= max as i32
             } else {
                 count > 0
@@ -1096,16 +1038,11 @@ pub fn check_condition(
     let mut slot = cond.target_slot as i32;
 
     if let Some(params) = cond.params.as_object() {
-        let get_param =
-            |key: &str| -> Option<&serde_json::Value> { get_param_case_insensitive(params, key) };
+        let get_param = |key: &str| -> Option<&serde_json::Value> { get_param_case_insensitive(params, key) };
 
         if val == 0 {
             if let Some(min) = get_param("min").and_then(|v| v.as_i64()) {
                 val = min as i32;
-            } else if let Some(min) = get_param("value").and_then(|v| v.as_i64()) {
-                val = min as i32;
-            } else if let Some(v) = get_param("val").and_then(|v| v.as_i64()) {
-                val = v as i32;
             }
         }
 
