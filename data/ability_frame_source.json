@@ -35507,14 +35507,17 @@
       "frame_verification": {
         "verified": true,
         "notes": [
-          "Trigger: LIVE_SUCCESS",
-          "Text: {{live_success.png|ライブ�?功時}}エール�?�より公開�?�れ�?�自分�?�カード�?�枚数�?��?相手�?�エール�?�よ�?��?�公開�?��?�カード�?�枚数より少�?��?�場�?��?カードを1枚引�??。...",
-          "Frames: 4 frame(s)",
-          "Frame 0: RETURN",
-          "Frame 1: JUMP_IF_FALSE",
-          "Frame 2: DRAW",
-          "Frame 3: RETURN"
-        ]
+          "LIVE_SUCCESS: This turn, if your deck has been refreshed, this card's score +2.",
+          "Frame 0: DECK_REFRESHED - checks if deck has been refreshed this turn",
+          "Frame 1: JUMP_IF_FALSE with value=1 - skips if deck not refreshed",
+          "Frame 2: BOOST_SCORE with value=2 - boosts score by 2",
+          "Frame 3: RETURN",
+          "1 card shares this pattern (未熟DREAMER)"
+        ],
+        "text_mapping": {
+          "{{live_success.png|ライブ成功時}}このターン、自分のデッキがリフレッシュしていた場合": "Frame 0-1: DECK_REFRESHED + JUMP_IF_FALSE",
+          "このカードのスコアを+２する": "Frame 2: BOOST_SCORE with value=2"
+        }
       }
     },
     {
