@@ -2698,35 +2698,35 @@
       "manual_terms_count": 41,
       "manual_terms_sample": [
         "KALEIDOSCORE",
-        "DOLLCHESTRA",
         "成功ライブカード置き場",
-        "ライブカード置き場",
+        "DOLLCHESTRA",
         "5yncri5e!",
+        "ライブカード置き場",
         "Printemps",
         "SaintSnow",
         "エネルギーデッキ",
-        "エネルギーカード",
         "EdelNote",
-        "Liella!",
+        "エネルギーカード",
         "CatChu!",
-        "スリーズブーケ",
         "メンバーカード",
+        "スリーズブーケ",
+        "Liella!",
+        "ライブカード",
         "Aqours",
         "ウェイト状態",
-        "ライブカード",
         "必要ハート",
         "日野下花帆",
         "アクティブ",
         "澁谷かのん",
-        "BiBi",
-        "左サイド",
         "右サイド",
-        "上原歩夢",
-        "ステージ",
-        "米女メイ",
-        "センター",
         "ブレード",
-        "虹ヶ咲"
+        "センター",
+        "米女メイ",
+        "上原歩夢",
+        "BiBi",
+        "ステージ",
+        "左サイド",
+        "カード"
       ],
       "top_replaced_terms": [
         {
@@ -3000,13 +3000,13 @@
         "を得る": {
           "count": 287,
           "triggers": [
-            "ハート",
-            "ブレード",
             "heart01",
+            "ブレード",
             "heart06",
+            "heart02",
+            "ハート",
             "heart05",
             "heart03",
-            "heart02",
             "heart04"
           ],
           "original_effects": [
@@ -3382,10 +3382,10 @@
         "か": {
           "count": 54,
           "triggers": [
-            "heart01",
-            "heart05",
             "heart03",
+            "heart01",
             "heart02",
+            "heart05",
             "heart04"
           ],
           "original_effects": [
@@ -3448,8 +3448,8 @@
         "のうち、⟦X⟧を選ぶ": {
           "count": 18,
           "triggers": [
-            "heart05",
-            "heart06"
+            "heart06",
+            "heart05"
           ],
           "original_effects": [
             "のうち、1つを選ぶ",
@@ -3488,9 +3488,9 @@
         "自分の⟦⟦X⟧⟧の上から⟦⟦X⟧⟧を⟦X⟧見る": {
           "count": 27,
           "triggers": [
+            "ライブ成功時",
             "ライブ開始時",
-            "登場",
-            "ライブ成功時"
+            "登場"
           ],
           "original_effects": [
             "自分のデッキの上からカードを5枚見る",
@@ -3665,10 +3665,10 @@
         "自分の⟦⟦X⟧⟧の上から⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧に置く": {
           "count": 21,
           "triggers": [
+            "ライブ成功時",
             "ライブ開始時",
             "登場",
-            "E",
-            "ライブ成功時"
+            "E"
           ],
           "original_effects": [
             "自分のデッキの上からカードを5枚控え室に置く",
@@ -3706,24 +3706,24 @@
         "": {
           "count": 753,
           "triggers": [
-            "ハート",
-            "E",
-            "heart0",
-            "ブレード",
-            "heart01",
-            "heart06",
             "ライブ成功時",
-            "起動",
             "ターン1回",
-            "ライブ開始時",
-            "heart05",
+            "自動",
+            "E",
+            "heart01",
+            "heart03",
+            "ブレード",
+            "起動",
+            "heart0",
+            "ハート",
             "登場",
             "heart02",
-            "heart03",
+            "heart06",
             "センター",
-            "heart04",
-            "自動",
-            "常時"
+            "常時",
+            "ライブ開始時",
+            "heart05",
+            "heart04"
           ],
           "original_effects": [
             "",
@@ -4741,9 +4741,9 @@
         "を⟦X⟧含む⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧に加える": {
           "count": 5,
           "triggers": [
-            "heart01",
+            "heart06",
             "heart03",
-            "heart06"
+            "heart01"
           ],
           "original_effects": [
             "を3以上含むライブカードを1枚手札に加える",
@@ -4756,8 +4756,8 @@
         "以下から⟦X⟧を選ぶ": {
           "count": 12,
           "triggers": [
-            "登場",
-            "ライブ成功時"
+            "ライブ成功時",
+            "登場"
           ],
           "original_effects": [
             "以下から1つを選ぶ",
@@ -4911,9 +4911,9 @@
         "⟦⟦X⟧⟧を⟦X⟧引き、⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧に置く": {
           "count": 37,
           "triggers": [
+            "ライブ成功時",
             "登場",
-            "E",
-            "ライブ成功時"
+            "E"
           ],
           "original_effects": [
             "カードを1枚引き、手札を1枚控え室に置く",
@@ -5063,9 +5063,9 @@
         "を持つ⟦⟦X⟧⟧の場合、ライブ終了時まで、": {
           "count": 5,
           "triggers": [
-            "heart04",
             "heart05",
-            "heart01"
+            "heart01",
+            "heart04"
           ],
           "original_effects": [
             "を持つメンバーカードの場合、ライブ終了時まで、",
@@ -5360,9 +5360,9 @@
           "count": 35,
           "triggers": [
             "heart01",
+            "heart02",
             "heart05",
             "heart03",
-            "heart02",
             "heart04"
           ],
           "original_effects": [
@@ -5605,9 +5605,9 @@
         "になる": {
           "count": 4,
           "triggers": [
-            "heart04",
+            "heart06",
             "heart02",
-            "heart06"
+            "heart04"
           ],
           "original_effects": [
             "になる",
@@ -6087,9 +6087,9 @@
         "減らす": {
           "count": 12,
           "triggers": [
-            "heart0",
             "heart01",
             "heart06",
+            "heart0",
             "heart05",
             "heart04"
           ],
@@ -6942,9 +6942,9 @@
         "を⟦X⟧以上持つ⟦⟦X⟧⟧か、必要⟦⟦X⟧⟧に": {
           "count": 3,
           "triggers": [
-            "heart04",
+            "heart02",
             "heart05",
-            "heart02"
+            "heart04"
           ],
           "original_effects": [
             "を2個以上持つメンバーカードか、必要ハートに",
@@ -6955,9 +6955,9 @@
         "を⟦X⟧含む⟦⟦X⟧⟧を⟦X⟧公開して⟦⟦X⟧⟧に加えてもよい": {
           "count": 3,
           "triggers": [
-            "heart04",
+            "heart02",
             "heart05",
-            "heart02"
+            "heart04"
           ],
           "original_effects": [
             "を2以上含むライブカードを1枚公開して手札に加えてもよい",
@@ -6968,8 +6968,8 @@
         "自分の⟦⟦X⟧⟧にいる『⟦⟦X⟧⟧』のメンバーが持つ⟦⟦X⟧⟧に、": {
           "count": 3,
           "triggers": [
-            "ライブ開始時",
-            "ライブ成功時"
+            "ライブ成功時",
+            "ライブ開始時"
           ],
           "original_effects": [
             "自分のステージにいる『Aqours』のメンバーが持つハートに、",
@@ -7774,9 +7774,9 @@
         "のうち⟦X⟧を選ぶ": {
           "count": 4,
           "triggers": [
-            "heart04",
+            "heart06",
             "heart05",
-            "heart06"
+            "heart04"
           ],
           "original_effects": [
             "のうち1つを選ぶ",
@@ -7903,8 +7903,8 @@
         "を持つ⟦⟦X⟧⟧が⟦X⟧以上ある場合、この⟦⟦X⟧⟧の⟦⟦X⟧⟧を+⟦X⟧する": {
           "count": 2,
           "triggers": [
-            "スコア",
-            "ALLブレード"
+            "ALLブレード",
+            "スコア"
           ],
           "original_effects": [
             "を持つカードが1枚以上ある場合、このカードのスコアを+１する",
@@ -10797,8 +10797,8 @@
         "が合計⟦X⟧以上ある場合、相手のライブ開始時、相手の⟦⟦X⟧⟧置き場にある⟦⟦X⟧⟧⟦X⟧は、成功させるための必要⟦⟦X⟧⟧が": {
           "count": 2,
           "triggers": [
-            "heart05",
-            "heart02"
+            "heart02",
+            "heart05"
           ],
           "original_effects": [
             "が合計5つ以上ある場合、相手のライブ開始時、相手のライブカード置き場にあるライブカード1枚は、成功させるための必要ハートが",
@@ -10901,8 +10901,8 @@
         "の合計が⟦X⟧の場合、ライブ終了時まで、": {
           "count": 2,
           "triggers": [
-            "heart04",
-            "heart05"
+            "heart05",
+            "heart04"
           ],
           "original_effects": [
             "の合計が4以上の場合、ライブ終了時まで、",
@@ -11803,37 +11803,48 @@
       "total_clauses": 1973,
       "matched_clauses": 1973,
       "unmatched_clauses": 0,
-      "unique_patterns": 41,
+      "unique_patterns": 55,
       "pattern_counts": {
         "atomic_card_type_live": 246,
-        "atomic_card_type_member": 89,
+        "atomic_card_type_member": 88,
         "atomic_cost_below": 82,
         "atomic_zone_hand": 228,
         "gain_resource_specific": 17,
         "atomic_zone_deck_top": 147,
         "atomic_group_mus": 53,
-        "place_to_discard": 116,
-        "atomic_icon_reference": 351,
-        "atomic_zone_stage": 186,
+        "place_to_discard_remaining": 91,
+        "place_to_discard_deck_top": 22,
+        "atomic_icon_live_start": 81,
+        "atomic_zone_stage": 180,
+        "atomic_icon_toujyou": 61,
+        "atomic_icon_blade": 56,
         "atomic_cost_above": 41,
+        "atomic_icon_other": 30,
         "basic_action_draw": 9,
         "conditional_only": 6,
         "atomic_group_nijigasaki": 85,
+        "atomic_icon_energy": 21,
         "atomic_group_liella": 61,
         "atomic_card_type_energy": 30,
         "atomic_group_hasu": 40,
+        "atomic_icon_jyouji": 57,
         "catchall_any": 8,
         "heart_specification": 20,
         "move_member": 4,
         "conditional_member_specific": 4,
+        "atomic_icon_jidou": 2,
         "conditional_specific_name": 2,
         "atomic_group_aqours": 46,
         "conditional_or_condition": 3,
-        "atomic_zone_discard": 10,
+        "atomic_icon_live_success": 14,
+        "atomic_zone_discard": 7,
+        "atomic_icon_turn1": 17,
         "look_fragment": 2,
         "empty_string": 8,
+        "place_to_discard": 3,
         "atomic_area_center": 15,
         "atomic_zone_energy_zone": 21,
+        "atomic_icon_heart": 10,
         "conditional_fragment": 4,
         "parenthetical_note": 3,
         "trigger_when": 1,
@@ -11843,8 +11854,11 @@
         "state_change_wait_this_member": 2,
         "atomic_area_left": 3,
         "atomic_area_right": 1,
+        "atomic_icon_kidou": 2,
         "state_change_activate": 3,
+        "atomic_group_saint_snow": 6,
         "catchall_repeat_procedure": 3,
+        "atomic_group_arise": 4,
         "catchall_choice": 1
       },
       "pattern_variables": {
@@ -12097,7 +12111,6 @@
           []
         ],
         "atomic_card_type_member": [
-          [],
           [],
           [],
           [],
@@ -12939,357 +12952,100 @@
           [],
           []
         ],
-        "place_to_discard": [
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その後、これにより公開したカード"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "その中から1枚までをデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から好きな枚数を好きな順番でデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "それ以外の場合、公開したカード"
-          ],
-          [
-            "それ以外の場合、公開したカード"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "その中から1枚までをデッキの上に置き、残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ],
-          [
-            "残り"
-          ]
+        "place_to_discard_remaining": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
         ],
-        "atomic_icon_reference": [
+        "place_to_discard_deck_top": [
           [],
           [],
           [],
@@ -13311,255 +13067,9 @@
           [],
           [],
           [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
+          []
+        ],
+        "atomic_icon_live_start": [
           [],
           [],
           [],
@@ -13822,6 +13332,121 @@
           [],
           [],
           [],
+          []
+        ],
+        "atomic_icon_toujyou": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "atomic_icon_blade": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
           [],
           [],
           [],
@@ -13954,6 +13579,38 @@
           [
             "9"
           ]
+        ],
+        "atomic_icon_other": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
         ],
         "basic_action_draw": [
           [
@@ -14097,6 +13754,29 @@
           [],
           []
         ],
+        "atomic_icon_energy": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
         "atomic_group_liella": [
           [],
           [],
@@ -14193,6 +13873,65 @@
           []
         ],
         "atomic_group_hasu": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "atomic_icon_jyouji": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
           [],
           [],
           [],
@@ -14382,6 +14121,10 @@
             "そのメンバーは、このメンバーがいたエリアに移動させる"
           ]
         ],
+        "atomic_icon_jidou": [
+          [],
+          []
+        ],
         "conditional_specific_name": [
           [
             "その後、自分",
@@ -14461,7 +14204,39 @@
             "さらにこのカードのスコアを+１する"
           ]
         ],
+        "atomic_icon_live_success": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
         "atomic_zone_discard": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "atomic_icon_turn1": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
           [],
           [],
           [],
@@ -14493,6 +14268,17 @@
           [],
           []
         ],
+        "place_to_discard": [
+          [
+            "その後、これにより公開したカード"
+          ],
+          [
+            "それ以外の場合、公開したカード"
+          ],
+          [
+            "それ以外の場合、公開したカード"
+          ]
+        ],
         "atomic_area_center": [
           [],
           [],
@@ -14522,6 +14308,18 @@
           [],
           [],
           [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
+        "atomic_icon_heart": [
           [],
           [],
           [],
@@ -14678,6 +14476,10 @@
         "atomic_area_right": [
           []
         ],
+        "atomic_icon_kidou": [
+          [],
+          []
+        ],
         "state_change_activate": [
           [
             "1"
@@ -14689,7 +14491,21 @@
             "2"
           ]
         ],
+        "atomic_group_saint_snow": [
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
         "catchall_repeat_procedure": [
+          [],
+          [],
+          []
+        ],
+        "atomic_group_arise": [
+          [],
           [],
           [],
           []
@@ -14771,13 +14587,11 @@
         },
         {
           "original": "残りを控え室に置く",
-          "pattern_name": "place_to_discard",
-          "structure": "Basic Action - Place card to discard",
-          "template": "⟦SOURCE⟧を控え室に置く",
+          "pattern_name": "place_to_discard_remaining",
+          "structure": "Basic Action - Place remaining to discard",
+          "template": "残りを控え室に置く",
           "matched_text": "残りを控え室に置く",
-          "variables": [
-            "残り"
-          ]
+          "variables": []
         },
         {
           "original": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
@@ -14909,7 +14723,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "per_unit",
             "gain_fragment",
             "heart_specification",
@@ -14956,7 +14771,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "choose_option",
             "gain_resource_specific",
@@ -14975,6 +14791,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -15078,7 +14895,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "place_to_zone",
@@ -15099,7 +14918,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "conditional_threshold",
             "gain_ability",
             "conditional_card_count",
@@ -15124,6 +14944,7 @@
             "look_top",
             "look_select_add",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -15153,6 +14974,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -15177,6 +14999,8 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_zone_deck_top",
             "look_top",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -15203,7 +15027,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "heart_specification",
             "catchall_any"
@@ -15211,7 +15036,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "choose_option",
             "gain_resource_specific",
@@ -15235,7 +15061,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -15264,7 +15092,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -15292,7 +15122,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_cost_below",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "parenthetical_note",
             "icon_embedded_parenthetical",
@@ -15309,12 +15140,16 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_live_start",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "look_top",
             "look_select_add",
             "cost_effect",
             "gain_blades",
             "duration_gain",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "gain_until_discard",
@@ -15342,7 +15177,8 @@
           ],
           [
             "{{toujyou.png|登場}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -15355,6 +15191,8 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
             "look_top",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -15382,7 +15220,8 @@
             "{{jyouji.png|常時}}",
             "atomic_cost_above",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_or_condition",
             "conditional_group_presence_specific",
@@ -15428,8 +15267,10 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -15510,7 +15351,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "basic_action_draw",
             "cost_effect",
             "gain_blades",
@@ -15545,7 +15387,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -15557,7 +15401,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_blades",
             "gain_hearts",
             "duration_gain",
@@ -15573,7 +15419,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_blades",
             "gain_hearts",
             "duration_gain",
@@ -15588,7 +15436,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -15601,7 +15451,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_member",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_hearts",
@@ -15631,7 +15482,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "place_to_zone",
             "place_specific_location",
             "place_fragment",
@@ -15649,7 +15501,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_member",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_hearts",
@@ -15680,7 +15533,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "basic_action_draw",
             "discard_from_hand",
             "basic_action_discard",
@@ -15723,7 +15577,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "gain_ability",
             "parenthetical_note",
             "discard_optional",
@@ -15741,7 +15596,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -15754,7 +15611,8 @@
             "{{kidou.png|起動}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -15793,7 +15651,8 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_resource_specific",
             "gain_duration_specific",
             "gain_specific_fragment",
@@ -15827,7 +15686,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -15845,7 +15705,8 @@
             "atomic_group_nijigasaki",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "state_change_activate",
@@ -15882,7 +15743,9 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "catchall_any"
           ],
@@ -15891,7 +15754,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_discard",
             "add_from_discard",
             "place_to_zone",
@@ -15980,7 +15844,8 @@
             "{{jyouji.png|常時}}",
             "atomic_group_nijigasaki",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "nested_condition",
             "conditional_fragment",
             "gain_fragment",
@@ -15997,7 +15862,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "add_fragment",
             "add_to_zone_fragment",
@@ -16009,7 +15876,7 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "score_comparison",
             "conditional_fragment",
             "add_fragment",
@@ -16026,7 +15893,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "basic_action_draw",
             "set_phase_action",
             "heart_specification",
@@ -16036,7 +15904,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_group_presence",
             "area_specific_presence",
@@ -16059,7 +15928,7 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_threshold",
             "conditional_card_count",
@@ -16092,7 +15961,8 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "atomic_area_left",
             "basic_action_draw",
             "heart_specification",
@@ -16102,7 +15972,9 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_member",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "gain_ability",
             "conditional_or_condition",
             "conditional_specific_name",
@@ -16121,7 +15993,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_fragment",
             "heart_specification",
@@ -16135,6 +16008,7 @@
             "look_top",
             "look_filter_add",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_optional",
@@ -16194,7 +16068,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -16217,10 +16093,13 @@
             "atomic_group_liella",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_and_effect",
@@ -16246,9 +16125,11 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "look_top",
             "look_select_add",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -16272,7 +16153,7 @@
           [
             "{{live_success.png|ライブ成功時}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "score_comparison",
             "conditional_fragment",
             "conditional_name_fragment",
@@ -16286,7 +16167,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_blades",
             "gain_hearts",
             "duration_gain",
@@ -16301,7 +16184,7 @@
           [
             "{{live_success.png|ライブ成功時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "basic_action_draw",
             "area_specific_presence",
             "conditional_or_condition",
@@ -16321,7 +16204,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_liella",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_group_and_cost",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -16344,7 +16228,7 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_threshold",
             "conditional_energy_count",
@@ -16371,7 +16255,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "place_to_zone",
             "discard_and_effect",
             "place_fragment",
@@ -16389,7 +16274,8 @@
             "{{jyouji.png|常時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_or_condition",
             "conditional_fragment",
@@ -16410,7 +16296,9 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "add_fragment",
             "add_to_zone_fragment",
@@ -16424,7 +16312,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "add_fragment",
             "add_to_zone_fragment",
@@ -16434,7 +16324,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_unit",
@@ -16531,6 +16423,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -16557,6 +16450,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -16582,7 +16476,7 @@
             "atomic_group_hasu",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "add_fragment",
             "add_to_zone_fragment",
             "add_generic",
@@ -16594,7 +16488,7 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_group_hasu",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_threshold",
             "conditional_zone_specific",
@@ -16616,7 +16510,7 @@
             "atomic_group_hasu",
             "atomic_zone_stage",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "conditional_group_presence",
             "area_specific_presence",
             "conditional_member_specific",
@@ -16646,6 +16540,7 @@
             "atomic_zone_hand",
             "look_top",
             "look_filter_add",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "place_fragment",
@@ -16666,7 +16561,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -16678,7 +16575,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -16697,7 +16595,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -16727,7 +16626,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -16757,7 +16657,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -16783,7 +16685,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -16795,7 +16699,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_heart_total",
             "conditional_member_specific",
@@ -16844,7 +16749,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -16863,7 +16769,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "add_from_discard",
             "add_fragment",
             "add_to_zone_fragment",
@@ -16875,10 +16782,12 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "look_top",
             "look_select_add",
             "conditional_threshold",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -16909,13 +16818,15 @@
           [
             "{{kidou.png|起動}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_threshold",
             "conditional_energy_count",
@@ -16932,7 +16843,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -16952,7 +16864,8 @@
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
@@ -16991,13 +16904,15 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "basic_action_draw",
             "catchall_any"
           ],
@@ -17009,7 +16924,8 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -17094,6 +17010,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17119,6 +17036,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17144,6 +17062,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17222,7 +17141,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "stage_specific_group",
             "catchall_any"
@@ -17230,7 +17150,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "conditional_threshold",
             "conditional_zero_cards",
             "conditional_and_condition",
@@ -17306,10 +17227,12 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "look_filter_add",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_optional",
@@ -17333,7 +17256,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "multi_card_stage",
             "heart_specification",
             "catchall_any"
@@ -17363,6 +17287,8 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -17414,7 +17340,8 @@
             "atomic_group_aqours",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_live_success",
+            "atomic_icon_other",
             "conditional_threshold",
             "conditional_member_specific",
             "conditional_or_condition",
@@ -17469,7 +17396,8 @@
             "atomic_group_aqours",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -17520,7 +17448,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "conditional_threshold",
             "gain_blades",
             "duration_gain",
@@ -17549,7 +17478,8 @@
             "atomic_zone_discard",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_live_start",
+            "atomic_icon_other",
             "add_from_discard",
             "disable_ability",
             "add_fragment",
@@ -17566,6 +17496,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17586,7 +17517,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "trigger_when",
             "heart_specification",
             "catchall_any"
@@ -17594,7 +17526,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_center",
             "conditional_member_specific",
             "conditional_heart_count",
@@ -17616,8 +17549,10 @@
             "atomic_group_liella",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17640,6 +17575,7 @@
             "atomic_group_liella",
             "atomic_card_type_member",
             "atomic_zone_hand",
+            "batontouch_condition",
             "add_fragment",
             "add_to_zone_fragment",
             "add_generic",
@@ -17654,7 +17590,9 @@
             "atomic_group_liella",
             "atomic_card_type_member",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_toujyou",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_discard",
             "place_to_zone",
             "discard_and_effect",
@@ -17683,6 +17621,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -17705,7 +17644,9 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "move_member",
             "conditional_member_specific",
             "conditional_fragment",
@@ -17723,7 +17664,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_unit",
@@ -17737,7 +17679,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -17798,7 +17741,9 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -17810,7 +17755,9 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -17822,7 +17769,9 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -17887,7 +17836,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "score_fragment",
             "add_fragment",
@@ -17911,7 +17862,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "area_specific_presence",
             "conditional_member_specific",
             "nested_condition",
@@ -17936,6 +17888,8 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -17996,7 +17950,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "conditional_area_population",
@@ -18029,7 +17985,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_per_card",
             "gain_fragment",
             "heart_specification",
@@ -18060,7 +18017,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_member",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "gain_hearts",
@@ -18083,7 +18042,8 @@
           ],
           [
             "{{toujyou.png|登場}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "batontouch_condition",
@@ -18101,7 +18061,9 @@
           ],
           [
             "{{toujyou.png|登場}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "batontouch_condition",
@@ -18124,6 +18086,7 @@
             "atomic_zone_hand",
             "atomic_zone_stage",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "trigger_on_discard",
@@ -18152,6 +18115,7 @@
             "atomic_zone_hand",
             "atomic_zone_stage",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "trigger_on_discard",
@@ -18207,6 +18171,8 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
             "look_top",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -18251,7 +18217,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
             "atomic_zone_discard",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "place_to_zone",
             "discard_specific_count",
             "discard_from_zone",
@@ -18273,7 +18240,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_group_presence",
             "area_specific_presence",
             "conditional_member_specific",
@@ -18309,7 +18277,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
+            "batontouch_condition",
             "conditional_group_and_cost",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -18351,7 +18321,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
+            "batontouch_condition",
             "conditional_group_and_cost",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -18375,7 +18347,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_or_condition",
             "conditional_specific_group",
             "conditional_specific_zone",
@@ -18393,7 +18366,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
+            "batontouch_condition",
             "conditional_group_and_cost",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -18448,7 +18423,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_unit",
@@ -18490,7 +18466,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "gain_ability",
             "conditional_or_condition",
             "discard_optional",
@@ -18503,7 +18480,10 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_live_success",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "add_fragment",
             "add_to_zone_fragment",
             "add_generic",
@@ -18513,7 +18493,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "nested_condition",
             "conditional_fragment",
             "gain_fragment",
@@ -18527,7 +18508,9 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -18550,6 +18533,8 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -18577,7 +18562,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "total_zone_cards",
             "conditional_both_players",
             "conditional_total_cards",
@@ -18600,9 +18586,11 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -18630,9 +18618,11 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -18660,9 +18650,11 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -18689,8 +18681,9 @@
             "atomic_group_aqours",
             "atomic_zone_stage",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
-            "heart_color_total",
+            "atomic_icon_live_success",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -18708,8 +18701,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_aqours",
             "atomic_zone_stage",
-            "atomic_icon_reference",
-            "heart_color_total",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -18727,7 +18720,8 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_group_aqours",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -18780,7 +18774,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "state_change_wait_this_member",
@@ -18819,7 +18815,8 @@
             "atomic_cost_below",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "parenthetical_note",
             "discard_optional",
@@ -18837,7 +18834,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_per_card",
             "gain_fragment",
             "heart_specification",
@@ -18850,7 +18848,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "add_from_discard",
             "parenthetical_note",
             "add_to_zone",
@@ -18928,7 +18927,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -18980,7 +18980,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "state_change_wait_this_member",
             "state_change_wait",
@@ -18994,7 +18995,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -19028,7 +19030,9 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "state_change_wait_this_member",
             "state_change_wait",
             "choose_option",
@@ -19041,7 +19045,9 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "state_change_wait_this_member",
             "state_change_wait",
             "choose_option",
@@ -19055,8 +19061,11 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "look_top",
+            "place_to_discard_deck_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "reorder_cards",
@@ -19123,7 +19132,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_heart_total",
             "conditional_member_specific",
             "conditional_specific_name",
@@ -19146,7 +19157,8 @@
             "atomic_group_mus",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "choose_option",
             "conditional_specific_card",
             "gain_resource_specific",
@@ -19199,7 +19211,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -19231,7 +19244,9 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "atomic_area_center",
             "state_change_wait",
             "parenthetical_note",
@@ -19273,7 +19288,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_discarded_card",
@@ -19290,7 +19306,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_discarded_card",
@@ -19311,6 +19328,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -19350,7 +19368,8 @@
             "atomic_zone_discard",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "atomic_area_center",
             "discard_from_hand",
             "basic_action_discard",
@@ -19387,7 +19406,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "place_to_zone",
             "discard_specific_count",
@@ -19446,6 +19467,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -19517,7 +19539,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_member",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -19536,7 +19559,8 @@
             "atomic_cost_above",
             "atomic_group_aqours",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_blades",
             "duration_gain",
@@ -19572,7 +19596,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_aqours",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_specific_name",
             "conditional_fragment",
@@ -19591,7 +19616,8 @@
             "atomic_zone_stage",
             "atomic_zone_energy_zone",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -19632,7 +19658,8 @@
             "atomic_cost_below",
             "atomic_group_nijigasaki",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_toujyou",
+            "atomic_icon_other",
             "parenthetical_note",
             "conditional_heart_count",
             "conditional_fragment",
@@ -19653,7 +19680,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -19691,7 +19719,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "gain_ability",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -19712,7 +19741,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "gain_ability",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -19732,7 +19762,8 @@
           ],
           [
             "{{toujyou.png|登場}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait_this_member",
             "state_change_wait",
             "parenthetical_note",
@@ -19753,7 +19784,8 @@
             "atomic_zone_stage",
             "atomic_zone_energy_zone",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "place_to_zone",
             "parenthetical_note",
             "discard_and_effect",
@@ -19780,7 +19812,8 @@
           [
             "{{kidou.png|起動}}",
             "atomic_group_nijigasaki",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "state_change_wait",
             "catchall_any"
@@ -19789,7 +19822,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_hearts",
             "duration_gain",
@@ -19807,7 +19841,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_hearts",
             "duration_gain",
@@ -19824,7 +19859,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "basic_action_draw",
             "gain_hearts",
             "duration_gain",
@@ -19873,7 +19909,8 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -19906,6 +19943,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -19947,14 +19985,16 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_choice",
             "catchall_any"
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_choice",
             "catchall_any"
@@ -20001,7 +20041,8 @@
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_group_presence",
             "area_specific_presence",
             "conditional_member_specific",
@@ -20033,6 +20074,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_stage",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -20059,7 +20101,7 @@
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "conditional_threshold",
             "conditional_zone_specific",
             "conditional_fragment",
@@ -20083,7 +20125,8 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "place_to_zone",
             "discard_and_effect",
             "place_specific_location",
@@ -20101,7 +20144,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -20116,7 +20161,8 @@
             "atomic_card_type_live",
             "atomic_card_type_member",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "atomic_area_center",
             "discard_from_hand",
             "basic_action_discard",
@@ -20146,7 +20192,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "conditional_member_specific",
             "conditional_specific_name",
@@ -20166,7 +20213,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_per_card",
             "gain_fragment",
             "heart_specification",
@@ -20186,7 +20234,8 @@
             "{{toujyou.png|登場}}",
             "atomic_group_mus",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_ability",
             "parenthetical_note",
@@ -20275,7 +20324,8 @@
             "atomic_zone_discard",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -20331,7 +20381,8 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "stage_specific_group",
             "catchall_any"
@@ -20346,7 +20397,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "cost_effect",
             "gain_blades",
             "duration_gain",
@@ -20395,7 +20447,10 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_jyouji",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "conditional_fragment",
             "gain_fragment",
             "conditional_zone_fragment",
@@ -20429,7 +20484,7 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "atomic_area_center",
             "state_change_wait",
             "parenthetical_note",
@@ -20449,7 +20504,8 @@
             "{{jidou.png|自動}}",
             "atomic_cost_below",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "trigger_when",
             "heart_specification",
@@ -20461,6 +20517,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -20552,7 +20609,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_group_presence_specific",
             "conditional_fragment",
@@ -20655,7 +20713,10 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_live_start",
+            "atomic_icon_live_success",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -20666,7 +20727,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -20698,7 +20760,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -20757,7 +20820,7 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "atomic_area_center",
             "catchall_any"
           ],
@@ -20765,7 +20828,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "area_swap",
             "conditional_member_specific",
@@ -20791,6 +20855,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -20823,7 +20888,8 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_other",
             "gain_ability",
             "conditional_or_condition",
             "conditional_specific_name",
@@ -20863,7 +20929,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_blades",
             "duration_gain",
@@ -20877,7 +20944,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_hearts",
             "duration_gain",
@@ -20896,7 +20964,10 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_live_start",
+            "atomic_icon_blade",
+            "atomic_icon_live_success",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -20940,7 +21011,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_blades",
             "duration_gain",
@@ -20953,7 +21025,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -20990,7 +21063,8 @@
             "{{jyouji.png|常時}}",
             "atomic_group_mus",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_fragment",
             "heart_specification",
@@ -20999,7 +21073,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_specific_name",
             "conditional_fragment",
             "conditional_threshold_fragment",
@@ -21016,7 +21091,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "area_specific_presence",
             "conditional_member_specific",
@@ -21037,7 +21113,8 @@
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "basic_action_draw",
             "conditional_fragment",
             "conditional_generic",
@@ -21048,7 +21125,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -21123,7 +21201,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "state_change_wait_this_member",
             "state_change_wait",
             "conditional_member_specific",
@@ -21150,7 +21229,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -21165,7 +21245,8 @@
             "{{kidou.png|起動}}",
             "atomic_group_nijigasaki",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -21239,7 +21320,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -21319,7 +21401,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -21369,7 +21452,7 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -21377,7 +21460,8 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_group_nijigasaki",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_specific_card",
             "conditional_card_presence",
             "conditional_fragment",
@@ -21411,7 +21495,8 @@
             "atomic_group_nijigasaki",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -21426,7 +21511,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "heart_specification",
             "catchall_any"
@@ -21453,7 +21539,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -21533,6 +21620,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -21584,7 +21672,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_fragment",
             "catchall_any"
@@ -21600,8 +21689,9 @@
             "atomic_group_liella",
             "atomic_card_type_member",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "atomic_area_center",
+            "batontouch_condition",
             "conditional_or_condition",
             "heart_specification",
             "catchall_any"
@@ -21611,6 +21701,7 @@
             "atomic_group_liella",
             "atomic_card_type_energy",
             "conditional_threshold",
+            "batontouch_condition",
             "conditional_or_condition",
             "conditional_energy_count",
             "conditional_energy_specific",
@@ -21624,7 +21715,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -21659,7 +21751,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "score_fragment",
             "add_fragment",
@@ -21719,7 +21812,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -21727,7 +21821,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "state_change_wait_this_member",
             "state_change_wait",
             "discard_specific",
@@ -21738,7 +21834,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "trigger_when",
             "heart_specification",
@@ -21747,7 +21844,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -21778,7 +21877,8 @@
             "{{jidou.png|自動}}",
             "atomic_zone_energy_zone",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -21789,7 +21889,8 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_left",
             "gain_blades",
             "duration_gain",
@@ -21845,7 +21946,8 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_right",
             "gain_blades",
             "duration_gain",
@@ -21877,14 +21979,17 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -21897,7 +22002,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_liella",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -21910,7 +22016,7 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -21931,7 +22037,9 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_liella",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_left",
             "gain_blades",
             "duration_gain",
@@ -21955,7 +22063,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_liella",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "set_phase_action",
             "heart_specification",
@@ -22063,8 +22172,10 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -22120,7 +22231,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -22145,7 +22257,9 @@
             "atomic_group_nijigasaki",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "place_to_zone",
@@ -22169,7 +22283,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -22198,7 +22313,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "trigger_when",
             "heart_specification",
@@ -22215,7 +22331,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -22242,7 +22359,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -22263,7 +22381,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "per_unit",
             "gain_per_card",
             "gain_fragment",
@@ -22279,7 +22398,8 @@
             "atomic_zone_stage",
             "atomic_zone_energy_zone",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "place_to_zone",
             "discard_and_effect",
@@ -22306,7 +22426,8 @@
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "trigger_when",
             "heart_specification",
             "catchall_any"
@@ -22329,7 +22450,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
@@ -22338,6 +22460,7 @@
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
+            "batontouch_condition",
             "conditional_or_condition",
             "discard_specific_count",
             "discard_from_zone",
@@ -22360,7 +22483,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
@@ -22369,6 +22493,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -22393,7 +22518,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
@@ -22402,6 +22528,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -22426,6 +22553,7 @@
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
+            "batontouch_condition",
             "conditional_or_condition",
             "discard_specific_count",
             "discard_from_zone",
@@ -22448,6 +22576,7 @@
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
+            "batontouch_condition",
             "conditional_or_condition",
             "discard_specific_count",
             "discard_from_zone",
@@ -22470,6 +22599,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -22494,6 +22624,7 @@
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
+            "batontouch_condition",
             "conditional_or_condition",
             "discard_specific_count",
             "discard_from_zone",
@@ -22516,7 +22647,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
@@ -22525,6 +22657,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -22550,6 +22683,7 @@
             "look_top",
             "look_select_add",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -22574,14 +22708,16 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_choice",
             "catchall_any"
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_choice",
             "catchall_any"
@@ -22597,7 +22733,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_specific_card",
             "conditional_or_condition",
             "conditional_card_presence",
@@ -22620,7 +22757,8 @@
             "atomic_group_nijigasaki",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -22650,7 +22788,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_nijigasaki",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_group_and_cost",
             "conditional_member_specific",
             "conditional_specific_group",
@@ -22675,7 +22814,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_cost_below",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "basic_action_draw",
             "state_change_wait",
             "choose_from_below",
@@ -22688,7 +22828,8 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "state_change_activate",
@@ -22732,22 +22873,27 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "basic_action_draw",
             "catchall_any"
           ],
           [
             "{{toujyou.png|登場}}",
+            "atomic_group_saint_snow",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "add_from_discard",
             "gain_blades",
             "duration_gain",
@@ -22771,7 +22917,8 @@
             "{{kidou.png|起動}}",
             "atomic_cost_below",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "state_change_wait",
             "heart_specification",
             "stage_specific_group",
@@ -22780,7 +22927,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "conditional_threshold",
             "gain_hearts",
             "duration_gain",
@@ -22806,6 +22954,7 @@
             "{{toujyou.png|登場}}",
             "atomic_zone_hand",
             "basic_action_draw",
+            "batontouch_condition",
             "conditional_or_condition",
             "conditional_fragment",
             "conditional_name_fragment",
@@ -22818,7 +22967,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "state_change_wait_this_member",
@@ -22841,7 +22991,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "choose_option",
             "gain_resource_specific",
             "gain_duration_specific",
@@ -22855,7 +23006,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_hearts",
             "duration_gain",
@@ -22879,7 +23031,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "stage_with_hearts",
             "heart_specification",
@@ -22929,7 +23082,9 @@
             "{{kidou.png|起動}}",
             "atomic_group_liella",
             "atomic_card_type_member",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_blades",
@@ -22960,7 +23115,9 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -22969,6 +23126,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_optional",
@@ -22991,13 +23149,17 @@
           [
             "{{kidou.png|起動}}",
             "atomic_group_aqours",
-            "atomic_icon_reference",
+            "atomic_group_saint_snow",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "catchall_any"
           ],
           [
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "trigger_when",
             "heart_specification",
@@ -23007,6 +23169,7 @@
           [
             "{{toujyou.png|登場}}",
             "basic_action_draw",
+            "batontouch_condition",
             "conditional_or_condition",
             "heart_specification",
             "catchall_any"
@@ -23026,6 +23189,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -23071,7 +23235,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -23098,7 +23264,9 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "stage_with_hearts",
             "heart_specification",
@@ -23113,6 +23281,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -23142,6 +23311,7 @@
             "basic_action_draw",
             "state_change_activate",
             "trigger_on_discard",
+            "batontouch_condition",
             "activate_energy",
             "conditional_member_specific",
             "conditional_or_condition",
@@ -23161,7 +23331,9 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_member",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "atomic_area_left",
             "discard_from_hand",
             "basic_action_discard",
@@ -23243,7 +23415,9 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_energy_zone",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "place_to_zone",
@@ -23282,7 +23456,8 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "place_to_zone",
             "discard_and_effect",
             "place_fragment",
@@ -23299,7 +23474,8 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_energy_zone",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "state_change_activate",
             "place_to_zone",
             "discard_and_effect",
@@ -23325,7 +23501,8 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "place_to_zone",
             "discard_and_effect",
             "add_to_zone",
@@ -23346,7 +23523,9 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -23356,7 +23535,9 @@
             "atomic_cost_below",
             "atomic_card_type_member",
             "atomic_zone_discard",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -23369,6 +23550,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -23401,7 +23583,7 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_liella",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "atomic_area_center",
             "heart_specification",
             "catchall_any"
@@ -23419,6 +23601,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_optional",
@@ -23440,7 +23623,9 @@
           [
             "{{jidou.png|自動}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "per_unit",
@@ -23457,7 +23642,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "set_phase_action",
             "heart_specification",
             "stage_specific_group",
@@ -23490,7 +23676,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_blades",
@@ -23532,7 +23719,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "add_from_discard",
             "add_to_zone",
             "add_fragment",
@@ -23545,7 +23734,9 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_energy_zone",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -23560,7 +23751,9 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -23588,7 +23781,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -23622,6 +23816,7 @@
             "atomic_zone_discard",
             "atomic_zone_hand",
             "add_from_discard",
+            "batontouch_condition",
             "conditional_or_condition",
             "add_fragment",
             "add_to_zone_fragment",
@@ -23633,7 +23828,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -23661,7 +23857,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -23703,7 +23900,8 @@
           ],
           [
             "{{kidou.png|起動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "place_to_zone",
@@ -23747,7 +23945,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "gain_hearts",
             "duration_gain",
@@ -23773,7 +23972,10 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_jyouji",
+            "atomic_icon_turn1",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_ability",
@@ -23795,7 +23997,8 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "state_change_activate",
             "activate_energy",
             "trigger_when",
@@ -23828,7 +24031,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -23842,9 +24046,10 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_zone_stage",
             "atomic_group_arise",
-            "atomic_icon_reference",
+            "atomic_zone_stage",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "conditional_group_presence",
             "gain_blades",
             "duration_gain",
@@ -23879,7 +24084,8 @@
             "atomic_group_aqours",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "choose_option",
             "gain_resource_specific",
@@ -23898,7 +24104,8 @@
             "atomic_card_type_member",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "per_unit",
@@ -23919,8 +24126,10 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -23949,7 +24158,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -23957,7 +24167,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_energy",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -23984,6 +24195,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_select",
@@ -24013,7 +24225,9 @@
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "choose_from_below",
             "area_specific_presence",
             "conditional_member_specific",
@@ -24038,7 +24252,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -24064,7 +24279,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -24081,11 +24297,13 @@
           [
             "{{toujyou.png|登場}}",
             "atomic_group_liella",
+            "atomic_group_sunny_passion",
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -24139,11 +24357,11 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
+            "atomic_group_arise",
             "atomic_card_type_member",
             "atomic_zone_discard",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_group_arise",
             "discard_from_deck",
             "basic_action_discard",
             "add_from_discard",
@@ -24177,7 +24395,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -24219,7 +24438,7 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_hearts",
             "duration_gain",
@@ -24257,7 +24476,8 @@
             "{{jyouji.png|常時}}",
             "atomic_cost_above",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_per_card",
             "gain_fragment",
             "heart_specification",
@@ -24267,7 +24487,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -24312,7 +24533,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -24324,11 +24546,14 @@
             "atomic_zone_discard",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "look_top",
             "add_from_discard",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "discard_and_effect",
@@ -24401,7 +24626,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_member",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_blades",
@@ -24432,7 +24658,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -24448,21 +24675,24 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_left",
             "gain_fragment",
             "catchall_any"
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_fragment",
             "catchall_any"
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_right",
             "gain_fragment",
             "catchall_any"
@@ -24496,7 +24726,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "area_specific_presence",
             "conditional_member_specific",
             "conditional_fragment",
@@ -24522,6 +24753,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -24546,7 +24778,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -24586,7 +24819,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_fragment",
             "conditional_member_fragment",
@@ -24637,6 +24871,7 @@
             "atomic_zone_hand",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -24663,9 +24898,11 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "cost_effect",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -24737,7 +24974,9 @@
             "{{kidou.png|起動}}",
             "atomic_card_type_live",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "place_to_zone",
@@ -24783,7 +25022,8 @@
           [
             "{{kidou.png|起動}}",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "basic_action_draw",
             "discard_from_hand",
             "basic_action_discard",
@@ -24833,7 +25073,7 @@
           [
             "{{live_success.png|ライブ成功時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_other",
             "conditional_threshold",
             "conditional_or_condition",
             "conditional_zone_specific",
@@ -24869,7 +25109,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -24895,9 +25136,10 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_zone_stage",
             "atomic_group_arise",
-            "atomic_icon_reference",
+            "atomic_zone_stage",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_per_card",
             "gain_fragment",
             "heart_specification",
@@ -24910,7 +25152,8 @@
             "atomic_zone_discard",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -24940,7 +25183,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "heart_specification",
             "catchall_any"
@@ -24964,7 +25208,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "state_change_wait",
             "parenthetical_note",
             "icon_embedded_parenthetical",
@@ -24984,6 +25229,7 @@
             "atomic_zone_deck_top",
             "atomic_zone_hand",
             "look_top",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "look_and_reveal",
@@ -25032,7 +25278,8 @@
             "{{toujyou.png|登場}}",
             "atomic_card_type_member",
             "atomic_zone_deck_top",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_deck",
             "basic_action_discard",
             "gain_hearts",
@@ -25062,7 +25309,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_live_start",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -25084,7 +25332,8 @@
           [
             "{{jidou.png|自動}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_live_success",
+            "atomic_icon_other",
             "basic_action_draw",
             "heart_specification",
             "catchall_any"
@@ -25092,7 +25341,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_left",
             "atomic_area_center",
             "atomic_area_right",
@@ -25111,7 +25361,8 @@
             "atomic_group_mus",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "gain_hearts",
@@ -25218,7 +25469,9 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -25243,7 +25496,8 @@
             "atomic_group_hasu",
             "atomic_zone_hand",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "cost_effect",
             "choose_option",
             "gain_resource_specific",
@@ -25285,7 +25539,8 @@
           ],
           [
             "{{live_success.png|ライブ成功時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "heart_specification",
             "catchall_any"
           ],
@@ -25293,7 +25548,8 @@
             "{{live_success.png|ライブ成功時}}",
             "atomic_card_type_live",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_or_condition",
             "conditional_specific_group",
@@ -25347,7 +25603,8 @@
             "atomic_card_type_live",
             "atomic_zone_discard",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "discard_from_hand",
             "basic_action_discard",
             "add_from_discard",
@@ -25377,12 +25634,15 @@
             "atomic_card_type_member",
             "atomic_zone_deck_top",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "look_top",
             "cost_effect",
             "gain_blades",
             "gain_hearts",
             "duration_gain",
+            "place_to_discard_remaining",
             "place_to_discard",
             "place_to_zone",
             "gain_until_discard",
@@ -25411,7 +25671,10 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_blades",
             "gain_hearts",
             "duration_gain",
@@ -25477,7 +25740,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_hasu",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_other",
             "conditional_member_specific",
             "conditional_or_condition",
             "conditional_fragment",
@@ -25494,7 +25758,9 @@
           ],
           [
             "{{live_start.png|ライブ開始時}}",
-            "atomic_icon_reference",
+            "atomic_icon_energy",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_hearts",
             "duration_gain",
             "gain_until_discard",
@@ -25505,7 +25771,8 @@
           ],
           [
             "{{toujyou.png|登場}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "atomic_area_center",
             "gain_blades",
             "duration_gain",
@@ -25518,7 +25785,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_mus",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "atomic_area_center",
             "area_specific_presence",
             "conditional_member_specific",
@@ -25539,7 +25807,9 @@
           ],
           [
             "{{jidou.png|自動}}",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_turn1",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -25552,7 +25822,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "choose_option",
             "gain_resource_specific",
@@ -25566,7 +25837,8 @@
           [
             "{{jyouji.png|常時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "stage_specific_group",
@@ -25575,6 +25847,7 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_aqours",
+            "atomic_group_saint_snow",
             "atomic_card_type_live",
             "atomic_zone_stage",
             "conditional_member_specific",
@@ -25597,7 +25870,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "per_unit",
             "heart_specification",
             "catchall_any"
@@ -25624,7 +25898,8 @@
           ],
           [
             "{{jyouji.png|常時}}",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "heart_specification",
             "catchall_any"
@@ -25633,7 +25908,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_aqours",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -25663,7 +25939,8 @@
             "{{live_start.png|ライブ開始時}}",
             "atomic_group_aqours",
             "atomic_zone_hand",
-            "atomic_icon_reference",
+            "atomic_icon_blade",
+            "atomic_icon_other",
             "gain_blades",
             "duration_gain",
             "gain_until_discard",
@@ -25676,7 +25953,8 @@
             "{{jyouji.png|常時}}",
             "atomic_group_liella",
             "atomic_card_type_live",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "gain_fragment",
             "stage_with_hearts",
             "heart_specification",
@@ -25685,7 +25963,8 @@
           [
             "{{live_start.png|ライブ開始時}}",
             "atomic_zone_stage",
-            "atomic_icon_reference",
+            "atomic_icon_heart",
+            "atomic_icon_other",
             "heart_specification",
             "stage_specific_group",
             "catchall_any"
@@ -26002,7 +26281,7 @@
           "original": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{jyouji.png|常時}} + ライブカード + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦RESOURCE⟧を得る + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
+          "template": "{{jyouji.png|常時}} + ライブカード + ⟦ICON⟧ + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦RESOURCE⟧を得る + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
           "matched_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
           "variables": [
             "{{jyouji.png|常時}}",
@@ -26024,7 +26303,13 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_blade",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{icon_blade.png|ブレード}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{icon_blade.png|ブレード}",
               "variables": []
@@ -26404,7 +26689,7 @@
           "original": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{live_start.png|ライブ開始時}} + 手札 + ⟦ICON⟧ + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + ⟦OPTIONS⟧のうち、1つを選ぶ + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧選ぶ + ⟦TEXT⟧",
+          "template": "{{live_start.png|ライブ開始時}} + 手札 + ⟦ICON⟧ + ⟦ICON⟧ + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + ⟦OPTIONS⟧のうち、1つを選ぶ + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧選ぶ + ⟦TEXT⟧",
           "matched_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。",
           "variables": [
             "{{live_start.png|ライブ開始時}}",
@@ -26436,7 +26721,13 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_heart",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{heart_01.png|heart01}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{heart_01.png|heart01}",
               "variables": []
@@ -26533,7 +26824,7 @@
           "original": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{toujyou.png|登場}} + 『μ's』 + ライブカード + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦FILTER⟧を⟦Y⟧枚公開して + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧ライブカードを⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい + ⟦TEXT⟧",
+          "template": "{{toujyou.png|登場}} + 『μ's』 + ライブカード + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + 残りを控え室に置く + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦FILTER⟧を⟦Y⟧枚公開して + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧ライブカードを⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい + ⟦TEXT⟧",
           "matched_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "variables": [
             "{{toujyou.png|登場}}",
@@ -26605,6 +26896,12 @@
               "variables": [
                 "5"
               ]
+            },
+            {
+              "pattern_name": "place_to_discard_remaining",
+              "template": "残りを控え室に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": []
             },
             {
               "pattern_name": "place_to_discard",
@@ -27602,7 +27899,7 @@
           "original": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{kidou.png|起動}} + 自分のデッキの上から + ⟦ICON⟧ + デッキの上からカードを⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦TEXT⟧",
+          "template": "{{kidou.png|起動}} + 自分のデッキの上から + ⟦ICON⟧ + ⟦ICON⟧ + ⟦ICON⟧ + デッキの上からカードを⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦TEXT⟧",
           "matched_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く。",
           "variables": [
             "{{kidou.png|起動}}",
@@ -27649,7 +27946,19 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_energy",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{icon_energy.png|E}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_turn1",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{turn1.png|ターン1回}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{turn1.png|ターン1回}",
               "variables": []
@@ -27804,7 +28113,7 @@
           "original": "{{live_start.png|ライブ開始時}}自分の控え室に『μ's』のカードが25枚以上ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{live_start.png|ライブ開始時}} + 『μ's』 + ⟦ICON⟧ + 自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧ + ライブ終了時まで、「⟦ABILITY⟧」を得る + ⟦SOURCE⟧のカードが⟦X⟧枚以上ある場合、⟦EFFECT⟧ + 自分の⟦ZONE⟧に⟦TARGET⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦RESOURCE⟧を得る + ⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧ + ⟦TYPE⟧カードが⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦X⟧枚⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦ZONE⟧に⟦TARGET⟧が⟦HEARTS⟧ある + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
+          "template": "{{live_start.png|ライブ開始時}} + 『μ's』 + ⟦ICON⟧ + ⟦ICON⟧ + 自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧ + ライブ終了時まで、「⟦ABILITY⟧」を得る + ⟦SOURCE⟧のカードが⟦X⟧枚以上ある場合、⟦EFFECT⟧ + 自分の⟦ZONE⟧に⟦TARGET⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦RESOURCE⟧を得る + ⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧ + ⟦TYPE⟧カードが⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦SOURCE⟧が⟦X⟧枚⟦CONDITION⟧場合、⟦EFFECT⟧ + ⟦ZONE⟧に⟦TARGET⟧が⟦HEARTS⟧ある + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
           "matched_text": "{{live_start.png|ライブ開始時}}自分の控え室に『μ's』のカードが25枚以上ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
           "variables": [
             "{{live_start.png|ライブ開始時}}",
@@ -27865,7 +28174,13 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_jyouji",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{jyouji.png|常時}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{jyouji.png|常時}",
               "variables": []
@@ -28034,7 +28349,7 @@
           "original": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{toujyou.png|登場}} + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + 自分のデッキの上からカードを⟦X⟧枚見る。その中から⟦Y⟧枚を手札に加え、残りを控え室に置く + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦Y⟧枚⟦ACTION⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦ADVERB⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
+          "template": "{{toujyou.png|登場}} + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + 自分のデッキの上からカードを⟦X⟧枚見る。その中から⟦Y⟧枚を手札に加え、残りを控え室に置く + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + 残りを控え室に置く + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦Y⟧枚⟦ACTION⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦ADVERB⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
           "matched_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
           "variables": [
             "{{toujyou.png|登場}}",
@@ -28130,6 +28445,12 @@
                 "1",
                 "自分のデッキの上からカードを3枚見る"
               ]
+            },
+            {
+              "pattern_name": "place_to_discard_remaining",
+              "template": "残りを控え室に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": []
             },
             {
               "pattern_name": "place_to_discard",
@@ -28328,7 +28649,7 @@
           "original": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{toujyou.png|登場}} + メンバーカード + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦FILTER⟧を⟦Y⟧枚公開して + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧メンバーカードを⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦TEXT⟧",
+          "template": "{{toujyou.png|登場}} + メンバーカード + 自分のデッキの上から + 手札 + 自分のデッキの上からカードを⟦X⟧枚見る + ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧ + 残りを控え室に置く + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦FILTER⟧を⟦Y⟧枚公開して + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧メンバーカードを⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい + ⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい + ⟦TEXT⟧",
           "matched_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
           "variables": [
             "{{toujyou.png|登場}}",
@@ -28411,6 +28732,12 @@
                 "1",
                 "自分のデッキの上からカードを5枚見る"
               ]
+            },
+            {
+              "pattern_name": "place_to_discard_remaining",
+              "template": "残りを控え室に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": []
             },
             {
               "pattern_name": "place_to_discard",
@@ -28587,7 +28914,7 @@
           "original": "{{live_success.png|ライブ成功時}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{live_success.png|ライブ成功時}} + 自分のデッキの上から + 自分のデッキの上からカードを⟦X⟧枚見る + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦ADVERB⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
+          "template": "{{live_success.png|ライブ成功時}} + 自分のデッキの上から + 自分のデッキの上からカードを⟦X⟧枚見る + その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く + 残りを控え室に置く + ⟦SOURCE⟧を控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦ADVERB⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に⟦MODIFIER⟧置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚見る + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
           "matched_text": "{{live_success.png|ライブ成功時}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
           "variables": [
             "{{live_success.png|ライブ成功時}}",
@@ -28655,6 +28982,18 @@
               "variables": [
                 "3"
               ]
+            },
+            {
+              "pattern_name": "place_to_discard_deck_top",
+              "template": "その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
+              "matched_text": "その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
+              "variables": []
+            },
+            {
+              "pattern_name": "place_to_discard_remaining",
+              "template": "残りを控え室に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": []
             },
             {
               "pattern_name": "place_to_discard",
@@ -28861,7 +29200,7 @@
           "original": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{live_start.png|ライブ開始時}} + ライブカード + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
+          "template": "{{live_start.png|ライブ開始時}} + ライブカード + ⟦ICON⟧ + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧",
           "matched_text": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
           "variables": [
             "{{live_start.png|ライブ開始時}}",
@@ -28882,7 +29221,13 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_heart",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{heart_00.png|heart0}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{heart_00.png|heart0}",
               "variables": []
@@ -28920,7 +29265,7 @@
           "original": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{live_start.png|ライブ開始時}} + ライブカード + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦OPTIONS⟧のうち、1つを選ぶ + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦PHASE⟧で⟦DESTINATION⟧に⟦CARD⟧⟦X⟧ + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧選ぶ + ⟦TEXT⟧",
+          "template": "{{live_start.png|ライブ開始時}} + ライブカード + ⟦ICON⟧ + ⟦ICON⟧ + ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧ + ⟦OPTIONS⟧のうち、1つを選ぶ + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る + ⟦RESOURCE⟧を⟦X⟧つ得る + ⟦PHASE⟧で⟦DESTINATION⟧に⟦CARD⟧⟦X⟧ + ⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧ + ⟦TEXT⟧選ぶ + ⟦TEXT⟧",
           "matched_text": "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
           "variables": [
             "{{live_start.png|ライブ開始時}}",
@@ -28953,7 +29298,13 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_heart",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{heart_01.png|heart01}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{heart_01.png|heart01}",
               "variables": []
@@ -29102,7 +29453,7 @@
           "original": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{kidou.png|起動}} + ライブカード + 自分の控え室から + 手札 + ⟦ICON⟧ + 手札を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える + ⟦TEXT⟧",
+          "template": "{{kidou.png|起動}} + ライブカード + 自分の控え室から + 手札 + ⟦ICON⟧ + ⟦ICON⟧ + ⟦ICON⟧ + 手札を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える + ⟦TEXT⟧",
           "matched_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。",
           "variables": [
             "{{kidou.png|起動}}",
@@ -29175,7 +29526,19 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_turn1",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{turn1.png|ターン1回}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_heart",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{heart_03.png|heart03}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{turn1.png|ターン1回}",
               "variables": []
@@ -29386,7 +29749,7 @@
           "original": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_01.png|heart01}}を3以上含むライブカードを1枚手札に加える。",
           "pattern_name": "trigger_clause_sequence",
           "structure": "Ability - Trigger + clause pattern sequence",
-          "template": "{{kidou.png|起動}} + ライブカード + 自分の控え室から + 手札 + ⟦ICON⟧ + 手札を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える + ⟦TEXT⟧",
+          "template": "{{kidou.png|起動}} + ライブカード + 自分の控え室から + 手札 + ⟦ICON⟧ + ⟦ICON⟧ + ⟦ICON⟧ + 手札を⟦X⟧枚控え室に置く + ⟦SOURCE⟧を⟦X⟧枚控え室に置く + 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧ + ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に加える + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦DESTINATION⟧に置く + ⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える + ⟦TEXT⟧",
           "matched_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_01.png|heart01}}を3以上含むライブカードを1枚手札に加える。",
           "variables": [
             "{{kidou.png|起動}}",
@@ -29459,7 +29822,19 @@
               "variables": []
             },
             {
-              "pattern_name": "atomic_icon_reference",
+              "pattern_name": "atomic_icon_turn1",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{turn1.png|ターン1回}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_heart",
+              "template": "⟦ICON⟧",
+              "matched_text": "{{heart_01.png|heart01}}",
+              "variables": []
+            },
+            {
+              "pattern_name": "atomic_icon_other",
               "template": "⟦ICON⟧",
               "matched_text": "{{turn1.png|ターン1回}",
               "variables": []

@@ -78,7 +78,14 @@
 - atomic_area_center: 15 matches
 - atomic_area_right: 1 matches
 
-**Note:** Group patterns (A-RISE, Saint Snow, Sunny Passion) not matching - may not appear in data or written differently. Heart colors captured by icon_reference pattern.
+**Note:** Group patterns (A-RISE, Saint Snow, Sunny Passion) removed - atomic patterns apply to skeletons (with placeholders), not jp_examples (with Japanese text). Heart colors captured by icon_heart pattern.
+
+**FINAL ATOMIC PATTERNS STATUS:**
+- Total atomic patterns: 20 (cost conditions, groups, card types, zones, icon types, areas)
+- Specific icon patterns: 10 (live_start 81, toujyou 61, blade 56, jyouji 57, energy 21, turn1 17, live_success 14, other 30, heart 10, kidou 2, jidou 2)
+- place_to_discard granularized: deck_top 22, remaining 91, fallback 3
+- Total patterns: 53 (up from 70 after atomic patterns and granularization)
+- Total matches: 1973 (correct)
 
 ---
 

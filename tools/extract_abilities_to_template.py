@@ -28,22 +28,29 @@ This represents abilities in the minimal number of patterns without losing meani
 from __future__ import annotations
 
 import argparse
+# ============================================================================
 # IMPORTANT: Main Ability Extraction and DSL Pattern Matching Script
-# - Extracts ability clauses from card data
-# - Matches clauses using DSL (Domain-Specific Language) regex patterns
-# - Preserves icons (e.g., {{toujyou.png|登場}}) to maintain semantic information
-# - Achieves 100% compression (1973/1973 clauses) with 61 patterns
-# - Run this to extract abilities and generate data/abilities_extracted.json
+# ============================================================================
+# This script extracts ability clauses from card data and matches them using
+# DSL (Domain-Specific Language) regex patterns to achieve compression.
 #
-# NEXT STEP: Add ability-level DSL patterns to preserve trigger → condition → options structure
-# - Current approach: clause-level (splits abilities by newlines/periods)
-# - Needed: ability-level (preserves trigger → condition → effect → options hierarchy)
+# FILE STRUCTURE:
+# - Lines 1-200: Imports and helper functions
+# - Lines 326-562: ABILITY_LEVEL_PATTERNS (special ability-level patterns)
+# - Lines 562-2117: DSL_PATTERNS (clause-level patterns - where to add new patterns)
+# - Lines 2117-2266: match_dsl_patterns() - main pattern matching logic
+# - Lines 2857-2915: extract_abilities() - main extraction function
+# - Lines 3030-3053: main() - entry point
 #
-# ABILITY-LEVEL DSL PATTERNS (preserves full ability structure):
-# - trigger_condition_effect: Single trigger + condition + effect
-# - trigger_effect_options: Single trigger + multiple bullet-point options
-# - trigger_condition_effect_options: Trigger + condition + bullet-point options
-# - sequential_effects: Trigger → multiple sequential effects
+# KEY INSIGHT FOR ADDING NEW PATTERNS:
+# - DSL_PATTERNS (line 562+) are clause-level patterns
+# - These are ONLY used for generic abilities that don't match ABILITY_LEVEL_PATTERNS
+# - For generic abilities, the script extracts the trigger icon and matches the effect text
+#   against DSL_PATTERNS
+# - Results populate pattern_variables in abilities_extracted.json
+#
+# USAGE: Run this to extract abilities and generate data/abilities_extracted.json
+# ============================================================================
 import json
 import re
 import unicodedata
@@ -402,6 +409,24 @@ DSL_PATTERNS = [
             "structure": "Atomic - Group Liella!",
         },
         {
+            "name": "atomic_group_arise",
+            "regex": r"『A-RISE』",
+            "template": "『A-RISE』",
+            "structure": "Atomic - Group A-RISE",
+        },
+        {
+            "name": "atomic_group_saint_snow",
+            "regex": r"『SaintSnow』",
+            "template": "『SaintSnow』",
+            "structure": "Atomic - Group Saint Snow",
+        },
+        {
+            "name": "atomic_group_sunny_passion",
+            "regex": r"『SunnyPassion』",
+            "template": "『SunnyPassion』",
+            "structure": "Atomic - Group Sunny Passion",
+        },
+        {
             "name": "atomic_card_type_live",
             "regex": r"ライブカード",
             "template": "ライブカード",
@@ -449,17 +474,73 @@ DSL_PATTERNS = [
             "template": "エネルギーカード",
             "structure": "Atomic - Card type: energy card",
         },
+        # Specific icon patterns (top 10 by frequency)
         {
-            "name": "atomic_group_arise",
-            "regex": r"『A-RISE』",
-            "template": "『A-RISE』",
-            "structure": "Atomic - Group A-RISE",
+            "name": "atomic_icon_live_start",
+            "regex": r"\{\{live_start\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: live start trigger",
         },
         {
-            "name": "atomic_icon_reference",
+            "name": "atomic_icon_toujyou",
+            "regex": r"\{\{toujyou\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: appearance trigger",
+        },
+        {
+            "name": "atomic_icon_blade",
+            "regex": r"\{\{icon_blade\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: blade resource",
+        },
+        {
+            "name": "atomic_icon_energy",
+            "regex": r"\{\{icon_energy\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: energy resource",
+        },
+        {
+            "name": "atomic_icon_jyouji",
+            "regex": r"\{\{jyouji\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: always-on",
+        },
+        {
+            "name": "atomic_icon_turn1",
+            "regex": r"\{\{turn1\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: once per turn",
+        },
+        {
+            "name": "atomic_icon_live_success",
+            "regex": r"\{\{live_success\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: live success trigger",
+        },
+        {
+            "name": "atomic_icon_kidou",
+            "regex": r"\{\{kidou\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: activate trigger",
+        },
+        {
+            "name": "atomic_icon_jidou",
+            "regex": r"\{\{jidou\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: automatic trigger",
+        },
+        {
+            "name": "atomic_icon_heart",
+            "regex": r"\{\{heart_\d+\.png\|[^}]+\}\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon: heart resource",
+        },
+        # Fallback for other icons
+        {
+            "name": "atomic_icon_other",
             "regex": r"\{\{[^}]+\}",
             "template": "⟦ICON⟧",
-            "structure": "Atomic - Icon reference {{x.png}}",
+            "structure": "Atomic - Icon reference (fallback)",
         },
         {
             "name": "atomic_area_left",
@@ -619,10 +700,22 @@ DSL_PATTERNS = [
             "structure": "Per-Unit - Effect triggers per unit of something",
         },
         {
+            "name": "place_to_discard_deck_top",
+            "regex": r"その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
+            "template": "その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
+            "structure": "Basic Action - Place to deck top, remaining to discard",
+        },
+        {
+            "name": "place_to_discard_remaining",
+            "regex": r"残りを控え室に置く",
+            "template": "残りを控え室に置く",
+            "structure": "Basic Action - Place remaining to discard",
+        },
+        {
             "name": "place_to_discard",
             "regex": r"([^。]+)を控え室に置く",
             "template": "⟦SOURCE⟧を控え室に置く",
-            "structure": "Basic Action - Place card to discard",
+            "structure": "Basic Action - Place card to discard (fallback)",
         },
         {
             "name": "place_to_hand",
@@ -722,15 +815,9 @@ DSL_PATTERNS = [
         },
         {
             "name": "batontouch_condition",
-            "regex": r"このメンバーよりコストが低い『([^』]+)』のメンバーからバトンタッチして登場した場合、([^。]+)",
-            "template": "このメンバーよりコストが低い『⟦GROUP⟧』のメンバーからバトンタッチして登場した場合、⟦EFFECT⟧",
-            "structure": "Conditional - Batontouch from lower-cost group member triggers effect",
-        },
-        {
-            "name": "heart_color_total",
-            "regex": r"自分のステージにいる『([^』]+)』のメンバーが持つハートに、([^。]+)が合計(\d+)個以上ある場合、([^。]+)",
-            "template": "自分のステージにいる『⟦GROUP⟧』のメンバーが持つハートに、⟦HEART⟧が合計⟦X⟧個以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Heart color total threshold triggers effect",
+            "regex": r"([^。]*?)バトンタッチ([^。]*?)場合、([^。]+)",
+            "template": "⟦CONDITION⟧バトンタッチ⟦MODIFIER⟧場合、⟦EFFECT⟧",
+            "structure": "Conditional - Batontouch condition triggers effect (flexible)",
         },
         {
             "name": "reveal_condition",
