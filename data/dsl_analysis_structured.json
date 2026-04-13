@@ -1,0 +1,2256 @@
+{
+  "schema": "dsl_analysis_structured.v1",
+  "_comment": "DSL pattern analysis results - structured for system consumption",
+  "metadata": {
+    "generated_at": "2026-04-13T23:58:14.000977",
+    "total_patterns": 6,
+    "total_abilities_analyzed": 603,
+    "compression_ratio": 0.9900497512437811
+  },
+  "patterns": [
+    {
+      "pattern_name": "trigger_clause_sequence",
+      "regex": "DYNAMIC - trigger + clause patterns",
+      "template": "⟦TRIGGER⟧ + [⟦CLAUSE_PATTERN_1⟧, ⟦CLAUSE_PATTERN_2⟧, ...]",
+      "structure": "Ability - Trigger + clause pattern sequence (generic)",
+      "match_count": 590,
+      "matched_abilities": [
+        {
+          "ability_text": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "ライブ",
+            "1",
+            "成功ライブカード置き場にカード",
+            "2",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "成功ライブカード置き場",
+            "カード",
+            "2",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+            "1枚手札",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+            "1枚手札",
+            "自分の成功ライブカード置き場",
+            "カード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分",
+            "成功ライブカード置き場にカード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+            "1枚手札",
+            "自分の成功ライブカード置き場",
+            "カード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分",
+            "成功ライブカード置き場にカード",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+            "",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場に",
+            "2枚以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカード",
+            "2",
+            "以上ある",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+            "1",
+            "手札",
+            "自分の成功ライブカード置き場",
+            "カード",
+            "2枚以上",
+            "自分の成功ライブカード置き場にカードが2枚以上ある場",
+            "合",
+            "自分の控え室からライブカードを1枚手札に加える"
+          ],
+          "trigger": "ON_PLAY",
+          "clause_patterns": [
+            {
+              "pattern_name": "add_from_discard",
+              "template": "自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える",
+              "matched_text": "自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "ライブ",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "conditional_threshold",
+              "template": "自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "成功ライブカード置き場にカード",
+                "2",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_specific",
+              "template": "自分の⟦ZONE⟧に⟦TARGET⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "成功ライブカード置き場",
+                "カード",
+                "2",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_fragment",
+              "template": "⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_fragment",
+              "template": "⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場",
+                "カード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_name_fragment",
+              "template": "⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分",
+                "成功ライブカード置き場にカード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_generic",
+              "template": "⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_generic",
+              "template": "⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場",
+                "カード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_name_generic",
+              "template": "⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分",
+                "成功ライブカード置き場にカード",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "",
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "",
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_card_type",
+              "template": "⟦TYPE⟧カードが⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場に",
+                "2枚以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "conditional_specific_count",
+              "template": "⟦SOURCE⟧が⟦X⟧枚⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカード",
+                "2",
+                "以上ある",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカード",
+                "1",
+                "手札"
+              ]
+            },
+            {
+              "pattern_name": "stage_with_hearts",
+              "template": "⟦ZONE⟧に⟦TARGET⟧が⟦HEARTS⟧ある",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある",
+              "variables": [
+                "自分の成功ライブカード置き場",
+                "カード",
+                "2枚以上"
+              ]
+            },
+            {
+              "pattern_name": "heart_specification",
+              "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "自分の成功ライブカード置き場にカードが2枚以上ある場",
+                "合",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-001-SD | 高坂 穂乃果 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+          "variables": [
+            "{{jyouji.png|常時}}",
+            "自分",
+            "成功ライブカード置き場にあるカード",
+            "1",
+            "{{icon_blade.png|ブレード}}を得る",
+            "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}",
+            "",
+            "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+            "",
+            "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+            "{{icon_blade.png|ブレード}}",
+            "を得る",
+            "{{icon_blade.png|ブレード}}",
+            "を得る",
+            "{{icon_blade.png|ブレード}}",
+            "を得る",
+            "自分の成功ライブカード置き場にあるカード1枚につ",
+            "き",
+            "{{icon_blade.png|ブレード}}を得る"
+          ],
+          "trigger": "CONSTANT",
+          "clause_patterns": [
+            {
+              "pattern_name": "per_unit",
+              "template": "⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "自分",
+                "成功ライブカード置き場にあるカード",
+                "1",
+                "{{icon_blade.png|ブレード}}を得る"
+              ]
+            },
+            {
+              "pattern_name": "gain_fragment",
+              "template": "⟦RESOURCE⟧を得る",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "",
+                "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "",
+                "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_action",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "{{icon_blade.png|ブレード}}",
+                "を得る"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_trigger",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "{{icon_blade.png|ブレード}}",
+                "を得る"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_live_start",
+              "template": "⟦ICON⟧⟦EFFECT⟧",
+              "matched_text": "{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "{{icon_blade.png|ブレード}}",
+                "を得る"
+              ]
+            },
+            {
+              "pattern_name": "heart_specification",
+              "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る",
+              "variables": [
+                "自分の成功ライブカード置き場にあるカード1枚につ",
+                "き",
+                "{{icon_blade.png|ブレード}}を得る"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-001-SD | 高坂 穂乃果 (ab#1)"
+          ]
+        },
+        {
+          "ability_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+          "variables": [
+            "{{kidou.png|起動}}",
+            "メンバー",
+            "1",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "自分の控え室からメンバーカードを1枚手札に加える",
+            "このメンバー",
+            "ステージから控え室",
+            "置く：自分の控え室からメンバーカードを1枚手札に",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+            "1枚手札",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+            "1枚手札",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+            "1枚手札",
+            "",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+            "",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+            "1",
+            "手札"
+          ],
+          "trigger": "ACTIVATED",
+          "clause_patterns": [
+            {
+              "pattern_name": "add_from_discard",
+              "template": "自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える",
+              "matched_text": "自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "メンバー",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_and_effect",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室",
+                "自分の控え室からメンバーカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室",
+                "置く：自分の控え室からメンバーカードを1枚手札に"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "",
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "",
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からメンバーカード",
+                "1",
+                "手札"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)",
+            "PL!S-PR-025-PR | 高海千歌 (ab#0)",
+            "PL!S-PR-027-PR | 松浦果南 (ab#0)",
+            "PL!HS-PR-014-PR | 日野下花帆 (ab#0)",
+            "PL!N-sd1-006-SD | 近江彼方 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{toujyou.png|登場}}自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "コスト4以下の『μ's』の",
+            "1",
+            "コスト4以下の『μ's』のメンバー",
+            "1",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+            "1枚手札",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+            "1枚手札",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+            "1枚手札",
+            "",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+            "",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+            "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+            "1",
+            "手札"
+          ],
+          "trigger": "ON_PLAY",
+          "clause_patterns": [
+            {
+              "pattern_name": "add_member_card_from_discard",
+              "template": "自分の控え室から⟦FILTER⟧メンバーカードを⟦X⟧枚手札に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "コスト4以下の『μ's』の",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "add_from_discard",
+              "template": "自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "コスト4以下の『μ's』のメンバー",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "add_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "add_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "",
+                "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "",
+                "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える",
+              "variables": [
+                "自分の控え室からコスト4以下の『μ's』のメンバーカード",
+                "1",
+                "手札"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-003-SD | 南 ことり (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。",
+          "variables": [
+            "{{live_start.png|ライブ開始時}}",
+            "手札",
+            "1",
+            "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}",
+            "ライブ終了時まで、選んだハート",
+            "1",
+            "ライブ終了時",
+            "選んだハート",
+            "1",
+            "手札",
+            "1枚控え室",
+            "ライブ終了時まで、選んだハート",
+            "1",
+            "",
+            "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "",
+            "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "{{heart_01.png|heart01}}",
+            "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "{{heart_01.png|heart01}}",
+            "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "{{heart_01.png|heart01}}",
+            "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+            "手札",
+            "1枚控え室",
+            "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のう",
+            "ち",
+            "1つを選ぶ"
+          ],
+          "trigger": "LIVE_START",
+          "clause_patterns": [
+            {
+              "pattern_name": "cost_effect",
+              "template": "⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "手札",
+                "1",
+                "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "choose_option",
+              "template": "⟦OPTIONS⟧のうち、1つを選ぶ",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}"
+              ]
+            },
+            {
+              "pattern_name": "gain_resource_specific",
+              "template": "⟦RESOURCE⟧を⟦X⟧つ得る",
+              "matched_text": "ライブ終了時まで、選んだハートを1つ得る",
+              "variables": [
+                "ライブ終了時まで、選んだハート",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "gain_duration_specific",
+              "template": "⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る",
+              "matched_text": "ライブ終了時まで、選んだハートを1つ得る",
+              "variables": [
+                "ライブ終了時",
+                "選んだハート",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "discard_optional",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい",
+              "matched_text": "手札を1枚控え室に置いてもよい",
+              "variables": [
+                "手札",
+                "1枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "gain_specific_fragment",
+              "template": "⟦RESOURCE⟧を⟦X⟧つ得る",
+              "matched_text": "ライブ終了時まで、選んだハートを1つ得る",
+              "variables": [
+                "ライブ終了時まで、選んだハート",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "",
+                "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "",
+                "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_action",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "{{heart_01.png|heart01}}",
+                "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_trigger",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "{{heart_01.png|heart01}}",
+                "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_live_start",
+              "template": "⟦ICON⟧⟦EFFECT⟧",
+              "matched_text": "{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "{{heart_01.png|heart01}}",
+                "か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "trigger_energize",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい",
+              "matched_text": "手札を1枚控え室に置いてもよい",
+              "variables": [
+                "手札",
+                "1枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "heart_specification",
+              "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": [
+                "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のう",
+                "ち",
+                "1つを選ぶ"
+              ]
+            },
+            {
+              "pattern_name": "catchall_choice",
+              "template": "⟦TEXT⟧選ぶ",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ",
+              "variables": []
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-003-SD | 南 ことり (ab#1)"
+          ]
+        },
+        {
+          "ability_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "5",
+            "残り",
+            "残り",
+            "控え室",
+            "自分のデッキの上からカード",
+            "5",
+            "『μ's』のライブカード",
+            "1",
+            "残り",
+            "控え室",
+            "残り",
+            "控え室",
+            "自分のデッキの上からカード",
+            "5",
+            "残り",
+            "控え室",
+            "自分のデッキの上からカード",
+            "5",
+            "残り",
+            "控え室",
+            "残り",
+            "控え室",
+            "自分のデッキの上からカード",
+            "5",
+            "",
+            "自分のデッキの上からカードを5枚見る",
+            "",
+            "自分のデッキの上からカードを5枚見る",
+            "残り",
+            "控え室",
+            "残り",
+            "控え室",
+            "残り",
+            "控え室",
+            "その中から『μ's』のライブカード",
+            "1"
+          ],
+          "trigger": "ON_PLAY",
+          "clause_patterns": [
+            {
+              "pattern_name": "look_top",
+              "template": "自分のデッキの上からカードを⟦X⟧枚見る",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "5"
+              ]
+            },
+            {
+              "pattern_name": "place_to_discard",
+              "template": "⟦SOURCE⟧を控え室に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り"
+              ]
+            },
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "look_and_reveal",
+              "template": "⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦FILTER⟧を⟦Y⟧枚公開して",
+              "matched_text": "自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5",
+                "『μ's』のライブカード",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "look_fragment",
+              "template": "⟦SOURCE⟧を⟦X⟧枚見る",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "look_count_fragment",
+              "template": "⟦SOURCE⟧を⟦X⟧枚見る",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "look_generic",
+              "template": "⟦SOURCE⟧を⟦X⟧枚見る",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "",
+                "自分のデッキの上からカードを5枚見る"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分のデッキの上からカードを5枚見る",
+              "variables": [
+                "",
+                "自分のデッキの上からカードを5枚見る"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "残りを控え室に置く",
+              "variables": [
+                "残り",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "reveal_and_add_optional",
+              "template": "⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい",
+              "matched_text": "その中から『μ's』のライブカードを1枚公開して手札に加えてもよい",
+              "variables": [
+                "その中から『μ's』のライブカード",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-004-SD | 園田海未 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+          "variables": [
+            "{{kidou.png|起動}}",
+            "ライブ",
+            "1",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "自分の控え室からライブカードを1枚手札に加える",
+            "このメンバー",
+            "ステージから控え室",
+            "置く：自分の控え室からライブカードを1枚手札に",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+            "1枚手札",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+            "1枚手札",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+            "1枚手札",
+            "",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+            "",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバー",
+            "ステージから控え室",
+            "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+            "1",
+            "手札"
+          ],
+          "trigger": "ACTIVATED",
+          "clause_patterns": [
+            {
+              "pattern_name": "add_from_discard",
+              "template": "自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える",
+              "matched_text": "自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "ライブ",
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_and_effect",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く：⟦EFFECT⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室",
+                "自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室",
+                "置く：自分の控え室からライブカードを1枚手札に"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "",
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "",
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "このメンバーをステージから控え室に置く",
+              "variables": [
+                "このメンバー",
+                "ステージから控え室"
+              ]
+            },
+            {
+              "pattern_name": "add_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える",
+              "variables": [
+                "このメンバーをステージから控え室に置く：自分の控え室からライブカード",
+                "1",
+                "手札"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-005-SD | 星空 凛 (ab#0)",
+            "PL!S-PR-026-PR | 桜内梨子 (ab#0)",
+            "PL!N-PR-009-PR | 優木せつ菜 (ab#0)",
+            "PL!N-PR-012-PR | 三船栞子 (ab#0)",
+            "PL!N-PR-014-PR | 鐘 嵐珠 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{toujyou.png|登場}}手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える。そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "手札のライブカード",
+            "1枚公開してもよい：自分の成功ライブカード置き場",
+            "あるカードを1枚手札に",
+            "そうした場合、これにより公開したカード",
+            "自分",
+            "成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+            "1枚手札",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+            "1枚手札",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分",
+            "成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+            "1枚手札",
+            "",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+            "",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "そうした場合、これにより公開したカード",
+            "自分の成功ライブカード置き場",
+            "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+            "1",
+            "手札",
+            "そうした場",
+            "合",
+            "これにより公開したカードを自分の成功ライブカード置き場に置く"
+          ],
+          "trigger": "ON_PLAY",
+          "clause_patterns": [
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "手札のライブカード",
+                "1枚公開してもよい：自分の成功ライブカード置き場",
+                "あるカードを1枚手札に"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_location",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分",
+                "成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "add_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "add_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分",
+                "成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "add_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に加える",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+                "1枚手札"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "",
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "",
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場合、これにより公開したカード",
+                "自分の成功ライブカード置き場"
+              ]
+            },
+            {
+              "pattern_name": "add_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に加える",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える",
+              "variables": [
+                "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカード",
+                "1",
+                "手札"
+              ]
+            },
+            {
+              "pattern_name": "heart_specification",
+              "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
+              "matched_text": "そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く",
+              "variables": [
+                "そうした場",
+                "合",
+                "これにより公開したカードを自分の成功ライブカード置き場に置く"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える。そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-006-SD | 西木野 真姫 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "1",
+            "自分のデッキの上からカード",
+            "5",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それらの中",
+            "ライブカード",
+            "カードを1枚引く",
+            "それらの中",
+            "ライブカード",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5",
+            "控え室",
+            "自分のデッキの上",
+            "カード",
+            "5枚控え室",
+            "それらの中にライブカード",
+            "ある",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "自分のデッキの上からカード",
+            "5",
+            "控え室",
+            "それらの中にライブカード",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それらの中",
+            "ライブカード",
+            "ある",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それら",
+            "中にライブカード",
+            "ある",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それらの中にライブカード",
+            "ある",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5",
+            "控え室",
+            "それらの中",
+            "ライブカード",
+            "ある",
+            "カードを1枚引く",
+            "それら",
+            "中にライブカード",
+            "ある",
+            "カードを1枚引く",
+            "",
+            "自分のデッキの上からカードを5枚控え室に置く",
+            "",
+            "自分のデッキの上からカードを5枚控え室に置く",
+            "それらの中にライブ",
+            "ある",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それらの中",
+            "ライブカード",
+            "カードを1枚引く",
+            "自分のデッキの上からカード",
+            "5枚控え室",
+            "それらの中",
+            "ライブカード",
+            "カードを1枚引く",
+            "それらの中にライブカードがある場",
+            "合",
+            "カードを1枚引く"
+          ],
+          "trigger": "ON_PLAY",
+          "clause_patterns": [
+            {
+              "pattern_name": "basic_action_draw",
+              "template": "カードを⟦X⟧枚引く",
+              "matched_text": "カードを1枚引く",
+              "variables": [
+                "1"
+              ]
+            },
+            {
+              "pattern_name": "basic_action_discard",
+              "template": "⟦SOURCE⟧を⟦X⟧枚控え室に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5"
+              ]
+            },
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_specific_card",
+              "template": "⟦SOURCE⟧に⟦TARGET⟧がある場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "conditional_card_presence",
+              "template": "⟦SOURCE⟧に⟦CARD⟧がある場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_from_zone",
+              "template": "⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上",
+                "カード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_fragment",
+              "template": "⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中にライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_count_fragment",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_presence_fragment",
+              "template": "⟦SOURCE⟧がある場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中にライブカード",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_fragment",
+              "template": "⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_name_fragment",
+              "template": "⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それら",
+                "中にライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_generic",
+              "template": "⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中にライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "place_count_generic",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_generic",
+              "template": "⟦ZONE⟧に⟦TARGET⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "conditional_name_generic",
+              "template": "⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それら",
+                "中にライブカード",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "",
+                "自分のデッキの上からカードを5枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "",
+                "自分のデッキの上からカードを5枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "conditional_card_type",
+              "template": "⟦TYPE⟧カードが⟦CONDITION⟧場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中にライブ",
+                "ある",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_zone_presence",
+              "template": "⟦ZONE⟧に⟦TARGET⟧がある場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く",
+              "variables": [
+                "自分のデッキの上からカード",
+                "5枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "conditional_heart_presence",
+              "template": "⟦ZONE⟧に⟦HEART⟧がある場合、⟦EFFECT⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中",
+                "ライブカード",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "heart_specification",
+              "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
+              "matched_text": "それらの中にライブカードがある場合、カードを1枚引く",
+              "variables": [
+                "それらの中にライブカードがある場",
+                "合",
+                "カードを1枚引く"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-007-SD | 東條 希 (ab#0)"
+          ]
+        },
+        {
+          "ability_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く。",
+          "variables": [
+            "{{kidou.png|起動}}",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10",
+            "控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上",
+            "カード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10",
+            "控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10",
+            "控え室",
+            "",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+            "",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+            "{{turn1.png|ターン1回}}",
+            "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+            "10枚控え室",
+            "{{turn1.png|ターン1回}}",
+            "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+            "{{turn1.png|ターン1回}}",
+            "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+          ],
+          "trigger": "ACTIVATED",
+          "clause_patterns": [
+            {
+              "pattern_name": "basic_action_discard",
+              "template": "⟦SOURCE⟧を⟦X⟧枚控え室に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10"
+              ]
+            },
+            {
+              "pattern_name": "place_to_zone",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_count",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_from_zone",
+              "template": "⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上",
+                "カード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_count_fragment",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_zone_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_fragment",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_fragment_generic",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_count_generic",
+              "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10",
+                "控え室"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_blade",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "",
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_heart",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "",
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_action",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}",
+                "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "discard_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "place_specific_type",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "discard_to_specific",
+              "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカード",
+                "10枚控え室"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_trigger",
+              "template": "⟦ICON⟧⟦ACTION⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}",
+                "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "icon_embedded_live_start",
+              "template": "⟦ICON⟧⟦EFFECT⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く",
+              "variables": [
+                "{{turn1.png|ターン1回}}",
+                "{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く"
+              ]
+            },
+            {
+              "pattern_name": "catchall_any",
+              "template": "⟦TEXT⟧",
+              "matched_text": "{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く。",
+              "variables": []
+            }
+          ],
+          "card_refs": [
+            "PL!-sd1-008-SD | 小泉 花陽 (ab#0)"
+          ]
+        }
+      ]
+    },
+    {
+      "pattern_name": "ability_trigger_choice_options",
+      "regex": "(\\{\\{[^}]+\\}\\})以下から(\\d+)つを選ぶ。\\n((?:・[^\\n]+\\n?)+)",
+      "template": "⟦TRIGGER⟧以下から⟦X⟧つを選ぶ。\n⟦OPTIONS⟧",
+      "structure": "Ability - Trigger + choice with bullet-point options",
+      "match_count": 4,
+      "matched_abilities": [
+        {
+          "ability_text": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。",
+          "variables": [
+            "{{toujyou.png|登場}}",
+            "1",
+            "・カードを1枚引き、手札を1枚控え室に置く。\n・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。"
+          ],
+          "trigger": "ON_PLAY",
+          "card_refs": [
+            "PL!-PR-005-PR | 星空 凛 (ab#0)",
+            "PL!-PR-006-PR | 西木野真姫 (ab#0)",
+            "PL!-PR-008-PR | 小泉花陽 (ab#0)"
+          ]
+        }
+      ]
+    },
+    {
+      "pattern_name": "ability_trigger_condition_choice_options",
+      "regex": "(\\{\\{[^}]+\\}\\})以下から(\\d+)つを選ぶ。(.+)がある場合、代わりに(\\d+)つ以上を選ぶ。\\n((?:・[^\\n]+\\n?)+)",
+      "template": "⟦TRIGGER⟧以下から⟦X⟧つを選ぶ。⟦CONDITION⟧がある場合、代わりに⟦Y⟧つ以上を選ぶ。\n⟦OPTIONS⟧",
+      "structure": "Ability - Trigger + condition + enhanced choice options",
+      "match_count": 1,
+      "matched_abilities": []
+    },
+    {
+      "pattern_name": "ability_trigger_gain_ability",
+      "regex": "(\\{\\{[^}]+\\}\\})ライブ終了時まで、「([^」]+)」を得る。",
+      "template": "⟦TRIGGER⟧ライブ終了時まで、「⟦ABILITY⟧」を得る。",
+      "structure": "Ability - Trigger + gain ability until end",
+      "match_count": 1,
+      "matched_abilities": []
+    },
+    {
+      "pattern_name": "ability_trigger_only",
+      "regex": "^(\\{\\{[^}]+\\}\\})$",
+      "template": "⟦TRIGGER⟧",
+      "structure": "Ability - Trigger only (no effect)",
+      "match_count": 1,
+      "matched_abilities": []
+    },
+    {
+      "pattern_name": "ability_trigger_cost_reduction",
+      "regex": "(\\{\\{[^}]+\\}\\})このカードを成功させるための必要ハートは([^。]+)少なくなる。",
+      "template": "⟦TRIGGER⟧このカードを成功させるための必要ハートは⟦REDUCTION⟧少なくなる。",
+      "structure": "Ability - Trigger + cost reduction",
+      "match_count": 0,
+      "matched_abilities": []
+    }
+  ]
+}

@@ -1,0 +1,779 @@
+DSL Pattern Templates - Information Theory Compression
+===============================================================================
+
+GOAL: Represent abilities in as few patterns as possible without losing meaning.
+
+This file shows how 1973 unique ability clauses are compressed into 61 pattern templates
+by treating ability text as a domain-specific language (DSL) for game mechanics.
+
+Each pattern template represents a grammatical structure in the ability DSL. Variables
+(numbers, card types, groups, zones) are extracted as parameters, allowing multiple
+unique clauses to share the same template while preserving all game mechanics.
+
+KEY BREAKTHROUGH: Preserving icons (e.g., {{toujyou.png|登場}}) maintained semantic
+information and dramatically improved compression from 86.21% to 96.65%.
+
+COMPRESSION STATISTICS:
+- Total clauses: 1973
+- Matched clauses: 1973 (100.00%)
+- Unique patterns: 61
+- Average clauses per pattern: 32
+
+================================================================================
+Pattern: icon_embedded_action
+Count: 215 clauses
+
+Variables extracted (215 instances):
+  Unique combinations: 96
+    15x: ('{{icon_b_all.png|ALLブレード}}', 'は任意の色のハートとして扱う')
+    6x: ('{{live_start.png|ライブ開始時}}', '自分か相手を選ぶ')
+    4x: ('{{live_start.png|ライブ開始時}}', '{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する')
+    4x: ('{{icon_score.png|スコア}}', '1つにつき、成功したライブのスコアの合計に1を加算する')
+    4x: ('{{heart_02.png|heart02}}', 'か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい')
+    4x: ('{{jyouji.png|常時}}', '相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる')
+    4x: ('{{jidou.png|自動}}', 'このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く')
+    4x: ('{{jyouji.png|常時}}', '{{center.png|センター}}ライブの合計スコアを+１する')
+    4x: ('{{live_start.png|ライブ開始時}}', '相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ')
+    4x: ('{{live_success.png|ライブ成功時}}', '自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    ... and 86 more combinations
+
+================================================================================
+Pattern: place_to_zone
+Count: 192 clauses
+Structure: Basic Action - Place card to zone
+Template: ⟦SOURCE⟧を⟦DESTINATION⟧に置く
+
+Variables extracted (192 instances):
+  Unique combinations: 32
+    89x: ('残り', '控え室')
+    23x: ('その中から1枚を手札に加え、残り', '控え室')
+    22x: ('その中から好きな枚数を好きな順番でデッキの上に置き、残り', '控え室')
+    4x: ('{{toujyou.png|登場}}自分の控え室からライブカード', '1枚までデッキの一番下')
+    4x: ('それら', '好きな順番でデッキの上')
+    4x: ('そうした場合、自分の控え室にある『虹ヶ咲』のライブカード', '1枚成功ライブカード置き場')
+    3x: ('{{toujyou.png|登場}}自分の控え室からカード', '1枚までデッキの一番上')
+    3x: ('{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバー', 'ステージから控え室')
+    3x: ('{{toujyou.png|登場}}カードを1枚引き、手札', '1枚デッキの一番下')
+    2x: ('{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分の控え室にあるメンバーカード2枚', '好きな順番でデッキの一番上')
+    ... and 22 more combinations
+
+================================================================================
+Pattern: basic_action_discard
+Count: 169 clauses
+Structure: Basic Action - Discard cards to discard pile
+Template: ⟦SOURCE⟧を⟦X⟧枚控え室に置く
+
+Variables extracted (169 instances):
+  Unique combinations: 49
+    15x: ('{{toujyou.png|登場}}カードを1枚引き、手札', '1')
+    13x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}手札', '2')
+    11x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}手札', '1')
+    9x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札', '1')
+    7x: ('{{toujyou.png|登場}}自分のデッキの上からカード', '3')
+    7x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカード', '3')
+    6x: ('{{toujyou.png|登場}}カードを2枚引き、手札', '1')
+    6x: ('{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札', '1')
+    5x: ('{{toujyou.png|登場}}カードを2枚引き、手札', '2')
+    5x: ('{{live_success.png|ライブ成功時}}カードを2枚引き、手札', '1')
+    ... and 39 more combinations
+
+================================================================================
+Pattern: duration_gain
+Count: 168 clauses
+
+Variables extracted (168 instances):
+  Unique combinations: 50
+    41x: ('{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}',)
+    18x: ('{{icon_blade.png|ブレード}}',)
+    12x: ('{{heart_01.png|heart01}}',)
+    8x: ('{{heart_04.png|heart04}}',)
+    6x: ('{{heart_02.png|heart02}}',)
+    5x: ('{{heart_01.png|heart01}}{{heart_01.png|heart01}}',)
+    5x: ('{{heart_05.png|heart05}}',)
+    4x: ('自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}',)
+    4x: ('自分の手札2枚につき、{{icon_blade.png|ブレード}}',)
+    4x: ('{{heart_03.png|heart03}}{{heart_03.png|heart03}}',)
+    ... and 40 more combinations
+
+================================================================================
+Pattern: add_from_discard
+Count: 149 clauses
+Structure: Basic Action - Add cards from discard to hand
+Template: 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える
+
+Variables extracted (149 instances):
+  Unique combinations: 23
+    51x: ('ライブ', '1')
+    23x: ('メンバー', '1')
+    14x: ('『虹ヶ咲』のライブ', '1')
+    9x: ('『蓮ノ空』のライブ', '1')
+    8x: ("『μ's』のライブ", '1')
+    5x: ('『Liella!』の', '1')
+    4x: ('4コスト以下の『蓮ノ空』のメンバー', '1')
+    4x: ('『みらくらぱーく！』の', '1')
+    4x: ('コスト2以下のメンバー', '1')
+    4x: ('、これにより公開したカードのカード名がすべて含まれるライブ', '1')
+    ... and 13 more combinations
+
+================================================================================
+Pattern: look_top
+Count: 126 clauses
+Structure: Basic Action - Look at top cards of deck
+Template: 自分のデッキの上からカードを⟦X⟧枚見る
+
+Variables extracted (126 instances):
+  Unique combinations: 7
+    45x: ('5',)
+    36x: ('3',)
+    20x: ('2',)
+    15x: ('4',)
+    6x: ('7',)
+    2x: ('6',)
+    2x: ('1',)
+
+================================================================================
+Pattern: basic_action_draw
+Count: 124 clauses
+Structure: Basic Action - Draw cards from deck
+Template: カードを⟦X⟧枚引く
+
+Variables extracted (124 instances):
+  Unique combinations: 3
+    112x: ('1',)
+    7x: ('3',)
+    5x: ('2',)
+
+================================================================================
+Pattern: cost_effect
+Count: 66 clauses
+Structure: Cost-Effect - Pay optional cost to activate effect
+Template: ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧
+
+Variables extracted (66 instances):
+  Unique combinations: 24
+    6x: ('{{toujyou.png|登場}}手札', '1', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    5x: ('{{live_start.png|ライブ開始時}}手札', '1', 'ライブ終了時まで、{{icon_blade.png|ブレード}}を得る')
+    5x: ('{{toujyou.png|登場}}手札', '1', '相手のステージにいるコスト4以下のメンバーを2人までウェイトにする')
+    4x: ('{{live_start.png|ライブ開始時}}手札', '1', '自分のステージにほかのメンバーがいる場合、好きなハートの色を1つ指定する')
+    4x: ('{{live_start.png|ライブ開始時}}手札', '1', 'これにより控え室に置いたカードがメンバーカードの場合、控え室に置いたカードと同じ名前を持つメンバー1人は、ライブ終了時まで、{{heart_04.png|heart04}}{{icon_blade.png|ブレード}}を得る')
+    4x: ('{{live_start.png|ライブ開始時}}手札', '2', '自分のステージにいるこのメンバー以外のウェイト状態のメンバー1人をアクティブにする')
+    4x: ('{{live_start.png|ライブ開始時}}手札のライブカード', '1', '好きなハートの色を1つ指定する')
+    4x: ('{{live_success.png|ライブ成功時}}手札', '1', '自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る')
+    4x: ('{{live_start.png|ライブ開始時}}手札', '1', 'ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、{{heart_01.png|heart01}}を得る')
+    4x: ('{{live_start.png|ライブ開始時}}手札', '1', '{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ')
+    ... and 14 more combinations
+
+================================================================================
+Pattern: state_change_wait
+Count: 65 clauses
+
+Variables extracted (65 instances):
+  Unique combinations: 23
+    6x: ('{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人',)
+    5x: ('・相手のステージにいるコスト4以下のメンバー1人',)
+    4x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー',)
+    4x: ('{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人',)
+    4x: ('{{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人',)
+    4x: ('{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：相手のステージにいるコスト10以下のメンバー1人',)
+    4x: ('{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のすべてのメンバー',)
+    3x: ('・相手のステージにいるすべてのコスト2以下のメンバー',)
+    3x: ('これにより控え室に置いたカードがライブカードの場合、このメンバー',)
+    3x: ('{{live_success.png|ライブ成功時}}自分のステージにこのメンバー以外のメンバーがいる場合、このメンバー',)
+    ... and 13 more combinations
+
+================================================================================
+Pattern: reveal_and_add_optional
+Count: 62 clauses
+Structure: Reveal-Add - Reveal cards, optionally add to hand
+Template: ⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい
+
+Variables extracted (62 instances):
+  Unique combinations: 27
+    6x: ('その中からメンバーカード', '1')
+    6x: ('その中からライブカード', '1')
+    4x: ('その中から『Liella!』のカード', '1')
+    3x: ('その中からコスト9以上の『Aqours』のメンバーカード', '1')
+    3x: ('その中からコスト9以上の『虹ヶ咲』のメンバーカード', '1')
+    3x: ("その中からコスト9以上の『μ's』のメンバーカード", '1')
+    3x: ('その中からコスト9以上の『Liella!』のメンバーカード', '1')
+    3x: ('その中からコスト9以上の『蓮ノ空』のメンバーカード', '1')
+    2x: ('その中から『みらくらぱーく！』のカード', '1')
+    2x: ('その中からコスト11以上のカード', '1')
+    ... and 17 more combinations
+
+================================================================================
+Pattern: gain_fragment
+Count: 61 clauses
+
+Variables extracted (61 instances):
+  Unique combinations: 27
+    4x: ('{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}',)
+    4x: ('{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}',)
+    4x: ('{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}',)
+    4x: ('{{jyouji.png|常時}}自分のステージにコストがそれぞれ異なるメンバーが3人以上いるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}',)
+    4x: ('{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{heart_03.png|heart03}}',)
+    3x: ('{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーがいるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}',)
+    3x: ('{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上であるかぎり、{{heart_03.png|heart03}}{{heart_03.png|heart03}}',)
+    3x: ('{{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}',)
+    3x: ('{{jyouji.png|常時}}{{center.png|センター}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}',)
+    3x: ('{{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_05.png|heart05}}',)
+    ... and 17 more combinations
+
+================================================================================
+Pattern: parenthetical_note
+Count: 56 clauses
+
+Variables extracted (56 instances):
+  Unique combinations: 12
+    25x: ('ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。',)
+    8x: ('この能力はセンターエリアに登場している場合のみ起動できる。',)
+    7x: ('メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。',)
+    3x: ('この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。',)
+    2x: ('手札のこのカードもこの効果で控え室に置ける。',)
+    2x: ('{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。',)
+    2x: ('この能力はセンターエリアに登場した場合のみ発動する。',)
+    2x: ('この能力はセンターエリアにいる場合のみ発動する。',)
+    2x: ('この能力は左サイドエリアか右サイドエリアに登場した場合のみ発動する。',)
+    1x: ('この効果で既にメンバーがいるエリアにも登場できる。ただし、このターンにステージに登場したメンバーがいるエリアには登場できない。',)
+    ... and 2 more combinations
+
+================================================================================
+Pattern: conditional_member_specific
+Count: 39 clauses
+
+Variables extracted (39 instances):
+  Unique combinations: 23
+    4x: ('{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』の', '登場しており、かつ名前が異なる', '「{{jyouji.png|常時}}ライブの合計スコアを+１する')
+    4x: ('選んだエリアに', 'いる', 'そのメンバーは、このメンバーがいたエリアに移動させる')
+    4x: ("{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』の", 'いない', 'このメンバーはセンターエリア以外にポジションチェンジする')
+    3x: ('{{jyouji.png|常時}}自分か相手のステージにコスト13以上の', 'いる', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る')
+    3x: ('そのエリアに', 'いる', 'そのメンバーはセンターエリアに移動させる')
+    2x: ('{{jyouji.png|常時}}自分のステージにほかの', 'いない', '自分はライブできない')
+    2x: ('{{toujyou.png|登場}}自分のステージにいる', '『5yncri5e!』のみの', '自分と対戦相手は、センターエリアのメンバーを左サイドエリアに、左サイドエリアのメンバーを右サイドエリアに、右サイドエリアのメンバーをセンターエリアに、それぞれ移動させる')
+    2x: ('{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいる', '最も大きいコストを持つ', '{{heart_03.png|heart03}}を得る')
+    1x: ('{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』の', '持つハートに、{{heart_05.png|heart05}}が合計4個以上あり、このターン、相手が余剰のハートを持たずにライブを成功させていた', 'このカードのスコアを+２する')
+    1x: ('{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいる', '持つハートの総数より多い', 'このカードのスコアを+１する')
+    ... and 13 more combinations
+
+================================================================================
+Pattern: conditional_threshold
+Count: 37 clauses
+Structure: Conditional - Threshold condition triggers effect
+Template: 自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧
+
+Variables extracted (37 instances):
+  Unique combinations: 23
+    4x: ('ステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカード', '1', 'ライブの合計スコアを+１する')
+    4x: ('エネルギー', '7', '自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く')
+    4x: ('カードの中にブレードハートを持たないメンバーカード', '3', 'ライブ終了時まで、{{icon_all.png|ハート}}を得る')
+    2x: ('エネルギー', '12', 'ライブの合計スコアを+１する')
+    2x: ('エネルギー', '10', 'ステージにいるこのメンバーのコストを+４する')
+    2x: ('成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカード', '1', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る')
+    2x: ('ステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギー', '7', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    2x: ('カードの中に、名前が異なる『Liella!』のメンバーカード', '3', 'エールにより公開された自分のカードの中から『Liella!』のライブカードを1枚手札に加える')
+    1x: ("控え室に『μ's』のカード", '25', 'ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する')
+    1x: ('ライブ中のカード', '3', 'このカードのスコアを+２する')
+    ... and 13 more combinations
+
+================================================================================
+Pattern: heart_specification
+Count: 36 clauses
+
+Variables extracted (36 instances):
+  Unique combinations: 17
+    4x: ('そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1', '枚', 'そのメンバーがいたエリアに登場させる')
+    4x: ('ライブ終了時ま', 'で', 'このメンバーが元々持つハートは選んだハートになる')
+    4x: ('そうした場', '合', 'それらのカードの中から1枚手札に加える')
+    3x: ('ライブ終了時まで、このメンバーのコスト', 'は', '選んだメンバーが元々持つコストより1低い値に等しくなる')
+    3x: ('その中から各グループ名につき1枚ずつ公開', 'し', '3枚まで手札に加えてもよい')
+    2x: ('その', '後', '登場したエリアとは別の自分のエリア1つを選ぶ')
+    2x: ('そうした場', '合', '相手はそれらのカードのうち1枚を選ぶ')
+    2x: ('その', '後', '自分のデッキの一番上のカードを1枚公開する')
+    2x: ('これによりライブカードを公開した場', '合', 'このカードのスコアを+１する')
+    2x: ('選んだカードが公開されるま', 'で', '自分のデッキの一番上からカードを１枚ずつ公開する')
+    ... and 7 more combinations
+
+================================================================================
+Pattern: state_change_activate
+Count: 34 clauses
+
+Variables extracted (34 instances):
+  Unique combinations: 3
+    24x: ('2',)
+    8x: ('1',)
+    2x: ('4',)
+
+================================================================================
+Pattern: add_fragment
+Count: 34 clauses
+
+Variables extracted (34 instances):
+  Unique combinations: 13
+    4x: ('{{toujyou.png|登場}}バトンタッチして登場した場合、このバトンタッチで控え室に置かれた『Liella!』のメンバーカード', '1枚手札')
+    4x: ('{{toujyou.png|登場}}自分の控え室からコスト2以下のメンバーカード', '2枚まで手札')
+    4x: ('{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカード', '1枚手札')
+    4x: ('その中からカード', '1枚手札')
+    4x: ('その中からカード', '2枚手札')
+    3x: ('そうした場合、そのライブカード', '手札')
+    2x: ('これにより相手に選ばれたカード', '自分の手札')
+    2x: ('{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカード', '1枚手札')
+    2x: ('{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、『虹ヶ咲』のメンバーカード', '1枚手札')
+    2x: ('その中から1枚', '手札')
+    ... and 3 more combinations
+
+================================================================================
+Pattern: discard_optional
+Count: 31 clauses
+
+Variables extracted (31 instances):
+  Unique combinations: 16
+    4x: ('{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚', 'このメンバーの下')
+    4x: ('{{toujyou.png|登場}}自分の成功ライブカード置き場にある『虹ヶ咲』のライブカード', '1枚控え室')
+    3x: ('{{live_start.png|ライブ開始時}}自分のデッキの一番上のカード', '控え室')
+    2x: ('{{toujyou.png|登場}}手札', '3枚まで控え室')
+    2x: ('{{toujyou.png|登場}}「鬼塚冬毬」以外の『Liella!』のメンバー1人', 'ステージから控え室')
+    2x: ('{{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカード', 'すべて控え室')
+    2x: ('{{toujyou.png|登場}}相手は手札からライブカード', '1枚控え室')
+    2x: ('{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のライブカードを1枚公開する：相手は手札', '1枚控え室')
+    2x: ('自分はそのカード', '控え室')
+    2x: ('{{toujyou.png|登場}}自分のエネルギー置き場にあるエネルギー2枚', 'このメンバーの下')
+    ... and 6 more combinations
+
+================================================================================
+Pattern: gain_resource_specific
+Count: 26 clauses
+Structure: Basic Action - Gain specific amount of resource
+Template: ⟦RESOURCE⟧を⟦X⟧つ得る
+
+Variables extracted (26 instances):
+  Unique combinations: 7
+    12x: ('ライブ終了時まで、そのハート', '1')
+    5x: ('ライブ終了時まで、選んだハート', '1')
+    4x: ('ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハート', '1')
+    2x: ('ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハート', '1')
+    1x: ("ライブ終了時まで、自分のステージにいる『μ's』のメンバー1人は、選んだハート", '1')
+    1x: ('ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動しているすべてのメンバーは、選んだハート', '1')
+    1x: ('ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハート', '2')
+
+================================================================================
+Pattern: conditional_fragment
+Count: 25 clauses
+
+Variables extracted (25 instances):
+  Unique combinations: 14
+    4x: ('これにより控え室に置いたカードの中にブレードハートを持たないメンバーカード', '1枚以上ある', 'このメンバーをアクティブにする')
+    3x: ('{{live_success.png|ライブ成功時}}自分', '余剰ハートを持たない', 'ライブの合計スコアを+１する')
+    3x: ('自分', '余剰ハートを2つ以上持つ', 'ライブの合計スコアを－１する')
+    2x: ('それぞれのメンバーのコスト', '同じ', '元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う')
+    2x: ('これにより公開されたカード', 'ライブカードの', 'ライブ終了時まで、このメンバーは「{{jyouji.png|常時}}ライブの合計スコアを+１する')
+    2x: ('{{live_success.png|ライブ成功時}}自分のエネルギー', '相手より少ない', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    2x: ('公開したカード', 'コスト9以下のメンバーカードの', '公開したカードを手札に加え、このメンバーはポジションチェンジする')
+    1x: ('{{live_success.png|ライブ成功時}}このターン、自分のデッキ', 'リフレッシュしていた', 'このカードのスコアを+２する')
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場のカード枚数', '相手より少ない', 'このカードのスコアを+１する')
+    1x: ('{{live_success.png|ライブ成功時}}このターン、自分', '余剰ハートを持たない', 'このカードのスコアを+１する')
+    ... and 4 more combinations
+
+================================================================================
+Pattern: gain_ability
+Count: 24 clauses
+
+Variables extracted (24 instances):
+  Unique combinations: 2
+    23x: ('{{jyouji.png|常時}}ライブの合計スコアを+１する。',)
+    1x: ('{{jyouji.png|常時}}ライブの合計スコアを+３する。',)
+
+================================================================================
+Pattern: per_unit
+Count: 18 clauses
+Structure: Per-Unit - Effect triggers per unit of something
+Template: ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧
+
+Variables extracted (18 instances):
+  Unique combinations: 11
+    6x: ('ライブ終了時まで、自分', '成功ライブカード置き場にあるカード', '1', '選んだハートを1つ得る')
+    2x: ('この能力を起動するためのコストは、自分', '成功ライブカード置き場にあるカード', '1', '控え室に置く手札の数が1枚減る')
+    2x: ('{{jyouji.png|常時}}このメンバー', '下にあるエネルギーカード', '1', '{{icon_blade.png|ブレード}}を得る')
+    1x: ('{{jyouji.png|常時}}自分', '成功ライブカード置き場にあるカード', '1', '{{icon_blade.png|ブレード}}を得る')
+    1x: ('{{live_start.png|ライブ開始時}}自分', '成功ライブカード置き場にあるカード', '1', 'このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる')
+    1x: ('{{jyouji.png|常時}}手札にあるこのメンバーカードのコストは、このカード以外の自分', '手札', '1', '1少なくなる')
+    1x: ('それら', '中にあるライブカード', '1', 'このカードのスコアを+１する')
+    1x: ('{{jyouji.png|常時}}自分', '成功ライブカード置き場にあるカード', '1', 'ステージにいるこのメンバーのコストを+１する')
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード名が「EMOTION」', 'カード', '1', 'このカードのスコアを+２し、成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}増やす')
+    1x: ('{{live_start.png|ライブ開始時}}自分のライブカード置き場にあるこのカード以外の『蓮ノ空』', 'カード', '1', 'このカードの必要ハートを{{heart_04.png|heart04}}{{heart_04.png|heart04}}減らす')
+    ... and 1 more combinations
+
+================================================================================
+Pattern: choose_from_below
+Count: 17 clauses
+
+Variables extracted (17 instances):
+  Unique combinations: 4
+    11x: ('{{toujyou.png|登場}}', '1')
+    4x: ('{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：', '1')
+    1x: ('{{live_success.png|ライブ成功時}}', '1')
+    1x: ('{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、', '1')
+
+================================================================================
+Pattern: area_swap
+Count: 15 clauses
+
+Variables extracted (15 instances):
+  Unique combinations: 1
+    15x: ('(こ', '今いるエリア以外のエリア')
+
+================================================================================
+Pattern: conditional_group_and_cost
+Count: 13 clauses
+
+Variables extracted (13 instances):
+  Unique combinations: 10
+    4x: ('ステージ', 'このメンバー以外', 'メンバー', '1', 'ライブ終了時まで、エールによって公開される自分のカードの枚数が8枚減る')
+    1x: ('、ステージと控え室', '名前の異なる『Liella!』', 'メンバー', '5', 'このカードを使用するためのコストは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}になる')
+    1x: ('ステージ', '「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前', '異なるメンバー', '2', 'エールにより公開された自分のカードの中から、カードを1枚手札に加える')
+    1x: ('ステージに、このターン中', 'バトンタッチして登場した『蓮ノ空』', 'メンバー', '2', 'このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす')
+    1x: ('ステージに、このターン中', 'バトンタッチして登場した『蓮ノ空』', 'メンバー', '2', 'このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす')
+    1x: ('ステージに、このターン中', 'バトンタッチして登場した『蓮ノ空』', 'メンバー', '2', 'このカードを成功させるための必要ハートを{{heart_01.png|heart01}}減らす')
+    1x: ('ステージ', '同じ名前の『虹ヶ咲』', 'メンバー', '2', 'このカードを成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}減らす')
+    1x: ('ステージ', '『みらくらぱーく！』', 'メンバー', '3', 'このカードのスコアを+１する')
+    1x: ('ステージ', 'コスト10以上の『蓮ノ空』', 'メンバー', '2', 'このカードのスコアを+１する')
+    1x: ('ステージ', '名前', '異なるメンバー', '3', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: conditional_only
+Count: 12 clauses
+
+Variables extracted (12 instances):
+  Unique combinations: 5
+    4x: ('この能力は、このカードが控え室にある場合', '起動できる')
+    3x: ('この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合', '起動できる')
+    2x: ('この能力は、このカードが自分のエールによって公開されている場合', '発動する')
+    2x: ('この能力は、このカードが手札にある場合', '起動できる')
+    1x: ('この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が７以上の場合', '起動できる')
+
+================================================================================
+Pattern: gain_per_card
+Count: 11 clauses
+
+Variables extracted (11 instances):
+  Unique combinations: 5
+    3x: ('{{jyouji.png|常時}}自分のステージにいるコスト4以上', '『スリーズブーケ』以外', 'メンバー1人', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}')
+    2x: ('{{jyouji.png|常時}}自分のステージにいるほか', '『みらくらぱーく！』', 'メンバー1人', '{{icon_blade.png|ブレード}}')
+    2x: ('{{jyouji.png|常時}}相手', 'ステージにいるウェイト状態', 'メンバー1人', '{{icon_blade.png|ブレード}}')
+    2x: ('{{jyouji.png|常時}}相手', 'ステージにいるウェイト状態', 'メンバー1人', '{{heart_06.png|heart06}}')
+    2x: ('{{jyouji.png|常時}}自分のステージにいるこのメンバー以外', '『A-RISE』', 'メンバー1人', '{{heart_05.png|heart05}}')
+
+================================================================================
+Pattern: conditional_specific_card
+Count: 11 clauses
+
+Variables extracted (11 instances):
+  Unique combinations: 7
+    4x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場', 'カード', '手札を1枚控え室に置いてもよい')
+    2x: ('{{jyouji.png|常時}}自分の成功ライブカード置き場', '『lilywhite』のカード', '手札にあるこのメンバーカードのコストは2減る')
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場', 'スコアが１か５のカード', 'このカードのスコアを+１する')
+    1x: ('{{live_success.png|ライブ成功時}}エールにより公開された自分の『虹ヶ咲』のメンバーカードが持つハートの中', '{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}', 'このカードのスコアを+１する')
+    1x: ('自分の成功ライブカード置き場', '『虹ヶ咲』のカード', '代わりに1つ以上を選ぶ')
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場かライブ中のライブカードの中に、必要ハート', '含まれる{{heart_01.png|heart01}}が4の『虹ヶ咲』のライブカード', 'このカードのスコアを+１する')
+    1x: ('{{live_start.png|ライブ開始時}}自分のステージに『蓮ノ空』のメンバーが3人以上いて、かつ自分の控え室にカード名', '「DreamBelievers」を含むライブカード', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: conditional_or_condition
+Count: 10 clauses
+
+Variables extracted (10 instances):
+  Unique combinations: 6
+    4x: ('{{toujyou.png|登場}}{{center.png|センター}}『Liella!』のメンバー2人', 'らバトンタッチして登場している', 'カードを2枚引き、自分の控え室にあるコスト4以下の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる')
+    2x: ('これにより1枚以上のカードが控え室に置', 'れた', 'そのエールで得たブレードハートを失い、もう一度エールを行う')
+    1x: ('{{live_start.png|ライブ開始時}}自分のステージに「徒町小鈴」が登場しており、かつ「徒町小鈴」よりコストの大きい「村野さや', '」が登場している', 'このカードを成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}減らす')
+    1x: ('{{live_success.png|ライブ成功時}}このターン、エールにより公開された自分のカードの中にブレードハートを持たないカードが0枚の場合', '、または自分が余剰ハートを2つ以上持っている', 'このカードのスコアは４になる')
+    1x: ('{{live_success.png|ライブ成功時}}自分', '相手の成功ライブカード置き場にカードが2枚以上ある', 'エールにより公開された自分のカードの中から、メンバーカードを2枚まで手札に加える')
+    1x: ('3人以上おり、', 'つそれぞれ名前が異なる', 'さらにこのカードのスコアを+１する')
+
+================================================================================
+Pattern: choose_option
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 4
+    5x: ('{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}',)
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードがある場合、{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}',)
+    1x: ('{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_02.png|heart02}}か{{heart_06.png|heart06}}',)
+    1x: ('{{live_start.png|ライブ開始時}}{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}',)
+
+================================================================================
+Pattern: trigger_on_discard
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 3
+    4x: ('メンバー1人をポジションチェンジさせてもよい',)
+    2x: ('メンバー1人をアクティブにしてもよい',)
+    2x: ('手札を1枚控え室に置いてもよい',)
+
+================================================================================
+Pattern: score_comparison
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 4
+    4x: ('高い', '自分のエネルギーデッキから、このメンバーの下にあるエネルギーカードの枚数に1を足した枚数のエネルギーカードをウェイト状態で置く')
+    2x: ('高い', 'このカードを手札に加えてもよい')
+    1x: ('高い', 'エールにより公開された自分のカードの中から、『虹ヶ咲』のカードを1枚手札に加える')
+    1x: ('高い', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+
+================================================================================
+Pattern: catchall_any
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 1
+    8x: ()
+
+================================================================================
+Pattern: conditional_specific_name
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 6
+    3x: ('{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコア', '合計', '６以上', '自分のエネルギーデッキから、エネルギーカードを1枚アクティブ状態で置く')
+    1x: ('その後、自分', 'エネルギー', 'すべてアクティブ状態', 'このカードのスコアを+１する')
+    1x: ('{{jidou.png|自動}}［ターン1回］エールにより自分のカードを1枚以上公開したとき、それらのカード', '中にブレードハートを持つカード', '2枚以下', 'それらのカードをすべて控え室に置いてもよい')
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカードのスコア', '合計', '６以上', 'このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす')
+    1x: ('スコア', '合計', '９以上', 'さらにこのカードのスコアを+１する')
+    1x: ('{{live_success.png|ライブ成功時}}このカード', 'スコア', '３', '自分の控え室にある『虹ヶ咲』のカードを1枚手札に加える')
+
+================================================================================
+Pattern: area_specific_presence
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 5
+    4x: ('ステージ', '、このメンバーよりコストの大きいメンバー', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る')
+    1x: ('センターエリア', "{{icon_blade.png|ブレード}}を9つ以上持つ『μ's』のメンバー", 'このカードのスコアを+２する')
+    1x: ('ステージ', '{{heart_02.png|heart02}}を4つ以上持つメンバー', 'このカードのスコアを+２し、必要ハートは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}になる')
+    1x: ('ステージ', '「中須かすみ」', '自分のデッキの上からカードを4枚公開する')
+    1x: ('センターエリア', "『μ's』のメンバー", 'そのメンバーが持つ{{heart_03.png|heart03}}2つにつき、このカードの必要ハートを{{heart_00.png|heart0}}減らす')
+
+================================================================================
+Pattern: empty_string
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 1
+    8x: ()
+
+================================================================================
+Pattern: stage_specific_group
+Count: 7 clauses
+
+Variables extracted (7 instances):
+  Unique combinations: 2
+    4x: ('相手のステージ', 'いるコスト9以下', 'メンバーを', '1', 'までウェイトにする')
+    3x: ('・自分のステージ', 'いる『SaintSnow』', 'メンバー', '1', 'をポジションチェンジさせる')
+
+================================================================================
+Pattern: nested_condition
+Count: 6 clauses
+
+Variables extracted (6 instances):
+  Unique combinations: 2
+    4x: ('{{jyouji.png|常時}}自分のライブ中のカード', '3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む', '{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}')
+    2x: ('{{jyouji.png|常時}}相手のエネルギー', '自分より多い', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}')
+
+================================================================================
+Pattern: conditional_group_presence
+Count: 5 clauses
+
+Variables extracted (5 instances):
+  Unique combinations: 5
+    1x: ('虹ヶ咲', 'このカードのスコアを+１する')
+    1x: ('蓮ノ空', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    1x: ('蓮ノ空', 'このカードを成功させるための必要ハートは、{{heart_01.png|heart01}}{{heart_01.png|heart01}}{{heart_00.png|heart0}}か、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{heart_00.png|heart0}}か、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_00.png|heart0}}のうち、選んだ1つにしてもよい')
+    1x: ('虹ヶ咲', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    1x: ('A-RISE', '以下から1つを選ぶ')
+
+================================================================================
+Pattern: trigger_when
+Count: 5 clauses
+
+Variables extracted (5 instances):
+  Unique combinations: 2
+    4x: ('(メンバーがステージから離れた', '下に置かれているエネルギーカードはエネルギーデッキに戻す')
+    1x: ('これによりウェイト状態のメンバーが3人以上アクティブ状態になった', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: add_to_zone
+Count: 4 clauses
+Structure: Basic Action - Add to zone with modifier
+Template: ⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える
+
+Variables extracted (4 instances):
+  Unique combinations: 2
+    3x: ('{{toujyou.png|登場}}手札のブレードハートを持たないメンバーカード', '2枚まで控え室に置いてもよい：自分の控え室から、これにより控え室', '置いたカードと同じ枚数の『Aqours』のライブカードを手札に')
+    1x: ('{{toujyou.png|登場}}手札のライブカード', '1枚公開してもよい：自分の成功ライブカード置き場', 'あるカードを1枚手札に')
+
+================================================================================
+Pattern: move_member
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('そのエリア',)
+
+================================================================================
+Pattern: disable_ability
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}',)
+
+================================================================================
+Pattern: conditional_heart_count
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('({{toujyou.png|登場}}能力', 'コスト', '支払って発動させる')
+
+================================================================================
+Pattern: reveal_card_optional
+Count: 3 clauses
+
+Variables extracted (3 instances):
+  Unique combinations: 2
+    2x: ('その中から『Liella!』', 'カード', '1')
+    1x: ('その中から『虹ヶ咲』', 'ライブカード', '1')
+
+================================================================================
+Pattern: set_phase_action
+Count: 3 clauses
+
+Variables extracted (3 instances):
+  Unique combinations: 3
+    1x: ('次のライブカードセットフェイズ', '自分がライブカード置き場', '置けるカード枚数の上限が', '1')
+    1x: ('そうした場合、次のライブカードセットフェイズ', '自分がライブカード置き場', '置けるカード枚数の上限が', '1')
+    1x: ('ライブ終了時ま', '、自分のステージにいる「中須かすみ」1人は、これ', 'より選んだカードが持つ色のハートを', '1')
+
+================================================================================
+Pattern: catchall_repeat_procedure
+Count: 3 clauses
+
+Variables extracted (3 instances):
+  Unique combinations: 1
+    3x: ()
+
+================================================================================
+Pattern: conditional_heart_total
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 2
+    1x: ('{{icon_blade.png|ブレード}}', '10', 'このカードのスコアを+１する')
+    1x: ('{{icon_blade.png|ブレード}}', '10', 'このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる')
+
+================================================================================
+Pattern: conditional_member_count
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 2
+    1x: ('CatChu!', '2', 'エネルギーを6枚までアクティブにする')
+    1x: ('KALEIDOSCORE', '2', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: multi_card_stage
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('4', '2')
+
+================================================================================
+Pattern: conditional_comparison
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('手札の枚数', '多い', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: look_fragment
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('自分は、そのプレイヤーのデッキの上からカード', '2')
+
+================================================================================
+Pattern: total_zone_cards
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('成功ライブカード置き場', '3', '{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る')
+
+================================================================================
+Pattern: heart_color_total
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 2
+    1x: ('Aqours', '{{heart_02.png|heart02}}', '6', 'このカードの{{live_success.png|ライブ成功時}}能力を無効にする')
+    1x: ('Aqours', '{{heart_04.png|heart04}}', '10', 'このカードのスコアを+２する')
+
+================================================================================
+Pattern: conditional_both_players
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('ライブの合計スコア', '同じ', 'ライブ終了時まで、自分と相手は成功ライブカード置き場にカードを置くことができない')
+
+================================================================================
+Pattern: activate_all_members
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ()
+
+================================================================================
+Pattern: conditional_specific_group
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ('{{live_start.png|ライブ開始時}}自分のステージ', '右サイドエリアに「大沢瑠璃乃」が、左サイドエリアに「安養寺姫芽」が、センターエリアに「藤島慈」', 'それぞれ登場して', 'このカードのスコアを+２する')
+
+================================================================================
+Pattern: zone_specific_condition
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ('センター', 'コスト9以上の『Aqours』のメンバー', '以下から1つを選ぶ')
+
+================================================================================
+Pattern: conditional_zero_cards
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ('{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場', '、かつ自分のステージにいるメンバーが『lilywhite』のみの場合、このカードのスコアを+１する')
+
+================================================================================
+Pattern: catchall_choice
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ()
+
+================================================================================
+Pattern: conditional_specific_present
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ('{{live_success.png|ライブ成功時}}自分', '余剰ハートを3つ以上持って', 'それらをすべて失い、このカードのスコアを+１する')

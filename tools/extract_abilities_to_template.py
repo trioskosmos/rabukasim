@@ -250,7 +250,78 @@ def parse_trigger_effect(clause: str) -> list[tuple[str, str]]:
     return pairs
 
 
-# ABILITY-LEVEL DSL PATTERNS (preserve trigger → action → options structure)
+# ============================================================================
+# DSL APPROACH FOR CARD GAME ABILITIES
+# ============================================================================
+#
+# The DSL (Domain-Specific Language) approach treats ability text as a
+# structured language for game mechanics, with two levels of patterns:
+#
+# 1. CLAUSE-LEVEL PATTERNS (DSL_PATTERNS):
+#    - Match individual clauses within abilities
+#    - Examples: "draw X cards", "place X cards in discard"
+#    - 61 patterns achieve 100% compression of 1973 clauses
+#
+# 2. ABILITY-LEVEL PATTERNS (ABILITY_LEVEL_PATTERNS):
+#    - Match entire abilities preserving trigger structure
+#    - Only for SPECIAL patterns with unique semantic meaning
+#    - Examples: choice structures, ability granting, property modification
+#
+# ============================================================================
+# MORTAR APPROACH FOR GENERIC ABILITIES
+# ============================================================================
+#
+# Generic abilities (trigger + single clause effect) are NOT represented as
+# ability-level patterns. Instead, they use the "mortar" approach:
+#
+#   {trigger: "登場", clauses: ["add_from_discard", "score_mod"]}
+#
+# This means: extract the trigger icon, then match the effect text against
+# clause-level patterns. The result is a sequence of clause patterns.
+#
+# ============================================================================
+# WHAT COUNTS AS "SPECIAL" ABILITY-LEVEL PATTERNS
+# ============================================================================
+#
+# Only create ability-level patterns for combinations that have unique game
+# mechanics beyond simple clause sequences:
+#
+# 1. CHOICE STRUCTURES: "Choose X from the following: [bullet list]"
+#    - Complex selection logic that clause patterns can't capture
+#    - Example: ability_trigger_choice_options
+#
+# 2. ABILITY GRANTING: "Gain [ability] until end of live"
+#    - Meta-game mechanic of granting abilities
+#    - Example: ability_trigger_gain_ability
+#
+# 3. PROPERTY MODIFICATION: "Required hearts are reduced by X"
+#    - Direct card property modification
+#    - Example: ability_trigger_cost_reduction
+#
+# 4. TRIGGER-ONLY: Abilities with just a trigger, no effect
+#    - Example: ability_trigger_only
+#
+# ============================================================================
+# WHAT SHOULD BE REPRESENTED AS TRIGGER + CLAUSE SEQUENCES
+# ============================================================================
+#
+# Everything else - the vast majority of abilities - should be represented
+# as trigger + clause pattern sequences:
+#
+# - Simple trigger + single effect: "登場：カードを1枚引く"
+#   → {trigger: "登場", clauses: ["basic_action_draw"]}
+#
+# - Trigger + multiple effects: "登場：カードを1枚引き、手札を1枚控え室に置く"
+#   → {trigger: "登場", clauses: ["basic_action_draw", "basic_action_discard"]}
+#
+# - Trigger + conditional effect: "登場：自分のエネルギーが7枚以上ある場合、カードを1枚引く"
+#   → {trigger: "登場", clauses: ["conditional_energy", "basic_action_draw"]}
+#
+# This approach achieves high compression while preserving all game mechanics.
+# ============================================================================
+
+# ABILITY-LEVEL DSL PATTERNS (only special patterns with unique semantic meaning)
+# Generic patterns (trigger + single clause) should be represented as trigger + clause pattern sequences
 # Order from most specific to least specific
 ABILITY_LEVEL_PATTERNS = [
     {
@@ -266,64 +337,22 @@ ABILITY_LEVEL_PATTERNS = [
         "structure": "Ability - Trigger + choice with bullet-point options",
     },
     {
-        "name": "ability_trigger_condition",
-        "regex": r"(\{\{[^}]+\}\})(.+)がある場合、(.+)。",
-        "template": "⟦TRIGGER⟧⟦CONDITION⟧がある場合、⟦EFFECT⟧。",
-        "structure": "Ability - Trigger + condition + effect",
+        "name": "ability_trigger_gain_ability",
+        "regex": r"(\{\{[^}]+\}\})ライブ終了時まで、「([^」]+)」を得る。",
+        "template": "⟦TRIGGER⟧ライブ終了時まで、「⟦ABILITY⟧」を得る。",
+        "structure": "Ability - Trigger + gain ability until end",
     },
     {
-        "name": "ability_trigger_cost",
-        "regex": r"(\{\{[^}]+\}\})(.+)：(.+)。",
-        "template": "⟦TRIGGER⟧⟦COST⟧：⟦EFFECT⟧。",
-        "structure": "Ability - Trigger + cost → effect",
+        "name": "ability_trigger_cost_reduction",
+        "regex": r"(\{\{[^}]+\}\})このカードを成功させるための必要ハートは([^。]+)少なくなる。",
+        "template": "⟦TRIGGER⟧このカードを成功させるための必要ハートは⟦REDUCTION⟧少なくなる。",
+        "structure": "Ability - Trigger + cost reduction",
     },
     {
         "name": "ability_trigger_only",
         "regex": r"^(\{\{[^}]+\}\})$",
         "template": "⟦TRIGGER⟧",
         "structure": "Ability - Trigger only (no effect)",
-    },
-    {
-        "name": "ability_trigger_draw_discard",
-        "regex": r"(\{\{[^}]+\}\})カードを(\d+)枚引き、手札を(\d+)枚控え室に置く。",
-        "template": "⟦TRIGGER⟧カードを⟦X⟧枚引き、手札を⟦Y⟧枚控え室に置く。",
-        "structure": "Ability - Trigger + draw X discard Y",
-    },
-    {
-        "name": "ability_trigger_gain_until_end",
-        "regex": r"(\{\{[^}]+\}\})ライブ終了時まで、(.+)を得る。",
-        "template": "⟦TRIGGER⟧ライブ終了時まで、⟦RESOURCE⟧を得る。",
-        "structure": "Ability - Trigger + gain resource until end",
-    },
-    {
-        "name": "ability_trigger_look_top",
-        "regex": r"(\{\{[^}]+\}\})自分のデッキの上からカードを(\d+)枚見る。",
-        "template": "⟦TRIGGER⟧自分のデッキの上からカードを⟦X⟧枚見る。",
-        "structure": "Ability - Trigger + look at top X cards",
-    },
-    {
-        "name": "ability_trigger_discard_top",
-        "regex": r"(\{\{[^}]+\}\})デッキの上からカードを(\d+)枚控え室に置く。",
-        "template": "⟦TRIGGER⟧デッキの上からカードを⟦X⟧枚控え室に置く。",
-        "structure": "Ability - Trigger + discard top X cards",
-    },
-    {
-        "name": "ability_trigger_per_unit",
-        "regex": r"(\{\{[^}]+\}\})(.+)につき、(.+)を得る。",
-        "template": "⟦TRIGGER⟧⟦UNIT⟧につき、⟦RESOURCE⟧を得る。",
-        "structure": "Ability - Trigger + per-unit gain",
-    },
-    {
-        "name": "ability_trigger_simple",
-        "regex": r"(\{\{[^}]+\}\})(.+)。",
-        "template": "⟦TRIGGER⟧⟦EFFECT⟧。",
-        "structure": "Ability - Trigger + simple effect",
-    },
-    {
-        "name": "ability_catchall",
-        "regex": r".+",
-        "template": "⟦TEXT⟧",
-        "structure": "Ability - Catch-all",
     },
 ]
 
@@ -336,10 +365,22 @@ DSL_PATTERNS = [
             "structure": "Basic Action - Draw cards from deck",
         },
         {
+            "name": "discard_from_hand",
+            "regex": r"手札を(\d+)枚控え室に置く",
+            "template": "手札を⟦X⟧枚控え室に置く",
+            "structure": "Basic Action - Discard from hand (ADD_TO_HAND/DRAW opcode)",
+        },
+        {
+            "name": "discard_from_deck",
+            "regex": r"デッキの上からカードを(\d+)枚控え室に置く",
+            "template": "デッキの上からカードを⟦X⟧枚控え室に置く",
+            "structure": "Basic Action - Discard from deck (DRAW opcode)",
+        },
+        {
             "name": "basic_action_discard",
             "regex": r"([^。]+)を(\d+)枚控え室に置く",
             "template": "⟦SOURCE⟧を⟦X⟧枚控え室に置く",
-            "structure": "Basic Action - Discard cards to discard pile",
+            "structure": "Basic Action - Discard cards to discard pile (generic fallback)",
         },
         {
             "name": "look_top",
@@ -390,10 +431,22 @@ DSL_PATTERNS = [
             "structure": "Cost-Effect - Pay optional cost to activate effect",
         },
         {
+            "name": "gain_blades",
+            "regex": r"ライブ終了時まで、([^。]*)(?:ブレード|blade)([^。]*)を得る",
+            "template": "ライブ終了時まで、⟦FILTER⟧ブレード⟦SUFFIX⟧を得る",
+            "structure": "Duration - Gain blades until end of live (ADD_BLADES opcode)",
+        },
+        {
+            "name": "gain_hearts",
+            "regex": r"ライブ終了時まで、([^。]*)(?:ハート|heart)([^。]*)を得る",
+            "template": "ライブ終了時まで、⟦FILTER⟧ハート⟦SUFFIX⟧を得る",
+            "structure": "Duration - Gain hearts until end of live (ADD_HEARTS opcode)",
+        },
+        {
             "name": "duration_gain",
             "regex": r"ライブ終了時まで、([^。]+)を得る",
             "template": "ライブ終了時まで、⟦RESOURCE⟧を得る",
-            "structure": "Duration - Gain resource until end of live",
+            "structure": "Duration - Gain resource until end of live (generic fallback)",
         },
         {
             "name": "gain_ability",
@@ -432,10 +485,34 @@ DSL_PATTERNS = [
             "structure": "Per-Unit - Effect triggers per unit of something",
         },
         {
+            "name": "place_to_discard",
+            "regex": r"([^。]+)を控え室に置く",
+            "template": "⟦SOURCE⟧を控え室に置く",
+            "structure": "Basic Action - Place card to discard (MOVE_TO_DISCARD opcode)",
+        },
+        {
+            "name": "place_to_hand",
+            "regex": r"([^。]+)を手札に置く",
+            "template": "⟦SOURCE⟧を手札に置く",
+            "structure": "Basic Action - Place card to hand (ADD_TO_HAND opcode)",
+        },
+        {
+            "name": "place_to_deck",
+            "regex": r"([^。]+)をデッキに置く",
+            "template": "⟦SOURCE⟧をデッキに置く",
+            "structure": "Basic Action - Place card to deck",
+        },
+        {
+            "name": "place_to_stage",
+            "regex": r"([^。]+)をステージに置く",
+            "template": "⟦SOURCE⟧をステージに置く",
+            "structure": "Basic Action - Place card to stage",
+        },
+        {
             "name": "place_to_zone",
             "regex": r"([^。]+)を([^。]+)に置く",
             "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Place card to zone",
+            "structure": "Basic Action - Place card to zone (generic fallback)",
         },
         {
             "name": "place_at_bottom",
@@ -1890,7 +1967,44 @@ def match_dsl_patterns(clauses: list[dict[str, Any]], term_mapping: dict[str, st
                     break
             
             if not ability_matched:
-                unmatched_abilities.append(jp_text)
+                # Generic ability: represent as trigger + clause pattern sequence
+                # Extract trigger from jp_text
+                trigger_match = re.search(r'^(\{\{[^}]+\}\})', jp_text)
+                if trigger_match:
+                    trigger_icon = trigger_match.group(1)
+                    effect_text = jp_text[trigger_match.end():].lstrip('：')
+                    
+                    # Match effect text against clause-level patterns
+                    matched_clauses_for_effect = []
+                    for clause_pattern in dsl_patterns:
+                        clause_match = re.search(clause_pattern["regex"], effect_text)
+                        if clause_match:
+                            matched_clauses_for_effect.append({
+                                "pattern_name": clause_pattern["name"],
+                                "template": clause_pattern["template"],
+                                "matched_text": clause_match.group(0),
+                                "variables": list(clause_match.groups()),
+                            })
+                    
+                    if matched_clauses_for_effect:
+                        matched_abilities.append({
+                            "original": jp_text,
+                            "pattern_name": "trigger_clause_sequence",
+                            "structure": "Ability - Trigger + clause pattern sequence",
+                            "template": f"{trigger_icon} + " + " + ".join([c["template"] for c in matched_clauses_for_effect]),
+                            "matched_text": jp_text,
+                            "variables": [trigger_icon] + [v for c in matched_clauses_for_effect for v in c["variables"]],
+                            "trigger": ability.get('trigger', 'UNKNOWN'),
+                            "clause_patterns": matched_clauses_for_effect,
+                        })
+                        ability_pattern_counts["trigger_clause_sequence"] += 1
+                        if "trigger_clause_sequence" not in ability_pattern_variables:
+                            ability_pattern_variables["trigger_clause_sequence"] = []
+                        ability_pattern_variables["trigger_clause_sequence"].append([trigger_icon] + [c["pattern_name"] for c in matched_clauses_for_effect])
+                    else:
+                        unmatched_abilities.append(jp_text)
+                else:
+                    unmatched_abilities.append(jp_text)
     
     for clause_data in clauses:
         clause = clause_data["clause"]
@@ -2603,13 +2717,15 @@ def generate_structured_dsl_output(dsl_analysis: dict[str, Any], abilities_data:
     ability_level = dsl_analysis.get('dsl_pattern_analysis', {})
     pattern_counts = ability_level.get('ability_pattern_counts', {})
     pattern_variables = ability_level.get('ability_pattern_variables', {})
-    matched_abilities = ability_level.get('matched_abilities', [])
+    matched_abilities = ability_level.get('matched_ability_sample', [])
     
     # Load abilities from cards to get card references
     abilities_from_cards = abilities_data.get('abilities', [])
     
     # Build pattern entries with matched abilities and card references
     patterns_output = []
+    
+    # Add patterns from ABILITY_LEVEL_PATTERNS
     for pattern_name in [p["name"] for p in patterns]:
         if pattern_name == "ability_catchall":
             continue  # Skip catchall in structured output
@@ -2643,7 +2759,7 @@ def generate_structured_dsl_output(dsl_analysis: dict[str, Any], abilities_data:
                 "card_refs": cards[:5]  # Limit to first 5 cards
             })
         
-        patterns.append({
+        patterns_output.append({
             "pattern_name": pattern_name,
             "regex": pattern_info["regex"],
             "template": pattern_info["template"],
@@ -2652,19 +2768,52 @@ def generate_structured_dsl_output(dsl_analysis: dict[str, Any], abilities_data:
             "matched_abilities": matched_abilities_data
         })
     
+    # Add dynamically generated trigger_clause_sequence pattern
+    if "trigger_clause_sequence" in pattern_counts:
+        match_count = pattern_counts["trigger_clause_sequence"]
+        pattern_matched = [a for a in matched_abilities if a['pattern_name'] == 'trigger_clause_sequence']
+        
+        matched_abilities_data = []
+        for matched in pattern_matched[:10]:  # Limit to 10 samples
+            cards = []
+            for ability in abilities_from_cards:
+                for source in ability['source_ability_texts']:
+                    if source['jp'] == matched['original']:
+                        cards = source.get('cards', [])
+                        break
+                if cards:
+                    break
+            
+            matched_abilities_data.append({
+                "ability_text": matched['original'],
+                "variables": matched.get('variables', []),
+                "trigger": matched.get('trigger', 'UNKNOWN'),
+                "clause_patterns": matched.get('clause_patterns', []),
+                "card_refs": cards[:5]
+            })
+        
+        patterns_output.append({
+            "pattern_name": "trigger_clause_sequence",
+            "regex": "DYNAMIC - trigger + clause patterns",
+            "template": "⟦TRIGGER⟧ + [⟦CLAUSE_PATTERN_1⟧, ⟦CLAUSE_PATTERN_2⟧, ...]",
+            "structure": "Ability - Trigger + clause pattern sequence (generic)",
+            "match_count": match_count,
+            "matched_abilities": matched_abilities_data
+        })
+    
     # Sort by match count (descending)
-    patterns.sort(key=lambda p: -p['match_count'])
+    patterns_output.sort(key=lambda p: -p['match_count'])
     
     output = {
         "schema": "dsl_analysis_structured.v1",
         "_comment": "DSL pattern analysis results - structured for system consumption",
         "metadata": {
             "generated_at": datetime.now().isoformat(),
-            "total_patterns": len(patterns),
+            "total_patterns": len(patterns_output),
             "total_abilities_analyzed": ability_level.get('total_abilities', 0),
             "compression_ratio": ability_level.get('ability_compression_ratio', 0)
         },
-        "patterns": patterns
+        "patterns": patterns_output
     }
     
     output_file.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")

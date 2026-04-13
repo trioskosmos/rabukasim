@@ -1,0 +1,97 @@
+================================================================================
+CARD ABILITIES - ORGANIZED BY PATTERN
+================================================================================
+
+
+================================================================================
+PATTERN: ability_trigger_cost (64 abilities)
+================================================================================
+
+1. {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+   Cards: PL!-sd1-002-SD | 絢瀬 絵里 (ab#0), PL!S-PR-025-PR | 高海千歌 (ab#0), PL!S-PR-027-PR | 松浦果南 (ab#0)
+   Trigger: ACTIVATED
+
+2. {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+   Cards: PL!-sd1-005-SD | 星空 凛 (ab#0), PL!S-PR-026-PR | 桜内梨子 (ab#0), PL!N-PR-009-PR | 優木せつ菜 (ab#0)
+   Trigger: ACTIVATED
+
+3. {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分のデッキの上からカードを10枚控え室に置く。
+   Cards: PL!-sd1-008-SD | 小泉 花陽 (ab#0)
+   Trigger: ACTIVATED
+
+4. {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_03.png|heart03}}を3以上含むライブカードを1枚手札に加える。
+   Cards: PL!-PR-003-PR | 南ことり (ab#0)
+   Trigger: ACTIVATED
+
+5. {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から必要ハートに{{heart_01.png|heart01}}を3以上含むライブカードを1枚手札に加える。
+   Cards: PL!-PR-004-PR | 園田海未 (ab#0)
+   Trigger: ACTIVATED
+
+6. {{kidou.png|起動}}{{turn1.png|ターン1回}}手札をすべて公開する：自分のステージにほかのメンバーがおり、かつこれにより公開した手札の中にライブカードがない場合、自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
+   Cards: PL!N-PR-003-PR | 上原歩夢 (ab#0), PL!N-PR-008-PR | 近江彼方 (ab#0), PL!N-PR-010-PR | エマ・ヴェルデ (ab#0)
+   Trigger: ACTIVATED
+
+7. {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。
+   Cards: PL!N-bp1-002-R+ | 中須かすみ (ab#1), PL!N-bp1-002-P | 中須かすみ (ab#1), PL!N-bp1-002-P+ | 中須かすみ (ab#1)
+   Trigger: ACTIVATED
+
+8. {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。
+   Cards: PL!N-bp1-006-R+ | 近江彼方 (ab#0), PL!N-bp1-006-P | 近江彼方 (ab#0), PL!N-bp1-006-P+ | 近江彼方 (ab#0)
+   Trigger: ACTIVATED
+
+9. {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。
+   Cards: PL!N-bp1-006-R+ | 近江彼方 (ab#1), PL!N-bp1-006-P | 近江彼方 (ab#1), PL!N-bp1-006-P+ | 近江彼方 (ab#1)
+   Trigger: ACTIVATED
+
+10. {{kidou.png|起動}}{{turn1.png|ターン1回}}手札のメンバーカードを1枚控え室に置く：自分の控え室から、これにより控え室に置いたメンバーカードより、コストの低いメンバーカードを1枚手札に加える。
+   Cards: PL!N-bp1-008-R | エマ・ヴェルデ (ab#0), PL!N-bp1-008-P | エマ・ヴェルデ (ab#0)
+   Trigger: ACTIVATED
+
+... and 54 more
+
+
+================================================================================
+PATTERN: ability_trigger_simple (539 abilities)
+================================================================================
+
+1. {{toujyou.png|登場}}自分の成功ライブカード置き場にカードが2枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。
+   Cards: PL!-sd1-001-SD | 高坂 穂乃果 (ab#0)
+   Trigger: ON_PLAY
+
+2. {{jyouji.png|常時}}自分の成功ライブカード置き場にあるカード1枚につき、{{icon_blade.png|ブレード}}を得る。
+   Cards: PL!-sd1-001-SD | 高坂 穂乃果 (ab#1)
+   Trigger: CONSTANT
+
+3. {{toujyou.png|登場}}自分の控え室からコスト4以下の『μ's』のメンバーカードを1枚手札に加える。
+   Cards: PL!-sd1-003-SD | 南 ことり (ab#0)
+   Trigger: ON_PLAY
+
+4. {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。
+   Cards: PL!-sd1-003-SD | 南 ことり (ab#1)
+   Trigger: LIVE_START
+
+5. {{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『μ's』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
+   Cards: PL!-sd1-004-SD | 園田海未 (ab#0)
+   Trigger: ON_PLAY
+
+6. {{toujyou.png|登場}}手札のライブカードを1枚公開してもよい：自分の成功ライブカード置き場にあるカードを1枚手札に加える。そうした場合、これにより公開したカードを自分の成功ライブカード置き場に置く。
+   Cards: PL!-sd1-006-SD | 西木野 真姫 (ab#0)
+   Trigger: ON_PLAY
+
+7. {{toujyou.png|登場}}自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある場合、カードを1枚引く。
+   Cards: PL!-sd1-007-SD | 東條 希 (ab#0)
+   Trigger: ON_PLAY
+
+8. {{live_start.png|ライブ開始時}}自分の控え室に『μ's』のカードが25枚以上ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+   Cards: PL!-sd1-009-SD | 矢澤 にこ (ab#0)
+   Trigger: CONSTANT
+
+9. {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+   Cards: PL!-sd1-011-SD | 絢瀬 絵里 (ab#0), PL!-sd1-012-SD | 南 ことり (ab#0), PL!-sd1-016-SD | 東條 希 (ab#0)
+   Trigger: ON_PLAY
+
+10. {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚見る。その中からメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。
+   Cards: PL!-sd1-015-SD | 西木野 真姫 (ab#0), PL!HS-bp2-010-N | 日野下花帆 (ab#0)
+   Trigger: ON_PLAY
+
+... and 529 more
