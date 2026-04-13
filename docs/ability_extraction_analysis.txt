@@ -1,0 +1,468 @@
+================================================================================
+ABILITY EXTRACTION ANALYSIS
+Detailed review of `tools/extract_abilities_to_template.py`
+================================================================================
+
+FILE ANALYZED: tools/extract_abilities_to_template.py (2252 lines)
+RELATED FILES:
+- tools/branch_structure_analysis.md
+- data/ability_concrete_format_documentation.md
+
+PURPOSE OF THIS DOCUMENT:
+This file is not just a bug list. It is a design note for how we should extract
+ability meaning more faithfully than the current Python script does.
+
+The main goal is to preserve all useful information about an ability:
+- what trigger it belongs to
+- what text is a cost versus an effect
+- what text is optional
+- what text is conditional
+- what branch options exist
+- which operations belong to which branch
+- which target each operation applies to
+- which raw Japanese text produced each piece
+- how the text was normalized and translated
+
+The current extractor does some of this, but it flattens too much and loses
+important structure.
+
+================================================================================
+1. WHAT THE CURRENT SCRIPT ATTEMPTS
+================================================================================
+
+The extractor currently tries to turn Japanese ability text into structured
+logic through these steps:
+
+1. Read ability text from `cards.json`
+2. Group cards that share the same ability text
+3. Split multi-trigger cards by icon markers
+4. Parse the text with many regex patterns in `jp_to_logic()`
+5. Translate extracted fragments into English
+6. Emit logic strings and card references
+
+This is a sensible starting point, but it treats the ability as mostly a flat
+string. That is the central limitation.
+
+The script is strongest when the ability is a single simple action.
+It becomes much weaker when the ability has:
+- multiple triggers
+- optional costs
+- branches / choices
+- conditions inside branch options
+- nested or scoped effects
+- target changes mid-text
+- repeated clauses with different ownership
+
+================================================================================
+2. WHAT WE SHOULD PRESERVE ABOUT EACH ABILITY
+================================================================================
+
+The output should not just say "draw 1 card" or "tap member". It should record
+the structure around those actions as well.
+
+For each ability, preserve:
+
+1. Raw source text
+- Original Japanese text
+- Source card references
+- Trigger icon markers
+- Any embedded template markers
+
+2. Normalized text
+- Text after icon removal
+- Text after punctuation normalization
+- Text after number normalization
+- Text after phrase canonicalization
+- Text after any mojibake cleanup
+
+3. Trigger structure
+- Which trigger the clause belongs to
+- Whether multiple triggers exist in the same printed ability
+- Whether the trigger is `ON_PLAY`, `LIVE_START`, `ACTIVATED`, `AUTO`,
+  `ONCE_PER_TURN`, or another supported type
+
+4. Clause structure
+- Costs
+- Preconditions
+- Branch selectors
+- Optional actions
+- Effects
+- Post-effects / follow-up actions
+
+5. Semantic relationships
+- Condition applies to entire branch or only to one clause
+- Cost happens before effect or as part of an optional fork
+- Choice option maps to one specific outcome
+- Effect is conditional on a prior comparison
+- A text fragment is a target filter rather than the action itself
+
+6. Target resolution
+- Source card
+- Hand
+- Deck
+- Discard
+- Stage slots
+- Opponent stage
+- Selected card
+- Current player vs opponent player
+
+7. Translation confidence
+- Exact translated phrase
+- Fuzzy or heuristic translation
+- Unresolved fragment
+- Manual review flag
+
+================================================================================
+3. HIGH-PRIORITY BUGS
+================================================================================
+
+BUG 1: Destructive cleanup corrupts valid English
+
+Problem:
+The translation cleanup currently removes normal ASCII letters in some cases.
+That can damage already-correct output such as "draw", "opponent", or
+"activate".
+
+Why this matters:
+- We lose the correct effect description after successfully parsing it
+- Debugging becomes misleading because the text looks like the parser was wrong
+  when the cleanup stage actually broke it
+
+What to do instead:
+- Keep cleanup tightly scoped to known mojibake artifacts
+- Never strip generic ASCII letters as a broad fix
+- Prefer a whitelist of known replacements over character deletion
+
+BUG 2: Branch options are extracted but not properly translated
+
+Problem:
+The branch-choice logic captures option text and formats it as:
+`option 1: ...; option 2: ...`
+but it does not consistently run the same translation/normalization pipeline on
+the option text.
+
+Why this matters:
+- We lose the meaning of branch choices
+- The output becomes unreadable for choice-based abilities
+- We cannot tell which option produced which effect
+
+What to do instead:
+- Treat each branch option as its own parsed clause
+- Preserve the raw option text
+- Translate the option text
+- Store conditions and effects separately for each option
+
+BUG 3: Multi-trigger abilities are flattened
+
+Problem:
+When one printed ability contains more than one trigger, the output mixes those
+clauses together in a single logic list.
+
+Example pattern:
+- Trigger A: optional energy payment, branch choice, stage action
+- Trigger B: activation / discard / tap / untap sequence
+
+Why this matters:
+- We lose the boundary between triggers
+- Operations appear to belong to the wrong trigger
+- The structure of the printed ability is no longer recoverable
+
+What to do instead:
+- Split by trigger first
+- Parse each trigger independently
+- Keep a `trigger_index` or `trigger_group` field
+
+BUG 4: Optionality is not modeled cleanly
+
+Problem:
+Some clauses are optional, but they are also extracted as if they were normal
+mandatory operations.
+
+Why this matters:
+- Optional costs and optional effects are not the same thing
+- A player choice can change the meaning of all following text
+- The parser may duplicate or misorder operations
+
+What to do instead:
+- Mark optional sections explicitly
+- Keep the optional flag attached to the clause, not only to the translated
+  string
+
+================================================================================
+4. ARCHITECTURAL LIMITATIONS
+================================================================================
+
+LIMITATION 1: Regex-only parsing cannot hold enough structure
+
+The current regex approach is useful for repeating templates, but it does not
+scale well to abilities that vary in:
+- clause order
+- clause scope
+- punctuation style
+- condition placement
+- optional markers
+- branch formatting
+
+This is especially true for Japanese text, where word boundaries are not
+explicit and meaning is often carried by particles and clause order.
+
+Best use of regex:
+- simple one-action abilities
+- narrow template matches
+- post-normalization skeletons
+
+Best use of a richer parser:
+- branch abilities
+- conditional abilities
+- nested cost/effect sequences
+- multi-trigger cards
+
+LIMITATION 2: No preserved parse tree
+
+The current output is essentially a flat list of operations.
+That loses:
+- clause nesting
+- option membership
+- trigger boundaries
+- condition scope
+- optional scope
+
+Recommended data model:
+- a tree of triggers
+- each trigger contains ordered clauses
+- each clause contains raw text, normalized text, parsed type, targets, and
+  child clauses if it branches
+
+LIMITATION 3: Target resolution is heuristic
+
+The current target detection uses short context windows and string cues.
+That means the parser guesses based on nearby text instead of recording an
+explicit target state.
+
+What this misses:
+- target changes mid-ability
+- "your" vs "opponent's" stage references
+- source-card semantics when CONTEXT resolves to the card's stage slot
+- references that depend on a previous clause
+
+Recommended improvement:
+- resolve targets as part of clause parsing
+- store target metadata separately from the translated action text
+
+LIMITATION 4: Conditional meaning is often embedded, not extracted
+
+Many abilities contain conditions inside branch options or clause prefixes.
+The current output often leaves those conditions inside a free-form string.
+
+What gets lost:
+- if / then structure
+- and/or relationships
+- branch-level filters
+- thresholds such as cost <= N or cards >= N
+
+Recommended improvement:
+- pull conditions into a separate field
+- link each condition to the clause or branch it controls
+
+LIMITATION 5: The parser is scattershot instead of source-grounded
+
+The code often behaves as if it already knows what the ability should mean and
+then searches for fragments that might fit that assumption.
+
+Evidence in the current script:
+- it matches against many hard-coded strings rather than deriving structure from
+  the Japanese text itself
+- it uses broad `in jp_text` checks to decide whether a clause exists
+- it applies many fixed replacements to substrings that are assumed to be
+  present
+- it tries to recognize English-like intent after the fact instead of building a
+  parse directly from the Japanese tokens and clause boundaries
+
+Why this matters:
+- a guessed pattern can be wrong even when the Japanese text is different
+- the same clause may be missed if its wording changes slightly
+- unrelated fragments can be misread as a valid clause
+- the extractor becomes a collection of special cases instead of a single
+  reliable interpretation pipeline
+
+Recommended improvement:
+- treat the Japanese ability text as the source of truth
+- derive a normalized intermediate form before any English wording is produced
+- compare clauses against the actual source text, not against a presupposed
+  English paraphrase
+- separate detection, normalization, translation, and formatting into distinct
+  stages
+
+================================================================================
+5. WHAT A BETTER OUTPUT SHOULD LOOK LIKE
+================================================================================
+
+The output should preserve enough structure that a human or downstream tool can
+reconstruct the original card logic without re-reading the raw Japanese text.
+
+Suggested record shape:
+
+{
+  "source_ability_texts": [
+    {
+      "jp_raw": "<original printed text>",
+      "jp_normalized": "<normalized Japanese>",
+      "trigger": "ON_PLAY",
+      "trigger_index": 0,
+      "clauses": [
+        {
+          "kind": "cost | condition | branch | effect | optional",
+          "raw": "<raw fragment>",
+          "normalized": "<normalized fragment>",
+          "logic": "<English logic>",
+          "target": "hand | deck | discard | source_card | opponent_stage",
+          "optional": true,
+          "conditions": [],
+          "children": []
+        }
+      ],
+      "cards": ["..."]
+    }
+  ]
+}
+
+This is much better than a single flattened string because it preserves:
+- order
+- nesting
+- ownership
+- optionality
+- branch structure
+- trigger structure
+
+================================================================================
+6. RECOMMENDED EXTRACTION FLOW
+================================================================================
+
+The parser should work in layers:
+
+1. Preserve raw text
+- Keep the original ability text untouched
+- Keep icon markers and source references
+
+2. Normalize
+- Remove trigger icons
+- Normalize punctuation
+- Normalize numerals and counters
+- Canonicalize repeated phrases
+- Clean only known corruption patterns
+
+3. Split by trigger
+- Separate printed trigger sections before parsing the details
+
+4. Split by clause boundaries
+- Identify cost segments
+- Identify conditions
+- Identify branch choice sections
+- Identify effects
+
+5. Parse each clause
+- Translate known phrases
+- Resolve targets
+- Extract counts and operators
+- Keep uncertain fragments visible
+
+6. Emit structured output
+- Do not collapse everything into one logic line
+- Keep raw, normalized, and translated forms together
+
+================================================================================
+7. SPECIFIC IMPROVEMENTS NEEDED
+================================================================================
+
+Priority 1: Stop corrupting translated English
+- Remove broad destructive cleanup
+- Add tests that protect correct English output
+
+Priority 2: Preserve branch structure
+- Translate branch options
+- Keep each option as a separate clause
+- Record conditions that belong to each option
+
+Priority 3: Preserve trigger boundaries
+- Split multi-trigger abilities before clause extraction
+- Store trigger ownership in the output
+
+Priority 4: Preserve optional and conditional scope
+- Mark optional sections explicitly
+- Separate condition text from the action it gates
+
+Priority 5: Keep raw text alongside logic
+- Store the original source fragment
+- Store the normalized fragment
+- Store the translated result
+- Flag anything ambiguous for manual review
+
+================================================================================
+8. WHAT THE ANALYSIS FROM `branch_structure_analysis.md` ADDS
+================================================================================
+
+The branch analysis shows a few concrete failure modes:
+
+- Some abilities contain "choose one from" style branches
+- Option text is sometimes left untranslated
+- Later operations are extracted even when they belong to another trigger
+- Branch conditions can remain trapped inside the option text
+- A flat output format makes it hard to tell which operation belongs where
+
+The important takeaway is not just that translation is incomplete.
+It is that the parser loses the relationship between:
+- option text and option effects
+- condition and branch
+- trigger and clause
+- cost and effect
+
+================================================================================
+9. WHAT THE CONCRETE FORMAT DOC ADDS
+================================================================================
+
+The concrete format documentation is useful because it points toward the right
+kind of output:
+- direct game actions
+- explicit targets
+- explicit filters
+- direct descriptions of what runtime handlers do
+
+However, the ability extractor should go further by keeping the linguistic
+structure too.
+
+That means the output should not only say:
+- "draw 1 card from deck to hand"
+
+It should also say:
+- which trigger this came from
+- whether it was optional
+- whether it was gated by a condition
+- whether it was one branch out of several
+- what the raw Japanese source was
+- what normalization steps were applied
+
+================================================================================
+10. FINAL RECOMMENDATION
+================================================================================
+
+The current approach is good for simple cards, but it is not preserving enough
+detail for complex ability text.
+
+The right improvement is not to remove detail.
+It is to preserve detail in a structured way.
+
+Best path forward:
+- keep regex for simple patterns
+- add a normalization layer before translation
+- split triggers before clause parsing
+- keep branch options separate
+- mark optional and conditional scope explicitly
+- store raw, normalized, and translated text together
+- use manual review for anything ambiguous
+
+That gives us a parser that is still practical, but much more faithful to the
+actual text on the card.
+
+================================================================================
+END OF ANALYSIS
+================================================================================

@@ -1,0 +1,341 @@
+DSL Pattern Templates - Information Theory Compression
+================================================================
+
+GOAL: Represent abilities in as few patterns as possible without losing meaning.
+
+This file shows how 1120 unique ability clauses are compressed into 26 pattern templates
+by treating ability text as a domain-specific language (DSL) for game mechanics.
+
+Each pattern template represents a grammatical structure in the ability DSL. Variables
+(numbers, card types, groups, zones) are extracted as parameters, allowing multiple
+unique clauses to share the same template while preserving all game mechanics.
+
+COMPRESSION STATISTICS:
+- Total clauses: 1973
+- Matched clauses: 1120 (56.77%)
+- Unique patterns: 26
+- Average clauses per pattern: 43
+
+================================================================================
+Pattern: place_to_zone
+Count: 196 clauses
+Structure: Basic Action - Place card to zone
+Template: ⟦SOURCE⟧を⟦DESTINATION⟧に置く
+
+Variables extracted (196 instances):
+  Unique combinations: 33
+    89x: ('残り', '控え室')
+    23x: ('その中から1枚を手札に加え、残り', '控え室')
+    22x: ('その中から好きな枚数を好きな順番でデッキの上に置き、残り', '控え室')
+    4x: ('自分の控え室からライブカード', '1枚までデッキの一番下')
+    4x: ('それら', '好きな順番でデッキの上')
+    4x: ('そうした場合、自分の控え室にある『虹ヶ咲』のライブカード', '1枚成功ライブカード置き場')
+    4x: ('エネルギー置き場にあるエネルギー1枚', 'このメンバーの下')
+    3x: ('自分の控え室からカード', '1枚までデッキの一番上')
+    3x: ('このメンバー', 'ステージから控え室')
+    3x: ('カードを1枚引き、手札', '1枚デッキの一番下')
+    ... and 23 more combinations
+
+================================================================================
+Pattern: basic_action_discard
+Count: 169 clauses
+Structure: Basic Action - Discard cards to discard pile
+Template: ⟦SOURCE⟧を⟦X⟧枚控え室に置く
+
+Variables extracted (169 instances):
+  Unique combinations: 41
+    24x: ('手札', '1')
+    18x: ('カードを1枚引き、手札', '1')
+    13x: ('手札', '2')
+    11x: ('カードを2枚引き、手札', '1')
+    8x: ('自分のデッキの上からカード', '3')
+    8x: ('このメンバーをウェイトにし、手札', '1')
+    7x: ('デッキの上からカード', '3')
+    6x: ('自分のデッキの上からカード', '5')
+    6x: ('カードを2枚引き、手札', '2')
+    4x: ('手札のコスト4以下の『Liella!』のメンバーカード', '1')
+    ... and 31 more combinations
+
+================================================================================
+Pattern: add_from_discard
+Count: 149 clauses
+Structure: Basic Action - Add cards from discard to hand
+Template: 自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える
+
+Variables extracted (149 instances):
+  Unique combinations: 23
+    51x: ('ライブ', '1')
+    23x: ('メンバー', '1')
+    14x: ('『虹ヶ咲』のライブ', '1')
+    9x: ('『蓮ノ空』のライブ', '1')
+    8x: ("『μ's』のライブ", '1')
+    5x: ('『Liella!』の', '1')
+    4x: ('4コスト以下の『蓮ノ空』のメンバー', '1')
+    4x: ('『みらくらぱーく！』の', '1')
+    4x: ('コスト2以下のメンバー', '1')
+    4x: ('、これにより公開したカードのカード名がすべて含まれるライブ', '1')
+    ... and 13 more combinations
+
+================================================================================
+Pattern: look_top
+Count: 126 clauses
+Structure: Basic Action - Look at top cards of deck
+Template: 自分のデッキの上からカードを⟦X⟧枚見る
+
+Variables extracted (126 instances):
+  Unique combinations: 7
+    45x: ('5',)
+    36x: ('3',)
+    20x: ('2',)
+    15x: ('4',)
+    6x: ('7',)
+    2x: ('6',)
+    2x: ('1',)
+
+================================================================================
+Pattern: basic_action_draw
+Count: 124 clauses
+Structure: Basic Action - Draw cards from deck
+Template: カードを⟦X⟧枚引く
+
+Variables extracted (124 instances):
+  Unique combinations: 3
+    112x: ('1',)
+    7x: ('3',)
+    5x: ('2',)
+
+================================================================================
+Pattern: cost_effect
+Count: 66 clauses
+Structure: Cost-Effect - Pay optional cost to activate effect
+Template: ⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧
+
+Variables extracted (66 instances):
+  Unique combinations: 22
+    6x: ('手札', '1', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    6x: ('手札', '1', 'ライブ終了時まで、を得る')
+    5x: ('手札', '1', 'かかのうち、1つを選ぶ')
+    5x: ('手札', '1', '相手のステージにいるコスト4以下のメンバーを2人までウェイトにする')
+    4x: ('手札', '1', '自分のステージにほかのメンバーがいる場合、好きなハートの色を1つ指定する')
+    4x: ('手札', '1', 'これにより控え室に置いたカードがメンバーカードの場合、控え室に置いたカードと同じ名前を持つメンバー1人は、ライブ終了時まで、を得る')
+    4x: ('手札', '2', '自分のステージにいるこのメンバー以外のウェイト状態のメンバー1人をアクティブにする')
+    4x: ('手札のライブカード', '1', '好きなハートの色を1つ指定する')
+    4x: ('手札', '1', '自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る')
+    4x: ('手札', '1', 'ライブ終了時まで、これにより控え室に置いたカードと同じグループ名を持つメンバー1人は、を得る')
+    ... and 12 more combinations
+
+================================================================================
+Pattern: state_change_wait
+Count: 65 clauses
+
+Variables extracted (65 instances):
+  Unique combinations: 21
+    8x: ('このメンバー',)
+    6x: ('/このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人',)
+    5x: ('・相手のステージにいるコスト4以下のメンバー1人',)
+    4x: ('メンバー1人',)
+    4x: ('このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つの数が3つ以下のメンバー1人',)
+    4x: ('：相手のステージにいるコスト10以下のメンバー1人',)
+    4x: ('自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合、相手のステージにいる元々持つの数が3つ以下のすべてのメンバー',)
+    3x: ('・相手のステージにいるすべてのコスト2以下のメンバー',)
+    3x: ('これにより控え室に置いたカードがライブカードの場合、このメンバー',)
+    3x: ('自分のステージにこのメンバー以外のメンバーがいる場合、このメンバー',)
+    ... and 11 more combinations
+
+================================================================================
+Pattern: duration_gain
+Count: 49 clauses
+
+Variables extracted (49 instances):
+  Unique combinations: 28
+    4x: ('自分のライブ中のカード1枚につき、',)
+    4x: ('自分の手札2枚につき、',)
+    4x: ('これによって控え室に置いたカード1枚につき、',)
+    4x: ('自分のステージにいるメンバーは',)
+    4x: ('これによりアクティブにしたメンバーと、このメンバーは、それぞれ',)
+    2x: ('［緑ハート］',)
+    2x: ('自分のステージにいるメンバー1人は、',)
+    2x: ("自分のセンターエリアにいる『μ's』のメンバーは、",)
+    2x: ('自分のステージにいる『虹ヶ咲』のメンバー1人は、',)
+    2x: ('自分のステージにいる『虹ヶ咲』のメンバー1人は',)
+    ... and 18 more combinations
+
+================================================================================
+Pattern: conditional_threshold
+Count: 37 clauses
+Structure: Conditional - Threshold condition triggers effect
+Template: 自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧
+
+Variables extracted (37 instances):
+  Unique combinations: 23
+    4x: ('ステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「エールにより公開された自分のカードの中にライブカード', '1', 'ライブの合計スコアを+１する')
+    4x: ('エネルギー', '7', '自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く')
+    4x: ('カードの中にブレードハートを持たないメンバーカード', '3', 'ライブ終了時まで、を得る')
+    2x: ('エネルギー', '12', 'ライブの合計スコアを+１する')
+    2x: ('エネルギー', '10', 'ステージにいるこのメンバーのコストを+４する')
+    2x: ('成功ライブカード置き場のカードが0枚で、かつ相手の成功ライブカード置き場にカード', '1', 'を得る')
+    2x: ('ステージにいるメンバーが『Liella!』のみで、かつ自分のエネルギー', '7', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    2x: ('カードの中に、名前が異なる『Liella!』のメンバーカード', '3', 'エールにより公開された自分のカードの中から『Liella!』のライブカードを1枚手札に加える')
+    1x: ("控え室に『μ's』のカード", '25', 'ライブ終了時まで、「ライブの合計スコアを+１する')
+    1x: ('ライブ中のカード', '3', 'このカードのスコアを+２する')
+    ... and 13 more combinations
+
+================================================================================
+Pattern: state_change_activate
+Count: 34 clauses
+
+Variables extracted (34 instances):
+  Unique combinations: 3
+    24x: ('2',)
+    8x: ('1',)
+    2x: ('4',)
+
+================================================================================
+Pattern: gain_ability
+Count: 24 clauses
+
+Variables extracted (24 instances):
+  Unique combinations: 2
+    23x: ('ライブの合計スコアを+１する。',)
+    1x: ('ライブの合計スコアを+３する。',)
+
+================================================================================
+Pattern: per_unit
+Count: 18 clauses
+Structure: Per-Unit - Effect triggers per unit of something
+Template: ⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧
+
+Variables extracted (18 instances):
+  Unique combinations: 11
+    6x: ('ライブ終了時まで、自分', '成功ライブカード置き場にあるカード', '1', '選んだハートを1つ得る')
+    2x: ('この能力を起動するためのコストは、自分', '成功ライブカード置き場にあるカード', '1', '控え室に置く手札の数が1枚減る')
+    2x: ('このメンバー', '下にあるエネルギーカード', '1', 'を得る')
+    1x: ('自分', '成功ライブカード置き場にあるカード', '1', 'を得る')
+    1x: ('自分', '成功ライブカード置き場にあるカード', '1', 'このカードを成功させるための必要ハートは少なくなる')
+    1x: ('手札にあるこのメンバーカードのコストは、このカード以外の自分', '手札', '1', '1少なくなる')
+    1x: ('それら', '中にあるライブカード', '1', 'このカードのスコアを+１する')
+    1x: ('自分', '成功ライブカード置き場にあるカード', '1', 'ステージにいるこのメンバーのコストを+１する')
+    1x: ('自分の成功ライブカード置き場にあるカード名が「EMOTION」', 'カード', '1', 'このカードのスコアを+２し、成功させるための必要ハートを増やす')
+    1x: ('自分のライブカード置き場にあるこのカード以外の『蓮ノ空』', 'カード', '1', 'このカードの必要ハートを減らす')
+    ... and 1 more combinations
+
+================================================================================
+Pattern: area_swap
+Count: 15 clauses
+
+Variables extracted (15 instances):
+  Unique combinations: 1
+    15x: ('(こ', '今いるエリア以外のエリア')
+
+================================================================================
+Pattern: choose_option
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 2
+    7x: ('かか',)
+    1x: ('自分の成功ライブカード置き場にカードがある場合、かか',)
+
+================================================================================
+Pattern: trigger_on_discard
+Count: 8 clauses
+
+Variables extracted (8 instances):
+  Unique combinations: 3
+    4x: ('メンバー1人をポジションチェンジさせてもよい',)
+    2x: ('メンバー1人をアクティブにしてもよい',)
+    2x: ('手札を1枚控え室に置いてもよい',)
+
+================================================================================
+Pattern: conditional_group_presence
+Count: 5 clauses
+
+Variables extracted (5 instances):
+  Unique combinations: 5
+    1x: ('虹ヶ咲', 'このカードのスコアを+１する')
+    1x: ('蓮ノ空', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    1x: ('蓮ノ空', 'このカードを成功させるための必要ハートは、か、か、のうち、選んだ1つにしてもよい')
+    1x: ('虹ヶ咲', '自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く')
+    1x: ('A-RISE', '以下から1つを選ぶ')
+
+================================================================================
+Pattern: move_member
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('そのエリア',)
+
+================================================================================
+Pattern: disable_ability
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('自分のステージにいる『Liella!』のメンバー1人のすべての',)
+
+================================================================================
+Pattern: conditional_area_population
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 1
+    4x: ('ライブ終了時まで、を得る',)
+
+================================================================================
+Pattern: batontouch_condition
+Count: 4 clauses
+
+Variables extracted (4 instances):
+  Unique combinations: 2
+    2x: ('DOLLCHESTRA', 'ライブ終了時まで、を得る')
+    2x: ('みらくらぱーく！', 'ライブ終了時まで、を得る')
+
+================================================================================
+Pattern: conditional_member_count
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 2
+    1x: ('CatChu!', '2', 'エネルギーを6枚までアクティブにする')
+    1x: ('KALEIDOSCORE', '2', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: multi_card_stage
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('4', '2')
+
+================================================================================
+Pattern: conditional_comparison
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('手札の枚数', '多い', 'このカードのスコアを+１する')
+
+================================================================================
+Pattern: total_zone_cards
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ('成功ライブカード置き場', '3', 'を得る')
+
+================================================================================
+Pattern: activate_all_members
+Count: 2 clauses
+
+Variables extracted (2 instances):
+  Unique combinations: 1
+    2x: ()
+
+================================================================================
+Pattern: zone_specific_condition
+Count: 1 clauses
+
+Variables extracted (1 instances):
+  Unique combinations: 1
+    1x: ('センター', 'コスト9以上の『Aqours』のメンバー', '以下から1つを選ぶ')
