@@ -154,9 +154,6 @@ frontend/web_ui/node_modules/
 # Web Distribution
 web_dist/
 
-# Tools folder
-tools/
-
 # Debug and Trace
 trace_logic.py
 fix_logic.py
