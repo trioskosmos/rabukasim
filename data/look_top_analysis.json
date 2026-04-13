@@ -1,0 +1,101 @@
+{
+  "pattern_name": "look_top",
+  "total_matches": 126,
+  "sources": {
+    "5": 45,
+    "3": 36,
+    "2": 20,
+    "4": 15,
+    "7": 6,
+    "6": 2,
+    "1": 2
+  },
+  "counts": {
+    "": 126
+  },
+  "destinations": {
+    "": 126
+  },
+  "sample_matches": [
+    {
+      "source": "5",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "5"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "5",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "5"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    },
+    {
+      "source": "3",
+      "count": "",
+      "destination": "",
+      "full_vars": [
+        "3"
+      ]
+    }
+  ]
+}

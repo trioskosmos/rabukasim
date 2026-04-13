@@ -358,6 +358,128 @@ ABILITY_LEVEL_PATTERNS = [
 
 # CLAUSE-LEVEL DSL PATTERNS
 DSL_PATTERNS = [
+        # ATOMIC PATTERNS - Smallest semantic units
+        {
+            "name": "atomic_cost_below",
+            "regex": r"コスト(\d+)以下",
+            "template": "コスト⟦X⟧以下",
+            "structure": "Atomic - Cost below threshold",
+        },
+        {
+            "name": "atomic_cost_above",
+            "regex": r"コスト(\d+)以上",
+            "template": "コスト⟦X⟧以上",
+            "structure": "Atomic - Cost above threshold",
+        },
+        {
+            "name": "atomic_group_mus",
+            "regex": r"『μ's』",
+            "template": "『μ's』",
+            "structure": "Atomic - Group μ's",
+        },
+        {
+            "name": "atomic_group_aqours",
+            "regex": r"『Aqours』",
+            "template": "『Aqours』",
+            "structure": "Atomic - Group Aqours",
+        },
+        {
+            "name": "atomic_group_nijigasaki",
+            "regex": r"『虹ヶ咲』",
+            "template": "『虹ヶ咲』",
+            "structure": "Atomic - Group 虹ヶ咲",
+        },
+        {
+            "name": "atomic_group_hasu",
+            "regex": r"『蓮ノ空』",
+            "template": "『蓮ノ空』",
+            "structure": "Atomic - Group 蓮ノ空 (Hasu)",
+        },
+        {
+            "name": "atomic_group_liella",
+            "regex": r"『Liella!』",
+            "template": "『Liella!』",
+            "structure": "Atomic - Group Liella!",
+        },
+        {
+            "name": "atomic_card_type_live",
+            "regex": r"ライブカード",
+            "template": "ライブカード",
+            "structure": "Atomic - Card type: live card",
+        },
+        {
+            "name": "atomic_card_type_member",
+            "regex": r"メンバーカード",
+            "template": "メンバーカード",
+            "structure": "Atomic - Card type: member card",
+        },
+        {
+            "name": "atomic_zone_discard",
+            "regex": r"自分の控え室から",
+            "template": "自分の控え室から",
+            "structure": "Atomic - Zone: from discard",
+        },
+        {
+            "name": "atomic_zone_deck_top",
+            "regex": r"自分のデッキの上から",
+            "template": "自分のデッキの上から",
+            "structure": "Atomic - Zone: from deck top",
+        },
+        {
+            "name": "atomic_zone_hand",
+            "regex": r"手札",
+            "template": "手札",
+            "structure": "Atomic - Zone: hand",
+        },
+        {
+            "name": "atomic_zone_stage",
+            "regex": r"ステージ",
+            "template": "ステージ",
+            "structure": "Atomic - Zone: stage",
+        },
+        {
+            "name": "atomic_zone_energy_zone",
+            "regex": r"エネルギー置き場",
+            "template": "エネルギー置き場",
+            "structure": "Atomic - Zone: energy zone",
+        },
+        {
+            "name": "atomic_card_type_energy",
+            "regex": r"エネルギーカード",
+            "template": "エネルギーカード",
+            "structure": "Atomic - Card type: energy card",
+        },
+        {
+            "name": "atomic_group_arise",
+            "regex": r"『A-RISE』",
+            "template": "『A-RISE』",
+            "structure": "Atomic - Group A-RISE",
+        },
+        {
+            "name": "atomic_icon_reference",
+            "regex": r"\{\{[^}]+\}",
+            "template": "⟦ICON⟧",
+            "structure": "Atomic - Icon reference {{x.png}}",
+        },
+        {
+            "name": "atomic_area_left",
+            "regex": r"左サイド",
+            "template": "左サイド",
+            "structure": "Atomic - Area: left side",
+        },
+        {
+            "name": "atomic_area_center",
+            "regex": r"センター",
+            "template": "センター",
+            "structure": "Atomic - Area: center",
+        },
+        {
+            "name": "atomic_area_right",
+            "regex": r"右サイド",
+            "template": "右サイド",
+            "structure": "Atomic - Area: right side",
+        },
+        # CLAUSE PATTERNS - Composed of atomic patterns
         {
             "name": "basic_action_draw",
             "regex": r"カードを(\d+)枚引く",
@@ -368,13 +490,13 @@ DSL_PATTERNS = [
             "name": "discard_from_hand",
             "regex": r"手札を(\d+)枚控え室に置く",
             "template": "手札を⟦X⟧枚控え室に置く",
-            "structure": "Basic Action - Discard from hand (ADD_TO_HAND/DRAW opcode)",
+            "structure": "Basic Action - Discard from hand",
         },
         {
             "name": "discard_from_deck",
             "regex": r"デッキの上からカードを(\d+)枚控え室に置く",
             "template": "デッキの上からカードを⟦X⟧枚控え室に置く",
-            "structure": "Basic Action - Discard from deck (DRAW opcode)",
+            "structure": "Basic Action - Discard from deck",
         },
         {
             "name": "basic_action_discard",
@@ -432,15 +554,15 @@ DSL_PATTERNS = [
         },
         {
             "name": "gain_blades",
-            "regex": r"ライブ終了時まで、([^。]*)(?:ブレード|blade)([^。]*)を得る",
+            "regex": r"ライブ終了時まで、([^。]*?)(?:ブレード|blade)([^。]*?)を得る",
             "template": "ライブ終了時まで、⟦FILTER⟧ブレード⟦SUFFIX⟧を得る",
-            "structure": "Duration - Gain blades until end of live (ADD_BLADES opcode)",
+            "structure": "Duration - Gain blades until end of live",
         },
         {
             "name": "gain_hearts",
-            "regex": r"ライブ終了時まで、([^。]*)(?:ハート|heart)([^。]*)を得る",
+            "regex": r"ライブ終了時まで、([^。]*?)(?:ハート|heart)([^。]*?)を得る",
             "template": "ライブ終了時まで、⟦FILTER⟧ハート⟦SUFFIX⟧を得る",
-            "structure": "Duration - Gain hearts until end of live (ADD_HEARTS opcode)",
+            "structure": "Duration - Gain hearts until end of live",
         },
         {
             "name": "duration_gain",
@@ -473,10 +595,22 @@ DSL_PATTERNS = [
             "structure": "State Change - Activate energy cards",
         },
         {
+            "name": "state_change_wait_this_member",
+            "regex": r"このメンバーをウェイトにする",
+            "template": "このメンバーをウェイトにする",
+            "structure": "State Change - Put this member in wait state",
+        },
+        {
+            "name": "state_change_wait_opponent_all",
+            "regex": r"相手のステージにいるすべての([^。]+)をウェイトにする",
+            "template": "相手のステージにいるすべての⟦CONDITION⟧をウェイトにする",
+            "structure": "State Change - Put all opponent members with condition in wait state",
+        },
+        {
             "name": "state_change_wait",
             "regex": r"([^。]+)をウェイトにする",
             "template": "⟦TARGET⟧をウェイトにする",
-            "structure": "State Change - Put member in wait state",
+            "structure": "State Change - Put member in wait state (generic fallback)",
         },
         {
             "name": "per_unit",
@@ -488,13 +622,13 @@ DSL_PATTERNS = [
             "name": "place_to_discard",
             "regex": r"([^。]+)を控え室に置く",
             "template": "⟦SOURCE⟧を控え室に置く",
-            "structure": "Basic Action - Place card to discard (MOVE_TO_DISCARD opcode)",
+            "structure": "Basic Action - Place card to discard",
         },
         {
             "name": "place_to_hand",
             "regex": r"([^。]+)を手札に置く",
             "template": "⟦SOURCE⟧を手札に置く",
-            "structure": "Basic Action - Place card to hand (ADD_TO_HAND opcode)",
+            "structure": "Basic Action - Place card to hand",
         },
         {
             "name": "place_to_deck",
@@ -1493,12 +1627,6 @@ DSL_PATTERNS = [
             "structure": "Ability Activation - Card location condition",
         },
         {
-            "name": "icon_embedded_action",
-            "regex": r"(\{\{[^{}]+\}\}+)([^。]+)",
-            "template": "⟦ICON⟧⟦ACTION⟧",
-            "structure": "Icon-Embedded - Action with embedded icon",
-        },
-        {
             "name": "trigger_when",
             "regex": r"([^。]+)とき、([^。]+)",
             "template": "⟦TRIGGER⟧とき、⟦EFFECT⟧",
@@ -1607,12 +1735,6 @@ DSL_PATTERNS = [
             "structure": "Look-Add - Look at cards, optionally add to hand",
         },
         {
-            "name": "icon_embedded_trigger",
-            "regex": r"(\{\{[^{}]+\}\}+)([^。]+)",
-            "template": "⟦ICON⟧⟦ACTION⟧",
-            "structure": "Icon-Embedded - Trigger with icon",
-        },
-        {
             "name": "icon_embedded_cost_effect",
             "regex": r"(\{\{[^{}]+\}\}+)([^。]+)を置いてもよい：([^。]+)",
             "template": "⟦ICON⟧⟦SOURCE⟧を置いてもよい：⟦EFFECT⟧",
@@ -1623,12 +1745,6 @@ DSL_PATTERNS = [
             "regex": r"（([^）]+)）",
             "template": "（⟦NOTE⟧）",
             "structure": "Parenthetical - Note with embedded content",
-        },
-        {
-            "name": "icon_embedded_live_start",
-            "regex": r"(\{\{[^{}]+\}\}+)([^。]+)",
-            "template": "⟦ICON⟧⟦EFFECT⟧",
-            "structure": "Icon-Embedded - Live start trigger with icon",
         },
         {
             "name": "choose_below_simple",
@@ -1661,10 +1777,22 @@ DSL_PATTERNS = [
             "structure": "Basic Action - Specify color",
         },
         {
+            "name": "reveal_live_card_optional",
+            "regex": r"([^。]+)ライブカードを(\d+)枚公開して手札に加えてもよい",
+            "template": "⟦SOURCE⟧ライブカードを⟦X⟧枚公開して手札に加えてもよい",
+            "structure": "Reveal-Add - Reveal live cards, optionally add to hand",
+        },
+        {
+            "name": "reveal_member_card_optional",
+            "regex": r"([^。]+)メンバーカードを(\d+)枚公開して手札に加えてもよい",
+            "template": "⟦SOURCE⟧メンバーカードを⟦X⟧枚公開して手札に加えてもよい",
+            "structure": "Reveal-Add - Reveal member cards, optionally add to hand",
+        },
+        {
             "name": "reveal_and_add_optional",
             "regex": r"([^。]+)を(\d+)枚公開して手札に加えてもよい",
             "template": "⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい",
-            "structure": "Reveal-Add - Reveal cards, optionally add to hand",
+            "structure": "Reveal-Add - Reveal cards, optionally add to hand (generic fallback)",
         },
         {
             "name": "parenthetical_with_condition",
@@ -2806,7 +2934,7 @@ def generate_structured_dsl_output(dsl_analysis: dict[str, Any], abilities_data:
     
     output = {
         "schema": "dsl_analysis_structured.v1",
-        "_comment": "DSL pattern analysis results - structured for system consumption",
+        "_comment": "DSL pattern analysis results - structured for system consumption. Generated by tools/extract_abilities_to_template.py",
         "metadata": {
             "generated_at": datetime.now().isoformat(),
             "total_patterns": len(patterns_output),
