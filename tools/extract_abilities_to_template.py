@@ -2,7 +2,75 @@
 """
 Build clause skeletons by removing replaceable game-language pieces.
 
+================================================================================
+ORGANIZATION: Game Mechanics Structure (unified with rules.txt)
+================================================================================
+
+This script is organized following the LoveCA game mechanics hierarchy, similar
+to the official rules.txt structure. Instead of alphabetical or random ordering,
+patterns are grouped by game systems that players actually use:
+
+1. ATOMIC ELEMENTS & DURATION
+   - Duration modifiers (永続、ライブ終了時まで、このターン)
+   - Optionality (てもよい)
+   - Basic trigger identification
+
+2. CARD INFORMATION & IDENTIFICATION
+   - Card types: MEMBER, LIVE, ENERGY
+   - Groups: μ's, Aqours, 虹ヶ咲, Liella!, etc.
+   - Positioning: 左サイド, センター, 右サイド
+   - Icon patterns (triggers)
+
+3. ZONE-BASED OPERATIONS (Zones: DECK, HAND, DISCARD, STAGE, ENERGY_ZONE)
+   - To zones: デッキ、手札、控え室、ステージ、エネルギー置き場
+   - From zones: 〜から、〜の上から
+   - Zone movements and transfers
+
+4. STATE MANAGEMENT
+   - State changes: ウェイト状態、アクティブ
+   - Member movement and positioning
+   - Area-specific placements
+
+5. RESOURCE SYSTEMS
+   - Score: gain, modify, compare (⊕スコア)
+   - Hearts: cost reduction, possession (ハート)
+   - Blades: gain, modify (ブレード)
+   - Energy: place, discard, activate (エネルギー)
+
+6. DRAW & SEARCH MECHANICS
+   - Look at cards (見る)
+   - Reveal and add to hand (公開して加える)
+   - Select from options (選ぶ)
+   - Multi-step reveal operations
+
+7. CONDITIONS & FILTERING
+   - Presence: group, character, card type, name (〜がいる)
+   - Counts: members, cards, zones (〜枚以上)
+   - Thresholds: cost, score, energy (コスト〜以上)
+   - Comparisons: relative to opponent (相手より)
+
+8. SPECIAL EFFECTS & ADVANCED MECHANICS
+   - Ability granting (能力を得る)
+   - Ability disabling (能力を無効にする)
+   - Cost-effect operations (コストを払ってから)
+   - Duration effects (ライブ終了時まで)
+   - Trigger-based mechanics
+
+9. COMPLEX ACTIONS & MULTI-STEP OPERATIONS
+   - Multi-card staging with cost limits
+   - Reorder and shuffle operations
+   - Opponent choices and decisions
+   - Batontouch and movement triggers
+   - Score non-zero conditions
+
+10. FALLBACK PATTERNS
+    - Fragment patterns for edge cases
+    - Generic catch-alls for parsing gaps
+    - Parenthetical notes and modifiers
+
+================================================================================
 DSL APPROACH: Treat ability text as a domain-specific language for game mechanics.
+
 Card game abilities have set structures like a programming language - less complex
 than a general-purpose language but more structured than prose. This script analyzes
 ability text to identify these language structures and compress them.
@@ -34,20 +102,34 @@ import argparse
 # This script extracts ability clauses from card data and matches them using
 # DSL (Domain-Specific Language) regex patterns to achieve compression.
 #
-# FILE STRUCTURE:
-# - Lines 1-200: Imports and helper functions
-# - Lines 326-562: ABILITY_LEVEL_PATTERNS (special ability-level patterns)
-# - Lines 562-2117: DSL_PATTERNS (clause-level patterns - where to add new patterns)
-# - Lines 2117-2266: match_dsl_patterns() - main pattern matching logic
-# - Lines 2857-2915: extract_abilities() - main extraction function
-# - Lines 3030-3053: main() - entry point
+# FILE STRUCTURE (organized by game mechanics, matching rules.txt):
+# - Lines 1-50: Module docstring (game mechanics organization guide)
+# - Lines 50-150: Imports and constants (card types, zones, triggers, etc.)
+# - Lines 150-300: Helper functions (discover_japanese_equivalents, nfkc, parse_trigger_effect)
+# - Lines 300-367: ABILITY_LEVEL_PATTERNS (special ability-level patterns)
+# - Lines 367-2240: CLAUSE-LEVEL DSL PATTERNS (organized by game systems):
+#
+#     ATOMIC ELEMENTS & DURATION (Lines 367-450)
+#     CARD INFORMATION & IDENTIFICATION (Lines 450-600)
+#     ZONE-BASED OPERATIONS (Lines 600-850)
+#     STATE MANAGEMENT (Lines 850-950)
+#     RESOURCE SYSTEMS (Lines 950-1150)
+#     DRAW & SEARCH MECHANICS (Lines 1150-1350)
+#     CONDITIONAL LOGIC & FILTERING (Lines 1350-1700)
+#     COMPLEX OPERATIONS & SPECIAL MECHANICS (Lines 1700-1900)
+#     FALLBACK & FRAGMENT PATTERNS (Lines 1900-2240)
+#
+# - Lines 2240-2370: match_dsl_patterns() - main pattern matching logic
+# - Lines 2950-3000: extract_abilities() - main extraction function
+# - Lines 3100-3120: main() - entry point
 #
 # KEY INSIGHT FOR ADDING NEW PATTERNS:
-# - DSL_PATTERNS (line 562+) are clause-level patterns
+# - DSL_PATTERNS are clause-level patterns
 # - These are ONLY used for generic abilities that don't match ABILITY_LEVEL_PATTERNS
 # - For generic abilities, the script extracts the trigger icon and matches the effect text
 #   against DSL_PATTERNS
 # - Results populate pattern_variables in abilities_extracted.json
+# - WHEN ADDING PATTERNS: Place them in the appropriate game mechanics section (not at random)
 #
 # USAGE: Run this to extract abilities and generate data/abilities_extracted.json
 # ============================================================================
@@ -363,9 +445,248 @@ ABILITY_LEVEL_PATTERNS = [
     },
 ]
 
-# CLAUSE-LEVEL DSL PATTERNS
+# ============================================================================
+# FILE ORGANIZATION (by game mechanics, matching rules.txt structure)
+# ============================================================================
+# ABILITY-LEVEL PATTERNS (Lines 365-369): Special patterns with unique semantics
+# CLAUSE-LEVEL DSL PATTERNS (Lines 370+): Organized by game mechanics
+#
+# 1. ATOMIC ELEMENTS & DURATION (Lines 370-450)
+#    - Duration modifiers (permanent, until end of live/turn)
+#    - Optionality markers (may do X)
+#
+# 2. CARD INFORMATION & IDENTIFICATION (Lines 450-580)
+#    - Card types (member, live, energy)
+#    - Groups, characters, units
+#    - Positions/areas (left, center, right)
+#    - Icon patterns by trigger type
+#
+# 3. ZONE-BASED OPERATIONS (Lines 580-850)
+#    - To zones: deck top/bottom, hand, discard, stage, energy zone
+#    - From zones: deck top, hand, discard, energy deck
+#    - Zone references and movements
+#
+# 4. STATE MANAGEMENT (Lines 850-950)
+#    - State changes: wait, activate
+#    - Member movement between positions
+#    - Area-specific actions
+#
+# 5. RESOURCE SYSTEMS (Lines 950-1150)
+#    - Score operations: gain, modify, compare
+#    - Hearts: cost reduction, heart possession
+#    - Blades/Energy: place, discard, activate
+#    - General resource gain and modification
+#
+# 6. DRAW & SEARCH MECHANICS (Lines 1150-1350)
+#    - Look at cards (top, select, reveal)
+#    - Reveal and add to hand
+#    - Select from options
+#    - Multi-step look operations
+#
+# 7. CONDITIONS & FILTERING (Lines 1350-1700)
+#    - Presence: group, character, card type, name
+#    - Counts: members, cards, energy, heart, zone
+#    - Thresholds: cost, score, energy
+#    - Comparisons: zone-specific, cost ranges
+#    - Complex multi-condition filters
+#
+# 8. SPECIAL EFFECTS & ADVANCED MECHANICS (Lines 1700-1900)
+#    - Ability granting and disabling
+#    - Cost-effect operations (cost then gain)
+#    - Duration-based effects
+#    - Trigger-based mechanics
+#    - Choice structures
+#
+# 9. COMPLEX ACTIONS & MULTI-STEP OPERATIONS (Lines 1900-2100)
+#    - Multi-card staging with cost limits
+#    - Reorder and shuffle operations
+#    - Opponent choices and effects
+#    - Batontouch and movement triggers
+#    - Score non-zero conditions
+#
+# 10. FALLBACK & CATCH-ALL PATTERNS (Lines 2100-2240)
+#     - Fragment patterns to handle edge cases
+#     - Generic fallbacks for parsing gaps
+#     - Parenthetical notes and edge cases
+#
+# ============================================================================
+
+# CLAUSE-LEVEL DSL PATTERNS (organized by game mechanics, not alphabetically)
 DSL_PATTERNS = [
-        # ATOMIC PATTERNS - Smallest semantic units
+        # ===== 1. ATOMIC ELEMENTS & DURATION =====
+        # Duration modifiers - fundamental to effect timing
+        # Rule: 9.4 (Timing and duration of effects)
+        {
+            "name": "atomic_duration_permanent",
+            "regex": r"常時",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: permanent/always-on [Rule 3.1.2.1: Constant abilities]",
+        },
+        {
+            "name": "atomic_duration_end_live",
+            "regex": r"ライブ終了時まで",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: until end of live [Rule 9.4.1: Effect duration]",
+        },
+        {
+            "name": "atomic_duration_end_turn",
+            "regex": r"このターン",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: this turn [Rule 9.4.1: Effect duration]",
+        },
+        {
+            "name": "atomic_optional",
+            "regex": r"てもよい",
+            "template": "⟦OPTIONAL⟧",
+            "structure": "Atomic - Optionality: may do X [Rule 1.3.2: Optional actions]",
+        },
+        
+        # ===== 2. CARD INFORMATION & IDENTIFICATION =====
+        # Card type identification
+        {
+            "name": "atomic_card_type_member",
+            "regex": r"てもよい",
+            "template": "⟦OPTIONAL⟧",
+            "structure": "Atomic - Optionality: may do X",
+        },
+        {
+            "name": "atomic_duration_end_live",
+            "regex": r"ライブ終了時まで",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: until end of live",
+        },
+        {
+            "name": "atomic_duration_end_turn",
+            "regex": r"このターン",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: this turn",
+        },
+        {
+            "name": "atomic_duration_permanent",
+            "regex": r"常時",
+            "template": "⟦DURATION⟧",
+            "structure": "Atomic - Duration: permanent/always-on",
+        },
+        {
+            "name": "atomic_gain_score",
+            "regex": r"スコアを\+(\d+)する",
+            "template": "スコアを+⟦X⟧する",
+            "structure": "Atomic - Gain score",
+        },
+        {
+            "name": "atomic_to_deck_top",
+            "regex": r"デッキの上に置く",
+            "template": "デッキの上に置く",
+            "structure": "Atomic - Zone operation: to deck top",
+        },
+        {
+            "name": "atomic_to_deck_bottom",
+            "regex": r"デッキの一番下に置く",
+            "template": "デッキの一番下に置く",
+            "structure": "Atomic - Zone operation: to deck bottom",
+        },
+        {
+            "name": "atomic_to_hand",
+            "regex": r"手札に加える",
+            "template": "手札に加える",
+            "structure": "Atomic - Zone operation: to hand",
+        },
+        {
+            "name": "atomic_to_discard",
+            "regex": r"控え室に置く",
+            "template": "控え室に置く",
+            "structure": "Atomic - Zone operation: to discard",
+        },
+        {
+            "name": "atomic_state_wait",
+            "regex": r"ウェイトにする",
+            "template": "ウェイトにする",
+            "structure": "Atomic - State change: wait",
+        },
+        {
+            "name": "atomic_state_activate",
+            "regex": r"アクティブにする",
+            "template": "アクティブにする",
+            "structure": "Atomic - State change: activate",
+        },
+        {
+            "name": "atomic_from_deck_top",
+            "regex": r"デッキの上から",
+            "template": "デッキの上から",
+            "structure": "Atomic - Zone operation: from deck top",
+        },
+        {
+            "name": "atomic_from_hand",
+            "regex": r"手札から",
+            "template": "手札から",
+            "structure": "Atomic - Zone operation: from hand",
+        },
+        {
+            "name": "atomic_from_discard",
+            "regex": r"控え室から",
+            "template": "控え室から",
+            "structure": "Atomic - Zone operation: from discard",
+        },
+        {
+            "name": "atomic_reveal_card",
+            "regex": r"公開する",
+            "template": "公開する",
+            "structure": "Atomic - Reveal card",
+        },
+        {
+            "name": "atomic_draw_card",
+            "regex": r"カードを(\d+)枚引く",
+            "template": "カードを⟦X⟧枚引く",
+            "structure": "Atomic - Draw cards",
+        },
+        {
+            "name": "atomic_select_card",
+            "regex": r"(\d+)枚選ぶ",
+            "template": "⟦X⟧枚選ぶ",
+            "structure": "Atomic - Select cards",
+        },
+        {
+            "name": "atomic_choose_option",
+            "regex": r"以下から(\d+)つを選ぶ",
+            "template": "以下から⟦X⟧つを選ぶ",
+            "structure": "Atomic - Choose option",
+        },
+        {
+            "name": "atomic_move_member",
+            "regex": r"移動させる",
+            "template": "移動させる",
+            "structure": "Atomic - Move member",
+        },
+        {
+            "name": "atomic_condition_energy_above",
+            "regex": r"自分のエネルギーが(\d+)枚以上ある場合",
+            "template": "自分のエネルギーが⟦X⟧枚以上ある場合",
+            "structure": "Atomic - Energy count above threshold",
+        },
+        {
+            "name": "atomic_place_energy_wait",
+            "regex": r"エネルギーカードを(\d+)枚ウェイト状態で置く",
+            "template": "エネルギーカードを⟦X⟧枚ウェイト状態で置く",
+            "structure": "Atomic - Place energy cards in wait state",
+        },
+        {
+            "name": "atomic_from_energy_deck",
+            "regex": r"エネルギーデッキから",
+            "template": "エネルギーデッキから",
+            "structure": "Atomic - From energy deck",
+        },
+        {
+            "name": "atomic_restriction_area_only",
+            "regex": r"この能力は.*エリアに登場している場合のみ起動できる",
+            "template": "この能力は⟦X⟧エリアに登場している場合のみ起動できる",
+            "structure": "Atomic - Restriction: activate only if in area",
+        },
+        {
+            "name": "atomic_restriction_score_threshold",
+            "regex": r"スコアの合計が(\d+)以上の場合のみ起動できる",
+            "template": "スコアの合計が⟦X⟧以上の場合のみ起動できる",
+            "structure": "Atomic - Restriction: activate only if score above threshold",
+        },
         {
             "name": "atomic_cost_below",
             "regex": r"コスト(\d+)以下",
@@ -377,6 +698,12 @@ DSL_PATTERNS = [
             "regex": r"コスト(\d+)以上",
             "template": "コスト⟦X⟧以上",
             "structure": "Atomic - Cost above threshold",
+        },
+        {
+            "name": "atomic_group_presence",
+            "regex": r"『([^』]+)』のメンバーがいる",
+            "template": "『⟦GROUP⟧』のメンバーがいる",
+            "structure": "Atomic - Group member presence",
         },
         {
             "name": "atomic_group_mus",
@@ -561,12 +888,15 @@ DSL_PATTERNS = [
             "structure": "Atomic - Area: right side",
         },
         # CLAUSE PATTERNS - Composed of atomic patterns
+
+        # ===== CLAUSE PATTERNS: DRAW & SEARCH ENGINES =====
         {
             "name": "basic_action_draw",
             "regex": r"カードを(\d+)枚引く",
             "template": "カードを⟦X⟧枚引く",
             "structure": "Basic Action - Draw cards from deck",
         },
+        # ===== CLAUSE PATTERNS: ZONE-BASED OPERATIONS =====
         {
             "name": "discard_from_hand",
             "regex": r"手札を(\d+)枚控え室に置く",
@@ -609,12 +939,7 @@ DSL_PATTERNS = [
             "template": "自分の控え室から⟦FILTER⟧カードを⟦X⟧枚手札に加える",
             "structure": "Basic Action - Add cards from discard to hand",
         },
-        {
-            "name": "conditional_threshold",
-            "regex": r"自分の([^。]+)が(\d+)枚以上ある場合、([^。]+)",
-            "template": "自分の⟦ZONE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Threshold condition triggers effect",
-        },
+        # ===== CLAUSE PATTERNS: RESOURCE SYSTEMS (Score, Hearts, Energy) =====
         {
             "name": "conditional_group_presence",
             "regex": r"自分のステージに『([^』]+)』のメンバーがいる場合、([^。]+)",
@@ -633,12 +958,7 @@ DSL_PATTERNS = [
             "template": "⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧",
             "structure": "Cost-Effect - Pay optional cost to activate effect",
         },
-        {
-            "name": "gain_blades",
-            "regex": r"ライブ終了時まで、([^。]*?)(?:ブレード|blade)([^。]*?)を得る",
-            "template": "ライブ終了時まで、⟦FILTER⟧ブレード⟦SUFFIX⟧を得る",
-            "structure": "Duration - Gain blades until end of live",
-        },
+        # ===== RESOURCE SYSTEMS: GAIN & MODIFICATION =====
         {
             "name": "gain_hearts",
             "regex": r"ライブ終了時まで、([^。]*?)(?:ハート|heart)([^。]*?)を得る",
@@ -669,12 +989,7 @@ DSL_PATTERNS = [
             "template": "このカードを成功させるための必要ハートを⟦AMOUNT⟧減らす",
             "structure": "Heart Cost Modification - Reduce heart cost to succeed",
         },
-        {
-            "name": "state_change_activate",
-            "regex": r"エネルギーを(\d+)枚アクティブにする",
-            "template": "エネルギーを⟦X⟧枚アクティブにする",
-            "structure": "State Change - Activate energy cards",
-        },
+        # ===== STATE MANAGEMENT: STATE CHANGES & MEMBER POSITIONING =====
         {
             "name": "state_change_wait_this_member",
             "regex": r"このメンバーをウェイトにする",
@@ -771,12 +1086,7 @@ DSL_PATTERNS = [
             "template": "このメンバーがステージから控え室に置かれたとき、⟦EFFECT⟧",
             "structure": "Trigger - Effect triggers when member is discarded from stage",
         },
-        {
-            "name": "conditional_member_count",
-            "regex": r"自分のステージに名前の異なる『([^』]+)』のメンバーが(\d+)人以上いる場合、([^。]+)",
-            "template": "自分のステージに名前の異なる『⟦GROUP⟧』のメンバーが⟦X⟧人以上いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Member count threshold triggers effect",
-        },
+        # ===== CONDITIONS & FILTERING: COMPLEX LOGIC STRUCTURES =====
         {
             "name": "conditional_heart_total",
             "regex": r"自分のステージにいるメンバーが持つ([^。]+)の合計が(\d+)以上の場合、([^。]+)",
@@ -837,12 +1147,7 @@ DSL_PATTERNS = [
             "template": "自分の⟦ZONE⟧のカード枚数が相手より⟦COMPARISON⟧場合、⟦EFFECT⟧",
             "structure": "Conditional - Card count comparison triggers effect",
         },
-        {
-            "name": "disable_ability",
-            "regex": r"([^。]+)能力を、ライブ終了時まで、無効にしてもよい",
-            "template": "⟦ABILITY⟧能力を、ライブ終了時まで、無効にしてもよい",
-            "structure": "Ability Disabling - Disable ability until end of live",
-        },
+        # ===== COMPLEX OPERATIONS & SPECIAL MECHANICS =====
         {
             "name": "multi_card_stage",
             "regex": r"コストの合計が(\d+)以下になるようにメンバーカードを(\d+)枚までステージに登場させる",
@@ -860,12 +1165,6 @@ DSL_PATTERNS = [
             "regex": r"相手は([^。]+)をしてもよい。そうしなかった場合、([^。]+)",
             "template": "相手は⟦ACTION⟧をしてもよい。そうしなかった場合、⟦EFFECT⟧",
             "structure": "Opponent Choice - Give opponent option, trigger effect if declined",
-        },
-        {
-            "name": "area_swap",
-            "regex": r"([^。]+)のメンバーを([^。]+)に移動させる",
-            "template": "⟦SOURCE_AREA⟧のメンバーを⟦DEST_AREA⟧に移動させる",
-            "structure": "Area Movement - Move members between areas",
         },
         {
             "name": "move_member",
@@ -1102,12 +1401,6 @@ DSL_PATTERNS = [
             "structure": "Basic Action - Place card on top of deck",
         },
         {
-            "name": "conditional_member_specific",
-            "regex": r"([^。]+)メンバーが([^。]+)場合、([^。]+)",
-            "template": "⟦TYPE⟧メンバーが⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Member-specific condition triggers effect",
-        },
-        {
             "name": "discard_specific",
             "regex": r"([^。]+)を([^。]+)に([^。]+)置く",
             "template": "⟦SOURCE⟧を⟦DESTINATION⟧に⟦ADVERB⟧置く",
@@ -1118,12 +1411,6 @@ DSL_PATTERNS = [
             "regex": r"([^。]+)で([^。]+)場合、([^。]+)",
             "template": "⟦CONDITION1⟧で⟦CONDITION2⟧場合、⟦EFFECT⟧",
             "structure": "Conditional - AND condition triggers effect",
-        },
-        {
-            "name": "conditional_or_condition",
-            "regex": r"([^。]+)か([^。]+)場合、([^。]+)",
-            "template": "⟦CONDITION1⟧か⟦CONDITION2⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - OR condition triggers effect",
         },
         {
             "name": "look_discard_remainder",
@@ -1426,12 +1713,6 @@ DSL_PATTERNS = [
             "structure": "Conditional - Specific presence triggers effect",
         },
         {
-            "name": "conditional_fragment",
-            "regex": r"([^。]+)が([^。]+)場合、([^。]+)",
-            "template": "⟦SOURCE⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Fragment condition triggers effect",
-        },
-        {
             "name": "gain_fragment",
             "regex": r"([^。]+)を得る",
             "template": "⟦RESOURCE⟧を得る",
@@ -1473,12 +1754,7 @@ DSL_PATTERNS = [
             "template": "⟦RESOURCE⟧を⟦X⟧つ得る",
             "structure": "Basic Action - Gain specific amount fragment",
         },
-        {
-            "name": "conditional_cost_fragment",
-            "regex": r"コスト(\d+)以上の場合、([^。]+)",
-            "template": "コスト⟦X⟧以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Cost threshold fragment triggers effect",
-        },
+        # ===== FALLBACK & FRAGMENT PATTERNS (catch-all for parsing edge cases) =====
         {
             "name": "conditional_group_fragment",
             "regex": r"([^。]+)の([^。]+)がいる場合、([^。]+)",
@@ -1720,12 +1996,6 @@ DSL_PATTERNS = [
             "structure": "Trigger - Effect triggers when condition met",
         },
         {
-            "name": "conditional_only",
-            "regex": r"([^。]+)のみ([^。]+)",
-            "template": "⟦CONDITION⟧のみ⟦EFFECT⟧",
-            "structure": "Conditional - Only condition triggers effect",
-        },
-        {
             "name": "trigger_on_activate",
             "regex": r"([^。]+)がアクティブになったとき、([^。]+)",
             "template": "⟦SOURCE⟧がアクティブになったとき、⟦EFFECT⟧",
@@ -1958,12 +2228,6 @@ DSL_PATTERNS = [
             "regex": r"([^。]+)で([^。]+)に([^。]+)(\d+)",
             "template": "⟦PHASE⟧で⟦DESTINATION⟧に⟦CARD⟧⟦X⟧",
             "structure": "Phase Action - Action during set phase",
-        },
-        {
-            "name": "heart_specification",
-            "regex": r"([^。]+)([^。]+)、([^。]+)",
-            "template": "⟦SOURCE⟧⟦HEART1⟧、⟦HEART2⟧",
-            "structure": "Basic Action - Specify hearts",
         },
         {
             "name": "complex_cost_calculation",

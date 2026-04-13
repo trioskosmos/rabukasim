@@ -1,0 +1,37 @@
+Pattern names containing 'position' or 'ポジション':
+
+Ability-level pattern names containing 'position' or 'ポジション':
+
+Effect names containing 'position' or 'ポジション':
+  ⟦⟦X⟧⟧の上から⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧に置く：このメンバーはポジションチェンジする: 3 occurrences
+  このメンバーが⟦⟦X⟧⟧から⟦⟦X⟧⟧に置かれたとき、メンバー⟦X⟧をポジションチェンジさせてもよい: 4 occurrences
+  このメンバーを『⟦⟦X⟧⟧』か『⟦⟦X⟧⟧』のメンバーがいるエリアにポジションチェンジする: 4 occurrences
+  このメンバーをポジションチェンジしてもよい: 5 occurrences
+  を⟦X⟧以上持つ『⟦⟦X⟧⟧』のメンバーがいない場合、このメンバーは⟦⟦X⟧⟧エリア以外にポジションチェンジする: 4 occurrences
+  ・自分の⟦⟦X⟧⟧にいる『⟦⟦X⟧⟧』のメンバー⟦X⟧をポジションチェンジさせる: 3 occurrences
+  公開した⟦⟦X⟧⟧が⟦⟦X⟧⟧⟦X⟧の⟦⟦X⟧⟧の場合、公開した⟦⟦X⟧⟧を⟦⟦X⟧⟧に加え、このメンバーはポジションチェンジする: 2 occurrences
+  自分と相手は、自身の⟦⟦X⟧⟧の⟦⟦X⟧⟧にいるメンバーをポジションチェンジする: 3 occurrences
+  自分の⟦⟦X⟧⟧にいるメンバーが『⟦⟦X⟧⟧』のみの場合、自分の⟦⟦X⟧⟧にいるメンバー⟦X⟧をポジションチェンジさせてもよい: 1 occurrences
+
+Total structures: 441
+
+Sample structure with ポジションチェンジ:
+  Count: 1
+  Skeleton: ⟦X⟧:このメンバーを⟦X⟧か⟦X⟧のメンバーがいるエリアにポジションチェンジする / ⟦X⟧このメンバーがエリアを移動したとき、⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧にする
+  JP example: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする。
+{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動したとき、エネルギーを2枚アクティブにする。
+
+Sample structure with ポジションチェンジ:
+  Count: 1
+  Skeleton: ⟦X⟧:このメンバーを⟦X⟧か⟦X⟧のメンバーがいるエリアにポジションチェンジする / ⟦X⟧このメンバーがエリアを移動したとき、相手の⟦⟦X⟧⟧にいる元々持つ⟦X⟧の数が⟦X⟧以下のメンバー⟦X⟧をウェイトにする
+  JP example: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする。
+{{jidou.png|自動}}このメンバーがエリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が2つ以下のメンバー1人をウェイトにする。
+
+Sample structure with ポジションチェンジ:
+  Count: 1
+  Skeleton: ⟦X⟧⟦⟦X⟧⟧の上から⟦⟦X⟧⟧を⟦X⟧⟦⟦X⟧⟧に置く:このメンバーはポジションチェンジする / このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。
+  JP example: {{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+
+Total structures containing ポジションチェンジ: 11
+
+Done
