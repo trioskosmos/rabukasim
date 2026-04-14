@@ -4,6 +4,7 @@ use crate::core::logic::filter::map_filter_string_to_attr;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{AbilityContext, CardDatabase, Cost, GameState, TriggerType};
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -37,10 +38,12 @@ fn resolve_energy_cost(state: &GameState, db: &CardDatabase, p_idx: usize, cost:
     resolved_cost
 }
 
+#[inline]
 fn untapped_energy_count(state: &GameState, p_idx: usize) -> usize {
     state.players[p_idx].energy_zone.len() - state.players[p_idx].tapped_energy_count() as usize
 }
 
+#[inline]
 fn matches_filter_attr(state: &GameState, db: &CardDatabase, cid: i32, attr: u64) -> bool {
     attr & FILTER_TYPE_MASK == 0 || state.card_matches_filter(db, cid, attr)
 }
@@ -93,6 +96,7 @@ where
         .count()
 }
 
+#[inline]
 fn source_stage_slot(ctx: &AbilityContext) -> Option<usize> {
     (ctx.area_idx >= 0 && ctx.area_idx < 3).then_some(ctx.area_idx as usize)
 }

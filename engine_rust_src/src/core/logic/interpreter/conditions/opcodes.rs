@@ -14,6 +14,7 @@ use crate::core::logic::models::{AbilityFrameComponents, SemanticComparisonMode}
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -85,6 +86,7 @@ impl<'a> ConditionParams<'a> {
     }
 }
 
+#[inline]
 fn card_matches_group(db: &CardDatabase, cid: i32, group_id: u8) -> bool {
     db.get_member(cid)
         .map(|member| {
