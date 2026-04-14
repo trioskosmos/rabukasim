@@ -22,6 +22,22 @@ fn get_param_case_insensitive<'a>(
     params.get(key).or_else(|| params.get(&key.to_uppercase()))
 }
 
+#[inline]
+fn check_count_threshold(count: i32, val: i32, slot: i32) -> bool {
+    if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+}
+
+#[inline]
+fn resolve_slot_index(area_val: u8, ctx_area_idx: i16) -> Option<usize> {
+    if area_val >= 1 && area_val <= 3 {
+        Some((area_val - 1) as usize)
+    } else if ctx_area_idx >= 0 && (ctx_area_idx as usize) < 3 {
+        Some(ctx_area_idx as usize)
+    } else {
+        None
+    }
+}
+
 /// Unified parameters for condition checking to reduce parameter passing complexity
 struct ConditionParams<'a> {
     state: &'a GameState,
@@ -175,6 +191,10 @@ fn compare_sync_cost(
             _ => None,
         });
 
+    let get_slot_index = || -> Option<usize> {
+        area_override.or_else(|| resolve_slot_index(area_val, ctx.area_idx))
+    };
+
     let compare_slot_cost = |cards: &[i32], idx: usize| -> i32 {
         cards
             .get(idx)
@@ -185,44 +205,28 @@ fn compare_sync_cost(
             .unwrap_or(0)
     };
 
-    let (self_cost, opp_cost) = if let Some(idx) = area_override {
-        (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
-    } else if area_val >= 1 && area_val <= 3 {
-        let idx = (area_val - 1) as usize;
-        (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
-    } else if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-        let idx = ctx.area_idx as usize;
+    let sum_filtered_costs = |target: &crate::core::logic::player::PlayerState, target_idx: usize| -> i32 {
+        target
+            .stage
+            .iter()
+            .enumerate()
+            .filter(|(idx, &id)| {
+                id >= 0 && state.card_matches_filter_with_struct(
+                    db,
+                    id,
+                    Some((target_idx as u8, *idx as i16)),
+                    &filter,
+                    ctx,
+                )
+            })
+            .map(|(_, &id)| db.get_member(id).map_or(0, |member| member.cost as i32))
+            .sum()
+    };
+
+    let (self_cost, opp_cost) = if let Some(idx) = get_slot_index() {
         (compare_slot_cost(&player.stage, idx), compare_slot_cost(&opponent.stage, idx))
     } else {
-        let mut self_cost = 0;
-        for (idx, &id) in player.stage.iter().enumerate() {
-            if id >= 0
-                && state.card_matches_filter_with_struct(
-                    db,
-                    id,
-                    Some((p_idx as u8, idx as i16)),
-                    &filter,
-                    ctx,
-                )
-            {
-                self_cost += db.get_member(id).map_or(0, |member| member.cost as i32);
-            }
-        }
-        let mut opp_cost = 0;
-        for (idx, &id) in opponent.stage.iter().enumerate() {
-            if id >= 0
-                && state.card_matches_filter_with_struct(
-                    db,
-                    id,
-                    Some(((1 - p_idx) as u8, idx as i16)),
-                    &filter,
-                    ctx,
-                )
-            {
-                opp_cost += db.get_member(id).map_or(0, |member| member.cost as i32);
-            }
-        }
-        (self_cost, opp_cost)
+        (sum_filtered_costs(player, p_idx), sum_filtered_costs(opponent, 1 - p_idx))
     };
 
     if state.debug.debug_mode {
@@ -237,12 +241,7 @@ fn compare_sync_cost(
         );
     }
 
-    let comparison_mode = if slot_info.comparison == 0 {
-        1
-    } else {
-        slot_info.comparison
-    };
-
+    let comparison_mode = if slot_info.comparison == 0 { 1 } else { slot_info.comparison };
     compare_i32(self_cost, opp_cost + val, (comparison_mode as i32) << 4)
 }
 
@@ -454,16 +453,11 @@ fn check_condition_with_parts(
                         })
                         .count() as i32
                 };
-
                 count_for_player(p_idx) + count_for_player(1 - p_idx)
             } else {
                 resolve_count(state, db, op, attr, slot, ctx, depth)
             };
-            if val == 0 {
-                count > 0
-            } else {
-                compare_i32(count, val, slot)
-            }
+            check_count_threshold(count, val, slot)
         }
         C_IS_CENTER => {
             if !state.ui.silent {
@@ -490,16 +484,10 @@ fn check_condition_with_parts(
             } else {
                 resolve_count(state, db, op, attr, slot, ctx, depth)
             };
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
+            check_count_threshold(count, val, slot)
         }
-        C_COUNT_DISCARD => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
-        C_COUNT_ENERGY => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
+        C_COUNT_DISCARD => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
+        C_COUNT_ENERGY => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
         C_HAS_LIVE_CARD => player.live_zone.iter().any(|&cid| cid >= 0),
         COST_ENERGY => {
             let cost_delta = state.calculate_cost_delta(db, ctx.source_card_id, p_idx);
@@ -535,10 +523,7 @@ fn check_condition_with_parts(
                 false
             }
         }
-        C_COUNT_SUCCESS_LIVE => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
+        C_COUNT_SUCCESS_LIVE => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
         C_OPPONENT_HAS => {
             let p_opp = 1 - p_idx;
             state.players[p_opp]
@@ -573,10 +558,7 @@ fn check_condition_with_parts(
                 diff >= val
             }
         }
-        C_COUNT_GROUP => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
+        C_COUNT_GROUP => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
         C_GROUP_FILTER => {
             let group_id = semantic.semantic_group_id(val);
 
@@ -773,18 +755,9 @@ fn check_condition_with_parts(
                 count_ok
             }
         }
-        C_COUNT_LIVE_ZONE => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
-        C_COUNT_LIVE_HEARTS => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
-        C_COUNT_SUCCESS_LIVE_SCORE => {
-            let count = resolve_count(state, db, op, attr, slot, ctx, depth);
-            if val == 0 { count > 0 } else { compare_i32(count, val, slot) }
-        }
+        C_COUNT_LIVE_ZONE => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
+        C_COUNT_LIVE_HEARTS => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
+        C_COUNT_SUCCESS_LIVE_SCORE => check_count_threshold(resolve_count(state, db, op, attr, slot, ctx, depth), val, slot),
         C_TYPE_CHECK => {
             let check_val = semantic.resolved_filter_value(val);
             let card_id = player
@@ -955,11 +928,7 @@ fn check_condition_with_parts(
             self_cost > opp_cost
         }
         C_BLADE_COMPARE => {
-            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                ctx.area_idx as usize
-            } else {
-                0
-            };
+            let slot = resolve_slot_index(area_val, ctx.area_idx).unwrap_or(0);
             let blades = state.get_effective_blades(p_idx, slot, db, depth + 1);
             if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
                 blades <= val as u32
@@ -998,22 +967,8 @@ fn check_condition_with_parts(
             }
         }
         C_OPPONENT_HAS_WAIT => (0..3).any(|i| opponent.stage[i] >= 0 && opponent.is_tapped(i)),
-        C_IS_TAPPED => {
-            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                ctx.area_idx as usize
-            } else {
-                0
-            };
-            player.is_tapped(slot)
-        }
-        C_IS_ACTIVE => {
-            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                ctx.area_idx as usize
-            } else {
-                0
-            };
-            !player.is_tapped(slot)
-        }
+        C_IS_TAPPED => player.is_tapped(resolve_slot_index(area_val, ctx.area_idx).unwrap_or(0)),
+        C_IS_ACTIVE => !player.is_tapped(resolve_slot_index(area_val, ctx.area_idx).unwrap_or(0)),
         C_LIVE_PERFORMED => state.obtained_success_live[p_idx],
         C_IS_PLAYER => p_idx == state.current_player as usize,
         C_IS_OPPONENT => p_idx != state.current_player as usize,
@@ -1117,14 +1072,7 @@ fn check_condition_with_parts(
                 compare_i32(ctx.v_accumulated as i32, val, slot)
             }
         }
-        313 => {
-            let slot = if ctx.area_idx >= 0 && (ctx.area_idx as usize) < 3 {
-                ctx.area_idx as usize
-            } else {
-                0
-            };
-            player.is_tapped(slot)
-        }
+        313 => player.is_tapped(resolve_slot_index(area_val, ctx.area_idx).unwrap_or(0)),
         C_ON_ABILITY_RESOLVE => true,
         C_TARGET_MEMBER_HAS_NO_HEARTS => {
             let target_id = ctx.target_card_id;

@@ -1435,7 +1435,7 @@
         },
         {
             "name": "selected_resource_gain",
-            "regex": r"\b([^。]+)([^。]+)を(\d+)つ得る",
+            "regex": r"\b([^。]+)まで、([^。]+)を(\d+)つ得る",
             "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
             "structure": "Selected resource gain",
         },

@@ -169,6 +169,63 @@ fn extend_with_slot(
     }
 }
 
+fn collect_zone_ids(
+    check_stage: bool,
+    check_discard: bool,
+    check_hand: bool,
+    check_success: bool,
+    state: &GameState,
+    p_idx: usize,
+    stage_primary_player: usize,
+    stage_secondary_player: Option<usize>,
+    include_opponent: bool,
+    only_opponent: bool,
+) -> smallvec::SmallVec<[(i32, Option<(u8, i16)>); 32]> {
+    let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
+
+    if check_stage {
+        extend_with_slot(
+            &mut ids,
+            &state.players[stage_primary_player].stage,
+            stage_primary_player as u8,
+            0,
+        );
+        if let Some(other_player) = stage_secondary_player {
+            extend_with_slot(
+                &mut ids,
+                &state.players[other_player].stage,
+                other_player as u8,
+                0,
+            );
+        }
+    }
+
+    if !only_opponent {
+        if check_discard {
+            extend_with_slot(&mut ids, &state.players[p_idx].discard, p_idx as u8, 100);
+        }
+        if check_hand {
+            extend_with_slot(&mut ids, &state.players[p_idx].hand, p_idx as u8, 200);
+        }
+        if check_success {
+            extend_with_slot(&mut ids, &state.players[p_idx].success_lives, p_idx as u8, -1);
+        }
+    }
+    if include_opponent {
+        if check_discard {
+            extend_with_slot(&mut ids, &state.players[1 - p_idx].discard, (1 - p_idx) as u8, 100);
+        }
+        if check_hand {
+            extend_with_slot(&mut ids, &state.players[1 - p_idx].hand, (1 - p_idx) as u8, 200);
+        }
+        if check_success {
+            extend_with_slot(&mut ids, &state.players[1 - p_idx].success_lives, (1 - p_idx) as u8, -1);
+        }
+    }
+
+    ids
+}
+
 fn resolve_structured_zone_count(
     state: &GameState,
     db: &CardDatabase,
@@ -285,96 +342,41 @@ fn resolve_structured_zone_count(
             if zone_mask_blocks_simple_count(&filter, Zone::Stage as u8) {
                 return 0;
             }
-            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-            extend_with_slot(
-                &mut ids,
-                &state.players[stage_primary_player].stage,
-                stage_primary_player as u8,
-                0,
-            );
-            if let Some(other_player) = stage_secondary_player {
-                extend_with_slot(
-                    &mut ids,
-                    &state.players[other_player].stage,
-                    other_player as u8,
-                    0,
-                );
-            }
+            let ids = collect_zone_ids(true, false, false, false, state, p_idx, stage_primary_player, stage_secondary_player, include_opponent, only_opponent);
             return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
         }
         if check_discard {
             if zone_mask_blocks_simple_count(&filter, Zone::Discard as u8) {
                 return 0;
             }
-            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-            extend_with_slot(&mut ids, &state.players[p_idx].discard, p_idx as u8, 100);
-            if include_opponent {
-                extend_with_slot(&mut ids, &state.players[1 - p_idx].discard, (1 - p_idx) as u8, 100);
-            }
+            let ids = collect_zone_ids(false, true, false, false, state, p_idx, p_idx, None, include_opponent, only_opponent);
             return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
         }
         if check_hand {
             if zone_mask_blocks_simple_count(&filter, Zone::Hand as u8) {
                 return 0;
             }
-            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-            extend_with_slot(&mut ids, &state.players[p_idx].hand, p_idx as u8, 200);
-            if include_opponent {
-                extend_with_slot(&mut ids, &state.players[1 - p_idx].hand, (1 - p_idx) as u8, 200);
-            }
+            let ids = collect_zone_ids(false, false, true, false, state, p_idx, p_idx, None, include_opponent, only_opponent);
             return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
         }
         if check_success {
-            let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-            extend_with_slot(&mut ids, &state.players[p_idx].success_lives, p_idx as u8, -1);
-            if include_opponent {
-                extend_with_slot(&mut ids, &state.players[1 - p_idx].success_lives, (1 - p_idx) as u8, -1);
-            }
+            let ids = collect_zone_ids(false, false, false, true, state, p_idx, p_idx, None, include_opponent, only_opponent);
             return count_unique_groups_in_cards(state, db, ids, &filter, &count_ctx);
         }
     }
 
-    let mut ids = smallvec::SmallVec::<[(i32, Option<(u8, i16)>); 32]>::new();
-
-    if check_stage {
-        extend_with_slot(
-            &mut ids,
-            &state.players[stage_primary_player].stage,
-            stage_primary_player as u8,
-            0,
-        );
-        if let Some(other_player) = stage_secondary_player {
-            extend_with_slot(
-                &mut ids,
-                &state.players[other_player].stage,
-                other_player as u8,
-                0,
-            );
-        }
-    }
-
-    if !only_opponent {
-        if check_discard {
-            extend_with_slot(&mut ids, &player.discard, p_idx as u8, 100);
-        }
-        if check_hand {
-            extend_with_slot(&mut ids, &player.hand, p_idx as u8, 200);
-        }
-        if check_success {
-            extend_with_slot(&mut ids, &player.success_lives, p_idx as u8, -1);
-        }
-    }
-    if include_opponent {
-        if check_discard {
-            extend_with_slot(&mut ids, &opponent.discard, (1 - p_idx) as u8, 100);
-        }
-        if check_hand {
-            extend_with_slot(&mut ids, &opponent.hand, (1 - p_idx) as u8, 200);
-        }
-        if check_success {
-            extend_with_slot(&mut ids, &opponent.success_lives, (1 - p_idx) as u8, -1);
-        }
-    }
+    let ids = collect_zone_ids(
+        check_stage,
+        check_discard,
+        check_hand,
+        check_success,
+        state,
+        p_idx,
+        stage_primary_player,
+        stage_secondary_player,
+        include_opponent,
+        only_opponent,
+    );
 
     if frame.counts_unique_names() {
         let mut names = std::collections::HashSet::new();

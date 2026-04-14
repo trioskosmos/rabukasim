@@ -21,6 +21,31 @@ pub fn get_param_case_insensitive<'a>(
 }
 
 #[inline]
+fn check_group_activation(
+    params: &serde_json::Map<String, serde_json::Value>,
+    state: &GameState,
+    player_idx: usize,
+    is_energy: bool,
+) -> bool {
+    let group_filter = get_param_case_insensitive(params, "FILTER")
+        .and_then(|v| v.as_str())
+        .and_then(|v| v.strip_prefix("GROUP="))
+        .and_then(|v| v.parse::<u8>().ok());
+    
+    let mask = if is_energy {
+        state.players[player_idx].activated_energy_group_mask
+    } else {
+        state.players[player_idx].activated_member_group_mask
+    };
+    
+    if let Some(group_id) = group_filter {
+        (mask & (1 << group_id)) != 0
+    } else {
+        mask != 0
+    }
+}
+
+#[inline]
 pub fn comparison_mode_from_params(
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> Option<i32> {
@@ -437,78 +462,12 @@ pub fn evaluate_raw_condition(
             let energy_count = state.players[target_player].energy_zone.len() as i32;
             compare_count_thresholds(params, energy_count)
         }
-        "DID_ACTIVATE_ENERGY" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_energy_group_mask != 0
-            }
-        }
-        "DID_ACTIVATE_ENERGY_BY_GROUP" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_energy_group_mask != 0
-            }
-        }
-        "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_energy_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_energy_group_mask != 0
-            }
-        }
-        "DID_ACTIVATE_MEMBER" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_member_group_mask != 0
-            }
-        }
-        "DID_ACTIVATE_MEMBER_BY_GROUP" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_member_group_mask != 0
-            }
-        }
-        "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => {
-            let group_filter = get_param_case_insensitive(params, "FILTER")
-                .and_then(|v| v.as_str())
-                .and_then(|v| v.strip_prefix("GROUP="))
-                .and_then(|v| v.parse::<u8>().ok());
-            let target_player = ctx.player_id as usize;
-            if let Some(group_id) = group_filter {
-                (state.players[target_player].activated_member_group_mask & (1 << group_id)) != 0
-            } else {
-                state.players[target_player].activated_member_group_mask != 0
-            }
-        }
+        "DID_ACTIVATE_ENERGY" => check_group_activation(params, state, ctx.player_id as usize, true),
+        "DID_ACTIVATE_ENERGY_BY_GROUP" => check_group_activation(params, state, ctx.player_id as usize, true),
+        "DID_ACTIVATE_ENERGY_BY_MEMBER_EFFECT" => check_group_activation(params, state, ctx.player_id as usize, true),
+        "DID_ACTIVATE_MEMBER" => check_group_activation(params, state, ctx.player_id as usize, false),
+        "DID_ACTIVATE_MEMBER_BY_GROUP" => check_group_activation(params, state, ctx.player_id as usize, false),
+        "DID_ACTIVATE_MEMBER_BY_MEMBER_EFFECT" => check_group_activation(params, state, ctx.player_id as usize, false),
         "ALL_CARDS_MATCH" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
 
@@ -727,17 +686,18 @@ pub fn evaluate_raw_condition(
             let opponent_yell_count =
                 state.players[1 - ctx.player_id as usize].yell_cards.len() as i32;
 
-            if get_param_case_insensitive(params, "LESS_THAN")
+            let is_less_than_opponent = get_param_case_insensitive(params, "LESS_THAN")
                 .and_then(|v| v.as_str())
                 .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
-                .unwrap_or(false)
-            {
+                .unwrap_or(false);
+            let is_greater_than_opponent = get_param_case_insensitive(params, "GREATER_THAN")
+                .and_then(|v| v.as_str())
+                .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
+                .unwrap_or(false);
+
+            if is_less_than_opponent {
                 player_yell_count < opponent_yell_count
-            } else if get_param_case_insensitive(params, "GREATER_THAN")
-                .and_then(|v| v.as_str())
-                .map(|v| v.eq_ignore_ascii_case("OPPONENT"))
-                .unwrap_or(false)
-            {
+            } else if is_greater_than_opponent {
                 player_yell_count > opponent_yell_count
             } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
                 player_yell_count == eq as i32
@@ -751,7 +711,7 @@ pub fn evaluate_raw_condition(
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
 
-            let card_has_blade_heart = |cid: i32| {
+            let card_has_blade_heart = |cid: i32| -> bool {
                 db.get_member(cid)
                     .map(|card| card.blade_hearts.iter().any(|&heart| heart > 0))
                     .or_else(|| {
@@ -761,13 +721,14 @@ pub fn evaluate_raw_condition(
                     .unwrap_or(false)
             };
 
-            let matches_filter = |cid: i32| match filter {
-                "TYPE=LIVE" => db.get_live(cid).is_some(),
-                "TYPE=MEMBER" => db.get_member(cid).is_some(),
-                "TYPE=BLADE_HEART" => card_has_blade_heart(cid),
-                "TYPE_NOT=BLADE_HEART" => !card_has_blade_heart(cid),
-                "HAS_ALL_BLADE" => card_has_blade_heart(cid),
-                _ => true,
+            let matches_filter = |cid: i32| -> bool {
+                match filter {
+                    "TYPE=LIVE" => db.get_live(cid).is_some(),
+                    "TYPE=MEMBER" => db.get_member(cid).is_some(),
+                    "TYPE=BLADE_HEART" | "HAS_ALL_BLADE" => card_has_blade_heart(cid),
+                    "TYPE_NOT=BLADE_HEART" => !card_has_blade_heart(cid),
+                    _ => true,
+                }
             };
 
             let matching_count = yell_cards
@@ -782,14 +743,8 @@ pub fn evaluate_raw_condition(
                 && get_param_case_insensitive(params, "MAX").is_none()
             {
                 !yell_cards.is_empty() && matching_count == yell_cards.len() as i32
-            } else if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
-                matching_count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
-                matching_count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
-                matching_count <= max as i32
             } else {
-                matching_count > 0
+                compare_count_thresholds(params, matching_count)
             }
         }
         "UNIQUE_NAMES_COUNT" => {
@@ -810,17 +765,7 @@ pub fn evaluate_raw_condition(
                     }
                 }
             }
-            let count = names.len() as i32;
-
-            if let Some(eq) = get_param_case_insensitive(params, "EQ").and_then(|v| v.as_i64()) {
-                count == eq as i32
-            } else if let Some(min) = get_param_case_insensitive(params, "MIN").and_then(|v| v.as_i64()) {
-                count >= min as i32
-            } else if let Some(max) = get_param_case_insensitive(params, "MAX").and_then(|v| v.as_i64()) {
-                count <= max as i32
-            } else {
-                count > 0
-            }
+            compare_count_thresholds(params, names.len() as i32)
         }
         "UNIQUE_UNIT_NAMES_COUNT" => {
             let filter_attr = resolved_filter_attr(params, cond.attr);
