@@ -12,6 +12,7 @@ use crate::core::logic::performance::do_yell;
 use crate::core::logic::Phase;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -19,6 +20,7 @@ fn get_param_case_insensitive<'a>(
     params.get(key).or_else(|| params.get(&key.to_uppercase()))
 }
 
+#[inline]
 fn target_player_for_meta_rule(base_p: usize, slot_info: crate::core::logic::interpreter::instruction::DecodedSlot, target_slot: i32) -> usize {
     if slot_info.is_opponent || target_slot == 2 {
         1 - base_p
