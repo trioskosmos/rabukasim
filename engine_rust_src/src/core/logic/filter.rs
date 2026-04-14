@@ -209,7 +209,7 @@ struct FilterMatchCacheKey {
 
 thread_local! {
     static ACTIVE_FILTER_MATCH_CACHE: RefCell<Option<HashMap<FilterMatchCacheKey, bool>>> =
-        const { RefCell::new(None) };
+        RefCell::new(None);
 }
 
 pub struct FilterMatchCacheScope;

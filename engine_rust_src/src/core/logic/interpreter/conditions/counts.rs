@@ -31,7 +31,6 @@ fn needs_card_scan(filter: &CardFilter) -> bool {
 fn count_zone_len(cards: &[i32]) -> i32 {
     cards.iter().filter(|&&id| id >= 0).count() as i32
 }
-#[inline]
 
 #[inline]
 fn count_dense_zone_len(cards: &[i32]) -> i32 {
