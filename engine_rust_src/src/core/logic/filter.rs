@@ -430,6 +430,7 @@ impl CardFilter {
     }
 
     /// Convert to raw 64-bit format with clear bit operations and validation
+    #[inline]
     pub fn to_attr_computed(&self) -> u64 {
         let mut attr: u64 = 0;
 
@@ -861,6 +862,7 @@ impl CardFilter {
     }
 
     /// Decode a packed 64-bit filter attribute into its structured form.
+    #[inline]
     pub fn from_attr(attr: u64) -> Self {
         if attr == 0 {
             return Self {
@@ -915,6 +917,7 @@ impl CardFilter {
         }
     }
 
+    #[inline]
     pub fn to_attr(&self) -> u64 {
         if !self.is_enabled {
             0
