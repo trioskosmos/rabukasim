@@ -1,5 +1,6 @@
 use serde_json::Value;
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -7,6 +8,7 @@ fn get_param_case_insensitive<'a>(
     params.get(key).or_else(|| params.get(&key.to_uppercase()))
 }
 
+#[inline]
 fn decode_heart_type_token(token: &str) -> Option<usize> {
     let trimmed = token.trim_matches(|ch: char| {
         ch == '"' || ch == '\'' || ch == '{' || ch == '}' || ch == '[' || ch == ']'
@@ -14,6 +16,7 @@ fn decode_heart_type_token(token: &str) -> Option<usize> {
     decode_heart_type_value(&Value::String(trimmed.to_string()))
 }
 
+#[inline]
 fn decode_labeled_heart_type(text: &str) -> Option<usize> {
     let lower = text.to_ascii_lowercase();
     for marker in ["heart_type", "hearttype"] {
@@ -44,6 +47,7 @@ fn decode_labeled_heart_type(text: &str) -> Option<usize> {
     None
 }
 
+#[inline]
 pub fn decode_heart_type_value(value: &Value) -> Option<usize> {
     if let Some(text) = value.as_str() {
         let normalized = text.trim().to_ascii_uppercase();
@@ -71,6 +75,7 @@ pub fn decode_heart_type_value(value: &Value) -> Option<usize> {
     None
 }
 
+#[inline]
 pub fn decode_heart_type_from_params(params: Option<&Value>) -> Option<usize> {
     params
         .and_then(|value| value.as_object())

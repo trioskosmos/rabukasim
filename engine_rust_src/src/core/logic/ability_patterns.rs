@@ -3,6 +3,7 @@ use crate::core::logic::heart_semantics::decode_heart_type_from_params;
 use crate::core::logic::models::AbilityFrame;
 use crate::core::logic::{Ability, CardDatabase, PendingInteraction};
 
+#[inline]
 fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
     ability
         .resolved_frames()
@@ -10,6 +11,7 @@ fn ability_uses_opcode(ability: &Ability, opcode: i32) -> bool {
         .any(|frame| frame.opcode() == opcode)
 }
 
+#[inline]
 fn modal_option_has_opcode(ability: &Ability, option_idx: usize, opcode: i32) -> bool {
     ability
         .get_modal_option_frames(option_idx)
@@ -57,10 +59,12 @@ fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;
 
+#[inline]
 pub fn encode_optional_mode_mask(mask: i16) -> i16 {
     OPTIONAL_MODE_MASK_BASE + mask
 }
 
+#[inline]
 pub fn decode_optional_mode_mask(value: i16) -> Option<i16> {
     if value >= OPTIONAL_MODE_MASK_BASE {
         Some(value - OPTIONAL_MODE_MASK_BASE)
