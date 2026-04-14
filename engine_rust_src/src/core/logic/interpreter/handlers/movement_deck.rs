@@ -21,6 +21,7 @@ use crate::core::logic::interpreter::handlers::interaction_zone::{
 use crate::core::logic::interpreter::handlers::movement::handle_move_to_discard;
 use crate::core::logic::interpreter::handlers::movement::handle_swap_zone;
 
+#[inline]
 fn prepend_cards_preserve_order(
     deck: &mut smallvec::SmallVec<[i32; 60]>,
     cards: impl IntoIterator<Item = i32>,
@@ -36,6 +37,7 @@ fn prepend_cards_preserve_order(
     }
 }
 
+#[inline]
 fn prepend_cards_reverse_order<I>(deck: &mut smallvec::SmallVec<[i32; 60]>, cards: I)
 where
     I: IntoIterator<Item = i32>,

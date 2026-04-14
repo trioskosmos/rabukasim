@@ -1,5 +1,6 @@
 use crate::core::logic::{GameState};
 
+#[inline]
 pub fn discard_current_yell_pile(state: &mut GameState, p_idx: usize) -> usize {
     let current_yell = std::mem::take(&mut state.players[p_idx].yell_cards);
     let removed_count = current_yell.len();
