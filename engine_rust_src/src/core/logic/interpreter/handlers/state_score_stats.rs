@@ -11,6 +11,7 @@ mod state_score_slots;
 #[path = "state_score_transforms.rs"]
 mod state_score_transforms;
 
+#[inline]
 fn decode_heart_color(
     frame: &AbilityFrameComponents<'_>,
     ctx: &AbilityContext,

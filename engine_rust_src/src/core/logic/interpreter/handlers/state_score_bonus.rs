@@ -4,12 +4,14 @@ use crate::core::logic::interpreter::handlers::state_helpers::{
     inline_value_ge_threshold, update_live_score_snapshot,
 };
 
+#[inline]
 fn source_original_text<'a>(db: &'a CardDatabase, source_card_id: i32) -> Option<&'a str> {
     db.get_member(source_card_id)
         .map(|member| member.original_text.as_str())
         .or_else(|| db.get_live(source_card_id).map(|live| live.original_text.as_str()))
 }
 
+#[inline]
 fn resolve_multiplier_count_opcode(
     db: &CardDatabase,
     ctx: &AbilityContext,
