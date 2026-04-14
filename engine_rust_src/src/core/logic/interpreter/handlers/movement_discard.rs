@@ -9,6 +9,7 @@ use crate::core::enums::ChoiceType;
 use crate::core::{O_MOVE_TO_DISCARD, O_NOP};
 use super::super::HandlerResult;
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
