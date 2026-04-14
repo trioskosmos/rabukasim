@@ -1,1733 +1,1072 @@
-﻿DSL_PATTERNS = [
-        {
-            "name": "heart_total_condition_opponent_phase_cost_increase",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)に([^。]+)が([^。]+)(\d+)つ以上ある場合、([^。]+)の([^。]+)、([^。]+)の([^。]+)にある([^。]+)(\d+)枚は、([^。]+)ための([^。]+)が([^。]+)多くなる",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦HEART_TYPE⟧に⟦RESOURCE⟧が⟦TOTAL⟧⟦NUMBER⟧つ以上ある場合、⟦OPPONENT⟧の⟦PHASE⟧、⟦OPPONENT⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧⟦NUMBER2⟧枚は、⟦CONTEXT⟧ための⟦COST⟧が⟦MODIFIER⟧多くなる",
-            "structure": "Heart total condition opponent phase cost increase",
-        },
-        {
-            "name": "cost_calculation_summon",
-            "regex": r"\bそうした場合、([^。]+)の([^。]+)から、その([^。]+)の([^。]+)に(\d+)を([^。]+)した([^。]+)に([^。]+)コストの『([^』]+)』の([^。]+)を(\d+)枚、その([^。]+)いた([^。]+)に([^。]+)させる",
-            "template": "そうした場合、⟦SOURCE⟧の⟦ZONE⟧から、その⟦MEMBER⟧の⟦ATTRIBUTE⟧に⟦NUMBER1⟧を⟦OPERATION⟧した⟦CALCULATED⟧に⟦EQUAL⟧コストの『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER2⟧枚、その⟦MEMBER2⟧いた⟦ZONE2⟧に⟦ACTION⟧させる",
-            "structure": "Cost calculation summon",
-        },
-        {
-            "name": "select_member_and_cost_modification",
-            "regex": r"\b([^。]+)の([^。]+)いる『([^』]+)』の([^。]+)(\d+)人を選ぶ。([^。]+)まで、([^。]+)の([^。]+)は、([^。]+)([^。]+)が([^。]+)持つ([^。]+)より(\d+)低い([^。]+)に([^。]+)なる",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER1⟧人を選ぶ。⟦TIME⟧まで、⟦MEMBER⟧の⟦ATTRIBUTE⟧は、⟦SELECTED⟧⟦MEMBER2⟧が⟦ORIGINAL⟧持つ⟦COST⟧より⟦NUMBER2⟧低い⟦VALUE⟧に⟦EQUAL⟧なる",
-            "structure": "Select member and cost modification",
-        },
-        {
-            "name": "both_players_summon",
-            "regex": r"\b([^。]+)と([^。]+)は([^。]+)、([^。]+)の([^。]+)からコスト(\d+)以下の([^。]+)を(\d+)枚、([^。]+)の([^。]+)([^。]+)に([^。]+)で([^。]+)させる",
-            "template": "⟦PLAYER1⟧と⟦PLAYER2⟧は⟦EACH⟧、⟦SELF⟧の⟦ZONE⟧からコスト⟦COST⟧以下の⟦CARD_TYPE⟧を⟦NUMBER⟧枚、⟦MEMBER⟧の⟦CONDITION⟧⟦AREA⟧に⟦STATE⟧で⟦ACTION⟧させる",
-            "structure": "Both players summon",
-        },
-        {
-            "name": "center_member_position_change",
-            "regex": r"\(?\s*([^。]+)いる([^。]+)を([^。]+)いる([^。]+)以外の([^。]+)に([^。]+)させる。その([^。]+)に([^。]+)いる場合、その([^。]+)は([^。]+)に([^。]+)させる",
-            "template": "⟦ZONE⟧いる⟦TARGET⟧を⟦CURRENT⟧いる⟦AREA⟧以外の⟦ZONE2⟧に⟦ACTION⟧させる。その⟦ZONE3⟧に⟦TARGET2⟧いる場合、その⟦TARGET2⟧は⟦DESTINATION⟧に⟦ACTION2⟧させる",
-            "structure": "Center member position change",
-        },
-        {
-            "name": "heart_color_exception_per_member_cost_reduction",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)と([^。]+)以外の([^。]+)の([^。]+)を持つ([^。]+)(\d+)人につき、([^。]+)の([^。]+)を([^。]+)([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦HEART1⟧と⟦HEART2⟧以外の⟦COLOR⟧の⟦HEART⟧を持つ⟦TARGET⟧⟦NUMBER⟧人につき、⟦CARD⟧の⟦COST⟧を⟦MODIFIER⟧⟦ACTION⟧",
-            "structure": "Heart color exception per member cost reduction",
-        },
-        {
-            "name": "parenthesized_formation_change_restriction",
-            "regex": r"\（([^。]+)を([^。]+)([^。]+)の([^。]+)に([^。]+)させる。([^。]+)で([^。]+)の([^。]+)に(\d+)人以上の([^。]+)を([^。]+)させることはできない",
-            "template": "（⟦MEMBERS⟧を⟦EACH⟧⟦ANY⟧の⟦AREA⟧に⟦MOVE⟧させる。⟦EFFECT⟧で⟦AREA2⟧の⟦ZONE⟧に⟦NUMBER⟧人以上の⟦MEMBER2⟧を⟦ACTION⟧させることはできない",
-            "structure": "Parenthesized formation change restriction",
-        },
-        {
-            "name": "member_gains_hearts_from_selected_card_colors",
-            "regex": r"\b([^。]+)の([^。]+)いる「([^」]+)」(\d+)人は、([^。]+)により([^。]+)([^。]+)が持つ([^。]+)の([^。]+)を(\d+)つずつ([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる「⟦MEMBER⟧」⟦NUMBER⟧人は、⟦CONTEXT⟧により⟦SELECTED⟧⟦CARD⟧が持つ⟦ATTRIBUTE⟧の⟦RESOURCE⟧を⟦NUMBER2⟧つずつ⟦ACTION⟧",
-            "structure": "Member gains hearts from selected card colors",
-        },
-        {
-            "name": "zone_different_group_name_card_add",
-            "regex": r"\b([^。]+)の([^。]+)にある、([^。]+)の([^。]+)いるすべての([^。]+)と([^。]+)([^。]+)を持つ([^。]+)(\d+)枚を([^。]+)に加える",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある、⟦SOURCE2⟧の⟦ZONE2⟧いるすべての⟦TARGET⟧と⟦DIFFERENT⟧⟦ATTRIBUTE⟧を持つ⟦CARD_TYPE⟧⟦NUMBER⟧枚を⟦DESTINATION⟧に加える",
-            "structure": "Zone different group name card add",
-        },
-        {
-            "name": "cost_and_blade_count_comparison",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)が([^。]+)場合、([^。]+)の([^。]+)の([^。]+)が([^。]+)場合についても([^。]+)を([^。]+)",
-            "template": "⟦MEMBERS⟧の⟦ATTRIBUTE1⟧が⟦CONDITION1⟧場合、⟦MODIFIER⟧の⟦ATTRIBUTE2⟧の⟦ATTRIBUTE3⟧が⟦CONDITION2⟧場合についても⟦ACTION⟧を⟦PERFORM⟧",
-            "structure": "Cost and blade count comparison",
-        },
-        {
-            "name": "per_group_cost_reduction",
-            "regex": r"\b([^。]+)を([^。]+)するための([^。]+)は([^。]+)の([^。]+)いる([^。]+)の中の([^。]+)(\d+)種類につき、([^。]+)([^。]+)",
-            "template": "⟦ABILITY⟧を⟦ACTION⟧するための⟦COST⟧は⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧の中の⟦ATTRIBUTE⟧⟦NUMBER⟧種類につき、⟦RESOURCE⟧⟦REDUCTION⟧",
-            "structure": "Per group cost reduction",
-        },
-        {
-            "name": "per_member_wait_then_draw",
-            "regex": r"\b([^。]+)を(\d+)人まで([^。]+)してもよい：これにより([^。]+)にした([^。]+)(\d+)人につき、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦TARGET⟧を⟦NUMBER1⟧人まで⟦STATE⟧してもよい：これにより⟦STATE2⟧にした⟦TARGET2⟧⟦NUMBER2⟧人につき、⟦CARD_TYPE⟧を⟦NUMBER3⟧枚⟦ACTION⟧",
-            "structure": "Per member wait then draw",
-        },
-        {
-            "name": "zone_card_except_group_per_card_cost_reduce",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)以外の『([^』]+)』の([^。]+)(\d+)枚につき、([^。]+)の([^。]+)を([^。]+)減らす",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦EXCEPT_CARD⟧以外の『⟦GROUP⟧』の⟦CARD_TYPE⟧⟦NUMBER⟧枚につき、⟦TARGET⟧の⟦COST⟧を⟦MODIFIER⟧減らす",
-            "structure": "Zone card except group per card cost reduce",
-        },
-        {
-            "name": "dual_zone_card_count_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)が(\d+)枚で、かつ([^。]+)の([^。]+)に([^。]+)が(\d+)枚以上ある場合、([^。]+)を得る",
-            "template": "⟦SOURCE1⟧の⟦ZONE1⟧の⟦CARD_TYPE⟧が⟦NUMBER1⟧枚で、かつ⟦SOURCE2⟧の⟦ZONE2⟧に⟦CARD_TYPE2⟧が⟦NUMBER2⟧枚以上ある場合、⟦RESOURCE⟧を得る",
-            "structure": "Dual zone card count condition resource gain",
-        },
-        {
-            "name": "wait_member_count_selection",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)の([^。]+)まで、([^。]+)の([^。]+)にある『([^』]+)』の([^。]+)を選ぶ",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧の⟦COUNT⟧まで、⟦SOURCE2⟧の⟦ZONE2⟧にある『⟦GROUP⟧』の⟦CARD_TYPE⟧を選ぶ",
-            "structure": "Wait member count selection",
-        },
-        {
-            "name": "ability_resolution_trigger",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の(\{\\{[^}]+\}\})([^。]+)が([^。]+)たび、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧の⟦TRIGGER⟧⟦ABILITY⟧が⟦ACTION⟧たび、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DRAW⟧",
-            "structure": "Ability resolution trigger",
-        },
-        {
-            "name": "optional_energy_placement_from_member",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人の([^。]+)にある([^。]+)を、([^。]+)([^。]+)([^。]+)に置いてもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人の⟦LOCATION⟧にある⟦CARD_TYPE⟧を、⟦ANY⟧⟦COUNT⟧⟦DESTINATION⟧に置いてもよい",
-            "structure": "Optional energy placement from member",
-        },
-        {
-            "name": "effect_opponent_state_change_trigger",
-            "regex": r"\b([^。]+)の([^。]+)によって、([^。]+)の([^。]+)いる([^。]+)のコスト(\d+)以下の([^。]+)が([^。]+)になったとき",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧によって、⟦OPPONENT⟧の⟦ZONE⟧いる⟦STATE1⟧のコスト⟦COST⟧以下の⟦TARGET⟧が⟦STATE2⟧になったとき",
-            "structure": "Effect opponent state change trigger",
-        },
-        {
-            "name": "score_based_card_reveal",
-            "regex": r"\b([^。]+)の([^。]+)から、([^。]+)の([^。]+)の([^。]+)に(\d+)を([^。]+)した([^。]+)に等しい([^。]+)見る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦SOURCE2⟧の⟦LIVE⟧の⟦ATTRIBUTE1⟧に⟦NUMBER⟧を⟦OPERATION⟧した⟦CALCULATED⟧に等しい⟦COUNT⟧見る",
-            "structure": "Score based card reveal",
-        },
-        {
-            "name": "baton_touch_specific_card_recovery",
-            "regex": r"\b([^。]+)して([^。]+)した場合、この([^。]+)で([^。]+)された『([^』]+)』の([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦ACTION⟧して⟦TRIGGER⟧した場合、この⟦CONTEXT⟧で⟦PLACED⟧された『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Baton touch specific card recovery",
-        },
-        {
-            "name": "phase_based_trigger_on_card_discard",
-            "regex": r"\b([^。]+)の([^。]+)の間、([^。]+)の([^。]+)が(\d+)枚以上([^。]+)の([^。]+)から([^。]+)に([^。]+)たび",
-            "template": "⟦SOURCE⟧の⟦PHASE⟧の間、⟦OWNER⟧の⟦CARD_TYPE⟧が⟦NUMBER⟧枚以上⟦SOURCE2⟧の⟦ZONE⟧から⟦DESTINATION⟧に⟦ACTION⟧たび",
-            "structure": "Phase based trigger on card discard",
-        },
-        {
-            "name": "placed_card_trigger_ability_activation",
-            "regex": r"\b([^。]+)により([^。]+)に([^。]+)した([^。]+)の(\{\\{[^}]+\}\})([^。]+)(\d+)つを([^。]+)させる",
-            "template": "⟦CONTEXT⟧により⟦ZONE⟧に⟦PLACED⟧した⟦CARD⟧の⟦TRIGGER⟧⟦ABILITY⟧⟦NUMBER⟧つを⟦ACTION⟧させる",
-            "structure": "Placed card trigger ability activation",
-        },
-        {
-            "name": "per_member_reveal_from_deck",
-            "regex": r"\b([^。]+)の([^。]+)から、([^。]+)と([^。]+)の([^。]+)いる([^。]+)(\d+)人につき、(\d+)枚([^。]+)する",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE2⟧いる⟦TARGET⟧⟦NUMBER1⟧人につき、⟦NUMBER2⟧枚⟦ACTION⟧する",
-            "structure": "Per member reveal from deck",
-        },
-        {
-            "name": "state_change_optional_cost_condition_state_change",
-            "regex": r"\b([^。]+)を([^。]+)にしてもよい：([^。]+)の([^。]+)いるコスト(\d+)以下の([^。]+)(\d+)人を([^。]+)にする",
-            "template": "⟦TARGET⟧を⟦STATE1⟧にしてもよい：⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE2⟧にする",
-            "structure": "State change optional cost condition state change",
-        },
-        {
-            "name": "zone_card_count_condition_zone_to_zone_add",
-            "regex": r"([^。]+)の([^。]+)にカードが(\d+)枚以上ある場合、([^。]+)の([^。]+)から([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦SOURCE1⟧の⟦ZONE1⟧にカードが⟦NUMBER1⟧枚以上ある場合、⟦SOURCE2⟧の⟦ZONE2⟧から⟦CARD_TYPE⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Zone card count condition to zone add",
-        },
-        {
-            "name": "cost_total_condition_summon",
-            "regex": r"\b([^。]+)から、([^。]+)の([^。]+)が(\d+)以下になるように([^。]+)を(\d+)枚まで([^。]+)に([^。]+)させる",
-            "template": "⟦SOURCE⟧から、⟦ATTRIBUTE⟧の⟦TOTAL⟧が⟦NUMBER1⟧以下になるように⟦CARD_TYPE⟧を⟦NUMBER2⟧枚まで⟦DESTINATION⟧に⟦ACTION⟧させる",
-            "structure": "Cost total condition summon",
-        },
-        {
-            "name": "zone_card_reveal_optional_zone_card_count_add",
-            "regex": r"\b([^。]+)の([^。]+)を(\d+)枚公開してもよい：([^。]+)の([^。]+)にある([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦SOURCE1⟧の⟦CARD_TYPE⟧を⟦NUMBER1⟧枚公開してもよい：⟦SOURCE2⟧の⟦ZONE⟧にある⟦RESOURCE⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Zone card reveal optional zone card count add",
-        },
-        {
-            "name": "player_selection_card_placement",
-            "regex": r"\b([^。]+)は、その([^。]+)の([^。]+)にある([^。]+)を(\d+)枚、その([^。]+)の([^。]+)の([^。]+)に置く",
-            "template": "⟦PLAYER⟧は、その⟦TARGET_PLAYER⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧を⟦NUMBER⟧枚、その⟦TARGET_PLAYER2⟧の⟦ZONE2⟧の⟦POSITION⟧に置く",
-            "structure": "Player selection card placement",
-        },
-        {
-            "name": "original_heart_count_comparison_condition",
-            "regex": r"\b([^。]+)の([^。]+)、([^。]+)持つ([^。]+)の([^。]+)より([^。]+)の([^。]+)を持つ([^。]+)いる場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧、⟦MODIFIER⟧持つ⟦ATTRIBUTE1⟧の⟦ATTRIBUTE2⟧より⟦COMPARISON⟧の⟦RESOURCE⟧を持つ⟦TARGET⟧いる場合",
-            "structure": "Original heart count comparison condition",
-        },
-        {
-            "name": "phase_limit_reduction",
-            "regex": r"\b([^。]+)の([^。]+)で([^。]+)が([^。]+)に([^。]+)できる([^。]+)の([^。]+)が(\d+)枚([^。]+)",
-            "template": "⟦TIME⟧の⟦PHASE⟧で⟦PLAYER⟧が⟦ZONE⟧に⟦ACTION⟧できる⟦CARD_TYPE⟧の⟦LIMIT⟧が⟦NUMBER⟧枚⟦MODIFICATION⟧",
-            "structure": "Phase limit reduction",
-        },
-        {
-            "name": "area_placement_turn_restriction",
-            "regex": r"\(?\s*([^。]+)で([^。]+)した([^。]+)の([^。]+)([^。]+)には、この([^。]+)に([^。]+)は([^。]+)できない",
-            "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
-            "structure": "Area placement turn restriction",
-        },
-        {
-            "name": "dual_zone_card_count_condition",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)が(\d+)枚で、かつ([^。]+)の([^。]+)に([^。]+)が(\d+)枚以上ある場合",
-            "template": "⟦SOURCE1⟧の⟦ZONE1⟧の⟦CARD_TYPE⟧が⟦NUMBER1⟧枚で、かつ⟦SOURCE2⟧の⟦ZONE2⟧に⟦CARD_TYPE2⟧が⟦NUMBER2⟧枚以上ある場合",
-            "structure": "Dual zone card count condition",
-        },
-        {
-            "name": "conditional_card_add_and_discard_others",
-            "regex": r"\bその([^。]+)を([^。]+)に加え、([^。]+)により([^。]+)された([^。]+)すべての([^。]+)を([^。]+)に置く",
-            "template": "その⟦CARD⟧を⟦DESTINATION⟧に加え、⟦CONTEXT⟧により⟦REVEALED⟧された⟦OTHER⟧すべての⟦CARD_TYPE⟧を⟦DESTINATION2⟧に置く",
-            "structure": "Conditional card add and discard others",
-        },
-        {
-            "name": "distinct_cost_member_count_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)([^。]+)が([^。]+)([^。]+)の([^。]+)が(\d+)人以上いるかぎり、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧⟦ATTRIBUTE⟧が⟦DISTINCT⟧⟦MODIFIER⟧の⟦TARGET⟧が⟦NUMBER⟧人以上いるかぎり、⟦RESOURCE⟧を得る",
-            "structure": "Distinct cost member count condition resource gain",
-        },
-        {
-            "name": "activation_cost_zone_to_zone_add",
-            "regex": r"([^。]+)を([^。]+)から([^。]+)に置く：([^。]+)の([^。]+)から([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦COST_TARGET⟧を⟦SOURCE_ZONE⟧から⟦DESTINATION_ZONE⟧に置く：⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Activation cost zone to zone add",
-        },
-        {
-            "name": "highest_cost_member_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)のうち、([^。]+)にいる([^。]+)が([^。]+)大きい([^。]+)を持つ場合",
-            "template": "⟦SOURCE⟧の⟦ZONE1⟧いる⟦TARGET⟧のうち、⟦ZONE2⟧にいる⟦TARGET2⟧が⟦SUPERLATIVE⟧大きい⟦ATTRIBUTE⟧を持つ場合",
-            "structure": "Highest cost member condition",
-        },
-        {
-            "name": "swap_members",
-            "regex": r"\bその([^。]+)に([^。]+)いる場合、その([^。]+)は([^。]+)の([^。]+)いた([^。]+)に([^。]+)させる",
-            "template": "その⟦ZONE1⟧に⟦TARGET1⟧いる場合、その⟦TARGET1⟧は⟦TARGET2⟧の⟦MEMBER⟧いた⟦ZONE2⟧に⟦ACTION⟧させる",
-            "structure": "Swap members",
-        },
-        {
-            "name": "ability_activation_condition",
-            "regex": r"\b([^。]+)は、([^。]+)が([^。]+)の([^。]+)によって([^。]+)されている([^。]+)のみ([^。]+)する",
-            "template": "⟦ABILITY⟧は、⟦CARD⟧が⟦SOURCE⟧の⟦CONTEXT⟧によって⟦STATE⟧されている⟦CONDITION⟧のみ⟦ACTION⟧する",
-            "structure": "Ability activation condition",
-        },
-        {
-            "name": "from_revealed_cards_to_deck_bottom",
-            "regex": r"\b([^。]+)により([^。]+)された([^。]+)の中から、([^。]+)を(\d+)枚まで([^。]+)の([^。]+)に置く",
-            "template": "⟦CONTEXT⟧により⟦ACTION⟧された⟦SOURCE⟧の中から、⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦DESTINATION⟧の⟦POSITION⟧に置く",
-            "structure": "From revealed cards to deck bottom",
-        },
-        {
-            "name": "zone_member_cost_except_group_per_member_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)いるコスト(\d+)以上の([^。]+)以外の([^。]+)(\d+)人につき、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以上の⟦EXCEPT_GROUP⟧以外の⟦TARGET⟧⟦NUMBER⟧人につき、⟦RESOURCE⟧を得る",
-            "structure": "Zone member cost except group per member resource gain",
-        },
-        {
-            "name": "multi_condition_zone_card_presence",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)がおり、かつこれにより([^。]+)した([^。]+)の中に([^。]+)がない場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦CONDITION1⟧がおり、かつこれにより⟦ACTION⟧した⟦ZONE2⟧の中に⟦CARD_TYPE⟧がない場合",
-            "structure": "Multi condition zone card presence",
-        },
-        {
-            "name": "hand_cost_group_card_summon_optional",
-            "regex": r"\b([^。]+)からコスト(\d+)以下の『([^』]+)』の([^。]+)を(\d+)枚([^。]+)に([^。]+)させてもよい",
-            "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させてもよい",
-            "structure": "Hand cost group card summon optional",
-        },
-        {
-            "name": "member_leave_energy_return",
-            "regex": r"\(?\s*([^。]+)が([^。]+)から([^。]+)とき、([^。]+)に([^。]+)(?:されている|いる)([^。]+)は([^。]+)に置く",
-            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
-            "structure": "Member leave energy return",
-        },
-        {
-            "name": "zone_card_score_comparison_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)の([^。]+)が([^。]+)より([^。]+)かぎり、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧かぎり、⟦RESOURCE⟧を得る",
-            "structure": "Zone card score comparison condition resource gain",
-        },
-        {
-            "name": "specific_card_cost_reduce",
-            "regex": r"\bコスト(\d+)の『([^』]+)』の([^。]+)を([^。]+)から([^。]+)させるための([^。]+)は(\d+)減る",
-            "template": "コスト⟦COST⟧の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦SOURCE⟧から⟦ACTION⟧させるための⟦ATTRIBUTE⟧は⟦MODIFIER⟧減る",
-            "structure": "Specific card cost reduce",
-        },
-        {
-            "name": "hand_card_cost_reduce_per_hand_card",
-            "regex": r"\b([^。]+)にある([^。]+)の([^。]+)は、([^。]+)以外の([^。]+)(\d+)枚につき、(\d+)少なくなる",
-            "template": "⟦ZONE⟧にある⟦CARD⟧の⟦ATTRIBUTE⟧は、⟦EXCEPT_CARD⟧以外の⟦SOURCE⟧⟦NUMBER1⟧枚につき、⟦NUMBER2⟧少なくなる",
-            "structure": "Hand card cost reduce per hand card",
-        },
-        {
-            "name": "multi_resource_each_condition",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)の([^。]+)に([^。]+)が([^。]+)(\d+)以上([^。]+)かぎり",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧の⟦ATTRIBUTE⟧に⟦RESOURCE⟧が⟦CONDITION⟧⟦NUMBER⟧以上⟦STATE⟧かぎり",
-            "structure": "Multi resource each condition",
-        },
-        {
-            "name": "zone_to_zone_optional_deck_top_look",
-            "regex": r"\b([^。]+)を(\d+)枚([^。]+)に置いてもよい：([^。]+)の([^。]+)の上から([^。]+)を(\d+)枚見る",
-            "template": "⟦SOURCE⟧を⟦NUMBER1⟧枚⟦DESTINATION1⟧に置いてもよい：⟦SOURCE2⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER2⟧枚見る",
-            "structure": "Zone to zone optional deck top look",
-        },
-        {
-            "name": "wait_and_discard_then_draw",
-            "regex": r"\b([^。]+)を([^。]+)し、([^。]+)を(\d+)枚([^。]+)に置く：([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦TARGET⟧を⟦STATE⟧し、⟦CARD1⟧を⟦NUMBER1⟧枚⟦ZONE⟧に置く：⟦CARD2⟧を⟦NUMBER2⟧枚⟦ACTION⟧",
-            "structure": "Wait and discard then draw",
-        },
-        {
-            "name": "zone_cost_group_card_add",
-            "regex": r"\b([^。]+)の([^。]+)からコスト(\d+)以下の『([^』]+)』の([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧からコスト⟦COST⟧以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Zone cost group card add",
-        },
-        {
-            "name": "live_card_heart_total_condition",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)の([^。]+)が(\d+)以上の『([^』]+)』の([^。]+)あるかぎり",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦ATTRIBUTE⟧の⟦TOTAL⟧が⟦NUMBER⟧以上の『⟦GROUP⟧』の⟦CARD_TYPE⟧あるかぎり",
-            "structure": "Live card heart total condition",
-        },
-        {
-            "name": "hand_specific_member_summon",
-            "regex": r"\b([^。]+)からコスト(\d+)以下の「([^」]+)」の([^。]+)を(\d+)枚([^。]+)に([^。]+)させる",
-            "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の「⟦MEMBER⟧」の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させる",
-            "structure": "Hand specific member summon",
-        },
-        {
-            "name": "member_leave_energy_return",
-            "regex": r"\b([^。]+)が([^。]+)から([^。]+)とき、([^。]+)に([^。]+)いる([^。]+)は([^。]+)に置く",
-            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
-            "structure": "Member leave energy return",
-        },
-        {
-            "name": "hand_specific_group_member_summon",
-            "regex": r"\b([^。]+)からコスト(\d+)以下の『([^』]+)』の([^。]+)を(\d+)枚([^。]+)に([^。]+)させる",
-            "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させる",
-            "structure": "Hand specific group member summon",
-        },
-        {
-            "name": "conditional_live_card_discard_draw",
-            "regex": r"\b([^。]+)により([^。]+)を([^。]+)に([^。]+)した場合、さらに([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦CONTEXT⟧により⟦CARD⟧を⟦DESTINATION⟧に⟦PLACED⟧した場合、さらに⟦CARD2⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Conditional live card discard draw",
-        },
-        {
-            "name": "automatic_trigger_state_change_optional",
-            "regex": r"\b([^。]+)が([^。]+)から([^。]+)に([^。]+)とき、([^。]+)(\d+)人を([^。]+)にしてもよい",
-            "template": "⟦TARGET⟧が⟦SOURCE⟧から⟦DESTINATION⟧に⟦TRIGGER⟧とき、⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE⟧にしてもよい",
-            "structure": "Automatic trigger state change optional",
-        },
-        {
-            "name": "blade_transformation",
-            "regex": r"\b([^。]+)によって([^。]+)される([^。]+)の([^。]+)が持つ([^。]+)は、すべて([^。]+)になる",
-            "template": "⟦CONTEXT⟧によって⟦ACTION⟧される⟦SOURCE⟧の⟦CARD_TYPE⟧が持つ⟦ATTRIBUTE⟧は、すべて⟦TRANSFORM⟧になる",
-            "structure": "Blade transformation",
-        },
-        {
-            "name": "per_group_reveal",
-            "regex": r"\bその中から([^。]+)([^。]+)につき(\d+)枚ずつ([^。]+)し、(\d+)枚まで([^。]+)に加えてもよい",
-            "template": "その中から⟦EACH⟧⟦ATTRIBUTE⟧につき⟦NUMBER1⟧枚ずつ⟦ACTION⟧し、⟦NUMBER2⟧枚まで⟦DESTINATION⟧に加えてもよい",
-            "structure": "Per group reveal",
-        },
-        {
-            "name": "then_opponent_wait_member_condition_draw",
-            "regex": r"\bその後、([^。]+)の([^。]+)に([^。]+)の([^。]+)いる場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "その後、⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の⟦TARGET⟧いる場合、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Then opponent wait member condition draw",
-        },
-        {
-            "name": "zone_all_cards_cost_increase",
-            "regex": r"\b([^。]+)の([^。]+)にあるすべての([^。]+)は、([^。]+)ための([^。]+)が([^。]+)多くなる",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にあるすべての⟦CARD_TYPE⟧は、⟦CONTEXT⟧ための⟦COST⟧が⟦MODIFIER⟧多くなる",
-            "structure": "Zone all cards cost increase",
-        },
-        {
-            "name": "zone_cost_member_condition_draw",
-            "regex": r"\b([^。]+)の([^。]+)にコスト(\d+)以上の([^。]+)いる場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にコスト⟦COST⟧以上の⟦TARGET⟧いる場合、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Zone cost member condition draw",
-        },
-        {
-            "name": "move_members_to_preferred_areas_optional",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)を、それぞれ([^。]+)の([^。]+)に([^。]+)させてもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧を、それぞれ⟦PREFERENCE⟧の⟦DESTINATION⟧に⟦ACTION⟧させてもよい",
-            "structure": "Move members to preferred areas optional",
-        },
-        {
-            "name": "member_cost_total_comparison_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)の([^。]+)が([^。]+)より([^。]+)場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧の⟦ATTRIBUTE⟧の⟦TOTAL⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合",
-            "structure": "Member cost total comparison condition",
-        },
-        {
-            "name": "heart_color_comparison",
-            "regex": r"\b([^。]+)が持つ([^。]+)と、([^。]+)が持つ([^。]+)の中に([^。]+)の([^。]+)がある場合",
-            "template": "⟦MEMBER1⟧が持つ⟦HEART1⟧と、⟦MEMBER2⟧が持つ⟦HEART2⟧の中に⟦COMPARISON⟧の⟦COLOR⟧がある場合",
-            "structure": "Heart color comparison",
+﻿import json
+import re
+import sys
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+# Fix encoding for Windows console
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+
+
+def remove_trigger_from_start(text: str) -> str:
+    """Remove trigger from the start of text, preserving triggers in the middle/end."""
+    # Match trigger pattern: {{icon.png|text}} or {{icon.png|text}}/{{icon2.png|text2}}
+    trigger_pattern = r'^(\{\\{[^}]+\\.png\|[^}]+\}\}(?:/\{\\{[^}]+\\.png\|[^}]+\}\})?)'
+    trigger_match = re.match(trigger_pattern, text)
+    
+    if trigger_match:
+        return text[trigger_match.end():].strip()
+    else:
+        return text
+
+
+def extract_trigger(ability_text: str) -> dict[str, str]:
+    """Extract trigger from ability text and return trigger and remaining text."""
+    # Match trigger pattern: {{icon.png|text}} or {{icon.png|text}}/{{icon2.png|text2}}
+    trigger_pattern = r'^(\{\\{[^}]+\\.png\|[^}]+\}\}(?:/\{\\{[^}]+\\.png\|[^}]+\}\})?)'
+    trigger_match = re.match(trigger_pattern, ability_text)
+    
+    if trigger_match:
+        trigger = trigger_match.group(1)
+        remaining_text = ability_text[trigger_match.end():].strip()
+        return {
+            "trigger": trigger,
+            "remaining_text": remaining_text,
+            "original": ability_text
+        }
+    else:
+        return {
+            "trigger": "",
+            "remaining_text": ability_text,
+            "original": ability_text
+        }
+
+
+def process_patterns_triggers():
+    """Remove triggers from the start of all pattern literals/templates."""
+    global DSL_PATTERNS, LITERAL_PATTERNS, FAMILY_PATTERNS
+    
+    # Process DSL_PATTERNS
+    for pattern in DSL_PATTERNS:
+        if "template" in pattern:
+            pattern["template"] = remove_trigger_from_start(pattern["template"])
+    
+    # Process LITERAL_PATTERNS
+    for pattern in LITERAL_PATTERNS:
+        if "literal" in pattern:
+            pattern["literal"] = remove_trigger_from_start(pattern["literal"])
+        if "template" in pattern:
+            pattern["template"] = remove_trigger_from_start(pattern["template"])
+    
+    # Process FAMILY_PATTERNS
+    for pattern in FAMILY_PATTERNS:
+        if "prefix" in pattern:
+            pattern["prefix"] = remove_trigger_from_start(pattern["prefix"])
+        if "template" in pattern:
+            pattern["template"] = remove_trigger_from_start(pattern["template"])
+
+
+DSL_PATTERNS = [
+        {
+                "name": "heart_total_condition_opponent_phase_cost_increase",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)に([^。]+)が([^。]+)(\\d+)つ以上ある場合、([^。]+)の([^。]+)、([^。]+)の([^。]+)にある([^。]+)(\\d+)枚は、([^。]+)ための([^。]+)が([^。]+)多くなる",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦HEART_TYPE⟧に⟦RESOURCE⟧が⟦TOTAL⟧⟦NUMBER⟧つ以上ある場合、⟦OPPONENT⟧の⟦PHASE⟧、⟦OPPONENT⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧⟦NUMBER2⟧枚は、⟦CONTEXT⟧ための⟦COST⟧が⟦MODIFIER⟧多くなる",
+                "structure": "Heart total condition opponent phase cost increase"
+        },
+        {
+                "name": "cost_calculation_summon",
+                "regex": "\\bそうした場合、([^。]+)の([^。]+)から、その([^。]+)の([^。]+)に(\\d+)を([^。]+)した([^。]+)に([^。]+)コストの『([^』]+)』の([^。]+)を(\\d+)枚、その([^。]+)いた([^。]+)に([^。]+)させる",
+                "template": "そうした場合、⟦SOURCE⟧の⟦ZONE⟧から、その⟦MEMBER⟧の⟦ATTRIBUTE⟧に⟦NUMBER1⟧を⟦OPERATION⟧した⟦CALCULATED⟧に⟦EQUAL⟧コストの『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER2⟧枚、その⟦MEMBER2⟧いた⟦ZONE2⟧に⟦ACTION⟧させる",
+                "structure": "Cost calculation summon"
+        },
+        {
+                "name": "both_players_summon",
+                "regex": "\\b([^。]+)と([^。]+)は([^。]+)、([^。]+)の([^。]+)からコスト(\\d+)以下の([^。]+)を(\\d+)枚、([^。]+)の([^。]+)([^。]+)に([^。]+)で([^。]+)させる",
+                "template": "⟦PLAYER1⟧と⟦PLAYER2⟧は⟦EACH⟧、⟦SELF⟧の⟦ZONE⟧からコスト⟦COST⟧以下の⟦CARD_TYPE⟧を⟦NUMBER⟧枚、⟦MEMBER⟧の⟦CONDITION⟧⟦AREA⟧に⟦STATE⟧で⟦ACTION⟧させる",
+                "structure": "Both players summon"
+        },
+        {
+                "name": "center_member_position_change",
+                "regex": "\\(?\\s*([^。]+)いる([^。]+)を([^。]+)いる([^。]+)以外の([^。]+)に([^。]+)させる。その([^。]+)に([^。]+)いる場合、その([^。]+)は([^。]+)に([^。]+)させる",
+                "template": "⟦ZONE⟧いる⟦TARGET⟧を⟦CURRENT⟧いる⟦AREA⟧以外の⟦ZONE2⟧に⟦ACTION⟧させる。その⟦ZONE3⟧に⟦TARGET2⟧いる場合、その⟦TARGET2⟧は⟦DESTINATION⟧に⟦ACTION2⟧させる",
+                "structure": "Center member position change"
+        },
+        {
+                "name": "heart_color_exception_per_member_cost_reduction",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)と([^。]+)以外の([^。]+)の([^。]+)を持つ([^。]+)(\\d+)人につき、([^。]+)の([^。]+)を([^。]+)([^。]+)",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦HEART1⟧と⟦HEART2⟧以外の⟦COLOR⟧の⟦HEART⟧を持つ⟦TARGET⟧⟦NUMBER⟧人につき、⟦CARD⟧の⟦COST⟧を⟦MODIFIER⟧⟦ACTION⟧",
+                "structure": "Heart color exception per member cost reduction"
         },
         {
-            "name": "conditional_group_live_card_placement",
-            "regex": r"\bそうした場合、([^。]+)の([^。]+)にある『([^』]+)』の([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "そうした場合、⟦SOURCE⟧の⟦ZONE⟧にある『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Conditional group live card placement",
+                "name": "member_gains_hearts_from_selected_card_colors",
+                "regex": "\\b([^。]+)の([^。]+)いる「([^」]+)」(\\d+)人は、([^。]+)により([^。]+)([^。]+)が持つ([^。]+)の([^。]+)を(\\d+)つずつ([^。]+)",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる「⟦MEMBER⟧」⟦NUMBER⟧人は、⟦CONTEXT⟧により⟦SELECTED⟧⟦CARD⟧が持つ⟦ATTRIBUTE⟧の⟦RESOURCE⟧を⟦NUMBER2⟧つずつ⟦ACTION⟧",
+                "structure": "Member gains hearts from selected card colors"
         },
         {
-            "name": "per_heart_cost_reduction",
-            "regex": r"\bその([^。]+)が持つ([^。]+)(\d+)つにつき、([^。]+)の([^。]+)を([^。]+)([^。]+)",
-            "template": "その⟦MEMBER⟧が持つ⟦RESOURCE⟧⟦NUMBER1⟧つにつき、⟦CARD⟧の⟦COST⟧を⟦MODIFIER⟧⟦ACTION⟧",
-            "structure": "Per heart cost reduction",
+                "name": "zone_different_group_name_card_add",
+                "regex": "\\b([^。]+)の([^。]+)にある、([^。]+)の([^。]+)いるすべての([^。]+)と([^。]+)([^。]+)を持つ([^。]+)(\\d+)枚を([^。]+)に加える",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にある、⟦SOURCE2⟧の⟦ZONE2⟧いるすべての⟦TARGET⟧と⟦DIFFERENT⟧⟦ATTRIBUTE⟧を持つ⟦CARD_TYPE⟧⟦NUMBER⟧枚を⟦DESTINATION⟧に加える",
+                "structure": "Zone different group name card add"
         },
         {
-            "name": "card_location_condition_zone_member_resource_gain",
-            "regex": r"\b([^。]+)が([^。]+)にあるかぎり、([^。]+)の([^。]+)にいる([^。]+)は([^。]+)を得る",
-            "template": "⟦CARD⟧が⟦ZONE1⟧にあるかぎり、⟦SOURCE⟧の⟦ZONE2⟧にいる⟦TARGET⟧は⟦RESOURCE⟧を得る",
-            "structure": "Card location condition zone member resource gain",
+                "name": "per_group_cost_reduction",
+                "regex": "\\b([^。]+)を([^。]+)するための([^。]+)は([^。]+)の([^。]+)いる([^。]+)の中の([^。]+)(\\d+)種類につき、([^。]+)([^。]+)",
+                "template": "⟦ABILITY⟧を⟦ACTION⟧するための⟦COST⟧は⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧の中の⟦ATTRIBUTE⟧⟦NUMBER⟧種類につき、⟦RESOURCE⟧⟦REDUCTION⟧",
+                "structure": "Per group cost reduction"
         },
         {
-            "name": "parenthesized_ability_cost_activation",
-            "regex": r"[\(（]\s*(\{\\{[^}]+\}\})([^。]+)が([^。]+)を持つ場合、([^。]+)して([^。]+)させる[。）]",
-            "template": "⟦TRIGGER⟧⟦ABILITY⟧が⟦COST⟧を持つ場合、⟦PAYMENT⟧して⟦ACTION⟧させる",
-            "structure": "Parenthesized ability cost activation",
+                "name": "per_member_wait_then_draw",
+                "regex": "\\b([^。]+)を(\\d+)人まで([^。]+)してもよい：これにより([^。]+)にした([^。]+)(\\d+)人につき、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦TARGET⟧を⟦NUMBER1⟧人まで⟦STATE⟧してもよい：これにより⟦STATE2⟧にした⟦TARGET2⟧⟦NUMBER2⟧人につき、⟦CARD_TYPE⟧を⟦NUMBER3⟧枚⟦ACTION⟧",
+                "structure": "Per member wait then draw"
         },
         {
-            "name": "surplus_heart_condition_draw",
-            "regex": r"\b([^。]+)が([^。]+)に([^。]+)を(\d+)つ以上持つ場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧が⟦ZONE⟧に⟦RESOURCE⟧を⟦NUMBER1⟧つ以上持つ場合、⟦CARD_TYPE⟧を⟦NUMBER2⟧枚⟦ACTION⟧",
-            "structure": "Surplus heart condition draw",
+                "name": "zone_card_except_group_per_card_cost_reduce",
+                "regex": "\\b([^。]+)の([^。]+)にある([^。]+)以外の『([^』]+)』の([^。]+)(\\d+)枚につき、([^。]+)の([^。]+)を([^。]+)減らす",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦EXCEPT_CARD⟧以外の『⟦GROUP⟧』の⟦CARD_TYPE⟧⟦NUMBER⟧枚につき、⟦TARGET⟧の⟦COST⟧を⟦MODIFIER⟧減らす",
+                "structure": "Zone card except group per card cost reduce"
         },
         {
-            "name": "summoned_member_condition_wait",
-            "regex": r"\b([^。]+)により([^。]+)した([^。]+)が([^。]+)を持つ場合、([^。]+)を([^。]+)にする",
-            "template": "⟦CONTEXT⟧により⟦SUMMONED⟧した⟦MEMBER⟧が⟦ATTRIBUTE⟧を持つ場合、⟦TARGET⟧を⟦STATE⟧にする",
-            "structure": "Summoned member condition wait",
+                "name": "dual_zone_card_count_condition_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)の([^。]+)が(\\d+)枚で、かつ([^。]+)の([^。]+)に([^。]+)が(\\d+)枚以上ある場合、([^。]+)を得る",
+                "template": "⟦SOURCE1⟧の⟦ZONE1⟧の⟦CARD_TYPE⟧が⟦NUMBER1⟧枚で、かつ⟦SOURCE2⟧の⟦ZONE2⟧に⟦CARD_TYPE2⟧が⟦NUMBER2⟧枚以上ある場合、⟦RESOURCE⟧を得る",
+                "structure": "Dual zone card count condition resource gain"
         },
         {
-            "name": "reveal_count_reduction",
-            "regex": r"\b([^。]+)によって([^。]+)される([^。]+)の([^。]+)の([^。]+)が(\d+)枚([^。]+)",
-            "template": "⟦CONTEXT⟧によって⟦REVEALED⟧される⟦SOURCE⟧の⟦CARD⟧の⟦COUNT⟧が⟦NUMBER⟧枚⟦REDUCTION⟧",
-            "structure": "Reveal count reduction",
+                "name": "wait_member_count_selection",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)の([^。]+)まで、([^。]+)の([^。]+)にある『([^』]+)』の([^。]+)を選ぶ",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧の⟦COUNT⟧まで、⟦SOURCE2⟧の⟦ZONE2⟧にある『⟦GROUP⟧』の⟦CARD_TYPE⟧を選ぶ",
+                "structure": "Wait member count selection"
         },
         {
-            "name": "turn_other_member_moved_condition",
-            "regex": r"\b([^。]+)、([^。]+)の([^。]+)いるほかの([^。]+)が([^。]+)を([^。]+)している場合",
-            "template": "⟦TURN⟧、⟦SOURCE⟧の⟦ZONE⟧いるほかの⟦TARGET⟧が⟦OBJECT⟧を⟦ACTION⟧している場合",
-            "structure": "Turn other member moved condition",
+                "name": "score_based_card_reveal",
+                "regex": "\\b([^。]+)の([^。]+)から、([^。]+)の([^。]+)の([^。]+)に(\\d+)を([^。]+)した([^。]+)に等しい([^。]+)見る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦SOURCE2⟧の⟦LIVE⟧の⟦ATTRIBUTE1⟧に⟦NUMBER⟧を⟦OPERATION⟧した⟦CALCULATED⟧に等しい⟦COUNT⟧見る",
+                "structure": "Score based card reveal"
         },
         {
-            "name": "live_score_comparison_card_add_optional",
-            "regex": r"\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合、([^。]+)を([^。]+)に加えてもよい",
-            "template": "⟦SOURCE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合、⟦CARD⟧を⟦DESTINATION⟧に加えてもよい",
-            "structure": "Live score comparison card add optional",
+                "name": "per_member_reveal_from_deck",
+                "regex": "\\b([^。]+)の([^。]+)から、([^。]+)と([^。]+)の([^。]+)いる([^。]+)(\\d+)人につき、(\\d+)枚([^。]+)する",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE2⟧いる⟦TARGET⟧⟦NUMBER1⟧人につき、⟦NUMBER2⟧枚⟦ACTION⟧する",
+                "structure": "Per member reveal from deck"
         },
         {
-            "name": "per_card_cost_reduction",
-            "regex": r"自分の([^。]+)にあるカード(\d+)枚につき、このカードを成功させるための必要ハートは([^。]+)少なくなる。",
-            "template": "自分の⟦ZONE⟧にあるカード⟦NUMBER⟧枚につき、このカードを成功させるための必要ハートは⟦MODIFIER⟧少なくなる。",
-            "structure": "Per card cost reduction",
+                "name": "state_change_optional_cost_condition_state_change",
+                "regex": "\\b([^。]+)を([^。]+)にしてもよい：([^。]+)の([^。]+)いるコスト(\\d+)以下の([^。]+)(\\d+)人を([^。]+)にする",
+                "template": "⟦TARGET⟧を⟦STATE1⟧にしてもよい：⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE2⟧にする",
+                "structure": "State change optional cost condition state change"
         },
         {
-            "name": "condition_or_zone_cost_above_resource_gain",
-            "regex": r"\b([^。]+)か([^。]+)の([^。]+)にコスト(\d+)以上の([^。]+)いる場合、([^。]+)を得る",
-            "template": "⟦SOURCE1⟧か⟦SOURCE2⟧の⟦ZONE⟧にコスト⟦COST⟧以上の⟦TARGET⟧いる場合、⟦RESOURCE⟧を得る",
-            "structure": "Condition or zone cost above resource gain",
+                "name": "zone_card_count_condition_zone_to_zone_add",
+                "regex": "([^。]+)の([^。]+)に(?:この|その)?カードが(\\d+)枚以上ある場合、([^。]+)の([^。]+)から(?:この|その)?([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦ZONE⟧の⟦ZONE2⟧にカードが⟦NUMBER⟧枚以上ある場合、⟦PLAYER⟧の⟦SOURCE⟧から⟦CARD_TYPE⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Zone card count condition zone to zone add"
         },
         {
-            "name": "ability_cost_payment_activation",
-            "regex": r"\b(\{\\{[^}]+\}\})([^。]+)が([^。]+)を持つ場合、([^。]+)して([^。]+)させる",
-            "template": "⟦TRIGGER⟧⟦ABILITY⟧が⟦COST⟧を持つ場合、⟦PAYMENT⟧して⟦ACTION⟧させる",
-            "structure": "Ability cost payment activation",
+                "name": "cost_total_condition_summon",
+                "regex": "\\b([^。]+)から、([^。]+)の([^。]+)が(\\d+)以下になるように([^。]+)を(\\d+)枚まで([^。]+)に([^。]+)させる",
+                "template": "⟦SOURCE⟧から、⟦ATTRIBUTE⟧の⟦TOTAL⟧が⟦NUMBER1⟧以下になるように⟦CARD_TYPE⟧を⟦NUMBER2⟧枚まで⟦DESTINATION⟧に⟦ACTION⟧させる",
+                "structure": "Cost total condition summon"
         },
         {
-            "name": "live_score_comparison_draw",
-            "regex": r"\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Live score comparison draw",
+                "name": "zone_card_reveal_optional_zone_card_count_add",
+                "regex": "\\b([^。]+)の([^。]+)を(\\d+)枚公開してもよい：([^。]+)の([^。]+)にある([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦SOURCE1⟧の⟦CARD_TYPE⟧を⟦NUMBER1⟧枚公開してもよい：⟦SOURCE2⟧の⟦ZONE⟧にある⟦RESOURCE⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Zone card reveal optional zone card count add"
         },
         {
-            "name": "parenthetical_restriction",
-            "regex": r"\b（([^。]+)が持つ([^。]+)は、([^。]+)で([^。]+)する([^。]+)を([^。]+)ない。）",
-            "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-            "structure": "Parenthetical restriction",
+                "name": "player_selection_card_placement",
+                "regex": "\\b([^。]+)は、その([^。]+)の([^。]+)にある([^。]+)を(\\d+)枚、その([^。]+)の([^。]+)の([^。]+)に置く",
+                "template": "⟦PLAYER⟧は、その⟦TARGET_PLAYER⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧を⟦NUMBER⟧枚、その⟦TARGET_PLAYER2⟧の⟦ZONE2⟧の⟦POSITION⟧に置く",
+                "structure": "Player selection card placement"
         },
         {
-            "name": "opponent_selected_card_add",
-            "regex": r"\b([^。]+)により([^。]+)に([^。]+)された([^。]+)を([^。]+)の([^。]+)に加える",
-            "template": "⟦CONTEXT⟧により⟦SOURCE⟧に⟦ACTION⟧された⟦CARD⟧を⟦DESTINATION_SOURCE⟧の⟦DESTINATION⟧に加える",
-            "structure": "Opponent selected card add",
+                "name": "area_placement_turn_restriction",
+                "regex": "\\(?\\s*([^。]+)で([^。]+)した([^。]+)の([^。]+)([^。]+)には、この([^。]+)に([^。]+)は([^。]+)できない",
+                "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
+                "structure": "Area placement turn restriction"
         },
         {
-            "name": "exact_member_count_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が([^。]+)(\d+)人であるかぎり、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が⟦EXACT⟧⟦NUMBER⟧人であるかぎり、⟦RESOURCE⟧を得る",
-            "structure": "Exact member count condition resource gain",
+                "name": "conditional_card_add_and_discard_others",
+                "regex": "\\bその([^。]+)を([^。]+)に加え、([^。]+)により([^。]+)された([^。]+)すべての([^。]+)を([^。]+)に置く",
+                "template": "その⟦CARD⟧を⟦DESTINATION⟧に加え、⟦CONTEXT⟧により⟦REVEALED⟧された⟦OTHER⟧すべての⟦CARD_TYPE⟧を⟦DESTINATION2⟧に置く",
+                "structure": "Conditional card add and discard others"
         },
         {
-            "name": "card_trigger_ability_activation",
-            "regex": r"\bその([^。]+)の(\{\\{[^}]+\})(\{\\{[^}]+\})(\d+)つを([^。]+)させる",
-            "template": "その⟦CARD⟧の⟦ICON1⟧⟦ICON2⟧⟦NUMBER⟧つを⟦ACTION⟧させる",
-            "structure": "Card trigger ability activation",
+                "name": "activation_cost_zone_to_zone_add",
+                "regex": "([^。]+)を([^。]+)から([^。]+)に置く：([^。]+)の([^。]+)から([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦COST_TARGET⟧を⟦SOURCE_ZONE⟧から⟦DESTINATION_ZONE⟧に置く：⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Activation cost zone to zone add"
         },
         {
-            "name": "zone_member_same_name_group_action",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)の『([^』]+)』の([^。]+)(\d+)人以上の場合、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦TARGET⟧の『⟦GROUP⟧』の⟦MEMBER⟧⟦NUMBER⟧人以上の場合、⟦ACTION⟧。",
-            "structure": "Zone member same name group action",
+                "name": "highest_cost_member_condition",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)のうち、([^。]+)にいる([^。]+)が([^。]+)大きい([^。]+)を持つ場合",
+                "template": "⟦SOURCE⟧の⟦ZONE1⟧いる⟦TARGET⟧のうち、⟦ZONE2⟧にいる⟦TARGET2⟧が⟦SUPERLATIVE⟧大きい⟦ATTRIBUTE⟧を持つ場合",
+                "structure": "Highest cost member condition"
         },
         {
-            "name": "energy_under_member_restriction",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)されている([^。]+)では([^。]+)を([^。]+)ない",
-            "template": "⟦MEMBER⟧の⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧では⟦COST⟧を⟦ACTION⟧ない",
-            "structure": "Energy under member restriction",
+                "name": "swap_members",
+                "regex": "\\bその([^。]+)に([^。]+)いる場合、その([^。]+)は([^。]+)の([^。]+)いた([^。]+)に([^。]+)させる",
+                "template": "その⟦ZONE1⟧に⟦TARGET1⟧いる場合、その⟦TARGET1⟧は⟦TARGET2⟧の⟦MEMBER⟧いた⟦ZONE2⟧に⟦ACTION⟧させる",
+                "structure": "Swap members"
         },
         {
-            "name": "specific_member_condition_additional_draw",
-            "regex": r"\b([^。]+)の([^。]+)に「([^」]+)」いる場合、さらに([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に「⟦MEMBER⟧」いる場合、さらに⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Specific member condition additional draw",
+                "name": "ability_activation_condition",
+                "regex": "\\b([^。]+)は、([^。]+)が([^。]+)の([^。]+)によって([^。]+)されている([^。]+)のみ([^。]+)する",
+                "template": "⟦ABILITY⟧は、⟦CARD⟧が⟦SOURCE⟧の⟦CONTEXT⟧によって⟦STATE⟧されている⟦CONDITION⟧のみ⟦ACTION⟧する",
+                "structure": "Ability activation condition"
         },
         {
-            "name": "energy_zone_to_member_under_optional",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)(\d+)枚を([^。]+)の([^。]+)に置いてもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦RESOURCE⟧⟦NUMBER⟧枚を⟦TARGET⟧の⟦LOCATION⟧に置いてもよい",
-            "structure": "Energy zone to member under optional",
+                "name": "from_revealed_cards_to_deck_bottom",
+                "regex": "\\b([^。]+)により([^。]+)された([^。]+)の中から、([^。]+)を(\\d+)枚まで([^。]+)の([^。]+)に置く",
+                "template": "⟦CONTEXT⟧により⟦ACTION⟧された⟦SOURCE⟧の中から、⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦DESTINATION⟧の⟦POSITION⟧に置く",
+                "structure": "From revealed cards to deck bottom"
         },
         {
-            "name": "select_cards_with_specific_resources_optional",
-            "regex": r"\bその中から([^。]+)を持つ([^。]+)を(\d+)枚まで([^。]+)して([^。]+)に加えてもよい",
-            "template": "その中から⟦RESOURCE⟧を持つ⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦ACTION⟧して⟦DESTINATION⟧に加えてもよい",
-            "structure": "Select cards with specific resources optional",
+                "name": "zone_member_cost_except_group_per_member_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)いるコスト(\\d+)以上の([^。]+)以外の([^。]+)(\\d+)人につき、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以上の⟦EXCEPT_GROUP⟧以外の⟦TARGET⟧⟦NUMBER⟧人につき、⟦RESOURCE⟧を得る",
+                "structure": "Zone member cost except group per member resource gain"
         },
         {
-            "name": "per_live_card_score_increase",
-            "regex": r"\b([^。]+)の中にある([^。]+)(\d+)枚につき、([^。]+)の([^。]+)を([^。]+)する",
-            "template": "⟦SOURCE⟧の中にある⟦CARD_TYPE⟧⟦NUMBER1⟧枚につき、⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFICATION⟧する",
-            "structure": "Per live card score increase",
+                "name": "hand_cost_group_card_summon_optional",
+                "regex": "\\b([^。]+)からコスト(\\d+)以下の『([^』]+)』の([^。]+)を(\\d+)枚([^。]+)に([^。]+)させてもよい",
+                "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させてもよい",
+                "structure": "Hand cost group card summon optional"
         },
         {
-            "name": "select_specific_group_live_card_optional",
-            "regex": r"\bその中から『([^』]+)』の([^。]+)を(\d+)枚まで([^。]+)して([^。]+)に加えてもよい",
-            "template": "その中から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦ACTION⟧して⟦DESTINATION⟧に加えてもよい",
-            "structure": "Select specific group live card optional",
+                "name": "member_leave_energy_return",
+                "regex": "\\(?\\s*([^。]+)が([^。]+)から([^。]+)とき、([^。]+)に([^。]+)(?:されている|いる)([^。]+)は([^。]+)に置く",
+                "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+                "structure": "Member leave energy return"
         },
         {
-            "name": "zone_member_resource_total_action",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)の([^。]+)が(\d+)以上の場合、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦RESOURCE⟧の⟦ATTRIBUTE⟧が⟦NUMBER⟧以上の場合、⟦ACTION⟧。",
-            "structure": "Zone member resource total action",
+                "name": "zone_card_score_comparison_condition_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)にある([^。]+)の([^。]+)が([^。]+)より([^。]+)かぎり、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧かぎり、⟦RESOURCE⟧を得る",
+                "structure": "Zone card score comparison condition resource gain"
         },
         {
-            "name": "zone_member_resource_total_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)の([^。]+)が(\d+)以上の場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦RESOURCE⟧の⟦ATTRIBUTE⟧が⟦NUMBER⟧以上の場合",
-            "structure": "Zone member resource total condition",
+                "name": "hand_card_cost_reduce_per_hand_card",
+                "regex": "\\b([^。]+)にある([^。]+)の([^。]+)は、([^。]+)以外の([^。]+)(\\d+)枚につき、(\\d+)少なくなる",
+                "template": "⟦ZONE⟧にある⟦CARD⟧の⟦ATTRIBUTE⟧は、⟦EXCEPT_CARD⟧以外の⟦SOURCE⟧⟦NUMBER1⟧枚につき、⟦NUMBER2⟧少なくなる",
+                "structure": "Hand card cost reduce per hand card"
         },
         {
-            "name": "zone_group_card_deck_top_place",
-            "regex": r"\b([^。]+)から『([^』]+)』の([^。]+)を(\d+)枚まで([^。]+)の([^。]+)に置く",
-            "template": "⟦SOURCE⟧から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦DESTINATION⟧の⟦POSITION⟧に置く",
-            "structure": "Zone group card deck top place",
+                "name": "multi_resource_each_condition",
+                "regex": "\\b([^。]+)の([^。]+)の([^。]+)の([^。]+)に([^。]+)が([^。]+)(\\d+)以上([^。]+)かぎり",
+                "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧の⟦ATTRIBUTE⟧に⟦RESOURCE⟧が⟦CONDITION⟧⟦NUMBER⟧以上⟦STATE⟧かぎり",
+                "structure": "Multi resource each condition"
         },
         {
-            "name": "zone_this_member_except_group_per_member_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)以外の『([^』]+)』の([^。]+)(\d+)人につき",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦EXCEPT_MEMBER⟧以外の『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧人につき",
-            "structure": "Zone this member except group per member condition",
+                "name": "zone_to_zone_optional_deck_top_look",
+                "regex": "\\b([^。]+)を(\\d+)枚([^。]+)に置いてもよい：([^。]+)の([^。]+)の上から([^。]+)を(\\d+)枚見る",
+                "template": "⟦SOURCE⟧を⟦NUMBER1⟧枚⟦DESTINATION1⟧に置いてもよい：⟦SOURCE2⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER2⟧枚見る",
+                "structure": "Zone to zone optional deck top look"
         },
         {
-            "name": "continuous_reveal_until_condition",
-            "regex": r"\b([^。]+)が([^。]+)まで、([^。]+)の([^。]+)の([^。]+)を([^。]+)し続ける",
-            "template": "⟦CARD_TYPE⟧が⟦CONDITION⟧まで、⟦SOURCE⟧の⟦ZONE⟧の⟦POSITION⟧を⟦ACTION⟧し続ける",
-            "structure": "Continuous reveal until condition",
+                "name": "wait_and_discard_then_draw",
+                "regex": "\\b([^。]+)を([^。]+)し、([^。]+)を(\\d+)枚([^。]+)に置く：([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦TARGET⟧を⟦STATE⟧し、⟦CARD1⟧を⟦NUMBER1⟧枚⟦ZONE⟧に置く：⟦CARD2⟧を⟦NUMBER2⟧枚⟦ACTION⟧",
+                "structure": "Wait and discard then draw"
         },
         {
-            "name": "zone_card_score_total_condition",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)の([^。]+)の([^。]+)が(\d+)以上の場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧の⟦ATTRIBUTE1⟧の⟦ATTRIBUTE2⟧が⟦NUMBER⟧以上の場合",
-            "structure": "Zone card score total condition",
+                "name": "zone_cost_group_card_add",
+                "regex": "\\b([^。]+)の([^。]+)からコスト(\\d+)以下の『([^』]+)』の([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧からコスト⟦COST⟧以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Zone cost group card add"
         },
         {
-            "name": "opponent_wait_member_per_member_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)(\d+)人につき、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧⟦NUMBER⟧人につき、⟦RESOURCE⟧を得る",
-            "structure": "Opponent wait member per member resource gain",
+                "name": "live_card_heart_total_condition",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)の([^。]+)が(\\d+)以上の『([^』]+)』の([^。]+)あるかぎり",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦ATTRIBUTE⟧の⟦TOTAL⟧が⟦NUMBER⟧以上の『⟦GROUP⟧』の⟦CARD_TYPE⟧あるかぎり",
+                "structure": "Live card heart total condition"
         },
         {
-            "name": "lose_resource_and_retry",
-            "regex": r"\bその([^。]+)で([^。]+)を([^。]+)、もう一度([^。]+)を([^。]+)",
-            "template": "その⟦CONTEXT⟧で⟦GAINED_RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
-            "structure": "Lose resource and retry",
+                "name": "hand_specific_card_summon",
+                "regex": "\\b([^。]+)からコスト(\\d+)以下の(?:「([^」]+)」|『([^』]+)』)の([^。]+)を(\\d+)枚([^。]+)に([^。]+)させる",
+                "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の⟦IDENTIFIER⟧の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させる",
+                "structure": "Hand specific card summon"
         },
         {
-            "name": "no_other_members_condition_prevent_live",
-            "regex": r"\b([^。]+)の([^。]+)にほかの([^。]+)いない場合、([^。]+)は([^。]+)できない",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にほかの⟦TARGET⟧いない場合、⟦PLAYER⟧は⟦ACTION⟧できない",
-            "structure": "No other members condition prevent live",
+                "name": "member_leave_energy_return",
+                "regex": "\\b([^。]+)が([^。]+)から([^。]+)とき、([^。]+)に([^。]+)いる([^。]+)は([^。]+)に置く",
+                "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+                "structure": "Member leave energy return"
         },
         {
-            "name": "zone_card_count_action",
-            "regex": r"\b([^。]+)と([^。]+)の([^。]+)に([^。]+)が([^。]+)(\d+)枚以上ある場合、([^。]+)。",
-            "template": "⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE⟧に⟦CARD_TYPE⟧が⟦TOTAL⟧⟦NUMBER⟧枚以上ある場合、⟦ACTION⟧。",
-            "structure": "Zone card count action",
+                "name": "automatic_trigger_state_change_optional",
+                "regex": "\\b([^。]+)が([^。]+)から([^。]+)に([^。]+)とき、([^。]+)(\\d+)人を([^。]+)にしてもよい",
+                "template": "⟦TARGET⟧が⟦SOURCE⟧から⟦DESTINATION⟧に⟦TRIGGER⟧とき、⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE⟧にしてもよい",
+                "structure": "Automatic trigger state change optional"
         },
         {
-            "name": "zone_card_count_action_three_groups",
-            "regex": r"\b([^。]+)と([^。]+)と([^。]+)の([^。]+)『([^』]+)』(\d+)枚以上ある場合、([^。]+)。",
-            "template": "⟦SOURCE1⟧と⟦SOURCE2⟧と⟦SOURCE3⟧の⟦ZONE⟧『⟦CARD⟧』⟦NUMBER⟧枚以上ある場合、⟦ACTION⟧。",
-            "structure": "Zone card count action three groups",
+                "name": "blade_transformation",
+                "regex": "\\b([^。]+)によって([^。]+)される([^。]+)の([^。]+)が持つ([^。]+)は、すべて([^。]+)になる",
+                "template": "⟦CONTEXT⟧によって⟦ACTION⟧される⟦SOURCE⟧の⟦CARD_TYPE⟧が持つ⟦ATTRIBUTE⟧は、すべて⟦TRANSFORM⟧になる",
+                "structure": "Blade transformation"
         },
         {
-            "name": "combined_zone_card_count_condition",
-            "regex": r"\b([^。]+)と([^。]+)の([^。]+)に([^。]+)が([^。]+)(\d+)枚以上ある場合",
-            "template": "⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE⟧に⟦CARD_TYPE⟧が⟦TOTAL⟧⟦NUMBER⟧枚以上ある場合",
-            "structure": "Combined zone card count condition",
+                "name": "per_group_reveal",
+                "regex": "\\bその中から([^。]+)([^。]+)につき(\\d+)枚ずつ([^。]+)し、(\\d+)枚まで([^。]+)に加えてもよい",
+                "template": "その中から⟦EACH⟧⟦ATTRIBUTE⟧につき⟦NUMBER1⟧枚ずつ⟦ACTION⟧し、⟦NUMBER2⟧枚まで⟦DESTINATION⟧に加えてもよい",
+                "structure": "Per group reveal"
         },
         {
-            "name": "side_area_activation_restriction",
-            "regex": r"\（([^。]+)は([^。]+)か([^。]+)に([^。]+)した([^。]+)のみ([^。]+)する",
-            "template": "（⟦ABILITY⟧は⟦ZONE1⟧か⟦ZONE2⟧に⟦ACTION⟧した⟦CONDITION⟧のみ⟦ACTIVATE⟧する",
-            "structure": "Side area activation restriction",
+                "name": "then_opponent_wait_member_condition_draw",
+                "regex": "\\bその後、([^。]+)の([^。]+)に([^。]+)の([^。]+)いる場合、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "その後、⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の⟦TARGET⟧いる場合、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "Then opponent wait member condition draw"
         },
         {
-            "name": "area_specific_appearance_condition_draw",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)しているなら、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦ZONE⟧の⟦AREA⟧に⟦STATE⟧しているなら、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Area specific appearance condition draw",
+                "name": "zone_all_cards_cost_increase",
+                "regex": "\\b([^。]+)の([^。]+)にあるすべての([^。]+)は、([^。]+)ための([^。]+)が([^。]+)多くなる",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にあるすべての⟦CARD_TYPE⟧は、⟦CONTEXT⟧ための⟦COST⟧が⟦MODIFIER⟧多くなる",
+                "structure": "Zone all cards cost increase"
         },
         {
-            "name": "member_under_energy_cost_restriction",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)いる([^。]+)では([^。]+)を([^。]+)ない",
-            "template": "⟦MEMBER⟧の⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧では⟦COST⟧を⟦PAYMENT⟧ない",
-            "structure": "Member under energy cost restriction",
+                "name": "conditional_group_live_card_placement",
+                "regex": "\\bそうした場合、([^。]+)の([^。]+)にある『([^』]+)』の([^。]+)を(\\d+)枚([^。]+)に置く",
+                "template": "そうした場合、⟦SOURCE⟧の⟦ZONE⟧にある『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置く",
+                "structure": "Conditional group live card placement"
         },
         {
-            "name": "parenthesized_energy_cost_restriction",
-            "regex": r"\（([^。]+)の([^。]+)に([^。]+)いる([^。]+)では([^。]+)を([^。]+)ない",
-            "template": "（⟦MEMBER⟧の⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧では⟦COST⟧を⟦PAYMENT⟧ない",
-            "structure": "Parenthesized energy cost restriction",
+                "name": "card_location_condition_zone_member_resource_gain",
+                "regex": "\\b([^。]+)が([^。]+)にあるかぎり、([^。]+)の([^。]+)にいる([^。]+)は([^。]+)を得る",
+                "template": "⟦CARD⟧が⟦ZONE1⟧にあるかぎり、⟦SOURCE⟧の⟦ZONE2⟧にいる⟦TARGET⟧は⟦RESOURCE⟧を得る",
+                "structure": "Card location condition zone member resource gain"
         },
         {
-            "name": "card_name_treatment",
-            "regex": r"\b([^。]+)この([^。]+)は『([^』]+)』、『([^』]+)』、『([^』]+)』として扱う",
-            "template": "⟦LOCATION⟧この⟦CARD⟧は『⟦GROUP1⟧』、『⟦GROUP2⟧』、『⟦GROUP3⟧』として扱う",
-            "structure": "Card name treatment",
+                "name": "surplus_heart_condition_draw",
+                "regex": "\\b([^。]+)が([^。]+)に([^。]+)を(\\d+)つ以上持つ場合、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦SOURCE⟧が⟦ZONE⟧に⟦RESOURCE⟧を⟦NUMBER1⟧つ以上持つ場合、⟦CARD_TYPE⟧を⟦NUMBER2⟧枚⟦ACTION⟧",
+                "structure": "Surplus heart condition draw"
         },
         {
-            "name": "zone_count_condition_card_draw",
-            "regex": r"\b([^。]+)の([^。]+)が(\d+)枚以上ある場合、([^。]+)を(\d+)枚([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER1⟧枚以上ある場合、⟦CARD⟧を⟦NUMBER2⟧枚⟦ACTION⟧。",
-            "structure": "Zone count condition card draw",
+                "name": "summoned_member_condition_wait",
+                "regex": "\\b([^。]+)により([^。]+)した([^。]+)が([^。]+)を持つ場合、([^。]+)を([^。]+)にする",
+                "template": "⟦CONTEXT⟧により⟦SUMMONED⟧した⟦MEMBER⟧が⟦ATTRIBUTE⟧を持つ場合、⟦TARGET⟧を⟦STATE⟧にする",
+                "structure": "Summoned member condition wait"
         },
         {
-            "name": "zone_members_cost_below_wait",
-            "regex": r"([^。]+)の([^。]+)いるコスト(\d+)以下の([^。]+)(\d+)人を([^。]+)にする",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧にする",
-            "structure": "Zone members cost below wait",
+                "name": "reveal_count_reduction",
+                "regex": "\\b([^。]+)によって([^。]+)される([^。]+)の([^。]+)の([^。]+)が(\\d+)枚([^。]+)",
+                "template": "⟦CONTEXT⟧によって⟦REVEALED⟧される⟦SOURCE⟧の⟦CARD⟧の⟦COUNT⟧が⟦NUMBER⟧枚⟦REDUCTION⟧",
+                "structure": "Reveal count reduction"
         },
         {
-            "name": "look_at_deck_top",
-            "regex": r"\b([^。]+)は、その([^。]+)の([^。]+)の([^。]+)の([^。]+)を([^。]+)",
-            "template": "⟦PLAYER⟧は、その⟦TARGET_PLAYER⟧の⟦ZONE⟧の⟦POSITION⟧の⟦CARD_TYPE⟧を⟦ACTION⟧",
-            "structure": "Look at deck top",
+                "name": "live_score_comparison_card_add_optional",
+                "regex": "\\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合、([^。]+)を([^。]+)に加えてもよい",
+                "template": "⟦SOURCE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合、⟦CARD⟧を⟦DESTINATION⟧に加えてもよい",
+                "structure": "Live score comparison card add optional"
         },
         {
-            "name": "zone_member_cost_distinct_action",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)が([^。]+)メンバーが(\d+)人以上いるかぎり、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦ATTRIBUTE⟧が⟦CONDITION⟧メンバーが⟦NUMBER⟧人以上いるかぎり、⟦ACTION⟧。",
-            "structure": "Zone member cost distinct action",
+                "name": "condition_or_zone_cost_above_resource_gain",
+                "regex": "\\b([^。]+)か([^。]+)の([^。]+)にコスト(\\d+)以上の([^。]+)いる場合、([^。]+)を得る",
+                "template": "⟦SOURCE1⟧か⟦SOURCE2⟧の⟦ZONE⟧にコスト⟦COST⟧以上の⟦TARGET⟧いる場合、⟦RESOURCE⟧を得る",
+                "structure": "Condition or zone cost above resource gain"
         },
         {
-            "name": "zone_member_cost_distinct_count_condition",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)が([^。]+)メンバーが(\d+)人以上いるかぎり",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦ATTRIBUTE⟧が⟦CONDITION⟧メンバーが⟦NUMBER⟧人以上いるかぎり",
-            "structure": "Zone member cost distinct count condition",
+                "name": "live_score_comparison_draw",
+                "regex": "\\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦SOURCE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "Live score comparison draw"
         },
         {
-            "name": "cheer_revealed_card_condition",
-            "regex": r"\b([^。]+)により([^。]+)した([^。]+)の中に([^。]+)が(\d+)枚以上あるとき",
-            "template": "⟦CONTEXT⟧により⟦ACTION⟧した⟦ZONE⟧の中に⟦CARD_TYPE⟧が⟦NUMBER⟧枚以上あるとき",
-            "structure": "Cheer revealed card condition",
+                "name": "exact_member_count_condition_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)が([^。]+)(\\d+)人であるかぎり、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が⟦EXACT⟧⟦NUMBER⟧人であるかぎり、⟦RESOURCE⟧を得る",
+                "structure": "Exact member count condition resource gain"
         },
         {
-            "name": "turn_member_appearance_count_trigger",
-            "regex": r"\b([^。]+)、([^。]+)の([^。]+)に([^。]+)が(\d+)回([^。]+)したとき",
-            "template": "⟦TURN⟧、⟦SOURCE⟧の⟦ZONE⟧に⟦TARGET⟧が⟦NUMBER⟧回⟦ACTION⟧したとき",
-            "structure": "Turn member appearance count trigger",
+                "name": "energy_zone_to_member_under_optional",
+                "regex": "\\b([^。]+)の([^。]+)にある([^。]+)(\\d+)枚を([^。]+)の([^。]+)に置いてもよい",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦RESOURCE⟧⟦NUMBER⟧枚を⟦TARGET⟧の⟦LOCATION⟧に置いてもよい",
+                "structure": "Energy zone to member under optional"
         },
         {
-            "name": "member_movement_trigger_draw",
-            "regex": r"\b([^。]+)が([^。]+)を([^。]+)するたび、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦MEMBER⟧が⟦ZONE⟧を⟦ACTION⟧するたび、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DRAW⟧",
-            "structure": "Member movement trigger draw",
+                "name": "select_cards_with_specific_resources_optional",
+                "regex": "\\bその中から([^。]+)を持つ([^。]+)を(\\d+)枚まで([^。]+)して([^。]+)に加えてもよい",
+                "template": "その中から⟦RESOURCE⟧を持つ⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦ACTION⟧して⟦DESTINATION⟧に加えてもよい",
+                "structure": "Select cards with specific resources optional"
         },
         {
-            "name": "trigger_ability_activation",
-            "regex": r"\b([^。]+)の(\{\\{[^}]+\}\})([^。]+)(\d+)つを([^。]+)させる",
-            "template": "⟦CARD⟧の⟦TRIGGER⟧⟦ABILITY_TYPE⟧⟦NUMBER⟧つを⟦ACTION⟧させる",
-            "structure": "Trigger ability activation",
+                "name": "per_live_card_score_increase",
+                "regex": "\\b([^。]+)の中にある([^。]+)(\\d+)枚につき、([^。]+)の([^。]+)を([^。]+)する",
+                "template": "⟦SOURCE⟧の中にある⟦CARD_TYPE⟧⟦NUMBER1⟧枚につき、⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFICATION⟧する",
+                "structure": "Per live card score increase"
         },
         {
-            "name": "from_among_reveal_add_optional",
-            "regex": r"\bその中から『([^』]+)』の([^。]+)を(\d+)枚公開して([^。]+)に加えてもよい",
-            "template": "その中から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚公開して⟦ZONE⟧に加えてもよい",
-            "structure": "From among reveal add optional",
+                "name": "select_specific_group_live_card_optional",
+                "regex": "\\bその中から『([^』]+)』の([^。]+)を(\\d+)枚まで([^。]+)して([^。]+)に加えてもよい",
+                "template": "その中から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦ACTION⟧して⟦DESTINATION⟧に加えてもよい",
+                "structure": "Select specific group live card optional"
         },
         {
-            "name": "all_cards_type_condition_draw",
-            "regex": r"\b([^。]+)が([^。ー]+)([^。]+)の場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦THEY⟧が⟦ALL⟧⟦CARD_TYPE⟧の場合、⟦CARD_TYPE2⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "All cards type condition draw",
+                "name": "zone_member_resource_total_action",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)の([^。]+)が(\\d+)以上の場合、([^。]+)。",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦RESOURCE⟧の⟦ATTRIBUTE⟧が⟦NUMBER⟧以上の場合、⟦ACTION⟧。",
+                "structure": "Zone member resource total action"
         },
         {
-            "name": "zone_other_group_member_per_member_condition",
-            "regex": r"\b([^。]+)の([^。]+)いるほかの『([^』]+)』の([^。]+)(\d+)人につき",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いるほかの『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧人につき",
-            "structure": "Zone other group member per member condition",
+                "name": "zone_group_card_deck_top_place",
+                "regex": "\\b([^。]+)から『([^』]+)』の([^。]+)を(\\d+)枚まで([^。]+)の([^。]+)に置く",
+                "template": "⟦SOURCE⟧から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚まで⟦DESTINATION⟧の⟦POSITION⟧に置く",
+                "structure": "Zone group card deck top place"
         },
         {
-            "name": "zone_wait_state_member_condition",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)の『([^』]+)』の([^。]+)いるかぎり",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の『⟦GROUP⟧』の⟦TARGET⟧いるかぎり",
-            "structure": "Zone wait state member condition",
+                "name": "zone_this_member_except_group_per_member_condition",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)以外の『([^』]+)』の([^。]+)(\\d+)人につき",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦EXCEPT_MEMBER⟧以外の『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧人につき",
+                "structure": "Zone this member except group per member condition"
         },
         {
-            "name": "select_different_area",
-            "regex": r"\bその後、([^。]+)した([^。]+)とは([^。]+)の([^。]+)(\d+)つを選ぶ",
-            "template": "その後、⟦ACTION⟧した⟦ZONE1⟧とは⟦DIFFERENT⟧の⟦ZONE2⟧⟦NUMBER⟧つを選ぶ",
-            "structure": "Select different area",
+                "name": "continuous_reveal_until_condition",
+                "regex": "\\b([^。]+)が([^。]+)まで、([^。]+)の([^。]+)の([^。]+)を([^。]+)し続ける",
+                "template": "⟦CARD_TYPE⟧が⟦CONDITION⟧まで、⟦SOURCE⟧の⟦ZONE⟧の⟦POSITION⟧を⟦ACTION⟧し続ける",
+                "structure": "Continuous reveal until condition"
         },
         {
-            "name": "card_play_baton_touch_optional",
-            "regex": r"\b([^。]+)の([^。]+)に際し、(\d+)人の([^。]+)と([^。]+)してもよい",
-            "template": "⟦CARD⟧の⟦CONTEXT⟧に際し、⟦NUMBER⟧人の⟦TARGET⟧と⟦ACTION⟧してもよい",
-            "structure": "Card play baton touch optional",
+                "name": "opponent_wait_member_per_member_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)(\\d+)人につき、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧⟦NUMBER⟧人につき、⟦RESOURCE⟧を得る",
+                "structure": "Opponent wait member per member resource gain"
         },
         {
-            "name": "per_energy_draw",
-            "regex": r"\b([^。]+)の([^。]+)(\d+)枚につき、([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧⟦NUMBER1⟧枚につき、⟦CARD_TYPE⟧を⟦NUMBER2⟧枚⟦ACTION⟧",
-            "structure": "Per energy draw",
+                "name": "lose_resource_and_retry",
+                "regex": "\\bその([^。]+)で([^。]+)を([^。]+)、もう一度([^。]+)を([^。]+)",
+                "template": "その⟦CONTEXT⟧で⟦GAINED_RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
+                "structure": "Lose resource and retry"
         },
         {
-            "name": "ability_activation_location_restriction",
-            "regex": r"\b([^。]+)は、([^。]+)が([^。]+)にある([^。]+)のみ([^。]+)できる",
-            "template": "⟦ABILITY⟧は、⟦CARD⟧が⟦ZONE⟧にある⟦CONDITION⟧のみ⟦ACTION⟧できる",
-            "structure": "Ability activation location restriction",
+                "name": "no_other_members_condition_prevent_live",
+                "regex": "\\b([^。]+)の([^。]+)にほかの([^。]+)いない場合、([^。]+)は([^。]+)できない",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にほかの⟦TARGET⟧いない場合、⟦PLAYER⟧は⟦ACTION⟧できない",
+                "structure": "No other members condition prevent live"
         },
         {
-            "name": "area_restriction_ability_activation",
-            "regex": r"\（([^。]+)は([^。]+)に([^。]+)している([^。]+)のみ([^。]+)できる",
-            "template": "（⟦ABILITY⟧は⟦ZONE⟧に⟦STATE⟧している⟦CONDITION⟧のみ⟦ACTION⟧できる",
-            "structure": "Area restriction ability activation",
+                "name": "zone_card_count_action",
+                "regex": "\\b([^。]+)と([^。]+)の([^。]+)に([^。]+)が([^。]+)(\\d+)枚以上ある場合、([^。]+)。",
+                "template": "⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE⟧に⟦CARD_TYPE⟧が⟦TOTAL⟧⟦NUMBER⟧枚以上ある場合、⟦ACTION⟧。",
+                "structure": "Zone card count action"
         },
         {
-            "name": "energy_comparison_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)が([^。]+)より([^。]+)かぎり、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧かぎり、⟦RESOURCE2⟧を得る",
-            "structure": "Energy comparison condition resource gain",
+                "name": "side_area_activation_restriction",
+                "regex": "\\（([^。]+)は([^。]+)か([^。]+)に([^。]+)した([^。]+)のみ([^。]+)する",
+                "template": "（⟦ABILITY⟧は⟦ZONE1⟧か⟦ZONE2⟧に⟦ACTION⟧した⟦CONDITION⟧のみ⟦ACTIVATE⟧する",
+                "structure": "Side area activation restriction"
         },
         {
-            "name": "alternative_condition_total_score_increase",
-            "regex": r"\b([^。]+)が(\d+)枚以上ある場合、([^。]+)に([^。]+)を([^。]+)する",
-            "template": "⟦CARD⟧が⟦NUMBER1⟧枚以上ある場合、⟦ALTERNATIVE⟧に⟦SCORE⟧を⟦MODIFIER⟧する",
-            "structure": "Alternative condition total score increase",
+                "name": "area_specific_appearance_condition_draw",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)しているなら、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦ZONE⟧の⟦AREA⟧に⟦STATE⟧しているなら、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "Area specific appearance condition draw"
         },
         {
-            "name": "optional_deck_top_discard",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)の([^。]+)を([^。]+)に置いてもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧の⟦POSITION⟧の⟦CARD⟧を⟦DESTINATION⟧に置いてもよい",
-            "structure": "Optional deck top discard",
+                "name": "member_under_energy_cost_restriction",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)いる([^。]+)では([^。]+)を([^。]+)ない",
+                "template": "⟦MEMBER⟧の⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧では⟦COST⟧を⟦PAYMENT⟧ない",
+                "structure": "Member under energy cost restriction"
         },
         {
-            "name": "conditional_place",
-            "regex": r"そうした場合、これにより([^。]+)した([^。]+)を([^。]+)の([^。]+)に置く",
-            "template": "そうした場合、これにより⟦ACTION⟧した⟦TARGET⟧を⟦SOURCE⟧の⟦ZONE⟧に置く",
-            "structure": "Conditional place",
+                "name": "card_name_treatment",
+                "regex": "\\b([^。]+)この([^。]+)は『([^』]+)』、『([^』]+)』、『([^』]+)』として扱う",
+                "template": "⟦LOCATION⟧この⟦CARD⟧は『⟦GROUP1⟧』、『⟦GROUP2⟧』、『⟦GROUP3⟧』として扱う",
+                "structure": "Card name treatment"
         },
         {
-            "name": "energy_total_action",
-            "regex": r"\b([^。]+)と([^。]+)の([^。]+)の([^。]+)が(\d+)枚以上あるかぎり、([^。]+)。",
-            "template": "⟦SOURCE1⟧と⟦SOURCE2⟧の⟦RESOURCE⟧の⟦ATTRIBUTE⟧が⟦NUMBER⟧枚以上あるかぎり、⟦ACTION⟧。",
-            "structure": "Energy total action",
+                "name": "zone_count_condition_card_draw",
+                "regex": "\\b([^。]+)の([^。]+)が(\\d+)枚以上ある場合、([^。]+)を(\\d+)枚([^。]+)。",
+                "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER1⟧枚以上ある場合、⟦CARD⟧を⟦NUMBER2⟧枚⟦ACTION⟧。",
+                "structure": "Zone count condition card draw"
         },
         {
-            "name": "energy_total_condition_resource_gain",
-            "regex": r"\b([^。]+)と([^。]+)の([^。]+)の合計が(\d+)以上の場合、([^。]+)。",
-            "template": "⟦SOURCE⟧と⟦TARGET⟧の⟦RESOURCE⟧の合計が⟦NUMBER⟧以上の場合、⟦ACTION⟧。",
-            "structure": "Energy total condition resource gain",
+                "name": "zone_members_cost_below_wait",
+                "regex": "([^。]+)の([^。]+)いるコスト(\\d+)以下の([^。]+)(\\d+)人を([^。]+)にする",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧にする",
+                "structure": "Zone members cost below wait"
         },
         {
-            "name": "turn_surplus_heart_condition",
-            "regex": r"\b([^。]+)、([^。]+)が([^。]+)に([^。]+)を(\d+)つ以上持っており",
-            "template": "⟦TURN⟧、⟦SOURCE⟧が⟦ZONE⟧に⟦RESOURCE⟧を⟦NUMBER⟧つ以上持っており",
-            "structure": "Turn surplus heart condition",
+                "name": "look_at_deck_top",
+                "regex": "\\b([^。]+)は、その([^。]+)の([^。]+)の([^。]+)の([^。]+)を([^。]+)",
+                "template": "⟦PLAYER⟧は、その⟦TARGET_PLAYER⟧の⟦ZONE⟧の⟦POSITION⟧の⟦CARD_TYPE⟧を⟦ACTION⟧",
+                "structure": "Look at deck top"
         },
         {
-            "name": "move_to_different_area",
-            "regex": r"\b([^。]+)を([^。]+)いる([^。]+)以外の([^。]+)に([^。]+)させる",
-            "template": "⟦TARGET⟧を⟦CURRENT⟧いる⟦ZONE1⟧以外の⟦ZONE2⟧に⟦ACTION⟧させる",
-            "structure": "Move to different area",
+                "name": "zone_member_cost_distinct_action",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)が([^。]+)(?:この|その)?メンバーが(\\d+)人以上いるかぎり、([^。]+)。",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦CARD_TYPE⟧が⟦ATTRIBUTE⟧メンバーが⟦NUMBER⟧人以上いるかぎり、⟦ACTION⟧。",
+                "structure": "Zone member cost distinct action"
         },
         {
-            "name": "select_specific_member_card",
-            "regex": r"\b([^。]+)は([^。]+)の中から「([^」]+)」の([^。]+)を(\d+)枚選ぶ",
-            "template": "⟦PLAYER⟧は⟦SOURCE⟧の中から「⟦MEMBER⟧」の⟦CARD_TYPE⟧を⟦NUMBER⟧枚選ぶ",
-            "structure": "Select specific member card",
+                "name": "member_movement_trigger_draw",
+                "regex": "\\b([^。]+)が([^。]+)を([^。]+)するたび、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦MEMBER⟧が⟦ZONE⟧を⟦ACTION⟧するたび、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DRAW⟧",
+                "structure": "Member movement trigger draw"
         },
         {
-            "name": "select_specific_member_except",
-            "regex": r"\b([^。]+)の([^。]+)いる「([^」]+)」以外の([^。]+)を(\d+)人選ぶ",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる「⟦MEMBER⟧」以外の⟦TARGET⟧を⟦NUMBER⟧人選ぶ",
-            "structure": "Select specific member except",
+                "name": "from_among_reveal_add_optional",
+                "regex": "\\bその中から『([^』]+)』の([^。]+)を(\\d+)枚公開して([^。]+)に加えてもよい",
+                "template": "その中から『⟦GROUP⟧』の⟦CARD_TYPE⟧を⟦NUMBER⟧枚公開して⟦ZONE⟧に加えてもよい",
+                "structure": "From among reveal add optional"
         },
         {
-            "name": "opponent_wait_member_count_condition",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)の([^。]+)が(\d+)人以上いるかぎり",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の⟦TARGET⟧が⟦NUMBER⟧人以上いるかぎり",
-            "structure": "Opponent wait member count condition",
+                "name": "all_cards_type_condition_draw",
+                "regex": "\\b([^。]+)が([^。ー]+)([^。]+)の場合、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "⟦THEY⟧が⟦ALL⟧⟦CARD_TYPE⟧の場合、⟦CARD_TYPE2⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "All cards type condition draw"
         },
         {
-            "name": "member_under_energy_per_energy_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)(\d+)枚につき、([^。]+)を得る",
-            "template": "⟦MEMBER⟧の⟦LOCATION⟧にある⟦CARD_TYPE⟧⟦NUMBER⟧枚につき、⟦RESOURCE⟧を得る",
-            "structure": "Member under energy per energy resource gain",
+                "name": "zone_wait_state_member_condition",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)の『([^』]+)』の([^。]+)いるかぎり",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の『⟦GROUP⟧』の⟦TARGET⟧いるかぎり",
+                "structure": "Zone wait state member condition"
         },
         {
-            "name": "score_based_energy_payment_optional",
-            "regex": r"\b([^：]+)の([^：]+)に([^：]+)の([^：]+)を([^：]+)してもよい",
-            "template": "⟦CARD⟧の⟦ATTRIBUTE⟧に⟦EQUAL⟧の⟦RESOURCE⟧を⟦ACTION⟧してもよい",
-            "structure": "Score based energy payment optional",
+                "name": "card_play_baton_touch_optional",
+                "regex": "\\b([^。]+)の([^。]+)に際し、(\\d+)人の([^。]+)と([^。]+)してもよい",
+                "template": "⟦CARD⟧の⟦CONTEXT⟧に際し、⟦NUMBER⟧人の⟦TARGET⟧と⟦ACTION⟧してもよい",
+                "structure": "Card play baton touch optional"
         },
         {
-            "name": "specific_cost_member_appearance_trigger",
-            "regex": r"\b([^。]+)の([^。]+)にコスト(\d+)の([^。]+)が([^。]+)したとき",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にコスト⟦COST⟧の⟦TARGET⟧が⟦ACTION⟧したとき",
-            "structure": "Specific cost member appearance trigger",
+                "name": "ability_activation_location_restriction",
+                "regex": "\\b([^。]+)は、([^。]+)が([^。]+)にある([^。]+)のみ([^。]+)できる",
+                "template": "⟦ABILITY⟧は、⟦CARD⟧が⟦ZONE⟧にある⟦CONDITION⟧のみ⟦ACTION⟧できる",
+                "structure": "Ability activation location restriction"
         },
         {
-            "name": "placed_cards_cost_reduction",
-            "regex": r"\b([^：]+)に([^：]+)([^：]+)の([^：]+)が(\d+)枚([^：]+)",
-            "template": "⟦DESTINATION⟧に⟦PLACED⟧⟦SOURCE⟧の⟦COUNT⟧が⟦NUMBER⟧枚⟦REDUCTION⟧",
-            "structure": "Placed cards cost reduction",
+                "name": "area_restriction_ability_activation",
+                "regex": "\\（([^。]+)は([^。]+)に([^。]+)している([^。]+)のみ([^。]+)できる",
+                "template": "（⟦ABILITY⟧は⟦ZONE⟧に⟦STATE⟧している⟦CONDITION⟧のみ⟦ACTION⟧できる",
+                "structure": "Area restriction ability activation"
         },
         {
-            "name": "zone_select_different_name_cards",
-            "regex": r"\b([^。]+)の([^。]+)にある、([^。]+)の([^。]+)を(\d+)枚選ぶ",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある、⟦CONDITION⟧の⟦CARD_TYPE⟧を⟦NUMBER⟧枚選ぶ",
-            "structure": "Zone select different name cards",
+                "name": "energy_comparison_condition_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)が([^。]+)より([^。]+)かぎり、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧かぎり、⟦RESOURCE2⟧を得る",
+                "structure": "Energy comparison condition resource gain"
         },
         {
-            "name": "score_floor_restriction",
-            "regex": r"\b([^。]+)では([^。]+)の([^。]+)は(\d+)未満には([^。]+)ない",
-            "template": "⟦EFFECT⟧では⟦LIVE⟧の⟦SCORE⟧は⟦NUMBER⟧未満には⟦NEGATION⟧ない",
-            "structure": "Score floor restriction",
+                "name": "alternative_condition_total_score_increase",
+                "regex": "\\b([^。]+)が(\\d+)枚以上ある場合、([^。]+)に([^。]+)を([^。]+)する",
+                "template": "⟦CARD⟧が⟦NUMBER1⟧枚以上ある場合、⟦ALTERNATIVE⟧に⟦SCORE⟧を⟦MODIFIER⟧する",
+                "structure": "Alternative condition total score increase"
         },
         {
-            "name": "zone_card_count_add",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦RESOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Zone card count add",
+                "name": "optional_deck_top_discard",
+                "regex": "\\b([^。]+)の([^。]+)の([^。]+)の([^。]+)を([^。]+)に置いてもよい",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧の⟦POSITION⟧の⟦CARD⟧を⟦DESTINATION⟧に置いてもよい",
+                "structure": "Optional deck top discard"
         },
         {
-            "name": "conditional_consequence",
-            "regex": r"\b([^。]+)により([^。]+)した([^。]+)、([^。]+)を([^。]+)。",
-            "template": "⟦CONTEXT⟧により⟦ACTION⟧した⟦CONDITION⟧、⟦TARGET⟧を⟦RESULT⟧。",
-            "structure": "Conditional consequence",
+                "name": "conditional_place",
+                "regex": "そうした場合、これにより([^。]+)した([^。]+)を([^。]+)の([^。]+)に置く",
+                "template": "そうした場合、これにより⟦ACTION⟧した⟦TARGET⟧を⟦SOURCE⟧の⟦ZONE⟧に置く",
+                "structure": "Conditional place"
         },
         {
-            "name": "energy_deck_place_wait_state",
-            "regex": r"\b([^。]+)の([^。]+)から、([^。]+)を(\d+)枚([^。]+)で置く",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦STATE⟧で置く",
-            "structure": "Energy deck place wait state",
+                "name": "energy_total_action",
+                "regex": "\\b([^。]+)と([^。]+)の([^。]+)の([^。]+)が(\\d+)枚以上あるかぎり、([^。]+)。",
+                "template": "⟦SOURCE1⟧と⟦SOURCE2⟧の⟦RESOURCE⟧の⟦ATTRIBUTE⟧が⟦NUMBER⟧枚以上あるかぎり、⟦ACTION⟧。",
+                "structure": "Energy total action"
         },
         {
-            "name": "opponent_zone_member_count_limit",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)の([^。]+)まで",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧の⟦ATTRIBUTE⟧まで",
-            "structure": "Opponent zone member count limit",
+                "name": "move_to_different_area",
+                "regex": "\\b([^。]+)を([^。]+)いる([^。]+)以外の([^。]+)に([^。]+)させる",
+                "template": "⟦TARGET⟧を⟦CURRENT⟧いる⟦ZONE1⟧以外の⟦ZONE2⟧に⟦ACTION⟧させる",
+                "structure": "Move to different area"
         },
         {
-            "name": "select_different_area_from_member",
-            "regex": r"\b([^。]+)いる([^。]+)とは([^。]+)の([^。]+)(\d+)つを選ぶ",
-            "template": "⟦MEMBER⟧いる⟦ZONE1⟧とは⟦DIFFERENT⟧の⟦ZONE2⟧⟦NUMBER⟧つを選ぶ",
-            "structure": "Select different area from member",
+                "name": "select_specific_member_card",
+                "regex": "\\b([^。]+)は([^。]+)の中から「([^」]+)」の([^。]+)を(\\d+)枚選ぶ",
+                "template": "⟦PLAYER⟧は⟦SOURCE⟧の中から「⟦MEMBER⟧」の⟦CARD_TYPE⟧を⟦NUMBER⟧枚選ぶ",
+                "structure": "Select specific member card"
         },
         {
-            "name": "place_in_any_order_on_deck",
-            "regex": r"\b([^。]+)を([^。]+)の([^。]+)で([^。]+)の([^。]+)に置く",
-            "template": "⟦THEY⟧を⟦ANY⟧の⟦ORDER⟧で⟦ZONE⟧の⟦POSITION⟧に置く",
-            "structure": "Place in any order on deck",
+                "name": "opponent_wait_member_count_condition",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)の([^。]+)が(\\d+)人以上いるかぎり",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦STATE⟧の⟦TARGET⟧が⟦NUMBER⟧人以上いるかぎり",
+                "structure": "Opponent wait member count condition"
         },
         {
-            "name": "original_heart_replacement",
-            "regex": r"([^。]+)、([^。]+)が([^。]+)持つ([^。]+)は([^。]+)([^。]+)になる",
-            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
-            "structure": "Original heart replacement",
+                "name": "member_under_energy_per_energy_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)にある([^。]+)(\\d+)枚につき、([^。]+)を得る",
+                "template": "⟦MEMBER⟧の⟦LOCATION⟧にある⟦CARD_TYPE⟧⟦NUMBER⟧枚につき、⟦RESOURCE⟧を得る",
+                "structure": "Member under energy per energy resource gain"
         },
         {
-            "name": "deck_top_place",
-            "regex": r"([^。]+)の([^。]+)の上から([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Deck top place",
+                "name": "score_based_energy_payment_optional",
+                "regex": "\\b([^：]+)の([^：]+)に([^：]+)の([^：]+)を([^：]+)してもよい",
+                "template": "⟦CARD⟧の⟦ATTRIBUTE⟧に⟦EQUAL⟧の⟦RESOURCE⟧を⟦ACTION⟧してもよい",
+                "structure": "Score based energy payment optional"
         },
         {
-            "name": "zone_member_exact_count_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)がちょうど(\d+)人であるかぎり",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧がちょうど⟦NUMBER⟧人であるかぎり",
-            "structure": "Zone member exact count condition",
+                "name": "placed_cards_cost_reduction",
+                "regex": "\\b([^：]+)に([^：]+)([^：]+)の([^：]+)が(\\d+)枚([^：]+)",
+                "template": "⟦DESTINATION⟧に⟦PLACED⟧⟦SOURCE⟧の⟦COUNT⟧が⟦NUMBER⟧枚⟦REDUCTION⟧",
+                "structure": "Placed cards cost reduction"
         },
         {
-            "name": "opponent_zone_wait_state_member_per_member_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)の([^。]+)(\d+)人につき",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦STATE⟧の⟦TARGET⟧⟦NUMBER⟧人につき",
-            "structure": "Opponent zone wait state member per member condition",
+                "name": "score_floor_restriction",
+                "regex": "\\b([^。]+)では([^。]+)の([^。]+)は(\\d+)未満には([^。]+)ない",
+                "template": "⟦EFFECT⟧では⟦LIVE⟧の⟦SCORE⟧は⟦NUMBER⟧未満には⟦NEGATION⟧ない",
+                "structure": "Score floor restriction"
         },
         {
-            "name": "phase_based_action_prevention",
-            "regex": r"\b([^。]+)は([^。]+)の([^。]+)に([^。]+)に([^。]+)ない",
-            "template": "⟦MEMBER⟧は⟦PLAYER⟧の⟦PHASE⟧に⟦ACTION⟧に⟦NEGATION⟧ない",
-            "structure": "Phase based action prevention",
+                "name": "zone_card_count_add",
+                "regex": "\\b([^。]+)の([^。]+)にある([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦RESOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Zone card count add"
         },
         {
-            "name": "deck_top_to_discard",
-            "regex": r"\b([^。]+)の([^。]+)から([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "⟦ZONE⟧の⟦POSITION⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Deck top to discard",
+                "name": "conditional_consequence",
+                "regex": "\\b([^。]+)により([^。]+)した([^。]+)、([^。]+)を([^。]+)。",
+                "template": "⟦CONTEXT⟧により⟦ACTION⟧した⟦CONDITION⟧、⟦TARGET⟧を⟦RESULT⟧。",
+                "structure": "Conditional consequence"
         },
         {
-            "name": "per_discarded_card_draw",
-            "regex": r"\b([^。]+)により([^。]+)した([^。ー]+)([^。]+)を([^。]+)",
-            "template": "⟦CONTEXT⟧により⟦PLACED⟧した⟦COUNT⟧⟦ACTION⟧を⟦DRAW⟧",
-            "structure": "Per discarded card draw",
+                "name": "energy_deck_place_wait_state",
+                "regex": "\\b([^。]+)の([^。]+)から、([^。]+)を(\\d+)枚([^。]+)で置く",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦STATE⟧で置く",
+                "structure": "Energy deck place wait state"
         },
         {
-            "name": "repeat_procedure",
-            "regex": r"\b([^。]+)はこの([^。]+)をさらに(\d+)回まで([^。]+)してもよい",
-            "template": "⟦PLAYER⟧はこの⟦PROCEDURE⟧をさらに⟦NUMBER⟧回まで⟦REPEAT⟧してもよい",
-            "structure": "Repeat procedure",
+                "name": "original_heart_replacement",
+                "regex": "([^。]+)、([^。]+)が([^。]+)持つ([^。]+)は([^。]+)([^。]+)になる",
+                "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+                "structure": "Original heart replacement"
         },
         {
-            "name": "draw_discard_combined",
-            "regex": r"\b([^。]+)を(\d+)枚引き、([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "⟦RESOURCE1⟧を⟦NUMBER1⟧枚引き、⟦RESOURCE2⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Draw discard combined",
+                "name": "deck_top_place",
+                "regex": "\\b([^。]+)の([^。]+)(?:の上から|から)([^。]+)を(\\d+)枚([^。]+)に置く",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦RESOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置く",
+                "structure": "Deck top place"
         },
         {
-            "name": "zone_to_zone_add",
-            "regex": r"([^。]+)の([^。]+)から([^。]+)を(\d+)枚([^。]+)に加える",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
-            "structure": "Zone to zone add",
+                "name": "phase_based_action_prevention",
+                "regex": "\\b([^。]+)は([^。]+)の([^。]+)に([^。]+)に([^。]+)ない",
+                "template": "⟦MEMBER⟧は⟦PLAYER⟧の⟦PHASE⟧に⟦ACTION⟧に⟦NEGATION⟧ない",
+                "structure": "Phase based action prevention"
         },
         {
-            "name": "condition_zone_member_presence_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)がいるかぎり、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦CONDITION⟧がいるかぎり、⟦RESOURCE⟧を得る",
-            "structure": "Condition zone member presence resource gain",
+                "name": "per_discarded_card_draw",
+                "regex": "\\b([^。]+)により([^。]+)した([^。ー]+)([^。]+)を([^。]+)",
+                "template": "⟦CONTEXT⟧により⟦PLACED⟧した⟦COUNT⟧⟦ACTION⟧を⟦DRAW⟧",
+                "structure": "Per discarded card draw"
         },
         {
-            "name": "zone_other_group_member_presence_condition",
-            "regex": r"\b([^。]+)の([^。]+)にほかの『([^』]+)』の([^。]+)いる場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にほかの『⟦GROUP⟧』の⟦TARGET⟧いる場合",
-            "structure": "Zone other group member presence condition",
+                "name": "repeat_procedure",
+                "regex": "\\b([^。]+)はこの([^。]+)をさらに(\\d+)回まで([^。]+)してもよい",
+                "template": "⟦PLAYER⟧はこの⟦PROCEDURE⟧をさらに⟦NUMBER⟧回まで⟦REPEAT⟧してもよい",
+                "structure": "Repeat procedure"
         },
         {
-            "name": "draw_discard_combined_with_period",
-            "regex": r"([^。]+)を(\d+)枚引き、([^。]+)を(\d+)枚([^。]+)に置く。",
-            "template": "⟦RESOURCE1⟧を⟦NUMBER1⟧枚引き、⟦RESOURCE2⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に置く。",
-            "structure": "Draw discard combined with period",
+                "name": "draw_discard_combined",
+                "regex": "\\b([^。]+)を(\\d+)枚引き、([^。]+)を(\\d+)枚([^。]+)に置く",
+                "template": "⟦RESOURCE1⟧を⟦NUMBER1⟧枚引き、⟦RESOURCE2⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に置く",
+                "structure": "Draw discard combined"
         },
         {
-            "name": "per_card_resource_gain",
-            "regex": r"([^。]+)の([^。]+)にあるカード(\d+)枚につき、([^。]+)を得る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にあるカード⟦NUMBER⟧枚につき、⟦RESOURCE⟧を得る",
-            "structure": "Per card resource gain",
+                "name": "zone_to_zone_add",
+                "regex": "([^。]+)の([^。]+)から([^。]+)を(\\d+)枚([^。]+)に加える",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
+                "structure": "Zone to zone add"
         },
         {
-            "name": "specific_member_pair_condition",
-            "regex": r"\b([^。]+)の([^。]+)に「([^」]+)」と「([^」]+)」いる場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に「⟦MEMBER1⟧」と「⟦MEMBER2⟧」いる場合",
-            "structure": "Specific member pair condition",
+                "name": "condition_zone_member_presence_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)に([^。]+)がいるかぎり、([^。]+)を得る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦CONDITION⟧がいるかぎり、⟦RESOURCE⟧を得る",
+                "structure": "Condition zone member presence resource gain"
         },
         {
-            "name": "condition_draw",
-            "regex": r"それらの中に([^。]+)がある場合、([^。]+)を(\d+)枚([^。]+)",
-            "template": "それらの中に⟦CARD_TYPE⟧がある場合、⟦RESOURCE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Condition draw",
+                "name": "condition_draw",
+                "regex": "それらの中に([^。]+)がある場合、([^。]+)を(\\d+)枚([^。]+)",
+                "template": "それらの中に⟦CARD_TYPE⟧がある場合、⟦RESOURCE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "Condition draw"
         },
         {
-            "name": "alternative_condition_score_increase",
-            "regex": r"\b(\d+)枚以上ある場合、([^。]+)に([^。]+)を([^。]+)する",
-            "template": "⟦NUMBER1⟧枚以上ある場合、⟦ALTERNATIVE⟧に⟦SCORE⟧を⟦MODIFIER⟧する",
-            "structure": "Alternative condition score increase",
+                "name": "icon_action_after_condition",
+                "regex": "(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)+を得る。",
+                "template": "⟦ICON⟧を得る。",
+                "structure": "Icon action after condition"
         },
         {
-            "name": "zone_member_group_only_condition",
-            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が『([^』]+)』のみで",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が『⟦GROUP⟧』のみで",
-            "structure": "Zone member group only condition",
+                "name": "live_card_count_condition_resource_gain",
+                "regex": "\\b([^。]+)の([^。]+)の([^。]+)が(\\d+)枚以上あるかぎり",
+                "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧が⟦NUMBER⟧枚以上あるかぎり",
+                "structure": "Live card count condition resource gain"
         },
         {
-            "name": "formation_change_optional",
-            "regex": r"\b([^：]+)の([^：]+)いる([^：]+)を([^：]+)してもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧を⟦ACTION⟧してもよい",
-            "structure": "Formation change optional",
+                "name": "from_among_member_card_reveal_add_optional",
+                "regex": "\\bその中から([^。]+)を(\\d+)枚公開して([^。]+)に加えてもよい",
+                "template": "その中から⟦CARD_TYPE⟧を⟦NUMBER⟧枚公開して⟦ZONE⟧に加えてもよい",
+                "structure": "From among member card reveal add optional"
         },
         {
-            "name": "live_card_count_action",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)(\d+)枚以上(?:の場合|あるか|かぎり)、([^。]+)",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧⟦NUMBER⟧枚以上の場合、⟦ACTION⟧。",
-            "structure": "Live card count action",
+                "name": "ability_limitation",
+                "regex": "\\b([^。]+)では([^。]+)は(\\d+)つまでしか([^。]+)ない",
+                "template": "⟦ABILITY⟧では⟦RESOURCE⟧は⟦NUMBER⟧つまでしか⟦LIMITATION⟧ない",
+                "structure": "Ability limitation"
         },
         {
-            "name": "live_card_count_action_two_part",
-            "regex": r"(?:\{?\{[^}]+\}\}?)?([^。]+)の([^。]+)の([^。]+)が(\d+)枚以上(?:の場合|あるか|かぎり)、([^。]+)",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD⟧⟦NUMBER⟧枚以上の場合、⟦ACTION⟧。",
-            "structure": "Live card count action two part",
+                "name": "condition_opponent_draw",
+                "regex": "\\bそうした場合、([^。]+)は([^。]+)を(\\d+)枚([^。]+)",
+                "template": "そうした場合、⟦OPPONENT⟧は⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
+                "structure": "Condition opponent draw"
         },
         {
-            "name": "icon_action_after_condition",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)+を得る。",
-            "template": "⟦ICON⟧を得る。",
-            "structure": "Icon action after condition",
+                "name": "place_at_specific_deck_position",
+                "regex": "\\b([^。]+)の([^。]+)から(\\d+)枚目に([^。]+)てもよい",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦POSITION⟧枚目に⟦ACTION⟧てもよい",
+                "structure": "Place at specific deck position"
         },
         {
-            "name": "live_card_count_condition_resource_gain",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)が(\d+)枚以上あるかぎり",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧が⟦NUMBER⟧枚以上あるかぎり",
-            "structure": "Live card count condition resource gain",
+                "name": "side_area_activation",
+                "regex": "\\（([^。]+)は([^。]+)に([^。]+)場合のみ([^。]+)する",
+                "template": "（⟦ABILITY⟧は⟦ZONE⟧に⟦CONDITION⟧場合のみ⟦ACTION⟧する",
+                "structure": "Side area activation"
         },
         {
-            "name": "from_among_member_card_reveal_add_optional",
-            "regex": r"\bその中から([^。]+)を(\d+)枚公開して([^。]+)に加えてもよい",
-            "template": "その中から⟦CARD_TYPE⟧を⟦NUMBER⟧枚公開して⟦ZONE⟧に加えてもよい",
-            "structure": "From among member card reveal add optional",
+                "name": "resource_selection",
+                "regex": "\\b([^。]+)か([^。]+)か([^。]+)のうち、(\\d+)つを選ぶ",
+                "template": "⟦RESOURCE1⟧か⟦RESOURCE2⟧か⟦RESOURCE3⟧のうち、⟦NUMBER⟧つを選ぶ",
+                "structure": "Resource selection"
         },
         {
-            "name": "card_identity_change",
-            "regex": r"\bすべての([^。]+)にある([^。]+)は『([^』]+)』として扱う",
-            "template": "すべての⟦ZONE⟧にある⟦CARD⟧は『⟦GROUP⟧』として扱う",
-            "structure": "Card identity change",
+                "name": "deck_top_look",
+                "regex": "\\b([^。]+)の([^。]+)の上から([^。]+)を(\\d+)枚見る",
+                "template": "⟦SOURCE⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER⟧枚見る",
+                "structure": "Deck top look"
         },
         {
-            "name": "ability_limitation",
-            "regex": r"\b([^。]+)では([^。]+)は(\d+)つまでしか([^。]+)ない",
-            "template": "⟦ABILITY⟧では⟦RESOURCE⟧は⟦NUMBER⟧つまでしか⟦LIMITATION⟧ない",
-            "structure": "Ability limitation",
+                "name": "summon_from_discard",
+                "regex": "\\b([^。]+)を([^。]+)から([^。]+)に([^。]+)させる",
+                "template": "⟦CARD⟧を⟦SOURCE⟧から⟦DESTINATION⟧に⟦ACTION⟧させる",
+                "structure": "Summon from discard"
         },
         {
-            "name": "condition_opponent_draw",
-            "regex": r"\bそうした場合、([^。]+)は([^。]+)を(\d+)枚([^。]+)",
-            "template": "そうした場合、⟦OPPONENT⟧は⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Condition opponent draw",
+                "name": "draw_until_condition",
+                "regex": "\\b([^。]+)が(\\d+)枚になるまで([^。]+)を([^。]+)",
+                "template": "⟦ZONE⟧が⟦NUMBER⟧枚になるまで⟦CARD_TYPE⟧を⟦ACTION⟧",
+                "structure": "Draw until condition"
         },
         {
-            "name": "place_at_specific_deck_position",
-            "regex": r"\b([^。]+)の([^。]+)から(\d+)枚目に([^。]+)てもよい",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦POSITION⟧枚目に⟦ACTION⟧てもよい",
-            "structure": "Place at specific deck position",
+                "name": "condition_action_period",
+                "regex": "\\b([^。]+)が([^。]+)場合、([^。]+)を([^。]+)。",
+                "template": "⟦SUBJECT⟧が⟦CONDITION⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
+                "structure": "Condition action period"
         },
         {
-            "name": "side_area_activation",
-            "regex": r"\（([^。]+)は([^。]+)に([^。]+)場合のみ([^。]+)する",
-            "template": "（⟦ABILITY⟧は⟦ZONE⟧に⟦CONDITION⟧場合のみ⟦ACTION⟧する",
-            "structure": "Side area activation",
+                "name": "hand_card_cost_reduce",
+                "regex": "\\b([^。]+)にある([^。]+)の([^。]+)は(\\d+)減る",
+                "template": "⟦ZONE⟧にある⟦CARD⟧の⟦ATTRIBUTE⟧は⟦NUMBER⟧減る",
+                "structure": "Hand card cost reduce"
         },
         {
-            "name": "resource_selection",
-            "regex": r"\b([^。]+)か([^。]+)か([^。]+)のうち、(\d+)つを選ぶ",
-            "template": "⟦RESOURCE1⟧か⟦RESOURCE2⟧か⟦RESOURCE3⟧のうち、⟦NUMBER⟧つを選ぶ",
-            "structure": "Resource selection",
+                "name": "parenthesized_clause_note",
+                "regex": "[（(]([^）)]+)[）)]",
+                "template": "（⟦CLAUSE⟧）",
+                "structure": "Parenthesized clause note"
         },
         {
-            "name": "deck_top_look",
-            "regex": r"\b([^。]+)の([^。]+)の上から([^。]+)を(\d+)枚見る",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER⟧枚見る",
-            "structure": "Deck top look",
+                "name": "bullet_draw",
+                "regex": "・カードを1枚引く。",
+                "template": "・カードを1枚引く。",
+                "structure": "Bullet draw"
         },
         {
-            "name": "summon_from_discard",
-            "regex": r"\b([^。]+)を([^。]+)から([^。]+)に([^。]+)させる",
-            "template": "⟦CARD⟧を⟦SOURCE⟧から⟦DESTINATION⟧に⟦ACTION⟧させる",
-            "structure": "Summon from discard",
+                "name": "bullet_cost_heart_reduce",
+                "regex": "・このカードの必要ハートを([^。]+)減らす。",
+                "template": "・このカードの必要ハートを⟦MODIFIER⟧減らす。",
+                "structure": "Bullet cost heart reduce"
         },
         {
-            "name": "cost_heart_become_less",
-            "regex": r"\b([^。]+)を成功させるための必要ハートは([^。]+)少なくなる",
-            "template": "⟦TARGET⟧を成功させるための必要ハートは⟦MODIFIER⟧少なくなる",
-            "structure": "Cost heart become less",
+                "name": "energy_under_member_place",
+                "regex": "\\b([^。]+)(\\d+)枚を([^。]+)の([^。]+)に置く",
+                "template": "⟦RESOURCE⟧⟦NUMBER⟧枚を⟦TARGET⟧の⟦LOCATION⟧に置く",
+                "structure": "Energy under member place"
         },
         {
-            "name": "member_under_energy_card_per_card_condition",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)『([^』]+)』の([^。]+)(\d+)枚につき、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦CARD⟧『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧枚につき、⟦ACTION⟧。",
-            "structure": "Member under energy card per card condition",
+                "name": "optional_card_discard",
+                "regex": "\\b([^。]+)はその([^。]+)を([^。]+)に置いてもよい",
+                "template": "⟦PLAYER⟧はその⟦CARD⟧を⟦DESTINATION⟧に置いてもよい",
+                "structure": "Optional card discard"
         },
         {
-            "name": "draw_until_condition",
-            "regex": r"\b([^。]+)が(\d+)枚になるまで([^。]+)を([^。]+)",
-            "template": "⟦ZONE⟧が⟦NUMBER⟧枚になるまで⟦CARD_TYPE⟧を⟦ACTION⟧",
-            "structure": "Draw until condition",
+                "name": "turn_member_not_moved_condition",
+                "regex": "\\b([^。]+)に([^。]+)が([^。]+)していないかぎり",
+                "template": "⟦TURN⟧に⟦TARGET⟧が⟦ACTION⟧していないかぎり",
+                "structure": "Turn member not moved condition"
         },
         {
-            "name": "original_resource_count_set",
-            "regex": r"\b([^。]+)持つ([^。]+)の([^。]+)は(\d+)つになる",
-            "template": "⟦MODIFIER⟧持つ⟦RESOURCE⟧の⟦ATTRIBUTE⟧は⟦NUMBER⟧つになる",
-            "structure": "Original resource count set",
+                "name": "card_placement_restriction",
+                "regex": "\\b([^。]+)は([^。]+)に([^。]+)ことができない",
+                "template": "⟦CARD⟧は⟦ZONE⟧に⟦ACTION⟧ことができない",
+                "structure": "Card placement restriction"
         },
         {
-            "name": "opponent_card_effect_activation",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)でも([^。]+)する",
-            "template": "⟦OPPONENT⟧の⟦CARD⟧の⟦EFFECT⟧でも⟦ACTION⟧する",
-            "structure": "Opponent card effect activation",
+                "name": "discard_all_revealed_cards",
+                "regex": "\\b([^。]+)した([^。]+)をすべて([^。]+)に置く",
+                "template": "⟦ACTION⟧した⟦CARD_TYPE⟧をすべて⟦DESTINATION⟧に置く",
+                "structure": "Discard all revealed cards"
         },
         {
-            "name": "condition_action_period",
-            "regex": r"\b([^。]+)が([^。]+)場合、([^。]+)を([^。]+)。",
-            "template": "⟦SUBJECT⟧が⟦CONDITION⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
-            "structure": "Condition action period",
+                "name": "from_among_place_deck_top_with_remainder",
+                "regex": "\\bその中から好きな枚数を好きな順番で([^。]+)の上に置き、",
+                "template": "その中から好きな枚数を好きな順番で⟦ZONE⟧の上に置き、",
+                "structure": "From among place deck top with remainder"
         },
         {
-            "name": "opponent_select_from_cards",
-            "regex": r"\bそうした場合、([^。]+)は([^。]+)の([^。]+)を選ぶ",
-            "template": "そうした場合、⟦OPPONENT⟧は⟦SOURCE⟧の⟦NUMBER⟧を選ぶ",
-            "structure": "Opponent select from cards",
+                "name": "summon_to_empty_area",
+                "regex": "\\b([^。]+)のいない([^。]+)に([^。]+)させる",
+                "template": "⟦TARGET⟧のいない⟦ZONE⟧に⟦ACTION⟧させる",
+                "structure": "Summon to empty area"
         },
         {
-            "name": "hand_card_cost_reduce",
-            "regex": r"\b([^。]+)にある([^。]+)の([^。]+)は(\d+)減る",
-            "template": "⟦ZONE⟧にある⟦CARD⟧の⟦ATTRIBUTE⟧は⟦NUMBER⟧減る",
-            "structure": "Hand card cost reduce",
+                "name": "effect_prevent_state_change",
+                "regex": "\\b([^。]+)によっては([^。]+)に([^。]+)ない",
+                "template": "⟦CONTEXT⟧によっては⟦STATE⟧に⟦NEGATION⟧ない",
+                "structure": "Effect prevent state change"
         },
         {
-            "name": "baton_touch_restriction",
-            "regex": r"\b([^。]+)は([^。]+)で([^。]+)に([^。]+)ない",
-            "template": "⟦MEMBER⟧は⟦ACTION⟧で⟦DESTINATION⟧に⟦NEGATION⟧ない",
-            "structure": "Baton touch restriction",
+                "name": "temporary_live_prevention",
+                "regex": "\\b([^。]+)まで、([^。]+)は([^。]+)できない",
+                "template": "⟦TIME⟧まで、⟦PLAYER⟧は⟦ACTION⟧できない",
+                "structure": "Temporary live prevention"
         },
         {
-            "name": "cost_heart_reduce",
-            "regex": r"\b([^。]+)を成功させるための必要ハートを([^。]+)減らす",
-            "template": "⟦TARGET⟧を成功させるための必要ハートを⟦MODIFIER⟧減らす",
-            "structure": "Cost heart reduce",
+                "name": "member_position_change_optional",
+                "regex": "\\b([^。]+)(\\d+)人を([^。]+)させてもよい",
+                "template": "⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させてもよい",
+                "structure": "Member position change optional"
         },
         {
-            "name": "parenthesized_clause_note",
-            "regex": r"[（(]([^）)]+)[）)]",
-            "template": "（⟦CLAUSE⟧）",
-            "structure": "Parenthesized clause note",
+                "name": "zone_to_zone_optional",
+                "regex": "([^。]+)を(\\d+)枚([^。]+)に置いてもよい",
+                "template": "⟦SOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置いてもよい",
+                "structure": "Zone to zone optional"
         },
         {
-            "name": "bullet_draw",
-            "regex": r"・カードを1枚引く。",
-            "template": "・カードを1枚引く。",
-            "structure": "Bullet draw",
+                "name": "appearance_draw",
+                "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}カードを1枚引く。",
+                "template": "{{toujyou.png|登場}}カードを1枚引く。",
+                "structure": "Appearance draw"
         },
         {
-            "name": "bullet_cost_heart_reduce",
-            "regex": r"・このカードの必要ハートを([^。]+)減らす。",
-            "template": "・このカードの必要ハートを⟦MODIFIER⟧減らす。",
-            "structure": "Bullet cost heart reduce",
+                "name": "appearance_member_move_optional",
+                "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}自分のステージにいる(?:この|その)?メンバーを、それぞれ好きなエリアに移動させてもよい。",
+                "template": "{{toujyou.png|登場}}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。",
+                "structure": "Appearance member move optional"
         },
         {
-            "name": "energy_under_member_place",
-            "regex": r"\b([^。]+)(\d+)枚を([^。]+)の([^。]+)に置く",
-            "template": "⟦RESOURCE⟧⟦NUMBER⟧枚を⟦TARGET⟧の⟦LOCATION⟧に置く",
-            "structure": "Energy under member place",
+                "name": "appearance_activate_discarded_member_ability",
+                "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}自分の控え室にあるコスト4以下の『([^』]+)』の([^。]+)を1枚選ぶ。そのカードの\\{\\{toujyou\\.png\\|登場\\}\\}能力1つを発動させる。",
+                "template": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。",
+                "structure": "Appearance activate discarded member ability"
         },
         {
-            "name": "side_specific_energy_activation",
-            "regex": r"\【([^】]+)】([^。]+)を(\d+)枚([^。]+)にする",
-            "template": "【⟦SIDE⟧】⟦RESOURCE⟧を⟦NUMBER⟧枚⟦STATE⟧にする",
-            "structure": "Side specific energy activation",
+                "name": "activation_cost_zone_to_zone",
+                "regex": "([^。]+)を([^。]+)から([^。]+)に置く",
+                "template": "⟦COST_TARGET⟧を⟦SOURCE_ZONE⟧から⟦DESTINATION_ZONE⟧に置く",
+                "structure": "Activation cost zone to zone"
         },
         {
-            "name": "member_state_condition_resource_gain",
-            "regex": r"\b([^。]+)が([^。]+)であるかぎり、([^。]+)を得る",
-            "template": "⟦MEMBER⟧が⟦STATE⟧であるかぎり、⟦RESOURCE⟧を得る",
-            "structure": "Member state condition resource gain",
+                "name": "ability_less_card",
+                "regex": "\\b([^。]+)を([^。]+)ない([^。]+)",
+                "template": "⟦ATTRIBUTE⟧を⟦NEGATION⟧ない⟦CARD_TYPE⟧",
+                "structure": "Ability less card"
         },
         {
-            "name": "optional_card_discard",
-            "regex": r"\b([^。]+)はその([^。]+)を([^。]+)に置いてもよい",
-            "template": "⟦PLAYER⟧はその⟦CARD⟧を⟦DESTINATION⟧に置いてもよい",
-            "structure": "Optional card discard",
+                "name": "energy_activation",
+                "regex": "\\b([^。]+)を(\\d+)枚([^。]+)にする",
+                "template": "⟦RESOURCE⟧を⟦NUMBER⟧枚⟦STATE⟧にする",
+                "structure": "Energy activation"
         },
         {
-            "name": "turn_member_not_moved_action",
-            "regex": r"\b([^。]+)に([^。]+)が([^。]+)していない(?:場合|かぎり)、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦MEMBER⟧が⟦ACTION⟧していない場合、⟦ACTION2⟧。",
-            "structure": "Turn member not moved action",
+                "name": "duration_gain_ability",
+                "regex": "(?:ライブ(?:開始|終了)時|[^。]+)終了時まで、「([^」]+)」を得る。",
+                "template": "⟦EVENT⟧終了時まで、「⟦ABILITY⟧」を得る。",
+                "structure": "Duration gain ability"
         },
         {
-            "name": "member_leaves_stage_energy_return",
-            "regex": r"メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。",
-            "template": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。",
-            "structure": "Member leaves stage energy return",
+                "name": "trigger_energy_colon_action",
+                "regex": "(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)+支払ってもよい：([^。]+)。",
+                "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦ACTION⟧。",
+                "structure": "Trigger energy colon action"
         },
         {
-            "name": "turn_member_not_moved_condition",
-            "regex": r"\b([^。]+)に([^。]+)が([^。]+)していないかぎり",
-            "template": "⟦TURN⟧に⟦TARGET⟧が⟦ACTION⟧していないかぎり",
-            "structure": "Turn member not moved condition",
+                "name": "trigger_energy_optional_per_resource_score",
+                "regex": "(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)+を好きな数支払ってもよい：([^。]+)支払った([^。]+)(\\d+)つにつき、([^。]+)",
+                "template": "⟦TRIGGER⟧⟦ENERGY⟧を好きな数支払ってもよい：⟦PREFIX⟧支払った⟦RESOURCE⟧⟦NUMBER⟧つにつき、⟦ACTION⟧。",
+                "structure": "Trigger energy optional per resource score"
         },
         {
-            "name": "card_placement_restriction",
-            "regex": r"\b([^。]+)は([^。]+)に([^。]+)ことができない",
-            "template": "⟦CARD⟧は⟦ZONE⟧に⟦ACTION⟧ことができない",
-            "structure": "Card placement restriction",
+                "name": "comma_separated_action",
+                "regex": "\\b([^：]+)、([^：]+)を([^：]+)。",
+                "template": "⟦CONDITION⟧、⟦TARGET⟧を⟦ACTION⟧。",
+                "structure": "Comma separated action"
         },
         {
-            "name": "discard_all_revealed_cards",
-            "regex": r"\b([^。]+)した([^。]+)をすべて([^。]+)に置く",
-            "template": "⟦ACTION⟧した⟦CARD_TYPE⟧をすべて⟦DESTINATION⟧に置く",
-            "structure": "Discard all revealed cards",
+                "name": "trigger_position_change_area",
+                "regex": "(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)*：([^。]+)を『([^』]+)』か『([^』]+)』の([^。]+)が([^。]+)エリアに([^。]+)。",
+                "template": "⟦TRIGGER⟧⟦ENERGY⟧：⟦TARGET⟧を『⟦GROUP1⟧』か『⟦GROUP2⟧』の⟦MEMBER⟧が⟦CONDITION⟧エリアに⟦ACTION⟧。",
+                "structure": "Trigger position change area"
         },
         {
-            "name": "from_among_place_deck_top_with_remainder",
-            "regex": r"\bその中から好きな枚数を好きな順番で([^。]+)の上に置き、",
-            "template": "その中から好きな枚数を好きな順番で⟦ZONE⟧の上に置き、",
-            "structure": "From among place deck top with remainder",
+                "name": "score_modify",
+                "regex": "([^：]+)の([^：]+)を([^：]+)する",
+                "template": "⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する",
+                "structure": "Score modify"
         },
         {
-            "name": "summon_to_empty_area",
-            "regex": r"\b([^。]+)のいない([^。]+)に([^。]+)させる",
-            "template": "⟦TARGET⟧のいない⟦ZONE⟧に⟦ACTION⟧させる",
-            "structure": "Summon to empty area",
+                "name": "selected_resource_gain",
+                "regex": "\\b([^。]+)まで、([^。]+)を(\\d+)つ得る",
+                "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+                "structure": "Selected resource gain"
         },
         {
-            "name": "effect_prevent_state_change",
-            "regex": r"\b([^。]+)によっては([^。]+)に([^。]+)ない",
-            "template": "⟦CONTEXT⟧によっては⟦STATE⟧に⟦NEGATION⟧ない",
-            "structure": "Effect prevent state change",
+                "name": "from_among_add_simple",
+                "regex": "\\bその中から(\\d+)枚を([^。]+)に加え、",
+                "template": "その中から⟦NUMBER⟧枚を⟦ZONE⟧に加え、",
+                "structure": "From among add simple"
         },
         {
-            "name": "temporary_live_prevention",
-            "regex": r"\b([^。]+)まで、([^。]+)は([^。]+)できない",
-            "template": "⟦TIME⟧まで、⟦PLAYER⟧は⟦ACTION⟧できない",
-            "structure": "Temporary live prevention",
+                "name": "member_state_condition",
+                "regex": "\\b([^。]+)が([^。]+)であるかぎり",
+                "template": "⟦MEMBER⟧が⟦STATE⟧であるかぎり",
+                "structure": "Member state condition"
         },
         {
-            "name": "else_condition_discard",
-            "regex": r"\b([^。]+)の場合、([^。]+)を([^。]+)に置く",
-            "template": "⟦OTHERWISE⟧場合、⟦CARD⟧を⟦DESTINATION⟧に置く",
-            "structure": "Else condition discard",
+                "name": "position_change_optional",
+                "regex": "\\b([^。]+)を([^。]+)してもよい",
+                "template": "⟦TARGET⟧を⟦ACTION⟧してもよい",
+                "structure": "Position change optional"
         },
         {
-            "name": "opponent_effect_activation",
-            "regex": r"\(相手の([^。]+)の([^。]+)でも([^。]+)する",
-            "template": "(相手の⟦CARD⟧の⟦EFFECT⟧でも⟦ACTION⟧する",
-            "structure": "Opponent effect activation",
+                "name": "ask_question",
+                "regex": "\\b([^。]+)に([^。]+)と聞く。",
+                "template": "⟦TARGET⟧に⟦QUESTION⟧と聞く。",
+                "structure": "Ask question"
         },
         {
-            "name": "select_one_from_revealed",
-            "regex": r"\bその中から(\d+)枚を([^。]+)に([^。]+)する",
-            "template": "その中から⟦NUMBER⟧枚を⟦DESTINATION⟧に⟦ACTION⟧する",
-            "structure": "Select one from revealed",
+                "name": "player_selection",
+                "regex": "\\b([^。]+)か([^。]+)を選ぶ",
+                "template": "⟦PLAYER1⟧か⟦PLAYER2⟧を選ぶ",
+                "structure": "Player selection"
         },
         {
-            "name": "energy_count_condition",
-            "regex": r"\b([^。]+)の([^。]+)が(\d+)枚以上ある場合",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER⟧枚以上ある場合",
-            "structure": "Energy count condition",
+                "name": "face_up_placement",
+                "regex": "\\b([^。]+)で([^。]+)に置く",
+                "template": "⟦STATE⟧で⟦ZONE⟧に置く",
+                "structure": "Face up placement"
         },
         {
-            "name": "conditional_card_add",
-            "regex": r"\bそうした場合、その([^。]+)を([^。]+)に加える",
-            "template": "そうした場合、その⟦CARD⟧を⟦DESTINATION⟧に加える",
-            "structure": "Conditional card add",
+                "name": "auto_trigger_cost_group_baton_touch",
+                "regex": "(\\{?\\{[^}]+\\.png\\|[^}]+\\}\\}?)このメンバーがコスト(\\d+)以上の『([^』]+)』のメンバーとバトンタッチして控え室に置かれた",
+                "template": "⟦TRIGGER⟧このメンバーがコスト⟦COST⟧以上の『⟦GROUP⟧』のメンバーとバトンタッチして控え室に置かれた",
+                "structure": "Auto trigger cost group baton touch"
         },
         {
-            "name": "zone_card_reveal_optional",
-            "regex": r"([^。]+)の([^。]+)を(\d+)枚公開してもよい",
-            "template": "⟦SOURCE⟧の⟦CARD_TYPE⟧を⟦NUMBER⟧枚公開してもよい",
-            "structure": "Zone card reveal optional",
+                "name": "turn1_energy_card_draw",
+                "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}：カードを1枚引く。",
+                "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+                "structure": "Turn 1 energy card draw"
         },
         {
-            "name": "member_position_change_optional",
-            "regex": r"\b([^。]+)(\d+)人を([^。]+)させてもよい",
-            "template": "⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させてもよい",
-            "structure": "Member position change optional",
+                "name": "live_start_multi_member_blade_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}(?:ライブ(?:開始|終了)時)?まで、自分のステージにいる、「([^」]+)」「([^」]+)」「([^」]+)」のうちのメンバー1人と、これにより選んだメンバー以外の『([^』]+)』のメンバー1人は、\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「⟦NAME1⟧」「⟦NAME2⟧」「⟦NAME3⟧」のうちのメンバー1人と、これにより選んだメンバー以外の『⟦GROUP⟧』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start multi member blade gain"
         },
         {
-            "name": "zone_card_presence_condition",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)ある場合",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦CARD_TYPE⟧ある場合",
-            "structure": "Zone card presence condition",
+                "name": "live_start_distinct_group_heart_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分のステージにグループ名がそれぞれ異なるメンバーが(\\d+)人以上いる場合、(?:ライブ(?:開始|終了)時)?まで、自分のセンターエリアにいるメンバーは\\{\\{icon_all\\.png\\|ハート\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが⟦NUMBER⟧人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。",
+                "structure": "Live start distinct group heart gain"
         },
         {
-            "name": "select_specific_group_member",
-            "regex": r"\いる『([^』]+)』の([^。]+)(\d+)人を選ぶ",
-            "template": "いる『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧人を選ぶ",
-            "structure": "Select specific group member",
+                "name": "live_start_energy_payment_per_energy_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}を(\\d+)つまで支払ってもよい：(?:ライブ(?:開始|終了)時)?まで、支払った\\{\\{icon_energy\\.png\\|E\\}\\}につき、\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を⟦NUMBER⟧つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start energy payment per energy gain"
         },
         {
-            "name": "zone_to_zone_optional",
-            "regex": r"([^。]+)を(\d+)枚([^。]+)に置いてもよい",
-            "template": "⟦SOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置いてもよい",
-            "structure": "Zone to zone optional",
+                "name": "live_start_hand_names_optional_discard_per_card_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、好きな枚数控え室に置いてもよい：(?:ライブ(?:開始|終了)時)?まで、これによって控え室に置いた枚数1枚につき、\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start hand names optional discard per card gain"
         },
         {
-            "name": "appearance_draw",
-            "regex": r"\{\{toujyou\.png\|登場\}\}カードを1枚引く。",
-            "template": "{{toujyou.png|登場}}カードを1枚引く。",
-            "structure": "Appearance draw",
+                "name": "live_start_same_card_name_heart_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分のライブ中の『([^』]+)』の([^。]+)を1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、(?:ライブ(?:開始|終了)時)?まで、\\{\\{heart_04\\.png\\|heart04\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』の⟦CARD_TYPE⟧を1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+                "structure": "Live start same card name heart gain"
         },
         {
-            "name": "appearance_member_move_optional",
-            "regex": r"\{\{toujyou\.png\|登場\}\}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。",
-            "template": "{{toujyou.png|登場}}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。",
-            "structure": "Appearance member move optional",
+                "name": "live_start_other_group_member_blade_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}支払ってもよい：(?:ライブ(?:開始|終了)時)?まで、自分のステージにいるほかの『([^』]+)』のメンバーは\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『⟦GROUP⟧』のメンバーは{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start other group member blade gain"
         },
         {
-            "name": "appearance_activate_discarded_member_ability",
-            "regex": r"\{\{toujyou\.png\|登場\}\}自分の控え室にあるコスト4以下の『([^』]+)』のメンバーカードを1枚選ぶ。そのカードの\{\{toujyou\.png\|登場\}\}能力1つを発動させる。",
-            "template": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『⟦GROUP⟧』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。",
-            "structure": "Appearance activate discarded member ability",
+                "name": "live_start_energy_payment_single_blade_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}支払ってもよい：(?:ライブ(?:開始|終了)時)?まで、\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start energy payment single blade gain"
         },
         {
-            "name": "member_resource_per_resource_condition",
-            "regex": r"\b([^。]+)が持つ([^。]+)(\d+)つにつき",
-            "template": "⟦MEMBER⟧が持つ⟦RESOURCE⟧⟦NUMBER⟧つにつき",
-            "structure": "Member resource per resource condition",
+                "name": "live_start_energy_payment_single_heart_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}支払ってもよい：(?:ライブ(?:開始|終了)時)?まで、\\{\\{heart_02\\.png\\|heart02\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
+                "structure": "Live start energy payment single heart gain"
         },
         {
-            "name": "position_resource_gain",
-            "regex": r"\b(\{\\{[^}]+\}\})([^。]+)を得る",
-            "template": "⟦POSITION⟧⟦RESOURCE⟧を得る",
-            "structure": "Position resource gain",
+                "name": "live_start_energy_payment_multi_blade_gain",
+                "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}(\\{\\{icon_energy\\.png\\|E\\}\\}){6}支払ってもよい：(?:ライブ(?:開始|終了)時)?まで、(\\{\\{icon_blade\\.png\\|ブレード\\}\\}){3}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start energy payment multi blade gain"
         },
         {
-            "name": "activation_cost_zone_to_zone",
-            "regex": r"([^。]+)を([^。]+)から([^。]+)に置く",
-            "template": "⟦COST_TARGET⟧を⟦SOURCE_ZONE⟧から⟦DESTINATION_ZONE⟧に置く",
-            "structure": "Activation cost zone to zone",
+                "name": "live_start_no_blade_heart_condition_gain",
+                "regex": "\\{\\{jidou\\.png\\|自動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、(?:ライブ(?:開始|終了)時)?終了時まで、\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}を得る。",
+                "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
+                "structure": "No blade heart condition gain"
         },
         {
-            "name": "resource_requirement",
-            "regex": r"\b([^。]+)に([^。]+)を(\d+)以上含む",
-            "template": "⟦REQUIREMENT_TYPE⟧に⟦RESOURCE⟧を⟦NUMBER⟧以上含む",
-            "structure": "Resource requirement",
+                "name": "live_start_moved_member_blade_gain",
+                "regex": "(?:\\{\\{live_start\\.png\\|ライブ開始時\\}\\}|\\{\\{live_success\\.png\\|ライブ成功時\\}\\})(?:ライブ(?:開始|終了)時)?まで、自分のステージにいる、このターン中にエリアを移動したメンバーは\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
+                "structure": "Live start moved member blade gain"
         },
         {
-            "name": "ability_less_card",
-            "regex": r"\b([^。]+)を([^。]+)ない([^。]+)",
-            "template": "⟦ATTRIBUTE⟧を⟦NEGATION⟧ない⟦CARD_TYPE⟧",
-            "structure": "Ability less card",
+                "name": "live_start_energy_under_member_heart_gain",
+                "regex": "(?:\\{\\{live_start\\.png\\|ライブ開始時\\}\\}|\\{\\{live_success\\.png\\|ライブ成功時\\}\\})自分のステージに([^。]+)が下にあるメンバーがいる場合、(?:ライブ(?:開始|終了)時)?まで、\\{\\{heart_01\\.png\\|heart01\\}\\}を得る。",
+                "template": "{{live_start.png|ライブ開始時}}自分のステージに⟦CARD_TYPE⟧が下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+                "structure": "Live start energy under member heart gain"
         },
         {
-            "name": "energy_activation",
-            "regex": r"\b([^。]+)を(\d+)枚([^。]+)にする",
-            "template": "⟦RESOURCE⟧を⟦NUMBER⟧枚⟦STATE⟧にする",
-            "structure": "Energy activation",
+                "name": "turn1_discard_draw_live_card_add",
+                "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}手札を1枚控え室に置く：自分の控え室にある([^。]+)を1枚選び、そのカードのスコアに等しい数の\\{\\{icon_energy\\.png\\|E\\}\\}を支払ってもよい。そうした場合、その([^。]+)を手札に加える。",
+                "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にある⟦CARD_TYPE⟧を1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、その⟦CARD_TYPE⟧を手札に加える。",
+                "structure": "Turn 1 discard draw live card add"
         },
         {
-            "name": "alternative_selection_count",
-            "regex": r"\b([^。]+)に(\d+)つ以上を([^。]+)",
-            "template": "⟦ALTERNATIVE⟧に⟦NUMBER⟧つ以上を⟦SELECT⟧",
-            "structure": "Alternative selection count",
+                "name": "turn1_cost4_member_discard_activate_ability",
+                "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}手札のコスト4以下の『([^』]+)』の([^。]+)を1枚控え室に置く：これにより控え室に置いた([^。]+)の\\{\\{toujyou\\.png\\|登場\\}\\}能力1つを発動させる。",
+                "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『⟦GROUP⟧』の⟦CARD_TYPE⟧を1枚控え室に置く：これにより控え室に置いた⟦CARD_TYPE⟧の{{toujyou.png|登場}}能力1つを発動させる。",
+                "structure": "Turn 1 cost 4 member discard activate ability"
         },
         {
-            "name": "duration_gain_ability",
-            "regex": r"([^。]+)終了時まで、「([^」]+)」を得る。",
-            "template": "⟦EVENT⟧終了時まで、「⟦ABILITY⟧」を得る。",
-            "structure": "Duration gain ability",
-        },
-        {
-            "name": "trigger_energy_colon_duration_action",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)を得る。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
-            "structure": "Trigger energy colon duration action",
-        },
-        {
-            "name": "trigger_energy_colon_action",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦ACTION⟧。",
-            "structure": "Trigger energy colon action",
-        },
-        {
-            "name": "trigger_energy_two_group_positioning",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)『([^』]+)』『([^』]+)』の([^。]+)に([^。]+)。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦TARGET⟧の⟦SOURCE⟧『⟦GROUP1⟧』『⟦GROUP2⟧』の⟦MEMBER⟧に⟦ACTION⟧。",
-            "structure": "Trigger energy two group positioning",
-        },
-        {
-            "name": "trigger_energy_per_resource_score",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)(\d+)枚につき、([^。]+)。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦SOURCE⟧の⟦RESOURCE⟧⟦NUMBER⟧枚につき、⟦ACTION⟧。",
-            "structure": "Trigger energy per resource score",
-        },
-        {
-            "name": "trigger_energy_colon_duration_simple",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦DURATION⟧まで、⟦ACTION⟧。",
-            "structure": "Trigger energy colon duration simple",
-        },
-        {
-            "name": "trigger_hand_names_optional_discard_per_card",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、([^。]+)控え室に置いてもよい：([^。]+)",
-            "template": "⟦TRIGGER⟧手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、⟦CONDITION⟧控え室に置いてもよい：⟦ACTION⟧。",
-            "structure": "Trigger hand names optional discard per card",
-        },
-        {
-            "name": "trigger_center_turn_member_wait",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)メンバー(\d+)人を([^。]+)する：([^。]+)",
-            "template": "⟦TRIGGER⟧⟦AREA⟧⟦TURN⟧メンバー⟦NUMBER⟧人を⟦ACTION⟧する：⟦EFFECT⟧",
-            "structure": "Trigger center turn member wait",
-        },
-        {
-            "name": "trigger_side_energy_activation",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)【([^】]+)】([^。]+)。",
-            "template": "⟦TRIGGER⟧【⟦SIDE⟧】⟦ACTION⟧。",
-            "structure": "Trigger side energy activation",
-        },
-        {
-            "name": "zone_card_score_total_energy_deck_action",
-            "regex": r"自分の([^。]+)から、([^。]+)を(\d+)枚([^。]+)で([^。]+)。",
-            "template": "自分の⟦ZONE⟧から、⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦STATE⟧で⟦ACTION⟧。",
-            "structure": "Zone card score total energy deck action",
-        },
-        {
-            "name": "live_start_game_turn_score_duration_member_gain",
-            "regex": r"この([^。]+)の([^。]+)の場合、この([^。]+)の([^。]+)を([^。]+)し、([^。]+)まで、([^。]+)。",
-            "template": "この⟦GAME⟧の⟦PHASE⟧の場合、この⟦CARD⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧し、⟦DURATION⟧まで、⟦ACTION⟧。",
-            "structure": "Live start game turn score duration member gain",
-        },
-        {
-            "name": "trigger_energy_optional_per_resource_score",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+を好きな数支払ってもよい：([^。]+)支払った([^。]+)(\d+)つにつき、([^。]+)",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧を好きな数支払ってもよい：⟦PREFIX⟧支払った⟦RESOURCE⟧⟦NUMBER⟧つにつき、⟦ACTION⟧。",
-            "structure": "Trigger energy optional per resource score",
-        },
-        {
-            "name": "comma_separated_action",
-            "regex": r"\b([^：]+)、([^：]+)を([^：]+)。",
-            "template": "⟦CONDITION⟧、⟦TARGET⟧を⟦ACTION⟧。",
-            "structure": "Comma separated action",
-        },
-        {
-            "name": "trigger_position_change_area",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)*：([^。]+)を『([^』]+)』か『([^』]+)』の([^。]+)が([^。]+)エリアに([^。]+)。",
-            "template": "⟦TRIGGER⟧⟦ENERGY⟧：⟦TARGET⟧を『⟦GROUP1⟧』か『⟦GROUP2⟧』の⟦MEMBER⟧が⟦CONDITION⟧エリアに⟦ACTION⟧。",
-            "structure": "Trigger position change area",
-        },
-        {
-            "name": "score_modify",
-            "regex": r"([^：]+)の([^：]+)を([^：]+)する",
-            "template": "⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する",
-            "structure": "Score modify",
-        },
-        {
-            "name": "selected_resource_gain",
-            "regex": r"\b([^。]+)まで、([^。]+)を(\d+)つ得る",
-            "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
-            "structure": "Selected resource gain",
-        },
-        {
-            "name": "from_among_add_simple",
-            "regex": r"\bその中から(\d+)枚を([^。]+)に加え、",
-            "template": "その中から⟦NUMBER⟧枚を⟦ZONE⟧に加え、",
-            "structure": "From among add simple",
-        },
-        {
-            "name": "member_state_condition",
-            "regex": r"\b([^。]+)が([^。]+)であるかぎり",
-            "template": "⟦MEMBER⟧が⟦STATE⟧であるかぎり",
-            "structure": "Member state condition",
-        },
-        {
-            "name": "zone_reveal_all",
-            "regex": r"\b([^。]+)をすべて([^。]+)する",
-            "template": "⟦SOURCE⟧をすべて⟦ACTION⟧する",
-            "structure": "Zone reveal all",
-        },
-        {
-            "name": "position_change_optional",
-            "regex": r"\b([^。]+)を([^。]+)してもよい",
-            "template": "⟦TARGET⟧を⟦ACTION⟧してもよい",
-            "structure": "Position change optional",
-        },
-        {
-            "name": "baton_touch_appearance_condition",
-            "regex": r"\b([^。]+)して([^。]+)した場合",
-            "template": "⟦ACTION⟧して⟦TRIGGER⟧した場合",
-            "structure": "Baton touch appearance condition",
-        },
-        {
-            "name": "ask_question",
-            "regex": r"\b([^。]+)に([^。]+)と聞く。",
-            "template": "⟦TARGET⟧に⟦QUESTION⟧と聞く。",
-            "structure": "Ask question",
-        },
-        {
-            "name": "side_specific_resource_gain",
-            "regex": r"\【([^】]+)】([^。]+)を得る",
-            "template": "【⟦SIDE⟧】⟦RESOURCE⟧を得る",
-            "structure": "Side specific resource gain",
-        },
-        {
-            "name": "player_selection",
-            "regex": r"\b([^。]+)か([^。]+)を選ぶ",
-            "template": "⟦PLAYER1⟧か⟦PLAYER2⟧を選ぶ",
-            "structure": "Player selection",
-        },
-        {
-            "name": "phase_condition",
-            "regex": r"\b([^。]+)の([^。]+)の場合",
-            "template": "⟦SOURCE⟧の⟦PHASE⟧の場合",
-            "structure": "Phase condition",
-        },
-        {
-            "name": "face_up_placement",
-            "regex": r"\b([^。]+)で([^。]+)に置く",
-            "template": "⟦STATE⟧で⟦ZONE⟧に置く",
-            "structure": "Face up placement",
-        },
-        {
-            "name": "zone_zone_member",
-            "regex": r"([^。]+)と([^。]+)に([^。]+)の([^。]+)",
-            "template": "⟦ZONE1⟧と⟦ZONE2⟧に⟦GROUP⟧の⟦MEMBER⟧",
-            "structure": "Zone zone member",
-        },
-        {
-            "name": "colon_duration_action",
-            "regex": r"\b([^：]+)：([^、]+)まで、([^。]+)を得る。",
-            "template": "⟦COST⟧：⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
-            "structure": "Colon duration action",
-        },
-        {
-            "name": "auto_member_cost_bottom_match",
-            "regex": r"\{?\{jidou\.png\|自動\}\}?このメンバーコスト(\d+)以上の『([^』]+)』のメンバーとボトムマッチしてステージに置かれた",
-            "template": "⟦TRIGGER⟧このメンバーコスト⟦COST⟧以上の『⟦GROUP⟧』のメンバーとボトムマッチしてステージに置かれた",
-            "structure": "Auto member cost bottom match",
-        },
-        {
-            "name": "auto_trigger_cost_group_bottom_match",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)このメンバーコスト(\d+)以上の『([^』]+)』のメンバーとボトムマッチしてステージに置かれた",
-            "template": "⟦TRIGGER⟧このメンバーコスト⟦COST⟧以上の『⟦GROUP⟧』のメンバーとボトムマッチしてステージに置かれた",
-            "structure": "Auto trigger cost group bottom match",
-        },
-        {
-            "name": "auto_trigger_cost_group_baton_touch",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)このメンバーがコスト(\d+)以上の『([^』]+)』のメンバーとバトンタッチして控え室に置かれた",
-            "template": "⟦TRIGGER⟧このメンバーがコスト⟦COST⟧以上の『⟦GROUP⟧』のメンバーとバトンタッチして控え室に置かれた",
-            "structure": "Auto trigger cost group baton touch",
-        },
-        {
-            "name": "turn1_energy_card_draw",
-            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}：カードを1枚引く。",
-            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
-            "structure": "Turn 1 energy card draw",
-        },
-        {
-            "name": "appearance_activation_cost_note",
-            "regex": r"[（(]\{\{toujyou\.png\|登場\}\}能力がコストを持つ場合、支払って発動させる。[）)]",
-            "template": "（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
-            "structure": "Appearance activation cost note",
-        },
-        {
-            "name": "live_start_multi_member_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のステージにいる、「([^」]+)」「([^」]+)」「([^」]+)」のうちのメンバー1人と、これにより選んだメンバー以外の『([^』]+)』のメンバー1人は、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「⟦NAME1⟧」「⟦NAME2⟧」「⟦NAME3⟧」のうちのメンバー1人と、これにより選んだメンバー以外の『⟦GROUP⟧』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start multi member blade gain",
-        },
-        {
-            "name": "live_start_distinct_group_heart_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のステージにグループ名がそれぞれ異なるメンバーが(\d+)人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは\{\{icon_all\.png\|ハート\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが⟦NUMBER⟧人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。",
-            "structure": "Live start distinct group heart gain",
-        },
-        {
-            "name": "live_start_energy_payment_per_energy_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}を(\d+)つまで支払ってもよい：ライブ終了時まで、支払った\{\{icon_energy\.png\|E\}\}につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を⟦NUMBER⟧つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start energy payment per energy gain",
-        },
-        {
-            "name": "live_start_hand_names_optional_discard_per_card_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start hand names optional discard per card gain",
-        },
-        {
-            "name": "live_start_same_card_name_heart_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のライブ中の『([^』]+)』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、\{\{heart_04\.png\|heart04\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
-            "structure": "Live start same card name heart gain",
-        },
-        {
-            "name": "live_start_other_group_member_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『([^』]+)』のメンバーは\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『⟦GROUP⟧』のメンバーは{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start other group member blade gain",
-        },
-        {
-            "name": "live_start_energy_payment_single_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start energy payment single blade gain",
-        },
-        {
-            "name": "live_start_card_count_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のライブ中のカード1枚につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start card count blade gain",
-        },
-        {
-            "name": "live_start_two_energy_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start two energy blade gain",
-        },
-        {
-            "name": "live_start_energy_payment_single_heart_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{heart_02\.png\|heart02\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
-            "structure": "Live start energy payment single heart gain",
-        },
-        {
-            "name": "live_start_two_energy_heart_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{heart_04\.png\|heart04\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
-            "structure": "Live start two energy heart gain",
-        },
-        {
-            "name": "live_start_energy_payment_multi_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}(\{\{icon_energy\.png\|E\}\}){6}支払ってもよい：ライブ終了時まで、(\{\{icon_blade\.png\|ブレード\}\}){3}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start energy payment multi blade gain",
-        },
-        {
-            "name": "live_start_no_blade_heart_condition_gain",
-            "regex": r"\{\{jidou\.png\|自動\}\}\{\{turn1\.png\|ターン1回\}\}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、\{\{heart_[0-9]{2}\.png\|heart[0-9]{2}\}\}を得る。",
-            "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
-            "structure": "No blade heart condition gain",
-        },
-        {
-            "name": "live_start_moved_member_blade_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start moved member blade gain",
-        },
-        {
-            "name": "live_start_energy_under_member_heart_gain",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、\{\{heart_01\.png\|heart01\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
-            "structure": "Live start energy under member heart gain",
-        },
-        {
-            "name": "live_start_blade_gain_clause",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}[^。]+\{\{icon_blade\.png\|ブレード\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}…{{icon_blade.png|ブレード}}を得る。",
-            "structure": "Live start blade gain clause",
-        },
-        {
-            "name": "live_start_heart_gain_clause",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}[^。]+\{\{heart_[0-9]{2}\.png\|heart[0-9]{2}\}\}を得る。",
-            "template": "{{live_start.png|ライブ開始時}}…{{heart_XX.png|heartXX}}を得る。",
-            "structure": "Live start heart gain clause",
-        },
-        {
-            "name": "turn1_discard_draw_live_card_add",
-            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の\{\{icon_energy\.png\|E\}\}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
-            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
-            "structure": "Turn 1 discard draw live card add",
-        },
-        {
-            "name": "turn1_cost4_member_discard_activate_ability",
-            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}手札のコスト4以下の『([^』]+)』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの\{\{toujyou\.png\|登場\}\}能力1つを発動させる。",
-            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『⟦GROUP⟧』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる。",
-            "structure": "Turn 1 cost 4 member discard activate ability",
-        },
-        {
-            "name": "condition_duration_action",
-            "regex": r"([^、]+)場合、([^。]+)まで、([^。]+)を得る。",
-            "template": "⟦CONDITION⟧場合、⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
-            "structure": "Condition duration action",
-        },
-        {
-            "name": "condition_action_with_icon",
-            "regex": r"([^、]+)場合、([^。]+)を得る。",
-            "template": "⟦CONDITION⟧場合、⟦RESOURCE⟧を得る。",
-            "structure": "Condition action with icon",
-        },
-        {
-            "name": "condition_action_with_icon_comma",
-            "regex": r"([^、]+)場合、([^。]+)、([^。]+)。",
-            "template": "⟦CONDITION⟧場合、⟦ACTION⟧、⟦TARGET⟧。",
-            "structure": "Condition action with icon comma",
-        },
-        {
-            "name": "condition_score_modify",
-            "regex": r"([^、]+)場合、([^。]+)の([^。]+)を([^。]+)する。",
-            "template": "⟦CONDITION⟧場合、⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する。",
-            "structure": "Condition score modify",
-        },
-        {
-            "name": "condition_cost_reduction",
-            "regex": r"([^、]+)場合、([^。]+)の([^。]+)を([^。]+)する。",
-            "template": "⟦CONDITION⟧場合、⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する。",
-            "structure": "Condition cost reduction",
-        },
-        {
-            "name": "member_under_energy_card_action",
-            "regex": r"\b([^。]+)の([^。]+)にある([^。]+)『([^』]+)』の([^。]+)(\d+)枚につき、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧にある⟦CARD⟧『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧枚につき、⟦ACTION⟧。",
-            "structure": "Member under energy card action",
-        },
-        {
-            "name": "live_card_count_action",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)(\d+)枚以上の場合、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦CONTEXT⟧の⟦CARD_TYPE⟧⟦NUMBER⟧枚以上の場合、⟦ACTION⟧。",
-            "structure": "Live card count action",
-        },
-        {
-            "name": "turn_member_not_moved_action",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)が([^。]+)していない場合、([^。]+)。",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦MEMBER⟧が⟦ACTION⟧していない場合、⟦ACTION2⟧。",
-            "structure": "Turn member not moved action",
-        },
-        {
-            "name": "card_draw",
-            "regex": r"([^。]+)を(\d+)枚引き",
-            "template": "⟦RESOURCE⟧を⟦NUMBER⟧枚引き",
-            "structure": "Card draw",
-        },
-        {
-            "name": "remainder_place",
-            "regex": r"\b残りを([^。]+)に置く",
-            "template": "残りを⟦ZONE⟧に置く",
-            "structure": "Remainder place",
-        },
-        {
-            "name": "select_from_below",
-            "regex": r"\b以下から(\d+)つを選ぶ",
-            "template": "以下から⟦NUMBER⟧つを選ぶ",
-            "structure": "Select from below",
-        },
-        {
-            "name": "quoted_ability_gain",
-            "regex": r"\」を([^。]+)",
-            "template": "」を⟦ACTION⟧",
-            "structure": "Quoted ability gain",
-        },
-    ]
+                "name": "remainder_place",
+                "regex": "\\b残りを([^。]+)に置く",
+                "template": "残りを⟦ZONE⟧に置く",
+                "structure": "Remainder place"
+        }
+]
 
 LITERAL_PATTERNS = [
     {
@@ -1781,7 +1120,7 @@ LITERAL_PATTERNS = [
     {
         "name": "live_start_same_card_name_heart_gain",
         "literal": "{{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
-        "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』の⟦CARD_TYPE⟧を1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
         "structure": "Live start same card name heart gain",
     },
     {
@@ -1859,7 +1198,7 @@ LITERAL_PATTERNS = [
     {
         "name": "live_start_energy_under_member_heart_gain",
         "literal": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
-        "template": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージに⟦CARD_TYPE⟧が下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
         "structure": "Live start energy under member heart gain",
     },
     {
@@ -1889,19 +1228,19 @@ LITERAL_PATTERNS = [
     {
         "name": "toujyou_deck_top_three_discard_heart_gain",
         "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
-        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_XX.png|heartXX}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
         "structure": "Toujyou deck top three discard heart gain",
     },
     {
         "name": "toujyou_deck_top_three_discard_heart_gain_01",
         "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
-        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_XX.png|heartXX}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
         "structure": "Toujyou deck top three discard heart gain 01",
     },
     {
         "name": "toujyou_deck_top_three_discard_heart_gain_05",
         "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_05.png|heart05}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
-        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_05.png|heart05}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_XX.png|heartXX}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
         "structure": "Toujyou deck top three discard heart gain 05",
     },
     {
@@ -2049,6 +1388,12 @@ LITERAL_PATTERNS = [
         "structure": "Live start Aqours member heart check disable success",
     },
     {
+        "name": "live_start_aqours_heart_disable_success",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "structure": "Live start Aqours heart disable success",
+    },
+    {
         "name": "toujyou_main_phase_energy_payment_livecard_place",
         "literal": "{{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室からライブカードを1枚、表向きでライブカード置き場に置く。次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
         "template": "{{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室からライブカードを1枚、表向きでライブカード置き場に置く。次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
@@ -2109,28 +1454,32 @@ LITERAL_PATTERNS = [
         "structure": "Live start Aqours heart disable success",
     },
     {
-        "name": "jyouji_cost10_liella_hand_cost_reduce",
+        "name": "jyouji_cost_group_hand_cost_reduce",
+        "regex": "\\{\\{jyouji\\.png\\|常時\\}\\}コスト(\\d+)の『([^』]+)』のメンバーカードを自分の手札から登場させるためのコストは(\\d+)減る。",
         "literal": "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。",
-        "template": "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。",
-        "structure": "Jyouji cost10 Liella hand cost reduce",
+        "template": "{{jyouji.png|常時}}コスト⟦COST1⟧の『⟦GROUP⟧』のメンバーカードを自分の手札から登場させるためのコストは⟦COST2⟧減る。",
+        "structure": "Jyouji cost group hand cost reduce",
     },
     {
-        "name": "toujyou_or_live_start_center_wait_bibi",
+        "name": "trigger_position_group_wait_opponent_wait",
+        "regex": "\\{\\{(?:toujyou|live_start)\\.png\\|(?:登場|ライブ開始時)\\}\\}/\\{\\{(?:toujyou|live_start)\\.png\\|(?:登場|ライブ開始時)\\}\\}(?:\\{\\{center\\.png\\|センター\\}\\})?『([^』]+)』のメンバー(\\d+)人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー(\\d+)人をウェイトにする。（この能力は(?:センターエリア|エリア)にいる場合のみ発動する。）",
         "literal": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる場合のみ発動する。）",
-        "template": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる場合のみ発動する。）",
-        "structure": "Toujyou or live start center wait BiBi",
+        "template": "⟦TRIGGER⟧⟦POSITION⟧『⟦GROUP⟧』のメンバー⟦NUMBER1⟧人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー⟦NUMBER2⟧人をウェイトにする。（この能力は⟦AREA⟧にいる場合のみ発動する。）",
+        "structure": "Trigger position group wait opponent wait",
     },
     {
-        "name": "kidou_turn1_three_discard_musica",
+        "name": "kidou_turn1_discard_group_condition_livecard_add",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}手札を(\\d+)枚控え室に置く：自分のステージにほかの『([^』]+)』のメンバーがいる場合、自分の控え室から『([^』]+)』のライブカードを(\\d+)枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード(\\d+)枚につき、控え室に置く手札の数が(\\d+)枚減る。",
         "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。",
-        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。",
-        "structure": "Kidou turn1 three discard musica",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を⟦NUMBER1⟧枚控え室に置く：自分のステージにほかの『⟦GROUP1⟧』のメンバーがいる場合、自分の控え室から『⟦GROUP2⟧』のライブカードを⟦NUMBER2⟧枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード⟦NUMBER3⟧枚につき、控え室に置く手札の数が⟦NUMBER4⟧枚減る。",
+        "structure": "Kidou turn1 discard group condition livecard add",
     },
     {
-        "name": "toujyou_hand_discard_opponent_wait_two",
+        "name": "toujyou_hand_discard_opponent_wait",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}手札を(\\d+)枚控え室に置いてもよい：相手のステージにいるコスト(\\d+)以下のメンバーを(\\d+)人までウェイトにする。（ウェイト状態のメンバーが持つ\\{\\{icon_blade\\.png\\|ブレード\\}\\}は、エールで公開する枚数を増やさない。）",
         "literal": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-        "template": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-        "structure": "Toujyou hand discard opponent wait two",
+        "template": "{{toujyou.png|登場}}手札を⟦NUMBER1⟧枚控え室に置いてもよい：相手のステージにいるコスト⟦COST⟧以下のメンバーを⟦NUMBER2⟧人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "structure": "Toujyou hand discard opponent wait",
     },
     {
         "name": "live_success_wait_member_score_plus",
@@ -2140,39 +1489,45 @@ LITERAL_PATTERNS = [
     },
     {
         "name": "kidou_energy_hand_blade_gain",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}このカードを手札から控え室に置く：カードを(\\d+)枚引き、ライブ終了時まで、自分のステージにいる『([^』]+)』のメンバー(\\d+)人は\\{\\{icon_blade\\.png\\|ブレード\\}\\}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
         "literal": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
-        "template": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
+        "template": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを⟦NUMBER1⟧枚引き、ライブ終了時まで、自分のステージにいる『⟦GROUP⟧』のメンバー⟦NUMBER2⟧人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
         "structure": "Kidou energy hand blade gain",
     },
     {
-        "name": "live_start_nijigasaki_name_different_score_plus",
-        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを+２する。",
-        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを+２する。",
-        "structure": "Live start nijigasaki name different score plus",
+        "name": "live_start_name_different_score_plus",
+        "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分のステージにいる名前の異なる『([^』]+)』のメンバー(\\d+)人につき、このカードのスコアを\\+(\\d+)する。",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『μ's』のメンバー1人につき、このカードのスコアを+1する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『⟦GROUP⟧』のメンバー⟦NUMBER1⟧人につき、このカードのスコアを+⟦SCORE⟧する。",
+        "structure": "Live start name different score plus",
     },
     {
-        "name": "kidou_turn1_energy_zone_move_energy_two_active",
+        "name": "kidou_turn1_energy_zone_move_energy_active",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}エネルギー置き場にあるエネルギー(\\d+)枚をこのメンバーの下に置く：エネルギーを(\\d+)枚アクティブにする。",
         "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：エネルギーを2枚アクティブにする。",
-        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：エネルギーを2枚アクティブにする。",
-        "structure": "Kidou turn1 energy zone move energy two active",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー⟦NUMBER1⟧枚をこのメンバーの下に置く：エネルギーを⟦NUMBER2⟧枚アクティブにする。",
+        "structure": "Kidou turn1 energy zone move energy active",
     },
     {
-        "name": "toujyou_wait_printemps_energy_active",
-        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
-        "template": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
-        "structure": "Toujyou wait Printemps energy active",
+        "name": "toujyou_wait_group_energy_active",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}このメンバーをウェイトにしてもよい：自分のステージにいる『([^』]+)』のメンバー(\\d+)人につき、エネルギーを(\\d+)枚アクティブにする。",
+        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『μ's』のメンバー1人につき、エネルギーを1枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『⟦GROUP⟧』のメンバー⟦NUMBER1⟧人につき、エネルギーを⟦NUMBER2⟧枚アクティブにする。",
+        "structure": "Toujyou wait group energy active",
     },
     {
-        "name": "jyouji_left_side_three_hearts",
+        "name": "jyouji_side_heart_gain",
+        "regex": "\\{\\{jyouji\\.png\\|常時\\}\\}【(?:左サイド|右サイド)】\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}(?:\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}){2,}を得る。",
         "literal": "{{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
-        "template": "{{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
-        "structure": "Jyouji left side three hearts",
+        "template": "{{jyouji.png|常時}}【⟦SIDE⟧】{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Jyouji side heart gain",
     },
     {
-        "name": "jyouji_right_side_three_hearts",
+        "name": "jyouji_right_side_heart_gain",
+        "regex": "\\{\\{jyouji\\.png\\|常時\\}\\}【(?:左サイド|右サイド)】\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}(?:\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}){2,}を得る。",
         "literal": "{{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_05.png|heart05}}を得る。",
-        "template": "{{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_05.png|heart05}}を得る。",
-        "structure": "Jyouji right side three hearts",
+        "template": "{{jyouji.png|常時}}【⟦SIDE⟧】{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Jyouji side heart gain",
     },
     {
         "name": "toujyou_or_live_start_energy_payment_select_one",
@@ -2181,10 +1536,11 @@ LITERAL_PATTERNS = [
         "structure": "Toujyou or live start energy payment select one",
     },
     {
-        "name": "jyouji_center_area_blade_five",
+        "name": "jyouji_position_blade_gain",
+        "regex": "\\{\\{jyouji\\.png\\|常時\\}\\}ステージの(?:センターエリア|エリア)にいる場合、\\{\\{icon_blade\\.png\\|ブレード\\}\\}(?:\\{\\{icon_blade\\.png\\|ブレード\\}\\})+を得る。",
         "literal": "{{jyouji.png|常時}}ステージのセンターエリアにいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
-        "template": "{{jyouji.png|常時}}ステージのセンターエリアにいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
-        "structure": "Jyouji center area blade five",
+        "template": "{{jyouji.png|常時}}ステージの⟦POSITION⟧にいる場合、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji position blade gain",
     },
     {
         "name": "jidou_no_live_cards_reveal_redo_ally_blades",
@@ -2193,94 +1549,109 @@ LITERAL_PATTERNS = [
         "structure": "Jidou no live cards reveal redo ally blades",
     },
     {
-        "name": "toujyou_three_look_one_add",
+        "name": "toujyou_deck_look_add",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}このメンバーをウェイトにし、手札を(\\d+)枚控え室に置いてもよい：自分のデッキの上からカードを(\\d+)枚見る。その中から(\\d+)枚を手札に加える。残りを控え室に置く。",
         "literal": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加える。残りを控え室に置く。",
-        "template": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加える。残りを控え室に置く。",
-        "structure": "Toujyou three look one add",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を⟦NUMBER1⟧枚控え室に置いてもよい：自分のデッキの上からカードを⟦NUMBER2⟧枚見る。その中から⟦NUMBER3⟧枚を手札に加える。残りを控え室に置く。",
+        "structure": "Toujyou deck look add",
     },
     {
-        "name": "toujyou_score_total_three_plus_public_mu",
-        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
-        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
-        "structure": "Toujyou score total three plus public mu",
+        "name": "toujyou_score_total_deck_look_group_add",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}自分の成功ライブカード置き場にあるカードのスコアの合計が(\\d+)以上の場合、自分のデッキの上からカードを(\\d+)枚見る。その中から『([^』]+)』のメンバーカードを(\\d+)枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が10以上の場合、自分のデッキの上からカードを3枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が⟦NUMBER1⟧以上の場合、自分のデッキの上からカードを⟦NUMBER2⟧枚見る。その中から『⟦GROUP⟧』のメンバーカードを⟦NUMBER3⟧枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "structure": "Toujyou score total deck look group add",
     },
     {
         "name": "live_start_success_card_total_heart_reduce",
-        "literal": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
-        "template": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
+        "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分の成功ライブカード置き場にあるカード(\\d+)枚につき、このカードを成功させるための必要ハートは\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}(?:\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\})+少なくなる。",
+        "literal": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_01.png|heart01}}少なくなる。",
+        "template": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード⟦NUMBER⟧枚につき、このカードを成功させるための必要ハートは{{heart_XX.png|heartXX}}少なくなる。",
         "structure": "Live start success card total heart reduce",
     },
     {
-        "name": "kidou_turn1_shuffle_six_active_energy",
+        "name": "kidou_turn1_shuffle_members_active_energy",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}自分の控え室にある(?:「([^」]+)」(?:と「([^」]+)」){2,})を、合計(\\d+)枚をシャッフルしてデッキの一番下に置く：エネルギーを(\\d+)枚までアクティブにする。",
         "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く：エネルギーを6枚までアクティブにする。",
-        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く：エネルギーを6枚までアクティブにする。",
-        "structure": "Kidou turn1 shuffle six active energy",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある⟦MEMBERS⟧を、合計⟦NUMBER1⟧枚をシャッフルしてデッキの一番下に置く：エネルギーを⟦NUMBER2⟧枚までアクティブにする。",
+        "structure": "Kidou turn1 shuffle members active energy",
     },
     {
-        "name": "jyouji_live_cards_no_live_start_no_live_success_gain",
+        "name": "jyouji_live_cards_no_abilities_heart_gain",
+        "regex": "\\{\\{jyouji\\.png\\|常時\\}\\}自分のライブ中のライブカードに、\\{\\{live_start\\.png\\|ライブ開始時\\}\\}能力も\\{\\{live_success\\.png\\|ライブ成功時\\}\\}能力も持たないカードがあるかぎり、\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}(?:\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\})+を得る。",
         "literal": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
-        "template": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
-        "structure": "Jyouji live cards no live start no live success gain",
+        "template": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Jyouji live cards no abilities heart gain",
     },
     {
-        "name": "toujyou_other_5yncri5e_member_draw",
-        "literal": "{{toujyou.png|登場}}自分のステージにほかの『5yncri5e!』のメンバーがいる場合、カードを1枚引く。",
-        "template": "{{toujyou.png|登場}}自分のステージにほかの『5yncri5e!』のメンバーがいる場合、カードを1枚引く。",
-        "structure": "Toujyou other 5yncri5e member draw",
+        "name": "toujyou_other_group_member_draw",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}自分のステージにほかの『([^』]+)』のメンバーがいる場合、カードを(\\d+)枚引く。",
+        "literal": "{{toujyou.png|登場}}自分のステージにほかの『虹ヶ咲』のメンバーがいる場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分のステージにほかの『⟦GROUP⟧』のメンバーがいる場合、カードを⟦NUMBER⟧枚引く。",
+        "structure": "Toujyou other group member draw",
     },
     {
-        "name": "toujyou_hand_livecard_discard_draw3",
+        "name": "toujyou_hand_card_discard_draw",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}手札の([^。]+)を(\\d+)枚控え室に置いてもよい：カードを(\\d+)枚引く。",
         "literal": "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
-        "template": "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
-        "structure": "Toujyou hand livecard discard draw3",
+        "template": "{{toujyou.png|登場}}手札の⟦CARD_TYPE⟧を⟦NUMBER1⟧枚控え室に置いてもよい：カードを⟦NUMBER2⟧枚引く。",
+        "structure": "Toujyou hand card discard draw",
     },
     {
         "name": "toujyou_success_total_score_draw",
-        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、カードを1枚引く。",
-        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、カードを1枚引く。",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}自分の成功ライブカード置き場にあるカードのスコアの合計が(\\d+)以上の場合、カードを(\\d+)枚引く。",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が10以上の場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が⟦SCORE⟧以上の場合、カードを⟦NUMBER⟧枚引く。",
         "structure": "Toujyou success total score draw",
     },
     {
-        "name": "kidou_turn1_energy_to_under_member_draw_bladeheart",
+        "name": "kidou_turn1_energy_to_under_member_draw_heart",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}エネルギー置き場にあるエネルギー(\\d+)枚をこのメンバーの下に置く：カードを(\\d+)枚引き、ライブ終了時まで、\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}を得る。",
         "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：カードを1枚引き、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
-        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：カードを1枚引き、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
-        "structure": "Kidou turn1 energy to under member draw bladeheart",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー⟦NUMBER1⟧枚をこのメンバーの下に置く：カードを⟦NUMBER2⟧枚引き、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Kidou turn1 energy to under member draw heart",
     },
     {
         "name": "toujyou_this_turn_other_member_moved_draw",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを(\\d+)枚引く。",
         "literal": "{{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを1枚引く。",
-        "template": "{{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを⟦NUMBER⟧枚引く。",
         "structure": "Toujyou this turn other member moved draw",
     },
     {
-        "name": "live_success_member_heart_total_more_draw",
-        "literal": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+１する。",
-        "template": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+１する。",
-        "structure": "Live success member heart total more draw",
+        "name": "live_success_member_heart_total_more_score_plus",
+        "regex": "\\{\\{live_success\\.png\\|ライブ成功時\\}\\}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを\\+(\\d+)する。",
+        "literal": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+1する。",
+        "template": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+⟦SCORE⟧する。",
+        "structure": "Live success member heart total more score plus",
     },
     {
         "name": "live_start_center_member_cost_higher_score_plus",
-        "literal": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+１する。",
-        "template": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+１する。",
+        "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分のセンターエリアにいる『([^』]+)』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを\\+(\\d+)する。",
+        "literal": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『μ's』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+1する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『⟦GROUP⟧』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+⟦SCORE⟧する。",
         "structure": "Live start center member cost higher score plus",
     },
     {
-        "name": "live_start_cost_total_less_draw_one",
+        "name": "live_start_cost_total_less_draw",
+        "regex": "\\{\\{live_start\\.png\\|ライブ開始時\\}\\}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを(\\d+)枚引く。",
         "literal": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。",
-        "template": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。",
-        "structure": "Live start cost total less draw one",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを⟦NUMBER⟧枚引く。",
+        "structure": "Live start cost total less draw",
     },
     {
-        "name": "kidou_turn1_three_discard_position_change",
+        "name": "kidou_turn1_discard_position_change",
+        "regex": "\\{\\{kidou\\.png\\|起動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}デッキの上からカードを(\\d+)枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
         "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
-        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
-        "structure": "Kidou turn1 three discard position change",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを⟦NUMBER⟧枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "structure": "Kidou turn1 discard position change",
     },
     {
-        "name": "jidou_cost10_member_draw",
+        "name": "jidou_cost_member_draw",
+        "regex": "\\{\\{jidou\\.png\\|自動\\}\\}\\{\\{turn1\\.png\\|ターン1回\\}\\}自分のステージにコスト(\\d+)のメンバーが登場したとき、カードを(\\d+)枚引く。",
         "literal": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
-        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
-        "structure": "Jidou cost10 member draw",
+        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト⟦COST⟧のメンバーが登場したとき、カードを⟦NUMBER⟧枚引く。",
+        "structure": "Jidou cost member draw",
     },
     {
         "name": "toujyou_mia_taylor_blade_match",
@@ -2385,22 +1756,25 @@ LITERAL_PATTERNS = [
         "structure": "Toujyou draw discard one",
     },
     {
-        "name": "toujyou_energy_two_active",
+        "name": "toujyou_energy_active",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}エネルギーを(\\d+)枚アクティブにする。",
         "literal": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
-        "template": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
-        "structure": "Toujyou energy two active",
+        "template": "{{toujyou.png|登場}}エネルギーを⟦NUMBER⟧枚アクティブにする。",
+        "structure": "Toujyou energy active",
     },
     {
-        "name": "toujyou_top_five_discard",
+        "name": "toujyou_top_discard",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}デッキの上からカードを(\\d+)枚控え室に置く。",
         "literal": "{{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。",
-        "template": "{{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。",
-        "structure": "Toujyou top five discard",
+        "template": "{{toujyou.png|登場}}デッキの上からカードを⟦NUMBER⟧枚控え室に置く。",
+        "structure": "Toujyou top discard",
     },
     {
-        "name": "toujyou_lower_cost_mirakurapark_batonpass_hearts",
+        "name": "toujyou_lower_cost_batonpass_heart_gain",
+        "regex": "\\{\\{toujyou\\.png\\|登場\\}\\}\\{\\{icon_energy\\.png\\|E\\}\\}支払ってもよい：このメンバーよりコストが低い『([^』]+)』のメンバーからバトンタッチして登場した場合、(?:ライブ終了時まで)?、\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\}(?:\\{\\{heart_[0-9]{2}\\.png\\|heart[0-9]{2}\\}\\})+を得る。",
         "literal": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『みらくらぱーく！』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る。",
-        "template": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『⟦GROUP⟧』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る。",
-        "structure": "Toujyou lower cost Mirakurapark batonpass hearts",
+        "template": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『⟦GROUP⟧』のメンバーからバトンタッチして登場した場合、⟦DURATION⟧、{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Toujyou lower cost batonpass heart gain",
     },
     {
         "name": "jyouji_batonpass_cannot_discard",
@@ -2561,17 +1935,8 @@ FAMILY_PATTERNS = [
     },
 ]
 
-import json
-import re
-import sys
-from collections import Counter
-from pathlib import Path
-from typing import Any
-
-# Fix encoding for Windows console
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+# Process patterns to remove triggers from the start of literals/templates
+# process_patterns_triggers()  # DISABLED - will do this more slowly
 
 def check_pattern_overlap(patterns: list[dict[str, Any]], cards_file: Path) -> list[dict[str, Any]]:
     """
@@ -2618,9 +1983,18 @@ def check_pattern_overlap(patterns: list[dict[str, Any]], cards_file: Path) -> l
                         "matched_text": match.group(0),
                     })
         
-        # Check for overlapping matches in this text
-        for i, match1 in enumerate(matches_in_text):
-            for match2 in matches_in_text[i+1:]:
+        # Optimize: Sort matches by start position for linear scan O(n) instead of O(n^2)
+        matches_in_text.sort(key=lambda x: x["start"])
+        
+        # Check for overlapping matches using linear scan
+        for i in range(len(matches_in_text)):
+            match1 = matches_in_text[i]
+            # Only check subsequent matches (they're sorted by start position)
+            for j in range(i + 1, len(matches_in_text)):
+                match2 = matches_in_text[j]
+                # Early termination: if match2 starts after match1 ends, no more overlaps possible
+                if match2["start"] >= match1["end"]:
+                    break
                 # Check if ranges overlap
                 if not (match1["end"] <= match2["start"] or match2["end"] <= match1["start"]):
                     overlaps.append({
@@ -2673,6 +2047,21 @@ def group_unique_abilities(abilities: list[dict[str, Any]]) -> list[dict[str, An
 
 def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
     dsl_patterns = DSL_PATTERNS
+    
+    # Pre-compile regex patterns for performance (compile once, use many times)
+    compiled_dsl_patterns = []
+    for pattern in dsl_patterns:
+        try:
+            compiled = re.compile(pattern["regex"])
+            compiled_dsl_patterns.append({
+                "name": pattern["name"],
+                "regex": pattern["regex"],
+                "compiled": compiled,
+                "structure": pattern.get("structure", ""),
+                "template": pattern.get("template", ""),
+            })
+        except re.error as e:
+            print(f"ERROR: Invalid regex in pattern '{pattern['name']}': {e}")
 
     text_matches = []
     pattern_counts = Counter()
@@ -2788,8 +2177,8 @@ def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
                 if i < len(covered_positions):
                     covered_positions[i] = True
 
-        for pattern in dsl_patterns:
-            for match in re.finditer(pattern["regex"], text):
+        for pattern in compiled_dsl_patterns:
+            for match in pattern["compiled"].finditer(text):
                 # Check if this match overlaps with already-covered positions
                 match_start = match.start()
                 match_end = match.end()
@@ -3057,6 +2446,31 @@ def print_summary(analysis: dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
+    # Set up logging to both terminal and file
+    import sys
+    from datetime import datetime
+    
+    log_file = Path("../data/extract_abilities_log.txt")
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Create a custom print function that writes to both stdout and file
+    class Logger:
+        def __init__(self, log_file):
+            self.log_file = log_file
+            self.terminal = sys.stdout
+            self.log = open(log_file, 'w', encoding='utf-8')
+            self.log.write(f"=== Pattern Extraction Log - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ===\n\n")
+        
+        def write(self, message):
+            self.terminal.write(message)
+            self.log.write(message)
+        
+        def flush(self):
+            self.terminal.flush()
+            self.log.flush()
+    
+    sys.stdout = Logger(log_file)
+    
     cards_file = Path("../data/cards.json")
     rules_file = Path("../data/rules.txt")
     output_file = Path("../data/abilities_extracted.json")
