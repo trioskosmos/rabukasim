@@ -18,6 +18,7 @@ enum BladeThresholdKind {
     Exact,
 }
 
+#[inline]
 fn blade_threshold_from_params(params: Option<&serde_json::Value>) -> Option<(u32, BladeThresholdKind)> {
     let filter = params?
         .as_object()?
