@@ -175,14 +175,17 @@ pub const FILTER_PASSTHROUGH_MASK: u64 = FILTER_ANY_STAGE
     | KEYWORD_HAS_LIVE_SET
     | FILTER_TOTAL_COST;
 
+#[inline]
 pub fn passthrough_filter_attr(attr: u64) -> u64 {
     attr & FILTER_PASSTHROUGH_MASK
 }
 
+#[inline]
 pub fn structured_filter_attr(attr: u64) -> u64 {
     attr & !FILTER_PASSTHROUGH_MASK
 }
 
+#[inline]
 pub fn structured_filter_from_attr(attr: u64) -> CardFilter {
     CardFilter::from_attr(structured_filter_attr(attr))
 }
