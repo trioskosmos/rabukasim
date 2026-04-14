@@ -1,14 +1,14 @@
 {
   "schema": "ability_skeletons.v6",
-  "source": "data\\cards.json",
-  "rules_source": "data\\rules.txt",
-  "metadata_source": "data\\metadata.json",
+  "source": "..\\data\\cards.json",
+  "rules_source": "..\\data\\rules.txt",
+  "metadata_source": "..\\data\\metadata.json",
   "dsl_pattern_analysis": {
     "total_texts": 627,
     "total_characters": 64720,
     "total_covered_characters": 64720,
     "total_coverage_percentage": 100.0,
-    "unique_patterns": 283,
+    "unique_patterns": 282,
     "pattern_counts": {
       "zone_card_count_condition_zone_to_zone_add": 2,
       "member_under_energy_per_energy_resource_gain": 2,
@@ -35,7 +35,7 @@
       "draw_discard_combined": 18,
       "score_modify": 11,
       "state_change_optional_cost_condition_state_change": 2,
-      "parenthetical_restriction": 4,
+      "parenthesized_clause_note": 13,
       "live_start_any_blade_gain": 37,
       "toujyou_end_of_turn_blade_gain": 1,
       "condition_or_zone_cost_above_resource_gain": 1,
@@ -46,7 +46,6 @@
       "live_start_hand_discard_blade_then_draw": 1,
       "toujyou_top_five_discard": 1,
       "live_start_two_energy_blade_gain_literal": 1,
-      "parenthesized_clause_note": 9,
       "toujyou_deck_top_three_discard_heart_gain": 1,
       "energy_under_member_place": 3,
       "toujyou_deck_top_three_discard_heart_gain_01": 1,
@@ -2059,38 +2058,45 @@
           "ウェイト"
         ]
       ],
-      "parenthetical_restriction": [
+      "parenthesized_clause_note": [
         [
-          "ウェイト状態のメンバー",
-          "{{icon_blade.png|ブレード}}",
-          "エール",
-          "公開",
-          "枚数",
-          "増やさ"
+          "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
         ],
         [
-          "ウェイト状態のメンバー",
-          "{{icon_blade.png|ブレード}}",
-          "エール",
-          "公開",
-          "枚数",
-          "増やさ"
+          "必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。"
         ],
         [
-          "ウェイト状態のメンバー",
-          "{{icon_blade.png|ブレード}}",
-          "エール",
-          "公開",
-          "枚数",
-          "増やさ"
+          "手札のこのカードもこの効果で控え室に置ける。"
         ],
         [
-          "ウェイト状態のメンバー",
-          "{{icon_blade.png|ブレード}}",
-          "エール",
-          "公開",
-          "枚数",
-          "増やさ"
+          "エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。"
+        ],
+        [
+          "エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。"
+        ],
+        [
+          "この効果で既にメンバーがいるエリアにも登場できる。ただし、このターンにステージに登場したメンバーがいるエリアには登場できない。"
+        ],
+        [
+          "{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。"
+        ],
+        [
+          "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
+        ],
+        [
+          "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
+        ],
+        [
+          "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
+        ],
+        [
+          "{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。"
+        ],
+        [
+          "メンバーをそれぞれ好きなエリアに移動させる。この効果で1つのエリアに2人以上のメンバーを移動させることはできない。"
+        ],
+        [
+          "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。"
         ]
       ],
       "live_start_any_blade_gain": [
@@ -2345,35 +2351,6 @@
       ],
       "live_start_two_energy_blade_gain_literal": [
         []
-      ],
-      "parenthesized_clause_note": [
-        [
-          "必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。"
-        ],
-        [
-          "手札のこのカードもこの効果で控え室に置ける。"
-        ],
-        [
-          "エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。"
-        ],
-        [
-          "エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。"
-        ],
-        [
-          "この効果で既にメンバーがいるエリアにも登場できる。ただし、このターンにステージに登場したメンバーがいるエリアには登場できない。"
-        ],
-        [
-          "{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。"
-        ],
-        [
-          "{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。"
-        ],
-        [
-          "メンバーをそれぞれ好きなエリアに移動させる。この効果で1つのエリアに2人以上のメンバーを移動させることはできない。"
-        ],
-        [
-          "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。"
-        ]
       ],
       "toujyou_deck_top_three_discard_heart_gain": [
         []
@@ -4284,7 +4261,7 @@
       ],
       "area_placement_turn_restriction": [
         [
-          "この効果",
+          "（この効果",
           "登場",
           "メンバー",
           "いるエリ",
@@ -4294,7 +4271,7 @@
           "登場"
         ],
         [
-          "この効果",
+          "（この効果",
           "登場",
           "メンバー",
           "いるエリ",
@@ -5964,19 +5941,14 @@
             ]
           },
           {
-            "pattern_name": "parenthetical_restriction",
-            "structure": "Parenthetical restriction",
-            "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
+            "pattern_name": "parenthesized_clause_note",
+            "structure": "Parenthesized clause note",
+            "template": "（⟦CLAUSE⟧）",
             "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
             "start": 94,
             "end": 152,
             "variables": [
-              "ウェイト状態のメンバー",
-              "{{icon_blade.png|ブレード}}",
-              "エール",
-              "公開",
-              "枚数",
-              "増やさ"
+              "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
             ]
           }
         ],
@@ -11633,22 +11605,6 @@
         "original": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カードを1枚引き、手札を1枚控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
         "matches": [
           {
-            "pattern_name": "parenthetical_restriction",
-            "structure": "Parenthetical restriction",
-            "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-            "start": 71,
-            "end": 129,
-            "variables": [
-              "ウェイト状態のメンバー",
-              "{{icon_blade.png|ブレード}}",
-              "エール",
-              "公開",
-              "枚数",
-              "増やさ"
-            ]
-          },
-          {
             "pattern_name": "draw_discard_combined",
             "structure": "Draw discard combined",
             "template": "⟦RESOURCE1⟧を⟦NUMBER1⟧枚引き、⟦RESOURCE2⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に置く",
@@ -11661,6 +11617,17 @@
               "手札",
               "1",
               "控え室"
+            ]
+          },
+          {
+            "pattern_name": "parenthesized_clause_note",
+            "structure": "Parenthesized clause note",
+            "template": "（⟦CLAUSE⟧）",
+            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "start": 71,
+            "end": 129,
+            "variables": [
+              "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
             ]
           }
         ],
@@ -11749,22 +11716,6 @@
         "original": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分の控え室から『μ's』のメンバーカードを1枚手札に加える。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
         "matches": [
           {
-            "pattern_name": "parenthetical_restriction",
-            "structure": "Parenthetical restriction",
-            "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-            "start": 67,
-            "end": 125,
-            "variables": [
-              "ウェイト状態のメンバー",
-              "{{icon_blade.png|ブレード}}",
-              "エール",
-              "公開",
-              "枚数",
-              "増やさ"
-            ]
-          },
-          {
             "pattern_name": "zone_to_zone_add",
             "structure": "Zone to zone add",
             "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
@@ -11777,6 +11728,17 @@
               "『μ's』のメンバーカード",
               "1",
               "手札"
+            ]
+          },
+          {
+            "pattern_name": "parenthesized_clause_note",
+            "structure": "Parenthesized clause note",
+            "template": "（⟦CLAUSE⟧）",
+            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "start": 67,
+            "end": 125,
+            "variables": [
+              "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
             ]
           }
         ],
@@ -12111,22 +12073,6 @@
         "original": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
         "matches": [
           {
-            "pattern_name": "parenthetical_restriction",
-            "structure": "Parenthetical restriction",
-            "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-            "start": 91,
-            "end": 149,
-            "variables": [
-              "ウェイト状態のメンバー",
-              "{{icon_blade.png|ブレード}}",
-              "エール",
-              "公開",
-              "枚数",
-              "増やさ"
-            ]
-          },
-          {
             "pattern_name": "deck_top_look",
             "structure": "Deck top look",
             "template": "⟦SOURCE⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER⟧枚見る",
@@ -12138,6 +12084,17 @@
               "デッキ",
               "カード",
               "2"
+            ]
+          },
+          {
+            "pattern_name": "parenthesized_clause_note",
+            "structure": "Parenthesized clause note",
+            "template": "（⟦CLAUSE⟧）",
+            "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "start": 91,
+            "end": 149,
+            "variables": [
+              "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
             ]
           },
           {
@@ -13091,7 +13048,7 @@
           {
             "pattern_name": "member_leave_energy_return",
             "structure": "Member leave energy return",
-            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
             "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
             "start": 187,
             "end": 234,
@@ -13345,6 +13302,23 @@
         "original": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
         "matches": [
           {
+            "pattern_name": "member_leave_energy_return",
+            "structure": "Member leave energy return",
+            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+            "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+            "start": 203,
+            "end": 250,
+            "variables": [
+              "メンバー",
+              "ステージ",
+              "離れた",
+              "下",
+              "置かれて",
+              "エネルギーカード",
+              "エネルギーデッキ"
+            ]
+          },
+          {
             "pattern_name": "hand_specific_member_summon",
             "structure": "Hand specific member summon",
             "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の「⟦MEMBER⟧」の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させる",
@@ -13359,23 +13333,6 @@
               "1",
               "、このメンバーがいたエリア",
               "登場"
-            ]
-          },
-          {
-            "pattern_name": "member_leave_energy_return",
-            "structure": "Member leave energy return",
-            "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
-            "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
-            "start": 203,
-            "end": 250,
-            "variables": [
-              "メンバー",
-              "ステージ",
-              "離れた",
-              "下",
-              "置かれて",
-              "エネルギーカード",
-              "エネルギーデッキ"
             ]
           },
           {
@@ -14431,12 +14388,12 @@
           {
             "pattern_name": "area_placement_turn_restriction",
             "structure": "Area placement turn restriction",
-            "template": "（⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
+            "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
             "matched_text": "（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
             "start": 80,
             "end": 122,
             "variables": [
-              "この効果",
+              "（この効果",
               "登場",
               "メンバー",
               "いるエリ",
@@ -21781,12 +21738,12 @@
           {
             "pattern_name": "area_placement_turn_restriction",
             "structure": "Area placement turn restriction",
-            "template": "（⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
+            "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
             "matched_text": "（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
             "start": 87,
             "end": 129,
             "variables": [
-              "この効果",
+              "（この効果",
               "登場",
               "メンバー",
               "いるエリ",

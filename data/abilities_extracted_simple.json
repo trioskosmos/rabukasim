@@ -712,17 +712,12 @@
           ]
         },
         {
-          "pattern_name": "parenthetical_restriction",
-          "structure": "Parenthetical restriction",
-          "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
+          "pattern_name": "parenthesized_clause_note",
+          "structure": "Parenthesized clause note",
+          "template": "（⟦CLAUSE⟧）",
           "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
           "extracted_variables": [
-            "ウェイト状態のメンバー",
-            "{{icon_blade.png|ブレード}}",
-            "エール",
-            "公開",
-            "枚数",
-            "増やさ"
+            "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
           ]
         }
       ]
@@ -6010,20 +6005,6 @@
       "coverage": 1.0,
       "pattern_matches": [
         {
-          "pattern_name": "parenthetical_restriction",
-          "structure": "Parenthetical restriction",
-          "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "extracted_variables": [
-            "ウェイト状態のメンバー",
-            "{{icon_blade.png|ブレード}}",
-            "エール",
-            "公開",
-            "枚数",
-            "増やさ"
-          ]
-        },
-        {
           "pattern_name": "draw_discard_combined",
           "structure": "Draw discard combined",
           "template": "⟦RESOURCE1⟧を⟦NUMBER1⟧枚引き、⟦RESOURCE2⟧を⟦NUMBER2⟧枚⟦DESTINATION⟧に置く",
@@ -6034,6 +6015,15 @@
             "手札",
             "1",
             "控え室"
+          ]
+        },
+        {
+          "pattern_name": "parenthesized_clause_note",
+          "structure": "Parenthesized clause note",
+          "template": "（⟦CLAUSE⟧）",
+          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+          "extracted_variables": [
+            "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
           ]
         }
       ]
@@ -6120,20 +6110,6 @@
       "coverage": 1.0,
       "pattern_matches": [
         {
-          "pattern_name": "parenthetical_restriction",
-          "structure": "Parenthetical restriction",
-          "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "extracted_variables": [
-            "ウェイト状態のメンバー",
-            "{{icon_blade.png|ブレード}}",
-            "エール",
-            "公開",
-            "枚数",
-            "増やさ"
-          ]
-        },
-        {
           "pattern_name": "zone_to_zone_add",
           "structure": "Zone to zone add",
           "template": "⟦SOURCE⟧の⟦ZONE⟧から⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に加える",
@@ -6144,6 +6120,15 @@
             "『μ's』のメンバーカード",
             "1",
             "手札"
+          ]
+        },
+        {
+          "pattern_name": "parenthesized_clause_note",
+          "structure": "Parenthesized clause note",
+          "template": "（⟦CLAUSE⟧）",
+          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+          "extracted_variables": [
+            "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
           ]
         }
       ]
@@ -6463,20 +6448,6 @@
       "coverage": 1.0,
       "pattern_matches": [
         {
-          "pattern_name": "parenthetical_restriction",
-          "structure": "Parenthetical restriction",
-          "template": "（⟦CONDITION⟧が持つ⟦RESOURCE⟧は、⟦CONTEXT⟧で⟦ACTION⟧する⟦ATTRIBUTE⟧を⟦MODIFIER⟧ない。）",
-          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
-          "extracted_variables": [
-            "ウェイト状態のメンバー",
-            "{{icon_blade.png|ブレード}}",
-            "エール",
-            "公開",
-            "枚数",
-            "増やさ"
-          ]
-        },
-        {
           "pattern_name": "deck_top_look",
           "structure": "Deck top look",
           "template": "⟦SOURCE⟧の⟦ZONE⟧の上から⟦RESOURCE⟧を⟦NUMBER⟧枚見る",
@@ -6486,6 +6457,15 @@
             "デッキ",
             "カード",
             "2"
+          ]
+        },
+        {
+          "pattern_name": "parenthesized_clause_note",
+          "structure": "Parenthesized clause note",
+          "template": "（⟦CLAUSE⟧）",
+          "matched_text": "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+          "extracted_variables": [
+            "ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。"
           ]
         },
         {
@@ -7376,7 +7356,7 @@
         {
           "pattern_name": "member_leave_energy_return",
           "structure": "Member leave energy return",
-          "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+          "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
           "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
           "extracted_variables": [
             "メンバー",
@@ -7614,6 +7594,21 @@
       "coverage": 1.0,
       "pattern_matches": [
         {
+          "pattern_name": "member_leave_energy_return",
+          "structure": "Member leave energy return",
+          "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦STATE⟧されている⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
+          "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+          "extracted_variables": [
+            "メンバー",
+            "ステージ",
+            "離れた",
+            "下",
+            "置かれて",
+            "エネルギーカード",
+            "エネルギーデッキ"
+          ]
+        },
+        {
           "pattern_name": "hand_specific_member_summon",
           "structure": "Hand specific member summon",
           "template": "⟦SOURCE⟧からコスト⟦COST⟧以下の「⟦MEMBER⟧」の⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に⟦ACTION⟧させる",
@@ -7626,21 +7621,6 @@
             "1",
             "、このメンバーがいたエリア",
             "登場"
-          ]
-        },
-        {
-          "pattern_name": "member_leave_energy_return",
-          "structure": "Member leave energy return",
-          "template": "⟦MEMBER⟧が⟦ZONE⟧から⟦ACTION⟧とき、⟦LOCATION⟧に⟦PLACED⟧いる⟦CARD_TYPE⟧は⟦DESTINATION⟧に置く",
-          "matched_text": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
-          "extracted_variables": [
-            "メンバー",
-            "ステージ",
-            "離れた",
-            "下",
-            "置かれて",
-            "エネルギーカード",
-            "エネルギーデッキ"
           ]
         },
         {
@@ -8636,10 +8616,10 @@
         {
           "pattern_name": "area_placement_turn_restriction",
           "structure": "Area placement turn restriction",
-          "template": "（⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
+          "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
           "matched_text": "（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
           "extracted_variables": [
-            "この効果",
+            "（この効果",
             "登場",
             "メンバー",
             "いるエリ",
@@ -15569,10 +15549,10 @@
         {
           "pattern_name": "area_placement_turn_restriction",
           "structure": "Area placement turn restriction",
-          "template": "（⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
+          "template": "⟦EFFECT⟧で⟦SUMMONED⟧した⟦MEMBER⟧の⟦AREA⟧⟦LOCATION⟧には、この⟦TURN⟧に⟦MEMBER2⟧は⟦ACTION⟧できない",
           "matched_text": "（この効果で登場したメンバーのいるエリアには、このターンにメンバーは登場できない。）",
           "extracted_variables": [
-            "この効果",
+            "（この効果",
             "登場",
             "メンバー",
             "いるエリ",
