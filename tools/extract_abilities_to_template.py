@@ -1397,13 +1397,6 @@ DSL_PATTERNS = [
             "structure": "Reveal count reduction",
         },
 
-        # From: "カードを1枚引く"
-        {
-            "name": "simple_draw_card",
-            "regex": r"\b([^。]+)を(\d+)枚([^。]+)",
-            "template": "⟦CARD_TYPE⟧を⟦NUMBER⟧枚⟦ACTION⟧",
-            "structure": "Simple draw card",
-        },
 
         # From: "相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ"
         {
@@ -1453,21 +1446,6 @@ DSL_PATTERNS = [
             "structure": "Member under energy per energy resource gain",
         },
 
-        # From: "・このカードの必要ハートを{{heart_06.png|heart06}}減らす。"
-        {
-            "name": "bullet_point_cost_reduction",
-            "regex": r"\・([^。]+)の([^。]+)を([^。]+)([^。]+)",
-            "template": "・⟦CARD⟧の⟦COST⟧を⟦MODIFIER⟧⟦ACTION⟧",
-            "structure": "Bullet point cost reduction",
-        },
-
-        # From: "・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。"
-        {
-            "name": "bullet_position_change",
-            "regex": r"\・([^。]+)の([^。]+)いる『([^』]+)』の([^。]+)(\d+)人を([^。]+)させる。",
-            "template": "・⟦SOURCE⟧の⟦ZONE⟧いる『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させる。",
-            "structure": "Bullet position change",
-        },
 
         # From: "選んだハートを1つ得る"
         {
@@ -1669,13 +1647,6 @@ DSL_PATTERNS = [
             "structure": "Quoted ability gain",
         },
 
-        # From: "、{{icon_all.png|ハート}}を得る"
-        {
-            "name": "condition_resource_gain_simple",
-            "regex": r"、([^。]+)を([^。]+)",
-            "template": "、⟦RESOURCE⟧を⟦ACTION⟧",
-            "structure": "Condition resource gain simple",
-        },
 
         # From: "自分はこの手順をさらに4回まで繰り返してもよい"
         {
@@ -1685,125 +1656,7 @@ DSL_PATTERNS = [
             "structure": "Repeat procedure",
         },
 
-        # From: "(" opening parenthesis
-        {
-            "name": "open_parenthesis",
-            "regex": r"\(",
-            "template": "(",
-            "structure": "Open parenthesis",
-        },
 
-        # From: ")" closing parenthesis
-        {
-            "name": "close_parenthesis",
-            "regex": r"\)",
-            "template": ")",
-            "structure": "Close parenthesis",
-        },
-
-        # From: "（" opening japanese parenthesis
-        {
-            "name": "open_japanese_parenthesis",
-            "regex": r"\（",
-            "template": "（",
-            "structure": "Open japanese parenthesis",
-        },
-
-        # From: "）" closing japanese parenthesis
-        {
-            "name": "close_japanese_parenthesis",
-            "regex": r"\）",
-            "template": "）",
-            "structure": "Close japanese parenthesis",
-        },
-
-        # From: '"' opening quote
-        {
-            "name": "open_quote",
-            "regex": r'"',
-            "template": '"',
-            "structure": "Open quote",
-        },
-
-        # From: '"' closing quote
-        {
-            "name": "close_quote",
-            "regex": r'"',
-            "template": '"',
-            "structure": "Close quote",
-        },
-
-        # From: "そのカードの{{toujyou.png|登場}}能力1つを発動させる"
-        {
-            "name": "card_trigger_ability_activation_v2",
-            "regex": r"\bその([^。]+)の([^。]+)(\d+)つを([^。]+)させる",
-            "template": "その⟦CARD⟧の⟦ABILITY_TYPE⟧⟦NUMBER⟧つを⟦ACTION⟧させる",
-            "structure": "Card trigger ability activation v2",
-        },
-
-        # From: "自分のエネルギーが10枚以上あるかぎり"
-        {
-            "name": "energy_count_condition_v2",
-            "regex": r"\b([^。]+)の([^。]+)が(\d+)枚以上あるかぎり",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER⟧枚以上あるかぎり",
-            "structure": "Energy count condition v2",
-        },
-
-        # From: "ライブの合計スコアが相手より高い場合"
-        {
-            "name": "live_score_comparison_condition_v2",
-            "regex": r"\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合",
-            "template": "⟦SOURCE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合",
-            "structure": "Live score comparison condition v2",
-        },
-
-        # From: "相手のエネルギーが自分より多い場合"
-        {
-            "name": "opponent_energy_comparison_condition",
-            "regex": r"\b([^。]+)の([^。]+)が([^。]+)より([^。]+)場合",
-            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦COMPARISON_TARGET⟧より⟦COMPARISON⟧場合",
-            "structure": "Opponent energy comparison condition",
-        },
-
-        # From: "その中から1枚を手札に加える"
-        {
-            "name": "select_one_from_revealed_v2",
-            "regex": r"\bその中から(\d+)枚を([^。]+)に([^。]+)",
-            "template": "その中から⟦NUMBER⟧枚を⟦DESTINATION⟧に⟦ACTION⟧",
-            "structure": "Select one from revealed v2",
-        },
-
-        # From: "ステージのセンターエリアにいる場合"
-        {
-            "name": "center_area_condition_v2",
-            "regex": r"\b([^。]+)の([^。]+)に([^。]+)場合",
-            "template": "⟦ZONE⟧の⟦AREA⟧に⟦STATE⟧場合",
-            "structure": "Center area condition v2",
-        },
-
-        # From: "それらが両方ある場合"
-        {
-            "name": "both_conditions_met",
-            "regex": r"\b([^。]+)が([^。]+)ある場合",
-            "template": "⟦THEY⟧が⟦BOTH⟧ある場合",
-            "structure": "Both conditions met",
-        },
-
-        # From: "・" bullet point
-        {
-            "name": "bullet_point",
-            "regex": r"\・",
-            "template": "・",
-            "structure": "Bullet point",
-        },
-
-        # From: "自分のライブ中のライブカードに"
-        {
-            "name": "zone_card_condition_v2",
-            "regex": r"\b([^。]+)の([^。]+)の([^。]+)に",
-            "template": "⟦SOURCE⟧の⟦STATE⟧の⟦CARD_TYPE⟧に",
-            "structure": "Zone card condition v2",
-        },
 
         # From: "控え室に置く手札の数が1枚減る"
         {
@@ -1813,21 +1666,7 @@ DSL_PATTERNS = [
             "structure": "Placed cards cost reduction",
         },
 
-        # From: "自分のステージに"
-        {
-            "name": "simple_zone_condition",
-            "regex": r"\b([^。]+)の([^。]+)に",
-            "template": "⟦SOURCE⟧の⟦ZONE⟧に",
-            "structure": "Simple zone condition",
-        },
 
-        # From: "のみ起動できる"
-        {
-            "name": "activation_restriction",
-            "regex": r"\のみ([^。]+)できる",
-            "template": "のみ⟦ACTION⟧できる",
-            "structure": "Activation restriction",
-        },
 
         # From: "対戦相手のカードの効果でも発動する"
         {
@@ -1845,21 +1684,6 @@ DSL_PATTERNS = [
             "structure": "Card name treatment",
         },
 
-        # From: "も登場できる"
-        {
-            "name": "can_summon",
-            "regex": r"\も([^。]+)できる",
-            "template": "も⟦ACTION⟧できる",
-            "structure": "Can summon",
-        },
-
-        # From: "は登場できない"
-        {
-            "name": "cannot_summon",
-            "regex": r"\は([^。]+)できない",
-            "template": "は⟦ACTION⟧できない",
-            "structure": "Cannot summon",
-        },
 
         # From: "いる『Aqours』のメンバー1人を選ぶ"
         {
@@ -1869,13 +1693,6 @@ DSL_PATTERNS = [
             "structure": "Select specific group member",
         },
 
-        # From: "ライブ終了時まで"
-        {
-            "name": "duration_until_live_end",
-            "regex": r"\b([^。]+)終了時まで",
-            "template": "⟦EVENT⟧終了時まで",
-            "structure": "Duration until live end",
-        },
 
         # From: "必要ハートに{{heart_03.png|heart03}}を3以上含む"
         {
@@ -1909,13 +1726,6 @@ DSL_PATTERNS = [
             "structure": "Draw discard combined with period",
         },
 
-        # From: "。"
-        {
-            "name": "period",
-            "regex": r"。",
-            "template": "。",
-            "structure": "Period",
-        },
 
         # From: "（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）"
         {
@@ -1925,118 +1735,9 @@ DSL_PATTERNS = [
             "structure": "Parenthetical restriction",
         },
 
-        # From: "\n・"
-        {
-            "name": "newline_bullet",
-            "regex": r"\n・",
-            "template": "\n・",
-            "structure": "Newline bullet",
-        },
-
-        # From: "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。"
-        {
-            "name": "duration_resource_gain_with_period",
-            "regex": r"([^。]+)終了時まで、([^。]+)を得る。",
-            "template": "⟦EVENT⟧終了時まで、⟦RESOURCE⟧を得る。",
-            "structure": "Duration resource gain with period",
-        },
 
 
-        # From: "{{toujyou.png|登場}}"
-        {
-            "name": "trigger_appearance_icon",
-            "regex": r"\{\{toujyou\.png\|登場\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Appearance trigger icon",
-        },
 
-        # From: "{{jidou.png|自動}}"
-        {
-            "name": "trigger_automatic_icon",
-            "regex": r"\{\{jidou\.png\|自動\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Automatic trigger icon",
-        },
-
-        # From: "{{live_start.png|ライブ開始時}}"
-        {
-            "name": "trigger_live_start_icon",
-            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Live start trigger icon",
-        },
-
-        # From: "{{kidou.png|起動}}"
-        {
-            "name": "trigger_activation_icon",
-            "regex": r"\{\{kidou\.png\|起動\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Activation trigger icon",
-        },
-
-        # From: "{{jyouji.png|常時}}"
-        {
-            "name": "trigger_constant_icon",
-            "regex": r"\{\{jyouji\.png\|常時\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Constant trigger icon",
-        },
-
-        # From: "{{live_success.png|ライブ成功時}}"
-        {
-            "name": "trigger_live_success_icon",
-            "regex": r"\{\{live_success\.png\|ライブ成功時\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Live success trigger icon",
-        },
-
-        # From: "{{turn1.png|ターン1回}}"
-        {
-            "name": "trigger_turn1_icon",
-            "regex": r"\{\{turn1\.png\|ターン1回\}\}",
-            "template": "⟦TRIGGER⟧",
-            "structure": "Turn 1 trigger icon",
-        },
-
-        # From: "{{icon_energy.png|E}}"
-        {
-            "name": "resource_energy_icon",
-            "regex": r"\{\{icon_energy\.png\|E\}\}",
-            "template": "⟦RESOURCE⟧",
-            "structure": "Energy resource icon",
-        },
-
-        # From: "{{heart_01.png|heart01}}"
-        {
-            "name": "resource_heart01_icon",
-            "regex": r"\{\{heart_01\.png\|heart01\}\}",
-            "template": "⟦RESOURCE⟧",
-            "structure": "Heart01 resource icon",
-        },
-
-        # From: "{{heart_03.png|heart03}}"
-        {
-            "name": "resource_heart03_icon",
-            "regex": r"\{\{heart_03\.png\|heart03\}\}",
-            "template": "⟦RESOURCE⟧",
-            "structure": "Heart03 resource icon",
-        },
-
-        # From: "{{heart_06.png|heart06}}"
-        {
-            "name": "resource_heart06_icon",
-            "regex": r"\{\{heart_06\.png\|heart06\}\}",
-            "template": "⟦RESOURCE⟧",
-            "structure": "Heart06 resource icon",
-        },
-
-        # From: "\n" (newline between sentences)
-        {
-            "name": "newline",
-            "regex": r"\n",
-            "template": "\n",
-            "structure": "Newline",
-        },
 
 
 
@@ -2157,132 +1858,244 @@ DSL_PATTERNS = [
             "structure": "Parenthetical restriction",
         },
 
-        # From: "必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う"
+        # From: "([^。]+)の([^。]+)が(\d+)枚以上あるかぎり、([^。]+)を得る。"
         {
-            "name": "blade_heart_treatment_literal",
-            "regex": r"必要ハートを確認する時、エールで出た",
-            "template": "必要ハートを確認する時、エールで出た",
-            "structure": "Blade heart treatment literal",
+            "name": "resource_count_condition_resource_gain",
+            "regex": r"\b([^。]+)の([^。]+)が(\d+)枚以上あるかぎり、([^。]+)を得る。",
+            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER⟧枚以上あるかぎり、⟦GAIN⟧を得る。",
+            "structure": "Resource count condition resource gain",
         },
 
-        # From: "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す"
+        # From: "([^。]+)まで、([^。]+)を得る。"
         {
-            "name": "member_leave_energy_return_literal",
-            "regex": r"メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す",
-            "template": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す",
-            "structure": "Member leave energy return literal",
+            "name": "duration_resource_gain",
+            "regex": r"\b([^。]+)まで、([^。]+)を得る。",
+            "template": "⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
+            "structure": "Duration resource gain",
         },
 
-        # From: "能力がコストを持つ場合、支払って発動させる"
+        # From: "([^。]+)支払ってもよい：([^。]+)まで、([^。]+)を得る。"
         {
-            "name": "ability_cost_activation_literal",
-            "regex": r"能力がコストを持つ場合、支払って発動させる",
-            "template": "能力がコストを持つ場合、支払って発動させる",
-            "structure": "Ability cost activation literal",
+            "name": "cost_optional_duration_resource_gain",
+            "regex": r"\b([^。]+)支払ってもよい：([^。]+)まで、([^。]+)を得る。",
+            "template": "⟦COST⟧支払ってもよい：⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
+            "structure": "Cost optional duration resource gain",
         },
 
-        # From: "メンバーをそれぞれ好きなエリアに移動させる"
+        # From: "([^。]+)を得る。"
         {
-            "name": "formation_change_literal",
-            "regex": r"メンバーをそれぞれ好きなエリアに移動させる",
-            "template": "メンバーをそれぞれ好きなエリアに移動させる",
-            "structure": "Formation change literal",
+            "name": "simple_resource_gain",
+            "regex": r"\b([^。]+)を得る。",
+            "template": "⟦RESOURCE⟧を得る。",
+            "structure": "Simple resource gain",
         },
 
-        # From: "2人以上のメンバーを移動させることはできない"
+        # From: "([^。]+)を(\d+)枚([^。]+)する。"
         {
-            "name": "cannot_move_multiple_literal",
-            "regex": r"2人以上のメンバーを移動させることはできない",
-            "template": "2人以上のメンバーを移動させることはできない",
-            "structure": "Cannot move multiple literal",
+            "name": "card_action",
+            "regex": r"\b([^。]+)を(\d+)枚([^。]+)する。",
+            "template": "⟦CARD⟧を⟦NUMBER⟧枚⟦ACTION⟧する。",
+            "structure": "Card action",
         },
 
-        # From: "移動させてもよい"
+        # From: "([^。]+)の([^。]+)が(\d+)枚以上ある場合、([^。]+)を(\d+)枚([^。]+)。"
         {
-            "name": "optional_move_literal",
-            "regex": r"移動させてもよい",
-            "template": "移動させてもよい",
-            "structure": "Optional move literal",
+            "name": "zone_count_condition_card_draw",
+            "regex": r"\b([^。]+)の([^。]+)が(\d+)枚以上ある場合、([^。]+)を(\d+)枚([^。]+)。",
+            "template": "⟦SOURCE⟧の⟦RESOURCE⟧が⟦NUMBER1⟧枚以上ある場合、⟦CARD⟧を⟦NUMBER2⟧枚⟦ACTION⟧。",
+            "structure": "Zone count condition card draw",
         },
 
-        # From: "置ける"
+        # From: "([^。]+)を([^。]+)に([^。]+)する。"
         {
-            "name": "can_place_literal",
-            "regex": r"置ける",
-            "template": "置ける",
-            "structure": "Can place literal",
+            "name": "zone_move",
+            "regex": r"\b([^。]+)を([^。]+)に([^。]+)する。",
+            "template": "⟦TARGET⟧を⟦ZONE⟧に⟦ACTION⟧する。",
+            "structure": "Zone move",
         },
 
-        # From: "、"
+        # From: "([^。]+)が([^。]+)いる場合、([^。]+)を([^。]+)する。"
         {
-            "name": "comma_literal",
-            "regex": r"、",
-            "template": "、",
-            "structure": "Comma literal",
+            "name": "presence_condition_action",
+            "regex": r"\b([^。]+)が([^。]+)いる場合、([^。]+)を([^。]+)する。",
+            "template": "⟦SUBJECT⟧が⟦CONDITION⟧いる場合、⟦TARGET⟧を⟦ACTION⟧する。",
+            "structure": "Presence condition action",
         },
 
-        # From: "支払ってもよい"
+        # From: "([^。]+)が([^。]+)ある場合、([^。]+)を([^。]+)する。"
         {
-            "name": "optional_payment_literal",
-            "regex": r"支払ってもよい",
-            "template": "支払ってもよい",
-            "structure": "Optional payment literal",
+            "name": "existence_condition_action",
+            "regex": r"\b([^。]+)が([^。]+)ある場合、([^。]+)を([^。]+)する。",
+            "template": "⟦SUBJECT⟧が⟦CONDITION⟧ある場合、⟦TARGET⟧を⟦ACTION⟧する。",
+            "structure": "Existence condition action",
         },
 
-        # From: "加える"
+        # From: "([^。]+)が([^。]+)以上の場合、([^。]+)を([^。]+)する。"
         {
-            "name": "add_to_hand_literal",
-            "regex": r"加える",
-            "template": "加える",
-            "structure": "Add to hand literal",
+            "name": "threshold_condition_action",
+            "regex": r"\b([^。]+)が([^。]+)以上の場合、([^。]+)を([^。]+)する。",
+            "template": "⟦SUBJECT⟧が⟦THRESHOLD⟧以上の場合、⟦TARGET⟧を⟦ACTION⟧する。",
+            "structure": "Threshold condition action",
         },
 
-        # From: "置かれた"
+        # From: "([^。]+)の([^。]+)を([^。]+)する。"
         {
-            "name": "placed_passive_literal",
-            "regex": r"置かれた",
-            "template": "置かれた",
-            "structure": "Placed passive literal",
+            "name": "attribute_modify",
+            "regex": r"\b([^。]+)の([^。]+)を([^。]+)する。",
+            "template": "⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する。",
+            "structure": "Attribute modify",
         },
 
-        # From: "移動させる"
+        # From: "([^。]+)は([^。]+)する。"
         {
-            "name": "move_verb_literal",
-            "regex": r"移動させる",
-            "template": "移動させる",
-            "structure": "Move verb literal",
+            "name": "subject_action",
+            "regex": r"\b([^。]+)は([^。]+)する。",
+            "template": "⟦SUBJECT⟧は⟦ACTION⟧する。",
+            "structure": "Subject action",
         },
 
-        # From: "{{center.png|センター}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る"
+        # From: "([^。]+)、([^。]+)を([^。]+)。"
         {
-            "name": "position_blade_resource_gain",
-            "regex": r"\{\{center\.png\|センター\}\}\{\{icon_blade\.png\|ブレード\}\}\{\{icon_blade\.png\|ブレード\}\}を得る",
-            "template": "⟦POSITION⟧⟦BLADE⟧⟦BLADE⟧を得る",
-            "structure": "Position blade resource gain",
+            "name": "comma_separated_action",
+            "regex": r"\b([^。]+)、([^。]+)を([^。]+)。",
+            "template": "⟦CONDITION⟧、⟦TARGET⟧を⟦ACTION⟧。",
+            "structure": "Comma separated action",
         },
 
-        # From: "{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う"
+        # From: "([^。]+)：([^。]+)。"
         {
-            "name": "all_blade_treatment",
-            "regex": r"\{\{icon_b_all\.png\|ALLブレード\}\}は任意の色のハートとして扱う",
-            "template": "⟦ALL_BLADE⟧は任意の色のハートとして扱う",
-            "structure": "All blade treatment",
+            "name": "colon_action",
+            "regex": r"\b([^。]+)：([^。]+)。",
+            "template": "⟦COST⟧：⟦ACTION⟧。",
+            "structure": "Colon action",
         },
 
-        # From: "{{center.png|センター}}"
+        # From: "([^。]+)、([^。]+)。"
         {
-            "name": "center_icon",
-            "regex": r"\{\{center\.png\|センター\}\}",
-            "template": "⟦CENTER⟧",
-            "structure": "Center icon",
+            "name": "comma_period",
+            "regex": r"\b([^。]+)、([^。]+)。",
+            "template": "⟦CLAUSE1⟧、⟦CLAUSE2⟧。",
+            "structure": "Comma period",
         },
 
-        # From: "を得る" resource gain verb
+        # From: "([^。]+)により([^。]+)した([^。]+)、([^。]+)を([^。]+)。"
         {
-            "name": "resource_gain_verb_exact",
-            "regex": r"を得る",
-            "template": "を得る",
-            "structure": "Resource gain verb exact",
+            "name": "conditional_consequence",
+            "regex": r"\b([^。]+)により([^。]+)した([^。]+)、([^。]+)を([^。]+)。",
+            "template": "⟦CONTEXT⟧により⟦ACTION⟧した⟦CONDITION⟧、⟦TARGET⟧を⟦RESULT⟧。",
+            "structure": "Conditional consequence",
+        },
+
+        # From: "([^。]+)が([^。]+)場合、([^。]+)を([^。]+)。"
+        {
+            "name": "condition_action_period",
+            "regex": r"\b([^。]+)が([^。]+)場合、([^。]+)を([^。]+)。",
+            "template": "⟦SUBJECT⟧が⟦CONDITION⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
+            "structure": "Condition action period",
+        },
+
+        # From: "([^。]+)。"
+        {
+            "name": "sentence_period",
+            "regex": r"\b([^。]+)。",
+            "template": "⟦SENTENCE⟧。",
+            "structure": "Sentence period",
+        },
+
+        # From: "([^。]+)、"
+        {
+            "name": "clause_comma",
+            "regex": r"\b([^。]+)、",
+            "template": "⟦CLAUSE⟧、",
+            "structure": "Clause comma",
+        },
+
+        # From: "([^。]+)（([^。]+)）"
+        {
+            "name": "parenthetical_note",
+            "regex": r"\b([^。]+)（([^。]+)）",
+            "template": "⟦MAIN⟧（⟦NOTE⟧）",
+            "structure": "Parenthetical note",
+        },
+
+        # From: "([^。]+)（"
+        {
+            "name": "parenthetical_open",
+            "regex": r"\b([^。]+)（",
+            "template": "⟦MAIN⟧（",
+            "structure": "Parenthetical open",
+        },
+
+        # From: "([^。]+)）"
+        {
+            "name": "parenthetical_close",
+            "regex": r"\b([^。]+)）",
+            "template": "⟦CONTENT⟧）",
+            "structure": "Parenthetical close",
+        },
+
+        # From: "・([^。]+)"
+        {
+            "name": "bullet_point",
+            "regex": r"\・([^。]+)",
+            "template": "・⟦CONTENT⟧",
+            "structure": "Bullet point",
+        },
+
+        # From: "{{"
+        {
+            "name": "open_brace",
+            "regex": r"\{\{",
+            "template": "⟦OPEN_BRACE⟧",
+            "structure": "Open brace",
+        },
+
+        # From: "}}"
+        {
+            "name": "close_brace",
+            "regex": r"\}\}",
+            "template": "⟦CLOSE_BRACE⟧",
+            "structure": "Close brace",
+        },
+
+        # From: "（"
+        {
+            "name": "open_paren",
+            "regex": r"\（",
+            "template": "（",
+            "structure": "Open paren",
+        },
+
+        # From: "）"
+        {
+            "name": "close_paren",
+            "regex": r"\）",
+            "template": "）",
+            "structure": "Close paren",
+        },
+
+        # From: "("
+        {
+            "name": "open_paren_ascii",
+            "regex": r"\(",
+            "template": "(",
+            "structure": "Open paren ascii",
+        },
+
+        # From: ")"
+        {
+            "name": "close_paren_ascii",
+            "regex": r"\)",
+            "template": ")",
+            "structure": "Close paren ascii",
+        },
+
+        # From: '"'
+        {
+            "name": "quote",
+            "regex": r'"',
+            "template": '"',
+            "structure": "Quote",
         },
     ]
 
@@ -2491,10 +2304,69 @@ def extract_abilities(cards_file: Path, rules_file: Path, output_file: Path, met
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
+    # Generate simple output with pattern matching info
+    simple_output = generate_simple_output(cards, unique_abilities, dsl_pattern_analysis)
+    simple_output_file = output_file.parent / "abilities_extracted_simple.json"
+    with open(simple_output_file, 'w', encoding='utf-8') as f:
+        json.dump(simple_output, f, ensure_ascii=False, indent=2)
+
     if show_summary:
         print_summary(dsl_pattern_analysis)
 
     return result
+
+
+def generate_simple_output(cards: dict[str, dict[str, Any]], unique_abilities: list[dict[str, Any]], pattern_analysis: dict[str, Any]) -> dict[str, Any]:
+    """Generate simple output with pattern matching information."""
+    # Create a mapping from ability text to pattern matches
+    text_matches_map = {}
+    for match in pattern_analysis.get('text_matches', []):
+        original = match.get('original', '')
+        text_matches_map[original] = match
+
+    simple_abilities = []
+    for i, ability_data in enumerate(unique_abilities):
+        ability_text = ability_data['ability']
+        card_ids = ability_data['card_ids']
+        
+        # Get card examples (first 5)
+        card_examples = []
+        for card_id in card_ids[:5]:
+            if card_id in cards:
+                card = cards[card_id]
+                card_name = card.get('name', card_id)
+                card_no = card.get('card_no', card_id)
+                card_examples.append(f"{card_no} | {card_name}")
+        
+        # Get pattern matches for this ability
+        pattern_match = text_matches_map.get(ability_text, {})
+        matches = pattern_match.get('matches', [])
+        coverage = pattern_match.get('coverage', 0)
+        
+        # Format pattern matches
+        pattern_matches_output = []
+        for match in matches:
+            pattern_matches_output.append({
+                'pattern_name': match['pattern_name'],
+                'structure': match['structure'],
+                'template': match['template'],
+                'matched_text': match['matched_text'],
+                'extracted_variables': match['variables']
+            })
+        
+        simple_abilities.append({
+            'jp': ability_text,
+            'ability_index': i,
+            'card_examples': card_examples,
+            'count': len(card_ids),
+            'coverage': coverage,
+            'pattern_matches': pattern_matches_output
+        })
+    
+    return {
+        'total_unique_abilities': len(simple_abilities),
+        'abilities': simple_abilities
+    }
 
 
 def print_summary(analysis: dict[str, Any]) -> None:
