@@ -5,6 +5,13 @@ Remove patterns with zero matches from extract_abilities_to_template.py
 
 import json
 import re
+import sys
+
+# Set UTF-8 encoding for output
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
 # Load pattern match counts from abilities_extracted.json
 with open('c:\\Users\\trios\\.gemini\\antigravity\\vscode\\loveca-copy\\data\\abilities_extracted_simple.json', 'r', encoding='utf-8') as f:

@@ -50,37 +50,38 @@
 - "toujyou_deck_top_three_discard_heart_gain" variants could be unified
 
 ### 3. Atomic Variable Enhancement
-**Priority: HIGH** - Variables must capture atomic components based on clause structure.
+**Priority: HIGH** - Variables must separate core mechanics from parameters for clause recombination.
 
-**Proper Understanding of Non-Atomic Variables:**
-The issue is NOT about filtering "filler words" - demonstratives and player references serve important purposes:
-- "このメンバー" (this member) - specifies which entity, not filler
-- "自分のステージ" (my stage) - necessary for targeting
-- "ライブ終了時まで" (until end of live) - timing condition
+**Purpose of Atomic Decomposition:**
+- "draw member card" and "draw live card" should be recognized as same core ability
+- Core mechanic: "draw card" (atomic)
+- Parameters: card type (member/live), zone, player, etc. (combinable)
+- Enables combining abilities with different clauses
 
-**Real Problem:** Patterns capture multi-component phrases in single variables:
-- "{{toujyou.png|登場}}自分" mixes trigger + player reference
-- "センターにいるメンバー" mixes location + state + entity
-- "コスト11以上のカード" mixes condition + entity type
+**Current Problem:**
+Patterns capture specific combinations as separate patterns:
+- "draw member card" → one pattern
+- "draw live card" → another pattern
+- Result: seen as radically different abilities when they're the same core mechanic
 
-**Atomic Variable Rules (Clause-Based Decomposition):**
-- **Separate components by clause structure:**
-  - Demonstratives: "この" + "メンバー" (separate specifier from entity)
-  - Player refs: "自分" + "ステージ" (separate player from location)
-  - Timing: "ライブ終了時" + "まで" (separate timing from duration marker)
-  - Conditions: "コスト11以上" + "カード" (separate condition from entity)
+**Atomic Variable Rules (Core Mechanics vs Parameters):**
+- **Core mechanics (atomic):**
+  - Actions: "draw", "place", "gain", "lose", "reveal"
+  - Conditions: "if", "when", "while"
+  - Operators: "add", "subtract", "multiply"
 
-- **Capture atomic game mechanic components:**
-  - Entity types: "メンバー", "カード", "ハート", "ブレード"
-  - Zones: "ステージ", "控え室", "手札", "エネルギー"
-  - States: "アクティブ", "ウェイト", "表", "裏"
-  - Actions: "置く", "得る", "引く", "公開する"
-  - Numbers: pure numeric values
+- **Parameters (combinable):**
+  - Card types: "member", "live", "energy"
+  - Zones: "stage", "waiting room", "hand", "energy zone"
+  - Players: "self", "opponent"
+  - Numbers: quantities
+  - Conditions: cost, group, state
 
 **Implementation approach:**
-- Redesign pattern regex to capture atomic components separately
-- Update templates to recombine components in proper clause structure
-- Ensure each variable represents a single atomic game mechanic component
+- Consolidate patterns by core mechanic
+- Make card types, zones, players into parameter variables
+- Create unified patterns like "draw [CARD_TYPE] from [ZONE]"
+- Enable clause recombination through atomic parameter separation
 
 ## Implementation Order
 
