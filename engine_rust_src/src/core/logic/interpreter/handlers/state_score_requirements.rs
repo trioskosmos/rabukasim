@@ -1,6 +1,6 @@
-
 use super::*;
 
+#[inline]
 fn resolve_requirement_color(
     _db: &CardDatabase,
     _ctx: &AbilityContext,
@@ -28,6 +28,7 @@ fn resolve_requirement_color(
     }
 }
 
+#[inline]
 fn resolved_requirement_amount(
     state: &GameState,
     db: &CardDatabase,
