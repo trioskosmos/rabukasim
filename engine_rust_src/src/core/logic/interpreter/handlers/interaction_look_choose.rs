@@ -12,6 +12,7 @@ use rand::seq::SliceRandom;
 use rand::SeedableRng;
 use rand_pcg::Pcg64;
 
+#[inline]
 fn resolve_choose_count(db: &CardDatabase, ctx: &AbilityContext, frame_data: &AbilityFrameComponents<'_>) -> usize {
     let mut choose_count = frame_data.look_choose().choose_count.max(1) as usize;
 
