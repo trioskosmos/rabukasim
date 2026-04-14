@@ -12,6 +12,7 @@ use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::enums::Zone;
 use crate::core::{O_RECOVER_LIVE, O_RECOVER_MEMBER};
 
+#[inline]
 fn recovery_uses_same_name_filter(
     db: &CardDatabase,
     ctx: &AbilityContext,
@@ -21,6 +22,7 @@ fn recovery_uses_same_name_filter(
     recovery_special_id(db, ctx, frame_data, frame_idx) == 4
 }
 
+#[inline]
 fn recovery_special_id(
     db: &CardDatabase,
     ctx: &AbilityContext,
