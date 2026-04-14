@@ -89,6 +89,8 @@ thread_local! {
     static ON_DEMAND_AURA_QUERY: Cell<bool> = const { Cell::new(false) };
 }
 
+fn stage_card_id(state: &GameState, player_idx: usize, slot_idx: usize) -> i32 {
+    state.players[player_idx].stage[slot_idx]
 }
 
 fn iter_stage_cards_excluding(
@@ -106,8 +108,7 @@ fn iter_stage_cards_excluding(
     })
 }
 
-
-#[inline]fn frame_uses_count_multiplier(
+fn frame_uses_count_multiplier(
     frame_data: &AbilityFrameComponents<'_>,
     has_per_card: bool,
 ) -> bool {
@@ -129,7 +130,9 @@ fn iter_stage_cards_excluding(
 fn cost_scope_frames<'a>(ab: &'a Ability) -> Cow<'a, [AbilityFrame]> {
     ab.resolved_frames()
 }
-d_data: &AbilityFrameComponents<'_>,
+
+fn is_hand_only_self_cost_modifier(
+    frame_data: &AbilityFrameComponents<'_>,
     op: i32,
 ) -> bool {
     if op != O_REDUCE_COST && op != O_INCREASE_COST {
@@ -178,7 +181,6 @@ pub fn ability_has_hand_only_self_cost_modifier(ab: &Ability) -> bool {
 fn is_generic_cost_area_slot(raw_slot: i32) -> bool {
     matches!((raw_slot as u32) & 0xFF, 0 | 1 | 4)
 }
-#[inline]
 
 fn ability_conditions_met(
     state: &GameState,
@@ -224,8 +226,10 @@ fn ability_conditions_met(
     true
 }
 
-frget_area == 1 {
- e if target_area == 4 {
+fn aura_target_mask(source_slot: usize, target_area: i32, attr: u64, has_filters: bool) -> u8 {
+    if target_area == 1 {
+        0b111
+    } else if target_area == 4 {
         1 << source_slot
     } else if attr != 0 || has_filters {
         0b111
@@ -311,7 +315,6 @@ pub fn get_effective_hearts_with_aura(
     board
 }
 
-#[inline]
 pub fn has_multi_baton(m: &MemberCard) -> u8 {
     if m.has_multi_baton {
         2
@@ -1674,12 +1677,6 @@ fn apply_aura_modifier(
                 }
             }
         }
-            }
-    _ => {}
-        _ => {}
-}}
-
-}
         _ => {}
     }
 }

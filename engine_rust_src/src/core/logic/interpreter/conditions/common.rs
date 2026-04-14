@@ -45,16 +45,19 @@ impl Drop for ConditionEvalCacheScope {
     }
 }
 
+#[inline]
 fn hash_value<T: Hash>(value: &T) -> u64 {
     let mut hasher = DefaultHasher::new();
     value.hash(&mut hasher);
     hasher.finish()
 }
 
+#[inline]
 fn hash_params(params: Option<&Value>) -> u64 {
     params.map(hash_value).unwrap_or_default()
 }
 
+#[inline]
 pub fn condition_eval_cache_key(
     opcode: i32,
     value: i32,
@@ -77,6 +80,7 @@ pub fn condition_eval_cache_key(
     }
 }
 
+#[inline]
 pub fn condition_eval_cache_lookup(key: &ConditionEvalCacheKey) -> Option<bool> {
     ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
         cache
@@ -86,6 +90,7 @@ pub fn condition_eval_cache_lookup(key: &ConditionEvalCacheKey) -> Option<bool> 
     })
 }
 
+#[inline]
 pub fn condition_eval_cache_store(key: ConditionEvalCacheKey, value: bool) {
     ACTIVE_CONDITION_EVAL_CACHE.with(|cache| {
         if let Some(active) = cache.borrow_mut().as_mut() {
@@ -96,6 +101,7 @@ pub fn condition_eval_cache_store(key: ConditionEvalCacheKey, value: bool) {
 
 /// Compare an i32 value against a target with optional comparison mode from slot.
 /// Slot encoding: 0 = equal, 1 = greater, 2 = less, 3 = greater-or-equal, 4 = less-or-equal
+#[inline]
 pub fn compare_i32(actual: i32, target: i32, slot: i32) -> bool {
     let mode = (slot >> 4) & 0x0F;
     match mode {
