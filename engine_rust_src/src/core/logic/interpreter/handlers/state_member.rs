@@ -15,6 +15,7 @@ use crate::core::logic::interpreter::suspension::resolve_target_player;
 
 use crate::core::models::interpreter::resolve_target_slot;
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
