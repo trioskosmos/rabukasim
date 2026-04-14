@@ -3,6 +3,7 @@ use crate::core::models::AbilityContext;
 use super::*;
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 
+#[inline]
 fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
