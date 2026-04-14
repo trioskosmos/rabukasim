@@ -33,10 +33,12 @@ fn count_zone_len(cards: &[i32]) -> i32 {
 }
 #[inline]
 
+#[inline]
 fn count_dense_zone_len(cards: &[i32]) -> i32 {
     cards.len() as i32
 }
 
+#[inline]
 fn sum_matching_live_required_hearts(
     required_hearts: &[u8; 7],
     color_mask: u8,
@@ -54,6 +56,7 @@ fn sum_matching_live_required_hearts(
     total
 }
 
+#[inline]
 fn count_unique_groups_in_cards(
     state: &GameState,
     db: &CardDatabase,
@@ -81,6 +84,7 @@ fn count_unique_groups_in_cards(
     groups.len() as i32
 }
 
+#[inline]
 fn zone_mask_blocks_simple_count(filter: &CardFilter, expected_mask: u8) -> bool {
     match filter.zone_mask as i32 {
         0 => false,
@@ -91,6 +95,7 @@ fn zone_mask_blocks_simple_count(filter: &CardFilter, expected_mask: u8) -> bool
     }
 }
 
+#[inline]
 fn decode_count_filter(attr: u64) -> CardFilter {
     let mut filter = CardFilter::from_attr(attr);
     if (attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0 && filter.target_player == 0 {
