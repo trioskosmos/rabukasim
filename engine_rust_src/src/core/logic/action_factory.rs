@@ -6,6 +6,7 @@ use crate::core::logic::models::AbilityContext;
 use crate::core::logic::state::GameState;
 use serde_json::json;
 
+#[inline]
 fn summarize_modal_option_label(ability: &crate::core::logic::Ability, index: usize) -> Option<String> {
     let frames = ability.get_modal_option_frames(index)?;
     let summary = frames
