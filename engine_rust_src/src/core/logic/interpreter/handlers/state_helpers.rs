@@ -2,6 +2,7 @@ use crate::core::*;
 
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+#[inline]
 pub fn update_live_score_snapshot(
     state: &mut GameState,
 
@@ -61,11 +62,13 @@ pub fn update_live_score_snapshot(
     false
 }
 
+#[inline]
 pub fn inline_value_ge_threshold(db: &CardDatabase, ctx: &AbilityContext) -> Option<i32> {
     let _ = (db, ctx);
     None
 }
 
+#[inline]
 pub fn source_ability<'a>(
     db: &'a CardDatabase,
     ctx: &AbilityContext,
@@ -79,6 +82,7 @@ pub fn source_ability<'a>(
         })
 }
 
+#[inline]
 pub fn tap_opponent_chooser_player(db: &CardDatabase, ctx: &AbilityContext) -> u8 {
     let _chooser_is_activator = source_ability(db, ctx)
         .map(|ability| {
