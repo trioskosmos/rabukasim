@@ -25,10 +25,15 @@ fn prepend_cards_preserve_order(
     deck: &mut smallvec::SmallVec<[i32; 60]>,
     cards: impl IntoIterator<Item = i32>,
 ) {
-    let mut new_deck = smallvec::SmallVec::<[i32; 60]>::new();
-    new_deck.extend(cards);
-    new_deck.extend(deck.drain(..));
-    *deck = new_deck;
+    let cards_vec: Vec<i32> = cards.into_iter().collect();
+    if cards_vec.is_empty() {
+        return;
+    }
+    // Use splice to insert at beginning without full reallocation
+    deck.reserve(cards_vec.len());
+    for card in cards_vec.into_iter().rev() {
+        deck.insert(0, card);
+    }
 }
 
 fn prepend_cards_reverse_order<I>(deck: &mut smallvec::SmallVec<[i32; 60]>, cards: I)
@@ -36,10 +41,15 @@ where
     I: IntoIterator<Item = i32>,
     I::IntoIter: DoubleEndedIterator,
 {
-    let mut new_deck = smallvec::SmallVec::<[i32; 60]>::new();
-    new_deck.extend(cards.into_iter().rev());
-    new_deck.extend(deck.drain(..));
-    *deck = new_deck;
+    let cards_vec: Vec<i32> = cards.into_iter().collect();
+    if cards_vec.is_empty() {
+        return;
+    }
+    // Reserve space and extend in reverse order
+    deck.reserve(cards_vec.len());
+    for card in cards_vec {
+        deck.insert(0, card);
+    }
 }
 
 // Main router for deck-related opcodes

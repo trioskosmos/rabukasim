@@ -346,11 +346,13 @@ impl CardDatabase {
     }
 
     /// Extract the logical ID (0-4095) from a packed card ID.
+    #[inline]
     pub fn to_logic_id(packed_id: i32) -> usize {
         (packed_id & LOGIC_ID_MASK) as usize
     }
 
     /// Extract the variant index (0-15) from a packed card ID.
+    #[inline]
     pub fn to_variant_idx(packed_id: i32) -> u8 {
         ((packed_id >> 12) & 0x0F) as u8
     }
@@ -1127,6 +1129,7 @@ impl CardDatabase {
     }
 
     // Fast Lookups
+    #[inline]
     pub fn get_member(&self, id: i32) -> Option<&MemberCard> {
         let resolved_id = self.legacy_id_aliases.get(&id).copied().unwrap_or(id);
 
@@ -1150,6 +1153,7 @@ impl CardDatabase {
         None
     }
 
+    #[inline]
     pub fn get_live(&self, id: i32) -> Option<&LiveCard> {
         let resolved_id = self.legacy_id_aliases.get(&id).copied().unwrap_or(id);
 

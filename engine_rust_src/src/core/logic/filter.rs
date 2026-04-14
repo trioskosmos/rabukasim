@@ -553,19 +553,41 @@ impl CardFilter {
         if !self.is_enabled {
             return true;
         }
-        let member = db.get_member(cid);
-        let live = db.get_live(cid);
+
+        // Fast path: If only checking zone_mask, skip database lookups entirely
         let requested_char_mask = requested_char_mask(self);
         let needs_card_metadata = self.card_type != 0
             || self.group_enabled
             || self.unit_enabled
-            || requested_char_mask != 0
             || self.has_blade_heart
             || self.not_has_blade_heart
             || self.is_setsuna
             || self.special_id == 1
             || self.special_id == 4
-            || self.is_cost_type;
+            || self.is_cost_type
+            || requested_char_mask != 0
+            || self.value_enabled;
+
+        // If only zone_mask is set and we have checked_slot, check it without DB lookup
+        if !needs_card_metadata && self.zone_mask != 0 {
+            if let Some((p_idx, slot)) = checked_slot {
+                let zone_type = match slot {
+                    0..=2 => ZONE_MASK_STAGE,
+                    -1 => ZONE_MASK_HAND,
+                    -2 => ZONE_MASK_DISCARD,
+                    _ => return true,
+                };
+                return match self.zone_mask as i32 {
+                    ZONE_MASK_STAGE => zone_type == ZONE_MASK_STAGE,
+                    ZONE_MASK_HAND => zone_type == ZONE_MASK_HAND,
+                    ZONE_MASK_DISCARD => zone_type == ZONE_MASK_DISCARD,
+                    _ => true,
+                };
+            }
+        }
+
+        let member = db.get_member(cid);
+        let live = db.get_live(cid);
 
         if member.is_none() && live.is_none() && needs_card_metadata {
             return false;

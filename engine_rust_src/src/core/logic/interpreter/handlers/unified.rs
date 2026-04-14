@@ -128,6 +128,13 @@ fn resolve_draw_count(
     frame_data: &AbilityFrameComponents<'_>,
     fallback_count: u32,
 ) -> u32 {
+    // Fast path: if no scaling and no accumulation, use direct value
+    if frame_data.scale_source() == crate::core::logic::models::SemanticScaleSource::None
+        && !frame_data.filter.compare_accumulated
+    {
+        return frame_data.value as u32;
+    }
+
     if frame_data.filter.compare_accumulated {
         if !ctx.selected_cards.is_empty() {
             return ctx.selected_cards.len() as u32;

@@ -6,6 +6,7 @@ use crate::core::enums::TriggerType;
 use crate::core::models::Zone;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+#[inline]
 fn needs_card_scan(filter: &CardFilter) -> bool {
     filter.card_type != 0
         || filter.group_enabled
@@ -26,9 +27,11 @@ fn needs_card_scan(filter: &CardFilter) -> bool {
         || filter.keyword_member
 }
 
+#[inline]
 fn count_zone_len(cards: &[i32]) -> i32 {
     cards.iter().filter(|&&id| id >= 0).count() as i32
 }
+#[inline]
 
 fn count_dense_zone_len(cards: &[i32]) -> i32 {
     cards.len() as i32

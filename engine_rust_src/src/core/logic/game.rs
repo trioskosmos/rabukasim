@@ -133,6 +133,23 @@ impl GameState {
             return;
         }
 
+        // Early return if stage is empty - no stats to calculate
+        let p = &self.core.players[p_idx];
+        let has_stage_members = p.stage.iter().any(|&cid| cid >= 0);
+        if !has_stage_members {
+            let p = &mut self.core.players[p_idx];
+            p.cached_slot_blades = [0; 3];
+            p.cached_slot_hearts = [HeartBoard::default(); 3];
+            p.cached_total_hearts = HeartBoard::default();
+            p.cached_total_blades = 0;
+            p.board_aura = crate::core::logic::rules::BoardAura::default();
+            self.needs_stat_sync_mask &= !(1 << p_idx);
+            if self.needs_stat_sync_mask == 0 {
+                self.needs_stat_sync = false;
+            }
+            return;
+        }
+
         use crate::core::logic::rules::{calculate_board_aura, get_effective_blades_with_aura, get_effective_hearts_with_aura};
 
         if !self.ui.silent {
