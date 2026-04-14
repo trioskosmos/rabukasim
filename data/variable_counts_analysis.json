@@ -1,0 +1,743 @@
+{
+  "total_unique_variables": 115,
+  "total_variable_occurrences": 2804,
+  "variable_counts": {
+    "ZONE": 302,
+    "NUMBER": 276,
+    "SOURCE": 242,
+    "ACTION": 213,
+    "CARD_TYPE": 178,
+    "TARGET": 161,
+    "DESTINATION": 140,
+    "RESOURCE": 135,
+    "CONDITION": 109,
+    "NUMBER2": 78,
+    "NUMBER1": 77,
+    "SUBJECT": 66,
+    "ATTRIBUTE": 49,
+    "STATE": 46,
+    "SOURCE2": 41,
+    "CARD": 36,
+    "MEMBER": 32,
+    "GROUP": 32,
+    "COST": 30,
+    "DESTINATION1": 30,
+    "RESOURCE2": 29,
+    "RESOURCE1": 27,
+    "CONTEXT": 21,
+    "COUNT": 19,
+    "ZONE2": 18,
+    "SELECTED": 18,
+    "PLACED": 18,
+    "MODIFIER": 18,
+    "REDUCTION": 16,
+    "LOCATION": 14,
+    "CLAUSE": 13,
+    "ZONE1": 12,
+    "ABILITY": 12,
+    "ICON": 12,
+    "POSITION": 11,
+    "COMPARISON_TARGET": 11,
+    "COMPARISON": 11,
+    "RESOURCE3": 9,
+    "CARD_TYPE2": 9,
+    "PLAYER1": 9,
+    "PLAYER2": 9,
+    "SOURCE1": 8,
+    "TRIGGER": 8,
+    "THEY": 8,
+    "ALL": 8,
+    "PLAYER": 8,
+    "TARGET2": 7,
+    "HEART": 7,
+    "HEART2": 7,
+    "NEGATION": 7,
+    "ENERGY": 6,
+    "ORIGINAL": 6,
+    "TARGET1": 6,
+    "COST_TARGET": 5,
+    "SOURCE_ZONE": 5,
+    "DESTINATION_ZONE": 5,
+    "AREA": 5,
+    "TOTAL": 5,
+    "OPPONENT": 5,
+    "EVENT": 4,
+    "EQUAL": 4,
+    "CURRENT": 4,
+    "NEW_TARGET": 3,
+    "STATE2": 3,
+    "DRAW": 3,
+    "RESULT": 3,
+    "MEMBER2": 3,
+    "EFFECT": 3,
+    "SUMMONED": 3,
+    "TURN": 3,
+    "PHASE": 3,
+    "STATE1": 2,
+    "REVEALED": 2,
+    "SCORE": 2,
+    "GROUP1": 2,
+    "GROUP2": 2,
+    "EXCEPT_CARD": 2,
+    "OPERATION": 2,
+    "CALCULATED": 2,
+    "TARGET_PLAYER": 2,
+    "PAYMENT": 2,
+    "CARD1": 2,
+    "CARD2": 2,
+    "EACH": 2,
+    "TRANSFORM": 2,
+    "LIVE": 2,
+    "HEART_TYPE": 2,
+    "QUESTION": 1,
+    "OTHER": 1,
+    "DESTINATION2": 1,
+    "ALTERNATIVE": 1,
+    "SUPERLATIVE": 1,
+    "TIME": 1,
+    "GROUP3": 1,
+    "MODIFICATION": 1,
+    "TARGET_PLAYER2": 1,
+    "GAINED": 1,
+    "LOSE": 1,
+    "PERFORM": 1,
+    "NUMBER3": 1,
+    "SELF": 1,
+    "ACTIVATE": 1,
+    "PROCEDURE": 1,
+    "REPEAT": 1,
+    "ATTRIBUTE1": 1,
+    "EXACT": 1,
+    "LIMITATION": 1,
+    "DIFFERENT": 1,
+    "EXCEPT_GROUP": 1,
+    "ZONE3": 1,
+    "ACTION2": 1,
+    "EXCEPT_MEMBER": 1,
+    "PREFIX": 1,
+    "HEART1": 1,
+    "COLOR": 1
+  },
+  "variable_examples": {
+    "SOURCE1": [
+      "jyouji.png|常時}}自分",
+      "{{live_success.png|ライブ成功時}}自分か相手",
+      "自分",
+      "toujyou.png|登場}}手札",
+      "{{toujyou.png|登場}}自分"
+    ],
+    "ZONE1": [
+      "成功ライブカード置き場",
+      "左サイドエリア",
+      "エリア",
+      "自分の成功ライブカード置き場",
+      "ステージに"
+    ],
+    "NUMBER1": [
+      "4",
+      "9",
+      "7",
+      "2",
+      "10"
+    ],
+    "SOURCE2": [
+      "自分",
+      "相手",
+      "エールにより公開された自分のカード"
+    ],
+    "ZONE2": [
+      "デッキ",
+      "中",
+      "右サイドエリア",
+      "エリア",
+      "ステージに"
+    ],
+    "CARD_TYPE": [
+      "カードのスコア",
+      "上",
+      "『μ's』のライブカード",
+      "手札を控え室に置き、その後、自分と相手はそれぞれカード",
+      "4コスト以下の『蓮ノ空』のメンバーカード"
+    ],
+    "NUMBER2": [
+      "2",
+      "4",
+      "6",
+      "5",
+      "3"
+    ],
+    "DESTINATION": [
+      "jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エール",
+      "live_success.png|ライブ成功時}}このターン、エール",
+      "すべて控え室",
+      "、メンバーのいないエリア",
+      "カードを3枚引き、手札を2枚控え室に置く。これにより控え室"
+    ],
+    "MEMBER": [
+      "桜坂しずく",
+      "jyouji.png|常時}}自分",
+      "ライブ終了時まで、このメンバー",
+      "jyouji.png|常時}}このメンバー",
+      "live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon"
+    ],
+    "LOCATION": [
+      "一番上",
+      "成功ライブカード置き場",
+      "jyouji.png|常時}}すべての領域にある",
+      "上に置き、1枚を控え室",
+      "下"
+    ],
+    "NUMBER": [
+      "25",
+      "8",
+      "4",
+      "7",
+      "15"
+    ],
+    "RESOURCE": [
+      "ステージにいるメンバー",
+      "{{icon_blade.png|ブレード}}",
+      "エネルギー1枚をこのメンバーの下に置く：自分の控え室から『虹ヶ咲』のライブカード",
+      "控え室にグループ名が異なるライブカード",
+      "ハート"
+    ],
+    "COST_TARGET": [
+      "{{kidou.png|起動}}このメンバー",
+      "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン"
+    ],
+    "SOURCE_ZONE": [
+      "ステージ",
+      "自分のステージ"
+    ],
+    "DESTINATION_ZONE": [
+      "控え室"
+    ],
+    "SOURCE": [
+      "kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー2枚をエネルギーデッキに",
+      "jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、自分",
+      "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のメンバーカードを1枚控え",
+      "{{jidou.png|自動}}{{turn1.png|ターン1回}}このメンバーがエリアを移動した",
+      "kidou.png|起動}}このメンバーをステージから控え室に置く：自分"
+    ],
+    "ZONE": [
+      "中",
+      "上",
+      "toujyou.png|登場}}自分",
+      "右サイドエリア",
+      "中にブレードハートを持つカードが2枚以下"
+    ],
+    "COST": [
+      "13",
+      "4",
+      "9",
+      "必要ハート",
+      "2"
+    ],
+    "GROUP": [
+      "蓮ノ空",
+      "Liella!",
+      "Aqours",
+      "5yncri5e!",
+      "虹ヶ咲"
+    ],
+    "RESOURCE1": [
+      "kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：カー",
+      "toujyou.png|登場}}カード",
+      "live_start.png|ライブ開始時}}{{heart_01.png|heart01}}",
+      "kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：{{",
+      "live_success.png|ライブ成功時}}自分のステージに『蓮ノ空』のメンバーがいる場合、カ"
+    ],
+    "RESOURCE2": [
+      "{{heart_04.png|heart04}}",
+      "{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{ic",
+      "{{heart_03.png|heart03}}",
+      "手札",
+      "{{heart_05.png|heart05}}"
+    ],
+    "RESOURCE3": [
+      "{{heart_05.png|heart05}}",
+      "{{heart_06.png|heart06}}"
+    ],
+    "SELECTED": [
+      "ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハー",
+      "ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動しているすべてのメンバーは、選んだ",
+      "選んだカー",
+      "ライブ終了時まで、選んだハー",
+      "ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハー"
+    ],
+    "ACTION": [
+      "すべて{{heart_01.png|heart01}}にする",
+      "カードを1枚引く",
+      "+１する",
+      "6枚までアクティブにする",
+      "ウェイト状態で置く"
+    ],
+    "TARGET": [
+      "そのメンバー",
+      "これにより控え室に置いたカードと同じ枚数の『Aqours』のライブカード",
+      "自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハート",
+      "ライブ終了時まで、自分と相手は成功ライブカード置き場にカード",
+      "メンバーが"
+    ],
+    "PLACED": [
+      "名前が異なる『Liella!",
+      "『スリーズブーケ",
+      "『蓮ノ空",
+      "置かれて",
+      "カード名の異なる『虹ヶ咲"
+    ],
+    "COUNT": [
+      "数",
+      "中にブレードハートを持たないカード",
+      "枚数",
+      "中に{{icon_b_all.png|ALLブレード}}を持つカード",
+      "中に{{icon_score.png|スコア}}を持つライブカード"
+    ],
+    "REDUCTION": [
+      "減る",
+      "以上ある場合、このカードのスコアを+２する。",
+      "以上ある場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。",
+      "以上ある場合、このカードのスコアを+１する。",
+      "以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart0"
+    ],
+    "DESTINATION1": [
+      "公開し、デッキの一番下",
+      "控え室"
+    ],
+    "TRIGGER": [
+      "{{live_success.png|ライブ成功時}}",
+      "{{live_start.png|ライブ開始時}}",
+      "{{kidou.png|起動}}",
+      "{{jidou.png|自動}}",
+      "置かれた"
+    ],
+    "NEW_TARGET": [
+      "メンバー"
+    ],
+    "STATE": [
+      "置かれて",
+      "ほかの『みらくらぱーく！』",
+      "それらを好きな順番",
+      "控え室に置く：エネルギー1枚か『虹ヶ咲』のメンバー1人をアクティブ",
+      "含まれる"
+    ],
+    "ATTRIBUTE": [
+      "ステージにいるメンバー",
+      "中",
+      "toujyou.png|登場}}能力",
+      "グループ名",
+      "ブレードハート"
+    ],
+    "MODIFIER": [
+      "{{heart_00.png|heart0}}減ら",
+      "1人までアクティブに",
+      "+４",
+      "アクティブに",
+      "{{heart_06.png|heart06}}"
+    ],
+    "STATE1": [
+      "ウェイト"
+    ],
+    "STATE2": [
+      "ウェイト",
+      "ウェイト状態"
+    ],
+    "CLAUSE": [
+      "エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1",
+      "エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1",
+      "メンバーをそれぞれ好きなエリアに移動させる。この効果で1つのエリアに2人以上のメンバーを移動させるこ",
+      "この効果で既にメンバーがいるエリアにも登場できる。ただし、このターンにステージに登場したメンバーがい",
+      "必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色の"
+    ],
+    "CARD": [
+      "toujyou.png|登場}}自分",
+      "jyouji.png|常時}}このカード",
+      "自分のエネルギーデッキから、エネルギーカード",
+      "ライブカード",
+      "カードを2枚引き、手札"
+    ],
+    "QUESTION": [
+      "何が好き？"
+    ],
+    "THEY": [
+      "回答",
+      "それ",
+      "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png",
+      "それら",
+      "jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードが1枚"
+    ],
+    "ALL": [
+      "7枚以",
+      "あな",
+      "『μ's』のカー",
+      "20以",
+      "合計20以"
+    ],
+    "CARD_TYPE2": [
+      "自分のデッキの上からカード",
+      "自分と相手は手札",
+      "カード",
+      "エネルギー",
+      "自分の控え室にある『Aqours』と『SaintSnow』のライブカード"
+    ],
+    "EVENT": [
+      "{{toujyou.png|登場}}ライブ",
+      "6種類以上ある場合、さらにライブ",
+      "そうしなかった場合、ライブ",
+      "{{live_start.png|ライブ開始時}}手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」"
+    ],
+    "ABILITY": [
+      "{{jyouji.png|常時}}ライブの合計スコアを+３する。",
+      "この能力",
+      "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+    ],
+    "CONDITION": [
+      "それぞれ登場している",
+      "live_start.png|ライブ開始時}}このターン、自分の『虹ヶ咲』のカードの効果によってウェ",
+      "相手より少ない",
+      "live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージに",
+      "余剰ハートを2つ以上持つ"
+    ],
+    "ENERGY": [
+      "{{icon_energy.png|E}}"
+    ],
+    "SUBJECT": [
+      "live_success.png|ライブ成功時}}自分のステージに「澁谷かのん」と「唐可可」",
+      "live_success.png|ライブ成功時}}自分のステージのセンターエリアにいる『Liella",
+      "3人以上おり、かつそれぞれ名前",
+      "それら",
+      "live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つハートの中に{{he"
+    ],
+    "CONTEXT": [
+      "プレイ",
+      "live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以上い",
+      "ライブ中",
+      "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png",
+      "その後、これ"
+    ],
+    "REVEALED": [
+      "公開"
+    ],
+    "OTHER": [
+      "ほかの"
+    ],
+    "DESTINATION2": [
+      "控え室"
+    ],
+    "POSITION": [
+      "4",
+      "控え室",
+      "一番上",
+      "メンバーがステージ",
+      "一番下"
+    ],
+    "COMPARISON_TARGET": [
+      "自分",
+      "相手",
+      "エールによって公開したカードの枚数"
+    ],
+    "COMPARISON": [
+      "2枚以上多い",
+      "多い",
+      "高く、かつ自分のステージに『蓮ノ空』のメンバーがいる",
+      "高い",
+      "少ない"
+    ],
+    "PLAYER": [
+      "自分"
+    ],
+    "AREA": [
+      "左サイドエリア",
+      "いるエリ",
+      "エリア",
+      "ア"
+    ],
+    "ALTERNATIVE": [
+      "ステージ"
+    ],
+    "SCORE": [
+      "いるこのメンバーのコスト",
+      "合計スコア"
+    ],
+    "DRAW": [
+      "1枚手札に加える",
+      "引く",
+      "控え室に置く"
+    ],
+    "TOTAL": [
+      "合計"
+    ],
+    "EQUAL": [
+      "いるメンバーが『Liella!』のみの場合、自分",
+      "等しい",
+      "『蓮ノ空』のメンバーがいる場合、こ",
+      "いる『Liella!』のメンバー1人のすべて"
+    ],
+    "RESULT": [
+      "1枚手札に加える",
+      "すべてウェイトにする"
+    ],
+    "TARGET2": [
+      "メンバー",
+      "こ",
+      "メンバーが"
+    ],
+    "SUPERLATIVE": [
+      "最も"
+    ],
+    "ICON": [
+      "{{icon_blade.png|ブレード}}",
+      "{{icon_all.png|ハート}}",
+      "{{heart_03.png|heart03}}",
+      "{{heart_05.png|heart05}}",
+      "{{heart_06.png|heart06}}"
+    ],
+    "TIME": [
+      "ライブ終了時"
+    ],
+    "GROUP1": [
+      "Aqours",
+      "スリーズブーケ"
+    ],
+    "GROUP2": [
+      "DOLLCHESTRA",
+      "SaintSnow"
+    ],
+    "GROUP3": [
+      "みらくらぱーく！"
+    ],
+    "EXCEPT_CARD": [
+      "このカード"
+    ],
+    "ORIGINAL": [
+      "元々"
+    ],
+    "HEART": [
+      "ハート",
+      "{{icon_blade.png|ブレード}}の数"
+    ],
+    "HEART2": [
+      "ト",
+      "{{heart_06.png|heart06}}",
+      "つ",
+      "}"
+    ],
+    "PLAYER1": [
+      "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png",
+      "toujyou.png|登場}}自分",
+      "live_success.png|ライブ成功時}}以下",
+      "live_start.png|ライブ開始時}}{{heart_02.png|heart02}}か{{",
+      "live_start.png|ライブ開始時}}{{heart_03.png|heart03}}か{{"
+    ],
+    "PLAYER2": [
+      "{{heart_06.png|heart06}}のうち1つ",
+      "{{heart_05.png|heart05}}のうち1つ",
+      "ら1つ",
+      "相手",
+      "{{heart_04.png|heart04}}のうち1つ"
+    ],
+    "MODIFICATION": [
+      "+１"
+    ],
+    "OPERATION": [
+      "足"
+    ],
+    "CALCULATED": [
+      "数"
+    ],
+    "MEMBER2": [
+      "メンバー",
+      "メンバーが"
+    ],
+    "TARGET_PLAYER": [
+      "プレイヤー"
+    ],
+    "TARGET_PLAYER2": [
+      "プレイヤー"
+    ],
+    "OPPONENT": [
+      "自分",
+      "相手"
+    ],
+    "GAINED": [
+      "得たブレードハー"
+    ],
+    "LOSE": [
+      "失い"
+    ],
+    "PERFORM": [
+      "行う"
+    ],
+    "PAYMENT": [
+      "支払え"
+    ],
+    "CARD1": [
+      "手札"
+    ],
+    "CARD2": [
+      "自分の控え室から『虹ヶ咲』のライブカード",
+      "カード"
+    ],
+    "NUMBER3": [
+      "1"
+    ],
+    "NEGATION": [
+      "5つ以上持つ『μ's』のメンバーがい",
+      "なら",
+      "持た",
+      "し"
+    ],
+    "EACH": [
+      "各グループ",
+      "それぞれ"
+    ],
+    "SELF": [
+      "自身"
+    ],
+    "EFFECT": [
+      "この効果",
+      "（この効果"
+    ],
+    "SUMMONED": [
+      "登場"
+    ],
+    "TURN": [
+      "ターン",
+      "jyouji.png|常時}}このターン"
+    ],
+    "TARGET1": [
+      "メンバー",
+      "メンバーが"
+    ],
+    "CURRENT": [
+      "今"
+    ],
+    "TRANSFORM": [
+      "[紫ブレード]",
+      "[青ブレード]"
+    ],
+    "ACTIVATE": [
+      "発動"
+    ],
+    "PROCEDURE": [
+      "手順"
+    ],
+    "REPEAT": [
+      "繰り返"
+    ],
+    "LIVE": [
+      "ライブ"
+    ],
+    "ATTRIBUTE1": [
+      "合計スコア"
+    ],
+    "EXACT": [
+      "ちょうど"
+    ],
+    "PHASE": [
+      "ライブ開始時",
+      "アクティブフェイズ"
+    ],
+    "LIMITATION": [
+      "得られ"
+    ],
+    "HEART_TYPE": [
+      "ハート"
+    ],
+    "DIFFERENT": [
+      "異なるグループ"
+    ],
+    "EXCEPT_GROUP": [
+      "『スリーズブーケ』"
+    ],
+    "ZONE3": [
+      "エリア"
+    ],
+    "ACTION2": [
+      "移動"
+    ],
+    "EXCEPT_MEMBER": [
+      "このメンバー"
+    ],
+    "PREFIX": [
+      "これにより"
+    ],
+    "HEART1": [
+      "{{heart_01.png|heart01}}"
+    ],
+    "COLOR": [
+      "色"
+    ]
+  },
+  "categories": {
+    "game_mechanics": {
+      "ZONE": 302,
+      "NUMBER": 276,
+      "SOURCE": 242,
+      "ACTION": 213,
+      "CARD_TYPE": 178,
+      "TARGET": 161,
+      "DESTINATION": 140,
+      "RESOURCE": 135,
+      "NUMBER2": 78,
+      "NUMBER1": 77,
+      "ATTRIBUTE": 49,
+      "STATE": 46,
+      "SOURCE2": 41,
+      "MEMBER": 32,
+      "GROUP": 32,
+      "COST": 30,
+      "DESTINATION1": 30,
+      "RESOURCE2": 29,
+      "RESOURCE1": 27,
+      "ZONE2": 18,
+      "ZONE1": 12,
+      "COMPARISON_TARGET": 11,
+      "RESOURCE3": 9,
+      "CARD_TYPE2": 9,
+      "PLAYER1": 9,
+      "PLAYER2": 9,
+      "SOURCE1": 8,
+      "PLAYER": 8,
+      "TARGET2": 7,
+      "HEART": 7,
+      "HEART2": 7,
+      "TARGET1": 6,
+      "COST_TARGET": 5,
+      "SOURCE_ZONE": 5,
+      "DESTINATION_ZONE": 5,
+      "NEW_TARGET": 3,
+      "STATE2": 3,
+      "MEMBER2": 3,
+      "STATE1": 2,
+      "SCORE": 2,
+      "GROUP1": 2,
+      "GROUP2": 2,
+      "TARGET_PLAYER": 2,
+      "HEART_TYPE": 2,
+      "DESTINATION2": 1,
+      "GROUP3": 1,
+      "TARGET_PLAYER2": 1,
+      "NUMBER3": 1,
+      "ATTRIBUTE1": 1,
+      "EXCEPT_GROUP": 1,
+      "ZONE3": 1,
+      "ACTION2": 1,
+      "EXCEPT_MEMBER": 1,
+      "HEART1": 1
+    },
+    "context_triggers": {
+      "CONDITION": 109,
+      "CONTEXT": 21,
+      "TRIGGER": 8,
+      "EVENT": 4,
+      "TURN": 3,
+      "PHASE": 3
+    },
+    "generic_broad": {
+      "OTHER": 1,
+      "ALTERNATIVE": 1,
+      "DIFFERENT": 1
+    }
+  }
+}
