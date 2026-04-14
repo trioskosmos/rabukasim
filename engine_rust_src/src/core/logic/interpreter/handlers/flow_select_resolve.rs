@@ -8,6 +8,7 @@ use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_player;
 use crate::core::models::AbilityContext;
 
+#[inline]
 fn count_targets<F>(cards: &[i32], mut predicate: F) -> usize
 where
     F: FnMut(usize, i32) -> bool,
@@ -20,6 +21,7 @@ where
         .count()
 }
 
+#[inline]
 fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: u64) -> u64 {
     let Ok(ab_idx) = usize::try_from(ctx.ability_index) else {
         return current;
