@@ -9,14 +9,17 @@ use std::time::Instant;
 
 pub struct MainPhaseGenerator;
 
+#[inline]
 fn ability_requires_deck_top_window(ab: &crate::core::logic::Ability) -> bool {
     ab.runtime_has_deck_top_window()
 }
 
+#[inline]
 fn ability_needs_condition_check(ab: &crate::core::logic::Ability) -> bool {
     ab.runtime_has_activation_conditions()
 }
 
+#[inline]
 fn ability_is_trivially_activatable(ab: &crate::core::logic::Ability) -> bool {
     ab.per_turn_limit() == 0
         && ab.costs.is_empty()
@@ -26,6 +29,7 @@ fn ability_is_trivially_activatable(ab: &crate::core::logic::Ability) -> bool {
         && !ability_requires_deck_top_window(ab)
 }
 
+#[inline]
 fn projected_aura_mask(slot_idx: i16, secondary_slot_idx: i16) -> usize {
     let mut mask = 0u8;
 
@@ -58,6 +62,7 @@ fn projected_aura_for_slots<'a>(
     })
 }
 
+#[inline]
 fn finalize_hand_play_cost(db: &CardDatabase, raw_cost: i32) -> i32 {
     if db.is_truly_vanilla() {
         raw_cost.max(0)
@@ -66,6 +71,7 @@ fn finalize_hand_play_cost(db: &CardDatabase, raw_cost: i32) -> i32 {
     }
 }
 
+#[inline]
 fn stage_card_may_prevent_baton_touch(card: &crate::core::logic::card_db::MemberCard) -> bool {
     let opcode_bit = 1u128 << (O_PREVENT_BATON_TOUCH as u32 % 128);
     (card.ability_opcodes_mask & opcode_bit) != 0
