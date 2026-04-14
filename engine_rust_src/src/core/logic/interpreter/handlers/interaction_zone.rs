@@ -3,6 +3,7 @@ use crate::core::logic::constants::TARGET_SLOT_STAGE;
 use crate::core::logic::filter::{structured_filter_attr, CardFilter};
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
+#[inline]
 pub fn normalized_source_zone(zone: Zone) -> Zone {
     if zone == Zone::Default {
         Zone::Discard
@@ -63,6 +64,7 @@ pub fn draw_zone_cards(
     }
 }
 
+#[inline]
 pub fn cards_for_source_zone(state: &GameState, target_player: usize, source_zone: Zone) -> &[i32] {
     match source_zone {
         Zone::Hand => state.players[target_player].hand.as_slice(),
@@ -72,6 +74,7 @@ pub fn cards_for_source_zone(state: &GameState, target_player: usize, source_zon
     }
 }
 
+#[inline]
 pub fn selected_target_key(source_zone: Zone, slot_idx: usize) -> i32 {
     ((source_zone as i32) << 8) | slot_idx as i32
 }
