@@ -1,0 +1,1776 @@
+{
+  "total_patterns_with_nonatomic": 102,
+  "pattern_analysis": {
+    "live_score_comparison_draw": {
+      "count": 10,
+      "unique_nonatomic_vars": 4,
+      "variables": [
+        {
+          "value": "合計スコア",
+          "count": 4
+        },
+        {
+          "value": "少ない",
+          "count": 2
+        },
+        {
+          "value": "枚数",
+          "count": 1
+        },
+        {
+          "value": "高い",
+          "count": 3
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、エールに...",
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、エールに...",
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、自分のエ..."
+      ]
+    },
+    "condition_action_period": {
+      "count": 10,
+      "unique_nonatomic_vars": 9,
+      "variables": [
+        {
+          "value": "リフレッシュしていた",
+          "count": 1
+        },
+        {
+          "value": "それぞれ異なる",
+          "count": 1
+        },
+        {
+          "value": "代わりにスコア",
+          "count": 1
+        },
+        {
+          "value": "余剰のハートを持たずにライブを成功させていた",
+          "count": 1
+        },
+        {
+          "value": "すべてアクティブ状態の",
+          "count": 1
+        },
+        {
+          "value": "ライブの合計スコア",
+          "count": 2
+        },
+        {
+          "value": "好きなハートの色",
+          "count": 1
+        },
+        {
+          "value": "それぞれ登場している",
+          "count": 1
+        },
+        {
+          "value": "両方ある",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のステージにほ...",
+        "{{jyouji.png|常時}}自分のエネルギーが12枚以上ある場合、ライブの合計スコアを+１する...",
+        "{{live_start.png|ライブ開始時}}自分のステージに名前の異なる『CatChu!』のメ..."
+      ]
+    },
+    "swap_members": {
+      "count": 9,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 3
+        },
+        {
+          "value": "メンバーが",
+          "count": 6
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|...",
+        "{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|...",
+        "{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|..."
+      ]
+    },
+    "original_heart_replacement": {
+      "count": 8,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "ライブ終了時まで、このメンバー",
+          "count": 4
+        },
+        {
+          "value": "選んだハー",
+          "count": 4
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か...",
+        "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か...",
+        "{{live_start.png|ライブ開始時}}{{heart_02.png|heart02}}か..."
+      ]
+    },
+    "area_placement_turn_restriction": {
+      "count": 8,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 4
+        },
+        {
+          "value": "ターン",
+          "count": 2
+        },
+        {
+          "value": "（この効果",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカー...",
+        "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカー...",
+        "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカー..."
+      ]
+    },
+    "member_leave_energy_return": {
+      "count": 6,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "離れた",
+          "count": 2
+        },
+        {
+          "value": "置かれて",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメ...",
+        "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメ...",
+        "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメ..."
+      ]
+    },
+    "comma_separated_action": {
+      "count": 6,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "代わりにスコア",
+          "count": 1
+        },
+        {
+          "value": "必要ハート",
+          "count": 1
+        },
+        {
+          "value": "ライブの合計スコア",
+          "count": 4
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}相手の成功ライブカード置き場にあるカードのスコアの合計が６以上であ...",
+        "{{jyouji.png|常時}}このメンバーの下にエネルギーカードが2枚以上置かれているかぎり、ラ...",
+        "{{live_start.png|ライブ開始時}}このターン、自分の『虹ヶ咲』のカードの効果によって..."
+      ]
+    },
+    "heart_total_condition_opponent_phase_cost_increase": {
+      "count": 6,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "必要ハート",
+          "count": 2
+        },
+        {
+          "value": "合計",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_02....",
+        "{{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_02....",
+        "{{toujyou.png|登場}}自分のステージにいるメンバーが持つハートに{{heart_02...."
+      ]
+    },
+    "all_cards_type_condition_draw": {
+      "count": 5,
+      "unique_nonatomic_vars": 4,
+      "variables": [
+        {
+          "value": "回答",
+          "count": 2
+        },
+        {
+          "value": "あな",
+          "count": 1
+        },
+        {
+          "value": "チョコミントかストロベリーフレイバーかクッキー＆クリー",
+          "count": 1
+        },
+        {
+          "value": "すべてメンバーカー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの場合、自分と相手は手札を1枚控え室に...",
+        "回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの場合、自分と相手は手札を1枚控え室に...",
+        "回答があなたの場合、自分と相手はカードを1枚引く。..."
+      ]
+    },
+    "zone_member_resource_total_action": {
+      "count": 5,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "合計",
+          "count": 2
+        },
+        {
+          "value": "総数",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つ{{icon_b...",
+        "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つ{{icon_b...",
+        "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーが持つ{{icon_b..."
+      ]
+    },
+    "hand_specific_member_summon": {
+      "count": 5,
+      "unique_nonatomic_vars": 5,
+      "variables": [
+        {
+          "value": "優木せつ菜",
+          "count": 1
+        },
+        {
+          "value": "上原歩夢",
+          "count": 1
+        },
+        {
+          "value": "桜坂しずく",
+          "count": 1
+        },
+        {
+          "value": "ミア・テイラー",
+          "count": 1
+        },
+        {
+          "value": "宮下愛",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy...",
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_ener...",
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_ener..."
+      ]
+    },
+    "score_modify": {
+      "count": 5,
+      "unique_nonatomic_vars": 4,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "合計スコア",
+          "count": 1
+        },
+        {
+          "value": "ポジションチェンジ",
+          "count": 1
+        },
+        {
+          "value": "センターにいるメンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分のステージにいる『Printemps』のメンバーを1人までア...",
+        "{{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する...",
+        "{{live_start.png|ライブ開始時}}カードを1枚引く。相手のステージにいるコスト9以下..."
+      ]
+    },
+    "per_discarded_card_draw": {
+      "count": 4,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 2
+        },
+        {
+          "value": "カー",
+          "count": 1
+        },
+        {
+          "value": "その後、これ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ...",
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ...",
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ..."
+      ]
+    },
+    "member_under_energy_cost_restriction": {
+      "count": 4,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "置かれて",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメ...",
+        "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメ...",
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy..."
+      ]
+    },
+    "score_floor_restriction": {
+      "count": 4,
+      "unique_nonatomic_vars": 4,
+      "variables": [
+        {
+          "value": "この効果",
+          "count": 1
+        },
+        {
+          "value": "ライブ",
+          "count": 1
+        },
+        {
+          "value": "合計スコア",
+          "count": 1
+        },
+        {
+          "value": "なら",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}自分が余剰ハートを持たない場合、ライブの合計ス...",
+        "{{live_success.png|ライブ成功時}}自分が余剰ハートを持たない場合、ライブの合計ス...",
+        "{{live_success.png|ライブ成功時}}自分が余剰ハートを持たない場合、ライブの合計ス..."
+      ]
+    },
+    "center_member_position_change": {
+      "count": 4,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "メンバーが",
+          "count": 1
+        },
+        {
+          "value": "センターに",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジション...",
+        "{{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジション...",
+        "{{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジション..."
+      ]
+    },
+    "score_modify_state_change": {
+      "count": 3,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 3
+        }
+      ],
+      "example_abilities": [
+        "・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。...",
+        "{{toujyou.png|登場}}自分のステージにいるすべてのメンバーをアクティブにする。...",
+        "{{kidou.png|起動}}【左サイド】{{turn1.png|ターン1回}}このメンバーをウェ..."
+      ]
+    },
+    "continuous_reveal_until_condition": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "一番上",
+          "count": 1
+        },
+        {
+          "value": "公開される",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自...",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自...",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自..."
+      ]
+    },
+    "highest_cost_member_condition": {
+      "count": 3,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        },
+        {
+          "value": "最も",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが...",
+        "{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが...",
+        "{{jyouji.png|常時}}自分のステージにいるメンバーのうち、センターエリアにいるメンバーが..."
+      ]
+    },
+    "reveal_count_reduction": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "枚数",
+          "count": 1
+        },
+        {
+          "value": "減る",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以...",
+        "{{live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以...",
+        "{{live_start.png|ライブ開始時}}自分のステージにこのメンバー以外のメンバーが1人以..."
+      ]
+    },
+    "opponent_wait_member_per_member_resource_gain": {
+      "count": 3,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 3
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき...",
+        "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{icon...",
+        "{{jyouji.png|常時}}相手のステージにいるウェイト状態のメンバー1人につき、{{hear..."
+      ]
+    },
+    "cost_calculation_summon": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "メンバーが",
+          "count": 1
+        },
+        {
+          "value": "等しい",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン...",
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン...",
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン..."
+      ]
+    },
+    "player_selection_card_placement": {
+      "count": 3,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "一番下",
+          "count": 1
+        },
+        {
+          "value": "プレイヤー",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.p...",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.p...",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.p..."
+      ]
+    },
+    "card_play_baton_touch_optional": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "プレイ",
+          "count": 1
+        },
+        {
+          "value": "バトンタッチ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}このカードのプレイに際し、2人のメンバーとバトンタッチしてもよい。...",
+        "{{jyouji.png|常時}}このカードのプレイに際し、2人のメンバーとバトンタッチしてもよい。...",
+        "{{jyouji.png|常時}}このカードのプレイに際し、2人のメンバーとバトンタッチしてもよい。..."
+      ]
+    },
+    "energy_comparison_condition_resource_gain": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "多い",
+          "count": 1
+        },
+        {
+          "value": "合計",
+          "count": 1
+        },
+        {
+          "value": "低い",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるメンバーのコストの合計が相手より低いかぎり、{...",
+        "{{jyouji.png|常時}}自分のステージにいるメンバーのコストの合計が相手より低いかぎり、{...",
+        "{{jyouji.png|常時}}自分のエネルギーが相手より多いかぎり、{{heart_06.png..."
+      ]
+    },
+    "per_group_cost_reduction": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "グループ名",
+          "count": 1
+        },
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy...",
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy...",
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy..."
+      ]
+    },
+    "score_based_card_reveal": {
+      "count": 3,
+      "unique_nonatomic_vars": 3,
+      "variables": [
+        {
+          "value": "合計スコア",
+          "count": 1
+        },
+        {
+          "value": "ライブ",
+          "count": 1
+        },
+        {
+          "value": "枚数",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの...",
+        "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの...",
+        "{{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの..."
+      ]
+    },
+    "ability_less_card": {
+      "count": 3,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "持た",
+          "count": 3
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}能力を持たないメンバーからバトンタッチして登場した場合、カードを...",
+        "{{jyouji.png|常時}}能力を持たないメンバーカードを自分の手札から登場させるためのコスト...",
+        "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト..."
+      ]
+    },
+    "automatic_trigger_state_change_optional_specific": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "置かれた",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、メンバー1人をアクテ...",
+        "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、メンバー1人をアクテ..."
+      ]
+    },
+    "energy_under_member_place": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "一番上",
+          "count": 1
+        },
+        {
+          "value": "そのメンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払って...",
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy..."
+      ]
+    },
+    "conditional_card_add_and_discard_others": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "ほかの",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自...",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：ライブカードが公開されるまで、自..."
+      ]
+    },
+    "no_other_members_condition_prevent_live": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "ライブ",
+          "count": 1
+        },
+        {
+          "value": "メンバーが",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにほかのメンバーがいない場合、自分はライブできない。...",
+        "{{jyouji.png|常時}}自分のステージにほかのメンバーがいない場合、自分はライブできない。..."
+      ]
+    },
+    "select_specific_group_live_card_optional": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚...",
+        "{{toujyou.png|登場}}自分のデッキの上からカードを5枚見る。その中から『虹ヶ咲』のライ..."
+      ]
+    },
+    "from_revealed_cards_to_deck_bottom": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "一番下",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ラ...",
+        "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ラ..."
+      ]
+    },
+    "score_based_energy_payment_optional": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "、ライブ終了時まで、無効に",
+          "count": 1
+        },
+        {
+          "value": "フォーメーションチェンジ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{...",
+        "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが『Liella!..."
+      ]
+    },
+    "conditional_consequence": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "無効に",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分のステージにいる『Liella!』のメンバー1人のすべての{...",
+        "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキ..."
+      ]
+    },
+    "temporary_live_prevention": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "ライブ",
+          "count": 1
+        },
+        {
+          "value": "ライブ終了時",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}カードを1枚引く。ライブ終了時まで、自分はライブできない。...",
+        "{{toujyou.png|登場}}カードを1枚引く。ライブ終了時まで、自分はライブできない。..."
+      ]
+    },
+    "card_name_treatment": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "みらくらぱーく！",
+          "count": 1
+        },
+        {
+          "value": "スリーズブーケ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHE...",
+        "{{jyouji.png|常時}}すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHE..."
+      ]
+    },
+    "per_member_reveal_from_deck": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "公開",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ...",
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ..."
+      ]
+    },
+    "ability_activation_condition": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、このカー...",
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、このカー..."
+      ]
+    },
+    "live_score_comparison_card_add_optional": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "合計スコア",
+          "count": 1
+        },
+        {
+          "value": "高い",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、このカー...",
+        "{{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、このカー..."
+      ]
+    },
+    "lose_resource_and_retry": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "得たブレードハー",
+          "count": 1
+        },
+        {
+          "value": "失い",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jidou.png|自動}}［ターン1回］エールにより自分のカードを1枚以上公開したとき、それら...",
+        "{{jidou.png|自動}}［ターン1回］エールにより自分のカードを1枚以上公開したとき、それら..."
+      ]
+    },
+    "wait_and_discard_then_draw": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "ウェイトに",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手...",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手..."
+      ]
+    },
+    "per_member_wait_then_draw": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "ウェイトに",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}メンバーを3人までウェイトにしてもよい：これによりウェイト状態に...",
+        "{{toujyou.png|登場}}メンバーを3人までウェイトにしてもよい：これによりウェイト状態に..."
+      ]
+    },
+    "both_players_summon": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "自身",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカー...",
+        "{{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からコスト2以下のメンバーカー..."
+      ]
+    },
+    "zone_card_score_comparison_condition_resource_gain": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "合計",
+          "count": 1
+        },
+        {
+          "value": "高い",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高...",
+        "{{jyouji.png|常時}}自分の成功ライブカード置き場にあるカードのスコアの合計が相手より高..."
+      ]
+    },
+    "look_at_deck_top": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "一番上",
+          "count": 1
+        },
+        {
+          "value": "プレイヤー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの...",
+        "{{live_start.png|ライブ開始時}}自分か相手を選ぶ。自分は、そのプレイヤーのデッキの..."
+      ]
+    },
+    "summoned_member_condition_wait": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "ブレードハート",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_ener...",
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_ener..."
+      ]
+    },
+    "blade_transformation": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカ...",
+        "{{live_start.png|ライブ開始時}}ライブ終了時まで、エールによって公開される自分のカ..."
+      ]
+    },
+    "position_change_optional": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "ポジションチェンジ",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(この...",
+        "{{toujyou.png|登場}}このメンバーをポジションチェンジしてもよい。(このメンバーを今い..."
+      ]
+    },
+    "side_area_activation": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "この能力",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}【左サイド】このターン、このメンバーがエリアを移動...",
+        "{{live_start.png|ライブ開始時}}【右サイド】このターン、このメンバーがエリアを移動..."
+      ]
+    },
+    "placed_cards_cost_reduction": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "名前が異なる『Liella!",
+          "count": 1
+        },
+        {
+          "value": "置いたカー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中に名前が...",
+        "{{kidou.png|起動}}【左サイド】{{turn1.png|ターン1回}}このメンバーをウェ..."
+      ]
+    },
+    "multi_resource_each_condition": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "必要ハート",
+          "count": 1
+        },
+        {
+          "value": "含まれる",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01...",
+        "{{jyouji.png|常時}}自分のライブ中のライブカードの必要ハートの中に{{heart_01..."
+      ]
+    },
+    "zone_wait_state_member_condition": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "このメンバー以外",
+          "count": 1
+        },
+        {
+          "value": "メンバーが",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーが...",
+        "{{jyouji.png|常時}}自分のステージにこのメンバー以外の『EdelNote』のメンバーが..."
+      ]
+    },
+    "repeat_procedure": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "繰り返",
+          "count": 1
+        },
+        {
+          "value": "手順",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを控え室に置いてもよい...",
+        "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを控え室に置いてもよい..."
+      ]
+    },
+    "exact_member_count_condition_resource_gain": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "ちょうど",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{hea...",
+        "{{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{hea..."
+      ]
+    },
+    "zone_member_cost_distinct_action": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "名前",
+          "count": 1
+        },
+        {
+          "value": "それぞれ異なる",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにコストがそれぞれ異なるメンバーが3人以上いるかぎり...",
+        "{{jyouji.png|常時}}自分のステージに名前が異なるメンバーが3人以上いるかぎり、{{he..."
+      ]
+    },
+    "per_group_reveal": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        },
+        {
+          "value": "各グループ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚...",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚..."
+      ]
+    },
+    "ability_limitation": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "得られ",
+          "count": 1
+        },
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、ライブ終...",
+        "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、ライブ終..."
+      ]
+    },
+    "selected_resource_gain_heart_complex": {
+      "count": 2,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 2
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_0...",
+        "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_0..."
+      ]
+    },
+    "zone_different_group_name_card_add": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "異なるグループ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}自分の控え室にある、自分のステージにいるすべて...",
+        "{{live_success.png|ライブ成功時}}自分の控え室にある、自分のステージにいるすべて..."
+      ]
+    },
+    "place_at_specific_deck_position": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "一番上",
+          "count": 1
+        },
+        {
+          "value": "置い",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え...",
+        "{{toujyou.png|登場}}自分のデッキの上からカードを2枚控え室に置く。その後、自分の控え..."
+      ]
+    },
+    "member_gains_hearts_from_selected_card_colors": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "選んだカー",
+          "count": 1
+        },
+        {
+          "value": "中須かすみ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデ...",
+        "{{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデ..."
+      ]
+    },
+    "live_card_heart_total_condition": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "必要ハート",
+          "count": 1
+        },
+        {
+          "value": "合計",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のライブカード置き場に必要ハートの合計が8以上の『Liella...",
+        "{{jyouji.png|常時}}自分のライブカード置き場に必要ハートの合計が8以上の『Liella..."
+      ]
+    },
+    "heart_color_exception_per_member_cost_reduction": {
+      "count": 2,
+      "unique_nonatomic_vars": 2,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        },
+        {
+          "value": "必要ハート",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージにいる{{heart_01.png|...",
+        "{{live_start.png|ライブ開始時}}自分のステージにいる{{heart_01.png|..."
+      ]
+    },
+    "conditional_place": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札のライブカードを1枚公開してもよい：自分の成功ライブカード置..."
+      ]
+    },
+    "condition_or_zone_cost_above_resource_gain": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバーが",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分か相手のステージにコスト13以上のメンバーがいる場合、{{ic..."
+      ]
+    },
+    "ask_question": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "何が好き？",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}相手に何が好き？と聞く。..."
+      ]
+    },
+    "ability_activation_location_restriction": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy..."
+      ]
+    },
+    "from_among_reveal_add_optional": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "みらくらぱーく！",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを5枚..."
+      ]
+    },
+    "alternative_condition_total_score_increase": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "いるこのメンバーのコスト",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のエネルギーが10枚以上ある場合、ステージにいるこのメンバーの..."
+      ]
+    },
+    "select_cards_with_specific_resources_optional": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚..."
+      ]
+    },
+    "cost_total_condition_summon": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "合計",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_ener..."
+      ]
+    },
+    "zone_all_cards_cost_increase": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "必要ハート",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}相手のライブカード置き場にあるすべてのライブカードは、成功させるた..."
+      ]
+    },
+    "duration_gain_ability": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "そうしなかった場合、ライブ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}相手は手札からライブカードを1枚控え室に置いてもよい。そうしなか..."
+      ]
+    },
+    "zone_card_count_action": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "合計",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分と相手の成功ライブカード置き場にカードが合計3枚以上ある場合、..."
+      ]
+    },
+    "per_live_card_score_increase": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "スコア",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のデッキの上から、自分と相手のステージにいるメ..."
+      ]
+    },
+    "selected_resource_gain_heart_group_member": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にカードがある場合、{..."
+      ]
+    },
+    "area_restriction_ability_activation": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン..."
+      ]
+    },
+    "optional_deck_top_discard": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "場合、それら",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jidou.png|自動}}［ターン1回］エールにより自分のカードを1枚以上公開したとき、それら..."
+      ]
+    },
+    "then_opponent_wait_member_condition_draw": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバーが",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上..."
+      ]
+    },
+    "zone_group_card_deck_top_place": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "一番上",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分の控え室から『μ's』のライブカードを1枚までデッキの一番上..."
+      ]
+    },
+    "effect_prevent_state_change": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "なら",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}このターン、自分と相手のステージにいるメンバーは、効果によっては..."
+      ]
+    },
+    "member_position_change_specific_optional": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーが『μ's』のみの場合..."
+      ]
+    },
+    "surplus_heart_condition_draw": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "余剰ハート",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}自分が余剰ハートに{{heart_01.png..."
+      ]
+    },
+    "wait_member_count_selection": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで..."
+      ]
+    },
+    "face_up_placement": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "それらを好きな順番",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで..."
+      ]
+    },
+    "energy_total_action": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "合計",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart..."
+      ]
+    },
+    "deck_top_to_discard": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバーがアクティブ状態",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、この..."
+      ]
+    },
+    "energy_zone_to_member_under_optional": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "一番上",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}自分の控え室にあるカード1枚をデッキの一番上に置いてもよい。..."
+      ]
+    },
+    "side_area_activation_restriction": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "この能力",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{toujyou.png|登場}}【左サイド】【右サイド】カードを2枚引き、手札を2枚控え室に置く..."
+      ]
+    },
+    "live_card_count_condition_resource_gain": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "ライブ中",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のライブ中のライブカードが2枚以上あるかぎり、{{icon_b..."
+      ]
+    },
+    "trigger_position_change_area": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.p..."
+      ]
+    },
+    "condition_action_period_surplus_heart": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "ライブの合計スコア",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}自分が余剰ハートを持たない場合、ライブの合計ス..."
+      ]
+    },
+    "zone_member_cost_except_group_per_member_resource_gain": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー..."
+      ]
+    },
+    "zone_this_member_except_group_per_member_condition": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}自分のステージにいるこのメンバー以外の『A-RISE』のメンバー1..."
+      ]
+    },
+    "zone_card_except_group_per_card_cost_reduce": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "必要ハート",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のライブカード置き場にあるこのカード以外の『蓮..."
+      ]
+    },
+    "select_specific_member_card": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "中須かすみ",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデ..."
+      ]
+    },
+    "discard_all_revealed_cards": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "公開",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデ..."
+      ]
+    },
+    "trigger_energy_optional_per_resource_score": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "これにより",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}を好..."
+      ]
+    },
+    "energy_activation": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "とき、エネルギー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "とき、エネルギーを2枚アクティブにする。..."
+      ]
+    },
+    "opponent_wait_member_count_condition": {
+      "count": 1,
+      "unique_nonatomic_vars": 1,
+      "variables": [
+        {
+          "value": "メンバー",
+          "count": 1
+        }
+      ],
+      "example_abilities": [
+        "{{jyouji.png|常時}}相手のステージにウェイト状態のメンバーが2人以上いるかぎり、{{h..."
+      ]
+    }
+  }
+}

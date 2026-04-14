@@ -19,6 +19,7 @@ pub mod choice_prompt;
 pub mod state;
 pub mod state_helpers;
 pub mod state_score_slots;
+pub mod state_score_hearts;
 pub mod unified;
 
 pub use interaction::*;
@@ -111,7 +112,7 @@ pub fn dispatch(
         | O_SET_BLADES | O_ADD_HEARTS | O_SET_HEARTS | O_TRANSFORM_COLOR | O_REDUCE_HEART_REQ 
         | O_TRANSFORM_HEART | O_INCREASE_HEART_COST | O_SET_HEART_COST | O_REDUCE_SCORE 
         | O_TRANSFORM_BLADES | O_SKIP_ACTIVATE_PHASE => {
-            state::handle_score_hearts(state, db, ctx, frame_data)
+            state_score_hearts::handle_score_hearts(state, db, ctx, frame_data)
         }
 
         // Select Mode, NOP

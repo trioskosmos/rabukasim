@@ -240,3 +240,54 @@ alphazero/**/*.pt
 alphazero/**/*.pth
 alphazero/models/
 h f _ s p a c e /
+
+# UV Package Manager Cache
+.uv-cache/
+.uv-cache-local/
+.uv-python/
+.uvcache/
+
+# Additional Virtual Environments
+.venv_cuda/
+
+# Temporary Build Directories
+.tmp/
+
+# Tooling/IDE Directories
+.agent/
+.kilocode/
+
+# Verification/Archive Directories
+verification_archive/
+
+# Root-Level Utility Scripts
+check_cov.py
+debug_pattern_order.py
+find_pattern_positions.py
+get_lowest_abilities.py
+show_below_70.py
+show_coverage_stats.py
+show_lowest_coverage.py
+write_abilities.py
+
+# Root-Level Batch Scripts (kept for convenience)
+# run_real_game_overnight.bat
+# run_real_game_overnight.ps1
+# run_strategy_comparison.bat
+# start_server.bat
+
+# Launcher Build Artifacts
+launcher/target/
+launcher/*.log
+
+# Backend Log Files
+backend/*.log
+
+# Root-Level Output Files
+low_output.txt
+
+# Rust Project UV Lock (unnecessary)
+engine_rust_src/uv.lock
+
+# Temporary Documentation
+engine_rust_src/test_fix_process_guide.txt

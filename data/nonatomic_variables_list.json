@@ -1,0 +1,418 @@
+{
+  "unique_count": 103,
+  "total_occurrences": 268,
+  "nonatomic_variables": [
+    {
+      "value": "、ライブ終了時まで、無効に",
+      "count": 1
+    },
+    {
+      "value": "あな",
+      "count": 1
+    },
+    {
+      "value": "いるこのメンバーのコスト",
+      "count": 1
+    },
+    {
+      "value": "このメンバー以外",
+      "count": 1
+    },
+    {
+      "value": "この効果",
+      "count": 1
+    },
+    {
+      "value": "この能力",
+      "count": 8
+    },
+    {
+      "value": "これにより",
+      "count": 1
+    },
+    {
+      "value": "すべてアクティブ状態の",
+      "count": 1
+    },
+    {
+      "value": "すべてメンバーカー",
+      "count": 1
+    },
+    {
+      "value": "そうしなかった場合、ライブ",
+      "count": 1
+    },
+    {
+      "value": "そのメンバー",
+      "count": 1
+    },
+    {
+      "value": "その後、これ",
+      "count": 1
+    },
+    {
+      "value": "それぞれ異なる",
+      "count": 2
+    },
+    {
+      "value": "それぞれ登場している",
+      "count": 1
+    },
+    {
+      "value": "それらを好きな順番",
+      "count": 1
+    },
+    {
+      "value": "ちょうど",
+      "count": 1
+    },
+    {
+      "value": "とき、エネルギー",
+      "count": 1
+    },
+    {
+      "value": "なら",
+      "count": 2
+    },
+    {
+      "value": "ほかの",
+      "count": 1
+    },
+    {
+      "value": "みらくらぱーく！",
+      "count": 3
+    },
+    {
+      "value": "アクティブに",
+      "count": 1
+    },
+    {
+      "value": "ウェイトに",
+      "count": 7
+    },
+    {
+      "value": "カー",
+      "count": 1
+    },
+    {
+      "value": "グループ名",
+      "count": 1
+    },
+    {
+      "value": "スコア",
+      "count": 1
+    },
+    {
+      "value": "スリーズブーケ",
+      "count": 2
+    },
+    {
+      "value": "センターに",
+      "count": 1
+    },
+    {
+      "value": "センターにいるメンバー",
+      "count": 1
+    },
+    {
+      "value": "ターン",
+      "count": 2
+    },
+    {
+      "value": "チョコミントかストロベリーフレイバーかクッキー＆クリー",
+      "count": 1
+    },
+    {
+      "value": "バトンタッチ",
+      "count": 1
+    },
+    {
+      "value": "フォーメーションチェンジ",
+      "count": 1
+    },
+    {
+      "value": "ブレードハート",
+      "count": 1
+    },
+    {
+      "value": "プレイ",
+      "count": 1
+    },
+    {
+      "value": "プレイヤー",
+      "count": 3
+    },
+    {
+      "value": "ポジションチェンジ",
+      "count": 4
+    },
+    {
+      "value": "ポジションチェンジさせてもよい",
+      "count": 1
+    },
+    {
+      "value": "ミア・テイラー",
+      "count": 1
+    },
+    {
+      "value": "メンバー",
+      "count": 49
+    },
+    {
+      "value": "メンバーが",
+      "count": 12
+    },
+    {
+      "value": "メンバーがアクティブ状態",
+      "count": 1
+    },
+    {
+      "value": "ライブ",
+      "count": 4
+    },
+    {
+      "value": "ライブの合計スコア",
+      "count": 7
+    },
+    {
+      "value": "ライブ中",
+      "count": 1
+    },
+    {
+      "value": "ライブ終了時",
+      "count": 1
+    },
+    {
+      "value": "ライブ終了時まで、このメンバー",
+      "count": 4
+    },
+    {
+      "value": "ライブ終了時まで、そのハー",
+      "count": 2
+    },
+    {
+      "value": "ライブ終了時まで、選んだハー",
+      "count": 3
+    },
+    {
+      "value": "リフレッシュしていた",
+      "count": 1
+    },
+    {
+      "value": "一番上",
+      "count": 6
+    },
+    {
+      "value": "一番下",
+      "count": 2
+    },
+    {
+      "value": "上原歩夢",
+      "count": 1
+    },
+    {
+      "value": "両方ある",
+      "count": 1
+    },
+    {
+      "value": "中須かすみ",
+      "count": 2
+    },
+    {
+      "value": "代わりにスコア",
+      "count": 2
+    },
+    {
+      "value": "低い",
+      "count": 1
+    },
+    {
+      "value": "何が好き？",
+      "count": 1
+    },
+    {
+      "value": "余剰のハートを持たずにライブを成功させていた",
+      "count": 1
+    },
+    {
+      "value": "余剰ハート",
+      "count": 1
+    },
+    {
+      "value": "余剰ハートを持たない",
+      "count": 2
+    },
+    {
+      "value": "優木せつ菜",
+      "count": 1
+    },
+    {
+      "value": "公開",
+      "count": 17
+    },
+    {
+      "value": "公開される",
+      "count": 1
+    },
+    {
+      "value": "各グループ",
+      "count": 1
+    },
+    {
+      "value": "合計",
+      "count": 10
+    },
+    {
+      "value": "合計スコア",
+      "count": 8
+    },
+    {
+      "value": "名前",
+      "count": 1
+    },
+    {
+      "value": "名前が異なる『Liella!",
+      "count": 1
+    },
+    {
+      "value": "含まれる",
+      "count": 1
+    },
+    {
+      "value": "回答",
+      "count": 2
+    },
+    {
+      "value": "場合、それら",
+      "count": 1
+    },
+    {
+      "value": "多い",
+      "count": 1
+    },
+    {
+      "value": "失い",
+      "count": 1
+    },
+    {
+      "value": "好きなハートの色",
+      "count": 1
+    },
+    {
+      "value": "宮下愛",
+      "count": 1
+    },
+    {
+      "value": "少ない",
+      "count": 2
+    },
+    {
+      "value": "得たブレードハー",
+      "count": 1
+    },
+    {
+      "value": "得られ",
+      "count": 1
+    },
+    {
+      "value": "必要ハート",
+      "count": 8
+    },
+    {
+      "value": "手順",
+      "count": 1
+    },
+    {
+      "value": "持た",
+      "count": 3
+    },
+    {
+      "value": "日野下花帆",
+      "count": 1
+    },
+    {
+      "value": "最も",
+      "count": 1
+    },
+    {
+      "value": "村野さやか",
+      "count": 1
+    },
+    {
+      "value": "枚数",
+      "count": 3
+    },
+    {
+      "value": "桜坂しずく",
+      "count": 1
+    },
+    {
+      "value": "減る",
+      "count": 1
+    },
+    {
+      "value": "無効に",
+      "count": 1
+    },
+    {
+      "value": "異なるグループ",
+      "count": 1
+    },
+    {
+      "value": "登場している",
+      "count": 2
+    },
+    {
+      "value": "等しい",
+      "count": 1
+    },
+    {
+      "value": "総数",
+      "count": 1
+    },
+    {
+      "value": "繰り返",
+      "count": 1
+    },
+    {
+      "value": "置い",
+      "count": 1
+    },
+    {
+      "value": "置いたカー",
+      "count": 1
+    },
+    {
+      "value": "置かれた",
+      "count": 1
+    },
+    {
+      "value": "置かれて",
+      "count": 4
+    },
+    {
+      "value": "自身",
+      "count": 1
+    },
+    {
+      "value": "選んだカー",
+      "count": 1
+    },
+    {
+      "value": "選んだハー",
+      "count": 4
+    },
+    {
+      "value": "離れた",
+      "count": 2
+    },
+    {
+      "value": "高い",
+      "count": 5
+    },
+    {
+      "value": "（この効果",
+      "count": 2
+    }
+  ]
+}

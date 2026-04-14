@@ -1,5 +1,47 @@
 ﻿DSL_PATTERNS = [
         {
+            "name": "member_state_change_wait",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をウェイトにする",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧する",
+            "structure": "Member state change wait",
+        },
+        {
+            "name": "member_state_change_active",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をアクティブにする",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧する",
+            "structure": "Member state change active",
+        },
+        {
+            "name": "member_state_change_standby",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をスタンバイにする",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧する",
+            "structure": "Member state change standby",
+        },
+        {
+            "name": "member_state_change_wait_optional",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をウェイトにしてもよい",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧してもよい",
+            "structure": "Member state change wait optional",
+        },
+        {
+            "name": "member_state_change_active_optional",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をアクティブにしてもよい",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧してもよい",
+            "structure": "Member state change active optional",
+        },
+        {
+            "name": "member_position_change_specific",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をポジションチェンジさせる",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させる",
+            "structure": "Member position change specific",
+        },
+        {
+            "name": "member_position_change_specific_optional",
+            "regex": r"\b([^。]+)の([^。]+)いる([^。]+)(\d+)人をポジションチェンジさせてもよい",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させてもよい",
+            "structure": "Member position change specific optional",
+        },
+        {
             "name": "heart_total_condition_opponent_phase_cost_increase",
             "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)に([^。]+)が([^。]+)(\d+)つ以上ある場合、([^。]+)の([^。]+)、([^。]+)の([^。]+)にある([^。]+)(\d+)枚は、([^。]+)ための([^。]+)が([^。]+)多くなる",
             "template": "⟦SOURCE⟧の⟦ZONE⟧いる⟦TARGET⟧が持つ⟦HEART_TYPE⟧に⟦RESOURCE⟧が⟦TOTAL⟧⟦NUMBER⟧つ以上ある場合、⟦OPPONENT⟧の⟦PHASE⟧、⟦OPPONENT⟧の⟦ZONE⟧にある⟦CARD_TYPE⟧⟦NUMBER2⟧枚は、⟦CONTEXT⟧ための⟦COST⟧が⟦MODIFIER⟧多くなる",
@@ -136,6 +178,12 @@
             "regex": r"\b([^。]+)の([^。]+)から、([^。]+)と([^。]+)の([^。]+)いる([^。]+)(\d+)人につき、(\d+)枚([^。]+)する",
             "template": "⟦SOURCE⟧の⟦ZONE⟧から、⟦SOURCE1⟧と⟦SOURCE2⟧の⟦ZONE2⟧いる⟦TARGET⟧⟦NUMBER1⟧人につき、⟦NUMBER2⟧枚⟦ACTION⟧する",
             "structure": "Per member reveal from deck",
+        },
+        {
+            "name": "state_change_optional_cost_condition_state_change_specific",
+            "regex": r"\b([^。]+)を(ウェイト|アクティブ|スタンバイ)にしてもよい：([^。]+)の([^。]+)いるコスト(\d+)以下の([^。]+)(\d+)人を(ウェイト|アクティブ|スタンバイ)にする",
+            "template": "⟦TARGET⟧を⟦STATE1⟧⟦PARTICLE1⟧してもよい：⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE2⟧⟦PARTICLE2⟧する",
+            "structure": "State change optional cost condition state change specific",
         },
         {
             "name": "state_change_optional_cost_condition_state_change",
@@ -328,6 +376,12 @@
             "regex": r"\b([^。]+)により([^。]+)を([^。]+)に([^。]+)した場合、さらに([^。]+)を(\d+)枚([^。]+)",
             "template": "⟦CONTEXT⟧により⟦CARD⟧を⟦DESTINATION⟧に⟦PLACED⟧した場合、さらに⟦CARD2⟧を⟦NUMBER⟧枚⟦ACTION⟧",
             "structure": "Conditional live card discard draw",
+        },
+        {
+            "name": "automatic_trigger_state_change_optional_specific",
+            "regex": r"\b([^。]+)が([^。]+)から([^。]+)に([^。]+)とき、([^。]+)(\d+)人を(ウェイト|アクティブ|スタンバイ)にしてもよい",
+            "template": "⟦TARGET⟧が⟦SOURCE⟧から⟦DESTINATION⟧に⟦TRIGGER⟧とき、⟦NEW_TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧してもよい",
+            "structure": "Automatic trigger state change optional specific",
         },
         {
             "name": "automatic_trigger_state_change_optional",
@@ -571,8 +625,8 @@
         },
         {
             "name": "lose_resource_and_retry",
-            "regex": r"\bその([^。]+)で([^。]+)を([^。]+)、もう一度([^。]+)を([^。]+)",
-            "template": "その⟦CONTEXT⟧で⟦GAINED_RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
+            "regex": r"\bその([^。]+)で([^。]+)([^。]+)を([^。]+)、もう一度([^。]+)を([^。]+)",
+            "template": "その⟦CONTEXT⟧で⟦GAINED⟧⟦RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
             "structure": "Lose resource and retry",
         },
         {
@@ -636,6 +690,12 @@
             "structure": "Zone count condition card draw",
         },
         {
+            "name": "zone_members_cost_below_wait_specific",
+            "regex": r"([^。]+)の([^。]+)いるコスト(\d+)以下の([^。]+)(\d+)人を(ウェイト|アクティブ|スタンバイ)にする",
+            "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧⟦PARTICLE⟧する",
+            "structure": "Zone members cost below wait specific",
+        },
+        {
             "name": "zone_members_cost_below_wait",
             "regex": r"([^。]+)の([^。]+)いるコスト(\d+)以下の([^。]+)(\d+)人を([^。]+)にする",
             "template": "⟦SOURCE⟧の⟦ZONE⟧いるコスト⟦COST⟧以下の⟦TARGET⟧⟦NUMBER⟧人を⟦STATE⟧にする",
@@ -691,7 +751,7 @@
         },
         {
             "name": "all_cards_type_condition_draw",
-            "regex": r"\b([^。]+)が([^。ー]+)([^。]+)の場合、([^。]+)を(\d+)枚([^。]+)",
+            "regex": r"\b([^。]+)が([^。]+)([^。]+)の場合、([^。]+)を(\d+)枚([^。]+)",
             "template": "⟦THEY⟧が⟦ALL⟧⟦CARD_TYPE⟧の場合、⟦CARD_TYPE2⟧を⟦NUMBER⟧枚⟦ACTION⟧",
             "structure": "All cards type condition draw",
         },
@@ -823,7 +883,7 @@
         },
         {
             "name": "placed_cards_cost_reduction",
-            "regex": r"\b([^：]+)に([^：]+)([^：]+)の([^：]+)が(\d+)枚([^：]+)",
+            "regex": r"\b([^：]+(?:\{[^}]+\}[^：]*)*)に([^：]+(?:\{[^}]+\}[^：]*)*)([^：]+(?:\{[^}]+\}[^：]*)*)の([^：]+(?:\{[^}]+\}[^：]*)*)が(\d+)枚([^：]+(?:\{[^}]+\}[^：]*)*)",
             "template": "⟦DESTINATION⟧に⟦PLACED⟧⟦SOURCE⟧の⟦COUNT⟧が⟦NUMBER⟧枚⟦REDUCTION⟧",
             "structure": "Placed cards cost reduction",
         },
@@ -877,8 +937,8 @@
         },
         {
             "name": "original_heart_replacement",
-            "regex": r"([^。]+)、([^。]+)が([^。]+)持つ([^。]+)は([^。]+)([^。]+)になる",
-            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "regex": r"\b([^。]+)が([^。]+)持つ([^。]+)は([^。]+)([^。]+)になる",
+            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "structure": "Original heart replacement",
         },
         {
@@ -913,7 +973,7 @@
         },
         {
             "name": "per_discarded_card_draw",
-            "regex": r"\b([^。]+)により([^。]+)した([^。ー]+)([^。]+)を([^。]+)",
+            "regex": r"\b([^。]+)により([^。]+)した([^。]+)([^。]+)を([^。]+)",
             "template": "⟦CONTEXT⟧により⟦PLACED⟧した⟦COUNT⟧⟦ACTION⟧を⟦DRAW⟧",
             "structure": "Per discarded card draw",
         },
@@ -1098,6 +1158,24 @@
             "structure": "Opponent card effect activation",
         },
         {
+            "name": "condition_action_period_live_total_score",
+            "regex": r"\b([^。]+)がライブの合計スコアが([^。]+)場合、([^。]+)を([^。]+)。",
+            "template": "⟦SUBJECT⟧が⟦ZONE⟧の⟦ATTRIBUTE⟧が⟦COMPARISON⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
+            "structure": "Condition action period live total score",
+        },
+        {
+            "name": "condition_action_period_surplus_heart",
+            "regex": r"\b([^。]+)が余剰ハートを持たない場合、([^。]+)を([^。]+)。",
+            "template": "⟦SUBJECT⟧が⟦CONDITION⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
+            "structure": "Condition action period surplus heart",
+        },
+        {
+            "name": "condition_action_period_appearing",
+            "regex": r"\b([^。]+)が登場している場合、([^。]+)を([^。]+)。",
+            "template": "⟦SUBJECT⟧が⟦STATE⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
+            "structure": "Condition action period appearing",
+        },
+        {
             "name": "condition_action_period",
             "regex": r"\b([^。]+)が([^。]+)場合、([^。]+)を([^。]+)。",
             "template": "⟦SUBJECT⟧が⟦CONDITION⟧場合、⟦TARGET⟧を⟦ACTION⟧。",
@@ -1260,6 +1338,12 @@
             "structure": "Zone card reveal optional",
         },
         {
+            "name": "member_position_change_optional_specific",
+            "regex": r"\b([^。]+)(\d+)人をポジションチェンジさせてもよい",
+            "template": "⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させてもよい",
+            "structure": "Member position change optional specific",
+        },
+        {
             "name": "member_position_change_optional",
             "regex": r"\b([^。]+)(\d+)人を([^。]+)させてもよい",
             "template": "⟦TARGET⟧⟦NUMBER⟧人を⟦ACTION⟧させてもよい",
@@ -1351,49 +1435,49 @@
         },
         {
             "name": "trigger_energy_colon_duration_action",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)を得る。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)を得る。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
             "structure": "Trigger energy colon duration action",
         },
         {
             "name": "trigger_energy_colon_action",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦ACTION⟧。",
             "structure": "Trigger energy colon action",
         },
         {
             "name": "trigger_energy_two_group_positioning",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)『([^』]+)』『([^』]+)』の([^。]+)に([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)『([^』]+)』『([^』]+)』の([^。]+)に([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦TARGET⟧の⟦SOURCE⟧『⟦GROUP1⟧』『⟦GROUP2⟧』の⟦MEMBER⟧に⟦ACTION⟧。",
             "structure": "Trigger energy two group positioning",
         },
         {
             "name": "trigger_energy_per_resource_score",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)(\d+)枚につき、([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)の([^。]+)(\d+)枚につき、([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦SOURCE⟧の⟦RESOURCE⟧⟦NUMBER⟧枚につき、⟦ACTION⟧。",
             "structure": "Trigger energy per resource score",
         },
         {
             "name": "trigger_energy_colon_duration_simple",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)まで、([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦DURATION⟧まで、⟦ACTION⟧。",
             "structure": "Trigger energy colon duration simple",
         },
         {
             "name": "trigger_hand_names_optional_discard_per_card",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、([^。]+)控え室に置いてもよい：([^。]+)",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、([^。]+)控え室に置いてもよい：([^。]+)",
             "template": "⟦TRIGGER⟧手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、⟦CONDITION⟧控え室に置いてもよい：⟦ACTION⟧。",
             "structure": "Trigger hand names optional discard per card",
         },
         {
             "name": "trigger_center_turn_member_wait",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)メンバー(\d+)人を([^。]+)する：([^。]+)",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)メンバー(\d+)人を([^。]+)する：([^。]+)",
             "template": "⟦TRIGGER⟧⟦AREA⟧⟦TURN⟧メンバー⟦NUMBER⟧人を⟦ACTION⟧する：⟦EFFECT⟧",
             "structure": "Trigger center turn member wait",
         },
         {
             "name": "trigger_side_energy_activation",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)【([^】]+)】([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)【([^】]+)】([^。]+)。",
             "template": "⟦TRIGGER⟧【⟦SIDE⟧】⟦ACTION⟧。",
             "structure": "Trigger side energy activation",
         },
@@ -1411,33 +1495,81 @@
         },
         {
             "name": "trigger_energy_optional_per_resource_score",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+を好きな数支払ってもよい：([^。]+)支払った([^。]+)(\d+)つにつき、([^。]+)",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)+を好きな数支払ってもよい：([^。]+)支払った([^。]+)(\d+)つにつき、([^。]+)",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧を好きな数支払ってもよい：⟦PREFIX⟧支払った⟦RESOURCE⟧⟦NUMBER⟧つにつき、⟦ACTION⟧。",
             "structure": "Trigger energy optional per resource score",
         },
         {
             "name": "comma_separated_action",
-            "regex": r"\b([^：]+)、([^：]+)を([^：]+)。",
+            "regex": r"\b([^：]+(?:\{[^}]+\}[^：]*)*)、([^：]+(?:\{[^}]+\}[^：]*)*)を([^：]+(?:\{[^}]+\}[^：]*)*)。",
             "template": "⟦CONDITION⟧、⟦TARGET⟧を⟦ACTION⟧。",
             "structure": "Comma separated action",
         },
         {
             "name": "trigger_position_change_area",
-            "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)*：([^。]+)を『([^』]+)』か『([^』]+)』の([^。]+)が([^。]+)エリアに([^。]+)。",
+            "regex": r"(\{\{[^}]+\.png\|[^}]+\}\}?)(\{\{[^}]+\.png\|[^}]+\}\}?)*：([^。]+)を『([^』]+)』か『([^』]+)』の([^。]+)が([^。]+)エリアに([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧：⟦TARGET⟧を『⟦GROUP1⟧』か『⟦GROUP2⟧』の⟦MEMBER⟧が⟦CONDITION⟧エリアに⟦ACTION⟧。",
             "structure": "Trigger position change area",
         },
         {
+            "name": "score_modify_state_change",
+            "regex": r"([^：]+)の([^：]+)を(ウェイト|アクティブ|スタンバイ)にする",
+            "template": "⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦STATE⟧⟦PARTICLE⟧する",
+            "structure": "Score modify state change",
+        },
+        {
             "name": "score_modify",
-            "regex": r"([^：]+)の([^：]+)を([^：]+)する",
+            "regex": r"([^：]+(?:\{[^}]+\}[^：]*)*)の([^：]+(?:\{[^}]+\}[^：]*)*)を([^：]+(?:\{[^}]+\}[^：]*)*)する",
             "template": "⟦TARGET⟧の⟦ATTRIBUTE⟧を⟦MODIFIER⟧する",
             "structure": "Score modify",
         },
         {
-            "name": "selected_resource_gain",
-            "regex": r"\b([^。]+)([^。]+)を(\d+)つ得る",
+            "name": "selected_resource_gain_heart",
+            "regex": r"\bライブ終了時まで、選んだハートを(\d+)つ得る",
             "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
-            "structure": "Selected resource gain",
+            "structure": "Selected resource gain heart",
+        },
+        {
+            "name": "selected_resource_gain_heart_this",
+            "regex": r"\bライブ終了時まで、このメンバーのハートを(\d+)つ得る",
+            "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+            "structure": "Selected resource gain heart this",
+        },
+        {
+            "name": "selected_resource_gain_heart_that",
+            "regex": r"\bライブ終了時まで、そのハートを(\d+)つ得る",
+            "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+            "structure": "Selected resource gain heart that",
+        },
+        {
+            "name": "selected_resource_gain_heart_per_card",
+            "regex": r"\bライブ終了時まで、([^。]+)カード(\d+)枚につき、選んだハートを(\d+)つ得る",
+            "template": "⟦DURATION⟧まで、⟦LOCATION⟧⟦CARD⟧⟦NUMBER1⟧枚につき、⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER2⟧つ得る",
+            "structure": "Selected resource gain heart per card",
+        },
+        {
+            "name": "selected_resource_gain_heart_group_member",
+            "regex": r"\bライブ終了時まで、([^。]+)ステージにいる『([^』]+)』の([^。]+)(\d+)人は、選んだハートを(\d+)つ得る",
+            "template": "⟦DURATION⟧まで、⟦LOCATION⟧ステージにいる『⟦GROUP⟧』の⟦TARGET⟧⟦NUMBER1⟧人は、⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER2⟧つ得る",
+            "structure": "Selected resource gain heart group member",
+        },
+        {
+            "name": "selected_resource_gain_heart_flexible",
+            "regex": r"\b([^。]+)、選んだハートを(\d+)つ得る",
+            "template": "⟦DURATION⟧、⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+            "structure": "Selected resource gain heart flexible",
+        },
+        {
+            "name": "selected_resource_gain_heart_complex",
+            "regex": r"\bライブ終了時まで、([^。]+)ステージにいる([^。]+)ターンに登場した([^。]+)のうち、『([^』]+)』以外のすべての([^。]+)は選んだハートを(\d+)つ得る",
+            "template": "⟦DURATION⟧まで、⟦LOCATION⟧ステージにいる⟦TURN⟧ターンに登場した⟦SOURCE⟧のうち、『⟦EXCLUSION⟧』以外のすべての⟦TARGET⟧は⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+            "structure": "Selected resource gain heart complex",
+        },
+        {
+            "name": "selected_resource_gain_DISABLED",
+            "regex": r"\bDISABLED_SELECTED_RESOURCE_GAIN_PATTERN",
+            "template": "⟦SELECTED⟧⟦RESOURCE⟧を⟦NUMBER⟧つ得る",
+            "structure": "Selected resource gain DISABLED",
         },
         {
             "name": "from_among_add_simple",
@@ -2579,18 +2711,18 @@ def check_pattern_overlap(patterns: list[dict[str, Any]], cards_file: Path) -> l
     Returns a list of overlapping pattern pairs.
     """
     overlaps = []
-    
+
     # Load cards to get actual ability texts
     with open(cards_file, 'r', encoding='utf-8') as f:
         cards = json.load(f)
-    
+
     # Get ability texts from cards
     ability_texts = []
     for card_id, card in cards.items():
         ability = card.get("ability", "")
         if ability:
             ability_texts.append(ability)
-    
+
     # Compile all patterns
     compiled_patterns = []
     for pattern in patterns:
@@ -2603,7 +2735,7 @@ def check_pattern_overlap(patterns: list[dict[str, Any]], cards_file: Path) -> l
             })
         except re.error as e:
             print(f"ERROR: Invalid regex in pattern '{pattern['name']}': {e}")
-    
+
     # Check for overlaps using actual ability texts (scan all texts)
     for text in ability_texts:
         matches_in_text = []
@@ -2677,11 +2809,12 @@ def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
     text_matches = []
     pattern_counts = Counter()
     pattern_variables = {}
-    
+
     total_characters = 0
     total_covered_characters = 0
 
-    for text_data in texts:
+    total_texts = len(texts)
+    for i, text_data in enumerate(texts):
         text = text_data.get("ability") or text_data.get("clause", "")
         card_ids = text_data.get("card_ids", [])
         if not text:

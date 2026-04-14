@@ -1,0 +1,95 @@
+{
+  "atomic_game_mechanics": {
+    "ZONES": [
+      "ステージ",
+      "控え室",
+      "手札",
+      "デッキ",
+      "成功ライブカード置き場",
+      "エネルギーカード置き場",
+      "ライブカード置き場"
+    ],
+    "CARD_TYPES": [
+      "メンバーカード",
+      "ライブカード",
+      "エネルギーカード"
+    ],
+    "NUMBERS": [
+      "\\d+"
+    ],
+    "RESOURCES": [
+      "ブレード"
+    ],
+    "HEARTS": [
+      "heart\\d+"
+    ],
+    "ACTIONS": [
+      "置く",
+      "得る",
+      "引く",
+      "選ぶ",
+      "加える",
+      "する",
+      "移動させる",
+      "発動させる",
+      "アクティブにする",
+      "ウェイトにする"
+    ],
+    "STATES": [
+      "待機",
+      "登場",
+      "ライブ開始時",
+      "ライブ成功時",
+      "起動",
+      "常時",
+      "アクティブ",
+      "ウェイト"
+    ],
+    "PLAYERS": [
+      "自分",
+      "相手"
+    ],
+    "ATTRIBUTES": [
+      "コスト",
+      "スコア"
+    ],
+    "POSITIONS": [
+      "上",
+      "下",
+      "左",
+      "右",
+      "センター",
+      "サイド"
+    ],
+    "AREAS": [
+      "エリア",
+      "ステージ",
+      "ライブエリア"
+    ],
+    "COMPARISONS": [
+      "以上",
+      "以下",
+      "より",
+      "未満"
+    ],
+    "GROUPS": [
+      "『([^』]+)』",
+      "「([^」]+)」"
+    ]
+  },
+  "current_state": {
+    "total_occurrences": 2804,
+    "nonatomic_occurrences": 925,
+    "percentage_nonatomic": 32.9885877318117
+  },
+  "required_changes": {
+    "total_pattern_matches": 4016,
+    "patterns_needing_modification": 3821,
+    "percentage_needing_modification": 95.14442231075697
+  },
+  "impact": {
+    "current_patterns": 282,
+    "estimated_patterns_after_atomic": "400-600",
+    "reason": "Multiple variants needed for trigger contexts, contextual phrases, grammatical structures, and icon references"
+  }
+}

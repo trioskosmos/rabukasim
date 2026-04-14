@@ -2387,8 +2387,8 @@
       "all_cards_type_condition_draw": [
         [
           "回答",
-          "チョコミントかストロベリーフレイバーかクッキー＆クリー",
-          "ム",
+          "チョコミントかストロベリ",
+          "ーフレイバーかクッキー＆クリーム",
           "自分と相手は手札",
           "1",
           "控え室に置く"
@@ -2403,8 +2403,8 @@
         ],
         [
           "それら",
-          "すべてメンバーカー",
-          "ド",
+          "すべてメンバ",
+          "ーカード",
           "カード",
           "1",
           "引く"
@@ -2419,8 +2419,8 @@
         ],
         [
           "それ",
-          "スコア6以上の『Aqours』のライブカー",
-          "ド",
+          "スコア6以上の『Aqours』のライブカ",
+          "ード",
           "エネルギー",
           "4",
           "アクティブにする"
@@ -2435,8 +2435,8 @@
         ],
         [
           "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカード",
-          "『μ's』のカー",
-          "ド",
+          "『μ's』のカ",
+          "ード",
           "自分のデッキの上からカード",
           "4",
           "見る"
@@ -3709,42 +3709,48 @@
       ],
       "original_heart_replacement": [
         [
-          "live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、このメンバー",
+          "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで",
+          "このメンバー",
           "元々",
           "ハート",
           "すべて{{heart_04.png|heart04}",
           "}"
         ],
         [
-          "ライブ終了時まで、このメンバー",
+          "ライブ終了時まで",
+          "このメンバー",
           "元々",
           "ハート",
           "選んだハー",
           "ト"
         ],
         [
-          "ライブ終了時まで、このメンバー",
+          "ライブ終了時まで",
+          "このメンバー",
           "元々",
           "ハート",
           "選んだハー",
           "ト"
         ],
         [
-          "live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバー",
+          "{{live_start.png|ライブ開始時}}ライブ終了時まで",
+          "自分のステージのセンターエリアにいる『Liella!』のメンバー",
           "元々",
           "{{icon_blade.png|ブレード}}の数",
           "3",
           "つ"
         ],
         [
-          "ライブ終了時まで、このメンバー",
+          "ライブ終了時まで",
+          "このメンバー",
           "元々",
           "ハート",
           "選んだハー",
           "ト"
         ],
         [
-          "ライブ終了時まで、このメンバー",
+          "ライブ終了時まで",
+          "このメンバー",
           "元々",
           "ハート",
           "選んだハー",
@@ -3855,15 +3861,15 @@
         [
           "その後、これ",
           "公開",
-          "カー",
-          "ド",
+          "カ",
+          "ード",
           "控え室に置く"
         ],
         [
           "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する：自分の控え室から、これ",
           "公開",
-          "カードのカード名がすべて含まれるライブカー",
-          "ド",
+          "カ",
+          "ードのカード名がすべて含まれるライブカード",
           "1枚手札に加える"
         ]
       ],
@@ -3955,8 +3961,7 @@
       "lose_resource_and_retry": [
         [
           "エール",
-          "得たブレードハー",
-          "ト",
+          "得たブレードハート",
           "失い",
           "エール",
           "行う"
@@ -6530,8 +6535,8 @@
             "end": 53,
             "variables": [
               "回答",
-              "チョコミントかストロベリーフレイバーかクッキー＆クリー",
-              "ム",
+              "チョコミントかストロベリ",
+              "ーフレイバーかクッキー＆クリーム",
               "自分と相手は手札",
               "1",
               "控え室に置く"
@@ -7901,8 +7906,8 @@
             "end": 68,
             "variables": [
               "それら",
-              "すべてメンバーカー",
-              "ド",
+              "すべてメンバ",
+              "ーカード",
               "カード",
               "1",
               "引く"
@@ -11142,12 +11147,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。",
             "start": 0,
             "end": 130,
             "variables": [
-              "live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、このメンバー",
+              "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで",
+              "このメンバー",
               "元々",
               "ハート",
               "すべて{{heart_04.png|heart04}",
@@ -12202,8 +12208,8 @@
             "variables": [
               "その後、これ",
               "公開",
-              "カー",
-              "ド",
+              "カ",
+              "ード",
               "控え室に置く"
             ]
           }
@@ -12740,8 +12746,8 @@
             "end": 106,
             "variables": [
               "それ",
-              "スコア6以上の『Aqours』のライブカー",
-              "ド",
+              "スコア6以上の『Aqours』のライブカ",
+              "ード",
               "エネルギー",
               "4",
               "アクティブにする"
@@ -12887,14 +12893,13 @@
           {
             "pattern_name": "lose_resource_and_retry",
             "structure": "Lose resource and retry",
-            "template": "その⟦CONTEXT⟧で⟦GAINED⟧⟦RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
+            "template": "その⟦CONTEXT⟧で⟦GAINED_RESOURCE⟧を⟦LOSE⟧、もう一度⟦ACTION⟧を⟦PERFORM⟧",
             "matched_text": "そのエールで得たブレードハートを失い、もう一度エールを行う。",
             "start": 101,
             "end": 131,
             "variables": [
               "エール",
-              "得たブレードハー",
-              "ト",
+              "得たブレードハート",
               "失い",
               "エール",
               "行う"
@@ -13597,12 +13602,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
             "start": 108,
             "end": 142,
             "variables": [
-              "ライブ終了時まで、このメンバー",
+              "ライブ終了時まで",
+              "このメンバー",
               "元々",
               "ハート",
               "選んだハー",
@@ -13634,12 +13640,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
             "start": 108,
             "end": 142,
             "variables": [
-              "ライブ終了時まで、このメンバー",
+              "ライブ終了時まで",
+              "このメンバー",
               "元々",
               "ハート",
               "選んだハー",
@@ -16811,12 +16818,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる。",
             "start": 0,
             "end": 103,
             "variables": [
-              "live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージのセンターエリアにいる『Liella!』のメンバー",
+              "{{live_start.png|ライブ開始時}}ライブ終了時まで",
+              "自分のステージのセンターエリアにいる『Liella!』のメンバー",
               "元々",
               "{{icon_blade.png|ブレード}}の数",
               "3",
@@ -18005,12 +18013,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
             "start": 108,
             "end": 142,
             "variables": [
-              "ライブ終了時まで、このメンバー",
+              "ライブ終了時まで",
+              "このメンバー",
               "元々",
               "ハート",
               "選んだハー",
@@ -18042,12 +18051,13 @@
           {
             "pattern_name": "original_heart_replacement",
             "structure": "Original heart replacement",
-            "template": "⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
+            "template": "⟦PERIOD⟧、⟦MEMBER⟧が⟦ORIGINAL⟧持つ⟦HEART⟧は⟦SELECTED⟧⟦HEART2⟧になる",
             "matched_text": "ライブ終了時まで、このメンバーが元々持つハートは選んだハートになる。",
             "start": 108,
             "end": 142,
             "variables": [
-              "ライブ終了時まで、このメンバー",
+              "ライブ終了時まで",
+              "このメンバー",
               "元々",
               "ハート",
               "選んだハー",
@@ -19851,8 +19861,8 @@
             "variables": [
               "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する：自分の控え室から、これ",
               "公開",
-              "カードのカード名がすべて含まれるライブカー",
-              "ド",
+              "カ",
+              "ードのカード名がすべて含まれるライブカード",
               "1枚手札に加える"
             ]
           }
@@ -21085,8 +21095,8 @@
             "end": 137,
             "variables": [
               "kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：これにより控え室に置いたカード",
-              "『μ's』のカー",
-              "ド",
+              "『μ's』のカ",
+              "ード",
               "自分のデッキの上からカード",
               "4",
               "見る"
