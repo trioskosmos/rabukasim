@@ -12,6 +12,7 @@ use crate::core::logic::filter::{
 use crate::core::logic::heart_semantics::decode_heart_type_value;
 use crate::core::logic::{AbilityContext, CardDatabase, Condition, ConditionType, GameState};
 
+#[inline]
 pub fn get_param_case_insensitive<'a>(
     params: &'a serde_json::Map<String, serde_json::Value>,
     key: &str,
@@ -19,6 +20,7 @@ pub fn get_param_case_insensitive<'a>(
     params.get(key).or_else(|| params.get(&key.to_uppercase()))
 }
 
+#[inline]
 pub fn comparison_mode_from_params(
     params: &serde_json::Map<String, serde_json::Value>,
 ) -> Option<i32> {
@@ -37,6 +39,7 @@ pub fn comparison_mode_from_params(
     }
 }
 
+#[inline]
 pub fn condition_from_clause(clause: &serde_json::Value) -> Condition {
     Condition {
         condition_type: clause
@@ -75,6 +78,7 @@ const RAW_COND_EXCLUDED_KEYS: &[&str] = &[
     "player", "PLAYER", "keyword", "KEYWORD",
 ];
 
+#[inline]
 fn resolved_filter_attr(
     params: &serde_json::Map<String, serde_json::Value>,
     fallback_attr: u64,
@@ -89,11 +93,13 @@ fn resolved_filter_attr(
     merge_filter_attr_with_params(fallback_attr, Some(&params_value))
 }
 
+#[inline]
 fn condition_match_filter_attr(filter_attr: u64) -> u64 {
     filter_attr & !crate::core::logic::filter::FILTER_ANY_STAGE
 }
 
 // Helper function to count unique names from card IDs
+#[inline]
 fn count_unique_names(card_ids: &[i32], db: &CardDatabase) -> i32 {
     let unique_names: std::collections::HashSet<&str> = card_ids
         .iter()
@@ -111,6 +117,7 @@ fn count_unique_names(card_ids: &[i32], db: &CardDatabase) -> i32 {
     }
 }
 
+#[inline]
 fn apply_area_semantics(attr: u64, area: &str) -> u64 {
     if area.eq_ignore_ascii_case("ANY_STAGE") || area.eq_ignore_ascii_case("ALL_AREAS") {
         attr | FILTER_ANY_STAGE
@@ -119,6 +126,7 @@ fn apply_area_semantics(attr: u64, area: &str) -> u64 {
     }
 }
 
+#[inline]
 fn resolved_condition_player(
     params: &serde_json::Map<String, serde_json::Value>,
     ctx: &AbilityContext,
@@ -137,6 +145,7 @@ fn resolved_condition_player(
         .unwrap_or_else(|| ctx.player_id as usize)
 }
 
+#[inline]
 fn resolved_condition_player_with_attr(
     params: &serde_json::Map<String, serde_json::Value>,
     ctx: &AbilityContext,
@@ -169,6 +178,7 @@ fn resolved_condition_player_with_attr(
         })
 }
 
+#[inline]
 fn compare_count_thresholds(
     params: &serde_json::Map<String, serde_json::Value>,
     count: i32,
@@ -228,6 +238,7 @@ fn filtered_stage_cards(
         .collect()
 }
 
+#[inline]
 fn discard_live_cards<'a>(
     state: &'a GameState,
     db: &'a CardDatabase,
