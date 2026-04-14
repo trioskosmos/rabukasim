@@ -6,6 +6,7 @@ use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 use crate::core::models::interpreter::get_choice_text;
 use crate::core::models::suspend_interaction;
 
+#[inline]
 fn is_interactive_frame(frame_data: &AbilityFrameComponents<'_>) -> bool {
     matches!(
         frame_data.opcode,
