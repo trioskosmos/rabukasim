@@ -1,4 +1,4 @@
-DSL_PATTERNS = [
+﻿DSL_PATTERNS = [
         {
             "name": "heart_total_condition_opponent_phase_cost_increase",
             "regex": r"\b([^。]+)の([^。]+)いる([^。]+)が持つ([^。]+)に([^。]+)が([^。]+)(\d+)つ以上ある場合、([^。]+)の([^。]+)、([^。]+)の([^。]+)にある([^。]+)(\d+)枚は、([^。]+)ための([^。]+)が([^。]+)多くなる",
@@ -1176,6 +1176,24 @@ DSL_PATTERNS = [
             "structure": "Cost heart reduce",
         },
         {
+            "name": "parenthesized_clause_note",
+            "regex": r"[（(]([^）)]+)[）)]",
+            "template": "（⟦CLAUSE⟧）",
+            "structure": "Parenthesized clause note",
+        },
+        {
+            "name": "bullet_draw",
+            "regex": r"・カードを1枚引く。",
+            "template": "・カードを1枚引く。",
+            "structure": "Bullet draw",
+        },
+        {
+            "name": "bullet_cost_heart_reduce",
+            "regex": r"・このカードの必要ハートを([^。]+)減らす。",
+            "template": "・このカードの必要ハートを⟦MODIFIER⟧減らす。",
+            "structure": "Bullet cost heart reduce",
+        },
+        {
             "name": "energy_under_member_place",
             "regex": r"\b([^。]+)(\d+)枚を([^。]+)の([^。]+)に置く",
             "template": "⟦RESOURCE⟧⟦NUMBER⟧枚を⟦TARGET⟧の⟦LOCATION⟧に置く",
@@ -1204,6 +1222,12 @@ DSL_PATTERNS = [
             "regex": r"\b([^。]+)に([^。]+)が([^。]+)していない(?:場合|かぎり)、([^。]+)。",
             "template": "⟦SOURCE⟧の⟦ZONE⟧に⟦MEMBER⟧が⟦ACTION⟧していない場合、⟦ACTION2⟧。",
             "structure": "Turn member not moved action",
+        },
+        {
+            "name": "member_leaves_stage_energy_return",
+            "regex": r"メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。",
+            "template": "メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。",
+            "structure": "Member leaves stage energy return",
         },
         {
             "name": "turn_member_not_moved_condition",
@@ -1306,6 +1330,24 @@ DSL_PATTERNS = [
             "regex": r"([^。]+)を(\d+)枚([^。]+)に置いてもよい",
             "template": "⟦SOURCE⟧を⟦NUMBER⟧枚⟦DESTINATION⟧に置いてもよい",
             "structure": "Zone to zone optional",
+        },
+        {
+            "name": "appearance_draw",
+            "regex": r"\{\{toujyou\.png\|登場\}\}カードを1枚引く。",
+            "template": "{{toujyou.png|登場}}カードを1枚引く。",
+            "structure": "Appearance draw",
+        },
+        {
+            "name": "appearance_member_move_optional",
+            "regex": r"\{\{toujyou\.png\|登場\}\}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。",
+            "template": "{{toujyou.png|登場}}自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい。",
+            "structure": "Appearance member move optional",
+        },
+        {
+            "name": "appearance_activate_discarded_member_ability",
+            "regex": r"\{\{toujyou\.png\|登場\}\}自分の控え室にあるコスト4以下の『([^』]+)』のメンバーカードを1枚選ぶ。そのカードの\{\{toujyou\.png\|登場\}\}能力1つを発動させる。",
+            "template": "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『⟦GROUP⟧』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。",
+            "structure": "Appearance activate discarded member ability",
         },
         {
             "name": "member_resource_per_resource_condition",
@@ -1518,12 +1560,6 @@ DSL_PATTERNS = [
             "structure": "Zone zone member",
         },
         {
-            "name": "colon_action",
-            "regex": r"\b([^。]+)：([^。]+)。",
-            "template": "⟦COST⟧：⟦ACTION⟧。",
-            "structure": "Colon action",
-        },
-        {
             "name": "colon_duration_action",
             "regex": r"\b([^：]+)：([^、]+)まで、([^。]+)を得る。",
             "template": "⟦COST⟧：⟦DURATION⟧まで、⟦RESOURCE⟧を得る。",
@@ -1558,6 +1594,132 @@ DSL_PATTERNS = [
             "regex": r"(\{?\{[^}]+\.png\|[^}]+\}\}?)(\{?\{[^}]+\.png\|[^}]+\}\}?)+支払ってもよい：([^。]+)。",
             "template": "⟦TRIGGER⟧⟦ENERGY⟧支払ってもよい：⟦ACTION⟧。",
             "structure": "Trigger energy colon action",
+        },
+        {
+            "name": "turn1_energy_card_draw",
+            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}：カードを1枚引く。",
+            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+            "structure": "Turn 1 energy card draw",
+        },
+        {
+            "name": "appearance_activation_cost_note",
+            "regex": r"[（(]\{\{toujyou\.png\|登場\}\}能力がコストを持つ場合、支払って発動させる。[）)]",
+            "template": "（{{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。）",
+            "structure": "Appearance activation cost note",
+        },
+        {
+            "name": "live_start_multi_member_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のステージにいる、「([^」]+)」「([^」]+)」「([^」]+)」のうちのメンバー1人と、これにより選んだメンバー以外の『([^』]+)』のメンバー1人は、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「⟦NAME1⟧」「⟦NAME2⟧」「⟦NAME3⟧」のうちのメンバー1人と、これにより選んだメンバー以外の『⟦GROUP⟧』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start multi member blade gain",
+        },
+        {
+            "name": "live_start_distinct_group_heart_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のステージにグループ名がそれぞれ異なるメンバーが(\d+)人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは\{\{icon_all\.png\|ハート\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが⟦NUMBER⟧人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。",
+            "structure": "Live start distinct group heart gain",
+        },
+        {
+            "name": "live_start_energy_payment_per_energy_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}を(\d+)つまで支払ってもよい：ライブ終了時まで、支払った\{\{icon_energy\.png\|E\}\}につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を⟦NUMBER⟧つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start energy payment per energy gain",
+        },
+        {
+            "name": "live_start_hand_names_optional_discard_per_card_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}手札の「([^」]+)」と「([^」]+)」と「([^」]+)」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start hand names optional discard per card gain",
+        },
+        {
+            "name": "live_start_same_card_name_heart_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のライブ中の『([^』]+)』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、\{\{heart_04\.png\|heart04\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+            "structure": "Live start same card name heart gain",
+        },
+        {
+            "name": "live_start_other_group_member_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『([^』]+)』のメンバーは\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『⟦GROUP⟧』のメンバーは{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start other group member blade gain",
+        },
+        {
+            "name": "live_start_energy_payment_single_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start energy payment single blade gain",
+        },
+        {
+            "name": "live_start_card_count_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のライブ中のカード1枚につき、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start card count blade gain",
+        },
+        {
+            "name": "live_start_two_energy_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start two energy blade gain",
+        },
+        {
+            "name": "live_start_energy_payment_single_heart_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{heart_02\.png\|heart02\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
+            "structure": "Live start energy payment single heart gain",
+        },
+        {
+            "name": "live_start_two_energy_heart_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}\{\{icon_energy\.png\|E\}\}\{\{icon_energy\.png\|E\}\}支払ってもよい：ライブ終了時まで、\{\{heart_04\.png\|heart04\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+            "structure": "Live start two energy heart gain",
+        },
+        {
+            "name": "live_start_energy_payment_multi_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}(\{\{icon_energy\.png\|E\}\}){6}支払ってもよい：ライブ終了時まで、(\{\{icon_blade\.png\|ブレード\}\}){3}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start energy payment multi blade gain",
+        },
+        {
+            "name": "live_start_no_blade_heart_condition_gain",
+            "regex": r"\{\{jidou\.png\|自動\}\}\{\{turn1\.png\|ターン1回\}\}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、\{\{heart_[0-9]{2}\.png\|heart[0-9]{2}\}\}を得る。",
+            "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
+            "structure": "No blade heart condition gain",
+        },
+        {
+            "name": "live_start_moved_member_blade_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start moved member blade gain",
+        },
+        {
+            "name": "live_start_energy_under_member_heart_gain",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、\{\{heart_01\.png\|heart01\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+            "structure": "Live start energy under member heart gain",
+        },
+        {
+            "name": "live_start_blade_gain_clause",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}[^。]+\{\{icon_blade\.png\|ブレード\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}…{{icon_blade.png|ブレード}}を得る。",
+            "structure": "Live start blade gain clause",
+        },
+        {
+            "name": "live_start_heart_gain_clause",
+            "regex": r"\{\{live_start\.png\|ライブ開始時\}\}[^。]+\{\{heart_[0-9]{2}\.png\|heart[0-9]{2}\}\}を得る。",
+            "template": "{{live_start.png|ライブ開始時}}…{{heart_XX.png|heartXX}}を得る。",
+            "structure": "Live start heart gain clause",
+        },
+        {
+            "name": "turn1_discard_draw_live_card_add",
+            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の\{\{icon_energy\.png\|E\}\}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
+            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
+            "structure": "Turn 1 discard draw live card add",
+        },
+        {
+            "name": "turn1_cost4_member_discard_activate_ability",
+            "regex": r"\{\{kidou\.png\|起動\}\}\{\{turn1\.png\|ターン1回\}\}手札のコスト4以下の『([^』]+)』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの\{\{toujyou\.png\|登場\}\}能力1つを発動させる。",
+            "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『⟦GROUP⟧』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる。",
+            "structure": "Turn 1 cost 4 member discard activate ability",
         },
         {
             "name": "condition_duration_action",
@@ -1638,18 +1800,6 @@ DSL_PATTERNS = [
             "structure": "Zone member cost distinct action",
         },
         {
-            "name": "comma_period",
-            "regex": r"\b([^。]+)、([^。]+)。",
-            "template": "⟦CLAUSE1⟧、⟦CLAUSE2⟧。",
-            "structure": "Comma period",
-        },
-        {
-            "name": "parenthetical_note",
-            "regex": r"\b([^。]+)（([^。]+)）",
-            "template": "⟦MAIN⟧（⟦NOTE⟧）",
-            "structure": "Parenthetical note",
-        },
-        {
             "name": "card_draw",
             "regex": r"([^。]+)を(\d+)枚引き",
             "template": "⟦RESOURCE⟧を⟦NUMBER⟧枚引き",
@@ -1673,19 +1823,851 @@ DSL_PATTERNS = [
             "template": "」を⟦ACTION⟧",
             "structure": "Quoted ability gain",
         },
-        {
-            "name": "sentence_period",
-            "regex": r"\b([^。]+)。",
-            "template": "⟦SENTENCE⟧。",
-            "structure": "Sentence period",
-        },
-        {
-            "name": "clause_comma",
-            "regex": r"\b([^。]+)、",
-            "template": "⟦CLAUSE⟧、",
-            "structure": "Clause comma",
-        },
     ]
+
+LITERAL_PATTERNS = [
+    {
+        "name": "turn1_cost4_member_discard_activate_ability",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『Liella!』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『⟦GROUP⟧』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる。",
+        "structure": "Turn 1 cost 4 member discard activate ability",
+    },
+    {
+        "name": "turn1_discard_draw_live_card_add",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。",
+        "structure": "Turn 1 discard draw live card add",
+    },
+    {
+        "name": "live_start_multi_member_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「澁谷かのん」「ウィーン・マルガレーテ」「鬼塚冬毬」のうちのメンバー1人と、これにより選んだメンバー以外の『Liella!』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、「⟦NAME1⟧」「⟦NAME2⟧」「⟦NAME3⟧」のうちのメンバー1人と、これにより選んだメンバー以外の『⟦GROUP⟧』のメンバー1人は、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start multi member blade gain",
+    },
+    {
+        "name": "live_start_distinct_group_heart_gain",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが3人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにグループ名がそれぞれ異なるメンバーが⟦NUMBER⟧人以上いる場合、ライブ終了時まで、自分のセンターエリアにいるメンバーは{{icon_all.png|ハート}}を得る。",
+        "structure": "Live start distinct group heart gain",
+    },
+    {
+        "name": "live_start_energy_payment_per_energy_gain",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を2つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}を⟦NUMBER⟧つまで支払ってもよい：ライブ終了時まで、支払った{{icon_energy.png|E}}につき、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start energy payment per energy gain",
+    },
+    {
+        "name": "live_start_two_energy_blade_gain_literal",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start two energy blade gain literal",
+    },
+    {
+        "name": "live_start_two_energy_heart_gain_literal",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "structure": "Live start two energy heart gain literal",
+    },
+    {
+        "name": "live_start_hand_names_optional_discard_per_card_gain",
+        "literal": "{{live_start.png|ライブ開始時}}手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}手札の「⟦NAME1⟧」と「⟦NAME2⟧」と「⟦NAME3⟧」を、好きな枚数控え室に置いてもよい：ライブ終了時まで、これによって控え室に置いた枚数1枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start hand names optional discard per card gain",
+    },
+    {
+        "name": "live_start_same_card_name_heart_gain",
+        "literal": "{{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のライブ中の『⟦GROUP⟧』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "structure": "Live start same card name heart gain",
+    },
+    {
+        "name": "live_start_other_group_member_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『虹ヶ咲』のメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のステージにいるほかの『⟦GROUP⟧』のメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start other group member blade gain",
+    },
+    {
+        "name": "live_start_energy_payment_single_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start energy payment single blade gain",
+    },
+    {
+        "name": "live_start_energy_payment_single_heart_gain",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{heart_02.png|heart02}}を得る。",
+        "structure": "Live start energy payment single heart gain",
+    },
+    {
+        "name": "live_start_energy_payment_multi_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start energy payment multi blade gain",
+    },
+    {
+        "name": "live_start_no_blade_heart_condition_gain",
+        "literal": "{{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、{{heart_06.png|heart06}}を得る。",
+        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}エールにより公開された自分のカードの中にブレードハートを持つカードがないとき、ライブ終了時まで、{{heart_XX.png|heartXX}}を得る。",
+        "structure": "No blade heart condition gain",
+    },
+    {
+        "name": "live_start_moved_member_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分のステージにいる、このターン中にエリアを移動したメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start moved member blade gain",
+    },
+    {
+        "name": "live_start_hand_two_card_blade_gain",
+        "literal": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start hand two card blade gain",
+    },
+    {
+        "name": "live_start_draw_then_place_top",
+        "literal": "{{live_start.png|ライブ開始時}}カードを1枚引いてもよい。そうした場合、手札2枚を好きな順番でデッキの上に置く。",
+        "template": "{{live_start.png|ライブ開始時}}カードを1枚引いてもよい。そうした場合、手札2枚を好きな順番でデッキの上に置く。",
+        "structure": "Live start draw then place top",
+    },
+    {
+        "name": "bullet_wait_state_member_active_blade_gain",
+        "literal": "・ウェイト状態のメンバー1人をアクティブにし、ライブ終了時まで、そのメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "template": "・ウェイト状態のメンバー1人をアクティブにし、ライブ終了時まで、そのメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Bullet wait state member active blade gain",
+    },
+    {
+        "name": "answer_otherwise_member_blade_gain",
+        "literal": "回答がそれ以外の場合、ライブ終了時まで、自分と相手のステージにいるメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "template": "回答がそれ以外の場合、ライブ終了時まで、自分と相手のステージにいるメンバーは{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Answer otherwise member blade gain",
+    },
+    {
+        "name": "jidou_zone_appearance_double_blade_gain",
+        "literal": "{{jidou.png|自動}}このカードが表向きでライブカード置き場に置かれたとき、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jidou.png|自動}}このカードが表向きでライブカード置き場に置かれたとき、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jidou zone appearance double blade gain",
+    },
+    {
+        "name": "jidou_energy_zone_bladeheart_gain",
+        "literal": "{{jidou.png|自動}}カードの効果によって自分のエネルギー置き場にエネルギーカードが置かれるたび、ライブ終了時まで、{{heart_06.png|heart06}}を得る。(相手のカードの効果でも発動する。)",
+        "template": "{{jidou.png|自動}}カードの効果によって自分のエネルギー置き場にエネルギーカードが置かれるたび、ライブ終了時まで、{{heart_06.png|heart06}}を得る。(相手のカードの効果でも発動する。)",
+        "structure": "Jidou energy zone bladeheart gain",
+    },
+    {
+        "name": "live_start_energy_under_member_heart_gain",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにエネルギーカードが下にあるメンバーがいる場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "structure": "Live start energy under member heart gain",
+    },
+    {
+        "name": "toujyou_end_of_turn_blade_gain",
+        "literal": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Toujyou end of turn blade gain",
+    },
+    {
+        "name": "live_start_energy_to_energy_deck_red_heart_gain",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバー1人の下にあるエネルギーカードを、好きな枚数エネルギーデッキに置いてもよい。そうした場合、ライブ終了時まで、そのメンバーは、これによって置いたエネルギーカード1枚につき、［赤ハート］［赤ハート］［赤ハート］を得る。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバー1人の下にあるエネルギーカードを、好きな枚数エネルギーデッキに置いてもよい。そうした場合、ライブ終了時まで、そのメンバーは、これによって置いたエネルギーカード1枚につき、［赤ハート］［赤ハート］［赤ハート］を得る。",
+        "structure": "Live start energy to energy deck red heart gain",
+    },
+    {
+        "name": "toujyou_center_blade_gain",
+        "literal": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Toujyou center blade gain",
+    },
+    {
+        "name": "toujyou_right_side_energy_activate",
+        "literal": "{{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。",
+        "structure": "Toujyou right side energy activate",
+    },
+    {
+        "name": "toujyou_deck_top_three_discard_heart_gain",
+        "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。",
+        "structure": "Toujyou deck top three discard heart gain",
+    },
+    {
+        "name": "toujyou_deck_top_three_discard_heart_gain_01",
+        "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "structure": "Toujyou deck top three discard heart gain 01",
+    },
+    {
+        "name": "toujyou_deck_top_three_discard_heart_gain_05",
+        "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_05.png|heart05}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_05.png|heart05}}を持つメンバーカードの場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+        "structure": "Toujyou deck top three discard heart gain 05",
+    },
+    {
+        "name": "turn1_energy_move_area",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーがいるエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：このメンバーがいるエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。",
+        "structure": "Turn1 energy move area",
+    },
+    {
+        "name": "toujyou_score_total_energy_deck_place",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、自分のエネルギーデッキから、エネルギーカードを1枚アクティブ状態で置く。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、自分のエネルギーデッキから、エネルギーカードを1枚アクティブ状態で置く。",
+        "structure": "Toujyou score total energy deck place",
+    },
+    {
+        "name": "jidou_main_phase_energy_payment_hand_add",
+        "literal": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。",
+        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。",
+        "structure": "Jidou main phase energy payment hand add",
+    },
+    {
+        "name": "center_turn1_wait_select_public_until_top",
+        "literal": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：ライブカードかコスト10以上のメンバーカードのどちらか1つを選ぶ。選んだカードが公開されるまで、自分のデッキの一番上からカードを１枚ずつ公開する。そのカードを手札に加え、これにより公開されたほかのすべてのカードを控え室に置く。",
+        "template": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：ライブカードかコスト10以上のメンバーカードのどちらか1つを選ぶ。選んだカードが公開されるまで、自分のデッキの一番上からカードを１枚ずつ公開する。そのカードを手札に加え、これにより公開されたほかのすべてのカードを控え室に置く。",
+        "structure": "Center turn1 wait select public until top",
+    },
+    {
+        "name": "bullet_move_member_optional",
+        "literal": "・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "template": "・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "structure": "Bullet move member optional",
+    },
+    {
+        "name": "jyouji_energy_ten_bladeheart_gain",
+        "literal": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
+        "template": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
+        "structure": "Jyouji energy ten bladeheart gain",
+    },
+    {
+        "name": "jyouji_higher_cost_member_blade_gain",
+        "literal": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jyouji.png|常時}}自分のステージに、このメンバーよりコストの大きいメンバーがいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji higher cost member blade gain",
+    },
+    {
+        "name": "jyouji_live_card_three_count_mixed_gain",
+        "literal": "{{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji live card three count mixed gain",
+    },
+    {
+        "name": "live_start_member_count_heart_reduce",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。",
+        "structure": "Live start member count heart reduce",
+    },
+    {
+        "name": "toujyou_draw_then_move",
+        "literal": "{{toujyou.png|登場}}カードを1枚引く。その後、登場したエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。",
+        "template": "{{toujyou.png|登場}}カードを1枚引く。その後、登場したエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。",
+        "structure": "Toujyou draw then move",
+    },
+    {
+        "name": "kidou_top_three_discard_liella_blade_gain",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：ライブ終了時まで、これにより控え室に置いた『Liella!』のメンバーカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：ライブ終了時まで、これにより控え室に置いた『Liella!』のメンバーカード1枚につき、{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Kidou top three discard Liella blade gain",
+    },
+    {
+        "name": "live_start_cost_total_less_draw_top",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを2枚引き、自分の手札を1枚デッキの一番上に置く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを2枚引き、自分の手札を1枚デッキの一番上に置く。",
+        "structure": "Live start cost total less draw top",
+    },
+    {
+        "name": "jidou_main_phase_add_to_hand_dive",
+        "literal": "{{jidou.png|自動}}自分のメインフェイズにこのカードが控え室から手札に加えられたとき、自分の手札からカード名が「DIVE!」のライブカード1枚を表向きでライブカード置き場に置いてもよい。そうした場合、次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
+        "template": "{{jidou.png|自動}}自分のメインフェイズにこのカードが控え室から手札に加えられたとき、自分の手札からカード名が「DIVE!」のライブカード1枚を表向きでライブカード置き場に置いてもよい。そうした場合、次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
+        "structure": "Jidou main phase add to hand dive",
+    },
+    {
+        "name": "toujyou_wait_member_blade_note",
+        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "structure": "Toujyou wait member blade note",
+    },
+    {
+        "name": "live_start_deck_top_reveal_member_move",
+        "literal": "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを公開する。公開したカードがコスト9以下のメンバーカードの場合、公開したカードを手札に加え、このメンバーはポジションチェンジする。それ以外の場合、公開したカードを控え室に置く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のデッキの一番上のカードを公開する。公開したカードがコスト9以下のメンバーカードの場合、公開したカードを手札に加え、このメンバーはポジションチェンジする。それ以外の場合、公開したカードを控え室に置く。",
+        "structure": "Live start deck top reveal member move",
+    },
+    {
+        "name": "jyouji_wait_state_member_cost_reduce",
+        "literal": "{{jyouji.png|常時}}自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり、手札にあるこのメンバーカードのコストは2減る。",
+        "template": "{{jyouji.png|常時}}自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり、手札にあるこのメンバーカードのコストは2減る。",
+        "structure": "Jyouji wait state member cost reduce",
+    },
+    {
+        "name": "live_start_score_total_cond_heart_reduce_then_score_plus",
+        "literal": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。スコアの合計が９以上の場合、さらにこのカードのスコアを+１する。",
+        "template": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。スコアの合計が９以上の場合、さらにこのカードのスコアを+１する。",
+        "structure": "Live start score total condition heart reduce then score plus",
+    },
+    {
+        "name": "toujyou_or_live_start_wait_energy_cost_action",
+        "literal": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "template": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "structure": "Toujyou or live start wait energy cost action",
+    },
+    {
+        "name": "toujyou_hand_three_discard_draw",
+        "literal": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
+        "template": "{{toujyou.png|登場}}手札を3枚まで控え室に置いてもよい：これにより置いた枚数分カードを引く。",
+        "structure": "Toujyou hand three discard draw",
+    },
+    {
+        "name": "jidou_three_appear_draw_to_five",
+        "literal": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。",
+        "template": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。",
+        "structure": "Jidou three appear draw to five",
+    },
+    {
+        "name": "jyouji_energy_ten_blade_gain_three",
+        "literal": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji energy ten blade gain three",
+    },
+    {
+        "name": "live_success_energy_deck_wait_state_place_opponent_draw",
+        "literal": "{{live_success.png|ライブ成功時}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置いてもよい。そうした場合、相手はカードを1枚引く。",
+        "template": "{{live_success.png|ライブ成功時}}自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置いてもよい。そうした場合、相手はカードを1枚引く。",
+        "structure": "Live success energy deck wait state place opponent draw",
+    },
+    {
+        "name": "jidou_three_appear_draw",
+        "literal": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。",
+        "template": "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場したとき、手札が5枚になるまでカードを引く。",
+        "structure": "Jidou three appear draw",
+    },
+    {
+        "name": "live_start_aqours_member_heart_check_disable_success",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つ{{heart_02.png|heart02}}に、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つ{{heart_02.png|heart02}}に、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "structure": "Live start Aqours member heart check disable success",
+    },
+    {
+        "name": "toujyou_main_phase_energy_payment_livecard_place",
+        "literal": "{{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室からライブカードを1枚、表向きでライブカード置き場に置く。次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
+        "template": "{{toujyou.png|登場}}自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分の控え室からライブカードを1枚、表向きでライブカード置き場に置く。次のライブカードセットフェイズで自分がライブカード置き場に置けるカード枚数の上限が1枚減る。",
+        "structure": "Toujyou main phase energy payment livecard place",
+    },
+    {
+        "name": "jyouji_opponent_energy_more_blade_gain",
+        "literal": "{{jyouji.png|常時}}相手のエネルギーが自分より多い場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jyouji.png|常時}}相手のエネルギーが自分より多い場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji opponent energy more blade gain",
+    },
+    {
+        "name": "toujyou_other_group_member_energy_active",
+        "literal": "{{toujyou.png|登場}}自分のステージにほかの『虹ヶ咲』のメンバーがいる場合、エネルギーを1枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}自分のステージにほかの『虹ヶ咲』のメンバーがいる場合、エネルギーを1枚アクティブにする。",
+        "structure": "Toujyou other group member energy active",
+    },
+    {
+        "name": "live_start_center_member_heart_reduce",
+        "literal": "{{live_start.png|ライブ開始時}}自分のセンターエリアに『μ's』のメンバーがいる場合、そのメンバーが持つ{{heart_03.png|heart03}}2つにつき、このカードの必要ハートを{{heart_00.png|heart0}}減らす。この能力では{{heart_00.png|heart0}}は3つまでしか減らない。",
+        "template": "{{live_start.png|ライブ開始時}}自分のセンターエリアに『μ's』のメンバーがいる場合、そのメンバーが持つ{{heart_03.png|heart03}}2つにつき、このカードの必要ハートを{{heart_00.png|heart0}}減らす。この能力では{{heart_00.png|heart0}}は3つまでしか減らない。",
+        "structure": "Live start center member heart reduce",
+    },
+    {
+        "name": "live_start_aqours_member_blade_score_plus",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバー1人を選ぶ。そのメンバーが持つ{{icon_blade.png|ブレード}}が6つ以上の場合、このカードのスコアを+１する。",
+        "structure": "Live start Aqours member blade score plus",
+    },
+    {
+        "name": "live_start_nijigasaki_member_deck_top_loop",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る。その中から1枚までをデッキの上に置き、残りを控え室に置く。その後、自分のデッキの一番上のカードを1枚公開する。これによりライブカードを公開した場合、このカードのスコアを+１する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る。その中から1枚までをデッキの上に置き、残りを控え室に置く。その後、自分のデッキの一番上のカードを1枚公開する。これによりライブカードを公開した場合、このカードのスコアを+１する。",
+        "structure": "Live start Nijigasaki member deck top loop",
+    },
+    {
+        "name": "live_start_hand_discard_blade_then_draw",
+        "literal": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これによりライブカードを控え室に置いた場合、さらにカードを1枚引く。",
+        "template": "{{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これによりライブカードを控え室に置いた場合、さらにカードを1枚引く。",
+        "structure": "Live start hand discard blade then draw",
+    },
+    {
+        "name": "toujyou_discard_two_livecards_opponent_choose",
+        "literal": "{{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。",
+        "template": "{{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。",
+        "structure": "Toujyou discard two livecards opponent choose",
+    },
+    {
+        "name": "toujyou_success_livecard_total_energy_active",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、エネルギーを2枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合、エネルギーを2枚アクティブにする。",
+        "structure": "Toujyou success livecard total energy active",
+    },
+    {
+        "name": "live_start_aqours_heart_disable_success",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる『Aqours』のメンバーが持つハートに、{{heart_02.png|heart02}}が合計6個以上ある場合、このカードの{{live_success.png|ライブ成功時}}能力を無効にする。{{live_success.png|ライブ成功時}}相手は、エネルギーデッキからエネルギーカードを1枚ウェイト状態で置く。",
+        "structure": "Live start Aqours heart disable success",
+    },
+    {
+        "name": "jyouji_cost10_liella_hand_cost_reduce",
+        "literal": "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。",
+        "template": "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。",
+        "structure": "Jyouji cost10 Liella hand cost reduce",
+    },
+    {
+        "name": "toujyou_or_live_start_center_wait_bibi",
+        "literal": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる場合のみ発動する。）",
+        "template": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい：相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる場合のみ発動する。）",
+        "structure": "Toujyou or live start center wait BiBi",
+    },
+    {
+        "name": "kidou_turn1_three_discard_musica",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。",
+        "structure": "Kidou turn1 three discard musica",
+    },
+    {
+        "name": "toujyou_hand_discard_opponent_wait_two",
+        "literal": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "template": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "structure": "Toujyou hand discard opponent wait two",
+    },
+    {
+        "name": "live_success_wait_member_score_plus",
+        "literal": "{{live_success.png|ライブ成功時}}自分のステージにいるウェイト状態のメンバー1人につき、このカードのスコアを+１する。",
+        "template": "{{live_success.png|ライブ成功時}}自分のステージにいるウェイト状態のメンバー1人につき、このカードのスコアを+１する。",
+        "structure": "Live success wait member score plus",
+    },
+    {
+        "name": "kidou_energy_hand_blade_gain",
+        "literal": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
+        "template": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く：カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る。この能力は、このカードが手札にある場合のみ起動できる。",
+        "structure": "Kidou energy hand blade gain",
+    },
+    {
+        "name": "live_start_nijigasaki_name_different_score_plus",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを+２する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいる名前の異なる『蓮ノ空』のメンバー1人につき、このカードのスコアを+２する。",
+        "structure": "Live start nijigasaki name different score plus",
+    },
+    {
+        "name": "kidou_turn1_energy_zone_move_energy_two_active",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：エネルギーを2枚アクティブにする。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：エネルギーを2枚アクティブにする。",
+        "structure": "Kidou turn1 energy zone move energy two active",
+    },
+    {
+        "name": "toujyou_wait_printemps_energy_active",
+        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のステージにいる『Printemps』のメンバー1人につき、エネルギーを1枚アクティブにする。",
+        "structure": "Toujyou wait Printemps energy active",
+    },
+    {
+        "name": "jyouji_left_side_three_hearts",
+        "literal": "{{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
+        "template": "{{jyouji.png|常時}}【左サイド】{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。",
+        "structure": "Jyouji left side three hearts",
+    },
+    {
+        "name": "jyouji_right_side_three_hearts",
+        "literal": "{{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_05.png|heart05}}を得る。",
+        "template": "{{jyouji.png|常時}}【右サイド】{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_05.png|heart05}}を得る。",
+        "structure": "Jyouji right side three hearts",
+    },
+    {
+        "name": "toujyou_or_live_start_energy_payment_select_one",
+        "literal": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。",
+        "template": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。",
+        "structure": "Toujyou or live start energy payment select one",
+    },
+    {
+        "name": "jyouji_center_area_blade_five",
+        "literal": "{{jyouji.png|常時}}ステージのセンターエリアにいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jyouji.png|常時}}ステージのセンターエリアにいる場合、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jyouji center area blade five",
+    },
+    {
+        "name": "jidou_no_live_cards_reveal_redo_ally_blades",
+        "literal": "{{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。",
+        "template": "{{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた場合、そのエールで得たブレードハートを失い、もう一度エールを行う。",
+        "structure": "Jidou no live cards reveal redo ally blades",
+    },
+    {
+        "name": "toujyou_three_look_one_add",
+        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加える。残りを控え室に置く。",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにし、手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加える。残りを控え室に置く。",
+        "structure": "Toujyou three look one add",
+    },
+    {
+        "name": "toujyou_score_total_three_plus_public_mu",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、自分のデッキの上からカードを5枚見る。その中から『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "structure": "Toujyou score total three plus public mu",
+    },
+    {
+        "name": "live_start_success_card_total_heart_reduce",
+        "literal": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
+        "template": "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる。",
+        "structure": "Live start success card total heart reduce",
+    },
+    {
+        "name": "kidou_turn1_shuffle_six_active_energy",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く：エネルギーを6枚までアクティブにする。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く：エネルギーを6枚までアクティブにする。",
+        "structure": "Kidou turn1 shuffle six active energy",
+    },
+    {
+        "name": "jyouji_live_cards_no_live_start_no_live_success_gain",
+        "literal": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
+        "template": "{{jyouji.png|常時}}自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがあるかぎり、{{heart_06.png|heart06}}{{heart_06.png|heart06}}を得る。",
+        "structure": "Jyouji live cards no live start no live success gain",
+    },
+    {
+        "name": "toujyou_other_5yncri5e_member_draw",
+        "literal": "{{toujyou.png|登場}}自分のステージにほかの『5yncri5e!』のメンバーがいる場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分のステージにほかの『5yncri5e!』のメンバーがいる場合、カードを1枚引く。",
+        "structure": "Toujyou other 5yncri5e member draw",
+    },
+    {
+        "name": "toujyou_hand_livecard_discard_draw3",
+        "literal": "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
+        "template": "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
+        "structure": "Toujyou hand livecard discard draw3",
+    },
+    {
+        "name": "toujyou_hand_livecard_discard_draw3_quoted",
+        "literal": "\"{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
+        "template": "\"{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい：カードを3枚引く。",
+        "structure": "Toujyou hand livecard discard draw3 quoted",
+    },
+    {
+        "name": "toujyou_success_total_score_draw",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にあるカードのスコアの合計が３以上の場合、カードを1枚引く。",
+        "structure": "Toujyou success total score draw",
+    },
+    {
+        "name": "kidou_turn1_energy_to_under_member_draw_bladeheart",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：カードを1枚引き、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く：カードを1枚引き、ライブ終了時まで、{{heart_01.png|heart01}}を得る。",
+        "structure": "Kidou turn1 energy to under member draw bladeheart",
+    },
+    {
+        "name": "toujyou_this_turn_other_member_moved_draw",
+        "literal": "{{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}このターン、自分のステージにいるほかのメンバーがエリアを移動している場合、カードを1枚引く。",
+        "structure": "Toujyou this turn other member moved draw",
+    },
+    {
+        "name": "live_success_member_heart_total_more_draw",
+        "literal": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+１する。",
+        "template": "{{live_success.png|ライブ成功時}}自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合、このカードのスコアを+１する。",
+        "structure": "Live success member heart total more draw",
+    },
+    {
+        "name": "live_start_center_member_cost_higher_score_plus",
+        "literal": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+１する。",
+        "template": "{{live_start.png|ライブ開始時}}自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合、このカードのスコアを+１する。",
+        "structure": "Live start center member cost higher score plus",
+    },
+    {
+        "name": "live_start_cost_total_less_draw_one",
+        "literal": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。",
+        "template": "{{live_start.png|ライブ開始時}}自分のステージにいるメンバーのコストの合計が相手より低い場合、カードを1枚引く。",
+        "structure": "Live start cost total less draw one",
+    },
+    {
+        "name": "kidou_turn1_three_discard_position_change",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "structure": "Kidou turn1 three discard position change",
+    },
+    {
+        "name": "jidou_cost10_member_draw",
+        "literal": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のステージにコスト10のメンバーが登場したとき、カードを1枚引く。",
+        "structure": "Jidou cost10 member draw",
+    },
+    {
+        "name": "toujyou_mia_taylor_blade_match",
+        "literal": "{{toujyou.png|登場}}相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持つハートの中に同じ色のハートがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。それぞれのメンバーのコストが同じ場合、元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う。",
+        "template": "{{toujyou.png|登場}}相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持つハートの中に同じ色のハートがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。それぞれのメンバーのコストが同じ場合、元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う。",
+        "structure": "Toujyou Mia Taylor blade match",
+    },
+    {
+        "name": "kidou_turn1_show_all_hand_search_live",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札をすべて公開する：自分のステージにほかのメンバーがおり、かつこれにより公開した手札の中にライブカードがない場合、自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札をすべて公開する：自分のステージにほかのメンバーがおり、かつこれにより公開した手札の中にライブカードがない場合、自分のデッキの上からカードを5枚見る。その中からライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+        "structure": "Kidou turn1 show all hand search live",
+    },
+    {
+        "name": "live_success_greater_heart_member_draw",
+        "literal": "{{live_success.png|ライブ成功時}}自分のステージに、元々持つハートの数より多い数のハートを持つメンバーがいる場合、カードを1枚引く。",
+        "template": "{{live_success.png|ライブ成功時}}自分のステージに、元々持つハートの数より多い数のハートを持つメンバーがいる場合、カードを1枚引く。",
+        "structure": "Live success greater heart member draw",
+    },
+    {
+        "name": "toujyou_energy_under_member_draw",
+        "literal": "{{toujyou.png|登場}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを2枚引く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+        "template": "{{toujyou.png|登場}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを2枚引く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+        "structure": "Toujyou energy under member draw",
+    },
+    {
+        "name": "opponent_card_effect_activation_note",
+        "literal": "(対戦相手のカードの効果でも発動する。)",
+        "template": "(対戦相手のカードの効果でも発動する。)",
+        "structure": "Opponent card effect activation note",
+    },
+    {
+        "name": "live_success_aqours_member_draw_discard",
+        "literal": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバー1人につき、カードを1枚引く。その後、これにより引いた枚数と同じ枚数を手札から控え室に置く。",
+        "template": "{{live_success.png|ライブ成功時}}自分のステージにいる『Aqours』のメンバー1人につき、カードを1枚引く。その後、これにより引いた枚数と同じ枚数を手札から控え室に置く。",
+        "structure": "Live success Aqours member draw discard",
+    },
+    {
+        "name": "kidou_nijigasaki_member_wait_draw",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする：カードを1枚引く。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする：カードを1枚引く。",
+        "structure": "Kidou nijigasaki member wait draw",
+    },
+    {
+        "name": "kidou_nijigasaki_member_wait_draw_quoted",
+        "literal": "\"{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする：カードを1枚引く。",
+        "template": "\"{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする：カードを1枚引く。",
+        "structure": "Kidou nijigasaki member wait draw quoted",
+    },
+    {
+        "name": "toujyou_wait_printemps_draw_discard",
+        "literal": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：カードを1枚引く。その後、このメンバーが『Printemps』のメンバーからバトンタッチして登場していないかぎり、手札を1枚控え室に置く。",
+        "template": "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：カードを1枚引く。その後、このメンバーが『⟦GROUP⟧』のメンバーからバトンタッチして登場していないかぎり、手札を1枚控え室に置く。",
+        "structure": "Toujyou wait Printemps draw discard",
+    },
+    {
+        "name": "jidou_opponent_stage_active_cost4_wait_draw",
+        "literal": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以下のメンバーがウェイト状態になったとき、カードを1枚引く。",
+        "template": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、相手のステージにいるアクティブ状態のコスト4以下のメンバーがウェイト状態になったとき、カードを1枚引く。",
+        "structure": "Jidou opponent stage active cost 4 wait draw",
+    },
+    {
+        "name": "toujyou_saintsnow_energy_payment_blade_gain",
+        "literal": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『SaintSnow』のカードを1枚手札に加える。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：自分の控え室から『⟦GROUP⟧』のカードを1枚手札に加える。そうした場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Toujyou SaintSnow energy payment blade gain",
+    },
+    {
+        "name": "live_start_bottom_two_cards_draw_heart_score",
+        "literal": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード⟦NUMBER⟧枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、⟦NUMBER⟧の場合、カードを1枚引く。合計が⟦NUMBER⟧の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が⟦NUMBER⟧の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Live start bottom two cards draw heart score",
+    },
+    {
+        "name": "bullet_energy_activate",
+        "literal": "・エネルギーを1枚アクティブにする。",
+        "template": "・エネルギーを1枚アクティブにする。",
+        "structure": "Bullet energy activate",
+    },
+    {
+        "name": "kidou_show_livecard_opponent_discard_four_blades",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のライブカードを1枚公開する：相手は手札を1枚控え室に置いてもよい。そうしなかった場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のライブカードを1枚公開する：相手は手札を1枚控え室に置いてもよい。そうしなかった場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Kidou show livecard opponent discard four blades",
+    },
+    {
+        "name": "toujyou_select_one_from_below",
+        "literal": "{{toujyou.png|登場}}以下から1つを選ぶ。",
+        "template": "{{toujyou.png|登場}}以下から1つを選ぶ。",
+        "structure": "Toujyou select one from below",
+    },
+    {
+        "name": "toujyou_lower_cost_dollchestra_batonpass_blade_gain",
+        "literal": "{{toujyou.png|登場}}このメンバーよりコストが低い『DOLLCHESTRA』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{toujyou.png|登場}}このメンバーよりコストが低い『⟦GROUP⟧』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Toujyou lower cost DOLLCHESTRA batonpass blade gain",
+    },
+    {
+        "name": "toujyou_top_four_discard_livecard_blade_gain",
+        "literal": "{{toujyou.png|登場}}自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{toujyou.png|登場}}自分のデッキの上からカードを⟦NUMBER⟧枚控え室に置く。それらの中にライブカードがある場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Toujyou top four discard livecard blade gain",
+    },
+    {
+        "name": "toujyou_draw_discard_one",
+        "literal": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+        "template": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+        "structure": "Toujyou draw discard one",
+    },
+    {
+        "name": "toujyou_energy_two_active",
+        "literal": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+        "template": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+        "structure": "Toujyou energy two active",
+    },
+    {
+        "name": "toujyou_top_five_discard",
+        "literal": "{{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。",
+        "template": "{{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。",
+        "structure": "Toujyou top five discard",
+    },
+    {
+        "name": "toujyou_lower_cost_mirakurapark_batonpass_hearts",
+        "literal": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『みらくらぱーく！』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る。",
+        "template": "{{toujyou.png|登場}}{{icon_energy.png|E}}支払ってもよい：このメンバーよりコストが低い『⟦GROUP⟧』のメンバーからバトンタッチして登場した場合、ライブ終了時まで、{{heart_01.png|heart01}}{{heart_01.png|heart01}}を得る。",
+        "structure": "Toujyou lower cost Mirakurapark batonpass hearts",
+    },
+    {
+        "name": "jyouji_batonpass_cannot_discard",
+        "literal": "{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。",
+        "template": "{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。",
+        "structure": "Jyouji batonpass cannot discard",
+    },
+    {
+        "name": "toujyou_member_cost_13_draw",
+        "literal": "{{toujyou.png|登場}}自分のステージにコスト13以上のメンバーがいる場合、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分のステージにコスト13以上のメンバーがいる場合、カードを1枚引く。",
+        "structure": "Toujyou member cost 13 draw",
+    },
+    {
+        "name": "toujyou_energy_six_draw",
+        "literal": "{{toujyou.png|登場}}自分のエネルギー6枚につき、カードを1枚引く。",
+        "template": "{{toujyou.png|登場}}自分のエネルギー6枚につき、カードを1枚引く。",
+        "structure": "Toujyou energy six draw",
+    },
+    {
+        "name": "kidou_discard_two_add_mu_livecard_score6",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が６以上の場合のみ起動できる。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が⟦NUMBER⟧以上の場合のみ起動できる。",
+        "structure": "Kidou discard two add mu livecard score 6",
+    },
+    {
+        "name": "kidou_discard_two_add_mu_livecard_score7",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が７以上の場合のみ起動できる。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を2枚控え室に置く：自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力は、自分の成功ライブカード置き場にあるカードのスコアの合計が⟦NUMBER⟧以上の場合のみ起動できる。",
+        "structure": "Kidou discard two add mu livecard score 7",
+    },
+    {
+        "name": "jidou_stage_member_live_start_havent_heart_gain",
+        "literal": "{{jidou.png|自動}}自分のステージにいるメンバーの{{live_start.png|ライブ開始時}}能力が解決するたび、そのメンバーが{{icon_all.png|ハート}}を持たない場合、ライブ終了時まで、そのメンバーは{{icon_all.png|ハート}}を得る。",
+        "template": "{{jidou.png|自動}}自分のステージにいるメンバーの{{live_start.png|ライブ開始時}}能力が解決するたび、そのメンバーが{{icon_all.png|ハート}}を持たない場合、ライブ終了時まで、そのメンバーは{{icon_all.png|ハート}}を得る。",
+        "structure": "Jidou stage member live start havent heart gain",
+    },
+    {
+        "name": "live_start_double_score_gain_quote",
+        "literal": "{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Live start double score gain quote",
+    },
+    {
+        "name": "jyouji_landonno_stage_all_names_score_plus_quote",
+        "literal": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Jyouji landonno stage all names score plus quote",
+    },
+    {
+        "name": "live_start_stage_double_score_gain_quote",
+        "literal": "{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{live_start.png|ライブ開始時}}このターン、自分のステージにメンバーが2回以上登場している場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Live start stage double score gain quote",
+    },
+    {
+        "name": "toujyou_success_score_one_or_less_quote",
+        "literal": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{toujyou.png|登場}}自分の成功ライブカード置き場にカードが1枚以上あり、かつスコアの合計が１以下の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Toujyou success score one or less quote",
+    },
+    {
+        "name": "live_start_cost_public_gain_quote",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、⟦NUMBER⟧、⟦NUMBER⟧、⟦NUMBER⟧、⟦NUMBER⟧、⟦NUMBER⟧のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Live start cost public gain quote",
+    },
+    {
+        "name": "kidou_center_turn1_wait_score_plus_quote",
+        "literal": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+        "template": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+        "structure": "Kidou center turn1 wait score plus quote",
+    },
+    {
+        "name": "live_success_aqours_all_stage_score_plus_quote",
+        "literal": "{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。",
+        "template": "{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。",
+        "structure": "Live success Aqours all stage score plus quote",
+    },
+    {
+        "name": "kidou_turn1_energy_hand_public_live_quote",
+        "literal": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の手札を、相手は見ないで1枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時まで、このメンバーは「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "template": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の手札を、相手は見ないで1枚選び公開する。これにより公開されたカードがライブカードの場合、ライブ終了時まで、このメンバーは「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "structure": "Kidou turn1 energy hand public live quote",
+    },
+    {
+        "name": "live_success_member_heart_more_energy_wait_quote",
+        "literal": "{{live_success.png|ライブ成功時}}このターン、自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+        "template": "{{live_success.png|ライブ成功時}}このターン、自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる場合、自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。",
+        "structure": "Live success member heart more energy wait quote",
+    },
+]
+
+FAMILY_PATTERNS = [
+    {
+        "name": "live_start_any_blade_gain",
+        "prefix": "{{live_start.png|ライブ開始時}}",
+        "contains": ["{{icon_blade.png|ブレード}}を得る。"],
+        "suffix": "{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{live_start.png|ライブ開始時}}…{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Live start any blade gain",
+    },
+    {
+        "name": "live_start_any_heart_gain",
+        "prefix": "{{live_start.png|ライブ開始時}}",
+        "contains": ["{{heart_"],
+        "suffix": "を得る。",
+        "template": "{{live_start.png|ライブ開始時}}…{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Live start any heart gain",
+    },
+    {
+        "name": "jidou_any_blade_gain",
+        "prefix": "{{jidou.png|自動}}",
+        "contains": ["{{icon_blade.png|ブレード}}を得る。"],
+        "suffix": "{{icon_blade.png|ブレード}}を得る。",
+        "template": "{{jidou.png|自動}}…{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Jidou any blade gain",
+    },
+    {
+        "name": "jidou_any_heart_gain",
+        "prefix": "{{jidou.png|自動}}",
+        "contains": ["{{heart_"],
+        "suffix": "を得る。",
+        "template": "{{jidou.png|自動}}…{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Jidou any heart gain",
+    },
+    {
+        "name": "toujyou_draw_then_followup",
+        "prefix": "{{toujyou.png|登場}}カードを1枚引く。",
+        "contains": ["その後、"],
+        "suffix": "移動する。",
+        "template": "{{toujyou.png|登場}}カードを1枚引く。その後、…移動する。",
+        "structure": "Toujyou draw then followup",
+    },
+    {
+        "name": "bullet_blade_gain",
+        "prefix": "・",
+        "contains": ["{{icon_blade.png|ブレード}}を得る。"],
+        "suffix": "{{icon_blade.png|ブレード}}を得る。",
+        "template": "・…{{icon_blade.png|ブレード}}を得る。",
+        "structure": "Bullet blade gain",
+    },
+    {
+        "name": "bullet_heart_gain",
+        "prefix": "・",
+        "contains": ["{{heart_"],
+        "suffix": "を得る。",
+        "template": "・…{{heart_XX.png|heartXX}}を得る。",
+        "structure": "Bullet heart gain",
+    },
+    {
+        "name": "live_start_energy_payment_gain",
+        "prefix": "{{live_start.png|ライブ開始時}}",
+        "contains": ["支払ってもよい：", "ライブ終了時まで、"],
+        "suffix": "を得る。",
+        "template": "{{live_start.png|ライブ開始時}}…支払ってもよい：…ライブ終了時まで、…を得る。",
+        "structure": "Live start energy payment gain",
+    },
+]
 
 import json
 import re
@@ -1797,93 +2779,6 @@ def group_unique_abilities(abilities: list[dict[str, Any]]) -> list[dict[str, An
     return list(unique_abilities.values())
 
 
-def recursively_decompose_variable(variable_text: str, dsl_patterns: list[dict[str, Any]], depth: int = 0, max_depth: int = 10) -> dict[str, Any]:
-    """
-    Recursively decompose a variable text using patterns until atomic level.
-    Excludes generic patterns that don't lead to atomic decomposition.
-    Returns decomposition tree.
-    """
-    if depth >= max_depth or len(variable_text) < 2:
-        return {
-            "text": variable_text,
-            "atomic": True,
-            "decomposition": None
-        }
-    
-    # Generic patterns to exclude from recursive decomposition
-    generic_patterns = {
-        'clause_comma',
-        'sentence_period',
-        'comma_period',
-        'colon_action',
-        'parenthetical_note',
-    }
-    
-    # Track which positions are already covered
-    covered_positions = [False] * len(variable_text)
-    matches = []
-    
-    for pattern in dsl_patterns:
-        # Skip generic patterns in recursive decomposition
-        if pattern["name"] in generic_patterns:
-            continue
-        
-        for match in re.finditer(pattern["regex"], variable_text):
-            match_start = match.start()
-            match_end = match.end()
-            
-            # Check if already covered
-            already_covered = False
-            for i in range(match_start, match_end):
-                if i < len(covered_positions) and covered_positions[i]:
-                    already_covered = True
-                    break
-            
-            if already_covered:
-                continue
-            
-            variables = list(match.groups())
-            matches.append({
-                "pattern_name": pattern["name"],
-                "structure": pattern["structure"],
-                "template": pattern["template"],
-                "matched_text": match.group(0),
-                "start": match.start(),
-                "end": match.end(),
-                "variables": variables,
-            })
-            
-            # Mark as covered
-            for i in range(match_start, match_end):
-                if i < len(covered_positions):
-                    covered_positions[i] = True
-    
-    if not matches:
-        return {
-            "text": variable_text,
-            "atomic": True,
-            "decomposition": None
-        }
-    
-    # Recursively decompose each variable
-    decomposed_variables = []
-    for match in matches:
-        decomposed_vars = []
-        for var in match["variables"]:
-            var_decomp = recursively_decompose_variable(var, dsl_patterns, depth + 1, max_depth)
-            decomposed_vars.append(var_decomp)
-        decomposed_variables.append({
-            "match": match,
-            "decomposed_variables": decomposed_vars
-        })
-    
-    return {
-        "text": variable_text,
-        "atomic": False,
-        "decomposition": decomposed_variables
-    }
-
-
 def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
     dsl_patterns = DSL_PATTERNS
 
@@ -1905,12 +2800,108 @@ def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
         
         # Track which positions are already covered by longer patterns
         covered_positions = [False] * len(text)
-        
+
+        def expand_match_span(start, end):
+            """Include obvious wrapper characters around a matched clause."""
+            while start >= 2 and text[start - 2:start] == "{{":
+                start -= 2
+            while start > 0 and text[start - 1] in {'・', '"', '「', '（', '('}:
+                start -= 1
+            while end < len(text) and text[end] in {'、', '：', '。', '）', ')', '』', '"', '」'}:
+                end += 1
+            for tail in ("を得る。", "を失う。", "を得る", "を失う"):
+                if text.startswith(tail, end):
+                    end += len(tail)
+                    break
+            return start, end
+
+        for pattern in LITERAL_PATTERNS:
+            literal = pattern["literal"]
+            match_start = text.find(literal)
+            if match_start == -1:
+                continue
+
+            match_end = match_start + len(literal)
+            match_start, match_end = expand_match_span(match_start, match_end)
+            already_covered = False
+            for i in range(match_start, match_end):
+                if i < len(covered_positions) and covered_positions[i]:
+                    already_covered = True
+                    break
+            if already_covered:
+                continue
+
+            matches.append({
+                "pattern_name": pattern["name"],
+                "structure": pattern["structure"],
+                "template": pattern["template"],
+                "matched_text": text[match_start:match_end],
+                "start": match_start,
+                "end": match_end,
+                "variables": [],
+            })
+            pattern_counts[pattern["name"]] += 1
+            if pattern["name"] not in pattern_variables:
+                pattern_variables[pattern["name"]] = []
+            pattern_variables[pattern["name"]].append([])
+            for i in range(match_start, match_end):
+                if i < len(covered_positions):
+                    covered_positions[i] = True
+
+        for pattern in FAMILY_PATTERNS:
+            prefix = pattern["prefix"]
+            start = text.find(prefix)
+            if start == -1:
+                continue
+
+            end_search_start = start + len(prefix)
+            suffix = pattern["suffix"]
+            end = text.find(suffix, end_search_start)
+            if end == -1:
+                continue
+            end += len(suffix)
+
+            contains_ok = True
+            for needle in pattern.get("contains", []):
+                if needle not in text[start:end]:
+                    contains_ok = False
+                    break
+            if not contains_ok:
+                continue
+
+            start, end = expand_match_span(start, end)
+
+            already_covered = False
+            for i in range(start, end):
+                if i < len(covered_positions) and covered_positions[i]:
+                    already_covered = True
+                    break
+            if already_covered:
+                continue
+
+            matches.append({
+                "pattern_name": pattern["name"],
+                "structure": pattern["structure"],
+                "template": pattern["template"],
+                "matched_text": text[start:end],
+                "start": start,
+                "end": end,
+                "variables": [],
+            })
+            pattern_counts[pattern["name"]] += 1
+            if pattern["name"] not in pattern_variables:
+                pattern_variables[pattern["name"]] = []
+            pattern_variables[pattern["name"]].append([])
+            for i in range(start, end):
+                if i < len(covered_positions):
+                    covered_positions[i] = True
+
         for pattern in dsl_patterns:
             for match in re.finditer(pattern["regex"], text):
                 # Check if this match overlaps with already-covered positions
                 match_start = match.start()
                 match_end = match.end()
+                match_start, match_end = expand_match_span(match_start, match_end)
                 
                 # Check if any position in this match is already covered
                 already_covered = False
@@ -1926,21 +2917,14 @@ def match_dsl_patterns(texts: list[dict[str, Any]]) -> dict[str, Any]:
                 # This match is not covered, so add it and mark positions as covered
                 variables = list(match.groups())
                 
-                # Recursively decompose variables
-                decomposed_vars = []
-                for var in variables:
-                    var_decomp = recursively_decompose_variable(var, dsl_patterns)
-                    decomposed_vars.append(var_decomp)
-                
                 matches.append({
                     "pattern_name": pattern["name"],
                     "structure": pattern["structure"],
                     "template": pattern["template"],
-                    "matched_text": match.group(0),
-                    "start": match.start(),
-                    "end": match.end(),
+                    "matched_text": text[match_start:match_end],
+                    "start": match_start,
+                    "end": match_end,
                     "variables": variables,
-                    "decomposed_variables": decomposed_vars,
                 })
                 pattern_counts[pattern["name"]] += 1
 
@@ -2210,3 +3194,4 @@ if __name__ == "__main__":
         print("=" * 80)
 
     extract_abilities(cards_file, rules_file, output_file, metadata_file)
+
