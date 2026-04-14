@@ -23,12 +23,14 @@ use std::time::Instant;
 
 pub struct ResponseGenerator;
 
+#[inline]
 fn optional_skip_is_available(pi: &PendingInteraction) -> bool {
     pi.filter.is_optional
         || (pi.filter_attr & FILTER_IS_OPTIONAL) != 0
         || pi.choice_type == ChoiceType::Optional
 }
 
+#[inline]
 fn add_cards_matching_filter<R: ActionReceiver + ?Sized>(
     state: &GameState,
     db: &CardDatabase,
@@ -45,6 +47,7 @@ fn add_cards_matching_filter<R: ActionReceiver + ?Sized>(
     }
 }
 
+#[inline]
 fn add_indexed_actions<R, F>(receiver: &mut R, count: usize, base_action: i32, mut include: F)
 where
     R: ActionReceiver + ?Sized,
@@ -57,6 +60,7 @@ where
     }
 }
 
+#[inline]
 fn add_stage_slot_actions<R: ActionReceiver + ?Sized>(
     receiver: &mut R,
     player: &crate::core::logic::player::PlayerState,
@@ -70,10 +74,12 @@ fn add_stage_slot_actions<R: ActionReceiver + ?Sized>(
     }
 }
 
+#[inline]
 fn add_optional_done<R: ActionReceiver + ?Sized>(receiver: &mut R) {
     receiver.add_action((ACTION_BASE_CHOICE + CHOICE_DONE as i32) as usize);
 }
 
+#[inline]
 fn add_optional_done_if_available<R: ActionReceiver + ?Sized>(
     receiver: &mut R,
     pi: &PendingInteraction,
@@ -83,6 +89,7 @@ fn add_optional_done_if_available<R: ActionReceiver + ?Sized>(
     }
 }
 
+#[inline]
 fn add_matching_stage_actions<R: ActionReceiver + ?Sized>(
     receiver: &mut R,
     state: &GameState,
@@ -1411,17 +1418,16 @@ impl ResponseGenerator {
                 )
         });
 
-        if let Some((follow_up_filter, _heart_color_idx)) = targeted_live_heart_bonus {
-            if add_matching_stage_actions(
-                receiver,
-                state,
-                db,
-                &state.players[p_idx],
-                follow_up_filter,
-                &pi.ctx,
-                true,
-            ) {
-                add_optional_done(receiver);
+        if let Some((filter_attr, _heart_color_idx)) = targeted_live_heart_bonus {
+            let mut added_any = false;
+            for (i, &cid) in state.players[p_idx].stage.iter().enumerate() {
+                if cid >= 0 && state.card_matches_filter_with_ctx(db, cid, filter_attr, &pi.ctx) {
+                    receiver.add_action((ACTION_BASE_STAGE_SLOTS + i as i32) as usize);
+                    added_any = true;
+                }
+            }
+            if added_any {
+                receiver.add_action(0);
                 return;
             }
         }
