@@ -1,207 +1,9 @@
 ﻿#!/usr/bin/env python3
-"""
-Build clause skeletons by removing replaceable game-language pieces.
 
-================================================================================
-ORGANIZATION: Game Mechanics Structure (unified with rules.txt)
-================================================================================
-
-This script is organized following the LoveCA game mechanics hierarchy, similar
-to the official rules.txt structure. Instead of alphabetical or random ordering,
-patterns are grouped by game systems that players actually use:
-
-1. ATOMIC ELEMENTS & DURATION
-   - Duration modifiers (永続、ライブ終了時まで、このターン)
-   - Optionality (てもよい)
-   - Basic trigger identification
-
-2. CARD INFORMATION & IDENTIFICATION
-   - Card types: MEMBER, LIVE, ENERGY
-   - Groups: μ's, Aqours, 虹ヶ咲, Liella!, etc.
-   - Positioning: 左サイド, センター, 右サイド
-   - Icon patterns (triggers)
-
-3. ZONE-BASED OPERATIONS (Zones: DECK, HAND, DISCARD, STAGE, ENERGY_ZONE)
-   - To zones: デッキ、手札、控え室、ステージ、エネルギー置き場
-   - From zones: 〜から、〜の上から
-   - Zone movements and transfers
-
-4. STATE MANAGEMENT
-   - State changes: ウェイト状態、アクティブ
-   - Member movement and positioning
-   - Area-specific placements
-
-5. RESOURCE SYSTEMS
-   - Score: gain, modify, compare (⊕スコア)
-   - Hearts: cost reduction, possession (ハート)
-   - Blades: gain, modify (ブレード)
-   - Energy: place, discard, activate (エネルギー)
-
-6. DRAW & SEARCH MECHANICS
-   - Look at cards (見る)
-   - Reveal and add to hand (公開して加える)
-   - Select from options (選ぶ)
-   - Multi-step reveal operations
-
-7. CONDITIONS & FILTERING
-   - Presence: group, character, card type, name (〜がいる)
-   - Counts: members, cards, zones (〜枚以上)
-   - Thresholds: cost, score, energy (コスト〜以上)
-   - Comparisons: relative to opponent (相手より)
-
-8. SPECIAL EFFECTS & ADVANCED MECHANICS
-   - Ability granting (能力を得る)
-   - Ability disabling (能力を無効にする)
-   - Cost-effect operations (コストを払ってから)
-   - Duration effects (ライブ終了時まで)
-   - Trigger-based mechanics
-
-9. COMPLEX ACTIONS & MULTI-STEP OPERATIONS
-   - Multi-card staging with cost limits
-   - Reorder and shuffle operations
-   - Opponent choices and decisions
-   - Batontouch and movement triggers
-   - Score non-zero conditions
-
-10. FALLBACK PATTERNS
-    - Fragment patterns for edge cases
-    - Generic catch-alls for parsing gaps
-    - Parenthetical notes and modifiers
-
-================================================================================
-DSL APPROACH: Treat ability text as a domain-specific language for game mechanics.
-
-Card game abilities have set structures like a programming language - less complex
-than a general-purpose language but more structured than prose. This script analyzes
-ability text to identify these language structures and compress them.
-
-INFORMATION THEORY GOAL: Represent abilities in as few patterns as possible without losing meaning.
-- Abilities are not random text - they follow structured patterns (syntax)
-- Game mechanics provide semantic meaning (semantics)
-- By identifying the DSL structures, we can compress abilities into patterns
-- Instead of storing N unique text strings, we store 1 pattern template + M variable parameters
-- Goal: Maximize pattern reuse while preserving all game mechanics and meaning
-
-LANGUAGE STRUCTURES TO IDENTIFY:
-- Triggers (when the ability fires)
-- Conditions (when the effect applies)
-- Costs (what must be paid)
-- Effects (what happens)
-- Targets (what is affected)
-- Values (numbers, card types, groups, zones)
-
-This represents abilities in the minimal number of patterns without losing meaning.
-
-================================================================================
-PATTERN FORMAT SPECIFICATION
-================================================================================
-
-Each DSL pattern follows a standard dictionary structure with four fields:
-
-    {
-        "name": "pattern_identifier",
-        "regex": r"regex with capture groups for variable parts",
-        "template": "⟦PLACEHOLDER⟧ literal text ⟦PLACEHOLDER⟧",
-        "structure": "Category - Human-readable description",
-    }
-
-GOAL: Compress the ability text corpus into as few phrases as possible while
-keeping all information. Every game term should be replaceable with a placeholder.
-
-TEMPLATE PLACEHOLDER NAMING CONVENTIONS:
-- ⟦X⟧, ⟦Y⟧, ⟦N⟧          - Numbers, counts, quantities
-- ⟦SOURCE⟧               - Origin zone, card source, or subject
-- ⟦DESTINATION⟧          - Target zone or where something goes
-- ⟦UNIT⟧                - Unit of measurement (cards, members, energy)
-- ⟦EFFECT⟧              - The resulting effect or consequence
-- ⟦CONDITION⟧           - Trigger condition or prerequisite
-- ⟦FILTER⟧              - Card type filter, group restriction
-- ⟦GROUP⟧               - Group name (μ's, Aqours, etc.)
-- ⟦CHARACTER⟧           - Specific character name
-- ⟦CARD_TYPE⟧           - Member, Live, Energy card types
-- ⟦ZONE⟧                - Deck, Hand, Stage, Discard, etc.
-- ⟦AREA⟧                - Left, Center, Right stage positions
-- ⟦RESOURCE⟧            - Score, Heart, Blade, Energy
-- ⟦DURATION⟧            - Turn, Live end, Permanent
-- ⟦TRIGGER⟧             - Icon trigger ({{icon.png|name}})
-- ⟦ACTION⟧              - Generic action verb
-- \\⟦TEXT\\⟧               - Fallback for unstructured text
-
-PATTERN CONSOLIDATION STRATEGY:
-1. Identify common structures across multiple ability texts
-2. Replace variable parts (numbers, card names, groups) with capture groups
-3. Create template using ⟦PLACEHOLDER⟧ syntax for each capture group
-4. Place more specific patterns BEFORE generic fallback patterns in the list
-5. Use atomic patterns for repeated elements (see ATOMIC ELEMENTS section below)
-
-EXAMPLE - Per-Unit Pattern:
-    Original ability text: "自分の控え室のエネルギーカード3枚につき、スコア+1"
-    Regex: r"([^。]+)の([^。]+)(\d+)枚につき、([^。]+)"
-    Template: "⟦SOURCE⟧の⟦UNIT⟧⟦X⟧枚につき、⟦EFFECT⟧"
-    Result: "自分の控え室のエネルギーカード" → "⟦SOURCE⟧の⟦UNIT⟧"
-             "3" → "⟦X⟧"
-             "スコア+1" → "⟦EFFECT⟧"
-
-This compresses hundreds of "per unit" variations into a single pattern.
-
-================================================================================
-ADDING NEW PATTERNS
-================================================================================
-
-When adding patterns:
-1. Place in the appropriate GAME MECHANICS section (see ORGANIZATION above)
-2. Order from MOST SPECIFIC to LEAST SPECIFIC within each section
-3. Use capture groups () for anything that varies between cards
-4. Keep regexes tight - use [^。]+ for "any chars except sentence end"
-5. Test that the pattern matches your target abilities without over-matching
-6. Document the structure field clearly for debugging
-
-FALLBACK PATTERNS:
-The final patterns in the list are "catch-all" patterns with regex r".+",
-which match anything not caught by earlier patterns. These ensure 100%
-coverage even if specific patterns miss edge cases.
-"""
 
 from __future__ import annotations
 
 import argparse
-# ============================================================================
-# IMPORTANT: Main Ability Extraction and DSL Pattern Matching Script
-# ============================================================================
-# This script extracts ability clauses from card data and matches them using
-# DSL (Domain-Specific Language) regex patterns to achieve compression.
-#
-# FILE STRUCTURE (organized by game mechanics, matching rules.txt):
-# - Lines 1-50: Module docstring (game mechanics organization guide)
-# - Lines 50-150: Imports and constants (card types, zones, triggers, etc.)
-# - Lines 150-300: Helper functions (discover_japanese_equivalents, nfkc, parse_trigger_effect)
-# - Lines 300-367: ABILITY_LEVEL_PATTERNS (special ability-level patterns)
-# - Lines 367-2240: CLAUSE-LEVEL DSL PATTERNS (organized by game systems):
-#
-#     ATOMIC ELEMENTS & DURATION (Lines 367-450)
-#     CARD INFORMATION & IDENTIFICATION (Lines 450-600)
-#     ZONE-BASED OPERATIONS (Lines 600-850)
-#     STATE MANAGEMENT (Lines 850-950)
-#     RESOURCE SYSTEMS (Lines 950-1150)
-#     DRAW & SEARCH MECHANICS (Lines 1150-1350)
-#     CONDITIONAL LOGIC & FILTERING (Lines 1350-1700)
-#     COMPLEX OPERATIONS & SPECIAL MECHANICS (Lines 1700-1900)
-#     FALLBACK & FRAGMENT PATTERNS (Lines 1900-2240)
-#
-# - Lines 2240-2370: match_dsl_patterns() - main pattern matching logic
-# - Lines 2950-3000: extract_abilities() - main extraction function
-# - Lines 3100-3120: main() - entry point
-#
-# KEY INSIGHT FOR ADDING NEW PATTERNS:
-# - DSL_PATTERNS are clause-level patterns
-# - These are ONLY used for generic abilities that don't match ABILITY_LEVEL_PATTERNS
-# - For generic abilities, the script extracts the trigger icon and matches the effect text
-#   against DSL_PATTERNS
-# - Results populate pattern_variables in abilities_extracted.json
-# - WHEN ADDING PATTERNS: Place them in the appropriate game mechanics section (not at random)
-#
-# USAGE: Run this to extract abilities and generate data/abilities_extracted.json
-# ============================================================================
 import json
 import re
 import unicodedata
@@ -211,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 
-# Semantic placeholder system - context-aware replacements
 SEMANTIC_PLACEHOLDERS = {
     # Numbers and quantities
     "number": "⟦N⟧",
@@ -235,8 +36,7 @@ SEMANTIC_PLACEHOLDERS = {
     "destination": "⟦DST⟧",
     "target": "⟦TGT⟧",
     "location": "⟦LOC⟧",
-    # Fallback
-    "text": "⟦TEXT⟧",
+
 }
 
 # Legacy support
@@ -251,145 +51,17 @@ NUMBER_RE = re.compile(
     r"(?:枚|人|つ|個|回|色|コスト|以上|以下|未満|まで|以下ある|以上ある)?"
 )
 
-# Mapping-based variable lists using English names from metadata.json
-# Japanese equivalents will be discovered by searching ability text
-
-# Card types (from metadata.json card_types)
-CARD_TYPES_EN = ["MEMBER", "LIVE", "ENERGY"]
-
-# Zones (from metadata.json zones)
-ZONES_EN = ["DECK", "ENERGY", "STAGE", "HAND", "DISCARD", "LIVE_SET", "SUCCESS_PILE", "YELL"]
-
-# Triggers (from metadata.json triggers)
-TRIGGERS_EN = ["ON_PLAY", "ON_LIVE_START", "ON_LIVE_SUCCESS", "TURN_START", "TURN_END", "CONSTANT", "ACTIVATED", "ON_LEAVES", "ON_REVEAL", "ON_POSITION_CHANGE", "ON_ABILITY_RESOLVE", "ON_ABILITY_SUCCESS", "ON_MOVE_TO_DISCARD", "ON_MEMBER_TAP"]
-
-# Group names (from metadata.json group_names - English)
-GROUP_NAMES_EN = ["MUSE", "AQOURS", "NIJIGASAKI", "LIELLA", "HASUNOSORA", "ARISE", "SAINT_SNOW", "SUNNY_PASSION", "MUSICAL", "OTHER"]
-
-# Unit names (from metadata.json unit_names - English)
-UNIT_NAMES_EN = ["PRINTEMPS", "LILY_WHITE", "BIBI", "CYARON", "AZALEA", "GUILTY_KISS", "DIVER_DIVA", "A_ZU_NA", "QU4RTZ", "R3BIRTH", "CATCHU", "KALEIDOSCORE", "SYNCRISE", "CERISE_BOUQUET", "DOLLCHESTRA", "MIRA_CRA_PARK", "EDEL_NOTE", "AISCREAM"]
-
-# Character names (from metadata.json character_ids - English)
-CHARACTER_NAMES_EN = ["HONOKA", "ELI", "KOTORI", "UMI", "RIN", "MAKI", "NOZOMI", "HANAYO", "NICO", "CHIKA", "RIKO", "KANAN", "DIA", "YOU", "YOSHIKO", "HANAMARU", "MARI", "RUBY", "AYUMU", "KASUMI", "SHIZUKU", "KARIN", "AI", "KANATA", "SETSUNA", "EMMA", "RINA", "SHIORIKO", "MIA", "LANZHU", "YU", "KANON", "KEKE", "CHISATO", "SUMIRE", "REN", "KINAKO", "MEI", "SHIKI", "NATSUMI", "MARGARETE", "TOMARI", "KAHO", "SAYAKA", "KOZUE", "TSUZURI", "RURINO", "MEGU", "GINKO", "KOSUZU", "HIME", "TSUBASA", "ERENA", "ANJU", "YUNA", "MAO", "SEIRA", "RIA"]
-
-# Heart icons (from ability text - represented as {{heart_XX.png}})
-HEART_ICONS_EN = ["HEART_00", "HEART_01", "HEART_02", "HEART_03", "HEART_04", "HEART_05", "HEART_06", "HEART_ALL"]
-
-# Positions (from metadata.json AREA_* constants, often in icons)
-POSITIONS_EN = ["LEFT", "CENTER", "RIGHT"]
-
-# States (derived from game mechanics)
-STATES_EN = ["WAIT", "ACTIVE"]
-
-# Resources (game mechanics terms)
-RESOURCES_EN = ["BLADE", "ENERGY", "SCORE", "HEART", "EXCESS_HEART", "REQUIRED_HEART", "COST"]
-
-# Mapping dictionary: English name -> Japanese text (to be discovered)
-# This will be populated by searching ability text
-TERM_MAPPING: dict[str, str] = {}
 
 
-def discover_japanese_equivalents(clauses: list[dict[str, Any]], metadata_file: Path) -> dict[str, Any]:
-    """Build mapping from manually curated terms based on actual ability text patterns."""
-    # Collect all ability text for searching
-    all_text = " ".join([nfkc(c["clause"]) for c in clauses])
-    
-    mapping: dict[str, str] = {}
-    counts: dict[str, int] = {}
-    
-    # Helper to count occurrences
-    def count_term(term: str, text: str) -> int:
-        return text.count(term)
-    
-    # Manually curated mapping based on actual ability text observation
-    # Groups (from 『』 brackets in ability text)
-    group_mapping = {
-        "MUSE": "μ's",
-        "AQOURS": "Aqours",
-        "NIJIGASAKI": "虹ヶ咲",
-        "LIELLA": "Liella!",
-        "HASUNOSORA": "蓮ノ空",
-        "MIRA_CRA_PARK": "みらくらぱーく！",
-        "SAINT_SNOW": "SaintSnow",
-    }
-    
-    # Units (from 『』 brackets in ability text)
-    unit_mapping = {
-        "PRINTEMPS": "Printemps",
-        "LILY_WHITE": "lily white",
-        "BIBI": "BiBi",
-        "CYARON": "CYaRon!",
-        "AZALEA": "AZALEA",
-        "GUILTY_KISS": "Guilty Kiss",
-        "DIVER_DIVA": "DiverDiva",
-        "A_ZU_NA": "A・ZU・NA",
-        "QU4RTZ": "QU4RTZ",
-        "R3BIRTH": "R3BIRTH",
-        "CATCHU": "CatChu!",
-        "KALEIDOSCORE": "KALEIDOSCORE",
-        "SYNCRISE": "5yncri5e!",
-        "CERISE_BOUQUET": "スリーズブーケ",
-        "DOLLCHESTRA": "DOLLCHESTRA",
-        "EDEL_NOTE": "EdelNote",
-    }
-    
-    # Characters (from 「」 brackets in ability text)
-    character_mapping = {
-        "UEHARA_YUME": "上原歩夢",
-        "SHIBUKI_KANON": "澁谷かのん",
-        "HINOSHITA_KAHO": "日野下花帆",
-        "YONEME_MEI": "米女メイ",
-        "TANG_KEKE": "唐可可",
-    }
-    
-    # Game terms (zones, card types, resources) from actual ability text
-    game_terms = {
-        "MEMBER": "メンバーカード",
-        "LIVE": "ライブカード",
-        "ENERGY": "エネルギーカード",
-        "CARD": "カード",
-        "DECK": "デッキ",
-        "STAGE": "ステージ",
-        "HAND": "手札",
-        "DISCARD": "控え室",
-        "LIVE_SET": "ライブカード置き場",
-        "SUCCESS_PILE": "成功ライブカード置き場",
-        "ENERGY_DECK": "エネルギーデッキ",
-        "YELL": "エール",
-        "BLADE": "ブレード",
-        "SCORE": "スコア",
-        "HEART": "ハート",
-        "COST": "コスト",
-        "REQUIRED_HEART": "必要ハート",
-        "WAIT": "ウェイト状態",
-        "ACTIVE": "アクティブ",
-        "CENTER": "センター",
-        "LEFT": "左サイド",
-        "RIGHT": "右サイド",
-    }
-    
-    # Add mappings and count occurrences
-    # For groups/units/characters (proper nouns), count only quoted occurrences to avoid particles
-    for en_name, jp_name in {**group_mapping, **unit_mapping, **character_mapping}.items():
-        quoted_count = all_text.count(f"『{jp_name}』") + all_text.count(f"「{jp_name}」")
-        if quoted_count > 0:
-            mapping[en_name] = jp_name
-            counts[en_name] = quoted_count
-    
-    # For game terms, count all occurrences (they're not proper nouns)
-    for en_name, jp_name in game_terms.items():
-        if jp_name in all_text:
-            mapping[en_name] = jp_name
-            counts[en_name] = count_term(jp_name, all_text)
-    
-    return {
-        "mapping": mapping,
-        "counts": counts,
-    }
 
 
 def nfkc(text: str) -> str:
     return unicodedata.normalize("NFKC", text)
+
+
+# Empty pattern lists (to be filled with new patterns)
+ABILITY_LEVEL_PATTERNS = []
+DSL_PATTERNS = []
 
 
 def parse_trigger_effect(clause: str) -> list[tuple[str, str]]:
@@ -438,1214 +110,10 @@ def parse_trigger_effect(clause: str) -> list[tuple[str, str]]:
     return pairs
 
 
-# ============================================================================
-# DSL APPROACH FOR CARD GAME ABILITIES
-# ============================================================================
-#
-# The DSL (Domain-Specific Language) approach treats ability text as a
-# structured language for game mechanics, with two levels of patterns:
-#
-# 1. CLAUSE-LEVEL PATTERNS (DSL_PATTERNS):
-#    - Match individual clauses within abilities
-#    - Examples: "draw X cards", "place X cards in discard"
-#    - 61 patterns achieve 100% compression of 1973 clauses
-#
-# 2. ABILITY-LEVEL PATTERNS (ABILITY_LEVEL_PATTERNS):
-#    - Match entire abilities preserving trigger structure
-#    - Only for SPECIAL patterns with unique semantic meaning
-#    - Examples: choice structures, ability granting, property modification
-#
-# ============================================================================
-# MORTAR APPROACH FOR GENERIC ABILITIES
-# ============================================================================
-#
-# Generic abilities (trigger + single clause effect) are NOT represented as
-# ability-level patterns. Instead, they use the "mortar" approach:
-#
-#   {trigger: "登場", clauses: ["add_from_discard", "score_mod"]}
-#
-# This means: extract the trigger icon, then match the effect text against
-# clause-level patterns. The result is a sequence of clause patterns.
-#
-# ============================================================================
-# WHAT COUNTS AS "SPECIAL" ABILITY-LEVEL PATTERNS
-# ============================================================================
-#
-# Only create ability-level patterns for combinations that have unique game
-# mechanics beyond simple clause sequences:
-#
-# 1. CHOICE STRUCTURES: "Choose X from the following: [bullet list]"
-#    - Complex selection logic that clause patterns can't capture
-#    - Example: ability_trigger_choice_options
-#
-# 2. ABILITY GRANTING: "Gain [ability] until end of live"
-#    - Meta-game mechanic of granting abilities
-#    - Example: ability_trigger_gain_ability
-#
-# 3. PROPERTY MODIFICATION: "Required hearts are reduced by X"
-#    - Direct card property modification
-#    - Example: ability_trigger_cost_reduction
-#
-# 4. TRIGGER-ONLY: Abilities with just a trigger, no effect
-#    - Example: ability_trigger_only
-#
-# ============================================================================
-# WHAT SHOULD BE REPRESENTED AS TRIGGER + CLAUSE SEQUENCES
-# ============================================================================
-#
-# Everything else - the vast majority of abilities - should be represented
-# as trigger + clause pattern sequences:
-#
-# - Simple trigger + single effect: "登場：カードを1枚引く"
-#   → {trigger: "登場", clauses: ["basic_action_draw"]}
-#
-# - Trigger + multiple effects: "登場：カードを1枚引き、手札を1枚控え室に置く"
-#   → {trigger: "登場", clauses: ["basic_action_draw", "basic_action_discard"]}
-#
-# - Trigger + conditional effect: "登場：自分のエネルギーが7枚以上ある場合、カードを1枚引く"
-#   → {trigger: "登場", clauses: ["conditional_energy", "basic_action_draw"]}
-#
-# This approach achieves high compression while preserving all game mechanics.
-# ============================================================================
 
-# ABILITY-LEVEL DSL PATTERNS (only special patterns with unique semantic meaning)
-# Generic patterns (trigger + single clause) should be represented as trigger + clause pattern sequences
-# Order from most specific to least specific
-ABILITY_LEVEL_PATTERNS = [
-    {
-        "name": "ability_trigger_condition_choice_options",
-        "regex": r"(\{\{[^}]+\}\})以下から(\d+)つを選ぶ。(.+)がある場合、代わりに(\d+)つ以上を選ぶ。\n((?:・[^\n]+\n?)+)",
-        "template": "⟦TRIGGER⟧以下から⟦X⟧つを選ぶ。⟦CONDITION⟧がある場合、代わりに⟦Y⟧つ以上を選ぶ。\n⟦OPTIONS⟧",
-        "structure": "Ability - Trigger + condition + enhanced choice options",
-    },
-    {
-        "name": "ability_trigger_choice_options",
-        "regex": r"(\{\{[^}]+\}\})以下から(\d+)つを選ぶ。\n((?:・[^\n]+\n?)+)",
-        "template": "⟦TRIGGER⟧以下から⟦X⟧つを選ぶ。\n⟦OPTIONS⟧",
-        "structure": "Ability - Trigger + choice with bullet-point options",
-    },
-    {
-        "name": "ability_trigger_gain_ability",
-        "regex": r"(\{\{[^}]+\}\})ライブ終了時まで、「([^」]+)」を得る。",
-        "template": "⟦TRIGGER⟧ライブ終了時まで、「⟦ABILITY⟧」を得る。",
-        "structure": "Ability - Trigger + gain ability until end",
-    },
-    {
-        "name": "ability_trigger_cost_reduction",
-        "regex": r"(\{\{[^}]+\}\})このカードを成功させるための必要ハートは([^。]+)少なくなる。",
-        "template": "⟦TRIGGER⟧このカードを成功させるための必要ハートは⟦REDUCTION⟧少なくなる。",
-        "structure": "Ability - Trigger + cost reduction",
-    },
-    {
-        "name": "ability_trigger_only",
-        "regex": r"^(\{\{[^}]+\}\})$",
-        "template": "⟦TRIGGER⟧",
-        "structure": "Ability - Trigger only (no effect)",
-    },
-]
 
-# ============================================================================
-# FILE ORGANIZATION (by game mechanics, matching rules.txt structure)
-# ============================================================================
-# ABILITY-LEVEL PATTERNS (Lines 365-369): Special patterns with unique semantics
-# CLAUSE-LEVEL DSL PATTERNS (Lines 370+): Organized by game mechanics
-#
-# 1. ATOMIC ELEMENTS & DURATION (Lines 370-450)
-#    - Duration modifiers (permanent, until end of live/turn)
-#    - Optionality markers (may do X)
-#
-# 2. CARD INFORMATION & IDENTIFICATION (Lines 450-580)
-#    - Card types (member, live, energy)
-#    - Groups, characters, units
-#    - Positions/areas (left, center, right)
-#    - Icon patterns by trigger type
-#
-# 3. ZONE-BASED OPERATIONS (Lines 580-850)
-#    - To zones: deck top/bottom, hand, discard, stage, energy zone
-#    - From zones: deck top, hand, discard, energy deck
-#    - Zone references and movements
-#
-# 4. STATE MANAGEMENT (Lines 850-950)
-#    - State changes: wait, activate
-#    - Member movement between positions
-#    - Area-specific actions
-#
-# 5. RESOURCE SYSTEMS (Lines 950-1150)
-#    - Score operations: gain, modify, compare
-#    - Hearts: cost reduction, heart possession
-#    - Blades/Energy: place, discard, activate
-#    - General resource gain and modification
-#
-# 6. DRAW & SEARCH MECHANICS (Lines 1150-1350)
-#    - Look at cards (top, select, reveal)
-#    - Reveal and add to hand
-#    - Select from options
-#    - Multi-step look operations
-#
-# 7. CONDITIONS & FILTERING (Lines 1350-1700)
-#    - Presence: group, character, card type, name
-#    - Counts: members, cards, energy, heart, zone
-#    - Thresholds: cost, score, energy
-#    - Comparisons: zone-specific, cost ranges
-#    - Complex multi-condition filters
-#
-# 8. SPECIAL EFFECTS & ADVANCED MECHANICS (Lines 1700-1900)
-#    - Ability granting and disabling
-#    - Cost-effect operations (cost then gain)
-#    - Duration-based effects
-#    - Trigger-based mechanics
-#    - Choice structures
-#
-# 9. COMPLEX ACTIONS & MULTI-STEP OPERATIONS (Lines 1900-2100)
-#    - Multi-card staging with cost limits
-#    - Reorder and shuffle operations
-#    - Opponent choices and effects
-#    - Batontouch and movement triggers
-#    - Score non-zero conditions
-#
-# 10. FALLBACK & CATCH-ALL PATTERNS (Lines 2100-2240)
-#     - Fragment patterns to handle edge cases
-#     - Generic fallbacks for parsing gaps
-#     - Parenthetical notes and edge cases
-#
-# ============================================================================
-
-# CLAUSE-LEVEL DSL PATTERNS (organized by game mechanics, not alphabetically)
 DSL_PATTERNS = [
-        # ===== 1. ATOMIC ELEMENTS & DURATION =====
-        # Duration modifiers - fundamental to effect timing
-        # Rule: 9.4 (Timing and duration of effects)
-        {
-            "name": "atomic_duration_permanent",
-            "regex": r"常時",
-            "template": "⟦DURATION⟧",
-            "structure": "Atomic - Duration: permanent/always-on [Rule 3.1.2.1: Constant abilities]",
-        },
-        {
-            "name": "atomic_duration_end_live",
-            "regex": r"ライブ終了時まで",
-            "template": "⟦DURATION⟧",
-            "structure": "Atomic - Duration: until end of live [Rule 9.4.1: Effect duration]",
-        },
-        {
-            "name": "atomic_duration_end_turn",
-            "regex": r"このターン",
-            "template": "⟦DURATION⟧",
-            "structure": "Atomic - Duration: this turn [Rule 9.4.1: Effect duration]",
-        },
-        {
-            "name": "atomic_optional",
-            "regex": r"てもよい",
-            "template": "⟦OPTIONAL⟧",
-            "structure": "Atomic - Optionality: may do X [Rule 1.3.2: Optional actions]",
-        },
-        
-        # ===== 2. CARD INFORMATION & IDENTIFICATION =====
-        # Card type identification
-        {
-            "name": "atomic_card_type",
-            "regex": r"([^。]+)カード",
-            "template": "⟦CARD_TYPE⟧カード",
-            "structure": "Atomic - Card type (generic)",
-        },
-        {
-            "name": "atomic_gain_score",
-            "regex": r"スコアを\+(\d+)する",
-            "template": "⟦RES⟧を+⟦AMT⟧する",
-            "structure": "Atomic - Gain score",
-        },
-        {
-            "name": "atomic_to_deck_top",
-            "regex": r"デッキの上に置く",
-            "template": "デッキの上に置く",
-            "structure": "Atomic - Zone operation: to deck top",
-        },
-        {
-            "name": "atomic_to_deck_bottom",
-            "regex": r"デッキの一番下に置く",
-            "template": "デッキの一番下に置く",
-            "structure": "Atomic - Zone operation: to deck bottom",
-        },
-        {
-            "name": "atomic_to_hand",
-            "regex": r"手札に加える",
-            "template": "手札に加える",
-            "structure": "Atomic - Zone operation: to hand",
-        },
-        {
-            "name": "atomic_to_discard",
-            "regex": r"控え室に置く",
-            "template": "控え室に置く",
-            "structure": "Atomic - Zone operation: to discard",
-        },
-        {
-            "name": "atomic_state_wait",
-            "regex": r"ウェイトにする",
-            "template": "ウェイトにする",
-            "structure": "Atomic - State change: wait",
-        },
-        {
-            "name": "atomic_state_activate",
-            "regex": r"アクティブにする",
-            "template": "アクティブにする",
-            "structure": "Atomic - State change: activate",
-        },
-        {
-            "name": "atomic_from_deck_top",
-            "regex": r"デッキの上から",
-            "template": "デッキの上から",
-            "structure": "Atomic - Zone operation: from deck top",
-        },
-        {
-            "name": "atomic_from_hand",
-            "regex": r"手札から",
-            "template": "手札から",
-            "structure": "Atomic - Zone operation: from hand",
-        },
-        {
-            "name": "atomic_from_discard",
-            "regex": r"控え室から",
-            "template": "控え室から",
-            "structure": "Atomic - Zone operation: from discard",
-        },
-        {
-            "name": "atomic_reveal_card",
-            "regex": r"公開する",
-            "template": "公開する",
-            "structure": "Atomic - Reveal card",
-        },
-        {
-            "name": "atomic_select_card",
-            "regex": r"(\d+)枚選ぶ",
-            "template": "⟦CNT⟧枚選ぶ",
-            "structure": "Atomic - Select cards",
-        },
-        {
-            "name": "atomic_choose_option",
-            "regex": r"以下から(\d+)つを選ぶ",
-            "template": "以下から⟦CNT⟧つを選ぶ",
-            "structure": "Atomic - Choose option",
-        },
-        {
-            "name": "atomic_move_member",
-            "regex": r"移動させる",
-            "template": "移動させる",
-            "structure": "Atomic - Move member",
-        },
-        {
-            "name": "atomic_condition_energy_above",
-            "regex": r"自分のエネルギーが(\d+)枚以上ある場合",
-            "template": "自分の⟦ZONE⟧が⟦CNT⟧枚以上ある場合",
-            "structure": "Atomic - Energy count above threshold",
-        },
-        {
-            "name": "atomic_place_energy_wait",
-            "regex": r"エネルギーカードを(\d+)枚ウェイト状態で置く",
-            "template": "⟦CTYPE⟧カードを⟦CNT⟧枚⟦STATE⟧で置く",
-            "structure": "Atomic - Place energy cards in wait state",
-        },
-        {
-            "name": "atomic_from_energy_deck",
-            "regex": r"エネルギーデッキから",
-            "template": "エネルギーデッキから",
-            "structure": "Atomic - From energy deck",
-        },
-        {
-            "name": "atomic_restriction_area_only",
-            "regex": r"この能力は.*エリアに登場している場合のみ起動できる",
-            "template": "この能力は⟦X⟧エリアに登場している場合のみ起動できる",
-            "structure": "Atomic - Restriction: activate only if in area",
-        },
-        {
-            "name": "atomic_restriction_score_threshold",
-            "regex": r"スコアの合計が(\d+)以上の場合のみ起動できる",
-            "template": "⟦RES⟧の合計が⟦CNT⟧以上の場合のみ起動できる",
-            "structure": "Atomic - Restriction: activate only if score above threshold",
-        },
-        {
-            "name": "atomic_cost_threshold",
-            "regex": r"コスト(\d+)(以上|以下)",
-            "template": "⟦COST⟧⟦CNT⟧\2",
-            "structure": "Atomic - Cost threshold (above/below)",
-        },
-        {
-            "name": "atomic_group",
-            "regex": r"『([^』]+)』",
-            "template": "『⟦GRP⟧』",
-            "structure": "Atomic - Group name (generic)",
-        },
-        {
-            "name": "atomic_zone",
-            "regex": r"([^。]+)",
-            "template": "⟦ZONE⟧",
-            "structure": "Atomic - Zone (generic)",
-        },
-        # Icon patterns (consolidated)
-        {
-            "name": "atomic_icon",
-            "regex": r"\{\{[^}]+\}\}",
-            "template": "⟦ICON⟧",
-            "structure": "Atomic - Icon reference (generic)",
-        },
-        {
-            "name": "atomic_area",
-            "regex": r"([^。]+)",
-            "template": "⟦AREA⟧",
-            "structure": "Atomic - Area (generic)",
-        },
-        # CLAUSE PATTERNS - Composed of atomic patterns
-
-        # ===== ATOMIC ACTIONS (consolidated) =====
-        # Draw action - covers all draw variations
-        {
-            "name": "action_draw",
-            "regex": r"([^。]*)カードを(\d+)枚引く",
-            "template": "⟦SRC⟧カードを⟦CNT⟧枚引く",
-            "structure": "Action - Draw cards",
-        },
-        # Discard action - covers all discard variations (hand, deck, generic)
-        {
-            "name": "action_discard",
-            "regex": r"([^。]+)を(\d+)枚控え室に置く",
-            "template": "⟦SRC⟧を⟦CNT⟧枚⟦DST⟧に置く",
-            "structure": "Action - Discard to zone",
-        },
-        # Look action - covers all look variations
-        {
-            "name": "action_look",
-            "regex": r"([^。]+)を(\d+)枚見る",
-            "template": "⟦SRC⟧を⟦CNT⟧枚見る",
-            "structure": "Action - Look at cards",
-        },
-        # Multi-step look-select-add compound pattern
-        {
-            "name": "compound_look_select_discard",
-            "regex": r"([^。]+)を(\d+)枚見る。その中から([^。]+)を(\d+)枚?[^。]*加え[^。]*残り[^。]*控え室",
-            "template": "⟦SRC⟧を⟦CNT⟧枚見る。その中から⟦FILTER⟧を⟦CNT2⟧枚加え、残りを⟦DST⟧",
-            "structure": "Compound - Look, select, add, discard remainder",
-        },
-        # Add to hand action - covers all zone-to-hand transfers
-        {
-            "name": "action_add_hand",
-            "regex": r"([^。]+)から([^。]+)を(\d+)枚手札に加える",
-            "template": "⟦SRC⟧から⟦TGT⟧を⟦CNT⟧枚⟦DST⟧に加える",
-            "structure": "Action - Add cards to hand from zone",
-        },
-        # ===== CLAUSE PATTERNS: RESOURCE SYSTEMS (Score, Hearts, Energy) =====
-        {
-            "name": "conditional_group_presence",
-            "regex": r"自分のステージに『([^』]+)』のメンバーがいる場合、([^。]+)",
-            "template": "自分のステージに『⟦GROUP⟧』のメンバーがいる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Group presence on stage triggers effect",
-        },
-        {
-            "name": "conditional_character_presence",
-            "regex": r"自分のステージに「([^」]+)」が登場している場合、([^。]+)",
-            "template": "自分のステージに「⟦CHARACTER⟧」が登場している場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific character presence triggers effect",
-        },
-        {
-            "name": "cost_effect",
-            "regex": r"([^。]+)を(\d+)枚控え室に置いてもよい：([^。]+)",
-            "template": "⟦COST⟧を⟦X⟧枚控え室に置いてもよい：⟦EFFECT⟧",
-            "structure": "Cost-Effect - Pay optional cost to activate effect",
-        },
-        # ===== RESOURCE SYSTEMS: GAIN & MODIFICATION =====
-        {
-            "name": "gain_hearts",
-            "regex": r"ライブ終了時まで、([^。]*?)(?:ハート|heart)([^。]*?)を得る",
-            "template": "ライブ終了時まで、⟦FILTER⟧ハート⟦SUFFIX⟧を得る",
-            "structure": "Duration - Gain hearts until end of live",
-        },
-        {
-            "name": "duration_gain",
-            "regex": r"ライブ終了時まで、([^。]+)を得る",
-            "template": "ライブ終了時まで、⟦RESOURCE⟧を得る",
-            "structure": "Duration - Gain resource until end of live (generic fallback)",
-        },
-        {
-            "name": "gain_ability",
-            "regex": r"ライブ終了時まで、「([^」]+)」を得る",
-            "template": "ライブ終了時まで、「⟦ABILITY⟧」を得る",
-            "structure": "Ability Granting - Gain ability text until end of live",
-        },
-        {
-            "name": "score_modifier",
-            "regex": r"このカードのスコアを([＋−\d]+)する",
-            "template": "このカードのスコアを⟦AMOUNT⟧する",
-            "structure": "Score Modification - Modify card score",
-        },
-        {
-            "name": "heart_cost_reduction",
-            "regex": r"このカードを成功させるための必要ハートを([＋−\d]+)減らす",
-            "template": "このカードを成功させるための必要ハートを⟦AMOUNT⟧減らす",
-            "structure": "Heart Cost Modification - Reduce heart cost to succeed",
-        },
-        # ===== STATE MANAGEMENT: STATE CHANGES & MEMBER POSITIONING =====
-        # State change - consolidated (covers wait/activate for any target)
-        {
-            "name": "action_state_change",
-            "regex": r"([^。]+)を(ウェイト|アクティブ)にする",
-            "template": "⟦TGT⟧を⟦STATE⟧にする",
-            "structure": "Action - Change member state",
-        },
-        # Per-unit trigger - consolidated (covers hand, energy, discard, score, generic)
-        {
-            "name": "trigger_per_unit",
-            "regex": r"([^。]*?)(\d+)[枚人]につき、([^。]+)",
-            "template": "⟦SRC⟧⟦CNT⟧枚につき、⟦EFF⟧",
-            "structure": "Trigger - Per-unit effect",
-        },
-        # Place to zone - consolidated (covers discard, deck, hand, stage, generic)
-        {
-            "name": "action_place",
-            "regex": r"([^。]+)を([^。]+)に置く",
-            "template": "⟦SRC⟧を⟦DST⟧に置く",
-            "structure": "Action - Place card to zone",
-        },
-        # Place at specific deck position
-        {
-            "name": "action_place_deck_position",
-            "regex": r"([^。]+)をデッキの(一番上|一番下)に置く",
-            "template": "⟦SRC⟧をデッキの⟦LOC⟧に置く",
-            "structure": "Action - Place card at deck position",
-        },
-        {
-            "name": "stage_from_hand",
-            "regex": r"手札から([^。]+)をステージに登場させる",
-            "template": "手札から⟦FILTER⟧をステージに登場させる",
-            "structure": "Basic Action - Stage card from hand",
-        },
-        {
-            "name": "trigger_on_move",
-            "regex": r"このメンバーがエリアを移動するたび、([^。]+)",
-            "template": "このメンバーがエリアを移動するたび、⟦EFFECT⟧",
-            "structure": "Trigger - Effect triggers when member moves area",
-        },
-        {
-            "name": "trigger_on_discard",
-            "regex": r"このメンバーがステージから控え室に置かれたとき、([^。]+)",
-            "template": "このメンバーがステージから控え室に置かれたとき、⟦EFFECT⟧",
-            "structure": "Trigger - Effect triggers when member is discarded from stage",
-        },
-        # ===== CONDITIONS & FILTERING: COMPLEX LOGIC STRUCTURES =====
-        {
-            "name": "conditional_heart_total",
-            "regex": r"自分のステージにいるメンバーが持つ([^。]+)の合計が(\d+)以上の場合、([^。]+)",
-            "template": "自分のステージにいるメンバーが持つ⟦RESOURCE⟧の合計が⟦X⟧以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Resource total threshold triggers effect",
-        },
-        {
-            "name": "conditional_cost_threshold",
-            "regex": r"自分のステージにコスト(\d+)以上のメンバーがいる場合、([^。]+)",
-            "template": "自分のステージにコスト⟦X⟧以上のメンバーがいる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Cost threshold triggers effect",
-        },
-        {
-            "name": "conditional_comparison",
-            "regex": r"自分の([^。]+)が相手より([少多]い)場合、([^。]+)",
-            "template": "自分の⟦STAT⟧が相手より⟦COMPARISON⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Comparison with opponent triggers effect",
-        },
-        {
-            "name": "conditional_area_population",
-            "regex": r"自分のステージのエリアすべてにメンバーが登場している場合、([^。]+)",
-            "template": "自分のステージのエリアすべてにメンバーが登場している場合、⟦EFFECT⟧",
-            "structure": "Conditional - All stage areas populated triggers effect",
-        },
-        {
-            "name": "batontouch_condition",
-            "regex": r"([^。]*?)バトンタッチ([^。]*?)場合、([^。]+)",
-            "template": "⟦CONDITION⟧バトンタッチ⟦MODIFIER⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Batontouch condition triggers effect (flexible)",
-        },
-        {
-            "name": "reveal_condition",
-            "regex": r"エールにより公開された自分のカードの中に([^。]+)があるとき、([^。]+)",
-            "template": "エールにより公開された自分のカードの中に⟦CONDITION⟧があるとき、⟦EFFECT⟧",
-            "structure": "Conditional - Reveal condition triggers effect",
-        },
-        {
-            "name": "zone_specific_condition",
-            "regex": r"自分のステージの([^。]+)エリアに([^。]+)がいる場合、([^。]+)",
-            "template": "自分のステージの⟦AREA⟧エリアに⟦TARGET⟧がいる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Zone-specific condition triggers effect",
-        },
-        {
-            "name": "card_count_comparison",
-            "regex": r"自分の([^。]+)のカード枚数が相手より([少多]い)場合、([^。]+)",
-            "template": "自分の⟦ZONE⟧のカード枚数が相手より⟦COMPARISON⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Card count comparison triggers effect",
-        },
-        # ===== COMPLEX OPERATIONS & SPECIAL MECHANICS =====
-        {
-            "name": "multi_card_stage",
-            "regex": r"コストの合計が(\d+)以下になるようにメンバーカードを(\d+)枚までステージに登場させる",
-            "template": "コストの合計が⟦X⟧以下になるようにメンバーカードを⟦Y⟧枚までステージに登場させる",
-            "structure": "Multi-Card Stage - Stage multiple members within cost limit",
-        },
-        {
-            "name": "reorder_cards",
-            "regex": r"その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
-            "template": "その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く",
-            "structure": "Multi-Step - Reorder cards on deck, discard rest",
-        },
-        {
-            "name": "opponent_choice",
-            "regex": r"相手は([^。]+)をしてもよい。そうしなかった場合、([^。]+)",
-            "template": "相手は⟦ACTION⟧をしてもよい。そうしなかった場合、⟦EFFECT⟧",
-            "structure": "Opponent Choice - Give opponent option, trigger effect if declined",
-        },
-        {
-            "name": "move_member",
-            "regex": r"このメンバーを([^。]+)に移動する",
-            "template": "このメンバーを⟦AREA⟧に移動する",
-            "structure": "Member Movement - Move member to area",
-        },
-        {
-            "name": "total_zone_cards",
-            "regex": r"自分と相手の([^。]+)にカードが合計(\d+)枚以上ある場合、([^。]+)",
-            "template": "自分と相手の⟦ZONE⟧にカードが合計⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Total cards in both players' zones triggers effect",
-        },
-        {
-            "name": "choose_option",
-            "regex": r"([^。]+)のうち、1つを選ぶ",
-            "template": "⟦OPTIONS⟧のうち、1つを選ぶ",
-            "structure": "Choice Effect - Select one from options",
-        },
-        {
-            "name": "activate_all_members",
-            "regex": r"自分のステージにいるすべてのメンバーをアクティブにする",
-            "template": "自分のステージにいるすべてのメンバーをアクティブにする",
-            "structure": "State Change - Activate all members on stage",
-        },
-        {
-            "name": "gain_until_discard",
-            "regex": r"([^。]+)まで、([^。]+)を得る",
-            "template": "⟦DURATION⟧まで、⟦RESOURCE⟧を得る",
-            "structure": "Duration - Gain resource until specified time",
-        },
-        {
-            "name": "look_add_specific",
-            "regex": r"([^。]+)の([^。]+)を(\d+)枚見て手札に加える",
-            "template": "⟦SOURCE⟧の⟦CARD_TYPE⟧を⟦X⟧枚見て手札に加える",
-            "structure": "Look-Add - Look at specific cards, add to hand",
-        },
-        {
-            "name": "choose_from_below",
-            "regex": r"([^。]+)以下から(\d+)つを選ぶ",
-            "template": "⟦OPTIONS⟧以下から⟦X⟧つを選ぶ",
-            "structure": "Choice Effect - Select from options below",
-        },
-        {
-            "name": "cost_threshold_condition",
-            "regex": r"自分のステージにコスト(\d+)以上のメンバーがいる場合、([^。]+)を得る",
-            "template": "自分のステージにコスト⟦X⟧以上のメンバーがいる場合、⟦RESOURCE⟧を得る",
-            "structure": "Conditional - Cost threshold triggers gain resource",
-        },
-        {
-            "name": "parenthetical_note",
-            "regex": r"（([^）]+)）",
-            "template": "（⟦NOTE⟧）",
-            "structure": "Parenthetical - Clarification note",
-        },
-        # Cost-effect compound - consolidated (covers optional and mandatory cost)
-        {
-            "name": "compound_cost_effect",
-            "regex": r"([^。]+)を([^。]+)に置(いてもよい|く)[。：](そうした場合、|)([^。]+)",
-            "template": "⟦SRC⟧を⟦DST⟧に置⟦OPT⟧⟦COND⟧⟦EFF⟧",
-            "structure": "Compound - Pay cost to trigger effect",
-        },
-        {
-            "name": "area_specific_presence",
-            "regex": r"自分の([^。]+)に([^。]+)がいる場合、([^。]+)",
-            "template": "自分の⟦AREA⟧に⟦TARGET⟧がいる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Presence in area triggers effect",
-        },
-        {
-            "name": "all_members_condition",
-            "regex": r"自分のステージにいるすべてのメンバーが([^。]+)場合、([^。]+)",
-            "template": "自分のステージにいるすべてのメンバーが⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - All members condition triggers effect",
-        },
-        {
-            "name": "heart_cost_decrease_condition",
-            "regex": r"([^。]+)につき、このカードを成功させるための必要ハートを(\d+)減らす",
-            "template": "⟦CONDITION⟧につき、このカードを成功させるための必要ハートを⟦X⟧減らす",
-            "structure": "Heart Cost Modification - Reduce heart cost based on condition",
-        },
-        {
-            "name": "area_specific_action",
-            "regex": r"自分の([^。]+)エリアに([^。]+)を置く",
-            "template": "自分の⟦AREA⟧エリアに⟦TARGET⟧を置く",
-            "structure": "Area-Specific Action - Place in specific area",
-        },
-        {
-            "name": "conditional_name_different",
-            "regex": r"名前の異なる([^。]+)が([^。]+)枚以上ある場合、([^。]+)",
-            "template": "名前の異なる⟦TYPE⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Name-different threshold triggers effect",
-        },
-        # Conditional threshold - consolidated count check
-        {
-            "name": "conditional_count_threshold",
-            "regex": r"([^。]+)が(\d+)[枚人]?(以上|以下)いる?場合、([^。]+)",
-            "template": "⟦SRC⟧が⟦CNT⟧⟦THRESH⟧場合、⟦EFF⟧",
-            "structure": "Conditional - Count threshold",
-        },
-        # Generic action with count - covers energy and other countable actions
-        {
-            "name": "action_with_count",
-            "regex": r"([^。]+)を(\d+)枚?([^。]+)",
-            "template": "⟦SRC⟧を⟦CNT⟧⟦ACT⟧",
-            "structure": "Action - Perform action with countable item",
-        },
-        {
-            "name": "conditional_group_and_cost",
-            "regex": r"自分の([^。]+)に([^。]+)の([^。]+)が(\d+)人以上いる場合、([^。]+)",
-            "template": "自分の⟦AREA⟧に⟦GROUP⟧の⟦TYPE⟧が⟦X⟧人以上いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Group and cost threshold triggers effect",
-        },
-        {
-            "name": "reveal_and_add",
-            "regex": r"([^。]+)を(\d+)枚公開して手札に加える",
-            "template": "⟦SOURCE⟧を⟦X⟧枚公開して手札に加える",
-            "structure": "Reveal-Add - Reveal cards and add to hand",
-        },
-        {
-            "name": "look_and_select",
-            "regex": r"([^。]+)を(\d+)枚見る。その中から(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧を⟦X⟧枚見る。その中から⟦Y⟧枚⟦ACTION⟧",
-            "structure": "Look-Select - Look at cards, then perform action",
-        },
-        {
-            "name": "conditional_zero_cards",
-            "regex": r"([^。]+)のカードが0枚で([^。]+)",
-            "template": "⟦SOURCE⟧のカードが0枚で⟦CONDITION⟧",
-            "structure": "Conditional - Zero cards condition",
-        },
-        {
-            "name": "conditional_specific_card",
-            "regex": r"([^。]+)に([^。]+)がある場合、([^。]+)",
-            "template": "⟦SOURCE⟧に⟦TARGET⟧がある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific card presence triggers effect",
-        },
-        {
-            "name": "discard_all",
-            "regex": r"すべてを([^。]+)に置く",
-            "template": "すべてを⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Discard all cards",
-        },
-        {
-            "name": "conditional_both_players",
-            "regex": r"自分と相手の([^。]+)が([^。]+)場合、([^。]+)",
-            "template": "自分と相手の⟦STAT⟧が⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Both players condition triggers effect",
-        },
-        {
-            "name": "gain_ability_specific",
-            "regex": r"([^。]+)は、ライブ終了時まで、「([^」]+)」を得る",
-            "template": "⟦TARGET⟧は、ライブ終了時まで、「⟦ABILITY⟧」を得る",
-            "structure": "Ability Granting - Target gains ability until end of live",
-        },
-        {
-            "name": "score_comparison",
-            "regex": r"ライブの合計スコアが相手より([高低]い)場合、([^。]+)",
-            "template": "ライブの合計スコアが相手より⟦COMPARISON⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Score comparison triggers effect",
-        },
-        {
-            "name": "conditional_cost_below",
-            "regex": r"コスト(\d+)以下の([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "コスト⟦X⟧以下の⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Cost below threshold triggers effect",
-        },
-        {
-            "name": "shuffle_deck",
-            "regex": r"デッキをシャッフルする",
-            "template": "デッキをシャッフルする",
-            "structure": "Basic Action - Shuffle deck",
-        },
-        {
-            "name": "place_on_deck",
-            "regex": r"([^。]+)をデッキの上に置く",
-            "template": "⟦SOURCE⟧をデッキの上に置く",
-            "structure": "Basic Action - Place card on top of deck",
-        },
-        {
-            "name": "conditional_and_condition",
-            "regex": r"([^。]+)で([^。]+)場合、([^。]+)",
-            "template": "⟦CONDITION1⟧で⟦CONDITION2⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - AND condition triggers effect",
-        },
-        {
-            "name": "look_discard_remainder",
-            "regex": r"([^。]+)を(\d+)枚見る。残りを([^。]+)に置く",
-            "template": "⟦SOURCE⟧を⟦X⟧枚見る。残りを⟦DESTINATION⟧に置く",
-            "structure": "Look-Discard - Look at cards, discard remainder",
-        },
-        {
-            "name": "conditional_heart_total_specific",
-            "regex": r"自分のステージにいる([^。]+)が持つハートの合計が(\d+)以上の場合、([^。]+)",
-            "template": "自分のステージにいる⟦TARGET⟧が持つハートの合計が⟦X⟧以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Heart total threshold triggers effect",
-        },
-        {
-            "name": "conditional_card_name",
-            "regex": r"([^。]+)のカード名が([^。]+)の場合、([^。]+)",
-            "template": "⟦SOURCE⟧のカード名が⟦NAME⟧の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Card name condition triggers effect",
-        },
-        {
-            "name": "add_to_zone",
-            "regex": r"([^。]+)を([^。]+)に([^。]+)加える",
-            "template": "⟦SOURCE⟧を⟦DESTINATION⟧に⟦MODIFIER⟧加える",
-            "structure": "Basic Action - Add to zone with modifier",
-        },
-        {
-            "name": "conditional_zone_cards",
-            "regex": r"([^。]+)のカードが(\d+)枚以上の場合、([^。]+)",
-            "template": "⟦SOURCE⟧のカードが⟦X⟧枚以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Zone card count threshold triggers effect",
-        },
-        {
-            "name": "conditional_specific_group",
-            "regex": r"([^。]+)の([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "⟦SOURCE⟧の⟦GROUP⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Group-specific condition triggers effect",
-        },
-        {
-            "name": "gain_resource_specific",
-            "regex": r"([^。]+)を(\d+)つ得る",
-            "template": "⟦RESOURCE⟧を⟦X⟧つ得る",
-            "structure": "Basic Action - Gain specific amount of resource",
-        },
-        {
-            "name": "conditional_heart_count",
-            "regex": r"([^。]+)が([^。]+)を持つ場合、([^。]+)",
-            "template": "⟦SOURCE⟧が⟦HEART⟧を持つ場合、⟦EFFECT⟧",
-            "structure": "Conditional - Heart possession triggers effect",
-        },
-        {
-            "name": "conditional_energy_count",
-            "regex": r"自分のエネルギーが(\d+)枚以上ある場合、([^。]+)",
-            "template": "自分のエネルギーが⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Energy count threshold triggers effect",
-        },
-        {
-            "name": "reveal_and_choose",
-            "regex": r"([^。]+)を(\d+)枚公開して、その中から(\d+)枚([^。]+)",
-            "template": "⟦SOURCE⟧を⟦X⟧枚公開して、その中から⟦Y⟧枚⟦ACTION⟧",
-            "structure": "Reveal-Choose - Reveal cards, then choose",
-        },
-        {
-            "name": "conditional_member_count_general",
-            "regex": r"([^。]+)メンバーが(\d+)人以上いる場合、([^。]+)",
-            "template": "⟦TYPE⟧メンバーが⟦X⟧人以上いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Member count threshold triggers effect",
-        },
-        {
-            "name": "conditional_card_presence",
-            "regex": r"([^。]+)に([^。]+)がある場合、([^。]+)",
-            "template": "⟦SOURCE⟧に⟦CARD⟧がある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Card presence triggers effect",
-        },
-        {
-            "name": "discard_specific_count",
-            "regex": r"([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "⟦SOURCE⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Discard specific count",
-        },
-        {
-            "name": "conditional_cost_specific",
-            "regex": r"コスト(\d+)の([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "コスト⟦X⟧の⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific cost condition triggers effect",
-        },
-        {
-            "name": "gain_and_add",
-            "regex": r"([^。]+)を得て、([^。]+)",
-            "template": "⟦RESOURCE⟧を得て、⟦EFFECT⟧",
-            "structure": "Multi-Step - Gain resource then perform action",
-        },
-        {
-            "name": "conditional_total_heart",
-            "regex": r"ハートの合計が(\d+)以上の場合、([^。]+)",
-            "template": "ハートの合計が⟦X⟧以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Total heart threshold triggers effect",
-        },
-        {
-            "name": "look_and_discard",
-            "regex": r"([^。]+)を(\d+)枚見て、([^。]+)",
-            "template": "⟦SOURCE⟧を⟦X⟧枚見て、⟦EFFECT⟧",
-            "structure": "Multi-Step - Look then perform action",
-        },
-        {
-            "name": "conditional_specific_name",
-            "regex": r"([^。]+)の([^。]+)が([^。]+)の場合、([^。]+)",
-            "template": "⟦SOURCE⟧の⟦TYPE⟧が⟦NAME⟧の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific name condition triggers effect",
-        },
-        {
-            "name": "discard_all_specific",
-            "regex": r"すべての([^。]+)を([^。]+)に置く",
-            "template": "すべての⟦SOURCE⟧を⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Discard all specific cards",
-        },
-        {
-            "name": "conditional_energy_specific",
-            "regex": r"エネルギーが([^。]+)ある場合、([^。]+)",
-            "template": "エネルギーが⟦CONDITION⟧ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Energy condition triggers effect",
-        },
-        {
-            "name": "conditional_zone_specific",
-            "regex": r"自分の([^。]+)に([^。]+)が(\d+)枚以上ある場合、([^。]+)",
-            "template": "自分の⟦ZONE⟧に⟦TARGET⟧が⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Zone-specific card count threshold triggers effect",
-        },
-        {
-            "name": "discard_from_zone",
-            "regex": r"([^。]+)から([^。]+)を([^。]+)に置く",
-            "template": "⟦SOURCE⟧から⟦CARD⟧を⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Discard from zone",
-        },
-        {
-            "name": "conditional_group_presence_specific",
-            "regex": r"([^。]+)に([^。]+)のメンバーがいる場合、([^。]+)",
-            "template": "⟦SOURCE⟧に⟦GROUP⟧のメンバーがいる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Group presence in zone triggers effect",
-        },
-        {
-            "name": "gain_duration_specific",
-            "regex": r"([^。]+)まで、([^。]+)を(\d+)つ得る",
-            "template": "⟦DURATION⟧まで、⟦RESOURCE⟧を⟦X⟧つ得る",
-            "structure": "Duration - Gain specific amount until specified time",
-        },
-        {
-            "name": "conditional_card_count_below",
-            "regex": r"([^。]+)のカードが(\d+)枚以下の場合、([^。]+)",
-            "template": "⟦SOURCE⟧のカードが⟦X⟧枚以下の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Card count below threshold triggers effect",
-        },
-        {
-            "name": "discard_from_hand",
-            "regex": r"手札から([^。]+)を(\d+)枚([^。]+)に置く",
-            "template": "手札から⟦CARD⟧を⟦X⟧枚⟦DESTINATION⟧に置く",
-            "structure": "Basic Action - Discard from hand",
-        },
-        {
-            "name": "conditional_member_below",
-            "regex": r"([^。]+)メンバーが(\d+)人以下の場合、([^。]+)",
-            "template": "⟦TYPE⟧メンバーが⟦X⟧人以下の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Member count below threshold triggers effect",
-        },
-        {
-            "name": "place_specific_location",
-            "regex": r"([^。]+)を([^。]+)の([^。]+)に置く",
-            "template": "⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に置く",
-            "structure": "Basic Action - Place in specific location",
-        },
-        {
-            "name": "conditional_cost_range",
-            "regex": r"コスト(\d+)から(\d+)までの([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "コスト⟦X⟧から⟦Y⟧までの⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Cost range condition triggers effect",
-        },
-        {
-            "name": "look_and_add_specific",
-            "regex": r"([^。]+)を(\d+)枚見て、([^。]+)を(\d+)枚手札に加える",
-            "template": "⟦SOURCE⟧を⟦X⟧枚見て、⟦CARD⟧を⟦Y⟧枚手札に加える",
-            "structure": "Look-Add - Look at cards, add specific to hand",
-        },
-        {
-            "name": "conditional_heart_below",
-            "regex": r"([^。]+)が持つハートが(\d+)以下の場合、([^。]+)",
-            "template": "⟦SOURCE⟧が持つハートが⟦X⟧以下の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Heart count below threshold triggers effect",
-        },
-        {
-            "name": "gain_and_place",
-            "regex": r"([^。]+)を得て、([^。]+)を([^。]+)に置く",
-            "template": "⟦RESOURCE⟧を得て、⟦CARD⟧を⟦DESTINATION⟧に置く",
-            "structure": "Multi-Step - Gain resource then place card",
-        },
-        {
-            "name": "conditional_specific_zone",
-            "regex": r"自分の([^。]+)の([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "自分の⟦ZONE⟧の⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Zone-specific condition triggers effect",
-        },
-        {
-            "name": "discard_then_add",
-            "regex": r"([^。]+)を([^。]+)に置いて、([^。]+)を([^。]+)に加える",
-            "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置いて、⟦CARD⟧を⟦TARGET⟧に加える",
-            "structure": "Multi-Step - Discard then add to zone",
-        },
-        {
-            "name": "conditional_total_cards",
-            "regex": r"カードが合計(\d+)枚以上ある場合、([^。]+)",
-            "template": "カードが合計⟦X⟧枚以上ある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Total card count threshold triggers effect",
-        },
-        {
-            "name": "place_at_specific",
-            "regex": r"([^。]+)を([^。]+)の([^。]+)に([^。]+)置く",
-            "template": "⟦SOURCE⟧を⟦DESTINATION⟧の⟦LOCATION⟧に⟦MODIFIER⟧置く",
-            "structure": "Basic Action - Place at specific location with modifier",
-        },
-        {
-            "name": "conditional_different_names",
-            "regex": r"名前が異なる([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "名前が異なる⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Different names condition triggers effect",
-        },
-        {
-            "name": "look_and_add_specific_zone",
-            "regex": r"([^。]+)を(\d+)枚見て、([^。]+)を([^。]+)に加える",
-            "template": "⟦SOURCE⟧を⟦X⟧枚見て、⟦CARD⟧を⟦DESTINATION⟧に加える",
-            "structure": "Look-Add - Look at cards, add to specific zone",
-        },
-        {
-            "name": "score_modify_fragment",
-            "regex": r"スコア([^。]+)",
-            "template": "スコア⟦AMOUNT⟧",
-            "structure": "Score Modification - Score fragment (generic)",
-        },
-        {
-            "name": "nested_condition",
-            "regex": r"([^。]+)が([^。]+)場合、([^。]+)を得る",
-            "template": "⟦CONDITION⟧が⟦VALUE⟧場合、⟦RESOURCE⟧を得る",
-            "structure": "Conditional - Nested condition triggers gain",
-        },
-        {
-            "name": "conditional_score",
-            "regex": r"([^。]+)のスコア\+([+\d]+)",
-            "template": "⟦SOURCE⟧のスコア⟦AMOUNT⟧",
-            "structure": "Score Modification - Add to source score",
-        },
-        {
-            "name": "conditional_specific_present",
-            "regex": r"([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "⟦SOURCE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific presence triggers effect",
-        },
-        {
-            "name": "conditional_threshold_fragment",
-            "regex": r"([^。]+)が(\d+)以上の場合、([^。]+)",
-            "template": "⟦SOURCE⟧が⟦X⟧以上の場合、⟦EFFECT⟧",
-            "structure": "Conditional - Threshold fragment triggers effect",
-        },
-        {
-            "name": "gain_specific_fragment",
-            "regex": r"([^。]+)を(\d+)つ得る",
-            "template": "⟦RESOURCE⟧を⟦X⟧つ得る",
-            "structure": "Basic Action - Gain specific amount fragment",
-        },
-        # ===== FALLBACK PATTERNS (catch-all for edge cases) =====
-        # Conditional presence - consolidated (covers group, member, card presence)
-        {
-            "name": "conditional_presence",
-            "regex": r"([^。]+)が(いる|ある)場合、([^。]+)",
-            "template": "⟦SRC⟧が⟦PRES⟧場合、⟦EFF⟧",
-            "structure": "Conditional - Presence check",
-        },
-        # Conditional threshold - consolidated (covers above/below/count)
-        {
-            "name": "conditional_threshold",
-            "regex": r"([^。]+)が(\d+)(枚|人)?(以上|以下)いる?場合、([^。]+)",
-            "template": "⟦SRC⟧が⟦CNT⟧⟦THRESH⟧場合、⟦EFF⟧",
-            "structure": "Conditional - Threshold check",
-        },
-        # Generic trigger pattern - consolidated
-        {
-            "name": "trigger_generic",
-            "regex": r"([^。]+)(時に|とき|たび|なったとき|置かれたとき)、([^。]+)",
-            "template": "⟦TRIG⟧、⟦EFF⟧",
-            "structure": "Trigger - Generic timing trigger",
-        },
-        # Ability activation conditions - consolidated
-        {
-            "name": "ability_activation",
-            "regex": r"(この能力は|このカードが)([^。]+)場合のみ発動できる",
-            "template": "⟦ACT⟧⟦COND⟧場合のみ発動できる",
-            "structure": "Ability Activation - Conditional activation",
-        },
-        {
-            "name": "conditional_card_type",
-            "regex": r"([^。]+)カードが([^。]+)場合、([^。]+)",
-            "template": "⟦TYPE⟧カードが⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Card type condition triggers effect",
-        },
-        {
-            "name": "conditional_specific_count",
-            "regex": r"([^。]+)が(\d+)枚([^。]+)場合、([^。]+)",
-            "template": "⟦SOURCE⟧が⟦X⟧枚⟦CONDITION⟧場合、⟦EFFECT⟧",
-            "structure": "Conditional - Specific count condition triggers effect",
-        },
-        {
-            "name": "conditional_cost_presence",
-            "regex": r"コスト(\d+)の([^。]+)が([^。]+)いる場合、([^。]+)",
-            "template": "コスト⟦X⟧の⟦TYPE⟧が⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Cost presence triggers effect",
-        },
-        {
-            "name": "conditional_group_presence_zone",
-            "regex": r"([^。]+)に([^。]+)のメンバーが([^。]+)いる場合、([^。]+)",
-            "template": "⟦ZONE⟧に⟦GROUP⟧のメンバーが⟦CONDITION⟧いる場合、⟦EFFECT⟧",
-            "structure": "Conditional - Group presence in zone triggers effect",
-        },
-        {
-            "name": "icon_embedded_choose",
-            "regex": r"(\{\{[^{}]+\}\}+)以下から(\d+)つを選ぶ",
-            "template": "⟦ICON⟧以下から⟦X⟧つを選ぶ",
-            "structure": "Icon-Embedded - Choice action with icon",
-        },
-        {
-            "name": "icon_embedded_cost_effect",
-            "regex": r"(\{\{[^{}]+\}\}+)([^。]+)を置いてもよい：([^。]+)",
-            "template": "⟦ICON⟧⟦SOURCE⟧を置いてもよい：⟦EFFECT⟧",
-            "structure": "Icon-Embedded - Cost-effect with icon",
-        },
-        {
-            "name": "choose_below_simple",
-            "regex": r"以下から(\d+)つを選ぶ",
-            "template": "以下から⟦X⟧つを選ぶ",
-            "structure": "Choice Effect - Select from options below",
-        },
-        {
-            "name": "look_add_optional",
-            "regex": r"([^。]+)の([^。]+)を(\d+)枚見て手札に加えてもよい",
-            "template": "⟦SOURCE⟧の⟦CARD_TYPE⟧を⟦X⟧枚見て手札に加えてもよい",
-            "structure": "Look-Add - Look at cards, optionally add to hand",
-        },
-        {
-            "name": "choose_simple",
-            "regex": r"([^。]+)から(\d+)つ選ぶ",
-            "template": "⟦SOURCE⟧から⟦X⟧つ選ぶ",
-            "structure": "Choice Effect - Select from source",
-        },
-        {
-            "name": "specify_color",
-            "regex": r"([^。]+)の色(\d+)つ指定する",
-            "template": "⟦SOURCE⟧の色⟦X⟧つ指定する",
-            "structure": "Basic Action - Specify color",
-        },
-        {
-            "name": "reveal_and_add_optional",
-            "regex": r"([^。]+)を(\d+)枚公開して手札に加えてもよい",
-            "template": "⟦SOURCE⟧を⟦X⟧枚公開して手札に加えてもよい",
-            "structure": "Reveal-Add - Reveal cards, optionally add to hand (generic fallback)",
-        },
-        {
-            "name": "place_energy_specify",
-            "regex": r"([^。]+)を置いてもよい：([^。]+)の色(\d+)つ指定する",
-            "template": "⟦SOURCE⟧を置いてもよい：⟦TYPE⟧の色⟦X⟧つ指定する",
-            "structure": "Cost-Effect - Place energy, specify color",
-        },
-        {
-            "name": "trigger_score_gain",
-            "regex": r"([^。]+)1つにつき、([^。]+)の合計([^。]+)",
-            "template": "⟦TRIGGER⟧1つにつき、⟦SOURCE⟧の合計⟦EFFECT⟧",
-            "structure": "Trigger - Score gain per trigger",
-        },
-        {
-            "name": "stage_with_hearts",
-            "regex": r"([^。]+)に([^。]+)が([^。]+)ある",
-            "template": "⟦ZONE⟧に⟦TARGET⟧が⟦HEARTS⟧ある",
-            "structure": "Basic Action - Stage with hearts",
-        },
-        {
-            "name": "reveal_card_optional",
-            "regex": r"([^。]+)の([^。]+)を(\d+)枚まで公開して手札に加えてもよい",
-            "template": "⟦SOURCE⟧の⟦CARD_TYPE⟧を⟦X⟧枚まで公開して手札に加えてもよい",
-            "structure": "Reveal-Add - Reveal up to N cards, optionally add to hand",
-        },
-        {
-            "name": "conditional_heart_presence",
-            "regex": r"([^。]+)に([^。]+)がある場合、([^。]+)",
-            "template": "⟦ZONE⟧に⟦HEART⟧がある場合、⟦EFFECT⟧",
-            "structure": "Conditional - Heart presence triggers effect",
-        },
-        {
-            "name": "trigger_energize",
-            "regex": r"([^。]+)を([^。]+)に置いてもよい",
-            "template": "⟦SOURCE⟧を⟦DESTINATION⟧に置いてもよい",
-            "structure": "Cost-Effect - Energize to activate",
-        },
-        {
-            "name": "select_different_area",
-            "regex": r"([^。]+)、([^。]+)とは別の([^。]+)(\d+)つ選ぶ",
-            "template": "⟦TIME⟧、⟦SOURCE_AREA⟧とは別の⟦TARGET_AREA⟧⟦X⟧つ選ぶ",
-            "structure": "Choice - Select different area",
-        },
-        {
-            "name": "conditional_choice",
-            "regex": r"([^。]+)、は([^。]+)(\d+)つ選ぶ",
-            "template": "⟦CONDITION⟧、は⟦SOURCE⟧⟦X⟧つ選ぶ",
-            "structure": "Conditional - Choice under condition",
-        },
-        {
-            "name": "negative_condition",
-            "regex": r"([^。]+)、は([^。]+)",
-            "template": "⟦DURATION⟧、は⟦NEGATION⟧",
-            "structure": "Conditional - Negative condition",
-        },
-        {
-            "name": "set_phase_action",
-            "regex": r"([^。]+)で([^。]+)に([^。]+)(\d+)",
-            "template": "⟦PHASE⟧で⟦DESTINATION⟧に⟦CARD⟧⟦X⟧",
-            "structure": "Phase Action - Action during set phase",
-        },
-        {
-            "name": "complex_cost_calculation",
-            "regex": r"([^。]+)、その([^。]+)のコスト(\d+)を([^。]+)合計コストの([^。]+)の([^。]+)(\d+)、その([^。]+)が([^。]+)",
-            "template": "⟦CONDITION⟧、その⟦SOURCE⟧のコスト⟦X⟧を⟦OPERATION⟧合計コストの⟦GROUP⟧の⟦CARD_TYPE⟧⟦Y⟧、その⟦TARGET⟧が⟦EFFECT⟧",
-            "structure": "Complex - Cost calculation with staging",
-        },
-        {
-            "name": "empty_string",
-            "regex": r"^\"$",
-            "template": "⟦EMPTY⟧",
-            "structure": "Empty - Empty string",
-        },
-        {
-            "name": "cost_threshold_wait",
-            "regex": r"([^。]+)にコスト(\d+)以下の([^。]+)(\d+)人まで([^。]+)にする",
-            "template": "⟦ZONE⟧にコスト⟦X⟧以下の⟦TYPE⟧⟦Y⟧人まで⟦STATE⟧にする",
-            "structure": "State Change - Cost threshold with state change",
-        },
-        {
-            "name": "score_nonzero_condition",
-            "regex": r"([^。]+)では([^。]+)の合計スコアは0にはならない",
-            "template": "⟦CONDITION⟧では⟦SOURCE⟧の合計スコアは0にはならない",
-            "structure": "Conditional - Score non-zero condition",
-        },
-        {
-            "name": "stage_specific_group",
-            "regex": r"([^。]+)に([^。]+)の([^。]+)(\d+)人([^。]+)",
-            "template": "⟦ZONE⟧に⟦GROUP⟧の⟦TYPE⟧⟦X⟧人⟦ACTION⟧",
-            "structure": "Basic Action - Stage specific group",
-        },
-        {
-            "name": "parenthetical_opponent",
-            "regex": r"（対戦相手の([^）]+)）",
-            "template": "（対戦相手の⟦NOTE⟧）",
-            "structure": "Parenthetical - Opponent effect note",
-        },
-        {
-            "name": "parenthetical_card_effect",
-            "regex": r"（この([^）]+)）",
-            "template": "（この⟦NOTE⟧）",
-            "structure": "Parenthetical - Card effect note",
-        },
-        {
-            "name": "choice_turn_specific",
-            "regex": r"この([^。]+)「([^」]+)」の([^。]+)(\d+)つ選ぶ",
-            "template": "この⟦TIME⟧「⟦GROUP⟧」の⟦CARD⟧⟦X⟧つ選ぶ",
-            "structure": "Choice - Select specific group cards during turn",
-        },
+       
         # NOTE: No catchall patterns - coverage should show actual unmatched clauses
         # This allows us to identify gaps in pattern matching and add specific patterns
 
@@ -2598,8 +1066,8 @@ def extract_abilities(cards_file: Path, rules_file: Path, output_file: Path, met
 
     known = build_known_terms(cards)
     
-    # Discover Japanese equivalents from metadata.json and ability text
-    term_data = discover_japanese_equivalents(clauses, metadata_file)
+    # Placeholder for term data (discover_japanese_equivalents was deleted)
+    term_data = {"mapping": {}, "counts": {}}
     
     all_terms, counters = build_candidate_terms(clauses, rules_text, known, term_data)
 
@@ -2660,12 +1128,110 @@ def extract_abilities(cards_file: Path, rules_file: Path, output_file: Path, met
     pattern_counts = dsl_pattern_analysis.get("pattern_counts", {})
     top_patterns = sorted(pattern_counts.items(), key=lambda x: -x[1])[:20]
     
+    # Analyze atomic phrase quality - which patterns are truly atomic?
+    def analyze_atomic_quality(template: str) -> dict:
+        """Analyze if a template is truly atomic (only placeholders and particles) or has long phrases."""
+        # Remove placeholders
+        text_only = re.sub(r'⟦[^⟧]+⟧', '', template)
+        # Remove common particles/structure words
+        particles = re.sub(r'[をのにがはでとから、：\/\(\)「」『』\s]', '', text_only)
+        # Count remaining characters (should be 0-3 for truly atomic)
+        remaining_len = len(particles)
+        return {
+            "is_atomic": remaining_len <= 3,
+            "remaining_text": particles,
+            "remaining_len": remaining_len,
+            "template": template
+        }
+    
+    # Categorize all matched patterns by atomic quality
+    atomic_patterns = []  # Truly atomic: only placeholders + particles
+    semi_atomic_patterns = []  # Has some structure but short phrases
+    needs_breakdown_patterns = []  # Long phrases that need decomposition
+    
+    for pattern_name, count in pattern_counts.items():
+        # Find template for this pattern
+        template = ""
+        for p in DSL_PATTERNS:
+            if p.get("name") == pattern_name:
+                template = p.get("template", "")
+                break
+        
+        if template:
+            quality = analyze_atomic_quality(template)
+            entry = {
+                "name": pattern_name,
+                "count": count,
+                "template": template,
+                "quality": quality
+            }
+            
+            if quality["is_atomic"]:
+                atomic_patterns.append(entry)
+            elif quality["remaining_len"] <= 10:
+                semi_atomic_patterns.append(entry)
+            else:
+                needs_breakdown_patterns.append(entry)
+    
+    # Sort by count
+    atomic_patterns.sort(key=lambda x: -x["count"])
+    semi_atomic_patterns.sort(key=lambda x: -x["count"])
+    needs_breakdown_patterns.sort(key=lambda x: -x["count"])
+    
+    # Categorize patterns by type for decomposition analysis
+    atomic_patterns_matched = [p for p in top_patterns if p[0].startswith(('atomic_', 'action_'))]
+    compound_patterns_matched = [p for p in top_patterns if p[0].startswith('compound_')]
+    conditional_patterns_matched = [p for p in top_patterns if p[0].startswith('conditional_')]
+    trigger_patterns_matched = [p for p in top_patterns if p[0].startswith('trigger_')]
+    
+    # Decomposition examples - show how complex abilities break down
+    decomposition_examples = []
+    matched_sample = dsl_pattern_analysis.get("matched_ability_sample", [])
+    for ability in matched_sample[:5]:
+        clause_patterns = ability.get("clause_patterns", [])
+        if len(clause_patterns) > 1:  # Multi-clause = decomposable
+            decomposition_examples.append({
+                "original": ability.get("original", "")[:60] + "...",
+                "trigger": ability.get("trigger", "UNKNOWN"),
+                "decomposed_into": [cp.get("pattern_name", "unknown") for cp in clause_patterns],
+                "composition_type": "sequential" if len(clause_patterns) == 2 else "complex"
+            })
+    
     verification = {
-        "script_version": "2.0-consolidated",
-        "total_dsl_patterns_defined": len(DSL_PATTERNS),
-        "total_ability_patterns_defined": len(ABILITY_LEVEL_PATTERNS),
-        "patterns_actually_matched": len([p for p, c in pattern_counts.items() if c > 0]),
-        "top_matching_patterns": [{"name": name, "count": count} for name, count in top_patterns],
+        "script_version": "2.0-atomic-analysis",
+        "coverage_metrics": {
+            "ability_coverage": round(coverage, 3),
+            "clause_coverage": round(clause_compression, 3),
+            "atomic_coverage": round(atomic_coverage, 3),
+            "note": "Atomic coverage = % of matched text using truly atomic patterns (only placeholders)"
+        },
+        "pattern_counts": {
+            "total_dsl_defined": len(DSL_PATTERNS),
+            "actually_matched": len([p for p, c in pattern_counts.items() if c > 0]),
+            "truly_atomic": len(atomic_patterns),
+            "semi_atomic": len(semi_atomic_patterns),
+            "needs_breakdown": len(needs_breakdown_patterns)
+        },
+        "atomic_quality_analysis": {
+            "truly_atomic_patterns": [
+                {"name": p["name"], "template": p["template"], "matches": p["count"]}
+                for p in atomic_patterns[:15]
+            ],
+            "needs_breakdown_patterns": [
+                {"name": p["name"], "template": p["template"], "remaining_text": p["quality"]["remaining_text"], "matches": p["count"]}
+                for p in needs_breakdown_patterns[:10]
+            ],
+            "goal": "All patterns should be atomic: only placeholders + particles (を、の、に、が etc.)"
+        },
+        "decomposition": {
+            "examples": decomposition_examples,
+            "principle": "Complex abilities decompose into atomic actions + conditions + triggers",
+            "composition_rules": [
+                "atomic_action + atomic_action = sequential",
+                "condition + atomic_action = conditional_effect",
+                "trigger + effect = triggered_ability"
+            ]
+        },
         "consolidation_proof": {
             "before_estimated": 190,
             "after": len(DSL_PATTERNS),
@@ -2857,7 +1423,7 @@ def main() -> int:
     try:
         abilities_data = json.load(open('data/abilities_from_cards.json', encoding='utf-8'))
         dsl_output_file = Path("data/dsl_analysis_structured.json")
-        generate_structured_dsl_output(payload['analysis'], abilities_data, ABILITY_LEVEL_PATTERNS, dsl_output_file)
+        generate_structured_dsl_output(payload['legacy_analysis'], abilities_data, ABILITY_LEVEL_PATTERNS, dsl_output_file)
         print(f"Structured DSL output written to {dsl_output_file}")
     except Exception as e:
         print(f"Warning: Could not generate structured DSL output: {e}")
