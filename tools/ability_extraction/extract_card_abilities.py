@@ -10,41 +10,67 @@ import re
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
+from difflib import SequenceMatcher
 
 
-# Game term patterns for expression parsing
-CARD_TYPES = [
-    'このメンバー', 'ライブカード', 'メンバーカード', 'カード', 
-    'エネルギーカード', 'ライブ中のカード', '成功ライブカード',
-    'エネルギーデッキ', 'エネルギー', 'ハート', 'ブレード'
-]
+def load_variable_config():
+    """Load variable configuration from external config file."""
+    config_file = Path("tools/ability_extraction/variable_config.json")
+    
+    if config_file.exists():
+        with open(config_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    else:
+        # Fallback to hardcoded values if config doesn't exist
+        return {
+            'card_types': [
+                'このメンバー', 'ライブカード', 'メンバーカード', 'カード',
+                'エネルギーカード', 'ライブ中のカード', '成功ライブカード',
+                'エネルギーデッキ', 'エネルギー', 'ハート', 'ブレード'
+            ],
+            'zones': [
+                'ステージ', '控え室', '手札', 'デッキ', 'ウェイト',
+                'エネルギー置き場', '成功ライブカード置き場', 'エリア'
+            ],
+            'players': ['自分', '相手'],
+            'positions': [
+                '【左サイド】', '【右サイド】', '【センター】', '【左】', '【右】', '【中央】',
+                'センター', '左サイド', '右サイド'
+            ],
+            'timing_modifiers': [
+                '【ターン1回】', '［ターン1回］', 'ターン1回',
+                'ターン2回', '2回', '毎ターン'
+            ],
+            'group_names': [],
+            'character_names': [],
+        }
 
-ZONES = [
-    'ステージ', '控え室', '手札', 'デッキ', 'ウェイト', 
-    'エネルギー置き場', '成功ライブカード置き場', 'エリア'
-]
 
-PLAYERS = [
-    '自分', '相手'
-]
+# Load variable configuration
+VAR_CONFIG = load_variable_config()
 
-POSITIONS = [
-    '【左サイド】', '【右サイド】', '【センター】', '【左】', '【右】', '【中央】',
-    'センター', '左サイド', '右サイド'
-]
-
-TIMING_MODIFIERS = [
-    '【ターン1回】', '［ターン1回］', 'ターン1回',
-    'ターン2回', '2回', '毎ターン'
-]
-
-GROUP_NAMES = []  # Will be extracted dynamically from 『』 patterns
+CARD_TYPES = VAR_CONFIG['card_types']
+ZONES = VAR_CONFIG['zones']
+PLAYERS = VAR_CONFIG['players']
+POSITIONS = VAR_CONFIG['positions']
+TIMING_MODIFIERS = VAR_CONFIG['timing_modifiers']
+GROUP_NAMES = VAR_CONFIG['group_names']
+CHARACTER_NAMES = VAR_CONFIG['character_names']
+OPTIONAL_MODIFIERS = VAR_CONFIG.get('optional_modifiers', [])
 
 ENERGY_COSTS = []  # Will be extracted from {{icon_energy.png|E}} patterns
-
-CHARACTER_NAMES = []  # Will be extracted from 「」 patterns
-
 SCORE_MODIFIERS = []  # Will be extracted from +1/+2/+3 patterns
+
+# Pre-compiled regex patterns for performance
+NUMBER_PATTERN = re.compile(r'[0-9０-９]+')
+GROUP_PATTERN = re.compile(r'『([^』]+)』')
+ENERGY_PATTERN = re.compile(r'([0-9]+)E')
+CHAR_PATTERN = re.compile(r'「([^」]+)」')
+SCORE_PATTERN = re.compile(r'[＋+]([0-9]+)')
+ICON_PATTERN = re.compile(r'\{\{([^}]+)\}\}')
+WHITESPACE_PATTERN = re.compile(r'\s+')
+ICON_COUNT_PATTERN = re.compile(r'(\[icon\]\s*)+')
+TRIGGER_PATTERN = re.compile(r'\{\{([^|]+)\|([^}]+)\}\}')
 
 
 def split_cost_effect(text: str) -> tuple[str, str]:
@@ -60,7 +86,8 @@ def split_cost_effect(text: str) -> tuple[str, str]:
 
 def extract_game_terms(text: str) -> dict:
     """
-    Extract game terms from text and return as structured dict.
+    Extract game terms from ability text.
+    Returns dict with lists of different term types.
     """
     terms = {
         'card_types': [],
@@ -76,245 +103,407 @@ def extract_game_terms(text: str) -> dict:
         'icon_patterns': []
     }
     
-    # Extract all {{}} patterns as variables
-    icon_pattern = re.compile(r'\{\{([^|]+)\|([^}]+)\}\}')
-    icon_matches = icon_pattern.findall(text)
-    for icon_file, icon_text in icon_matches:
-        full_pattern = f"{{{{{icon_file}|{icon_text}}}}}"
-        terms['icon_patterns'].append(full_pattern)
-        # Also add the text content
-        terms['icon_patterns'].append(icon_text)
-    
-    # Extract numbers
-    number_pattern = re.compile(r'(\d+)枚')
-    numbers = number_pattern.findall(text)
-    terms['numbers'] = numbers
-    
-    # Extract score modifiers (+1, +2, +3, etc.)
-    score_pattern = re.compile(r'\+([０-９]+)')
-    score_matches = score_pattern.findall(text)
-    terms['score_modifiers'] = score_matches
-    
-    # Extract card types
-    for card_type in CARD_TYPES:
+    # Card types
+    card_type_patterns = [
+        'このメンバー', 'エネルギー', 'エネルギーカード', 'エネルギーデッキ',
+        'カード', 'ハート', 'ブレード', 'メンバーカード', 'ライブカード',
+        'ライブ中のカード', '成功ライブカード'
+    ]
+    for card_type in card_type_patterns:
         if card_type in text:
             terms['card_types'].append(card_type)
     
-    # Extract zones
-    for zone in ZONES:
+    # Zones
+    zone_patterns = [
+        'ウェイト', 'エネルギー置き場', 'エリア', 'ステージ', 'デッキ',
+        '成功ライブカード置き場', '手札', '控え室'
+    ]
+    for zone in zone_patterns:
         if zone in text:
             terms['zones'].append(zone)
     
-    # Extract players
-    for player in PLAYERS:
+    # Players
+    player_patterns = ['自分', '相手']
+    for player in player_patterns:
         if player in text:
             terms['players'].append(player)
     
-    # Extract positions
-    for position in POSITIONS:
+    # Numbers (including full-width)
+    numbers = NUMBER_PATTERN.findall(text)
+    terms['numbers'].extend(numbers)
+    
+    # Positions
+    position_patterns = POSITIONS
+    for position in position_patterns:
         if position in text:
             terms['positions'].append(position)
     
-    # Extract timing modifiers
-    for timing in TIMING_MODIFIERS:
+    # Timing modifiers
+    timing_patterns = TIMING_MODIFIERS
+    for timing in timing_patterns:
         if timing in text:
             terms['timing_modifiers'].append(timing)
     
-    # Extract group names from 『』 patterns
-    group_pattern = re.compile(r'『([^』]+)』')
-    group_matches = group_pattern.findall(text)
-    terms['group_names'] = group_matches
+    # Group names (in brackets)
+    group_matches = GROUP_PATTERN.findall(text)
+    terms['group_names'].extend(group_matches)
     
-    # Extract energy costs from {{icon_energy.png|E}} patterns
-    energy_pattern = re.compile(r'\{\{icon_energy\.png\|E\}\}')
-    energy_matches = energy_pattern.findall(text)
-    if energy_matches:
-        # Count the number of E icons
-        energy_count = len(energy_matches)
-        terms['energy_costs'].append(f"{energy_count}E")
+    # Energy costs (like 1E, 2E, etc.)
+    energy_matches = ENERGY_PATTERN.findall(text)
+    for match in energy_matches:
+        terms['energy_costs'].append(f"{match}E")
     
-    # Extract character names from 「」 patterns
-    char_pattern = re.compile(r'「([^」]+)」')
-    char_matches = char_pattern.findall(text)
+    # Character names (in brackets and quotes)
+    char_matches = CHAR_PATTERN.findall(text)
     # Filter out score modifiers and other non-character patterns
     for char in char_matches:
         # Skip if it's just a number or score modifier
         if not re.match(r'^[０-９]+$', char) and not re.match(r'^\+', char):
             terms['character_names'].append(char)
     
+    # Score modifiers (+1, +2, +3)
+    score_matches = SCORE_PATTERN.findall(text)
+    terms['score_modifiers'].extend(score_matches)
+    
+    # All {{}} patterns
+    icon_matches = ICON_PATTERN.findall(text)
+    terms['icon_patterns'].extend(icon_matches)
+    
     return terms
 
 
-def compress_templates(template_list: list) -> list:
+def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]:
     """
-    Compress templates using hierarchical variable matching.
-    Groups templates that share structural patterns at different abstraction levels.
+    Create a template by replacing game terms with placeholders.
+    Uses smart variable extraction: groups repeated icons and handles optional modifiers.
+    Returns: (template, list of modifier_info dicts with 'pattern' and 'replacement')
     """
-    # Level 1: Exact match (current templates)
-    # Level 2: Abstract specific values to generic types
-    # Level 3: Abstract hierarchical relationships
+    template = text
+    modifier_info = []
     
-    level_groups = {
-        'level1': defaultdict(list),
-        'level2': defaultdict(list),
-        'level3': defaultdict(list)
-    }
+    # Normalize text: strip quotes, normalize commas to full-width, and remove all spaces for consistent comparison
+    template = template.strip('"\'')  # Strip leading/trailing quotes
+    template = template.replace(',', '、')  # Normalize half-width comma to full-width
+    template = WHITESPACE_PATTERN.sub('', template)  # Remove all spaces
+    
+    # Replace in order of specificity (longer patterns first)
+    replacements = []
+    
+    # Card types
+    for card_type in sorted(terms['card_types'], key=len, reverse=True):
+        replacements.append((card_type, '[card_type]'))
+    
+    # Zones
+    for zone in sorted(terms['zones'], key=len, reverse=True):
+        replacements.append((zone, '[zone]'))
+    
+    # Players
+    for player in sorted(terms['players'], key=len, reverse=True):
+        replacements.append((player, '[player]'))
+    
+    # Numbers
+    for number in sorted(terms['numbers'], key=len, reverse=True):
+        replacements.append((number, '[number]'))
+    
+    # Positions
+    for position in sorted(terms['positions'], key=len, reverse=True):
+        replacements.append((position, '[position]'))
+    
+    # Timing modifiers
+    for timing in sorted(terms['timing_modifiers'], key=len, reverse=True):
+        replacements.append((timing, '[timing_modifier]'))
+    
+    # Group names
+    for group in sorted(terms['group_names'], key=len, reverse=True):
+        replacements.append((group, '[group_name]'))
+    
+    # Energy costs
+    for energy in sorted(terms['energy_costs'], key=len, reverse=True):
+        replacements.append((energy, '[energy_cost]'))
+    
+    # Character names
+    for char in sorted(terms['character_names'], key=len, reverse=True):
+        replacements.append((char, '[character_name]'))
+    
+    # Score modifiers
+    for score in sorted(terms['score_modifiers'], key=len, reverse=True):
+        replacements.append((f'+{score}', '[score_modifier]'))
+    
+    # Icon patterns - group repeated icons as count variables
+    icon_patterns = sorted(terms['icon_patterns'], key=len, reverse=True)
+    for icon in icon_patterns:
+        replacements.append((f'{{{{{icon}}}}}', '[icon]'))
+    
+    # Apply replacements
+    for original, placeholder in replacements:
+        template = template.replace(original, placeholder)
+    
+    # Smart: Group repeated [icon] as count variables
+    template = ICON_COUNT_PATTERN.sub(lambda m: f'[icon_count:{len(m.group(0).split())}]', template)
+    
+    # Smart: Handle optional modifiers (group_nameの, ライブ中の, etc.)
+    # Track what each modifier replaced for hierarchical compression
+    for modifier in sorted(OPTIONAL_MODIFIERS, key=len, reverse=True):
+        if modifier in template:
+            # Find what precedes/follows the modifier to build full context
+            # For example: [group_name] + の = [group_name]の
+            template = template.replace(modifier, '[opt_mod]')
+            modifier_info.append({'pattern': modifier, 'replacement': '[opt_mod]'})
+    
+    return template, modifier_info
+
+
+def _merge_dicts(*dicts):
+    """Helper function to merge multiple dictionaries."""
+    result = {}
+    for d in dicts:
+        result.update(d)
+    return result
+
+
+def calculate_template_similarity(template1: str, template2: str) -> float:
+    """
+    Calculate similarity between two templates as a percentage.
+    Uses a simple character-based similarity metric.
+    """
+    return SequenceMatcher(None, template1, template2).ratio()
+
+
+def extract_optional_modifiers(template: str, modifier_info: list = None) -> tuple[str, list[str]]:
+    """
+    Extract optional modifiers from a template and return the base template and list of modifiers.
+    modifier_info: list of dicts with 'pattern' and 'replacement' from template creation
+    """
+    base_template = template
+    modifiers_found = []
+    
+    if not modifier_info:
+        # Fallback: extract from template directly
+        # Pattern: [placeholder]の[placeholder] -> base: [second_placeholder], modifier: [first_placeholder]の
+        modifier_patterns = [
+            (r'\[group_name\]\[opt_mod\]', '[group_name]の'),
+            (r'\[opt_mod\]', '[opt_mod]'),
+        ]
+        
+        for pattern, modifier in modifier_patterns:
+            if re.search(pattern, template):
+                base_template = re.sub(pattern, '', base_template)
+                modifiers_found.append(modifier)
+    else:
+        # Use tracked modifier info
+        for mod in modifier_info:
+            pattern = mod['pattern']
+            replacement = mod['replacement']
+            # Remove the replacement from template to get base
+            base_template = base_template.replace(replacement, '')
+            modifiers_found.append(pattern)
+    
+    # Clean up extra spaces
+    base_template = WHITESPACE_PATTERN.sub(' ', base_template).strip()
+    
+    return base_template, modifiers_found
+
+
+def compress_templates(template_list: list, all_abilities: list = None) -> list:
+    """
+    Compress templates by grouping identical templates together.
+    Then apply hierarchical compression based on optional modifiers.
+    """
+    # Level 1: Group identical templates
+    template_groups = defaultdict(list)
     
     for template_data in template_list:
         template = template_data['template']
-        
-        # Level 1: Original template
-        level_groups['level1'][template].append(template_data)
-        
-        # Level 2: Abstract specific values to generic types
-        structure = template
-        structure = re.sub(r'\[number\]', '[N]', structure)
-        structure = re.sub(r'\[card_type\]', '[CT]', structure)
-        structure = re.sub(r'\[zone\]', '[Z]', structure)
-        structure = re.sub(r'\[player\]', '[P]', structure)
-        structure = re.sub(r'\[position\]', '[POS]', structure)
-        structure = re.sub(r'\[timing_modifier\]', '[TM]', structure)
-        structure = re.sub(r'\[group_name\]', '[G]', structure)
-        structure = re.sub(r'\[([0-9]+)E\]', '[E]', structure)
-        structure = re.sub(r'\[character_name\]', '[C]', structure)
-        structure = re.sub(r'\[score_modifier\]', '[S]', structure)
-        structure = re.sub(r'\[icon\]', '[I]', structure)
-        structure = re.sub(r'\[icon_text\]', '[IT]', structure)
-        
-        level_groups['level2'][structure].append(template_data)
-        
-        # Level 3: Abstract hierarchical relationships
-        # Abstract cost thresholds (コスト9以上 → コスト以上)
-        structure3 = re.sub(r'コスト[0-9]+以上', 'コスト[THRESHOLD]以上', structure)
-        structure3 = re.sub(r'コスト[0-9]+以下', 'コスト[THRESHOLD]以下', structure3)
-        
-        # Abstract group names (『μ's』 → 『GROUP』)
-        structure3 = re.sub(r'『[^』]+』', '『GROUP』', structure3)
-        
-        # Abstract specific numbers in conditionals
-        structure3 = re.sub(r'[0-9]+以上', '[NUM]以上', structure3)
-        structure3 = re.sub(r'[0-9]+以下', '[NUM]以下', structure3)
-        
-        # Abstract position modifiers
-        structure3 = re.sub(r'一番上|一番下', '[POS_MOD]', structure3)
-        
-        # Abstract quantifiers
-        structure3 = re.sub(r'すべて|1人|2人|3人|[0-9]+人', '[QUANT]', structure3)
-        
-        # Abstract color patterns
-        structure3 = re.sub(r'(桃|赤|黄|緑|紫|青)\[CT\]', '[COLOR_CT]', structure3)
-        
-        level_groups['level3'][structure3].append(template_data)
+        template_groups[template].append(template_data)
     
-    # Build compressed templates using hierarchical matching
-    compressed_templates = []
-    processed_indices = set()
-    
-    # Start with level 3 (most abstract)
-    for structure, templates in level_groups['level3'].items():
+    # Build level 1 compressed templates
+    level1_templates = []
+    for template, templates in template_groups.items():
         if len(templates) > 1:
-            indices = [i for i, t in enumerate(template_list) if t in templates]
-            if all(idx not in processed_indices for idx in indices):
-                compressed_template = {
-                    'template': structure,
-                    'usage_count': sum(t['usage_count'] for t in templates),
-                    'variables': sorted(set().union(*[t['variables'] for t in templates])),
-                    'abilities': [ability for t in templates for ability in t['abilities'][:5]],
-                    'compressed_from': len(templates),
-                    'compression_level': 3
-                }
-                compressed_templates.append(compressed_template)
-                processed_indices.update(indices)
-    
-    # Then level 2 for remaining
-    for structure, templates in level_groups['level2'].items():
-        indices = [i for i, t in enumerate(template_list) if t in templates]
-        if len(indices) > 1 and all(idx not in processed_indices for idx in indices):
             compressed_template = {
-                'template': structure,
+                'template': template,
                 'usage_count': sum(t['usage_count'] for t in templates),
                 'variables': sorted(set().union(*[t['variables'] for t in templates])),
                 'abilities': [ability for t in templates for ability in t['abilities'][:5]],
                 'compressed_from': len(templates),
-                'compression_level': 2
+                'compression_level': 1,
+                'modifiers': templates[0].get('modifiers', [])
             }
-            compressed_templates.append(compressed_template)
-            processed_indices.update(indices)
-    
-    # Add remaining templates (level 1)
-    for i, template_data in enumerate(template_list):
-        if i not in processed_indices:
-            compressed_template = {
-                'template': template_data['template'],
-                'usage_count': template_data['usage_count'],
-                'variables': template_data['variables'],
-                'abilities': template_data['abilities'][:5],
-                'compressed_from': 1,
-                'compression_level': 1
-            }
-            compressed_templates.append(compressed_template)
-    
-    compressed_templates.sort(key=lambda x: -x['usage_count'])
-    return compressed_templates
-
-
-def create_expression_template(text: str, terms: dict) -> str:
-    """
-    Create a template by replacing game terms with placeholders.
-    """
-    template = text
-    
-    # Replace all {{}} patterns with [icon] placeholder
-    for icon_pattern in terms['icon_patterns']:
-        if icon_pattern.startswith('{{'):
-            template = template.replace(icon_pattern, '[icon]')
+            level1_templates.append(compressed_template)
         else:
-            # This is just the text content, replace it too
-            template = template.replace(icon_pattern, '[icon_text]')
+            # Add uncompressed templates - use the single template from this group
+            level1_templates.append({
+                'template': template,
+                'usage_count': templates[0]['usage_count'],
+                'variables': templates[0]['variables'],
+                'abilities': templates[0]['abilities'],
+                'compressed_from': 1,
+                'compression_level': 1,
+                'modifiers': templates[0].get('modifiers', [])
+            })
     
-    # Replace score modifiers
-    for score in terms['score_modifiers']:
-        template = template.replace(f'+{score}', '[score_modifier]')
+    # Analyze template similarity on level1 templates (after grouping identical ones)
+    # to understand what patterns exist
+    similarity_report = analyze_template_similarity(level1_templates, threshold=0.90)
+    print(f"\n=== Template Similarity Analysis ===")
+    print(f"Found {len(similarity_report)} highly similar template pairs (>=90% similarity)")
+    for i, (t1, t2, sim, data1, data2) in enumerate(similarity_report[:10]):
+        print(f"  {i+1}. Sim {sim:.2%}: '{t1}' vs '{t2}'")
     
-    # Replace energy costs
-    for energy in terms['energy_costs']:
-        e_count = int(energy.replace('E', ''))
-        energy_pattern = r'\{\{icon_energy\.png\|E\}\}' * e_count
-        template = re.sub(energy_pattern, f'[{energy}]', template)
+    # Only output similar pairs if there are any (not all identical)
+    if len(similarity_report) > 0 and len(similarity_report) < len(level1_templates) * len(level1_templates) / 2:
+        with open("template_similarity_report.txt", "w", encoding="utf-8") as f:
+            f.write(f"Template Similarity Report\n")
+            f.write(f"===========================\n\n")
+            f.write(f"Found {len(similarity_report)} highly similar template pairs (>=90% similarity)\n\n")
+            for i, (t1, t2, sim, data1, data2) in enumerate(similarity_report):
+                f.write(f"{i+1}. Sim {sim:.2%}\n")
+                f.write(f"Template A: {t1}\n")
+                f.write(f"Ability A examples: {data1.get('abilities', [])[:3]}\n")
+                f.write(f"Template B: {t2}\n")
+                f.write(f"Ability B examples: {data2.get('abilities', [])[:3]}\n")
+                f.write(f"\n")
+        print(f"Similarity report written to template_similarity_report.txt")
+    else:
+        print("Skipping similarity report - all templates are identical or no similar pairs found")
     
-    # Replace group names from 『』 patterns
-    for group_name in terms['group_names']:
-        template = template.replace(f'『{group_name}』', '[group_name]')
+    # Level 2: Skip hierarchical compression for now - focus on decomposition first
+    # The similar templates have structural differences that shouldn't be grouped
+    level2_templates = level1_templates
     
-    # Replace character names from 「」 patterns
-    for char_name in terms['character_names']:
-        template = template.replace(f'「{char_name}」', '[character_name]')
+    level2_templates.sort(key=lambda x: -x['usage_count'])
+    return level2_templates
+
+
+def is_optional_modifier(text: str) -> bool:
+    """
+    Check if text looks like an optional modifier pattern.
+    Optional modifiers are typically short and contain placeholders.
+    """
+    # Check if it's a placeholder pattern
+    placeholder_patterns = [
+        '[group_name]', '[opt_mod]', '[card_type]', '[zone]', '[player]'
+    ]
     
-    # Replace timing modifiers
-    for timing in terms['timing_modifiers']:
-        template = template.replace(timing, '[timing_modifier]')
+    # If it's very short and contains placeholders, it's likely an optional modifier
+    if len(text) <= 20 and any(p in text for p in placeholder_patterns):
+        return True
     
-    # Replace positions
-    for position in terms['positions']:
-        template = template.replace(position, '[position]')
+    # If it starts with a placeholder, it's likely a prefix modifier
+    if any(text.startswith(p) for p in placeholder_patterns):
+        return True
     
-    # Replace numbers first (longest to shortest to avoid partial matches)
-    for num in sorted(terms['numbers'], key=len, reverse=True):
-        template = template.replace(num + '枚', '[number]')
+    return False
+
+
+def find_common_base(templates: list) -> str:
+    """
+    Find the common base template by removing differences.
+    Uses longest common subsequence approach.
+    """
+    if not templates:
+        return ""
+    if len(templates) == 1:
+        return templates[0]
     
-    # Replace card types (longest to shortest)
-    for card_type in sorted(terms['card_types'], key=len, reverse=True):
-        template = template.replace(card_type, '[card_type]')
+    # Find common prefix
+    def common_prefix(s1, s2):
+        min_len = min(len(s1), len(s2))
+        for i in range(min_len):
+            if s1[i] != s2[i]:
+                return s1[:i]
+        return s1[:min_len]
     
-    # Replace zones (longest to shortest)
-    for zone in sorted(terms['zones'], key=len, reverse=True):
-        template = template.replace(zone, '[zone]')
+    # Find common suffix
+    def common_suffix(s1, s2):
+        min_len = min(len(s1), len(s2))
+        for i in range(1, min_len + 1):
+            if s1[-i] != s2[-i]:
+                return s1[-i+1:] if i > 1 else ""
+        return s1[-min_len:]
     
-    # Replace players
-    for player in terms['players']:
-        template = template.replace(player, '[player]')
+    # Start with first template as base
+    base = templates[0]
     
-    return template
+    for template in templates[1:]:
+        # Find common prefix and suffix
+        prefix = common_prefix(base, template)
+        suffix = common_suffix(base, template)
+        
+        # Build base from prefix + suffix
+        # This is a simplified approach - might need refinement
+        if len(prefix) + len(suffix) > len(base):
+            base = prefix + suffix
+        elif len(prefix) > len(base) * 0.5:
+            base = prefix
+        else:
+            # Keep the shorter template as base
+            base = template if len(template) < len(base) else base
+    
+    return base
+
+
+def find_difference(base: str, template: str) -> str:
+    """
+    Find the difference between base and template.
+    Returns the portion that's in template but not in base.
+    """
+    if base == template:
+        return ""
+    
+    # Simple approach: find where they differ
+    # This is a simplified diff - could be improved
+    for i in range(min(len(base), len(template))):
+        if base[i] != template[i]:
+            # Found difference point
+            # Return the rest of template from this point
+            return template[i:]
+    
+    # If one is prefix of the other, return the suffix
+    if len(template) > len(base):
+        return template[len(base):]
+    
+    return ""
+
+
+def analyze_template_similarity(templates: list, threshold: float = 0.90) -> list:
+    """
+    Analyze similarity between templates and return pairs above threshold.
+    Returns list of (template1, template2, similarity_score, template1_data, template2_data) tuples.
+    """
+    similar_pairs = []
+    
+    for i in range(len(templates)):
+        for j in range(i + 1, len(templates)):
+            t1 = templates[i]['template']
+            t2 = templates[j]['template']
+            
+            similarity = calculate_template_similarity(t1, t2)
+            if similarity >= threshold:
+                similar_pairs.append((t1, t2, similarity, templates[i], templates[j]))
+    
+    # Sort by similarity descending
+    similar_pairs.sort(key=lambda x: -x[2])
+    return similar_pairs
+
+
+
+
+def _mark_covered_positions(text: str, term_list: list, covered_positions: set, transform_func=None):
+    """
+    Helper function to mark covered positions for a list of terms.
+    transform_func: optional function to transform term before searching (e.g., add brackets)
+    """
+    for term in term_list:
+        search_text = transform_func(term) if transform_func else term
+        start = 0
+        while True:
+            pos = text.find(search_text, start)
+            if pos == -1:
+                break
+            for i in range(pos, pos + len(search_text)):
+                covered_positions.add(i)
+            start = pos + 1
 
 
 def calculate_text_coverage(text: str, terms: dict) -> dict:
@@ -325,94 +514,20 @@ def calculate_text_coverage(text: str, terms: dict) -> dict:
     total_chars = len(text)
     covered_positions = set()
     
-    # Find all occurrences of each term type and mark positions
-    for card_type in terms['card_types']:
-        start = 0
-        while True:
-            pos = text.find(card_type, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(card_type)):
-                covered_positions.add(i)
-            start = pos + 1
+    # Find all occurrences of each term type and mark positions using helper function
+    _mark_covered_positions(text, terms.get('card_types', []), covered_positions)
+    _mark_covered_positions(text, terms.get('zones', []), covered_positions)
+    _mark_covered_positions(text, terms.get('players', []), covered_positions)
+    _mark_covered_positions(text, terms.get('numbers', []), covered_positions, lambda n: n + '枚')
+    _mark_covered_positions(text, terms.get('positions', []), covered_positions)
+    _mark_covered_positions(text, terms.get('timing_modifiers', []), covered_positions)
+    _mark_covered_positions(text, terms.get('group_names', []), covered_positions, lambda g: f'『{g}』')
+    _mark_covered_positions(text, terms.get('character_names', []), covered_positions, lambda c: f'「{c}」')
+    _mark_covered_positions(text, terms.get('score_modifiers', []), covered_positions, lambda s: f'+{s}')
     
-    for zone in terms['zones']:
-        start = 0
-        while True:
-            pos = text.find(zone, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(zone)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for player in terms['players']:
-        start = 0
-        while True:
-            pos = text.find(player, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(player)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for number in terms['numbers']:
-        num_text = number + '枚'
-        start = 0
-        while True:
-            pos = text.find(num_text, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(num_text)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    # New variable types
-    for position in terms['positions']:
-        start = 0
-        while True:
-            pos = text.find(position, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(position)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for timing in terms['timing_modifiers']:
-        start = 0
-        while True:
-            pos = text.find(timing, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(timing)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for group_name in terms['group_names']:
-        group_text = f'『{group_name}』'
-        start = 0
-        while True:
-            pos = text.find(group_text, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(group_text)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for char_name in terms['character_names']:
-        char_text = f'「{char_name}」'
-        start = 0
-        while True:
-            pos = text.find(char_text, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(char_text)):
-                covered_positions.add(i)
-            start = pos + 1
-    
-    for energy in terms['energy_costs']:
+    # Energy costs (special handling for multiple energy icons)
+    for energy in terms.get('energy_costs', []):
         e_count = int(energy.replace('E', ''))
-        energy_pattern = r'\{\{icon_energy\.png\|E\}\}' * e_count
         start = 0
         while True:
             pos = text.find('{{icon_energy.png|E}}', start)
@@ -422,29 +537,15 @@ def calculate_text_coverage(text: str, terms: dict) -> dict:
                 covered_positions.add(i)
             start = pos + 1
     
-    # New: icon patterns
-    for icon_pattern in terms['icon_patterns']:
+    # Icon patterns
+    for icon_pattern in terms.get('icon_patterns', []):
         if icon_pattern.startswith('{{'):
-            start = 0
-            while True:
-                pos = text.find(icon_pattern, start)
-                if pos == -1:
-                    break
-                for i in range(pos, pos + len(icon_pattern)):
-                    covered_positions.add(i)
-                start = pos + 1
+            _mark_covered_positions(text, [icon_pattern], covered_positions)
     
-    # New: score modifiers
-    for score in terms['score_modifiers']:
-        score_text = f'+{score}'
-        start = 0
-        while True:
-            pos = text.find(score_text, start)
-            if pos == -1:
-                break
-            for i in range(pos, pos + len(score_text)):
-                covered_positions.add(i)
-            start = pos + 1
+    # Additional term types (if present)
+    _mark_covered_positions(text, terms.get('actions', []), covered_positions)
+    _mark_covered_positions(text, terms.get('placements', []), covered_positions)
+    _mark_covered_positions(text, terms.get('gains', []), covered_positions)
     
     covered_chars = len(covered_positions)
     coverage_percent = (covered_chars / total_chars * 100) if total_chars > 0 else 0
@@ -458,7 +559,7 @@ def calculate_text_coverage(text: str, terms: dict) -> dict:
 
 def collect_unique_variables(all_abilities: list) -> dict:
     """
-    Collect all unique game term variables found across all abilities.
+    Collect all unique game term variables from all abilities.
     """
     unique_vars = {
         'card_types': set(),
@@ -475,51 +576,37 @@ def collect_unique_variables(all_abilities: list) -> dict:
     }
     
     for ability in all_abilities:
-        effect = ability['effect']
-        cost, effect_text = split_cost_effect(effect)
-        
-        # Extract terms from both cost and effect
+        cost, effect_text = split_cost_effect(ability['effect'])
         cost_terms = extract_game_terms(cost)
         effect_terms = extract_game_terms(effect_text)
         
-        # Collect unique variables
+        # Collect from cost
         unique_vars['card_types'].update(cost_terms['card_types'])
-        unique_vars['card_types'].update(effect_terms['card_types'])
         unique_vars['zones'].update(cost_terms['zones'])
-        unique_vars['zones'].update(effect_terms['zones'])
         unique_vars['players'].update(cost_terms['players'])
-        unique_vars['players'].update(effect_terms['players'])
         unique_vars['numbers'].update(cost_terms['numbers'])
-        unique_vars['numbers'].update(effect_terms['numbers'])
         unique_vars['positions'].update(cost_terms['positions'])
-        unique_vars['positions'].update(effect_terms['positions'])
         unique_vars['timing_modifiers'].update(cost_terms['timing_modifiers'])
-        unique_vars['timing_modifiers'].update(effect_terms['timing_modifiers'])
         unique_vars['group_names'].update(cost_terms['group_names'])
-        unique_vars['group_names'].update(effect_terms['group_names'])
         unique_vars['energy_costs'].update(cost_terms['energy_costs'])
-        unique_vars['energy_costs'].update(effect_terms['energy_costs'])
         unique_vars['character_names'].update(cost_terms['character_names'])
-        unique_vars['character_names'].update(effect_terms['character_names'])
         unique_vars['score_modifiers'].update(cost_terms['score_modifiers'])
-        unique_vars['score_modifiers'].update(effect_terms['score_modifiers'])
         unique_vars['icon_patterns'].update(cost_terms['icon_patterns'])
+        
+        # Collect from effect
+        unique_vars['card_types'].update(effect_terms['card_types'])
+        unique_vars['zones'].update(effect_terms['zones'])
+        unique_vars['players'].update(effect_terms['players'])
+        unique_vars['numbers'].update(effect_terms['numbers'])
+        unique_vars['positions'].update(effect_terms['positions'])
+        unique_vars['timing_modifiers'].update(effect_terms['timing_modifiers'])
+        unique_vars['group_names'].update(effect_terms['group_names'])
+        unique_vars['energy_costs'].update(effect_terms['energy_costs'])
+        unique_vars['character_names'].update(effect_terms['character_names'])
+        unique_vars['score_modifiers'].update(effect_terms['score_modifiers'])
         unique_vars['icon_patterns'].update(effect_terms['icon_patterns'])
     
-    # Convert sets to sorted lists
-    return {
-        'card_types': sorted(list(unique_vars['card_types'])),
-        'zones': sorted(list(unique_vars['zones'])),
-        'players': sorted(list(unique_vars['players'])),
-        'numbers': sorted(list(unique_vars['numbers'])),
-        'positions': sorted(list(unique_vars['positions'])),
-        'timing_modifiers': sorted(list(unique_vars['timing_modifiers'])),
-        'group_names': sorted(list(unique_vars['group_names'])),
-        'energy_costs': sorted(list(unique_vars['energy_costs'])),
-        'character_names': sorted(list(unique_vars['character_names'])),
-        'score_modifiers': sorted(list(unique_vars['score_modifiers'])),
-        'icon_patterns': sorted(list(unique_vars['icon_patterns']))
-    }
+    return {k: sorted(list(v)) for k, v in unique_vars.items()}
 
 
 def generate_coverage_log(all_abilities: list, output_file: Path):
@@ -528,32 +615,35 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
     """
     unique_vars = collect_unique_variables(all_abilities)
     
-    # Calculate coverage for each ability
+    # Calculate coverage for each ability and cache term extraction results
     coverage_stats = []
     total_coverage = 0
+    term_cache = {}  # Cache for term extraction results
+    
     for ability in all_abilities:
         effect = ability['effect']
         cost, effect_text = split_cost_effect(effect)
         
-        cost_terms = extract_game_terms(cost)
-        effect_terms = extract_game_terms(effect_text)
+        # Use cached results if available
+        cache_key_cost = f"{ability['full_text']}_cost"
+        cache_key_effect = f"{ability['full_text']}_effect"
+        
+        if cache_key_cost in term_cache:
+            cost_terms = term_cache[cache_key_cost]
+        else:
+            cost_terms = extract_game_terms(cost)
+            term_cache[cache_key_cost] = cost_terms
+            
+        if cache_key_effect in term_cache:
+            effect_terms = term_cache[cache_key_effect]
+        else:
+            effect_terms = extract_game_terms(effect_text)
+            term_cache[cache_key_effect] = effect_terms
         
         cost_coverage = calculate_text_coverage(cost, cost_terms)
         effect_coverage = calculate_text_coverage(effect_text, effect_terms)
         
-        combined_coverage = calculate_text_coverage(cost + '：' + effect_text, {
-            'card_types': cost_terms['card_types'] + effect_terms['card_types'],
-            'zones': cost_terms['zones'] + effect_terms['zones'],
-            'players': cost_terms['players'] + effect_terms['players'],
-            'numbers': cost_terms['numbers'] + effect_terms['numbers'],
-            'positions': cost_terms['positions'] + effect_terms['positions'],
-            'timing_modifiers': cost_terms['timing_modifiers'] + effect_terms['timing_modifiers'],
-            'group_names': cost_terms['group_names'] + effect_terms['group_names'],
-            'energy_costs': cost_terms['energy_costs'] + effect_terms['energy_costs'],
-            'character_names': cost_terms['character_names'] + effect_terms['character_names'],
-            'score_modifiers': cost_terms['score_modifiers'] + effect_terms['score_modifiers'],
-            'icon_patterns': cost_terms['icon_patterns'] + effect_terms['icon_patterns']
-        })
+        combined_coverage = calculate_text_coverage(cost + '：' + effect_text, _merge_dicts(cost_terms, effect_terms))
         
         coverage_stats.append({
             'full_text': ability['full_text'],
@@ -567,7 +657,7 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
     avg_coverage = total_coverage / len(all_abilities) if all_abilities else 0
     
     # Group by templates
-    template_groups = defaultdict(lambda: {'count': 0, 'variables': set(), 'abilities': []})
+    template_groups = defaultdict(lambda: {'count': 0, 'variables': set(), 'modifiers': [], 'abilities': []})
     
     # Build a lookup for unique abilities to get card_examples
     unique_abilities_lookup = {}
@@ -578,41 +668,50 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
         effect = ability['effect']
         cost, effect_text = split_cost_effect(effect)
         
-        cost_terms = extract_game_terms(cost)
-        effect_terms = extract_game_terms(effect_text)
+        # Use cached results if available
+        cache_key_cost = f"{ability['full_text']}_cost"
+        cache_key_effect = f"{ability['full_text']}_effect"
         
-        cost_template = create_expression_template(cost, cost_terms)
-        effect_template = create_expression_template(effect_text, effect_terms)
+        if cache_key_cost in term_cache:
+            cost_terms = term_cache[cache_key_cost]
+        else:
+            cost_terms = extract_game_terms(cost)
+            term_cache[cache_key_cost] = cost_terms
+            
+        if cache_key_effect in term_cache:
+            effect_terms = term_cache[cache_key_effect]
+        else:
+            effect_terms = extract_game_terms(effect_text)
+            term_cache[cache_key_effect] = effect_terms
+        
+        cost_template, cost_modifiers = create_expression_template(cost, cost_terms)
+        effect_template, effect_modifiers = create_expression_template(effect_text, effect_terms)
         
         combined_template = f"{cost_template} ： {effect_template}"
+        # Normalize combined template to be consistent with create_expression_template
+        combined_template = combined_template.strip('"\'')
+        combined_template = WHITESPACE_PATTERN.sub('', combined_template)
+        all_modifiers = cost_modifiers + effect_modifiers
+        
+        # Add template to ability data
+        ability['cost_template'] = cost_template
+        ability['effect_template'] = effect_template
+        ability['combined_template'] = combined_template
+        ability['cost_terms'] = cost_terms
+        ability['effect_terms'] = effect_terms
+        ability['modifiers'] = all_modifiers
         
         # Collect all variables used in this template
         all_vars = set()
-        all_vars.update(cost_terms['card_types'])
-        all_vars.update(cost_terms['zones'])
-        all_vars.update(cost_terms['players'])
-        all_vars.update(cost_terms['numbers'])
-        all_vars.update(cost_terms['positions'])
-        all_vars.update(cost_terms['timing_modifiers'])
-        all_vars.update(cost_terms['group_names'])
-        all_vars.update(cost_terms['energy_costs'])
-        all_vars.update(cost_terms['character_names'])
-        all_vars.update(cost_terms['score_modifiers'])
-        all_vars.update(cost_terms['icon_patterns'])
-        all_vars.update(effect_terms['card_types'])
-        all_vars.update(effect_terms['zones'])
-        all_vars.update(effect_terms['players'])
-        all_vars.update(effect_terms['numbers'])
-        all_vars.update(effect_terms['positions'])
-        all_vars.update(effect_terms['timing_modifiers'])
-        all_vars.update(effect_terms['group_names'])
-        all_vars.update(effect_terms['energy_costs'])
-        all_vars.update(effect_terms['character_names'])
-        all_vars.update(effect_terms['score_modifiers'])
-        all_vars.update(effect_terms['icon_patterns'])
+        term_keys = ['card_types', 'zones', 'players', 'numbers', 'positions', 'timing_modifiers', 
+                     'group_names', 'energy_costs', 'character_names', 'score_modifiers', 'icon_patterns']
+        for key in term_keys:
+            all_vars.update(cost_terms[key])
+            all_vars.update(effect_terms[key])
         
         template_groups[combined_template]['count'] += 1
         template_groups[combined_template]['variables'].update(all_vars)
+        template_groups[combined_template]['modifiers'].extend(all_modifiers)
         
         # Add full ability data structure
         template_groups[combined_template]['abilities'].append({
@@ -631,14 +730,14 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
             'template': template,
             'usage_count': data['count'],
             'variables': sorted(list(data['variables'])),
-            'abilities': data['abilities'][:5]  # Limit to 5 examples
+            'abilities': data['abilities'][:5],  # Limit to 5 examples
+            'modifiers': list(data['modifiers'])
         })
     
     template_list.sort(key=lambda x: -x['usage_count'])
     
-    # Compress templates
-    compressed_templates = compress_templates(template_list)
-    compressed_templates.sort(key=lambda x: -x['usage_count'])
+    # Apply hierarchical compression with similarity analysis
+    compressed_templates = compress_templates(template_list, all_abilities)
     
     # Count variable usage
     variable_counts = defaultdict(int)
@@ -646,31 +745,39 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
         effect = ability['effect']
         cost, effect_text = split_cost_effect(effect)
         
-        cost_terms = extract_game_terms(cost)
-        effect_terms = extract_game_terms(effect_text)
+        # Use cached results if available
+        cache_key_cost = f"{ability['full_text']}_cost"
+        cache_key_effect = f"{ability['full_text']}_effect"
         
-        for var in cost_terms['card_types'] + effect_terms['card_types']:
-            variable_counts[f"card_type:{var}"] += 1
-        for var in cost_terms['zones'] + effect_terms['zones']:
-            variable_counts[f"zone:{var}"] += 1
-        for var in cost_terms['players'] + effect_terms['players']:
-            variable_counts[f"player:{var}"] += 1
-        for var in cost_terms['numbers'] + effect_terms['numbers']:
-            variable_counts[f"number:{var}"] += 1
-        for var in cost_terms['positions'] + effect_terms['positions']:
-            variable_counts[f"position:{var}"] += 1
-        for var in cost_terms['timing_modifiers'] + effect_terms['timing_modifiers']:
-            variable_counts[f"timing:{var}"] += 1
-        for var in cost_terms['group_names'] + effect_terms['group_names']:
-            variable_counts[f"group:{var}"] += 1
-        for var in cost_terms['energy_costs'] + effect_terms['energy_costs']:
-            variable_counts[f"energy:{var}"] += 1
-        for var in cost_terms['character_names'] + effect_terms['character_names']:
-            variable_counts[f"character:{var}"] += 1
-        for var in cost_terms['score_modifiers'] + effect_terms['score_modifiers']:
-            variable_counts[f"score:+{var}"] += 1
-        for var in cost_terms['icon_patterns'] + effect_terms['icon_patterns']:
-            variable_counts[f"icon:{var}"] += 1
+        if cache_key_cost in term_cache:
+            cost_terms = term_cache[cache_key_cost]
+        else:
+            cost_terms = extract_game_terms(cost)
+            term_cache[cache_key_cost] = cost_terms
+            
+        if cache_key_effect in term_cache:
+            effect_terms = term_cache[cache_key_effect]
+        else:
+            effect_terms = extract_game_terms(effect_text)
+            term_cache[cache_key_effect] = effect_terms
+        
+        # Count variable usage using a loop over term types
+        term_prefix_map = {
+            'card_types': 'card_type',
+            'zones': 'zone',
+            'players': 'player',
+            'numbers': 'number',
+            'positions': 'position',
+            'timing_modifiers': 'timing',
+            'group_names': 'group',
+            'energy_costs': 'energy',
+            'character_names': 'character',
+            'score_modifiers': 'score:+',
+            'icon_patterns': 'icon'
+        }
+        for key, prefix in term_prefix_map.items():
+            for var in cost_terms[key] + effect_terms[key]:
+                variable_counts[f"{prefix}{var}"] += 1
     
     log_data = {
         'schema': 'ability_coverage_log.v4',
@@ -709,9 +816,6 @@ def extract_trigger(text: str) -> tuple[list[str], str]:
     
     Returns: (list of triggers, effect text)
     """
-    # Pattern to match trigger icons: {{icon.png|trigger_name}}
-    trigger_pattern = re.compile(r'\{\{([^|]+)\|([^}]+)\}\}')
-    
     # Cost icon patterns to exclude from triggers
     cost_icon_patterns = [
         'icon_energy', 'heart', 'icon_blade', 'icon_b_all', 'icon_score', 'center'
@@ -720,7 +824,7 @@ def extract_trigger(text: str) -> tuple[list[str], str]:
     # Find all triggers at the start
     triggers = []
     trigger_end = 0
-    trigger_matches = list(trigger_pattern.finditer(text))
+    trigger_matches = list(TRIGGER_PATTERN.finditer(text))
     
     if not trigger_matches:
         return [], text
@@ -835,6 +939,14 @@ def extract_all_abilities(cards_file: Path) -> dict:
         # Get the first occurrence to extract triggers/effect
         sample = next(a for a in all_abilities if a["full_text"] == full_text)
         
+        # Generate templates
+        cost, effect_text = split_cost_effect(sample["effect"])
+        cost_terms = extract_game_terms(cost)
+        effect_terms = extract_game_terms(effect_text)
+        cost_template, cost_modifiers = create_expression_template(cost, cost_terms)
+        effect_template, effect_modifiers = create_expression_template(effect_text, effect_terms)
+        combined_template = f"{cost_template} ： {effect_template}"
+        
         unique_abilities.append({
             "full_text": full_text,
             "triggers": sample["triggers"],
@@ -842,6 +954,11 @@ def extract_all_abilities(cards_file: Path) -> dict:
             "trigger_count": sample["trigger_count"],
             "card_count": len(card_examples),
             "card_examples": card_examples[:10],  # Limit to 10 examples
+            "cost_template": cost_template,
+            "effect_template": effect_template,
+            "combined_template": combined_template,
+            "cost_terms": cost_terms,
+            "effect_terms": effect_terms,
         })
     
     # Sort by card count (most common first)
