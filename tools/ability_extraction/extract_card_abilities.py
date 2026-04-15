@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
-from difflib import SequenceMatcher
+from rapidfuzz import fuzz
 
 
 def load_variable_config():
@@ -181,10 +181,82 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
     template = text
     modifier_info = []
     
-    # Normalize text: strip quotes, normalize commas to full-width, and remove all spaces for consistent comparison
+    # Normalize text: strip quotes, normalize punctuation, and remove all spaces for consistent comparison
     template = template.strip('"\'')  # Strip leading/trailing quotes
     template = template.replace(',', '、')  # Normalize half-width comma to full-width
+    template = template.replace('（', '(')  # Normalize full-width parentheses to half-width
+    template = template.replace('）', ')')
     template = WHITESPACE_PATTERN.sub('', template)  # Remove all spaces
+    
+    # Extract composite patterns first (before individual variable replacements)
+    composite_replacements = []
+    
+    # Build composite patterns for group_name + card_type combinations
+    for group in sorted(terms['group_names'], key=len, reverse=True):
+        for card_type in sorted(terms['card_types'], key=len, reverse=True):
+            # Pattern 1: 『group_name』のcard_type
+            pattern1 = f'『{group}』の{card_type}'
+            if pattern1 in template:
+                composite_replacements.append((pattern1, '[grouped_card]'))
+            # Pattern 2: 『group_name』card_type (without の)
+            pattern2 = f'『{group}』{card_type}'
+            if pattern2 in template:
+                composite_replacements.append((pattern2, '[grouped_card]'))
+    
+    # Build composite patterns for color + card_type combinations (桃ブレード, etc.)
+    colors = ['桃', '赤', '黄', '緑', '紫', '青']
+    for color in colors:
+        for card_type in sorted(terms['card_types'], key=len, reverse=True):
+            # Pattern: color + card_type (e.g., 桃ブレード)
+            pattern = f'{color}{card_type}'
+            if pattern in template:
+                composite_replacements.append((pattern, '[colored_blade]'))
+    
+    # Build composite patterns for cost/score + number combinations
+    # Pattern: コスト[number] or スコア[number] -> [value_condition]
+    if 'コスト' in template:
+        template = template.replace('コスト', '[value_type:cost]')
+    if 'スコア' in template:
+        template = template.replace('スコア', '[value_type:score]')
+    
+    # Build composite patterns for condition phrases
+    # Pattern: 登場か、[zone]を移動した -> [appearance_condition]
+    if '登場か' in template:
+        template = template.replace('登場か', '[appearance_condition]')
+    if '登場か、' in template:
+        template = template.replace('登場か、', '[appearance_condition]')
+    
+    # Pattern: 名前が異なる -> [name_condition]
+    if '名前が異なる' in template:
+        template = template.replace('名前が異なる', '[name_condition]')
+    
+    # Pattern: [zone]にいる vs [zone]に -> normalize zone presence conditions
+    # Different zones (ステージ, 控え室, etc.) are semantically similar in condition context
+    for zone in terms['zones']:
+        # Pattern: [zone]にいる -> [zone_condition]
+        if f'{zone}にいる' in template:
+            template = template.replace(f'{zone}にいる', '[zone_condition]')
+        # Pattern: [zone]にある -> [zone_condition]
+        if f'{zone}にある' in template:
+            template = template.replace(f'{zone}にある', '[zone_condition]')
+    
+    # Pattern: [number]人 vs [number]枚 -> normalize number conditions
+    # Different units (people vs cards) in similar condition contexts
+    # This is handled by keeping the variable placeholders
+    
+    # Pattern: Action normalization - different actions in similar contexts
+    # Pattern: アクティブにする vs 引く -> [action]
+    # These are different semantic actions, so we keep them separate
+    
+    # Pattern: Condition combination normalization
+    # Pattern: [zone]に名前[opt_mod]異なる vs [zone]にいる名前[opt_mod]異なる
+    # Normalize zone presence in condition context
+    if 'に名前' in template:
+        template = template.replace('に名前', 'にいる名前')
+    
+    # Apply composite replacements first (longer patterns first)
+    for original, placeholder in sorted(composite_replacements, key=lambda x: -len(x[0])):
+        template = template.replace(original, placeholder)
     
     # Replace in order of specificity (longer patterns first)
     replacements = []
@@ -261,12 +333,109 @@ def _merge_dicts(*dicts):
     return result
 
 
+def parse_template_into_clauses(template: str) -> list[str]:
+    """
+    Parse a template into clauses based on delimiters (、 and ：).
+    Returns list of clauses in order.
+    """
+    clauses = []
+    current = ""
+    
+    for char in template:
+        if char == '、':
+            clauses.append(current)
+            current = ""
+        elif char == '：':
+            clauses.append(current)
+            clauses.append('：')  # Keep colon as a separator clause
+            current = ""
+        else:
+            current += char
+    
+    if current:
+        clauses.append(current)
+    
+    return clauses
+
+
+def compress_templates_clauses(template_list: list) -> list:
+    """
+    Compress templates by breaking them into clauses and compressing each clause type separately.
+    Returns clause-level analysis showing variants at each position.
+    """
+    # Parse all templates into clauses
+    template_clauses = {}
+    for template_data in template_list:
+        template = template_data['template']
+        clauses = parse_template_into_clauses(template)
+        template_clauses[template] = {
+            'clauses': clauses,
+            'data': template_data
+        }
+    
+    # Group by clause structure (number of clauses)
+    structure_groups = defaultdict(list)
+    for template, info in template_clauses.items():
+        structure_key = len(info['clauses'])
+        structure_groups[structure_key].append(template)
+    
+    # For each structure, analyze clause types at each position
+    compressed_templates = []
+    for structure_key, templates in structure_groups.items():
+        # Group by clause at each position
+        clause_groups = defaultdict(lambda: defaultdict(list))
+        
+        for template in templates:
+            clauses = template_clauses[template]['clauses']
+            for i, clause in enumerate(clauses):
+                clause_groups[i][clause].append(template)
+        
+        # For each clause position, find the most common clause and analyze variants
+        canonical_clauses = {}
+        clause_variants = {}
+        
+        for i in range(structure_key):
+            if i in clause_groups:
+                # Sort clauses by frequency
+                sorted_clauses = sorted(clause_groups[i].items(), key=lambda x: -len(x[1]))
+                most_common = sorted_clauses[0][0]
+                canonical_clauses[i] = most_common
+                
+                # Store all variants with their counts
+                clause_variants[i] = [
+                    {'clause': clause, 'count': len(templates_list)}
+                    for clause, templates_list in sorted_clauses
+                ]
+        
+        # Reconstruct canonical template
+        canonical_template = ''.join(canonical_clauses[i] for i in range(structure_key))
+        
+        # Merge all templates in this structure
+        merged_data = {
+            'template': canonical_template,
+            'usage_count': sum(template_clauses[t]['data']['usage_count'] for t in templates),
+            'variables': sorted(set().union(*[template_clauses[t]['data']['variables'] for t in templates])),
+            'abilities': [ability for t in templates for ability in template_clauses[t]['data']['abilities'][:5]],
+            'compressed_from': len(templates),
+            'compression_level': 3,
+            'modifiers': template_clauses[templates[0]]['data'].get('modifiers', []),
+            'clause_variants': clause_variants  # Add clause-level analysis
+        }
+        compressed_templates.append(merged_data)
+    
+    return compressed_templates
+
+
 def calculate_template_similarity(template1: str, template2: str) -> float:
     """
     Calculate similarity between two templates as a percentage.
-    Uses a simple character-based similarity metric.
+    Uses rapidfuzz for fast similarity calculation (10-100x faster than difflib).
     """
-    return SequenceMatcher(None, template1, template2).ratio()
+    # Skip similarity calculation for very long templates to prevent crashes
+    if len(template1) > 500 or len(template2) > 500:
+        return 0.0
+    # rapidfuzz.ratio returns 0-100, normalize to 0-1
+    return fuzz.ratio(template1, template2) / 100.0
 
 
 def extract_optional_modifiers(template: str, modifier_info: list = None) -> tuple[str, list[str]]:
@@ -367,12 +536,57 @@ def compress_templates(template_list: list, all_abilities: list = None) -> list:
     else:
         print("Skipping similarity report - all templates are identical or no similar pairs found")
     
-    # Level 2: Skip hierarchical compression for now - focus on decomposition first
-    # The similar templates have structural differences that shouldn't be grouped
-    level2_templates = level1_templates
+    # Level 2: Hierarchical compression based on optional modifiers
+    # Group templates that are similar (>=90% similarity) and differ mainly by optional modifiers
+    level2_templates = []
+    used_indices = set()
+    
+    for i, base_template in enumerate(level1_templates):
+        if i in used_indices:
+            continue
+        
+        # Look for similar templates to merge
+        similar_templates = [base_template]
+        for j in range(i + 1, len(level1_templates)):
+            if j in used_indices:
+                continue
+            
+            similarity = calculate_template_similarity(base_template['template'], level1_templates[j]['template'])
+            if similarity >= 0.90:  # 90% similarity threshold
+                similar_templates.append(level1_templates[j])
+                used_indices.add(j)
+        
+        if len(similar_templates) > 1:
+            # Merge similar templates
+            compressed_template = {
+                'template': base_template['template'],
+                'usage_count': sum(t['usage_count'] for t in similar_templates),
+                'variables': sorted(set().union(*[t['variables'] for t in similar_templates])),
+                'abilities': [ability for t in similar_templates for ability in t['abilities'][:5]],
+                'compressed_from': len(similar_templates),
+                'compression_level': 2,
+                'modifiers': similar_templates[0].get('modifiers', [])
+            }
+            level2_templates.append(compressed_template)
+        else:
+            # Add uncompressed template
+            level2_templates.append({
+                'template': base_template['template'],
+                'usage_count': base_template['usage_count'],
+                'variables': base_template['variables'],
+                'abilities': base_template['abilities'],
+                'compressed_from': 1,
+                'compression_level': 2,
+                'modifiers': base_template.get('modifiers', [])
+            })
     
     level2_templates.sort(key=lambda x: -x['usage_count'])
-    return level2_templates
+    
+    # Level 3: Clause-based compression
+    # Break templates into clauses (separated by 、 and ：) and compress each clause type separately
+    level3_templates = compress_templates_clauses(level2_templates)
+    
+    return level3_templates
 
 
 def is_optional_modifier(text: str) -> bool:
@@ -805,6 +1019,93 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
     print(f"Compressed templates: {len(compressed_templates)}")
     print(f"Compression ratio: {len(compressed_templates)}/{len(template_list)}")
     print(f"Total variables: {len(variable_counts)}")
+    
+    # Print compressed_from breakdown
+    print("\n=== Clause-Level Analysis ===")
+    print("Templates broken down by clauses (separated by 、 and ：)")
+    print("Shows variants at each clause position\n")
+    
+    # Save full breakdown to file
+    with open('template_breakdown.txt', 'w', encoding='utf-8') as f:
+        f.write("=== Clause-Level Analysis ===\n")
+        f.write("Templates broken down by clauses (separated by 、 and ：)\n")
+        f.write("Shows variants at each clause position\n\n")
+        
+        for i, template in enumerate(compressed_templates, 1):
+            compressed_from = template.get('compressed_from', 1)
+            usage_count = template.get('usage_count', 0)
+            clause_variants = template.get('clause_variants', {})
+            
+            # Add comment explaining what this template represents
+            template_str = template['template']
+            if '加える' in template_str:
+                comment = "# Add cards to zone"
+            elif '引く' in template_str:
+                comment = "# Draw cards"
+            elif 'アクティブにする' in template_str:
+                comment = "# Activate cards/members"
+            elif 'ウェイトにする' in template_str:
+                comment = "# Weight cards/members"
+            elif 'スコア' in template_str:
+                comment = "# Score modification"
+            elif 'ハート' in template_str or 'ブレード' in template_str:
+                comment = "# Heart/blade effects"
+            else:
+                comment = "# Other effect"
+            
+            f.write(f"{i}. {comment} - Compressed from {compressed_from} variants (usage count: {usage_count})\n")
+            f.write(f"   Canonical template: {template['template']}\n")
+            
+            # Show clause-level breakdown
+            if clause_variants:
+                f.write(f"   Clause breakdown:\n")
+                for pos, variants in clause_variants.items():
+                    f.write(f"      Position {pos} ({len(variants)} variants):\n")
+                    for j, variant in enumerate(variants, 1):  # Show all variants
+                        clause = variant['clause']
+                        count = variant['count']
+                        f.write(f"         {j}. '{clause}' (appears in {count} templates)\n")
+            
+            # Show all abilities
+            abilities = template.get('abilities', [])
+            if abilities:
+                f.write(f"   All abilities ({len(abilities)} total):\n")
+                for j, ability in enumerate(abilities, 1):
+                    if isinstance(ability, dict):
+                        full_text = ability.get('full_text', '')
+                    else:
+                        full_text = str(ability)
+                    f.write(f"      {j}. {full_text}\n")
+            f.write("\n")
+    
+    # Print summary to console
+    for i, template in enumerate(compressed_templates, 1):
+        compressed_from = template.get('compressed_from', 1)
+        usage_count = template.get('usage_count', 0)
+        clause_variants = template.get('clause_variants', {})
+        
+        template_str = template['template']
+        if '加える' in template_str:
+            comment = "# Add cards to zone"
+        elif '引く' in template_str:
+            comment = "# Draw cards"
+        elif 'アクティブにする' in template_str:
+            comment = "# Activate cards/members"
+        elif 'ウェイトにする' in template_str:
+            comment = "# Weight cards/members"
+        elif 'スコア' in template_str:
+            comment = "# Score modification"
+        elif 'ハート' in template_str or 'ブレード' in template_str:
+            comment = "# Heart/blade effects"
+        else:
+            comment = "# Other effect"
+        
+        print(f"{i}. {comment} - {compressed_from} variants (usage: {usage_count})")
+        print(f"   Clause breakdown: {len(clause_variants)} positions with variants")
+        for pos, variants in clause_variants.items():
+            print(f"      Position {pos}: {len(variants)} variants")
+            print(f"         Most common: '{variants[0]['clause']}'")
+        print()
 
 
 
