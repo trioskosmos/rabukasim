@@ -1,0 +1,37 @@
+{
+  "target_skeleton": "[card]を[zone_placement] ： [player]の[zone]から[card]を[number]枚[zone]に加える。",
+  "total_matches": 1,
+  "abilities": [
+    {
+      "full_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+      "combined_template": "[card]を[zone_placement] ： [player]の[zone]から[card]を[number]枚[zone]に加える。",
+      "card_count": 46,
+      "card_examples": [
+        "PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)",
+        "PL!S-PR-025-PR | 高海千歌 (ab#0)",
+        "PL!S-PR-027-PR | 松浦果南 (ab#0)",
+        "PL!HS-PR-014-PR | 日野下花帆 (ab#0)",
+        "PL!N-sd1-006-SD | 近江彼方 (ab#0)",
+        "PL!SP-pb1-021-N | ウィーン・マルガレーテ (ab#0)",
+        "PL!S-bp2-016-N | 国木田花丸 (ab#0)",
+        "PL!-pb1-019-N | 高坂穂乃果 (ab#0)",
+        "PL!-pb1-025-N | 東條 希 (ab#0)",
+        "PL!N-bp4-017-N | 宮下 愛 (ab#0)"
+      ],
+      "triggers": [
+        "起動"
+      ],
+      "cost_template": "[card]を[zone_placement]",
+      "effect_template": "[player]の[zone]から[card]を[number]枚[zone]に加える。",
+      "game_mechanics": [],
+      "boundaries": {
+        "full_text": "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+        "cost": "このメンバーをステージから控え室に置く",
+        "effect": "自分の控え室からメンバーカードを1枚手札に加える。",
+        "effect_parts": [
+          "自分の控え室からメンバーカードを1枚手札に加える"
+        ]
+      }
+    }
+  ]
+}

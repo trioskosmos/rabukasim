@@ -1,0 +1,448 @@
+{
+  "schema": "semantic_pattern_rules.v1",
+  "description": "Pattern-based rules for automatic semantic extraction from template syntax",
+  "core_operation_patterns": {
+    "move": {
+      "patterns": [
+        "\\[player\\]の\\[zone\\]から\\[card\\]を\\[number\\]枚\\[zone\\]に加える",
+        "\\[zone\\]を\\[number\\]枚\\[zone\\]に置く",
+        "\\[zone_placement\\]",
+        "\\[card\\]を\\[zone\\]に加える",
+        "\\[zone\\]から\\[zone\\]に置く",
+        "\\[zone\\]から\\[card\\]を\\[number\\]枚\\[zone\\]に加える",
+        "\\[card\\]を\\[number\\]枚\\[zone\\]に加える",
+        "\\[card\\]を\\[zone\\]に置く",
+        "\\[zone\\]の\\[position\\]に置く",
+        "\\[zone\\]の\\[position\\]から.*番目に置く",
+        "\\[player\\]の\\[zone\\]から\\[value_type:cost\\]\\[number\\]以下の\\[card\\]を\\[number\\]枚まで\\[zone\\]に加える",
+        "\\[zone\\]の上から\\[card\\]を\\[number\\]枚\\[zone\\]に置く",
+        "\\[player\\]の\\[zone\\]の上から\\[card\\]を\\[number\\]枚\\[zone\\]に置く",
+        "\\[player\\]の\\[zone_condition\\]\\[card\\]\\[number\\]枚を\\[card\\]の下に置いてもよい",
+        "その後、.*\\[zone\\]から\\[card\\]\\[number\\]枚を.*\\[zone\\]の\\[position\\]から\\[number\\]枚目に置いてもよい",
+        "\\[player\\]の\\[zone_condition\\]\\[card\\]\\[number\\]枚を\\[zone\\]の\\[position\\]に置いてもよい"
+      ],
+      "semantic_fields": {
+        "source_zone": "first \\[zone\\] occurrence",
+        "destination_zone": "second \\[zone\\] occurrence",
+        "count": "\\[number\\]",
+        "card_type": "\\[card\\]",
+        "position": "\\[position\\]",
+        "cost_constraint": "\\[value_type:cost\\]",
+        "placement_type": "under_card or normal"
+      }
+    },
+    "draw": {
+      "patterns": [
+        "\\[draw_effect\\]",
+        "\\[card\\]を\\[number\\]枚引く",
+        "\\[card\\]を\\[number\\]枚引き",
+        "これにより置いた枚数分\\[card\\]を引く"
+      ],
+      "semantic_fields": {
+        "count": "\\[number\\]",
+        "card_type": "\\[card\\]",
+        "condition": "placement_based"
+      }
+    },
+    "activate": {
+      "patterns": [
+        "\\[card\\]を\\[number\\]枚アクティブにする",
+        "\\[object\\]を\\[number\\]人までアクティブにする",
+        "アクティブにする",
+        "\\[card\\]は\\[player\\]の\\[mechanic\\]にアクティブにしない",
+        "効果によってはアクティブにならない"
+      ],
+      "semantic_fields": {
+        "count": "\\[number\\]",
+        "target": "\\[card\\] or \\[object\\]",
+        "mechanic": "\\[mechanic\\]",
+        "condition": "effect_based"
+      }
+    },
+    "rest": {
+      "patterns": [
+        "\\[card\\]を\\[number\\]枚ウェイトにする"
+      ],
+      "semantic_fields": {
+        "count": "\\[number\\]",
+        "target": "\\[card\\]"
+      }
+    },
+    "grant_modifier": {
+      "patterns": [
+        "\\[icon_gain\\]",
+        "\\[score_effect\\]"
+      ],
+      "semantic_fields": {
+        "modifier": "icon_gain or score_effect",
+        "target": "self or specified target"
+      }
+    },
+    "reveal": {
+      "patterns": [
+        "\\[card_reveal\\]",
+        "\\[card_look\\]",
+        "\\[card\\]を\\[number\\]枚公開",
+        "\\[card\\]を\\[number\\]枚見る",
+        "公開される",
+        "公開して",
+        "見る"
+      ],
+      "semantic_fields": {
+        "count": "\\[number\\]",
+        "target": "\\[card\\]",
+        "visibility": "revealed or looked"
+      }
+    },
+    "search": {
+      "patterns": [
+        "\\[player\\]の\\[zone\\]の上から\\[card_look\\]",
+        "\\[card\\]から\\[number\\]枚見る"
+      ],
+      "semantic_fields": {
+        "source_zone": "\\[zone\\]",
+        "look_count": "\\[number\\]",
+        "visibility": "look"
+      }
+    },
+    "deploy": {
+      "patterns": [
+        "\\[zone\\]に登場させる",
+        "\\[zone\\]から\\[zone\\]に登場させる",
+        "\\[card\\]を\\[zone\\]に登場させる",
+        "\\[zone\\]から\\[value_type:cost\\]\\[number\\]以下の\\[card\\]を\\[number\\]枚\\[zone\\]に登場させてもよい"
+      ],
+      "semantic_fields": {
+        "destination_zone": "\\[zone\\]",
+        "card_type": "\\[card\\]",
+        "cost_constraint": "\\[value_type:cost\\]"
+      }
+    },
+    "position_change": {
+      "patterns": [
+        "ポジションチェンジ",
+        "\\[zone\\]以外の\\[zone\\]に移動させる",
+        "\\[zone\\]に移動させる"
+      ],
+      "semantic_fields": {
+        "from_zone": "\\[zone\\]",
+        "to_zone": "\\[zone\\]"
+      }
+    },
+    "specify": {
+      "patterns": [
+        "指定する",
+        "選ぶ"
+      ],
+      "semantic_fields": {
+        "selection_type": "specify",
+        "count": "\\[number\\]"
+      }
+    },
+    "state_change": {
+      "patterns": [
+        "\\[zone\\]にする",
+        "\\[zone\\]状態で置く",
+        "\\[zone\\]にする。"
+      ],
+      "semantic_fields": {
+        "target_state": "\\[zone\\]",
+        "target": "\\[object\\]"
+      }
+    },
+    "score_modification": {
+      "patterns": [
+        "\\[value_type:score\\]を.*する",
+        "スコアを.*する",
+        "\\[score_effect\\]"
+      ],
+      "semantic_fields": {
+        "operation": "modify_score",
+        "amount": "\\[number\\]",
+        "target": "live_total or card"
+      }
+    },
+    "cost_modification": {
+      "patterns": [
+        "必要\\[card\\]を.*減らす",
+        "必要\\[card\\]を.*増やす",
+        "\\[heart\\]減らす",
+        "\\[heart\\]多くなる",
+        "減る",
+        "増やす",
+        "\\[player\\]の\\[condition\\]、\\[zone_condition\\]\\[card\\]の\\[value_type:cost\\]を\\+\\[number\\]する",
+        "\\[player\\]の\\[zone_condition\\]\\[card\\]\\[number\\]枚につき、\\[zone_condition\\]\\[card\\]の\\[value_type:cost\\]を\\+\\[number\\]する"
+      ],
+      "semantic_fields": {
+        "operation": "modify_cost",
+        "amount": "\\[number\\]",
+        "resource": "\\[card\\] or \\[heart\\]",
+        "condition": "\\[condition\\] or per_card"
+      }
+    },
+    "state_transformation": {
+      "patterns": [
+        "扱う",
+        "として扱う",
+        "なる",
+        "戻す",
+        "戻す",
+        "変更",
+        "入れ替える",
+        "交換"
+      ],
+      "semantic_fields": {
+        "operation": "state_transform",
+        "from_state": "original state",
+        "to_state": "new state"
+      }
+    },
+    "trigger_condition": {
+      "patterns": [
+        "場合",
+        "とき",
+        "たび",
+        "確認する時",
+        "離れたとき"
+      ],
+      "semantic_fields": {
+        "operation": "trigger_condition",
+        "trigger_event": "event description",
+        "condition": "condition logic"
+      }
+    },
+    "activation": {
+      "patterns": [
+        "発動させる",
+        "発動",
+        "解決する",
+        "起動"
+      ],
+      "semantic_fields": {
+        "operation": "activate_ability",
+        "target": "ability to activate"
+      }
+    },
+    "complex_logic": {
+      "patterns": [
+        "合計",
+        "成功",
+        "失敗",
+        "決定",
+        "比較"
+      ],
+      "semantic_fields": {
+        "operation": "complex_logic",
+        "logic_type": "total/success/failure/determine/compare"
+      }
+    },
+    "apply_modifier": {
+      "patterns": [
+        "得る",
+        "持つ",
+        "加算",
+        "追加"
+      ],
+      "semantic_fields": {
+        "operation": "apply_modifier",
+        "modifier": "resource or score modifier",
+        "duration": "continuous or temporary"
+      }
+    },
+    "apply_restriction": {
+      "patterns": [
+        "できない",
+        "できない",
+        "禁止",
+        "制限"
+      ],
+      "semantic_fields": {
+        "operation": "apply_restriction",
+        "restriction": "cannot_play/cannot_activate/cannot_move",
+        "target": "card or zone"
+      }
+    },
+    "shuffle_zone": {
+      "patterns": [
+        "シャッフル",
+        "切る"
+      ],
+      "semantic_fields": {
+        "operation": "shuffle_zone",
+        "zone": "zone to shuffle"
+      }
+    },
+    "mechanic_action": {
+      "patterns": [
+        "\\[mechanic\\]してもよい",
+        "\\[mechanic\\]公開された",
+        "\\[mechanic\\]で.*置けない",
+        "\\[mechanic\\]して.*置かれた",
+        "\\[zone\\]のこの\\[card\\]もこの効果で\\[zone\\]に\\[mechanic\\]"
+      ],
+      "semantic_fields": {
+        "operation": "special_mechanic",
+        "mechanic": "\\[mechanic\\]"
+      }
+    },
+    "choice_action": {
+      "patterns": [
+        "\\[choice\\]順番",
+        "\\[choice\\]\\[zone\\]",
+        "\\[choice\\]\\[card\\]"
+      ],
+      "semantic_fields": {
+        "operation": "free_choice",
+        "choice": "\\[choice\\]"
+      }
+    },
+    "player_query": {
+      "patterns": [
+        "\\[player\\]に何が好き？と聞く",
+        "\\[player\\]に聞く",
+        "\\[player\\]を選ぶ"
+      ],
+      "semantic_fields": {
+        "operation": "player_query",
+        "target": "\\[player\\]",
+        "query_type": "choice_selection"
+      }
+    }
+  },
+  "wrapper_patterns": {
+    "timing": {
+      "patterns": {
+        "manual": "起動",
+        "live_start": "ライブ開始時",
+        "live_success": "ライブ成功時",
+        "live_end": "ライブ終了時",
+        "always": "常時",
+        "automatic": "自動",
+        "on_move": "移動したとき",
+        "on_reveal": "公開したとき"
+      },
+      "extraction": "match in full_text before colon or at start"
+    },
+    "sequential_operations": {
+      "patterns": {
+        "comma_separated": "、",
+        "then_clause": "その中から",
+        "remainder_clause": "残りを",
+        "success_clause": "そうした場合",
+        "conditional_then": "〜場合.*〜"
+      },
+      "extraction": "split template by delimiters and identify sequence"
+    },
+    "conditional_branching": {
+      "patterns": {
+        "or_conditions": "か",
+        "or_separator": "または",
+        "either_or": "どちらか",
+        "one_of": "のうち"
+      },
+      "extraction": "identify OR branches in conditions"
+    },
+    "choice_branching": {
+      "patterns": {
+        "select_from": "のうち",
+        "choose_option": "選んだ",
+        "select_number": "選ぶ",
+        "alternatives": "または"
+      },
+      "extraction": "identify choice options and branches"
+    },
+    "cost": {
+      "patterns": {
+        "energy_cost": "\\[icon_count:\\d+\\]",
+        "action_cost": "\\[zone_placement\\]|\\[card\\]を\\[zone\\]に置く",
+        "optional": "支払ってもよい|〜してもよい"
+      },
+      "extraction": "match in cost_template"
+    },
+    "duration": {
+      "patterns": {
+        "until_end_of_live": "ライブ終了時まで",
+        "until_end_of_turn": "ターン.*まで",
+        "permanent": "永続"
+      },
+      "extraction": "match in effect_template"
+    },
+    "condition": {
+      "patterns": {
+        "count_condition": "\\[number\\]枚以上|\\[number\\]人以上",
+        "presence_condition": "いる|ある",
+        "trait_condition": "\\[group_name\\]|\\[character_name\\]",
+        "comparison": "\\[value_type:cost\\].*以上|以下"
+      },
+      "extraction": "match before effect action"
+    }
+  },
+  "select_do_patterns": {
+    "select_then_do": {
+      "patterns": [
+        "\\[card_look\\]その中から",
+        "\\[card\\]を\\[number\\]枚見る.*その中から",
+        "公開して.*\\[zone\\]に加える"
+      ],
+      "semantic_fields": {
+        "select_action": "first operation (look/reveal)",
+        "select_filter": "condition between select and do",
+        "do_action": "second operation (move/add)",
+        "do_target": "target of do action"
+      }
+    }
+  },
+  "choice_patterns": {
+    "choice_structure": {
+      "patterns": [
+        "\\[number\\]つを選ぶ",
+        "そのうち.*\\[number\\]つ",
+        "選んだ\\[number\\]つ"
+      ],
+      "semantic_fields": {
+        "choice_count": "\\[number\\]",
+        "options": "comma-separated alternatives"
+      }
+    }
+  },
+  "postcondition_patterns": {
+    "success_clause": {
+      "patterns": [
+        "そうした場合",
+        "これにより.*した場合",
+        "〜ことによって"
+      ],
+      "semantic_fields": {
+        "trigger_condition": "success of previous action",
+        "followup_effect": "effect after clause"
+      }
+    },
+    "conditional_result": {
+      "patterns": [
+        "〜場合.*〜",
+        "もし.*なら.*"
+      ],
+      "semantic_fields": {
+        "condition": "if clause",
+        "result": "then clause"
+      }
+    }
+  },
+  "deck_operation_patterns": {
+    "search_top_deck": {
+      "patterns": [
+        "\\[player\\]の\\[zone\\]の上から\\[card_look\\]",
+        "デッキの上から.*見る",
+        "その中から.*\\[card_reveal\\]"
+      ],
+      "semantic_fields": {
+        "look_count": "\\[number\\]",
+        "select_filter": "condition on selection",
+        "select_count": "\\[number\\]",
+        "selected_destination": "destination of selected cards",
+        "remainder_destination": "destination of unselected cards",
+        "remainder_order": "top/bottom/any"
+      }
+    }
+  }
+}

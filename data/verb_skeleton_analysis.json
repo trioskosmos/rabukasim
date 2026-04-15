@@ -1,0 +1,469 @@
+{
+  "verb_analysis": {
+    "置く": {
+      "count": 186,
+      "punctuation_context": {
+        "：": 45,
+        "。": 198,
+        "、": 107,
+        "（": 3,
+        "）": 2
+      },
+      "unique_skeletons": 141,
+      "sample_skeletons": [
+        "[zone]を[number]枚[zone]に置[opt_mod] ： [modifier_card]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら[card]に{{heart_[number].png|heart[number]}}[opt_mod]{{heart_[number].png|heart[number]}}を持つ[card_reveal]して[zone_placement]。",
+        " ： [modifier_card]上[opt_mod]ら[card]を[number]枚[zone]に置く。それらがすべて[modifier_card]場合、ライブ終了時[opt_mod]{{icon_blade.png|[card]}}[icon_gain]。",
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [zone]状態[opt_mod][object][number]人をアクティブにする。これにより[card][object]をアクティブにした場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： こ[modifier_card]は[card]置き場に置くことができない。",
+        " ： [card]が[zone][opt_mod]ら[zone]に置[opt_mod]れた[modifier_card][opt_mod]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら[card_reveal]して[zone_placement]。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+        "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。"
+      ]
+    },
+    "加える": {
+      "count": 78,
+      "punctuation_context": {
+        "：": 0,
+        "。": 85,
+        "、": 17,
+        "（": 1,
+        "）": 0
+      },
+      "unique_skeletons": 63,
+      "sample_skeletons": [
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [zone]状態[opt_mod][object][number]人をアクティブにする。これにより[card][object]をアクティブにした場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： [card]より[value_type:cost]が低い『[group_name]』[opt_mod][object][opt_mod]らバトンタッチして登場した場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： バトンタッチして登場した場合、こ[opt_mod]バトンタッチで[zone]に置[opt_mod]れた[card]を[number]枚[zone]に加える。",
+        "{{turn[number].png|ターン[number]回}}[icon_count:1] ： [modifier_card]ら[number][value_type:cost][opt_mod][modifier_card]を[number]枚[zone]に加える。",
+        "[card]を[zone][opt_mod]ら[zone]に置く ： [modifier_card]ら[card]を[number]枚[zone]に加える。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。",
+        "{{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。"
+      ]
+    },
+    "見る": {
+      "count": 60,
+      "punctuation_context": {
+        "：": 37,
+        "。": 63,
+        "、": 14,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 36,
+      "sample_skeletons": [
+        "[zone]を[number]枚[zone]に置[opt_mod] ： [modifier_card]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら[card]に{{heart_[number].png|heart[number]}}[opt_mod]{{heart_[number].png|heart[number]}}を持つ[card_reveal]して[zone_placement]。",
+        " ： [player_modifier][player]を選ぶ。[player]は、そ[opt_mod]プレイヤー[opt_mod][zone][opt_mod]一番上[modifier_card]を見る。[player]はそ[modifier_card]を[zone]に置[opt_mod]。",
+        "[card]を[zone]に[opt_mod] ： [modifier_card]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら好きな枚数を好きな順番で[zone][opt_mod]上に置き、残りを[zone]に置く。([zone]状態[opt_mod][object]が持つ{{icon_blade.png|[card]}}は、エールで公開する枚数を増やさない。)",
+        " ： [modifier_card]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら[card]を[number]枚[opt_mod]公開して[zone_placement]。",
+        "[zone]を[number]枚[zone]に置[opt_mod] ： [modifier_card]上[opt_mod]ら[card_look]。そ[opt_mod]中[opt_mod]ら{{heart_[number].png|heart[number]}}[opt_mod]{{heart_[number].png|heart[number]}}[opt_mod]{{heart_[number].png|heart[number]}}を持つ[card]を[number]枚[opt_mod]公開して[zone_placement]。"
+      ],
+      "sample_texts": [
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。",
+        "{{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。",
+        "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）"
+      ]
+    },
+    "する": {
+      "count": 175,
+      "punctuation_context": {
+        "：": 22,
+        "。": 174,
+        "、": 119,
+        "（": 5,
+        "）": 5
+      },
+      "unique_skeletons": 166,
+      "sample_skeletons": [
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [zone]状態[opt_mod][object][number]人をアクティブにする。これにより[card][object]をアクティブにした場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： エールにより公開された[player][modifier_card][opt_mod]中に{{icon_b_all.png|ALL[card]}}を持つ[card]が[number]枚[opt_mod]ある場合、[score_effect]する。",
+        "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな組み合わせで合計[number]枚、[zone]に置[opt_mod] ： ライブ終了時[opt_mod][icon_count:1][score_effect]する。を得る。",
+        " ： (対戦[player][modifier_card][opt_mod]効果でも発動する。)",
+        " ： [card]に『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、[score_effect]する。"
+      ],
+      "sample_texts": [
+        "(必要ハートを確認する時、エールで出た{{icon_b_all.png|ALLブレード}}は任意の色のハートとして扱う。)",
+        "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）"
+      ]
+    },
+    "得る": {
+      "count": 167,
+      "punctuation_context": {
+        "：": 0,
+        "。": 188,
+        "、": 23,
+        "（": 4,
+        "）": 0
+      },
+      "unique_skeletons": 148,
+      "sample_skeletons": [
+        "[zone]を[number]枚[zone]に置[opt_mod] ： ライブ終了時[modifier_card][object][number]人は、{{icon_blade.png|[card]}}{{icon_blade.png|[card]}}[icon_gain]。",
+        " ： [modifier_card]上[opt_mod]ら[card]を[number]枚[zone]に置く。それらがすべて[modifier_card]場合、ライブ終了時[opt_mod]{{icon_blade.png|[card]}}[icon_gain]。",
+        "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな組み合わせで合計[number]枚、[zone]に置[opt_mod] ： ライブ終了時[opt_mod][icon_count:1][score_effect]する。を得る。",
+        " ： こ[opt_mod]ターン、[card][card]を持たない[card]が[player][modifier_card]置き場[opt_mod]ら[zone]に置[opt_mod]れて[いる]場合、[draw_effect]、ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}[icon_gain]。",
+        " ： {{turn[number].png|ターン[number]回}}[player]がエールした[opt_mod]ライブ終了時[opt_mod]エールにより公開された[player][modifier_card][opt_mod]中[modifier_card][number]枚[opt_mod]、[icon_gain]。こ[opt_mod]能力では{{heart_[number].png|heart[number]}}は[number]つ[opt_mod]し[opt_mod]得られない。"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+        "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
+        "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。"
+      ]
+    },
+    "引く": {
+      "count": 57,
+      "punctuation_context": {
+        "：": 10,
+        "。": 62,
+        "、": 50,
+        "（": 1,
+        "）": 0
+      },
+      "unique_skeletons": 55,
+      "sample_skeletons": [
+        " ： [player][modifier_card]置き場に[card]が[number]枚[opt_mod]ある場合、[draw_effect]。",
+        " ： [draw_effect]。[card]に[character_name]が[いる]場合、さらに[draw_effect]。",
+        " ： [card]『[group_name]』[opt_mod][object][number]人[opt_mod]、[draw_effect]。そ[opt_mod]後、これにより引いた枚数と同じ枚数を[zone][opt_mod]ら[zone]に置く。",
+        " ： [draw_effect]。",
+        "[zone]を[number]枚[zone]に置[opt_mod] ： ライブ終了時[opt_mod][icon_gain]。これにより[card]を[zone]に置いた場合、さらに[draw_effect]。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+        "(エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)",
+        "{{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ステージの左サイドエリアに登場しているなら、カードを2枚引く。"
+      ]
+    },
+    "公開する": {
+      "count": 17,
+      "punctuation_context": {
+        "：": 5,
+        "。": 14,
+        "、": 17,
+        "（": 0,
+        "）": 7
+      },
+      "unique_skeletons": 17,
+      "sample_skeletons": [
+        "[card]を[zone]に[opt_mod] ： [card][value_type:cost][number][opt_mod][opt_mod][object][number]人を[zone]にする。([zone]状態[opt_mod][object]が持つ{{icon_blade.png|[card]}}は、エールで公開する枚数を増やさない。)",
+        "{{turn[number].png|ターン[number]回}}[card]を[zone]にする ： [draw_effect]、[zone]を[number]枚[zone]に置く。([zone]状態[opt_mod][object]が持つ{{icon_blade.png|[card]}}は、エールで公開する枚数を増やさない。)",
+        "[card]を[zone]に[opt_mod] ： [modifier_card]ら[card]を[number]枚[zone]に加える。([zone]状態[opt_mod][object]が持つ{{icon_blade.png|[card]}}は、エールで公開する枚数を増やさない。)",
+        "[card]を[zone]に[opt_mod] ： [card]元々持つ{{icon_blade.png|[card]}}[opt_mod]数が[opt_mod][number]つ[opt_mod][object][number]人を[zone]にする。([zone]状態[opt_mod][object]が持つ{{icon_blade.png|[card]}}は、エールで公開する枚数を増やさない。)",
+        "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}[card]を[zone]にし、[zone]を[number]枚[zone]に置く ： [modifier_card][value_type:cost][number][opt_mod][modifier_card][opt_mod]どちら[opt_mod][number]つを選ぶ。選んだ[card]が公開される[modifier_card][opt_mod]一番上[opt_mod]ら[card]を[number]枚[opt_mod]公開する。そ[modifier_card]を[zone]に加え、これにより公開されたほ[opt_mod][opt_mod]すべて[modifier_card]を[zone]に置く。"
+      ],
+      "sample_texts": [
+        "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）"
+      ]
+    },
+    "いる": {
+      "count": 205,
+      "punctuation_context": {
+        "：": 21,
+        "。": 70,
+        "、": 195,
+        "（": 7,
+        "）": 2
+      },
+      "unique_skeletons": 195,
+      "sample_skeletons": [
+        "[zone]を[number]枚[zone]に置[opt_mod] ： ライブ終了時[modifier_card][object][number]人は、{{icon_blade.png|[card]}}{{icon_blade.png|[card]}}[icon_gain]。",
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [zone]状態[opt_mod][object][number]人をアクティブにする。これにより[card][object]をアクティブにした場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： [card]に[いる]名前[opt_mod]異なる『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： [card]に『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、[score_effect]する。",
+        " ： [modifier_card]下に[card]が[number]枚[opt_mod]置[opt_mod]れて[いる][opt_mod]ぎり、[score_effect]する。"
+      ],
+      "sample_texts": [
+        "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。"
+      ]
+    },
+    "ウェイトにする": {
+      "count": 35,
+      "punctuation_context": {
+        "：": 11,
+        "。": 28,
+        "、": 8,
+        "（": 5,
+        "）": 0
+      },
+      "unique_skeletons": 34,
+      "sample_skeletons": [
+        "[card]を[zone]に[opt_mod] ： [card][value_type:cost][number][opt_mod][opt_mod][object][number]人を[zone]にする。",
+        "{{center.png|[position]}}『[group_name]』[opt_mod][object][number]人を[zone]に[opt_mod] ： [player]は、自身[opt_mod][zone_condition]アクティブ状態[opt_mod][object][number]人を[zone]にする。(こ[opt_mod]能力は[position][zone_condition]場合[opt_mod]み発動する。)",
+        "[icon_count:1]支払ってもよい ： [modifier_card]ら[value_type:cost][number][opt_mod][modifier_card]を[number]枚[zone]に登場させる。これにより登場した[object]が[card][card]を持つ場合、[card]を[zone]にする。",
+        "{{turn[number].png|ターン[number]回}}[card]を[zone]にする[opt_mod]、[zone]を[number]枚[zone]に置く ： [card]を[number]枚アクティブにする。",
+        "[card]を[zone]に[opt_mod] ： [card][object]が『[group_name]』[opt_mod]み[opt_mod]場合、[card]元々持つ{{icon_blade.png|[card]}}[opt_mod]数が[number]つ[opt_mod][opt_mod][object][number]人を[zone]にする。"
+      ],
+      "sample_texts": [
+        "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：自分の控え室から『μ's』のライブカードを1枚手札に加える。"
+      ]
+    },
+    "選ぶ": {
+      "count": 37,
+      "punctuation_context": {
+        "：": 2,
+        "。": 41,
+        "、": 37,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 32,
+      "sample_skeletons": [
+        " ： [player_modifier][modifier_card]を[number]枚選ぶ。それと同じ[card]名[modifier_card]が[card]場合、ライブ終了時[opt_mod][icon_gain]。",
+        " ： [player_modifier][player]を選ぶ。[player]は、そ[opt_mod]プレイヤー[opt_mod][zone_condition][card]を[number]枚[opt_mod]好きな順番で[zone][opt_mod][opt_mod]置く。",
+        "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}[card]を[zone]にし、[zone]を[number]枚[zone]に置く ： [modifier_card][value_type:cost][number][opt_mod][modifier_card][opt_mod]どちら[opt_mod][number]つを選ぶ。選んだ[card]が公開される[modifier_card][opt_mod]一番上[opt_mod]ら[card]を[number]枚[opt_mod]公開する。そ[modifier_card]を[zone]に加え、これにより公開されたほ[opt_mod][opt_mod]すべて[modifier_card]を[zone]に置く。",
+        " ： [player_modifier][player]を選ぶ。[player]は、そ[opt_mod]プレイヤー[opt_mod][zone][opt_mod]一番上[modifier_card]を見る。[player]はそ[modifier_card]を[zone]に置[opt_mod]。",
+        " ： [opt_mod][opt_mod]ら[number]つを選ぶ。・[card]に[card]名が異なる[card]が[number]枚[opt_mod]ある場合、[modifier_card]ら[card]を[number]枚[zone]に加える。・[card]にグループ名が異なる[card]が[number]枚[opt_mod]ある場合、[modifier_card]ら[card]を[number]枚[zone]に加える。"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
+        "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く。",
+        "{{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。"
+      ]
+    },
+    "ある": {
+      "count": 140,
+      "punctuation_context": {
+        "：": 10,
+        "。": 49,
+        "、": 150,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 132,
+      "sample_skeletons": [
+        " ： [player][modifier_card]置き場に[card]が[number]枚[opt_mod]ある場合、[draw_effect]。",
+        " ： すべて[opt_mod]領域にあるこ[modifier_card]は『[group_name]』、『[group_name]』、『[group_name]』として扱う。",
+        " ： エールにより公開された[player][modifier_card][opt_mod]中に{{icon_b_all.png|ALL[card]}}を持つ[card]が[number]枚[opt_mod]ある場合、[score_effect]する。",
+        " ： [card][object]が持つ[modifier_card]中に{{heart_[number].png|heart[number]}}、{{heart_[number].png|heart[number]}}、{{heart_[number].png|heart[number]}}、{{heart_[number].png|heart[number]}}、{{heart_[number].png|heart[number]}}、{{heart_[number].png|heart[number]}}がすべてある場合、ライブ終了時[opt_mod]{{icon_blade.png|[card]}}[icon_gain]。",
+        " ： [card][object]が[opt_mod][number]人である[opt_mod]ぎり、{{heart_[number].png|heart[number]}}[icon_gain]。"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。",
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。",
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。"
+      ]
+    },
+    "登場させる": {
+      "count": 19,
+      "punctuation_context": {
+        "：": 1,
+        "。": 19,
+        "、": 11,
+        "（": 3,
+        "）": 0
+      },
+      "unique_skeletons": 16,
+      "sample_skeletons": [
+        " ： 能力を持たない[card]を[modifier_card]ら登場させるため[opt_mod][value_type:cost]は[number]減る。",
+        " ： [player]と[player]は[それぞれ、自身][opt_mod][zone][opt_mod]ら[value_type:cost][number][opt_mod][modifier_card]を[number]枚、[object][opt_mod][いない][zone]に[zone]状態で登場させる。(こ[opt_mod]効果で登場した[object][opt_mod][いる][zone]には、こ[opt_mod]ターンに[object]は登場できない。)",
+        "[icon_count:1]支払ってもよい ： [card]に[value_type:cost][number][opt_mod][opt_mod]『[group_name]』[opt_mod][object]が[いる]場合、[opt_mod][opt_mod]ら[number]つを選ぶ。・[modifier_card]ら[value_type:cost][number][opt_mod][modifier_card]を[number]枚、[object][opt_mod][いない][zone]に登場させる。・こ[modifier_card][opt_mod]必要[card]を{{heart_[number].png|heart[number]}}減らす。",
+        "[icon_count:1]支払ってもよい ： [modifier_card]ら、[value_type:cost][opt_mod][合計が][number][opt_mod]になるように[card]を[number]枚[opt_mod][zone]に登場させる。",
+        "{{turn[number].png|ターン[number]回}}[icon_count:1] ： [modifier_card]ら[value_type:cost][number][opt_mod][modifier_card]を[number]枚、[object][opt_mod][いない][zone]に登場させる。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。",
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+        "{{toujyou.png|登場}}{{center.png|センター}}『Liella!』のメンバー2人からバトンタッチして登場している場合、カードを2枚引き、自分の控え室にあるコスト4以下の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる。"
+      ]
+    },
+    "できる": {
+      "count": 7,
+      "punctuation_context": {
+        "：": 0,
+        "。": 7,
+        "、": 3,
+        "（": 0,
+        "）": 2
+      },
+      "unique_skeletons": 6,
+      "sample_skeletons": [
+        "[icon_count:1]こ[modifier_card]を[zone][opt_mod]ら[zone]に置く ： [draw_effect]、ライブ終了時[modifier_card]『[group_name]』[opt_mod][object][number]人は[icon_gain]。こ[opt_mod]能力は、こ[modifier_card]が[zone_condition]場合[opt_mod]み起動できる。",
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [modifier_card]ら[card]を[number]枚[zone]に加える。こ[opt_mod]能力は、[card][modifier_card][value_type:score][opt_mod][合計が][number][opt_mod][opt_mod]場合[opt_mod]み起動できる。",
+        "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}[card]を[zone]にし、[zone]を[number]枚[zone]に置く ： [modifier_card][opt_mod]『[group_name]』[opt_mod][object][number]人を[modifier_card]ら[zone]に置く。そうした場合、[modifier_card]ら、そ[opt_mod][object][opt_mod][value_type:cost]に[number]を足した数に等しい[value_type:cost][modifier_card]を[number]枚、そ[opt_mod][object]がいた[zone]に登場させる。(こ[opt_mod]能力は[position][zone]に登場して[いる]場合[opt_mod]み起動できる。)",
+        "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}[object][number]人を[zone]にする ： ライブ終了時[opt_mod]これによって[zone]状態になった[object]は、[icon_count:1][score_effect]する。を得る。(こ[opt_mod]能力は[position][zone]に登場して[いる]場合[opt_mod]み起動できる。)",
+        "[icon_count:1][zone]を[number]枚[zone]に置く ： こ[modifier_card]を[zone][opt_mod]ら[zone]に登場させる。こ[opt_mod]能力は、こ[modifier_card]が[zone_condition]場合[opt_mod]み起動できる。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。",
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+        "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）"
+      ]
+    },
+    "アクティブにする": {
+      "count": 29,
+      "punctuation_context": {
+        "：": 5,
+        "。": 30,
+        "、": 19,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 26,
+      "sample_skeletons": [
+        " ： [modifier_card]を[number]枚アクティブにする。",
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [zone]状態[opt_mod][object][number]人をアクティブにする。これにより[card][object]をアクティブにした場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        "{{turn[number].png|ターン[number]回}}[zone]を[number]枚[zone]に置く ： [card][number]枚[opt_mod]『[group_name]』[opt_mod][object][number]人をアクティブにする。",
+        "{{turn[number].png|ターン[number]回}}[card]を[zone]にする[opt_mod]、[zone]を[number]枚[zone]に置く ： [card]を[number]枚アクティブにする。",
+        " ： [card]に[いる]名前[opt_mod]異なる『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、[card]を[number]枚[opt_mod]アクティブにする。そ[opt_mod]後、[player][modifier_card]がすべてアクティブ状態[opt_mod]場合、[score_effect]する。"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。",
+        "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+        "{{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。"
+      ]
+    },
+    "加算する": {
+      "count": 1,
+      "punctuation_context": {
+        "：": 0,
+        "。": 1,
+        "、": 1,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 1,
+      "sample_skeletons": [
+        " ： (エールで出た{{icon_score.png|[value_type:score]}}[number]つ[opt_mod]、成功したライブ[opt_mod][value_type:score][opt_mod]合計に[number]を加算する。)"
+      ],
+      "sample_texts": [
+        "(エールで出た{{icon_score.png|スコア}}1つにつき、成功したライブのスコアの合計に1を加算する。)"
+      ]
+    },
+    "なる": {
+      "count": 44,
+      "punctuation_context": {
+        "：": 0,
+        "。": 24,
+        "、": 32,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 39,
+      "sample_skeletons": [
+        " ： こ[opt_mod]ターン、エールにより公開された[player][modifier_card][opt_mod]中に[card][card]を持たない[card]が[number]枚[opt_mod]場合[opt_mod]、[opt_mod][player]が余剰[card]を[number]つ[opt_mod]持って[いる]場合、[score_effect]。",
+        " ： [card]に[いる]名前[opt_mod]異なる『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、[modifier_card]ら[card]を[number]枚[zone]に加える。",
+        " ： [card]に[card]名[opt_mod]異なる[card]が[number]枚[opt_mod]ある場合、[score_effect]する。[number]枚[opt_mod]ある場合、代わりに[value_type:score]を+[number]する。",
+        " ： [card]に[name_condition][object]が[number]人[opt_mod][いる][opt_mod]ぎり、[icon_gain]。",
+        "[icon_count:1]支払ってもよい ： ライブ終了時[modifier_card]が元々持つ[card]はすべて{{heart_[number].png|heart[number]}}になる。[icon_count:1]エールにより公開された[player][modifier_card][opt_mod]中[opt_mod]ら、[card]を[number]枚[zone]に加える。"
+      ],
+      "sample_texts": [
+        "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+        "{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。",
+        "{{jyouji.png|常時}}相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる。"
+      ]
+    },
+    "発動させる": {
+      "count": 4,
+      "punctuation_context": {
+        "：": 0,
+        "。": 4,
+        "、": 2,
+        "（": 0,
+        "）": 1
+      },
+      "unique_skeletons": 3,
+      "sample_skeletons": [
+        " ： [card][value_type:cost][number][opt_mod][modifier_card]を[number]枚選ぶ。そ[modifier_card][opt_mod][icon_count:1]能力[number]つを発動させる。",
+        "{{turn[number].png|ターン[number]回}}[zone][opt_mod][value_type:cost][number][opt_mod][modifier_card]を[number]枚[zone]に置く ： これにより[zone]に置いた[modifier_card][icon_count:1]能力[number]つを発動させる。",
+        " ： ([icon_count:1]能力が[value_type:cost]を持つ場合、支払って発動させる。)"
+      ],
+      "sample_texts": [
+        "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札のコスト4以下の『Liella!』のメンバーカードを1枚控え室に置く：これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる。",
+        "({{toujyou.png|登場}}能力がコストを持つ場合、支払って発動させる。)",
+        "{{toujyou.png|登場}}自分の控え室にあるコスト4以下の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。"
+      ]
+    },
+    "移動させる": {
+      "count": 10,
+      "punctuation_context": {
+        "：": 0,
+        "。": 11,
+        "、": 9,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 9,
+      "sample_skeletons": [
+        " ： [card][object]が『[group_name]』[opt_mod]み[opt_mod]場合、[card][object]をフォーメーションチェンジ[opt_mod]。([object]をそれぞれ好きな[zone]に移動させる。こ[opt_mod]効果で[number]つ[opt_mod][zone]に[number]人[opt_mod][opt_mod][object]を移動させることはできない。)",
+        " ： [opt_mod][opt_mod]ら[number]つを選ぶ。・[card][modifier_card][opt_mod]『[group_name]』[opt_mod][object][number]人は、ライブ終了時[opt_mod][icon_gain]。・[card]『[group_name]』[opt_mod][object][number]人をポジションチェンジさせる。([card]を今[いる][zone][opt_mod][opt_mod][zone]に移動させる。そ[opt_mod][zone]に[object]が[いる]場合、そ[opt_mod][object]は[card]がいた[zone]に移動させる。)",
+        " ： [card]をポジションチェンジ[opt_mod]。([card]を今[いる][zone][opt_mod][opt_mod][zone]に移動させる。そ[opt_mod][zone]に[object]が[いる]場合、そ[opt_mod][object]は[card]がいた[zone]に移動させる。)",
+        "{{turn[number].png|ターン[number]回}}[icon_count:1] ： [card]が[いる][zone]とは別[modifier_card][number]つを選ぶ。[card]をそ[opt_mod][zone]に移動する。選んだ[zone]に[object]が[いる]場合、そ[opt_mod][object]は、[card]がいた[zone]に移動させる。",
+        " ： [player]と[player]は、自身[opt_mod][zone][opt_mod][position]に[いる][object]をポジションチェンジする。([position]に[いる][object]を今[いる][zone][opt_mod][opt_mod][zone]に移動させる。そ[opt_mod][zone]に[object]が[いる]場合、そ[opt_mod][object]は[position][zone]に移動させる。)"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない場合、このメンバーはセンターエリア以外にポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "{{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+        "{{toujyou.png|登場}}以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)"
+      ]
+    },
+    "戻す": {
+      "count": 1,
+      "punctuation_context": {
+        "：": 0,
+        "。": 1,
+        "、": 0,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 1,
+      "sample_skeletons": [
+        " ： ([object]が[zone][opt_mod]ら離れた[opt_mod]下に置[opt_mod]れて[いる][card]は[card]に戻す。)"
+      ],
+      "sample_texts": [
+        "(メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに戻す。)"
+      ]
+    },
+    "減らす": {
+      "count": 12,
+      "punctuation_context": {
+        "：": 0,
+        "。": 12,
+        "、": 1,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 10,
+      "sample_skeletons": [
+        " ： [card]、こ[opt_mod]ターン中に登場、[opt_mod][zone]を移動した『[number]yncri[number]e!』[opt_mod][object][number]人[opt_mod]、こ[modifier_card]を成功させるため[opt_mod]必要[card]を{{heart_[number].png|heart[number]}}減らす。",
+        "[icon_count:1]支払ってもよい ： [card]に[value_type:cost][number][opt_mod][opt_mod]『[group_name]』[opt_mod][object]が[いる]場合、[opt_mod][opt_mod]ら[number]つを選ぶ。・[modifier_card]ら[value_type:cost][number][opt_mod][modifier_card]を[number]枚、[object][opt_mod][いない][zone]に登場させる。・こ[modifier_card][opt_mod]必要[card]を{{heart_[number].png|heart[number]}}減らす。",
+        " ： [player][modifier_card]置き場にあるこ[modifier_card][opt_mod][modifier_card][number]枚[opt_mod]、こ[modifier_card][opt_mod]必要[card]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}減らす。",
+        " ： [card]に、こ[opt_mod]ターン中にバトンタッチして登場した『[group_name]』[opt_mod][object]が[number]人[opt_mod][いる]場合、こ[modifier_card]を成功させるため[opt_mod]必要[card]を{{heart_[number].png|heart[number]}}減らす。",
+        " ： [card]{{heart_[number].png|heart[number]}}と{{heart_[number].png|heart[number]}}[opt_mod][opt_mod]色[modifier_card]を持つ[object][number]人[opt_mod]、こ[modifier_card][opt_mod]必要[card]を{{heart_[number].png|heart[number]}}減らす。"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす。",
+        "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす。",
+        "{{live_start.png|ライブ開始時}}自分のステージに、このターン中にバトンタッチして登場した『蓮ノ空』のメンバーが2人以上いる場合、このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす。"
+      ]
+    },
+    "増やす": {
+      "count": 2,
+      "punctuation_context": {
+        "：": 0,
+        "。": 2,
+        "、": 0,
+        "（": 0,
+        "）": 0
+      },
+      "unique_skeletons": 2,
+      "sample_skeletons": [
+        " ： [card][card][number]枚[opt_mod]、[score_effect]し、必要[card]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。",
+        " ： [card][card]名が[character_name][modifier_card][number]枚[opt_mod]、[score_effect]し、成功させるため[opt_mod]必要[card]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。"
+      ],
+      "sample_texts": [
+        "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード名が「EMOTION」のカード1枚につき、このカードのスコアを+２し、成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}増やす。",
+        "{{live_start.png|ライブ開始時}}自分の成功ライブカード置き場にあるカード1枚につき、このカードのスコアを+２し、必要ハートを{{heart_01.png|heart01}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_00.png|heart0}}増やす。"
+      ]
+    }
+  }
+}

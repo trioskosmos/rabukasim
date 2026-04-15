@@ -1,0 +1,3799 @@
+{
+  "shortest_20": [
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}カードを1枚引く。",
+      "original_template": " ： [draw_effect]。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_draw",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "player_query",
+        "variables": {
+          "player": "[player]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "player_query",
+          "variables": {
+            "player": "[player]"
+          },
+          "type": "sequential",
+          "text": "[player]に何が好き？と聞く"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}相手に何が好き？と聞く。",
+      "original_template": " ： [player]に何が好き？と聞く。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_player_query",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_end",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 2,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。",
+      "original_template": " ： ライブ終了時まで、[icon_gain]。",
+      "matched_patterns": [
+        "timing_live_end",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "position": "[position]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "position": "[position]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "grant_modifier",
+          "variables": {
+            "position": "[position]",
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[position][icon_gain]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}{{center.png|センター}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "original_template": " ： [position][icon_gain]。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_grant_modifier",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "activate",
+        "variables": {
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "activate",
+          "variables": {
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[card]を[number]枚アクティブにする"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}エネルギーを2枚アクティブにする。",
+      "original_template": " ： [card]を[number]枚アクティブにする。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_activate",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "activate",
+        "variables": {
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {},
+          "type": "sequential",
+          "text": "とき"
+        },
+        {
+          "step": 2,
+          "operation": "activate",
+          "variables": {
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[card]を[number]枚アクティブにする"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "とき、エネルギーを2枚アクティブにする。",
+      "original_template": " ： とき、[card]を[number]枚アクティブにする。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_activate",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "card": "[card]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "activation",
+        "variables": {
+          "player": "[player]",
+          "card": "[card]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "activation",
+          "variables": {
+            "player": "[player]",
+            "card": "[card]"
+          },
+          "type": "sequential",
+          "text": "(対戦[player]の[card]の効果でも発動する"
+        },
+        {
+          "step": 2,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "(対戦相手のカードの効果でも発動する。)",
+      "original_template": " ： (対戦[player]の[card]の効果でも発動する。)",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_activation",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "apply_restriction",
+        "variables": {
+          "card": "[card]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "apply_restriction",
+          "variables": {
+            "card": "[card]"
+          },
+          "type": "sequential",
+          "text": "この[card]は[card]置き場に置くことができない"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}このカードは成功ライブカード置き場に置くことができない。",
+      "original_template": " ： この[card]は[card]置き場に置くことができない。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_apply_restriction",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "mechanic": "[mechanic]",
+          "zone": "[zone]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "mechanic_action",
+        "variables": {
+          "card": "[card]",
+          "mechanic": "[mechanic]",
+          "zone": "[zone]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "mechanic_action",
+          "variables": {
+            "card": "[card]",
+            "mechanic": "[mechanic]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[card]は[mechanic]で[zone]に置けない"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}このメンバーはバトンタッチで控え室に置けない。",
+      "original_template": " ： [card]は[mechanic]で[zone]に置けない。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_mechanic_action",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_end",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "position": "[position]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "position": "[position]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[position]ライブ終了時まで"
+        },
+        {
+          "step": 2,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}{{center.png|センター}}ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "original_template": " ： [position]ライブ終了時まで、[icon_gain]。",
+      "matched_patterns": [
+        "timing_live_end",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[card]が[zone]状態であるかぎり"
+        },
+        {
+          "step": 2,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}このメンバーがウェイト状態であるかぎり、{{heart_05.png|heart05}}を得る。",
+      "original_template": " ： [card]が[zone]状態であるかぎり、[icon_gain]。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_grant_modifier",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "position": "[position]",
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "activate",
+        "variables": {
+          "position": "[position]",
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "activate",
+          "variables": {
+            "position": "[position]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[position][card]を[number]枚アクティブにする"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。",
+      "original_template": " ： [position][card]を[number]枚アクティブにする。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_activate",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "condition": "[condition]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "player": "[player]",
+          "condition": "[condition]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[condition]"
+        },
+        {
+          "step": 2,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}自分のエネルギーが7枚以上ある場合、カードを1枚引く。",
+      "original_template": " ： [player]の[condition]、[draw_effect]。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_draw",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_success",
+        "source": "pattern_match"
+      },
+      "cost": {
+        "resources": {
+          "energy": 1
+        },
+        "actions": [],
+        "optional": true
+      },
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{live_success.png|ライブ成功時}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：カードを1枚引く。",
+      "original_template": "[icon_count:1]支払ってもよい ： [draw_effect]。",
+      "matched_patterns": [
+        "timing_live_success",
+        "cost_extracted",
+        "operation_draw",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "automatic",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[card]が[zone]を移動するたび"
+        },
+        {
+          "step": 2,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{jidou.png|自動}}このメンバーがエリアを移動するたび、カードを1枚引く。",
+      "original_template": " ： [card]が[zone]を移動するたび、[draw_effect]。",
+      "matched_patterns": [
+        "timing_automatic",
+        "operation_draw",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "zone": "[zone]",
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "zone": "[zone]",
+          "card": "[card]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "move",
+          "variables": {
+            "zone": "[zone]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[zone]の上から[card]を[number]枚[zone]に置く"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}デッキの上からカードを5枚控え室に置く。",
+      "original_template": " ： [zone]の上から[card]を[number]枚[zone]に置く。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_move",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "card": "[card]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "このターンに[card]が移動していないかぎり"
+        },
+        {
+          "step": 2,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}このターンにこのメンバーが移動していないかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+      "original_template": " ： このターンに[card]が移動していないかぎり、[icon_gain]。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_grant_modifier",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "always",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "player": "[player]",
+          "mechanic": "[mechanic]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "activate",
+        "variables": {
+          "card": "[card]",
+          "player": "[player]",
+          "mechanic": "[mechanic]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "activate",
+          "variables": {
+            "card": "[card]",
+            "player": "[player]",
+            "mechanic": "[mechanic]"
+          },
+          "type": "sequential",
+          "text": "[card]は[player]の[mechanic]にアクティブにしない"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}このメンバーは自分のアクティブフェイズにアクティブにしない。",
+      "original_template": " ： [card]は[player]の[mechanic]にアクティブにしない。",
+      "matched_patterns": [
+        "timing_always",
+        "operation_activate",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "pattern_match"
+      },
+      "cost": {
+        "resources": {
+          "energy": 1
+        },
+        "actions": [],
+        "optional": false
+      },
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}：カードを1枚引く。",
+      "original_template": "[turnlimit][icon_count:1] ： [draw_effect]。",
+      "matched_patterns": [
+        "timing_manual",
+        "cost_extracted",
+        "operation_draw",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "draw_effect": "[draw_effect]",
+          "zone": "[zone]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "draw_effect": "[draw_effect]",
+          "zone": "[zone]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        },
+        {
+          "step": 2,
+          "operation": "move",
+          "variables": {
+            "zone": "[zone]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[zone]を[number]枚[zone]に置く"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。",
+      "original_template": " ： [draw_effect]、[zone]を[number]枚[zone]に置く。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_move",
+        "sequential_operations_extracted"
+      ]
+    }
+  ],
+  "longest_20": [
+    {
+      "timing": {
+        "trigger_type": "live_end",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "turnlimit": "[turnlimit]",
+          "player": "[player]",
+          "mechanic": "[mechanic]",
+          "card": "[card]",
+          "[colored_blade": "[[colored_blade]",
+          "number": "[number]",
+          "icon_gain": "[icon_gain]",
+          "icon_count:1": "[icon_count:1]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "turnlimit": "[turnlimit]",
+          "player": "[player]",
+          "mechanic": "[mechanic]",
+          "card": "[card]",
+          "[colored_blade": "[[colored_blade]",
+          "number": "[number]",
+          "icon_gain": "[icon_gain]",
+          "icon_count:1": "[icon_count:1]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "turnlimit": "[turnlimit]",
+            "player": "[player]",
+            "mechanic": "[mechanic]"
+          },
+          "type": "sequential",
+          "text": "[turnlimit][player]が[mechanic]したとき"
+        },
+        {
+          "step": 2,
+          "operation": "apply_modifier",
+          "variables": {
+            "mechanic": "[mechanic]",
+            "player": "[player]",
+            "card": "[card]",
+            "[colored_blade": "[[colored_blade]"
+          },
+          "type": "sequential",
+          "text": "[mechanic]公開された[player]の[card]が持つ[card][card]の中に[[colored_blade]]"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[[colored_blade]]"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[[colored_blade]]"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[[colored_blade]]"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[[colored_blade]]"
+        },
+        {
+          "step": 7,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[[colored_blade]]"
+        },
+        {
+          "step": 8,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "{{icon_b_all.png|ALL[card]}}のうち"
+        },
+        {
+          "step": 9,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[number]種類以上ある場合"
+        },
+        {
+          "step": 10,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 11,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        },
+        {
+          "step": 12,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[number]種類以上ある場合"
+        },
+        {
+          "step": 13,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "さらにライブ終了時まで"
+        },
+        {
+          "step": 14,
+          "operation": "score_modification",
+          "variables": {
+            "icon_count:1": "[icon_count:1]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[icon_count:1]ライブの合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 15,
+          "operation": "apply_modifier",
+          "variables": {},
+          "type": "sequential",
+          "text": "を得る"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": {
+        "type": "select_from_options",
+        "source": "pattern_match"
+      },
+      "original_text": "{{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードが持つブレードハートの中に[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}のうち、3種類以上ある場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。6種類以上ある場合、さらにライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+      "original_template": " ： [turnlimit][player]が[mechanic]したとき、[mechanic]公開された[player]の[card]が持つ[card][card]の中に[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、{{icon_b_all.png|ALL[card]}}のうち、[number]種類以上ある場合、ライブ終了時まで、[icon_gain]。[number]種類以上ある場合、さらにライブ終了時まで、[icon_count:1]ライブの合計[value_type:score]を+[number]する。を得る。",
+      "matched_patterns": [
+        "timing_live_end",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "choice_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "pattern_match"
+      },
+      "cost": {
+        "resources": {
+          "energy": 1
+        },
+        "actions": [
+          "action_cost"
+        ],
+        "optional": false
+      },
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "character_name": "[character_name]",
+          "card": "[card]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "position": "[position]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "deploy",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "character_name": "[character_name]",
+          "card": "[card]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "position": "[position]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone]から[value_type:cost][number]以下の[character_name]の[card]を[number]枚"
+        },
+        {
+          "step": 2,
+          "operation": "deploy",
+          "variables": {
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[card]がいた[zone]に登場させる"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その後"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition][card][number]枚をその[object]の[position]"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "([object]の下に置かれている[card]では[value_type:cost]を支払えない"
+        },
+        {
+          "step": 6,
+          "operation": "trigger_condition",
+          "variables": {
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[object]が[zone]から離れたとき"
+        },
+        {
+          "step": 7,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "下に置かれている[card]は[card]に置く"
+        },
+        {
+          "step": 8,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 5,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く：自分の手札からコスト13以下の「優木せつ菜」のメンバーカードを1枚、このメンバーがいたエリアに登場させる。その後、自分のエネルギー置き場にあるエネルギー1枚をそのメンバーの下に置く。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "original_template": "[icon_count:1][card]を[zone_placement] ： [player]の[zone]から[value_type:cost][number]以下の[character_name]の[card]を[number]枚、[card]がいた[zone]に登場させる。その後、[player]の[zone_condition][card][number]枚をその[object]の[position]。([object]の下に置かれている[card]では[value_type:cost]を支払えない。[object]が[zone]から離れたとき、下に置かれている[card]は[card]に置く。)",
+      "matched_patterns": [
+        "timing_manual",
+        "cost_extracted",
+        "operation_deploy",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "player": "[player]",
+          "zone_placement": "[zone_placement]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "position": "[position]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "card": "[card]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "player": "[player]",
+          "zone_placement": "[zone_placement]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "position": "[position]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": {
+        "type": "success_clause",
+        "source": "pattern_match"
+      },
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "move",
+          "variables": {
+            "card": "[card]",
+            "group_name": "[group_name]",
+            "object": "[object]",
+            "number": "[number]",
+            "player": "[player]",
+            "zone_placement": "[zone_placement]"
+          },
+          "type": "sequential",
+          "text": "[card]以外の『[group_name]』の[object][number]人を[player]の[zone_placement]"
+        },
+        {
+          "step": 2,
+          "operation": "trigger_condition",
+          "variables": {},
+          "type": "sequential",
+          "text": "そうした場合"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone]から"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その[object]の[value_type:cost]に[number]を足した数に等しい[value_type:cost]の[card]を[number]枚"
+        },
+        {
+          "step": 5,
+          "operation": "deploy",
+          "variables": {
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "その[object]がいた[zone]に登場させる"
+        },
+        {
+          "step": 6,
+          "operation": "trigger_condition",
+          "variables": {
+            "position": "[position]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "(この能力は[position][zone]に登場している場合のみ起動できる"
+        },
+        {
+          "step": 7,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        },
+        {
+          "type": "conditional_success",
+          "followup_operation": "deploy",
+          "followup_variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "object": "[object]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "card": "[card]",
+            "position": "[position]"
+          },
+          "pattern": "success_clause"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）",
+      "original_template": "[position][turnlimit][card]を[zone]にし、[zone]を[number]枚[zone]に置く ： [card]以外の『[group_name]』の[object][number]人を[player]の[zone_placement]。そうした場合、[player]の[zone]から、その[object]の[value_type:cost]に[number]を足した数に等しい[value_type:cost]の[card]を[number]枚、その[object]がいた[zone]に登場させる。(この能力は[position][zone]に登場している場合のみ起動できる。)",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_move",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "postcondition_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "count_in_zone",
+          "comparison": ">=",
+          "value": "[number]",
+          "source": "pattern_match"
+        },
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "object": "[object]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "icon_gain": "[icon_gain]",
+          "name_condition": "[name_condition]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "object": "[object]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "icon_gain": "[icon_gain]",
+          "name_condition": "[name_condition]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "object": "[object]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]に[object]が[number]人以上いる場合"
+        },
+        {
+          "step": 2,
+          "operation": "draw",
+          "variables": {
+            "player": "[player]",
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[player]と[player]は[draw_effect]"
+        },
+        {
+          "step": 3,
+          "operation": "move",
+          "variables": {
+            "zone": "[zone]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[zone]を[number]枚[zone]に置く"
+        },
+        {
+          "step": 4,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[number]人以上いる場合"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "さらに[player]の[zone_condition]『[group_name]』の[object][number]人は"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 7,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        },
+        {
+          "step": 8,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[number]人以上おり"
+        },
+        {
+          "step": 9,
+          "operation": "trigger_condition",
+          "variables": {
+            "name_condition": "[name_condition]"
+          },
+          "type": "sequential",
+          "text": "かつそれぞれ[name_condition]場合"
+        },
+        {
+          "step": 10,
+          "operation": "score_modification",
+          "variables": {
+            "card": "[card]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "さらにこの[card]の[value_type:score]を+[number]する"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}自分のステージにメンバーが1人以上いる場合、自分と相手はカードを1枚引き、手札を1枚控え室に置く。2人以上いる場合、さらに自分のステージにいる『μ's』のメンバー1人は、ライブ終了時まで、{{heart_03.png|heart03}}を得る。3人以上おり、かつそれぞれ名前が異なる場合、さらにこのカードのスコアを+１する。",
+      "original_template": " ： [player]の[zone]に[object]が[number]人以上いる場合、[player]と[player]は[draw_effect]、[zone]を[number]枚[zone]に置く。[number]人以上いる場合、さらに[player]の[zone_condition]『[group_name]』の[object][number]人は、ライブ終了時まで、[icon_gain]。[number]人以上おり、かつそれぞれ[name_condition]場合、さらにこの[card]の[value_type:score]を+[number]する。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_move",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_end",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "number": "[number]",
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "icon_gain": "[icon_gain]",
+          "zone": "[zone]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "number": "[number]",
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "icon_gain": "[icon_gain]",
+          "zone": "[zone]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": {
+        "type": "choice",
+        "choice_count": "[number]",
+        "source": "pattern_match"
+      },
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "specify",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "以下から[number]つを選ぶ"
+        },
+        {
+          "step": 2,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "・[player]の[zone_condition][card]以外の『[group_name]』の[object][number]人は"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 4,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        },
+        {
+          "step": 5,
+          "operation": "position_change",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "group_name": "[group_name]",
+            "object": "[object]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "・[player]の[zone_condition]『[group_name]』の[object][number]人をポジションチェンジさせる"
+        },
+        {
+          "step": 6,
+          "operation": "position_change",
+          "variables": {
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "([card]を今いる[zone]以外の[zone]に移動させる"
+        },
+        {
+          "step": 7,
+          "operation": "trigger_condition",
+          "variables": {
+            "zone": "[zone]",
+            "object": "[object]"
+          },
+          "type": "sequential",
+          "text": "その[zone]に[object]がいる場合"
+        },
+        {
+          "step": 8,
+          "operation": "position_change",
+          "variables": {
+            "object": "[object]",
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "その[object]は[card]がいた[zone]に移動させる"
+        },
+        {
+          "step": 9,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)",
+      "original_template": " ： 以下から[number]つを選ぶ。・[player]の[zone_condition][card]以外の『[group_name]』の[object][number]人は、ライブ終了時まで、[icon_gain]。・[player]の[zone_condition]『[group_name]』の[object][number]人をポジションチェンジさせる。([card]を今いる[zone]以外の[zone]に移動させる。その[zone]に[object]がいる場合、その[object]は[card]がいた[zone]に移動させる。)",
+      "matched_patterns": [
+        "timing_live_end",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "choice_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_end",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "position": "[position]",
+          "player": "[player]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]",
+          "number": "[number]",
+          "icon_count:1": "[icon_count:1]",
+          "zone": "[zone]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "score_modification",
+        "variables": {
+          "position": "[position]",
+          "player": "[player]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]",
+          "number": "[number]",
+          "icon_count:1": "[icon_count:1]",
+          "zone": "[zone]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "position": "[position]",
+            "player": "[player]",
+            "card": "[card]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[position][player]の[card]置き場に{{icon_score.png|[value_type:score]}}を持つ[card]が[number]枚ある場合"
+        },
+        {
+          "step": 2,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 3,
+          "operation": "score_modification",
+          "variables": {
+            "icon_count:1": "[icon_count:1]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[icon_count:1]ライブの合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 4,
+          "operation": "apply_modifier",
+          "variables": {},
+          "type": "sequential",
+          "text": "を得る"
+        },
+        {
+          "step": 5,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[number]枚以上ある場合"
+        },
+        {
+          "step": 6,
+          "operation": "score_modification",
+          "variables": {
+            "icon_count:1": "[icon_count:1]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "代わりに[icon_count:1]ライブの合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 7,
+          "operation": "apply_modifier",
+          "variables": {},
+          "type": "sequential",
+          "text": "を得る"
+        },
+        {
+          "step": 8,
+          "operation": "trigger_condition",
+          "variables": {
+            "position": "[position]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "(この能力は[position][zone]に登場した場合のみ発動する"
+        },
+        {
+          "step": 9,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}{{center.png|センター}}自分の成功ライブカード置き場に{{icon_score.png|スコア}}を持つ『μ's』のカードが1枚ある場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。2枚以上ある場合、代わりに「{{jyouji.png|常時}}ライブの合計スコアを+２する。」を得る。（この能力はセンターエリアに登場した場合のみ発動する。）",
+      "original_template": " ： [position][player]の[card]置き場に{{icon_score.png|[value_type:score]}}を持つ[card]が[number]枚ある場合、ライブ終了時まで、[icon_count:1]ライブの合計[value_type:score]を+[number]する。を得る。[number]枚以上ある場合、代わりに[icon_count:1]ライブの合計[value_type:score]を+[number]する。を得る。(この能力は[position][zone]に登場した場合のみ発動する。)",
+      "matched_patterns": [
+        "timing_live_end",
+        "operation_score_modification",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_success",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "mechanic": "[mechanic]",
+          "player": "[player]",
+          "card": "[card]",
+          "number": "[number]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "heart": "[heart]",
+          "zone": "[zone]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "score_modification",
+        "variables": {
+          "mechanic": "[mechanic]",
+          "player": "[player]",
+          "card": "[card]",
+          "number": "[number]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "heart": "[heart]",
+          "zone": "[zone]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "mechanic_action",
+          "variables": {
+            "mechanic": "[mechanic]",
+            "player": "[player]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[mechanic]公開された[player]の[card]の中に[card]が[number]枚以上あるか"
+        },
+        {
+          "step": 2,
+          "operation": "apply_modifier",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "object": "[object]",
+            "card": "[card]",
+            "heart": "[heart]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone_condition][object]が持つ[card]の中に[heart]"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[heart]"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[heart]"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[heart]"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[heart]"
+        },
+        {
+          "step": 7,
+          "operation": "complex_logic",
+          "variables": {
+            "heart": "[heart]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[heart]のうち合計[number]種類以上あるか"
+        },
+        {
+          "step": 8,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "このターンに[player]の[zone_condition][object]が[zone]を移動している場合"
+        },
+        {
+          "step": 9,
+          "operation": "score_modification",
+          "variables": {
+            "card": "[card]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "この[card]の[value_type:score]を+[number]する"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": {
+        "type": "select_from_options",
+        "source": "pattern_match"
+      },
+      "original_text": "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが2枚以上あるか、自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち合計5種類以上あるか、このターンに自分のステージにいるメンバーがエリアを移動している場合、このカードのスコアを+１する。",
+      "original_template": " ： [mechanic]公開された[player]の[card]の中に[card]が[number]枚以上あるか、[player]の[zone_condition][object]が持つ[card]の中に[heart]、[heart]、[heart]、[heart]、[heart]、[heart]のうち合計[number]種類以上あるか、このターンに[player]の[zone_condition][object]が[zone]を移動している場合、この[card]の[value_type:score]を+[number]する。",
+      "matched_patterns": [
+        "timing_live_success",
+        "operation_score_modification",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "choice_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "position": "[position]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "zone_condition": "[zone_condition]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "position": "[position]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "zone_condition": "[zone_condition]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": {
+        "type": "choice",
+        "choice_count": "[number]",
+        "source": "pattern_match"
+      },
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "position": "[position]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "group_name": "[group_name]",
+            "object": "[object]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]の[position][zone]に[value_type:cost][number]以上の『[group_name]』の[object]がいる場合"
+        },
+        {
+          "step": 2,
+          "operation": "specify",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "以下から[number]つを選ぶ"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "・ライブ終了時まで"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition][object][number]人は"
+        },
+        {
+          "step": 5,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        },
+        {
+          "step": 6,
+          "operation": "state_change",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "・[player]の[zone_condition][value_type:cost][number]以下の[object][number]人を[zone]にする"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}自分のステージのセンターエリアにコスト9以上の『Aqours』のメンバーがいる場合、以下から1つを選ぶ。\n・ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。",
+      "original_template": " ： [player]の[zone]の[position][zone]に[value_type:cost][number]以上の『[group_name]』の[object]がいる場合、以下から[number]つを選ぶ。・ライブ終了時まで、[player]の[zone_condition][object][number]人は、[icon_gain]。・[player]の[zone_condition][value_type:cost][number]以下の[object][number]人を[zone]にする。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "choice_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "grant_modifier",
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "icon_gain": "[icon_gain]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "specify",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "group_name": "[group_name]",
+            "object": "[object]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone_condition]『[group_name]』の[object][number]人を選ぶ"
+        },
+        {
+          "step": 2,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[card]の[value_type:cost]は"
+        },
+        {
+          "step": 4,
+          "operation": "state_transformation",
+          "variables": {
+            "object": "[object]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "選んだ[object]が元々持つ[value_type:cost]より[number]低い値に等しくなる"
+        },
+        {
+          "step": 5,
+          "operation": "trigger_condition",
+          "variables": {
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "これによりこの[card]の[value_type:cost]が[number]以上になった場合"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 7,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。",
+      "original_template": "[zone]の[card]を[number]枚[zone]に置いてもよい ： [player]の[zone_condition]『[group_name]』の[object][number]人を選ぶ。ライブ終了時まで、[card]の[value_type:cost]は、選んだ[object]が元々持つ[value_type:cost]より[number]低い値に等しくなる。これによりこの[card]の[value_type:cost]が[number]以上になった場合、ライブ終了時まで、[icon_gain]。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_grant_modifier",
+        "duration_until_end_of_live",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "card_look": "[card_look]",
+          "character_name": "[character_name]",
+          "card_reveal": "[card_reveal]",
+          "zone_placement": "[zone_placement]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "object": "[object]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "card_look": "[card_look]",
+          "character_name": "[character_name]",
+          "card_reveal": "[card_reveal]",
+          "zone_placement": "[zone_placement]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "object": "[object]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "reveal",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "card_look": "[card_look]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]の上から[card_look]"
+        },
+        {
+          "step": 2,
+          "operation": "move",
+          "variables": {
+            "character_name": "[character_name]",
+            "card_reveal": "[card_reveal]",
+            "zone_placement": "[zone_placement]"
+          },
+          "type": "sequential",
+          "text": "その中から[character_name]か[character_name]か[character_name]の[card_reveal]して[zone_placement]"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その後"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition]"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "これにより公開した[card]の[value_type:cost]以下で"
+        },
+        {
+          "step": 6,
+          "operation": "state_change",
+          "variables": {
+            "card": "[card]",
+            "number": "[number]",
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "かつ元々持つ{{icon_blade.png|[card]}}の数が[number]つ以下の[object]をすべて[zone]にする"
+        },
+        {
+          "type": "select_then_do",
+          "select_operation": "reveal",
+          "select_variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "card_look": "[card_look]"
+          },
+          "do_operation": "move",
+          "do_variables": {
+            "character_name": "[character_name]",
+            "card_reveal": "[card_reveal]",
+            "zone_placement": "[zone_placement]",
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "pattern": "then_clause"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 6,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}自分のデッキの上からカードを5枚見る。その中から「絢瀬絵里」か「朝香果林」か「葉月恋」のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。その後、相手のステージにいる、これにより公開したカードのコスト以下で、かつ元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバーをすべてウェイトにする。",
+      "original_template": " ： [player]の[zone]の上から[card_look]。その中から[character_name]か[character_name]か[character_name]の[card_reveal]して[zone_placement]。その後、[player]の[zone_condition]、これにより公開した[card]の[value_type:cost]以下で、かつ元々持つ{{icon_blade.png|[card]}}の数が[number]つ以下の[object]をすべて[zone]にする。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_move",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "character_name": "[character_name]",
+          "card_reveal": "[card_reveal]",
+          "card": "[card]",
+          "number": "[number]",
+          "zone_condition": "[zone_condition]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "reveal",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "character_name": "[character_name]",
+          "card_reveal": "[card_reveal]",
+          "card": "[card]",
+          "number": "[number]",
+          "zone_condition": "[zone_condition]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "character_name": "[character_name]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]に[character_name]がいる場合"
+        },
+        {
+          "step": 2,
+          "operation": "reveal",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "card_reveal": "[card_reveal]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]の上から[card_reveal]する"
+        },
+        {
+          "step": 3,
+          "operation": "specify",
+          "variables": {
+            "player": "[player]",
+            "character_name": "[character_name]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]はそれらの中から[character_name]の[card]を[number]枚選ぶ"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition][character_name][number]人は"
+        },
+        {
+          "step": 6,
+          "operation": "apply_modifier",
+          "variables": {
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "これにより選んだ[card]が持つ色の[card]を[number]つずつ得る"
+        },
+        {
+          "step": 7,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "公開した[card]をすべて[zone]に置く"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}自分のステージに「中須かすみ」がいる場合、自分のデッキの上からカードを4枚公開する。自分はそれらの中から「中須かすみ」のカードを1枚選ぶ。ライブ終了時まで、自分のステージにいる「中須かすみ」1人は、これにより選んだカードが持つ色のハートを1つずつ得る。公開したカードをすべて控え室に置く。",
+      "original_template": " ： [player]の[zone]に[character_name]がいる場合、[player]の[zone]の上から[card_reveal]する。[player]はそれらの中から[character_name]の[card]を[number]枚選ぶ。ライブ終了時まで、[player]の[zone_condition][character_name][number]人は、これにより選んだ[card]が持つ色の[card]を[number]つずつ得る。公開した[card]をすべて[zone]に置く。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_reveal",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "player": "[player]",
+          "zone": "[zone]",
+          "position": "[position]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "player": "[player]",
+          "zone": "[zone]",
+          "position": "[position]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": {
+        "type": "choice",
+        "choice_count": "[number]",
+        "source": "pattern_match"
+      },
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "specify",
+          "variables": {
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[card]か[value_type:cost][number]以上の[card]のどちらか[number]つを選ぶ"
+        },
+        {
+          "step": 2,
+          "operation": "reveal",
+          "variables": {
+            "card": "[card]"
+          },
+          "type": "sequential",
+          "text": "選んだ[card]が公開されるまで"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone]の[position]から[card]を[number]枚ずつ公開する"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その[card]を[zone]に加え"
+        },
+        {
+          "step": 5,
+          "operation": "move",
+          "variables": {
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "これにより公開されたほかのすべての[card]を[zone]に置く"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 5,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：ライブカードかコスト10以上のメンバーカードのどちらか1つを選ぶ。選んだカードが公開されるまで、自分のデッキの一番上からカードを１枚ずつ公開する。そのカードを手札に加え、これにより公開されたほかのすべてのカードを控え室に置く。",
+      "original_template": "[position][turnlimit][card]を[zone]にし、[zone]を[number]枚[zone]に置く ： [card]か[value_type:cost][number]以上の[card]のどちらか[number]つを選ぶ。選んだ[card]が公開されるまで、[player]の[zone]の[position]から[card]を[number]枚ずつ公開する。その[card]を[zone]に加え、これにより公開されたほかのすべての[card]を[zone]に置く。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_move",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "choice_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "icon_gain": "[icon_gain]",
+          "icon_count:1": "[icon_count:1]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "card": "[card]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "icon_gain": "[icon_gain]",
+          "icon_count:1": "[icon_count:1]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "complex_logic",
+          "variables": {
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]"
+          },
+          "type": "sequential",
+          "text": "それらの[card]の[value_type:cost]の合計が"
+        },
+        {
+          "step": 2,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[number]の場合"
+        },
+        {
+          "step": 3,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        },
+        {
+          "step": 4,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "合計が[number]の場合"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 6,
+          "operation": "grant_modifier",
+          "variables": {
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[icon_gain]"
+        },
+        {
+          "step": 7,
+          "operation": "trigger_condition",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "合計が[number]の場合"
+        },
+        {
+          "step": 8,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 9,
+          "operation": "score_modification",
+          "variables": {
+            "icon_count:1": "[icon_count:1]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[icon_count:1]ライブの合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 10,
+          "operation": "apply_modifier",
+          "variables": {},
+          "type": "sequential",
+          "text": "を得る"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+      "original_template": "[zone_condition][card][number]枚を[choice]順番で[zone]の[position]に置いてもよい ： それらの[card]の[value_type:cost]の合計が、[number]の場合、[draw_effect]。合計が[number]の場合、ライブ終了時まで、[icon_gain]。合計が[number]の場合、ライブ終了時まで、[icon_count:1]ライブの合計[value_type:score]を+[number]する。を得る。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_draw",
+        "duration_until_end_of_live",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "zone": "[zone]",
+          "card_look": "[card_look]",
+          "position": "[position]",
+          "card_reveal": "[card_reveal]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "reveal",
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "number": "[number]",
+          "zone": "[zone]",
+          "card_look": "[card_look]",
+          "position": "[position]",
+          "card_reveal": "[card_reveal]",
+          "card": "[card]",
+          "value_type:score": "[value_type:score]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": {
+        "type": "success_clause",
+        "source": "pattern_match"
+      },
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition]『[group_name]』の[object][number]人につき"
+        },
+        {
+          "step": 2,
+          "operation": "reveal",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "card_look": "[card_look]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]の上から[card_look]"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その中から[number]枚までを[zone]の上に置き"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "残りを[zone]に置く"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "その後"
+        },
+        {
+          "step": 6,
+          "operation": "reveal",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "position": "[position]",
+            "card_reveal": "[card_reveal]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]の[position]の[card_reveal]する"
+        },
+        {
+          "step": 7,
+          "operation": "trigger_condition",
+          "variables": {
+            "card": "[card]"
+          },
+          "type": "sequential",
+          "text": "これにより[card]を公開した場合"
+        },
+        {
+          "step": 8,
+          "operation": "score_modification",
+          "variables": {
+            "card": "[card]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "この[card]の[value_type:score]を+[number]する"
+        },
+        {
+          "type": "select_then_do",
+          "select_operation": "reveal",
+          "select_variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "group_name": "[group_name]",
+            "object": "[object]",
+            "number": "[number]",
+            "zone": "[zone]",
+            "card_look": "[card_look]"
+          },
+          "do_operation": "reveal",
+          "do_variables": {
+            "number": "[number]",
+            "zone": "[zone]",
+            "player": "[player]",
+            "position": "[position]",
+            "card_reveal": "[card_reveal]",
+            "card": "[card]",
+            "value_type:score": "[value_type:score]"
+          },
+          "pattern": "then_clause"
+        },
+        {
+          "type": "handle_remainder",
+          "remainder_operation": "reveal",
+          "remainder_variables": {
+            "zone": "[zone]",
+            "player": "[player]",
+            "position": "[position]",
+            "card_reveal": "[card_reveal]",
+            "card": "[card]",
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "pattern": "remainder_clause"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}自分のステージにいる『虹ヶ咲』のメンバー1人につき、自分のデッキの上からカードを1枚見る。その中から1枚までをデッキの上に置き、残りを控え室に置く。その後、自分のデッキの一番上のカードを1枚公開する。これによりライブカードを公開した場合、このカードのスコアを+１する。",
+      "original_template": " ： [player]の[zone_condition]『[group_name]』の[object][number]人につき、[player]の[zone]の上から[card_look]。その中から[number]枚までを[zone]の上に置き、残りを[zone]に置く。その後、[player]の[zone]の[position]の[card_reveal]する。これにより[card]を公開した場合、この[card]の[value_type:score]を+[number]する。",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_reveal",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "postcondition_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "automatic",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "mechanic": "[mechanic]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "draw",
+        "variables": {
+          "card": "[card]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "mechanic": "[mechanic]",
+          "draw_effect": "[draw_effect]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "card": "[card]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[card]が[zone]から[zone]に置かれたとき"
+        },
+        {
+          "step": 2,
+          "operation": "trigger_condition",
+          "variables": {
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "group_name": "[group_name]",
+            "object": "[object]",
+            "mechanic": "[mechanic]"
+          },
+          "type": "sequential",
+          "text": "[card]が[value_type:cost][number]以上の[card][card]を持たない『[group_name]』の[object]と[mechanic]していた場合"
+        },
+        {
+          "step": 3,
+          "operation": "activate",
+          "variables": {
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[card]を[number]枚アクティブにする"
+        },
+        {
+          "step": 4,
+          "operation": "trigger_condition",
+          "variables": {
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "card": "[card]",
+            "group_name": "[group_name]",
+            "object": "[object]"
+          },
+          "type": "sequential",
+          "text": "[value_type:cost][number]以上の[card][card]を持たない『[group_name]』の[object]の場合"
+        },
+        {
+          "step": 5,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "さらに[draw_effect]"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{jidou.png|自動}}このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、さらにカードを1枚引く。",
+      "original_template": " ： [card]が[zone]から[zone]に置かれたとき、[card]が[value_type:cost][number]以上の[card][card]を持たない『[group_name]』の[object]と[mechanic]していた場合、[card]を[number]枚アクティブにする。[value_type:cost][number]以上の[card][card]を持たない『[group_name]』の[object]の場合、さらに[draw_effect]。",
+      "matched_patterns": [
+        "timing_automatic",
+        "operation_draw",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "card": "[card]",
+          "number": "[number]",
+          "value_type:cost": "[value_type:cost]",
+          "zone_condition": "[zone_condition]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "card": "[card]",
+          "number": "[number]",
+          "value_type:cost": "[value_type:cost]",
+          "zone_condition": "[zone_condition]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "group_name": "[group_name]",
+            "object": "[object]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]にほかの『[group_name]』の[object]がいる場合"
+        },
+        {
+          "step": 2,
+          "operation": "move",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]から[card]を[number]枚[zone]に加える"
+        },
+        {
+          "step": 3,
+          "operation": "activation",
+          "variables": {
+            "value_type:cost": "[value_type:cost]"
+          },
+          "type": "sequential",
+          "text": "この能力を起動するための[value_type:cost]は"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone_condition][card][number]枚につき"
+        },
+        {
+          "step": 5,
+          "operation": "cost_modification",
+          "variables": {
+            "zone": "[zone]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[zone]に置く[zone]の数が[number]枚減る"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。",
+      "original_template": "[turnlimit][zone]を[number]枚[zone]に置く ： [player]の[zone]にほかの『[group_name]』の[object]がいる場合、[player]の[zone]から[card]を[number]枚[zone]に加える。この能力を起動するための[value_type:cost]は、[player]の[zone_condition][card][number]枚につき、[zone]に置く[zone]の数が[number]枚減る。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_move",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "object": "[object]",
+          "icon_gain": "[icon_gain]",
+          "value_type:cost": "[value_type:cost]",
+          "zone": "[zone]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "move",
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "card": "[card]",
+          "number": "[number]",
+          "draw_effect": "[draw_effect]",
+          "object": "[object]",
+          "icon_gain": "[icon_gain]",
+          "value_type:cost": "[value_type:cost]",
+          "zone": "[zone]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": {
+        "type": "success_clause",
+        "source": "pattern_match"
+      },
+      "duration": {
+        "type": "until_end_of_live",
+        "source": "pattern_match"
+      },
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "move",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "card": "[card]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone_condition][card][number]枚を[card]の下に置いてもよい"
+        },
+        {
+          "step": 2,
+          "operation": "trigger_condition",
+          "variables": {},
+          "type": "sequential",
+          "text": "そうした場合"
+        },
+        {
+          "step": 3,
+          "operation": "draw",
+          "variables": {
+            "draw_effect": "[draw_effect]"
+          },
+          "type": "sequential",
+          "text": "[draw_effect]"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "ライブ終了時まで"
+        },
+        {
+          "step": 5,
+          "operation": "grant_modifier",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "object": "[object]",
+            "icon_gain": "[icon_gain]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone_condition][object]は[icon_gain]"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "([object]の下に置かれている[card]では[value_type:cost]を支払えない"
+        },
+        {
+          "step": 7,
+          "operation": "trigger_condition",
+          "variables": {
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[object]が[zone]から離れたとき"
+        },
+        {
+          "step": 8,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "下に置かれている[card]は[card]に置く"
+        },
+        {
+          "step": 9,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": ")"
+        },
+        {
+          "type": "conditional_success",
+          "followup_operation": "draw",
+          "followup_variables": {
+            "draw_effect": "[draw_effect]",
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "object": "[object]",
+            "icon_gain": "[icon_gain]",
+            "card": "[card]",
+            "value_type:cost": "[value_type:cost]",
+            "zone": "[zone]"
+          },
+          "pattern": "success_clause"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 4,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを1枚引き、ライブ終了時まで、自分のステージにいるメンバーは{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）",
+      "original_template": " ： [player]の[zone_condition][card][number]枚を[card]の下に置いてもよい。そうした場合、[draw_effect]、ライブ終了時まで、[player]の[zone_condition][object]は[icon_gain]。([object]の下に置かれている[card]では[value_type:cost]を支払えない。[object]が[zone]から離れたとき、下に置かれている[card]は[card]に置く。)",
+      "matched_patterns": [
+        "timing_live_start",
+        "operation_move",
+        "duration_until_end_of_live",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "postcondition_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_start",
+        "source": "pattern_match"
+      },
+      "cost": {
+        "resources": {
+          "energy": 1
+        },
+        "actions": [],
+        "optional": true
+      },
+      "conditions": [
+        {
+          "operator": "presence",
+          "comparison": ">=",
+          "value": 1,
+          "source": "pattern_match"
+        }
+      ],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "card": "[card]",
+          "heart": "[heart]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "deploy",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "value_type:cost": "[value_type:cost]",
+          "number": "[number]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "card": "[card]",
+          "heart": "[heart]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": {
+        "type": "choice",
+        "choice_count": "[number]",
+        "source": "pattern_match"
+      },
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone": "[zone]",
+            "value_type:cost": "[value_type:cost]",
+            "number": "[number]",
+            "group_name": "[group_name]",
+            "object": "[object]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone]に[value_type:cost][number]以上の『[group_name]』の[object]がいる場合"
+        },
+        {
+          "step": 2,
+          "operation": "specify",
+          "variables": {
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "以下から[number]つを選ぶ"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "・[player]の[zone]から[value_type:cost][number]以下の[card]を[number]枚"
+        },
+        {
+          "step": 4,
+          "operation": "deploy",
+          "variables": {
+            "object": "[object]",
+            "zone": "[zone]"
+          },
+          "type": "sequential",
+          "text": "[object]のいない[zone]に登場させる"
+        },
+        {
+          "step": 5,
+          "operation": "cost_modification",
+          "variables": {
+            "card": "[card]",
+            "heart": "[heart]"
+          },
+          "type": "sequential",
+          "text": "・この[card]の必要[card]を[heart]減らす"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 3,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合、以下から1つを選ぶ。\n・自分の控え室からコスト4以下の『EdelNote』のメンバーカードを1枚、メンバーのいないエリアに登場させる。\n・このカードの必要ハートを{{heart_06.png|heart06}}減らす。",
+      "original_template": "[icon_count:1]支払ってもよい ： [player]の[zone]に[value_type:cost][number]以上の『[group_name]』の[object]がいる場合、以下から[number]つを選ぶ。・[player]の[zone]から[value_type:cost][number]以下の[card]を[number]枚、[object]のいない[zone]に登場させる。・この[card]の必要[card]を[heart]減らす。",
+      "matched_patterns": [
+        "timing_live_start",
+        "cost_extracted",
+        "operation_deploy",
+        "conditions_extracted",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted",
+        "choice_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "manual",
+        "source": "default"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "number": "[number]",
+          "position": "[position]",
+          "zone": "[zone]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "trigger_condition",
+        "variables": {
+          "player": "[player]",
+          "zone_condition": "[zone_condition]",
+          "object": "[object]",
+          "number": "[number]",
+          "position": "[position]",
+          "zone": "[zone]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "trigger_condition",
+          "variables": {
+            "player": "[player]",
+            "zone_condition": "[zone_condition]",
+            "object": "[object]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "[player]の[zone_condition][object]が『[number]yncri[number]e!』のみの場合"
+        },
+        {
+          "step": 2,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]と対戦[player]は"
+        },
+        {
+          "step": 3,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[position][zone]の[object]を[position][zone]に"
+        },
+        {
+          "step": 4,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[position][zone]の[object]を[position][zone]に"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[position][zone]の[object]を[position][zone]に"
+        },
+        {
+          "step": 6,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "それぞれ移動させる"
+        }
+      ],
+      "conditional_branching": null,
+      "choice_branching": null,
+      "original_text": "{{toujyou.png|登場}}自分のステージにいるメンバーが『5yncri5e!』のみの場合、自分と対戦相手は、センターエリアのメンバーを左サイドエリアに、左サイドエリアのメンバーを右サイドエリアに、右サイドエリアのメンバーをセンターエリアに、それぞれ移動させる。",
+      "original_template": " ： [player]の[zone_condition][object]が『[number]yncri[number]e!』のみの場合、[player]と対戦[player]は、[position][zone]の[object]を[position][zone]に、[position][zone]の[object]を[position][zone]に、[position][zone]の[object]を[position][zone]に、それぞれ移動させる。",
+      "matched_patterns": [
+        "timing_manual",
+        "operation_trigger_condition",
+        "sequential_operations_extracted"
+      ]
+    },
+    {
+      "timing": {
+        "trigger_type": "live_success",
+        "source": "pattern_match"
+      },
+      "cost": null,
+      "conditions": [],
+      "selector": {
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "name_condition": "[name_condition]",
+          "icon_count:1": "[icon_count:1]",
+          "mechanic": "[mechanic]",
+          "card": "[card]",
+          "condition": "[condition]",
+          "value_type:score": "[value_type:score]",
+          "number": "[number]"
+        },
+        "source": "extracted_from_action"
+      },
+      "action": {
+        "operation": "score_modification",
+        "variables": {
+          "player": "[player]",
+          "zone": "[zone]",
+          "group_name": "[group_name]",
+          "object": "[object]",
+          "name_condition": "[name_condition]",
+          "icon_count:1": "[icon_count:1]",
+          "mechanic": "[mechanic]",
+          "card": "[card]",
+          "condition": "[condition]",
+          "value_type:score": "[value_type:score]",
+          "number": "[number]"
+        },
+        "source": "pattern_match"
+      },
+      "postcondition": null,
+      "duration": null,
+      "choice": null,
+      "sequential_operations": [
+        {
+          "step": 1,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[player]の[zone]の[zone]すべてに『[group_name]』の[object]が登場しており"
+        },
+        {
+          "step": 2,
+          "operation": "trigger_condition",
+          "variables": {
+            "name_condition": "[name_condition]"
+          },
+          "type": "sequential",
+          "text": "かつ[name_condition]場合"
+        },
+        {
+          "step": 3,
+          "operation": "mechanic_action",
+          "variables": {
+            "icon_count:1": "[icon_count:1]",
+            "mechanic": "[mechanic]",
+            "player": "[player]",
+            "card": "[card]",
+            "condition": "[condition]"
+          },
+          "type": "sequential",
+          "text": "[icon_count:1][mechanic]公開された[player]の[card]の中に[condition]"
+        },
+        {
+          "step": 4,
+          "operation": "score_modification",
+          "variables": {
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "ライブの合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 5,
+          "operation": "unknown",
+          "variables": {},
+          "type": "sequential",
+          "text": "[condition]"
+        },
+        {
+          "step": 6,
+          "operation": "score_modification",
+          "variables": {
+            "value_type:score": "[value_type:score]",
+            "number": "[number]"
+          },
+          "type": "sequential",
+          "text": "代わりに合計[value_type:score]を+[number]する"
+        },
+        {
+          "step": 7,
+          "operation": "apply_modifier",
+          "variables": {},
+          "type": "sequential",
+          "text": "を得る"
+        }
+      ],
+      "conditional_branching": {
+        "type": "or_branching",
+        "branches": 2,
+        "source": "pattern_match"
+      },
+      "choice_branching": null,
+      "original_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。",
+      "original_template": " ： [player]の[zone]の[zone]すべてに『[group_name]』の[object]が登場しており、かつ[name_condition]場合、[icon_count:1][mechanic]公開された[player]の[card]の中に[condition]、ライブの合計[value_type:score]を+[number]する。[condition]、代わりに合計[value_type:score]を+[number]する。を得る。",
+      "matched_patterns": [
+        "timing_live_success",
+        "operation_score_modification",
+        "sequential_operations_extracted",
+        "conditional_branching_extracted"
+      ]
+    }
+  ]
+}

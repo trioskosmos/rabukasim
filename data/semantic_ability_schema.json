@@ -1,0 +1,190 @@
+{
+  "schema": "semantic_ability_ast.v1",
+  "description": "Semantic AST structure for ability extraction - separates core actions from wrapper patterns",
+  "ability_structure": {
+    "timing": {
+      "type": "trigger",
+      "description": "When the ability can be triggered",
+      "fields": ["trigger_type", "phase", "condition"],
+      "examples": ["live_start", "live_success", "live_end", "turn_start", "turn_end", "automatic", "manual", "on_move", "on_reveal", "on_baton_touch"]
+    },
+    "cost": {
+      "type": "cost",
+      "description": "Cost to activate the ability",
+      "fields": ["resources", "actions", "optional"],
+      "examples": ["pay_energy", "discard_card", "move_to_wait", "sacrifice"]
+    },
+    "conditions": {
+      "type": "condition_list",
+      "description": "Conditions that must be met for the ability to activate or apply",
+      "fields": ["operator", "target", "comparison", "value"],
+      "examples": ["count_in_zone", "score_sum", "has_trait", "group_only", "name_distinct", "entered_by"]
+    },
+    "selector": {
+      "type": "selector",
+      "description": "How to select targets for the ability",
+      "fields": ["controller", "source_zone", "filter", "count", "up_to", "visibility"],
+      "examples": ["self_stage_members", "opponent_hand", "top_of_deck", "revealed_cards"]
+    },
+    "action": {
+      "type": "action",
+      "description": "Core action performed by the ability",
+      "fields": ["operation", "target", "parameters"],
+      "examples": ["move", "draw", "activate", "rest", "grant_modifier", "reveal", "search", "disable_ability"]
+    },
+    "postcondition": {
+      "type": "postcondition",
+      "description": "Effects that trigger after the main action completes",
+      "fields": ["condition", "effect"],
+      "examples": ["if_success_then", "if_revealed_matching_then"]
+    },
+    "duration": {
+      "type": "duration",
+      "description": "How long the effect lasts",
+      "fields": ["type", "end_condition"],
+      "examples": ["until_end_of_live", "until_end_of_turn", "permanent", "while_condition_holds"]
+    },
+    "choice": {
+      "type": "choice",
+      "description": "When ability presents a choice between multiple options",
+      "fields": ["count", "modes"],
+      "examples": ["choose_one_of_three", "choose_two_options"]
+    }
+  },
+  "core_operations": {
+    "move": {
+      "description": "Move card(s) from one zone to another",
+      "parameters": ["from_zone", "to_zone", "count", "filter", "destination_order"]
+    },
+    "draw": {
+      "description": "Draw card(s) from deck to hand",
+      "parameters": ["count", "filter", "reveal"]
+    },
+    "activate": {
+      "description": "Change card from rested to active state",
+      "parameters": ["target", "count"]
+    },
+    "rest": {
+      "description": "Change card from active to rested state",
+      "parameters": ["target", "count"]
+    },
+    "position_change": {
+      "description": "Move card to different position within zone",
+      "parameters": ["target", "from_position", "to_position"]
+    },
+    "grant_modifier": {
+      "description": "Apply temporary or permanent modifier to target",
+      "parameters": ["target", "modifier", "duration", "value"]
+    },
+    "reveal": {
+      "description": "Reveal card(s) to opponent",
+      "parameters": ["target", "count", "filter"]
+    },
+    "search": {
+      "description": "Search deck for specific cards and take action",
+      "parameters": ["look_count", "select_filter", "select_count", "selected_destination", "remainder_destination", "remainder_order"]
+    },
+    "disable_ability": {
+      "description": "Disable one or more abilities on target",
+      "parameters": ["target", "ability_filter"]
+    },
+    "trigger_ability": {
+      "description": "Trigger another ability",
+      "parameters": ["target", "ability"]
+    },
+    "set_property": {
+      "description": "Set a property on target",
+      "parameters": ["target", "property", "value"]
+    }
+  },
+  "condition_operators": {
+    "count_in_zone": {
+      "description": "Count of cards in zone meets condition",
+      "parameters": ["zone", "filter", "comparison", "value"]
+    },
+    "score_sum": {
+      "description": "Total score meets condition",
+      "parameters": ["zone", "filter", "comparison", "value"]
+    },
+    "has_trait": {
+      "description": "Target has specific trait",
+      "parameters": ["target", "trait", "comparison", "value"]
+    },
+    "group_only": {
+      "description": "Target belongs to specific group only",
+      "parameters": ["target", "group"]
+    },
+    "name_distinct": {
+      "description": "All targets have distinct names",
+      "parameters": ["target"]
+    },
+    "entered_by": {
+      "description": "Target entered by specific method",
+      "parameters": ["target", "method"]
+    },
+    "resource_count": {
+      "description": "Count of specific resource meets condition",
+      "parameters": ["target", "resource", "comparison", "value"]
+    },
+    "comparison": {
+      "description": "Generic comparison between two values",
+      "parameters": ["left", "operator", "right"]
+    }
+  },
+  "modifier_types": {
+    "resource_gain": {
+      "description": "Gain resources (hearts, blades, etc.)",
+      "parameters": ["resource_type", "amount"]
+    },
+    "score_modification": {
+      "description": "Modify score",
+      "parameters": ["amount", "operation"]
+    },
+    "cost_modification": {
+      "description": "Modify cost",
+      "parameters": ["cost_type", "amount", "operation"]
+    },
+    "state_change": {
+      "description": "Change state (active/rested/zone-state)",
+      "parameters": ["state"]
+    },
+    "ability_grant": {
+      "description": "Grant ability",
+      "parameters": ["ability"]
+    }
+  },
+  "wrapper_patterns": {
+    "optional_cost": {
+      "pattern": "支払ってもよい",
+      "semantic": "cost.optional = true"
+    },
+    "optional_action": {
+      "pattern": "〜してもよい",
+      "semantic": "action.optional = true"
+    },
+    "conditional": {
+      "pattern": "〜場合",
+      "semantic": "conditions.add(...)"
+    },
+    "duration_temporary": {
+      "pattern": "ライブ終了時まで",
+      "semantic": "duration = {type: 'until_end_of_live'}"
+    },
+    "duration_turn": {
+      "pattern": "このターンに〜",
+      "semantic": "duration = {type: 'until_end_of_turn'}"
+    },
+    "usage_limit": {
+      "pattern": "ターン1回",
+      "semantic": "timing.usage_limit = 1"
+    },
+    "success_clause": {
+      "pattern": "そうした場合",
+      "semantic": "postcondition.condition = success"
+    },
+    "choice_structure": {
+      "pattern": "〜のうち、選んだ[number]つ",
+      "semantic": "choice.count = number"
+    }
+  }
+}

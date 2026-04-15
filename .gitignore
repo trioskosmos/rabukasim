@@ -291,3 +291,6 @@ engine_rust_src/uv.lock
 
 # Temporary Documentation
 engine_rust_src/test_fix_process_guide.txt
+
+# Large ability extraction data files
+data/ability_coverage_log.json

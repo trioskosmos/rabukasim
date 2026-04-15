@@ -172,14 +172,35 @@ def extract_game_terms(text: str) -> dict:
     return terms
 
 
-def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]:
+def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict], dict]:
     """
     Create a template by replacing game terms with placeholders.
     Uses smart variable extraction: groups repeated icons and handles optional modifiers.
-    Returns: (template, list of modifier_info dicts with 'pattern' and 'replacement')
+    Returns: (template, list of modifier_info dicts with 'pattern' and 'replacement', variable_mappings dict)
     """
     template = text
     modifier_info = []
+    variable_mappings = {}  # Track what each placeholder replaced
+    
+    # Detect action verb for hierarchical classification
+    action_verbs = {
+        'place': '置く',
+        'gain': '得る',
+        'draw': '引く',
+        'add': '加える',
+        'score': 'スコア',
+        'reveal': '公開',
+        'activate': 'アクティブ',
+        'summon': '登場',
+        'move': '移動',
+        'look': '見る'
+    }
+    
+    detected_action = None
+    for action, verb in action_verbs.items():
+        if verb in template:
+            detected_action = action
+            break
     
     # Normalize text: strip quotes, normalize punctuation, and remove all spaces for consistent comparison
     template = template.strip('"\'')  # Strip leading/trailing quotes
@@ -202,10 +223,14 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
             pattern1 = f'『{group}』の{card_type}'
             if pattern1 in template:
                 composite_replacements.append((pattern1, '[grouped_card]'))
+                if '[grouped_card]' not in variable_mappings:
+                    variable_mappings['[grouped_card]'] = pattern1
             # Pattern 2: 『group_name』card_type (without の)
             pattern2 = f'『{group}』{card_type}'
             if pattern2 in template:
                 composite_replacements.append((pattern2, '[grouped_card]'))
+                if '[grouped_card]' not in variable_mappings:
+                    variable_mappings['[grouped_card]'] = pattern2
     
     # Build composite patterns for color + card_type combinations (桃ブレード, etc.)
     colors = ['桃', '赤', '黄', '緑', '紫', '青']
@@ -215,6 +240,8 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
             pattern = f'{color}{card_type}'
             if pattern in template:
                 composite_replacements.append((pattern, '[colored_blade]'))
+                if '[colored_blade]' not in variable_mappings:
+                    variable_mappings['[colored_blade]'] = pattern
     
     # Build composite patterns for cost/score + number combinations
     # Pattern: コスト[number] or スコア[number] -> [value_condition]
@@ -268,42 +295,139 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
     # Card types
     for card_type in sorted(terms['card_types'], key=len, reverse=True):
         replacements.append((card_type, '[card_type]'))
+        if card_type in template and '[card_type]' not in variable_mappings:
+            variable_mappings['[card_type]'] = card_type
+    
+    # Track [card] supergroup placeholder
+    if '[card]' in template and '[card]' not in variable_mappings:
+        # Try to find what [card] replaced by looking at card_types
+        if variable_mappings.get('[card_type]'):
+            variable_mappings['[card]'] = variable_mappings['[card_type]']
+        else:
+            variable_mappings['[card]'] = 'カード'
     
     # Zones
     for zone in sorted(terms['zones'], key=len, reverse=True):
         replacements.append((zone, '[zone]'))
+        if zone in template:
+            if '[zone]' not in variable_mappings:
+                variable_mappings['[zone]'] = []
+            if zone not in variable_mappings['[zone]']:
+                variable_mappings['[zone]'].append(zone)
+    
+    # Track [zone] supergroup placeholder (use first zone if multiple)
+    if '[zone]' in template and '[zone]' in variable_mappings and variable_mappings['[zone]']:
+        if isinstance(variable_mappings['[zone]'], list) and len(variable_mappings['[zone]']) > 0:
+            variable_mappings['[zone]'] = variable_mappings['[zone]'][0]  # Use first zone
     
     # Players
     for player in sorted(terms['players'], key=len, reverse=True):
         replacements.append((player, '[player]'))
+        if player in template and '[player]' not in variable_mappings:
+            variable_mappings['[player]'] = player
     
-    # Numbers
+    # Numbers - only capture actual game numbers, not card IDs
+    # Filter out numbers that are likely from card IDs (sequences like 01, 02, etc.)
     for number in sorted(terms['numbers'], key=len, reverse=True):
         replacements.append((number, '[number]'))
+        if number in template:
+            # Skip numbers that look like card ID components (01, 02, 00, etc.)
+            # Card ID numbers are typically: 2-digit with leading zero, or 00
+            if number.isdigit() and len(number) == 2 and number.startswith('0'):
+                continue  # Skip 2-digit numbers with leading zero (card IDs)
+            if number == '00':
+                continue  # Skip double zero (card ID component)
+            # Only keep single digits 1-9 (actual game numbers)
+            if number.isdigit() and len(number) == 1:
+                if number in template:
+                    if '[number]' not in variable_mappings:
+                        variable_mappings['[number]'] = []
+                    if number not in variable_mappings['[number]']:
+                        variable_mappings['[number]'].append(number)
     
     # Positions
     for position in sorted(terms['positions'], key=len, reverse=True):
         replacements.append((position, '[position]'))
+        if position in template and '[position]' not in variable_mappings:
+            variable_mappings['[position]'] = position
     
     # Timing modifiers
     for timing in sorted(terms['timing_modifiers'], key=len, reverse=True):
         replacements.append((timing, '[timing_modifier]'))
+        if timing in template and '[timing_modifier]' not in variable_mappings:
+            variable_mappings['[timing_modifier]'] = timing
     
     # Group names
     for group in sorted(terms['group_names'], key=len, reverse=True):
         replacements.append((group, '[group_name]'))
+        if group in template and '[group_name]' not in variable_mappings:
+            variable_mappings['[group_name]'] = group
     
     # Energy costs
     for energy in sorted(terms['energy_costs'], key=len, reverse=True):
         replacements.append((energy, '[energy_cost]'))
+        if energy in template and '[energy_cost]' not in variable_mappings:
+            variable_mappings['[energy_cost]'] = energy
     
     # Character names
     for char in sorted(terms['character_names'], key=len, reverse=True):
         replacements.append((char, '[character_name]'))
+        if char in template and '[character_name]' not in variable_mappings:
+            variable_mappings['[character_name]'] = char
     
     # Score modifiers
     for score in sorted(terms['score_modifiers'], key=len, reverse=True):
-        replacements.append((f'+{score}', '[score_modifier]'))
+        score_pattern = f'+{score}'
+        replacements.append((score_pattern, '[score_modifier]'))
+        if score_pattern in template and '[score_modifier]' not in variable_mappings:
+            variable_mappings['[score_modifier]'] = score_pattern
+    
+    # Normalize heart icons to simple [heart] before other icon processing
+    template = re.sub(r'\{\{heart_\d+\.png\|heart\d+\}\}', '[heart]', template)
+    
+    # Normalize position icons to simple [position]
+    template = re.sub(r'\{\{(center|left_side|right_side)\.png\|[^}]+\}\}', '[position]', template)
+    
+    # Normalize turn limit icons to simple [turnlimit]
+    template = re.sub(r'\{\{turn\d+\.png\|ターン\d+回\}\}', '[turnlimit]', template)
+    
+    # Normalize position text patterns to [position]
+    position_patterns = {
+        '一番下': '[position]',
+        '一番上': '[position]',
+        '下に置く': '[position]',
+        '上に置く': '[position]'
+    }
+    for original, placeholder in position_patterns.items():
+        if original in template:
+            template = template.replace(original, placeholder)
+            if placeholder not in variable_mappings:
+                variable_mappings[placeholder] = original
+    
+    # Normalize free choice patterns to [choice]
+    choice_patterns = {
+        '好きな': '[choice]',
+        '好きな順番': '[choice]'
+    }
+    for original, placeholder in choice_patterns.items():
+        if original in template:
+            template = template.replace(original, placeholder)
+            if placeholder not in variable_mappings:
+                variable_mappings[placeholder] = original
+    
+    # Normalize mechanic patterns to [mechanic]
+    mechanic_patterns = {
+        'バトンタッチ': '[mechanic]',
+        'エールにより': '[mechanic]',
+        'エール': '[mechanic]',
+        'アクティブフェイズ': '[mechanic]',
+        '置ける': '[mechanic]'
+    }
+    for original, placeholder in mechanic_patterns.items():
+        if original in template:
+            template = template.replace(original, placeholder)
+            if placeholder not in variable_mappings:
+                variable_mappings[placeholder] = original
     
     # Icon patterns - group repeated icons as count variables
     icon_patterns = sorted(terms['icon_patterns'], key=len, reverse=True)
@@ -315,6 +439,12 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
         template = template.replace(original, placeholder)
     
     # Smart: Group repeated [icon] as count variables
+    # But first, handle resource gain patterns to preserve heart information before collapsing
+    resource_gain_pattern = re.compile(r'(\[heart\]|{{icon_[^}]+}})+を得る')
+    matches = list(resource_gain_pattern.finditer(template))
+    for match in reversed(matches):  # Process in reverse to avoid offset issues
+        template = template[:match.start()] + '[icon_gain]' + template[match.end():]
+    
     template = ICON_COUNT_PATTERN.sub(lambda m: f'[icon_count:{len(m.group(0).split())}]', template)
     
     # Smart: Handle optional modifiers (group_nameの, ライブ中の, etc.)
@@ -326,7 +456,89 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
             template = template.replace(modifier, '[opt_mod]')
             modifier_info.append({'pattern': modifier, 'replacement': '[opt_mod]'})
     
-    return template, modifier_info
+    # Apply super group normalization (patterns that always appear together)
+    # This must happen AFTER individual variable replacements so it can match placeholder patterns
+    try:
+        with open('tools/ability_extraction/variable_config.json', 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        super_groups = config.get('super_groups', {})
+        super_replacements = []
+        
+        for group_name, group_data in super_groups.items():
+            patterns = group_data.get('patterns', [])
+            placeholder = group_data.get('placeholder', f'[{group_name}]')
+            
+            # Replace all patterns in this supergroup with the single placeholder
+            for pattern in patterns:
+                if pattern in template:
+                    # Track the original pattern before replacement
+                    if placeholder not in variable_mappings:
+                        variable_mappings[placeholder] = pattern
+                    template = template.replace(pattern, placeholder)
+                    super_replacements.append({
+                        'pattern': pattern,
+                        'replacement': placeholder,
+                        'supergroup': group_name,
+                        'semantic': group_data.get('semantic', '')
+                    })
+        
+        if super_replacements:
+            modifier_info.extend(super_replacements)
+            
+        # Handle optional_conditions from config
+        # These are conditions that can be present or absent without changing the core mechanic
+        optional_conditions = config.get('optional_conditions', [])
+        for condition in optional_conditions:
+            if condition in template:
+                template = template.replace(condition, f'[{condition}]')
+        
+        # Handle optional_modifiers from config
+        # These are modifiers that can be present or absent without changing the core mechanic
+        optional_modifiers = config.get('optional_modifiers', [])
+        for modifier in optional_modifiers:
+            if modifier in template:
+                template = template.replace(modifier, f'[{modifier}]')
+        
+        # Handle verb_conjugations from config
+        # Normalize verb conjugations to their base form
+        verb_conjugations = config.get('verb_conjugations', [])
+        # Group conjugations by base verb (last character is typically the base)
+        verb_groups = {}
+        for verb in verb_conjugations:
+            if len(verb) > 1:
+                # Extract base verb (last 1-2 characters typically)
+                if verb.endswith('する'):
+                    base = verb
+                elif verb.endswith('く'):
+                    base = verb
+                elif verb.endswith('る'):
+                    base = verb
+                elif verb.endswith('ける'):
+                    base = verb
+                else:
+                    base = verb
+                if base not in verb_groups:
+                    verb_groups[base] = []
+                verb_groups[base].append(verb)
+        
+        # Replace all conjugations of a verb with the base form
+        for base, conjugations in verb_groups.items():
+            for conj in conjugations:
+                if conj in template:
+                    template = template.replace(conj, base)
+        
+        # Handle object_types from config
+        # Normalize object types (カード vs メンバー) to [object]
+        object_types = config.get('object_types', [])
+        for obj_type in object_types:
+            if obj_type in template:
+                template = template.replace(obj_type, '[object]')
+    except Exception as e:
+        # If config loading fails, continue without super group normalization
+        pass
+    
+    return template, modifier_info, variable_mappings
 
 
 def _merge_dicts(*dicts):
@@ -354,147 +566,34 @@ def parse_quote_content(content: str) -> str:
 
 def parse_grammar_clauses(template: str) -> list[str]:
     """
-    Parse a template into clauses using hierarchical grammar-based parsing.
-    Structure:
-    - Periods (。) = main clause boundaries (except inside parentheses)
-    - Commas (、) = sub-clause boundaries within main clauses
-    - Colon (：) = kept with cost clause (not separate)
-    - Quotes (「」) = kept for nested abilities
-    - Parens (（）) = nested structure, periods inside don't split main clause
-    
-    Returns flattened list of clauses preserving hierarchical structure markers.
+    Period-only clause splitting - split only at periods to preserve larger meaningful chunks.
+    This fixes the fundamental consolidation bottleneck caused by over-granular comma splitting.
     """
     clauses = []
+    current = ""
+    paren_depth = 0
     
-    # List indicators that create a context where commas should not split
-    list_indicators = ['と', 'または', 'か', '以外', 'うち', 'いずれか', '場合']
-    
-    # Context tracking
-    in_quote = False
-    paren_depth = 0  # Track nesting depth of parentheses
-    
-    # Step 1: Split by periods, but track parenthesis depth
-    main_clauses = []
-    current_clause = ""
-    
-    i = 0
-    while i < len(template):
-        char = template[i]
-        
-        # Track parenthesis depth
+    for char in template:
+        # Track parenthesis depth to avoid splitting inside parens
         if char == '(':
             paren_depth += 1
         elif char == ')':
             paren_depth = max(0, paren_depth - 1)
         
-        # Track quote context
-        if char == '「':
-            in_quote = True
-        elif char == '」':
-            in_quote = False
-        
         # Split on period only if not in parentheses
         if char == '。' and paren_depth == 0:
-            if current_clause.strip():
-                main_clauses.append(current_clause)
-            current_clause = ""
-        else:
-            current_clause += char
-        
-        i += 1
-    
-    if current_clause.strip():
-        main_clauses.append(current_clause)
-    
-    # Step 2: Split each main clause by commas (with context awareness)
-    for main_clause in main_clauses:
-        if not main_clause.strip():
-            continue
-        
-        # Check for conditional choice pattern (代わりに)
-        # If found, treat entire structure as one clause
-        if '代わりに' in main_clause:
-            clauses.append(main_clause)
+            if current.strip():
+                clauses.append(current)
             clauses.append('。')
-            continue
-        
-        sub_clauses = []
-        current = ""
-        in_quote = False
-        paren_depth = 0
-        
-        i = 0
-        while i < len(main_clause):
-            char = main_clause[i]
-            
-            # Track parenthesis depth
-            if char == '(':
-                paren_depth += 1
-            elif char == ')':
-                paren_depth = max(0, paren_depth - 1)
-            
-            # Track quote context
-            if char == '「':
-                in_quote = True
-            elif char == '」':
-                in_quote = False
-            
-            # Handle commas with list context
-            if char == '、':
-                # Don't split if in parentheses or in quote
-                if paren_depth > 0 or in_quote:
-                    current += char
-                else:
-                    # Check if this is between repeated placeholders (list pattern)
-                    # Look at what's before and after the comma
-                    prev_part = current[-50:] if len(current) >= 50 else current
-                    look_ahead = main_clause[i+1:i+50]
-                    
-                    # Check if both sides contain placeholder patterns like [[...]] or {{...}}
-                    has_placeholder_before = ('[[' in prev_part or '{{' in prev_part)
-                    has_placeholder_after = ('[[' in look_ahead or '{{' in look_ahead)
-                    
-                    # Also check for list indicators ahead
-                    has_list_indicator = False
-                    for indicator in list_indicators:
-                        if indicator in look_ahead:
-                            has_list_indicator = True
-                            break
-                    
-                    # Don't split if in list context (repeated placeholders or list indicator ahead)
-                    if (has_placeholder_before and has_placeholder_after) or has_list_indicator:
-                        current += char
-                    else:
-                        # Split - sub-clause separator
-                        if current:
-                            sub_clauses.append(current)
-                        current = ''
-            elif char == '：':
-                # Keep colon with current clause (cost clause)
-                current += char
-            elif char in ['（', '）', '「', '」', '・']:
-                # Keep quotes, parens, and bullet points as part of current clause
-                current += char
-            else:
-                current += char
-            
-            i += 1
-        
-        if current:
-            sub_clauses.append(current)
-        
-        # Add sub-clauses to main clause list
-        clauses.extend(sub_clauses)
-        # Add period marker to separate main clauses
-        clauses.append('。')
+            current = ""
+        else:
+            current += char
     
-    # Step 3: No consolidation - parser does structural splitting only
-    # Pattern analysis happens after parsing
+    if current.strip():
+        clauses.append(current)
     
-    # Filter empty clauses
     filtered = []
     for clause in clauses:
-        # Keep non-empty clauses or period markers
         if clause.strip() or clause == '。':
             filtered.append(clause)
     
@@ -836,17 +935,76 @@ def extract_optional_modifiers(template: str, modifier_info: list = None) -> tup
     return base_template, modifiers_found
 
 
+def normalize_template_for_grouping(template: str) -> str:
+    """
+    Normalize template for grouping by treating optional condition placeholders as empty.
+    This allows templates with optional slots to be grouped together.
+    """
+    import re
+    # Remove [icon_count:X] patterns (optional energy cost prefixes)
+    normalized = re.sub(r'\[icon_count:\d+\]', '', template)
+    # Remove '支払ってもよい' (may pay) optional cost prefix
+    normalized = re.sub(r'支払ってもよい', '', normalized)
+    # Normalize position format: {{center.png|[position]}} → [position]
+    normalized = re.sub(r'\{\{center\.png\|\[position\]\}\}', '[position]', normalized)
+    # Normalize card references: [card][card] → [card] (for "this member other than" patterns)
+    normalized = re.sub(r'\[card\]\[card\]', '[card]', normalized)
+    # Normalize number expressions: [number]人につき → [number]人 (for "per person" patterns)
+    normalized = re.sub(r'\[number\]人につき', '[number]人', normalized)
+    # Normalize optional modifiers: remove [opt_mod] when followed by specific patterns
+    # This is more aggressive, targeting structural similarity
+    normalized = re.sub(r'\[opt_mod\]', '', normalized)
+    # Normalize zone placement: [zone]に置いてもよい → [zone]に置く (optional placement)
+    normalized = re.sub(r'\[zone\]に置いてもよい', '[zone]に置く', normalized)
+    # Normalize zone placement: [zone]に置く → [zone]置く (shortened form)
+    normalized = re.sub(r'\[zone\]に置く', '[zone]置く', normalized)
+    # Normalize "ほか" and "以外" (both mean "other than")
+    normalized = re.sub(r'ほか', '以外', normalized)
+    # Normalize "ライブ終了時" prefix (optional timing)
+    normalized = re.sub(r'ライブ終了時', '', normalized)
+    
+    # SEMANTIC PARAMETER NORMALIZATION
+    # These are parameter variations, not semantic variations
+    
+    # Normalize heart numbers: {{heart_01.png|heart01}} → {{heart.png|heart}}
+    normalized = re.sub(r'\{\{heart_\d+\.png\|heart\d+\}\}', '{{heart.png|heart}}', normalized)
+    
+    # Normalize icon variations: {{icon_blade.png|...}} → {{icon.png|icon}}
+    normalized = re.sub(r'\{\{icon_blade\.png\|[^}]+\}\}', '{{icon.png|icon}}', normalized)
+    normalized = re.sub(r'\{\{icon_all\.png\|[^}]+\}\}', '{{icon.png|icon}}', normalized)
+    
+    # Normalize turn variations: {{turn1.png|ターン1回}} → {{turn.png|ターン}}
+    normalized = re.sub(r'\{\{turn\d+\.png\|ターン\d+回\}\}', '{{turn.png|ターン}}', normalized)
+    
+    # Normalize group names: 『μ's』, 『Aqours』, etc. → [group]
+    normalized = re.sub(r'『[^』]+』', '[group]', normalized)
+    
+    # Normalize card types: ライブカード, メンバーカード → [card]
+    normalized = re.sub(r'ライブカード', '[card]', normalized)
+    normalized = re.sub(r'メンバーカード', '[card]', normalized)
+    
+    # Normalize threshold numbers: [number]以上 → [threshold]
+    normalized = re.sub(r'\d+以上', '[threshold]', normalized)
+    
+    # Treat optional condition placeholders as empty for grouping
+    normalized = re.sub(r'\s+', ' ', normalized).strip()
+    return normalized
+
+
 def compress_templates(template_list: list, all_abilities: list = None) -> list:
     """
     Compress templates by grouping identical templates together.
     Then apply hierarchical compression based on optional modifiers.
     """
-    # Level 1: Group identical templates
+    # Level 1: Group identical templates using normalized version for grouping
     template_groups = defaultdict(list)
     
     for template_data in template_list:
         template = template_data['template']
-        template_groups[template].append(template_data)
+        # Use normalized template for grouping (removes optional prefixes like [icon_count:X])
+        normalized_template = normalize_template_for_grouping(template)
+        template_data['normalized_template'] = normalized_template
+        template_groups[normalized_template].append(template_data)
     
     # Build level 1 compressed templates
     level1_templates = []
@@ -1266,8 +1424,8 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
             effect_terms = extract_game_terms(effect_text)
             term_cache[cache_key_effect] = effect_terms
         
-        cost_template, cost_modifiers = create_expression_template(cost, cost_terms)
-        effect_template, effect_modifiers = create_expression_template(effect_text, effect_terms)
+        cost_template, cost_modifiers, cost_variable_mappings = create_expression_template(cost, cost_terms)
+        effect_template, effect_modifiers, effect_variable_mappings = create_expression_template(effect_text, effect_terms)
         
         combined_template = f"{cost_template} ： {effect_template}"
         # Normalize combined template to be consistent with create_expression_template
@@ -1282,6 +1440,7 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
         ability['cost_terms'] = cost_terms
         ability['effect_terms'] = effect_terms
         ability['modifiers'] = all_modifiers
+        ability['variable_mappings'] = {**cost_variable_mappings, **effect_variable_mappings}
         
         # Collect all variables used in this template
         all_vars = set()
@@ -1555,6 +1714,86 @@ def extract_trigger(text: str) -> tuple[list[str], str]:
     return triggers, effect
 
 
+def extract_game_mechanics(effect_text: str) -> list[dict]:
+    """
+    Extract game mechanics from effect text based on manual analysis.
+    Returns list of detected mechanics with their types and text segments.
+    Only extracts when specific patterns match - no verb-only fallbacks.
+    """
+    mechanics = []
+    
+    # Game mechanic definitions based on manual analysis
+    mechanic_patterns = {
+        'CARD_MOVEMENT': {
+            'verbs': ['引く', '置く', '加える', '移動させる', '登場させる'],
+            'patterns': [
+                r'カードを\d+枚引く',
+                r'手札を\d+枚[控え室|discard]に置く',
+                r'自分の[控え室|discard]から[カード|card]を\d+枚[手札|hand]に加える',
+                r'エネルギーカードを\d+枚ウェイト状態で置く',
+            ]
+        },
+        'RESOURCE_GAIN': {
+            'verbs': ['得る'],
+            'patterns': [
+                r'\{\{icon_[a-z_]+\.png|[^}]+\}\}を得る',
+                r'\{\{heart_\d+\.png|heart\d+\}\}を得る',
+            ]
+        },
+        'SCORE_MODIFICATION': {
+            'verbs': ['加算する', '足す'],
+            'patterns': [
+                r'このカードのスコアを[＋+]\d+する',
+                r'ライブの合計スコアを[＋+]\d+する',
+                r'ライブの合計スコアを－\d+する',
+            ]
+        },
+        'CONDITIONAL': {
+            'verbs': ['いる', 'ある'],
+            'patterns': [
+                r'自分の[ステージ|stage]に[^。]+がいる場合',
+                r'コスト\d+以上の[^。]+が\d+人以上いる場合',
+                r'ライブの合計スコアが相手より高い場合',
+            ]
+        },
+        'REVEAL': {
+            'verbs': ['見る', '公開する'],
+            'patterns': [
+                r'自分のデッキの上からカードを\d+枚見る',
+                r'その中から[カード|card]を\d+枚公開して',
+            ]
+        },
+        'STATE_CHANGE': {
+            'verbs': ['ウェイトにする', 'アクティブにする'],
+            'patterns': [
+                r'メンバー\d+人をウェイトにする',
+                r'このメンバーをウェイトにしてもよい',
+            ]
+        },
+    }
+    
+    for mechanic_name, mechanic_def in mechanic_patterns.items():
+        # Only extract when specific patterns match
+        for pattern in mechanic_def['patterns']:
+            matches = re.finditer(pattern, effect_text)
+            for match in matches:
+                # Find which verb matched
+                found_verb = None
+                for verb in mechanic_def['verbs']:
+                    if verb in match.group():
+                        found_verb = verb
+                        break
+                
+                mechanics.append({
+                    'mechanic': mechanic_name,
+                    'text_segment': match.group(),
+                    'verb': found_verb if found_verb else mechanic_def['verbs'][0],
+                    'pattern': pattern
+                })
+    
+    return mechanics
+
+
 def extract_abilities_from_card(card_id: str, card: dict) -> list[dict]:
     """
     Extract all abilities from a single card.
@@ -1583,6 +1822,9 @@ def extract_abilities_from_card(card_id: str, card: dict) -> list[dict]:
         
         triggers, effect = extract_trigger(part)
         
+        # Extract game mechanics from effect text
+        mechanics = extract_game_mechanics(effect)
+        
         abilities.append({
             "card_id": card_id,
             "card_name": card.get("name", ""),
@@ -1591,6 +1833,7 @@ def extract_abilities_from_card(card_id: str, card: dict) -> list[dict]:
             "effect": effect,
             "trigger_count": len(triggers),
             "ability_index": len(abilities),  # Track which ability this is (ab#0, ab#1, etc.)
+            "game_mechanics": mechanics,
         })
     
     return abilities
@@ -1604,7 +1847,7 @@ def extract_all_abilities(cards_file: Path) -> dict:
         cards = json.load(f)
     
     all_abilities = []
-    ability_groups = defaultdict(list)  # Group by full ability text
+    ability_groups = defaultdict(list)  # Group by full ability text first
     
     for card_id, card in cards.items():
         abilities = extract_abilities_from_card(card_id, card)
@@ -1614,8 +1857,8 @@ def extract_all_abilities(cards_file: Path) -> dict:
             card_example = f"{card_id} | {card.get('name', '')} (ab#{ability['ability_index']})"
             ability_groups[ability["full_text"]].append(card_example)
     
-    # Build unique abilities with card examples
-    unique_abilities = []
+    # Generate templates for all abilities
+    template_groups = defaultdict(list)  # Group by combined_template
     for full_text, card_examples in ability_groups.items():
         # Get the first occurrence to extract triggers/effect
         sample = next(a for a in all_abilities if a["full_text"] == full_text)
@@ -1624,26 +1867,54 @@ def extract_all_abilities(cards_file: Path) -> dict:
         cost, effect_text = split_cost_effect(sample["effect"])
         cost_terms = extract_game_terms(cost)
         effect_terms = extract_game_terms(effect_text)
-        cost_template, cost_modifiers = create_expression_template(cost, cost_terms)
-        effect_template, effect_modifiers = create_expression_template(effect_text, effect_terms)
+        cost_template, cost_modifiers, cost_variable_mappings = create_expression_template(cost, cost_terms)
+        effect_template, effect_modifiers, effect_variable_mappings = create_expression_template(effect_text, effect_terms)
         combined_template = f"{cost_template} ： {effect_template}"
         
-        unique_abilities.append({
+        template_groups[combined_template].append({
             "full_text": full_text,
+            "card_examples": card_examples,
             "triggers": sample["triggers"],
-            "effect": sample["effect"],
-            "trigger_count": sample["trigger_count"],
-            "card_count": len(card_examples),
-            "card_examples": card_examples[:10],  # Limit to 10 examples
             "cost_template": cost_template,
             "effect_template": effect_template,
+            "game_mechanics": sample.get("game_mechanics", []),
+        })
+    
+    # Merge abilities with the same combined_template
+    unique_abilities = []
+    for combined_template, abilities_list in template_groups.items():
+        # Combine all card examples
+        all_card_examples = []
+        all_triggers = set()
+        all_full_texts = []
+        all_game_mechanics = []
+        
+        for ability_data in abilities_list:
+            all_card_examples.extend(ability_data["card_examples"])
+            all_triggers.update(ability_data["triggers"])
+            all_full_texts.append(ability_data["full_text"])
+            if ability_data["game_mechanics"]:
+                all_game_mechanics.extend(ability_data["game_mechanics"])
+        
+        # Use the first ability as sample for templates
+        sample = abilities_list[0]
+        
+        unique_abilities.append({
+            "full_text": all_full_texts[0],  # Use first full_text as representative
             "combined_template": combined_template,
-            "cost_terms": cost_terms,
-            "effect_terms": effect_terms,
+            "card_count": len(all_card_examples),
+            "card_examples": all_card_examples[:10],  # Limit to 10 examples
+            "triggers": list(all_triggers),
+            "cost_template": sample["cost_template"],
+            "effect_template": sample["effect_template"],
+            "variable_mappings": {**cost_variable_mappings, **effect_variable_mappings},
         })
     
     # Sort by card count (most common first)
     unique_abilities.sort(key=lambda x: -x["card_count"])
+    
+    # Calculate unique templates count (correctly using set on combined_template)
+    unique_templates = len(set(ability["combined_template"] for ability in unique_abilities))
     
     return {
         "schema": "extracted_abilities.v1",
@@ -1654,9 +1925,9 @@ def extract_all_abilities(cards_file: Path) -> dict:
             "cards_with_abilities": len([c for c in cards.values() if c.get("ability")]),
             "total_abilities": len(all_abilities),
             "unique_abilities": len(unique_abilities),
+            "unique_templates": unique_templates,
         },
         "unique_abilities": unique_abilities,
-        "all_abilities": all_abilities,
     }
 
 
@@ -1700,10 +1971,6 @@ def main():
         json.dump(result, f, ensure_ascii=False, indent=2)
     
     print(f"Output written to {output_file}")
-    
-    # Generate coverage log
-    print("\nGenerating coverage log...")
-    generate_coverage_log(result['all_abilities'], coverage_log_file)
 
 
 if __name__ == "__main__":
