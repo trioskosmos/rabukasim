@@ -1,0 +1,109 @@
+# Clause Parsing Analysis Results
+
+## Theories Tested
+
+### Theory 1: Repeated icons are single units (no commas between them)
+**VERIFIED**: Looking at the template breakdown:
+- Line 103: `ライブ終了時[opt_mod]{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}を得る` - 2 icons, no comma
+- Line 107: `ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}を得る` - 2 hearts, no comma
+- Line 117: `[player]と[player]...{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}を得る` - 2 hearts, no comma
+- Line 124: `[player]か[player]...{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}を得る` - 2 icons, no comma
+- Line 145: `{{center.png|[position]}}{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}を得る` - 2 icons, no comma
+- Line 148: `ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}を得る` - 4 items, no commas
+- Line 174: `...{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}{{icon_blade.png|[card_type]}}を得る` - 3 icons, no commas
+
+**Conclusion**: Repeated icons/hearts are ALWAYS concatenated without commas. They form single clause units.
+
+### Theory 2: Selection uses "か" not commas
+**VERIFIED**: Looking at the template breakdown:
+- Line 78: `{{heart_[number].png|heart[number]}}か{{heart_[number].png|heart[number]}}か{{heart_[number].png|heart[number]}}[opt_mod]うち` - uses "か"
+- Line 94: `{{heart_[number].png|heart[number]}}か{{heart_[number].png|heart[number]}}か{{heart_[number].png|heart[number]}}[opt_mod]うち[number]つを選ぶ` - uses "か"
+- Line 164: `[player][opt_mod][zone_condition]メンバー[opt_mod]うち` - uses "うち"
+- Line 194: `[card_type][number]枚か『[group_name]』[opt_mod]メンバー[number]人をアクティブにする` - uses "か"
+- Line 210: `[player][opt_mod][zone_condition]メンバー[number]人か、[card_type]を[number]枚アクティブにする` - uses "か"
+- Line 227: `回答がチョコミントかストロベリーフレイバーかクッキー＆クリーム[opt_mod]場合` - uses "か"
+
+**Conclusion**: Selection patterns use "か" (or "または", "いずれか") as list indicators, not commas.
+
+### Theory 3: Parenthetical notes are metadata
+**VERIFIED**: Looking at position 8 (97 variants, most common is ')'):
+- Position 7 has 5 variants, most common is '。'
+- Position 8 has 97 variants, most common is ')'
+- Position 9 has 6 variants, most common is '。'
+- This suggests parentheses are being split as separate clauses
+
+Looking at examples:
+- Line 55: `(必要[card_type]を確認する時` - parenthetical note
+- Line 60: `(エールをすべて行った後` - parenthetical note
+- Line 62: `([icon_count:1]能力が[value_type:cost]を持つ場合` - parenthetical note
+- Line 74: `(エールで出た{{icon_score.png|[value_type:score]}}[number]つにつき` - parenthetical note
+- Line 106: `(メンバーが[zone]から離れた[opt_mod]下に置かれている[card_type]は[card_type]に戻す` - parenthetical note
+- Line 127: `(対戦[player][opt_mod][card_type][opt_mod]効果でも発動する` - parenthetical note
+- Line 150: `([zone][opt_mod]こ[opt_mod][card_type]もこ[opt_mod]効果で[zone]に置ける` - parenthetical note
+
+**Conclusion**: Parenthetical notes ARE being split as separate clauses by the current parser, which is correct. They appear at various positions in the clause sequence.
+
+### Theory 4: Nested references exist
+**VERIFIED**: Looking at the template breakdown:
+- Line 68: `[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る` - look at cards
+- Line 99: `そ[opt_mod]中から[grouped_card]を[number]枚[zone]に加え、残りを[zone]に置く` - "その中から" references previous clause
+- Line 6: `残りを[zone]に置く` (position 6, most common) - references "残り" from previous clause
+- Line 125: `[player][opt_mod][zone]にほか[opt_mod]メンバーがおり、かつこれにより公開した[zone][opt_mod]中に[card_type]がない場合、[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る` - "これにより公開した" references previous action
+
+**Conclusion**: Nested references exist (その中から, 残り, これにより) that reference previous clause outputs.
+
+### Theory 5: Comma-separated lists between hearts/icons
+**NOT FOUND**: After searching through 200+ clause variants, I found NO examples of commas between heart or icon patterns. All repeated icons/hearts are concatenated without commas.
+
+**Conclusion**: The user's original concern about "commas between hearts and stuff" may not actually exist in the normalized template data. The current parser may already be handling this correctly, or the issue was in the raw abilities before normalization.
+
+## Additional Findings
+
+### Multi-triggers
+Looking at the raw abilities data, some abilities have multiple triggers:
+- `{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}` - separated by `/`
+
+However, these are handled in the trigger extraction phase before template normalization, so they don't appear in the clause analysis.
+
+### Comma usage patterns
+From the co-occurrence data:
+- '' + '：' (336 times) - empty cost followed by colon
+- '、' + 'こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する' (35 times) - comma before score effect
+- 'こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する' + '。' (35 times) - score effect followed by period
+- '[card_type]を[number]枚引く' + '。' (33 times) - draw followed by period
+- '。' + ')' (32 times) - period followed by closing paren
+
+This shows commas are used to separate action clauses, not within lists.
+
+### Position analysis
+- Position 0: Cost clause (51 variants)
+- Position 1: Colon separator (4 variants)
+- Position 2: Main effect start (318 variants)
+- Position 3: Comma separator (5 variants)
+- Position 4: Character name or continuation (214 variants)
+- Position 5: Period separator (5 variants)
+- Position 6: Secondary effect like "残りを[zone]に置く" (145 variants)
+- Position 7: Period separator (5 variants)
+- Position 8: Parenthetical note content (97 variants)
+- Position 9: Period separator (6 variants)
+
+The 30 positions suggest very deep nesting or complex sequential structures.
+
+## Recommendations
+
+1. **Current parser is mostly correct** for the patterns that exist in the normalized data
+2. **No need to fix comma-separated icon lists** - they don't exist in the data
+3. **Parenthetical notes are already handled correctly** as separate clauses
+4. **The 30 positions suggest the current approach is too flat** - consider hierarchical parsing
+5. **Nested references are real** but not explicitly tracked - could add reference tracking
+
+## Final Assessment
+
+My theories were partially correct:
+- ✅ Repeated icons are single units (no commas)
+- ✅ Selection uses "か" not commas
+- ✅ Parenthetical notes are metadata (handled as separate clauses)
+- ✅ Nested references exist
+- ❌ Comma-separated lists between hearts/icons (don't exist in normalized data)
+
+The current delimiter-based parsing is working reasonably well for the patterns that exist, but the 30 positions suggest the approach is treating hierarchical structures as flat sequences. A grammar-based hierarchical parser would be more appropriate for capturing the true structure.

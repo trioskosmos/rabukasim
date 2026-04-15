@@ -1,6 +1,6 @@
 {
   "schema": "extracted_abilities.v1",
-  "generated_at": "2026-04-15T19:51:27.322530",
+  "generated_at": "2026-04-15T21:42:31.235773",
   "source_file": "data\\cards.json",
   "statistics": {
     "total_cards": 1787,
@@ -1453,8 +1453,8 @@
         "PL!SP-bp1-003-SEC | 嵐 千砂都 (ab#0)"
       ],
       "cost_template": "{{turn[number].png|ターン[number]回}}[zone_condition][card_type]を好きな枚数公開する",
-      "effect_template": "公開した[card_type][opt_mod][value_type:cost][opt_mod]合計が、[number]、[number]、[number]、[number]、[number][opt_mod]いずれか[opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": "{{turn[number].png|ターン[number]回}}[zone_condition][card_type]を好きな枚数公開する ： 公開した[card_type][opt_mod][value_type:cost][opt_mod]合計が、[number]、[number]、[number]、[number]、[number][opt_mod]いずれか[opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "公開した[card_type][opt_mod][value_type:cost][opt_mod]合計が、[number]、[number]、[number]、[number]、[number][opt_mod]いずれか[opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": "{{turn[number].png|ターン[number]回}}[zone_condition][card_type]を好きな枚数公開する ： 公開した[card_type][opt_mod][value_type:cost][opt_mod]合計が、[number]、[number]、[number]、[number]、[number][opt_mod]いずれか[opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [
           "カード",
@@ -1673,8 +1673,8 @@
         "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -2220,8 +2220,8 @@
         "PL!S-bp2-008-SEC | 小原鞠莉 (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、「[icon_count:1]エールにより公開された[player][opt_mod][card_type][opt_mod]中に[card_type]が[number]枚以上ある場合、ライブ[opt_mod]合計[value_type:score]を+[number]する。[card_type]が[number]枚以上ある場合、代わりに合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、「[icon_count:1]エールにより公開された[player][opt_mod][card_type][opt_mod]中に[card_type]が[number]枚以上ある場合、ライブ[opt_mod]合計[value_type:score]を+[number]する。[card_type]が[number]枚以上ある場合、代わりに合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、[icon_count:1]エールにより公開された[player][opt_mod][card_type][opt_mod]中に[card_type]が[number]枚以上ある場合、ライブ[opt_mod]合計[value_type:score]を+[number]する。[card_type]が[number]枚以上ある場合、代わりに合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod][zone]すべてに『[group_name]』[opt_mod]メンバーが登場しており、かつ[name_condition]場合、[icon_count:1]エールにより公開された[player][opt_mod][card_type][opt_mod]中に[card_type]が[number]枚以上ある場合、ライブ[opt_mod]合計[value_type:score]を+[number]する。[card_type]が[number]枚以上ある場合、代わりに合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -3261,8 +3261,8 @@
         "PL!S-bp3-001-SEC | 高海千歌 (ab#0)"
       ],
       "cost_template": "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}メンバー[number]人を[zone]にする",
-      "effect_template": "ライブ終了時[opt_mod]これによって[zone]状態になったメンバーは、「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。(こ[opt_mod]能力は[position][zone]に登場している場合[opt_mod]み起動できる。)",
-      "combined_template": "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}メンバー[number]人を[zone]にする ： ライブ終了時[opt_mod]これによって[zone]状態になったメンバーは、「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。(こ[opt_mod]能力は[position][zone]に登場している場合[opt_mod]み起動できる。)",
+      "effect_template": "ライブ終了時[opt_mod]これによって[zone]状態になったメンバーは、[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。(こ[opt_mod]能力は[position][zone]に登場している場合[opt_mod]み起動できる。)",
+      "combined_template": "{{center.png|[position]}}{{turn[number].png|ターン[number]回}}メンバー[number]人を[zone]にする ： ライブ終了時[opt_mod]これによって[zone]状態になったメンバーは、[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。(こ[opt_mod]能力は[position][zone]に登場している場合[opt_mod]み起動できる。)",
       "cost_terms": {
         "card_types": [],
         "zones": [
@@ -3472,8 +3472,8 @@
         "PL!N-bp3-009-SEC | 天王寺璃奈 (ab#0)"
       ],
       "cost_template": "[zone_condition][card_type][number]枚を好きな順番で[zone][opt_mod][opt_mod]置いてもよい",
-      "effect_template": "それら[opt_mod][card_type][opt_mod][value_type:cost][opt_mod]合計が、[number][opt_mod]場合、[card_type]を[number]枚引く。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]{{icon_all.png|[card_type]}}を得る。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": "[zone_condition][card_type][number]枚を好きな順番で[zone][opt_mod][opt_mod]置いてもよい ： それら[opt_mod][card_type][opt_mod][value_type:cost][opt_mod]合計が、[number][opt_mod]場合、[card_type]を[number]枚引く。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]{{icon_all.png|[card_type]}}を得る。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "それら[opt_mod][card_type][opt_mod][value_type:cost][opt_mod]合計が、[number][opt_mod]場合、[card_type]を[number]枚引く。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]{{icon_all.png|[card_type]}}を得る。合計が[number][opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": "[zone_condition][card_type][number]枚を好きな順番で[zone][opt_mod][opt_mod]置いてもよい ： それら[opt_mod][card_type][opt_mod][value_type:cost][opt_mod]合計が、[number][opt_mod]場合、[card_type]を[number]枚引く。合計が[number][opt_mod]場合、ライブ終了時[opt_mod]{{icon_all.png|[card_type]}}を得る。合計が[number][opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [
           "カード",
@@ -6322,8 +6322,8 @@
         "PL!N-bp5-001-SEC | 上原歩夢 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "{{turn[number].png|ターン[number]回}}[player]がエールした[opt_mod]エールにより公開された[player][opt_mod][card_type]が持つ[card_type][card_type][opt_mod]中に[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、{{icon_b_all.png|ALL[card_type]}}[opt_mod]うち、[number]種類以上ある場合、ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}を得る。[number]種類以上ある場合、さらにライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： {{turn[number].png|ターン[number]回}}[player]がエールした[opt_mod]エールにより公開された[player][opt_mod][card_type]が持つ[card_type][card_type][opt_mod]中に[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、{{icon_b_all.png|ALL[card_type]}}[opt_mod]うち、[number]種類以上ある場合、ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}を得る。[number]種類以上ある場合、さらにライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "{{turn[number].png|ターン[number]回}}[player]がエールした[opt_mod]エールにより公開された[player][opt_mod][card_type]が持つ[card_type][card_type][opt_mod]中に[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、{{icon_b_all.png|ALL[card_type]}}[opt_mod]うち、[number]種類以上ある場合、ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}を得る。[number]種類以上ある場合、さらにライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： {{turn[number].png|ターン[number]回}}[player]がエールした[opt_mod]エールにより公開された[player][opt_mod][card_type]が持つ[card_type][card_type][opt_mod]中に[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、[[colored_blade]]、{{icon_b_all.png|ALL[card_type]}}[opt_mod]うち、[number]種類以上ある場合、ライブ終了時[opt_mod]{{heart_[number].png|heart[number]}}を得る。[number]種類以上ある場合、さらにライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -10519,8 +10519,8 @@
         "PL!SP-bp1-008-P | 若菜四季 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[card_type]を[number]枚引く。[player][opt_mod][zone]に「[character_name]」がいる場合、さらに[card_type]を[number]枚引く。",
-      "combined_template": " ： [card_type]を[number]枚引く。[player][opt_mod][zone]に「[character_name]」がいる場合、さらに[card_type]を[number]枚引く。",
+      "effect_template": "[card_type]を[number]枚引く。[player][opt_mod][zone]に[character_name]がいる場合、さらに[card_type]を[number]枚引く。",
+      "combined_template": " ： [card_type]を[number]枚引く。[player][opt_mod][zone]に[character_name]がいる場合、さらに[card_type]を[number]枚引く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -11738,9 +11738,9 @@
         "PL!SP-pb1-011-R | 鬼塚冬毬 (ab#0)",
         "PL!SP-pb1-011-P+ | 鬼塚冬毬 (ab#0)"
       ],
-      "cost_template": "「[character_name]」以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人を[zone]から[zone]に置いてもよい",
+      "cost_template": "[character_name]以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人を[zone]から[zone]に置いてもよい",
       "effect_template": "[player][opt_mod][zone]から、これにより[zone]に置いた[card_type]を[number]枚、そ[opt_mod]メンバーがいた[zone]に登場させる。",
-      "combined_template": "「[character_name]」以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人を[zone]から[zone]に置いてもよい ： [player][opt_mod][zone]から、これにより[zone]に置いた[card_type]を[number]枚、そ[opt_mod]メンバーがいた[zone]に登場させる。",
+      "combined_template": "[character_name]以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人を[zone]から[zone]に置いてもよい ： [player][opt_mod][zone]から、これにより[zone]に置いた[card_type]を[number]枚、そ[opt_mod]メンバーがいた[zone]に登場させる。",
       "cost_terms": {
         "card_types": [],
         "zones": [
@@ -12918,8 +12918,8 @@
         "PL!S-pb1-002-P+ | 桜内梨子 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player]は[zone]から[card_type]を[number]枚[zone]に置いてもよい。そうしなかった場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： [player]は[zone]から[card_type]を[number]枚[zone]に置いてもよい。そうしなかった場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player]は[zone]から[card_type]を[number]枚[zone]に置いてもよい。そうしなかった場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： [player]は[zone]から[card_type]を[number]枚[zone]に置いてもよい。そうしなかった場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -14898,8 +14898,8 @@
         "PL!N-bp3-005-P | 宮下 愛 (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -15005,8 +15005,8 @@
         "PL!N-bp3-005-SEC | 宮下 愛 (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： こ[opt_mod]ターン、[player][opt_mod][zone]にメンバーが[number]回以上登場している場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -15109,8 +15109,8 @@
         "PL!N-bp3-007-P | 優木せつ菜 (ab#0)"
       ],
       "cost_template": "[icon_count:1][card_type]を[zone]から[zone]に置く",
-      "effect_template": "[player][opt_mod][zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚、[card_type]がいた[zone]に登場させる。そ[opt_mod]後、[player][opt_mod][zone_condition][card_type][number]枚をそ[opt_mod]メンバー[opt_mod]下に置く。(メンバー[opt_mod]下に置かれている[card_type]では[value_type:cost]を支払えない。メンバーが[zone]から離れた[opt_mod]下に置かれている[card_type]は[card_type]に置く。)",
-      "combined_template": "[icon_count:1][card_type]を[zone]から[zone]に置く ： [player][opt_mod][zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚、[card_type]がいた[zone]に登場させる。そ[opt_mod]後、[player][opt_mod][zone_condition][card_type][number]枚をそ[opt_mod]メンバー[opt_mod]下に置く。(メンバー[opt_mod]下に置かれている[card_type]では[value_type:cost]を支払えない。メンバーが[zone]から離れた[opt_mod]下に置かれている[card_type]は[card_type]に置く。)",
+      "effect_template": "[player][opt_mod][zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚、[card_type]がいた[zone]に登場させる。そ[opt_mod]後、[player][opt_mod][zone_condition][card_type][number]枚をそ[opt_mod]メンバー[opt_mod]下に置く。(メンバー[opt_mod]下に置かれている[card_type]では[value_type:cost]を支払えない。メンバーが[zone]から離れた[opt_mod]下に置かれている[card_type]は[card_type]に置く。)",
+      "combined_template": "[icon_count:1][card_type]を[zone]から[zone]に置く ： [player][opt_mod][zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚、[card_type]がいた[zone]に登場させる。そ[opt_mod]後、[player][opt_mod][zone_condition][card_type][number]枚をそ[opt_mod]メンバー[opt_mod]下に置く。(メンバー[opt_mod]下に置かれている[card_type]では[value_type:cost]を支払えない。メンバーが[zone]から離れた[opt_mod]下に置かれている[card_type]は[card_type]に置く。)",
       "cost_terms": {
         "card_types": [
           "このメンバー"
@@ -15472,8 +15472,8 @@
         "PL!N-bp3-011-P | ミア・テイラー (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone_condition]「[character_name]」以外[opt_mod]メンバーを[number]人選ぶ。そ[opt_mod]メンバーが持つ[card_type]と、[card_type]が持つ[card_type][opt_mod]中に同じ色[opt_mod][card_type]がある場合、ライブ終了時[opt_mod]{{icon_blade.png|[card_type]}}を得る。それぞれ[opt_mod]メンバー[opt_mod][value_type:cost]が同じ場合、元々[opt_mod]{{icon_blade.png|[card_type]}}[opt_mod]数が同じ場合についても同じことを行う。",
-      "combined_template": " ： [player][opt_mod][zone_condition]「[character_name]」以外[opt_mod]メンバーを[number]人選ぶ。そ[opt_mod]メンバーが持つ[card_type]と、[card_type]が持つ[card_type][opt_mod]中に同じ色[opt_mod][card_type]がある場合、ライブ終了時[opt_mod]{{icon_blade.png|[card_type]}}を得る。それぞれ[opt_mod]メンバー[opt_mod][value_type:cost]が同じ場合、元々[opt_mod]{{icon_blade.png|[card_type]}}[opt_mod]数が同じ場合についても同じことを行う。",
+      "effect_template": "[player][opt_mod][zone_condition][character_name]以外[opt_mod]メンバーを[number]人選ぶ。そ[opt_mod]メンバーが持つ[card_type]と、[card_type]が持つ[card_type][opt_mod]中に同じ色[opt_mod][card_type]がある場合、ライブ終了時[opt_mod]{{icon_blade.png|[card_type]}}を得る。それぞれ[opt_mod]メンバー[opt_mod][value_type:cost]が同じ場合、元々[opt_mod]{{icon_blade.png|[card_type]}}[opt_mod]数が同じ場合についても同じことを行う。",
+      "combined_template": " ： [player][opt_mod][zone_condition][character_name]以外[opt_mod]メンバーを[number]人選ぶ。そ[opt_mod]メンバーが持つ[card_type]と、[card_type]が持つ[card_type][opt_mod]中に同じ色[opt_mod][card_type]がある場合、ライブ終了時[opt_mod]{{icon_blade.png|[card_type]}}を得る。それぞれ[opt_mod]メンバー[opt_mod][value_type:cost]が同じ場合、元々[opt_mod]{{icon_blade.png|[card_type]}}[opt_mod]数が同じ場合についても同じことを行う。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -15893,8 +15893,8 @@
         "PL!-pb1-004-P+ | 園田海未 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "{{center.png|[position]}}[player][opt_mod][card_type]置き場に{{icon_score.png|[value_type:score]}}を持つ[grouped_card]が[number]枚ある場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。[number]枚以上ある場合、代わりに「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。(こ[opt_mod]能力は[position][zone]に登場した場合[opt_mod]み発動する。)",
-      "combined_template": " ： {{center.png|[position]}}[player][opt_mod][card_type]置き場に{{icon_score.png|[value_type:score]}}を持つ[grouped_card]が[number]枚ある場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。[number]枚以上ある場合、代わりに「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。(こ[opt_mod]能力は[position][zone]に登場した場合[opt_mod]み発動する。)",
+      "effect_template": "{{center.png|[position]}}[player][opt_mod][card_type]置き場に{{icon_score.png|[value_type:score]}}を持つ[grouped_card]が[number]枚ある場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。[number]枚以上ある場合、代わりに[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。(こ[opt_mod]能力は[position][zone]に登場した場合[opt_mod]み発動する。)",
+      "combined_template": " ： {{center.png|[position]}}[player][opt_mod][card_type]置き場に{{icon_score.png|[value_type:score]}}を持つ[grouped_card]が[number]枚ある場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。[number]枚以上ある場合、代わりに[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。(こ[opt_mod]能力は[position][zone]に登場した場合[opt_mod]み発動する。)",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -16455,8 +16455,8 @@
         "PL!-pb1-013-P+ | 園田海未 (ab#0)"
       ],
       "cost_template": "{{turn[number].png|ターン[number]回}}[icon_count:1]",
-      "effect_template": "[player][opt_mod][zone]を、[player]は見ないで[number]枚選び公開する。これにより公開された[card_type]が[card_type][opt_mod]場合、ライブ終了時[opt_mod][card_type]は「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": "{{turn[number].png|ターン[number]回}}[icon_count:1] ： [player][opt_mod][zone]を、[player]は見ないで[number]枚選び公開する。これにより公開された[card_type]が[card_type][opt_mod]場合、ライブ終了時[opt_mod][card_type]は「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player][opt_mod][zone]を、[player]は見ないで[number]枚選び公開する。これにより公開された[card_type]が[card_type][opt_mod]場合、ライブ終了時[opt_mod][card_type]は[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": "{{turn[number].png|ターン[number]回}}[icon_count:1] ： [player][opt_mod][zone]を、[player]は見ないで[number]枚選び公開する。これにより公開された[card_type]が[card_type][opt_mod]場合、ライブ終了時[opt_mod][card_type]は[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -17038,8 +17038,8 @@
         "PL!-bp4-007-P | 東條 希 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][card_type]置き場に[card_type]が[number]枚以上あり、かつ[value_type:score][opt_mod]合計が[number]以下[opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： [player][opt_mod][card_type]置き場に[card_type]が[number]枚以上あり、かつ[value_type:score][opt_mod]合計が[number]以下[opt_mod]場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player][opt_mod][card_type]置き場に[card_type]が[number]枚以上あり、かつ[value_type:score][opt_mod]合計が[number]以下[opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： [player][opt_mod][card_type]置き場に[card_type]が[number]枚以上あり、かつ[value_type:score][opt_mod]合計が[number]以下[opt_mod]場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19124,8 +19124,8 @@
         "PL!N-pb1-013-P+ | 上原歩夢 (ab#0)"
       ],
       "cost_template": "[icon_count:1]支払ってもよい",
-      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
-      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19180,8 +19180,8 @@
         "PL!N-pb1-014-P+ | 中須かすみ (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
-      "combined_template": " ： 「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "effect_template": "[character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "combined_template": " ： [character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19232,8 +19232,8 @@
         "PL!N-pb1-015-P+ | 桜坂しずく (ab#0)"
       ],
       "cost_template": "[icon_count:1]支払ってもよい",
-      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
-      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19288,8 +19288,8 @@
         "PL!N-pb1-016-P+ | 朝香果林 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19344,8 +19344,8 @@
         "PL!N-pb1-017-P+ | 宮下 愛 (ab#0)"
       ],
       "cost_template": "[icon_count:1]支払ってもよい",
-      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
-      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19400,8 +19400,8 @@
         "PL!N-pb1-018-P+ | 近江彼方 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19456,8 +19456,8 @@
         "PL!N-pb1-019-P+ | 優木せつ菜 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
-      "combined_template": " ： 「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "effect_template": "[character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "combined_template": " ： [character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19508,8 +19508,8 @@
         "PL!N-pb1-020-P+ | エマ・ヴェルデ (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
-      "combined_template": " ： 「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "effect_template": "[character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "combined_template": " ： [character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19560,8 +19560,8 @@
         "PL!N-pb1-021-P+ | 天王寺璃奈 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19616,8 +19616,8 @@
         "PL!N-pb1-022-P+ | 三船栞子 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
-      "combined_template": " ： 「[character_name]」からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "effect_template": "[character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
+      "combined_template": " ： [character_name]からバトンタッチして登場した場合、[card_type]を[number]枚引き、[zone]を[number]枚[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19668,8 +19668,8 @@
         "PL!N-pb1-023-P+ | ミア・テイラー (ab#0)"
       ],
       "cost_template": "[icon_count:1]支払ってもよい",
-      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
-      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod]「[character_name]」[opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "effect_template": "[zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
+      "combined_template": "[icon_count:1]支払ってもよい ： [zone]から[value_type:cost][number]以下[opt_mod][character_name][opt_mod][card_type]を[number]枚[zone]に登場させる。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -19724,8 +19724,8 @@
         "PL!N-pb1-024-P+ | 鐘 嵐珠 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -20861,8 +20861,8 @@
         "PL!-sd1-009-SD | 矢澤 にこ (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に[grouped_card]が[number]枚以上ある場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： [player][opt_mod][zone]に[grouped_card]が[number]枚以上ある場合、ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "[player][opt_mod][zone]に[grouped_card]が[number]枚以上ある場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： [player][opt_mod][zone]に[grouped_card]が[number]枚以上ある場合、ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -21516,9 +21516,9 @@
       "card_examples": [
         "LL-bp1-001-R+ | 上原歩夢&澁谷かのん&日野下花帆 (ab#1)"
       ],
-      "cost_template": "[zone][opt_mod]「[character_name]」と「[character_name]」と「[character_name]」を、好きな組み合わせで合計[number]枚、[zone]に置いてもよい",
-      "effect_template": "ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": "[zone][opt_mod]「[character_name]」と「[character_name]」と「[character_name]」を、好きな組み合わせで合計[number]枚、[zone]に置いてもよい ： ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "cost_template": "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな組み合わせで合計[number]枚、[zone]に置いてもよい",
+      "effect_template": "ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな組み合わせで合計[number]枚、[zone]に置いてもよい ： ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [
@@ -21853,8 +21853,8 @@
         "PL!SP-bp1-024-L | Tiny Stars (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "ライブ終了時[opt_mod][player][opt_mod][zone_condition]「[character_name]」[number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を、「[character_name]」[number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を得る。",
-      "combined_template": " ： ライブ終了時[opt_mod][player][opt_mod][zone_condition]「[character_name]」[number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を、「[character_name]」[number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を得る。",
+      "effect_template": "ライブ終了時[opt_mod][player][opt_mod][zone_condition][character_name][number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を、[character_name][number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を得る。",
+      "combined_template": " ： ライブ終了時[opt_mod][player][opt_mod][zone_condition][character_name][number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を、[character_name][number]人は{{heart_[number].png|heart[number]}}{{icon_blade.png|[card_type]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -21915,8 +21915,8 @@
         "PL!SP-bp1-024-L | Tiny Stars (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」と「[character_name]」がいる場合、[card_type]を[number]枚引く。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」と「[character_name]」がいる場合、[card_type]を[number]枚引く。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]と[character_name]がいる場合、[card_type]を[number]枚引く。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]と[character_name]がいる場合、[card_type]を[number]枚引く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -22769,8 +22769,8 @@
         "PL!SP-sd1-004-SD | 平安名すみれ (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
-      "combined_template": " ： ライブ終了時[opt_mod]「[icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。」を得る。",
+      "effect_template": "ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
+      "combined_template": " ： ライブ終了時[opt_mod][icon_count:1]ライブ[opt_mod]合計[value_type:score]を+[number]する。を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -23530,8 +23530,8 @@
         "PL!S-bp2-023-L | MY舞☆TONIGHT (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][card_type]置き場に「[character_name]」以外[opt_mod][grouped_card]がある場合、ライブ終了時[opt_mod][player][opt_mod][zone][opt_mod]メンバーは{{icon_blade.png|[card_type]}}を得る。",
-      "combined_template": " ： [player][opt_mod][card_type]置き場に「[character_name]」以外[opt_mod][grouped_card]がある場合、ライブ終了時[opt_mod][player][opt_mod][zone][opt_mod]メンバーは{{icon_blade.png|[card_type]}}を得る。",
+      "effect_template": "[player][opt_mod][card_type]置き場に[character_name]以外[opt_mod][grouped_card]がある場合、ライブ終了時[opt_mod][player][opt_mod][zone][opt_mod]メンバーは{{icon_blade.png|[card_type]}}を得る。",
+      "combined_template": " ： [player][opt_mod][card_type]置き場に[character_name]以外[opt_mod][grouped_card]がある場合、ライブ終了時[opt_mod][player][opt_mod][zone][opt_mod]メンバーは{{icon_blade.png|[card_type]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -23912,8 +23912,8 @@
         "PL!SP-bp2-025-L | Bubble Rise (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」、「[character_name]」、「[character_name]」[opt_mod]うち、名前[opt_mod]異なるメンバーが[number]人以上いる場合、エールにより公開された[player][opt_mod][card_type][opt_mod]中から、[card_type]を[number]枚[zone]に加える。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」、「[character_name]」、「[character_name]」[opt_mod]うち、名前[opt_mod]異なるメンバーが[number]人以上いる場合、エールにより公開された[player][opt_mod][card_type][opt_mod]中から、[card_type]を[number]枚[zone]に加える。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]、[character_name]、[character_name][opt_mod]うち、名前[opt_mod]異なるメンバーが[number]人以上いる場合、エールにより公開された[player][opt_mod][card_type][opt_mod]中から、[card_type]を[number]枚[zone]に加える。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]、[character_name]、[character_name][opt_mod]うち、名前[opt_mod]異なるメンバーが[number]人以上いる場合、エールにより公開された[player][opt_mod][card_type][opt_mod]中から、[card_type]を[number]枚[zone]に加える。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -24628,8 +24628,8 @@
         "PL!HS-bp2-024-L | レディバグ (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」が登場しており、かつ「[character_name]」より[value_type:cost][opt_mod]大きい「[character_name]」が登場している場合、こ[opt_mod][card_type]を成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}減らす。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」が登場しており、かつ「[character_name]」より[value_type:cost][opt_mod]大きい「[character_name]」が登場している場合、こ[opt_mod][card_type]を成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}減らす。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]が登場しており、かつ[character_name]より[value_type:cost][opt_mod]大きい[character_name]が登場している場合、こ[opt_mod][card_type]を成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}減らす。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]が登場しており、かつ[character_name]より[value_type:cost][opt_mod]大きい[character_name]が登場している場合、こ[opt_mod][card_type]を成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}減らす。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -24747,8 +24747,8 @@
         "PL!HS-bp2-026-L | みらくりえーしょん (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod][position][zone]に「[character_name]」が、[position][zone]に「[character_name]」が、[position][zone]に「[character_name]」がそれぞれ登場している場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod][position][zone]に「[character_name]」が、[position][zone]に「[character_name]」が、[position][zone]に「[character_name]」がそれぞれ登場している場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
+      "effect_template": "[player][opt_mod][zone][opt_mod][position][zone]に[character_name]が、[position][zone]に[character_name]が、[position][zone]に[character_name]がそれぞれ登場している場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod][position][zone]に[character_name]が、[position][zone]に[character_name]が、[position][zone]に[character_name]がそれぞれ登場している場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -24901,9 +24901,9 @@
       "card_examples": [
         "LL-bp2-001-R+ | 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (ab#2)"
       ],
-      "cost_template": "[zone][opt_mod]「[character_name]」と「[character_name]」と「[character_name]」を、好きな枚数[zone]に置いてもよい",
+      "cost_template": "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな枚数[zone]に置いてもよい",
       "effect_template": "ライブ終了時[opt_mod]これによって[zone]に置いた枚数[number]枚につき、{{icon_blade.png|[card_type]}}を得る。",
-      "combined_template": "[zone][opt_mod]「[character_name]」と「[character_name]」と「[character_name]」を、好きな枚数[zone]に置いてもよい ： ライブ終了時[opt_mod]これによって[zone]に置いた枚数[number]枚につき、{{icon_blade.png|[card_type]}}を得る。",
+      "combined_template": "[zone][opt_mod][character_name]と[character_name]と[character_name]を、好きな枚数[zone]に置いてもよい ： ライブ終了時[opt_mod]これによって[zone]に置いた枚数[number]枚につき、{{icon_blade.png|[card_type]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [
@@ -26611,9 +26611,9 @@
       "card_examples": [
         "LL-bp3-001-R+ | 園田海未&津島善子&天王寺璃奈 (ab#0)"
       ],
-      "cost_template": "{{turn[number].png|ターン[number]回}}[player][opt_mod][zone_condition]「[character_name]」と「[character_name]」と「[character_name]」を、合計[number]枚をシャッフルして[zone][opt_mod][opt_mod]置く",
+      "cost_template": "{{turn[number].png|ターン[number]回}}[player][opt_mod][zone_condition][character_name]と[character_name]と[character_name]を、合計[number]枚をシャッフルして[zone][opt_mod][opt_mod]置く",
       "effect_template": "[card_type]を[number]枚[opt_mod]アクティブにする。",
-      "combined_template": "{{turn[number].png|ターン[number]回}}[player][opt_mod][zone_condition]「[character_name]」と「[character_name]」と「[character_name]」を、合計[number]枚をシャッフルして[zone][opt_mod][opt_mod]置く ： [card_type]を[number]枚[opt_mod]アクティブにする。",
+      "combined_template": "{{turn[number].png|ターン[number]回}}[player][opt_mod][zone_condition][character_name]と[character_name]と[character_name]を、合計[number]枚をシャッフルして[zone][opt_mod][opt_mod]置く ： [card_type]を[number]枚[opt_mod]アクティブにする。",
       "cost_terms": {
         "card_types": [],
         "zones": [
@@ -28071,8 +28071,8 @@
         "PL!N-bp4-026-L | DIVE! (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod]メインフェイズにこ[opt_mod][card_type]が[zone]から[zone]に加えられた[opt_mod][player][opt_mod][zone]から[card_type]名が「[character_name]」[opt_mod][card_type][number]枚を表向きで[card_type]置き場に置いてもよい。そうした場合、次[opt_mod][card_type]セットフェイズで[player]が[card_type]置き場に置ける[card_type]枚数[opt_mod]上限が[number]枚減る。",
-      "combined_template": " ： [player][opt_mod]メインフェイズにこ[opt_mod][card_type]が[zone]から[zone]に加えられた[opt_mod][player][opt_mod][zone]から[card_type]名が「[character_name]」[opt_mod][card_type][number]枚を表向きで[card_type]置き場に置いてもよい。そうした場合、次[opt_mod][card_type]セットフェイズで[player]が[card_type]置き場に置ける[card_type]枚数[opt_mod]上限が[number]枚減る。",
+      "effect_template": "[player][opt_mod]メインフェイズにこ[opt_mod][card_type]が[zone]から[zone]に加えられた[opt_mod][player][opt_mod][zone]から[card_type]名が[character_name][opt_mod][card_type][number]枚を表向きで[card_type]置き場に置いてもよい。そうした場合、次[opt_mod][card_type]セットフェイズで[player]が[card_type]置き場に置ける[card_type]枚数[opt_mod]上限が[number]枚減る。",
+      "combined_template": " ： [player][opt_mod]メインフェイズにこ[opt_mod][card_type]が[zone]から[zone]に加えられた[opt_mod][player][opt_mod][zone]から[card_type]名が[character_name][opt_mod][card_type][number]枚を表向きで[card_type]置き場に置いてもよい。そうした場合、次[opt_mod][card_type]セットフェイズで[player]が[card_type]置き場に置ける[card_type]枚数[opt_mod]上限が[number]枚減る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -28181,8 +28181,8 @@
         "PL!N-bp4-027-L | EMOTION (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone_condition][card_type]名が「[character_name]」[opt_mod][card_type][number]枚につき、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]し、成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。",
-      "combined_template": " ： [player][opt_mod][zone_condition][card_type]名が「[character_name]」[opt_mod][card_type][number]枚につき、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]し、成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。",
+      "effect_template": "[player][opt_mod][zone_condition][card_type]名が[character_name][opt_mod][card_type][number]枚につき、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]し、成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。",
+      "combined_template": " ： [player][opt_mod][zone_condition][card_type]名が[character_name][opt_mod][card_type][number]枚につき、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]し、成功させるため[opt_mod]必要[card_type]を{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}{{heart_[number].png|heart[number]}}増やす。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -28887,8 +28887,8 @@
         "PL!SP-bp4-023-L | Dazzling Game (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "ライブ終了時[opt_mod][player][opt_mod][zone_condition]、「[character_name]」「[character_name]」「[character_name]」[opt_mod]うち[opt_mod]メンバー[number]人と、これにより選んだメンバー以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人は、{{icon_blade.png|[card_type]}}を得る。",
-      "combined_template": " ： ライブ終了時[opt_mod][player][opt_mod][zone_condition]、「[character_name]」「[character_name]」「[character_name]」[opt_mod]うち[opt_mod]メンバー[number]人と、これにより選んだメンバー以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人は、{{icon_blade.png|[card_type]}}を得る。",
+      "effect_template": "ライブ終了時[opt_mod][player][opt_mod][zone_condition]、[character_name][character_name][character_name][opt_mod]うち[opt_mod]メンバー[number]人と、これにより選んだメンバー以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人は、{{icon_blade.png|[card_type]}}を得る。",
+      "combined_template": " ： ライブ終了時[opt_mod][player][opt_mod][zone_condition]、[character_name][character_name][character_name][opt_mod]うち[opt_mod]メンバー[number]人と、これにより選んだメンバー以外[opt_mod]『[group_name]』[opt_mod]メンバー[number]人は、{{icon_blade.png|[card_type]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -29421,8 +29421,8 @@
         "LL-bp4-001-R+ | 絢瀬絵里&朝香果林&葉月 恋 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」か「[character_name]」か「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。そ[opt_mod]後、[player][opt_mod][zone_condition]、これにより公開した[card_type][opt_mod][value_type:cost]以下で、かつ元々持つ{{icon_blade.png|[card_type]}}[opt_mod]数が[number]つ以下[opt_mod]メンバーをすべて[zone]にする。",
-      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から「[character_name]」か「[character_name]」か「[character_name]」[opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。そ[opt_mod]後、[player][opt_mod][zone_condition]、これにより公開した[card_type][opt_mod][value_type:cost]以下で、かつ元々持つ{{icon_blade.png|[card_type]}}[opt_mod]数が[number]つ以下[opt_mod]メンバーをすべて[zone]にする。",
+      "effect_template": "[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name]か[character_name]か[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。そ[opt_mod]後、[player][opt_mod][zone_condition]、これにより公開した[card_type][opt_mod][value_type:cost]以下で、かつ元々持つ{{icon_blade.png|[card_type]}}[opt_mod]数が[number]つ以下[opt_mod]メンバーをすべて[zone]にする。",
+      "combined_template": " ： [player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚見る。そ[opt_mod]中から[character_name]か[character_name]か[character_name][opt_mod][card_type]を[number]枚公開して[zone]に加えてもよい。残りを[zone]に置く。そ[opt_mod]後、[player][opt_mod][zone_condition]、これにより公開した[card_type][opt_mod][value_type:cost]以下で、かつ元々持つ{{icon_blade.png|[card_type]}}[opt_mod]数が[number]つ以下[opt_mod]メンバーをすべて[zone]にする。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -30365,8 +30365,8 @@
         "PL!HS-sd1-005-SD | 徒町小鈴 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "「[character_name]」以外[opt_mod]『[group_name]』[opt_mod]メンバーからバトンタッチして登場した場合、[player][opt_mod][zone]から[card_type]を[number]枚[zone]に加える。",
-      "combined_template": " ： 「[character_name]」以外[opt_mod]『[group_name]』[opt_mod]メンバーからバトンタッチして登場した場合、[player][opt_mod][zone]から[card_type]を[number]枚[zone]に加える。",
+      "effect_template": "[character_name]以外[opt_mod]『[group_name]』[opt_mod]メンバーからバトンタッチして登場した場合、[player][opt_mod][zone]から[card_type]を[number]枚[zone]に加える。",
+      "combined_template": " ： [character_name]以外[opt_mod]『[group_name]』[opt_mod]メンバーからバトンタッチして登場した場合、[player][opt_mod][zone]から[card_type]を[number]枚[zone]に加える。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -30420,8 +30420,8 @@
         "PL!HS-sd1-005-SD | 徒町小鈴 (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいるかぎり、{{icon_blade.png|[card_type]}}を得る。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいるかぎり、{{icon_blade.png|[card_type]}}を得る。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいるかぎり、{{icon_blade.png|[card_type]}}を得る。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいるかぎり、{{icon_blade.png|[card_type]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -31593,8 +31593,8 @@
         "PL!HS-sd1-018-SD | Dream Believers（105期Ver.） (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に『[group_name]』[opt_mod]メンバーが[number]人以上いて、かつ[player][opt_mod][zone]に[card_type]名に「[character_name]」を含む[card_type]がある場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
-      "combined_template": " ： [player][opt_mod][zone]に『[group_name]』[opt_mod]メンバーが[number]人以上いて、かつ[player][opt_mod][zone]に[card_type]名に「[character_name]」を含む[card_type]がある場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
+      "effect_template": "[player][opt_mod][zone]に『[group_name]』[opt_mod]メンバーが[number]人以上いて、かつ[player][opt_mod][zone]に[card_type]名に[character_name]を含む[card_type]がある場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
+      "combined_template": " ： [player][opt_mod][zone]に『[group_name]』[opt_mod]メンバーが[number]人以上いて、かつ[player][opt_mod][zone]に[card_type]名に[character_name]を含む[card_type]がある場合、こ[opt_mod][card_type][opt_mod][value_type:score]を+[number]する。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -32346,8 +32346,8 @@
         "PL!HS-sd1-004-SD | 百生吟子 (ab#1)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいるかぎり、{{heart_[number].png|heart[number]}}を得る。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいるかぎり、{{heart_[number].png|heart[number]}}を得る。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいるかぎり、{{heart_[number].png|heart[number]}}を得る。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいるかぎり、{{heart_[number].png|heart[number]}}を得る。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -32959,8 +32959,8 @@
         "PL!N-bp5-029-L | 無敵級*ビリーバー (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」がいる場合、[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚公開する。[player]はそれら[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚選ぶ。ライブ終了時[opt_mod][player][opt_mod][zone_condition]「[character_name]」[number]人は、これにより選んだ[card_type]が持つ色[opt_mod][card_type]を[number]つずつ得る。公開した[card_type]をすべて[zone]に置く。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」がいる場合、[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚公開する。[player]はそれら[opt_mod]中から「[character_name]」[opt_mod][card_type]を[number]枚選ぶ。ライブ終了時[opt_mod][player][opt_mod][zone_condition]「[character_name]」[number]人は、これにより選んだ[card_type]が持つ色[opt_mod][card_type]を[number]つずつ得る。公開した[card_type]をすべて[zone]に置く。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]がいる場合、[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚公開する。[player]はそれら[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚選ぶ。ライブ終了時[opt_mod][player][opt_mod][zone_condition][character_name][number]人は、これにより選んだ[card_type]が持つ色[opt_mod][card_type]を[number]つずつ得る。公開した[card_type]をすべて[zone]に置く。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]がいる場合、[player][opt_mod][zone][opt_mod]上から[card_type]を[number]枚公開する。[player]はそれら[opt_mod]中から[character_name][opt_mod][card_type]を[number]枚選ぶ。ライブ終了時[opt_mod][player][opt_mod][zone_condition][character_name][number]人は、これにより選んだ[card_type]が持つ色[opt_mod][card_type]を[number]つずつ得る。公開した[card_type]をすべて[zone]に置く。",
       "cost_terms": {
         "card_types": [],
         "zones": [],
@@ -33392,8 +33392,8 @@
         "PL!HS-sd1-006-SD | 安養寺 姫芽 (ab#0)"
       ],
       "cost_template": "",
-      "effect_template": "[player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいる場合、[card_type]を[number]枚アクティブにし、[player][opt_mod][zone]から[grouped_card]を[number]枚[zone]に加える。",
-      "combined_template": " ： [player][opt_mod][zone]に「[character_name]」か「[character_name]」か「[character_name]」がいる場合、[card_type]を[number]枚アクティブにし、[player][opt_mod][zone]から[grouped_card]を[number]枚[zone]に加える。",
+      "effect_template": "[player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいる場合、[card_type]を[number]枚アクティブにし、[player][opt_mod][zone]から[grouped_card]を[number]枚[zone]に加える。",
+      "combined_template": " ： [player][opt_mod][zone]に[character_name]か[character_name]か[character_name]がいる場合、[card_type]を[number]枚アクティブにし、[player][opt_mod][zone]から[grouped_card]を[number]枚[zone]に加える。",
       "cost_terms": {
         "card_types": [],
         "zones": [],

@@ -188,6 +188,10 @@ def create_expression_template(text: str, terms: dict) -> tuple[str, list[dict]]
     template = template.replace('）', ')')
     template = WHITESPACE_PATTERN.sub('', template)  # Remove all spaces
     
+    # Remove quotes around character names BEFORE any other replacements
+    for char in terms['character_names']:
+        template = template.replace(f'「{char}」', char)
+    
     # Extract composite patterns first (before individual variable replacements)
     composite_replacements = []
     
@@ -333,6 +337,170 @@ def _merge_dicts(*dicts):
     return result
 
 
+def parse_quote_content(content: str) -> str:
+    """
+    Determine if quoted content is a character name or nested ability.
+    Returns: 'character_name' or 'nested_ability'
+    """
+    # Character name: short (2-4 chars), no spaces, no icons
+    if len(content) <= 4 and '{{' not in content and ' ' not in content:
+        return 'character_name'
+    # Nested ability: contains icons or verbs
+    elif '{{' in content or any(verb in content for verb in ['する', '得る', '引く']):
+        return 'nested_ability'
+    else:
+        return 'character_name'  # default
+
+
+def parse_grammar_clauses(template: str) -> list[str]:
+    """
+    Parse a template into clauses using hierarchical grammar-based parsing.
+    Structure:
+    - Periods (。) = main clause boundaries (except inside parentheses)
+    - Commas (、) = sub-clause boundaries within main clauses
+    - Colon (：) = kept with cost clause (not separate)
+    - Quotes (「」) = kept for nested abilities
+    - Parens (（）) = nested structure, periods inside don't split main clause
+    
+    Returns flattened list of clauses preserving hierarchical structure markers.
+    """
+    clauses = []
+    
+    # List indicators that create a context where commas should not split
+    list_indicators = ['と', 'または', 'か', '以外', 'うち', 'いずれか', '場合']
+    
+    # Context tracking
+    in_quote = False
+    paren_depth = 0  # Track nesting depth of parentheses
+    
+    # Step 1: Split by periods, but track parenthesis depth
+    main_clauses = []
+    current_clause = ""
+    
+    i = 0
+    while i < len(template):
+        char = template[i]
+        
+        # Track parenthesis depth
+        if char == '(':
+            paren_depth += 1
+        elif char == ')':
+            paren_depth = max(0, paren_depth - 1)
+        
+        # Track quote context
+        if char == '「':
+            in_quote = True
+        elif char == '」':
+            in_quote = False
+        
+        # Split on period only if not in parentheses
+        if char == '。' and paren_depth == 0:
+            if current_clause.strip():
+                main_clauses.append(current_clause)
+            current_clause = ""
+        else:
+            current_clause += char
+        
+        i += 1
+    
+    if current_clause.strip():
+        main_clauses.append(current_clause)
+    
+    # Step 2: Split each main clause by commas (with context awareness)
+    for main_clause in main_clauses:
+        if not main_clause.strip():
+            continue
+        
+        # Check for conditional choice pattern (代わりに)
+        # If found, treat entire structure as one clause
+        if '代わりに' in main_clause:
+            clauses.append(main_clause)
+            clauses.append('。')
+            continue
+        
+        sub_clauses = []
+        current = ""
+        in_quote = False
+        paren_depth = 0
+        
+        i = 0
+        while i < len(main_clause):
+            char = main_clause[i]
+            
+            # Track parenthesis depth
+            if char == '(':
+                paren_depth += 1
+            elif char == ')':
+                paren_depth = max(0, paren_depth - 1)
+            
+            # Track quote context
+            if char == '「':
+                in_quote = True
+            elif char == '」':
+                in_quote = False
+            
+            # Handle commas with list context
+            if char == '、':
+                # Don't split if in parentheses or in quote
+                if paren_depth > 0 or in_quote:
+                    current += char
+                else:
+                    # Check if this is between repeated placeholders (list pattern)
+                    # Look at what's before and after the comma
+                    prev_part = current[-50:] if len(current) >= 50 else current
+                    look_ahead = main_clause[i+1:i+50]
+                    
+                    # Check if both sides contain placeholder patterns like [[...]] or {{...}}
+                    has_placeholder_before = ('[[' in prev_part or '{{' in prev_part)
+                    has_placeholder_after = ('[[' in look_ahead or '{{' in look_ahead)
+                    
+                    # Also check for list indicators ahead
+                    has_list_indicator = False
+                    for indicator in list_indicators:
+                        if indicator in look_ahead:
+                            has_list_indicator = True
+                            break
+                    
+                    # Don't split if in list context (repeated placeholders or list indicator ahead)
+                    if (has_placeholder_before and has_placeholder_after) or has_list_indicator:
+                        current += char
+                    else:
+                        # Split - sub-clause separator
+                        if current:
+                            sub_clauses.append(current)
+                        current = ''
+            elif char == '：':
+                # Keep colon with current clause (cost clause)
+                current += char
+            elif char in ['（', '）', '「', '」', '・']:
+                # Keep quotes, parens, and bullet points as part of current clause
+                current += char
+            else:
+                current += char
+            
+            i += 1
+        
+        if current:
+            sub_clauses.append(current)
+        
+        # Add sub-clauses to main clause list
+        clauses.extend(sub_clauses)
+        # Add period marker to separate main clauses
+        clauses.append('。')
+    
+    # Step 3: No consolidation - parser does structural splitting only
+    # Pattern analysis happens after parsing
+    
+    # Filter empty clauses
+    filtered = []
+    for clause in clauses:
+        # Keep non-empty clauses or period markers
+        if clause.strip() or clause == '。':
+            filtered.append(clause)
+    
+    return filtered
+
+
 def parse_template_into_clauses(template: str) -> list[str]:
     """
     Parse a template into clauses based on delimiters (、 and ：).
@@ -356,6 +524,154 @@ def parse_template_into_clauses(template: str) -> list[str]:
         clauses.append(current)
     
     return clauses
+
+
+def extract_mechanic_type(template: str) -> str:
+    """
+    Extract the semantic game mechanic type from a template.
+    Returns a string identifying what the template does (e.g., 'draw_cards', 'activate', 'gain_hearts').
+    """
+    # Check for combined mechanics first (draw + score, etc.)
+    if '引く' in template and ('スコア' in template or 'score' in template.lower()):
+        return 'draw_and_score'
+    
+    # Check for draw/add mechanics
+    if '引く' in template or '加える' in template:
+        if 'から' in template and '加える' in template:
+            return 'draw_from_zone'
+        elif '引く' in template:
+            return 'draw_cards'
+        else:
+            return 'add_cards'
+    
+    # Check for activate/deactivate
+    if 'アクティブにする' in template:
+        return 'activate'
+    elif 'ウェイトにする' in template:
+        return 'deactivate'
+    
+    # Check for gain mechanics
+    if 'ハート' in template or 'heart' in template.lower():
+        if '得る' in template:
+            return 'gain_hearts'
+    if 'ブレード' in template or 'blade' in template.lower():
+        if '得る' in template:
+            return 'gain_blades'
+    
+    # Check for score modification with conditions
+    if 'スコア' in template or 'score' in template.lower():
+        if '+' in template:
+            # Check for conditional score variants
+            if 'ハート' in template or 'heart' in template.lower():
+                return 'conditional_score_hearts'
+            elif '枚以上ある場合' in template:
+                return 'conditional_score_count'
+            elif 'かつ' in template or 'または' in template:
+                return 'conditional_score_multi'
+            elif 'いずれか' in template:
+                return 'conditional_score_or'
+            else:
+                return 'increase_score'
+        elif '-' in template:
+            return 'decrease_score'
+    
+    # Check for conditional count effects
+    if '枚以上ある場合' in template or '枚以下ある場合' in template:
+        if '引く' in template:
+            return 'conditional_draw'
+        elif 'アクティブ' in template:
+            return 'conditional_activate'
+        else:
+            return 'conditional_effect'
+    
+    # Check for movement/positioning
+    if '移動' in template:
+        return 'move_position'
+    elif '置く' in template and ('zone' in template or 'エリア' in template or 'ステージ' in template):
+        return 'move_cards'
+    
+    # Check for reveal mechanics
+    if '公開' in template:
+        return 'reveal_cards'
+    
+    # Check for shuffle mechanics
+    if 'シャッフル' in template:
+        return 'shuffle'
+    
+    # Default: categorize by main verb
+    if 'する' in template:
+        # Extract the verb before "する"
+        verb_match = re.search(r'([^、\s]+)する', template)
+        if verb_match:
+            verb = verb_match.group(1)
+            return f'generic_{verb}'
+    
+    return 'unknown'
+
+
+def analyze_grammar_combinations(template_list: list) -> list:
+    """
+    Analyze templates using grammar-based parsing to show all real clause combinations.
+    Uses delimiters: ：, 、, 。, （, ）, 「, 」
+    Returns clause combination analysis showing all patterns and their co-occurrence.
+    """
+    from collections import Counter
+    
+    # Parse all templates into grammar clauses
+    template_clauses = {}
+    for template_data in template_list:
+        template = template_data['template']
+        clauses = parse_grammar_clauses(template)
+        template_clauses[template] = {
+            'clauses': clauses,
+            'data': template_data
+        }
+    
+    # Track all clause patterns at each position
+    clause_patterns_by_position = defaultdict(Counter)
+    clause_cooccurrence = defaultdict(int)  # Track which clauses appear together
+    
+    for template, info in template_clauses.items():
+        clauses = info['clauses']
+        for i, clause in enumerate(clauses):
+            clause_patterns_by_position[i][clause] += 1
+        
+        # Track co-occurrence (adjacent clauses)
+        for i in range(len(clauses) - 1):
+            pair = (clauses[i], clauses[i+1])
+            clause_cooccurrence[pair] += 1
+    
+    # Build analysis results
+    analysis_results = []
+    
+    # For each position, show all clause patterns
+    for pos in sorted(clause_patterns_by_position.keys()):
+        patterns = clause_patterns_by_position[pos]
+        sorted_patterns = sorted(patterns.items(), key=lambda x: -x[1])
+        
+        analysis_results.append({
+            'position': pos,
+            'total_variants': len(patterns),
+            'patterns': [
+                {'clause': clause, 'count': count}
+                for clause, count in sorted_patterns
+            ]
+        })
+    
+    # Show most common co-occurrences
+    sorted_cooccurrence = sorted(clause_cooccurrence.items(), key=lambda x: -x[1])
+    cooccurrence_summary = [
+        {'pair': pair, 'count': count}
+        for pair, count in sorted_cooccurrence[:50]  # Top 50
+    ]
+    
+    # Return structured analysis
+    return {
+        'position_analysis': analysis_results,
+        'cooccurrence_analysis': cooccurrence_summary,
+        'total_templates': len(template_list),
+        'total_positions': len(clause_patterns_by_position)
+    }
 
 
 def compress_templates_clauses(template_list: list) -> list:
@@ -424,6 +740,53 @@ def compress_templates_clauses(template_list: list) -> list:
         compressed_templates.append(merged_data)
     
     return compressed_templates
+
+
+def compress_templates_mechanics(template_list: list) -> list:
+    """
+    Compress templates by semantic mechanic type instead of clause structure.
+    Groups templates by what they DO (mechanic type) and shows parameter variants.
+    """
+    # Extract mechanic type for each template
+    mechanic_groups = defaultdict(list)
+    for template_data in template_list:
+        template = template_data['template']
+        mechanic_type = extract_mechanic_type(template)
+        mechanic_groups[mechanic_type].append(template_data)
+    
+    # For each mechanic type, analyze parameter patterns
+    compressed_mechanics = []
+    for mechanic_type, templates in mechanic_groups.items():
+        # Extract parameter patterns from all templates in this mechanic group
+        parameter_variants = defaultdict(lambda: defaultdict(list))
+        
+        for template_data in templates:
+            template = template_data['template']
+            # Extract all parameters and their values
+            params = re.findall(r'\[([^\]]+)\]', template)
+            for param in params:
+                parameter_variants[param][template].append(template_data)
+        
+        # Find most common parameter pattern for this mechanic
+        most_common_template = max(templates, key=lambda x: x['usage_count'])
+        
+        merged_data = {
+            'mechanic_type': mechanic_type,
+            'template': most_common_template['template'],
+            'usage_count': sum(t['usage_count'] for t in templates),
+            'variables': sorted(set().union(*[t['variables'] for t in templates])),
+            'abilities': [ability for t in templates for ability in t['abilities'][:10]],
+            'compressed_from': len(templates),
+            'compression_level': 4,
+            'modifiers': most_common_template.get('modifiers', []),
+            'parameter_variants': dict(parameter_variants),
+            'all_templates': [t['template'] for t in templates]
+        }
+        compressed_mechanics.append(merged_data)
+    
+    # Sort by usage count
+    compressed_mechanics.sort(key=lambda x: -x['usage_count'])
+    return compressed_mechanics
 
 
 def calculate_template_similarity(template1: str, template2: str) -> float:
@@ -582,11 +945,16 @@ def compress_templates(template_list: list, all_abilities: list = None) -> list:
     
     level2_templates.sort(key=lambda x: -x['usage_count'])
     
-    # Level 3: Clause-based compression
-    # Break templates into clauses (separated by 、 and ：) and compress each clause type separately
-    level3_templates = compress_templates_clauses(level2_templates)
+    # Level 3: Grammar-based clause analysis
+    # Parse templates using grammar delimiters (：, 、, 。, （, ）, 「, 」)
+    # Show all real clause combinations and co-occurrence patterns
+    level3_analysis = analyze_grammar_combinations(level2_templates)
     
-    return level3_templates
+    # Attach analysis to templates for output
+    for template in level2_templates:
+        template['grammar_analysis'] = level3_analysis
+    
+    return level2_templates
 
 
 def is_optional_modifier(text: str) -> bool:
@@ -1020,92 +1388,104 @@ def generate_coverage_log(all_abilities: list, output_file: Path):
     print(f"Compression ratio: {len(compressed_templates)}/{len(template_list)}")
     print(f"Total variables: {len(variable_counts)}")
     
-    # Print compressed_from breakdown
-    print("\n=== Clause-Level Analysis ===")
-    print("Templates broken down by clauses (separated by 、 and ：)")
-    print("Shows variants at each clause position\n")
+    # Print grammar-based analysis
+    print("\n=== Grammar-Based Clause Analysis ===")
+    print("Templates parsed with delimiters: ：, 、, 。, （, ）, 「, 」")
+    print("Shows all real clause combinations and co-occurrence patterns\n")
     
-    # Save full breakdown to file
-    with open('template_breakdown.txt', 'w', encoding='utf-8') as f:
-        f.write("=== Clause-Level Analysis ===\n")
-        f.write("Templates broken down by clauses (separated by 、 and ：)\n")
-        f.write("Shows variants at each clause position\n\n")
+    # Get grammar analysis from first template (all templates share the same analysis)
+    if compressed_templates and 'grammar_analysis' in compressed_templates[0]:
+        grammar_analysis = compressed_templates[0]['grammar_analysis']
         
-        for i, template in enumerate(compressed_templates, 1):
-            compressed_from = template.get('compressed_from', 1)
-            usage_count = template.get('usage_count', 0)
-            clause_variants = template.get('clause_variants', {})
+        # Save full breakdown to file
+        with open('template_breakdown.txt', 'w', encoding='utf-8') as f:
+            f.write("=== Grammar-Based Clause Analysis ===\n")
+            f.write("Templates parsed with delimiters: ：, 、, 。, （, ）, 「, 」\n")
+            f.write(f"Total templates analyzed: {grammar_analysis['total_templates']}\n")
+            f.write(f"Total clause positions: {grammar_analysis['total_positions']}\n\n")
             
-            # Add comment explaining what this template represents
-            template_str = template['template']
-            if '加える' in template_str:
-                comment = "# Add cards to zone"
-            elif '引く' in template_str:
-                comment = "# Draw cards"
-            elif 'アクティブにする' in template_str:
-                comment = "# Activate cards/members"
-            elif 'ウェイトにする' in template_str:
-                comment = "# Weight cards/members"
-            elif 'スコア' in template_str:
-                comment = "# Score modification"
-            elif 'ハート' in template_str or 'ブレード' in template_str:
-                comment = "# Heart/blade effects"
-            else:
-                comment = "# Other effect"
+            # Show position analysis
+            f.write("=== Clause Patterns by Position ===\n\n")
+            for pos_analysis in grammar_analysis['position_analysis']:
+                pos = pos_analysis['position']
+                variants = pos_analysis['total_variants']
+                patterns = pos_analysis['patterns']
+                
+                f.write(f"Position {pos} ({variants} variants):\n")
+                for j, pattern in enumerate(patterns, 1):
+                    clause = pattern['clause']
+                    count = pattern['count']
+                    f.write(f"   {j}. '{clause}' (appears in {count} templates)\n")
+                f.write("\n")
             
-            f.write(f"{i}. {comment} - Compressed from {compressed_from} variants (usage count: {usage_count})\n")
-            f.write(f"   Canonical template: {template['template']}\n")
+            # Show co-occurrence analysis
+            f.write("=== Most Common Clause Co-occurrences ===\n\n")
+            for cooc in grammar_analysis['cooccurrence_analysis']:
+                pair = cooc['pair']
+                count = cooc['count']
+                f.write(f"'{pair[0]}' + '{pair[1]}' (appears {count} times)\n")
             
-            # Show clause-level breakdown
-            if clause_variants:
-                f.write(f"   Clause breakdown:\n")
-                for pos, variants in clause_variants.items():
-                    f.write(f"      Position {pos} ({len(variants)} variants):\n")
-                    for j, variant in enumerate(variants, 1):  # Show all variants
-                        clause = variant['clause']
-                        count = variant['count']
-                        f.write(f"         {j}. '{clause}' (appears in {count} templates)\n")
-            
-            # Show all abilities
-            abilities = template.get('abilities', [])
-            if abilities:
-                f.write(f"   All abilities ({len(abilities)} total):\n")
-                for j, ability in enumerate(abilities, 1):
-                    if isinstance(ability, dict):
-                        full_text = ability.get('full_text', '')
-                    else:
-                        full_text = str(ability)
-                    f.write(f"      {j}. {full_text}\n")
-            f.write("\n")
-    
-    # Print summary to console
-    for i, template in enumerate(compressed_templates, 1):
-        compressed_from = template.get('compressed_from', 1)
-        usage_count = template.get('usage_count', 0)
-        clause_variants = template.get('clause_variants', {})
+            # Show all templates with their parsed clauses
+            f.write("\n=== All Templates with Parsed Clauses ===\n\n")
+            for i, template in enumerate(compressed_templates, 1):
+                compressed_from = template.get('compressed_from', 1)
+                usage_count = template.get('usage_count', 0)
+                template_str = template['template']
+                
+                # Add comment explaining what this template represents
+                if '加える' in template_str:
+                    comment = "# Add cards to zone"
+                elif '引く' in template_str:
+                    comment = "# Draw cards"
+                elif 'アクティブにする' in template_str:
+                    comment = "# Activate cards/members"
+                elif 'ウェイトにする' in template_str:
+                    comment = "# Weight cards/members"
+                elif 'スコア' in template_str:
+                    comment = "# Score modification"
+                elif 'ハート' in template_str or 'ブレード' in template_str:
+                    comment = "# Heart/blade effects"
+                else:
+                    comment = "# Other effect"
+                
+                f.write(f"{i}. {comment} - Compressed from {compressed_from} variants (usage count: {usage_count})\n")
+                f.write(f"   Template: {template_str}\n")
+                
+                # Show parsed clauses
+                clauses = parse_grammar_clauses(template_str)
+                f.write(f"   Parsed clauses ({len(clauses)} total):\n")
+                for j, clause in enumerate(clauses, 1):
+                    f.write(f"      {j}. '{clause}'\n")
+                
+                # Show all abilities
+                abilities = template.get('abilities', [])
+                if abilities:
+                    f.write(f"   All abilities ({len(abilities)} total):\n")
+                    for j, ability in enumerate(abilities, 1):
+                        if isinstance(ability, dict):
+                            full_text = ability.get('full_text', '')
+                        else:
+                            full_text = str(ability)
+                        f.write(f"      {j}. {full_text}\n")
+                f.write("\n")
         
-        template_str = template['template']
-        if '加える' in template_str:
-            comment = "# Add cards to zone"
-        elif '引く' in template_str:
-            comment = "# Draw cards"
-        elif 'アクティブにする' in template_str:
-            comment = "# Activate cards/members"
-        elif 'ウェイトにする' in template_str:
-            comment = "# Weight cards/members"
-        elif 'スコア' in template_str:
-            comment = "# Score modification"
-        elif 'ハート' in template_str or 'ブレード' in template_str:
-            comment = "# Heart/blade effects"
-        else:
-            comment = "# Other effect"
+        # Print summary to console
+        print(f"Total templates: {grammar_analysis['total_templates']}")
+        print(f"Total clause positions: {grammar_analysis['total_positions']}")
+        print(f"\nClause patterns by position:")
+        for pos_analysis in grammar_analysis['position_analysis']:
+            pos = pos_analysis['position']
+            variants = pos_analysis['total_variants']
+            most_common = pos_analysis['patterns'][0]['clause'] if pos_analysis['patterns'] else 'N/A'
+            print(f"  Position {pos}: {variants} variants, most common: '{most_common}'")
         
-        print(f"{i}. {comment} - {compressed_from} variants (usage: {usage_count})")
-        print(f"   Clause breakdown: {len(clause_variants)} positions with variants")
-        for pos, variants in clause_variants.items():
-            print(f"      Position {pos}: {len(variants)} variants")
-            print(f"         Most common: '{variants[0]['clause']}'")
-        print()
+        print(f"\nTop 10 co-occurrences:")
+        for cooc in grammar_analysis['cooccurrence_analysis'][:10]:
+            pair = cooc['pair']
+            count = cooc['count']
+            print(f"  '{pair[0]}' + '{pair[1]}' ({count} times)")
+    else:
+        print("No grammar analysis available")
 
 
 
