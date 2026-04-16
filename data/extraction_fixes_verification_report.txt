@@ -1,0 +1,126 @@
+EXTRACTION FIXES VERIFICATION REPORT
+=====================================
+Generated after applying fixes to extract_costs.py
+
+SUMMARY OF FIXES APPLIED:
+-------------------------
+1. Fixed incomplete comparison conditions - Added more specific "compares" field extraction
+2. Extract character/member names from conditions - Added character name extraction from quotes
+3. Add location specifications to card_count conditions - Added location field extraction
+4. Fix score vs cost modification action naming - Changed "add_score" to "modify_cost" for cost modifications
+5. Fix incomplete action details - Added OR pattern handling for card selection
+6. Standardize resource extraction - Improved heart and blade resource counting
+
+VERIFICATION RESULTS:
+---------------------
+
+FIXED ISSUES:
+
+1. Character/Member Name Extraction - FIXED
+   - Card [424]: "自分のステージに「徒町小鈴」が登場しており、かつ「徒町小鈴」よりコストの大きい「村野さやか」が登場している場合"
+     Now extracts: "characters": ["徒町小鈴", "徒町小鈴", "村野さやか"]
+   
+   - Card [579]: "自分のステージに「大沢瑠璃乃」か「百生吟子」か「徒町小鈴」がいる場合"
+     Now extracts: "characters": ["大沢瑠璃乃", "百生吟子", "徒町小鈴"]
+
+2. Comparison Conditions with "compares" Field - PARTIALLY FIXED
+   - Card [90]: "ライブの合計スコアが相手より高い場合"
+     Now extracts: "compares": "live_total_score" ✓ FIXED
+   
+   - Card [444]: "自分のステージにいるメンバーが持つハートの総数が、相手のステージにいるメンバーが持つハートの総数より多い場合"
+     Now extracts: "compares": "heart_total" ✓ FIXED
+   
+   - Card [502]: "自分のセンターエリアにいる『Liella!』のメンバーのコストが、相手のセンターエリアにいるメンバーより高い場合"
+     Now extracts: "compares": "cost" ✓ FIXED
+   
+   - Card [533]: "相手のステージにいるすべてのメンバーのそれぞれのコストよりコストが高いメンバーが自分のステージにいる場合"
+     Now extracts: "compares": "cost" ✓ FIXED
+   
+   - Card [46]: "このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した場合"
+     Now extracts: "compares": "cost" ✓ FIXED
+
+   BUT STILL BROKEN:
+   - Card [122]: "自分と相手のステージの中で、このメンバーがほかのすべてのメンバーより多くのハートを持つかぎり"
+     Still missing "compares" field ✗ NOT FIXED
+   
+   - Card [539]: "エールにより公開されている自分のライブカードの枚数が、エールにより公開されている相手のライブカードの枚数より多い場合"
+     Still missing "compares" field ✗ NOT FIXED
+
+3. Location Specifications in card_count Conditions - FIXED
+   - Card [63]: "自分と相手のエネルギーの合計が15枚以上あるかぎり"
+     Now extracts: "location": "energy" ✓ FIXED
+   
+   - Card [514]: "自分の成功ライブカード置き場かライブ中のライブカードの中に"
+     Now extracts: "location": "success_live_card_zone" ✓ FIXED
+   
+   - Card [562]: "エールにより公開された自分のカードの中に『Liella!』のカードが7枚以上ある場合"
+     Now extracts: "location": "cheer_revealed" ✓ FIXED
+
+4. Resource Extraction Standardization - FIXED
+   - Cards now properly separate blade_count from resource_count
+   - Heart resources now include total_heart_count field
+   - Example Card [29]: "blade_count": 1, "resource": "blade", "resource_count": 1 ✓
+
+5. Baton Touch Character Extraction - FIXED
+   - Card [85]: "能力を持たないメンバーからバトンタッチして登場した場合"
+     Now extracts: "source_member": "no_ability" ✓ FIXED
+
+REMAINING ISSUES:
+
+1. OR Pattern for Card Selection - PARTIALLY FIXED
+   - Card [142]: "エールにより公開された自分のカードの中から、コスト2以下のメンバーカードか、スコア２以下のライブカードを1枚手札に加える"
+     Current extraction: Only has "cost_limit": 2, missing "score_limit" for live_card option
+     Expected: Should have both cost_limit and score_limit for the OR choice ✗ NOT FULLY FIXED
+
+2. Position Marker Extraction - NOT FIXED
+   - Card [73]: "【左サイド】カードを2枚引き、手札を1枚控え室に置く"
+     Position marker 【左サイド】 not extracted as condition ✗ NOT FIXED
+   
+   - Card [107]: "{{center.png|センター}}自分のステージの右サイドエリアと左サイドエリアにいるメンバーのコストが同じ場合"
+     Only extracts "position": "left_side", missing the complex position comparison ✗ NOT FIXED
+
+3. Exact Number Conditions - NOT FIXED
+   - Card [91]: "自分のエネルギーがちょうど8枚あるかぎり"
+     Falls back to raw text instead of extracting exact number condition ✗ NOT FIXED
+
+4. Complex Multi-Condition Logic - NOT FIXED
+   - Card [595]: "自分のステージに『Aqours』のメンバーと『SaintSnow』のメンバーがいて、かつそれらのメンバーのコストが合計20以上の場合"
+     Only extracts first group condition, misses second group and cost total ✗ NOT FIXED
+
+5. Trigger Extraction - NEEDS VERIFICATION
+   - Need to check if trigger icons like {{jidou.png|自動}} and {{toujyou.png|登場}} are properly extracted
+   - This was the original issue mentioned but needs verification in the regenerated data
+
+RAW TEXT FALLBACKS:
+------------------
+Note: User stated raw text fallback is being handled separately, so these are not addressed in this fix:
+- Card [101]: "このメンバーがステージから控え室に置かれた" - raw text
+- Card [415]: "このメンバーがステージから控え室に置かれた" - raw text
+- Card [556]: "自分のステージにいるほかのメンバーがエリアを移動している" - raw text
+- Card [543]: "自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_04.png|heart04}}の合計が4以上の" - raw text
+- Card [550]: "自分のライブカード置き場にあるカードの必要ハートに含まれる{{heart_05.png|heart05}}の合計が4以上の" - raw text
+- Card [91]: "自分のエネルギーがちょうど8枚ある" - raw text
+
+CONCLUSION:
+-----------
+The fixes have successfully improved extraction in several areas:
+✓ Character name extraction from quotes - WORKING
+✓ Comparison conditions with "compares" field - PARTIALLY WORKING (some cases still fail)
+✓ Location specifications in card_count conditions - WORKING
+✓ Resource extraction standardization - WORKING
+✓ Baton touch character extraction - WORKING
+
+However, some issues remain:
+✗ OR pattern for card selection (missing score_limit)
+✗ Position marker extraction
+✗ Exact number conditions (like "ちょうど8枚")
+✗ Complex multi-condition logic
+✗ Some comparison conditions still missing "compares" field
+
+RECOMMENDATION:
+--------------
+1. Fix the remaining comparison condition patterns that don't match the new "compares" extraction logic
+2. Add score_limit extraction for OR patterns in card selection
+3. Add position marker extraction for 【左サイド】, 【右サイド】 patterns
+4. Add exact number condition pattern (ちょうどX枚)
+5. Improve multi-condition logic handling (AND/OR combinations)

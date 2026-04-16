@@ -1,0 +1,669 @@
+[
+  {
+    "pattern": "手札を1枚控え室に置いてもよい",
+    "count": 49,
+    "total_cards": 123,
+    "triggers": [
+      "登場",
+      "ライブ成功時",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "このメンバーをステージから控え室に置く",
+    "count": 5,
+    "total_cards": 49,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}支払ってもよい",
+    "count": 17,
+    "total_cards": 46,
+    "triggers": [
+      "登場",
+      "ライブ成功時",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 14,
+    "total_cards": 27,
+    "triggers": [
+      "登場",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}",
+    "count": 6,
+    "total_cards": 17,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "このメンバーをウェイトにしてもよい",
+    "count": 8,
+    "total_cards": 17,
+    "triggers": [
+      "登場",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "このメンバーをウェイトにし、手札を1枚控え室に置いてもよい",
+    "count": 6,
+    "total_cards": 17,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}",
+    "count": 5,
+    "total_cards": 14,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く",
+    "count": 5,
+    "total_cards": 13,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札を2枚控え室に置く",
+    "count": 8,
+    "total_cards": 13,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "このメンバーをウェイトにする",
+    "count": 5,
+    "total_cards": 12,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札を2枚控え室に置いてもよい",
+    "count": 7,
+    "total_cards": 12,
+    "triggers": [
+      "登場",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい",
+    "count": 3,
+    "total_cards": 11,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札を1枚控え室に置く",
+    "count": 4,
+    "total_cards": 11,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}",
+    "count": 2,
+    "total_cards": 9,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "デッキの上からカードを3枚控え室に置く",
+    "count": 2,
+    "total_cards": 7,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く",
+    "count": 2,
+    "total_cards": 7,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{center.png|センター}}このメンバーをウェイトにし、手札を1枚控え室に置く",
+    "count": 2,
+    "total_cards": 6,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札のライブカードを1枚控え室に置いてもよい",
+    "count": 2,
+    "total_cards": 6,
+    "triggers": [
+      "登場",
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "このメンバーをウェイトにし、手札を1枚控え室に置く",
+    "count": 2,
+    "total_cards": 5,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札にあるメンバーカードを好きな枚数公開する",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札のライブカードを1枚公開し、デッキの一番下に置いてもよい",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札のコスト4以下の『Liella!』のメンバーカードを1枚控え室に置く",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "『μ's』のメンバー1人をウェイトにしてもよい",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{center.png|センター}}メンバー1人をウェイトにする",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "このメンバーをウェイトにするか、手札を1枚控え室に置く",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "【左サイド】{{turn1.png|ターン1回}}このメンバーをウェイトにする",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する",
+    "count": 1,
+    "total_cards": 4,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札を2枚まで控え室に置いてもよい",
+    "count": 2,
+    "total_cards": 4,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札をすべて公開する",
+    "count": 1,
+    "total_cards": 3,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 3,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の同じグループ名を持つカード2枚を控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 3,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 3,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 2,
+    "total_cards": 3,
+    "triggers": [
+      "ライブ開始時",
+      "ライブ成功時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く",
+    "count": 2,
+    "total_cards": 3,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札のメンバーカードを1枚控え室に置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札を3枚まで控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "ライブ成功時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "「鬼塚冬毬」以外の『Liella!』のメンバー1人をステージから控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札のライブカードを1枚公開する",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "\"{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [],
+    "use_limits": []
+  },
+  {
+    "pattern": "このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "\"{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札を3枚控え室に置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "メンバーを3人までウェイトにしてもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "/{{live_start.png|ライブ開始時}}{{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}このメンバーをウェイトにする",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "エネルギー2枚をエネルギーデッキに置く",
+    "count": 1,
+    "total_cards": 2,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "手札の同じユニット名を持つカード2枚を控え室に置いてもよい",
+    "count": 2,
+    "total_cards": 2,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札のライブカードを1枚公開してもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "起動"
+    ],
+    "use_limits": [
+      "ターン1回"
+    ]
+  },
+  {
+    "pattern": "『虹ヶ咲」のメンバー1人をウェイトにしてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}を2つまで支払ってもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の『蓮ノ空』のカードを1枚控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "登場"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の『蓮ノ空』のカードを2枚控え室に置いてもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "{{icon_energy.png|E}}を好きな数支払ってもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ成功時"
+    ],
+    "use_limits": []
+  },
+  {
+    "pattern": "手札の『Aqours』のカードを1枚公開してもよい",
+    "count": 1,
+    "total_cards": 1,
+    "triggers": [
+      "ライブ開始時"
+    ],
+    "use_limits": []
+  }
+]

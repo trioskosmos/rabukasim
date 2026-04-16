@@ -22,9 +22,15 @@ def resolve_placeholder_chain(placeholder: str, variable_mappings: dict, visited
         # If mapped value is also a placeholder, resolve it recursively
         if isinstance(mapped_value, str) and mapped_value.startswith('[') and mapped_value.endswith(']'):
             return resolve_placeholder_chain(mapped_value, variable_mappings, visited)
-        # Handle lists (for multiple occurrences)
+        # Handle lists (for multiple occurrences) - use first value
         elif isinstance(mapped_value, list):
-            return mapped_value[0] if mapped_value else placeholder
+            if mapped_value:
+                # If list contains placeholders, resolve the first one
+                first_value = mapped_value[0]
+                if isinstance(first_value, str) and first_value.startswith('[') and first_value.endswith(']'):
+                    return resolve_placeholder_chain(first_value, variable_mappings, visited)
+                return first_value
+            return placeholder
         else:
             return mapped_value
     else:

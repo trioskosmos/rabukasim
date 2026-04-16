@@ -44,6 +44,7 @@ def main():
     # Define the scripts to run in order
     scripts = [
         (script_dir / "extract_card_abilities.py", "Ability Extraction from Cards"),
+        (script_dir / "extract_costs.py", "Cost Extraction from Abilities"),
         (script_dir / "pattern_based_semantic_extractor.py", "Pattern-based Semantic Extraction"),
         (script_dir / "integrate_semantic.py", "Semantic Integration"),
     ]

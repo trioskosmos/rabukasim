@@ -1,215 +1,24 @@
 {
-  "super_groups": {
-    "card": {
-      "placeholder": "[card]",
-      "patterns": [
-        "[card_type]",
-        "[player_card]",
-        "[grouped_card]",
-        "[zone_card]",
-        "[opt_mod][card_type]",
-        "[card_type][number]",
-        "[card_type][card_type]",
-        "[card_type][opt_mod]",
-        "[number][card_type]",
-        "[card_type][zone]",
-        "[player_card][card_type]",
-        "[grouped_card][number]",
-        "[opt_mod][grouped_card]",
-        "[zone][card_type]",
-        "[player_zone][card_type]",
-        "[player_card][opt_mod]",
-        "[player][card_type]",
-        "[opt_mod][player_card]",
-        "[number][player_card]",
-        "[player_zone][grouped_card]",
-        "[player_card][number]",
-        "[icon_count:1][card_type]",
-        "[card_type][value_type:cost]",
-        "[zone_condition][card_type]",
-        "[character_name][card_type]",
-        "[zone_card][number]",
-        "[grouped_card][opt_mod]",
-        "[player][player_card]",
-        "[icon_count:1][player_card]",
-        "[card_type][player_zone_condition]",
-        "[card_type][player]",
-        "[player_card][grouped_card]",
-        "[card_type][player_card]",
-        "[player][opt_mod][zone]",
-        "[player][opt_mod][zone_condition]",
-        "[zone][opt_mod][card_type]",
-        "[player][opt_mod][card_type]"
-      ],
-      "occurrences": 2000,
-      "semantic": "all card-related patterns (player cards, grouped cards, zone cards, card with modifiers, etc.)"
-    },
-    "modifier_card": {
-      "placeholder": "[modifier_card]",
-      "patterns": [
-        "[opt_mod][card]",
-        "[card][opt_mod]"
-      ],
-      "occurrences": 878,
-      "semantic": "modifier-card patterns (optional modifiers with cards)"
-    },
-    "player_modifier": {
-      "placeholder": "[player_modifier]",
-      "patterns": [
-        "[player][opt_mod]"
-      ],
-      "occurrences": 160,
-      "semantic": "player-modifier patterns (player with optional modifiers)"
-    },
-    "icon_gain": {
-      "placeholder": "[icon_gain]",
-      "patterns": [],
-      "occurrences": 106,
-      "semantic": "icon gain patterns (blade, all icons) - heart counts preserved separately"
-    },
-    "draw_effect": {
-      "placeholder": "[draw_effect]",
-      "patterns": [
-        "[card]を[number]枚引く",
-        "[card]を[number]枚引き",
-        "(エールをすべて行った後、エールで出た[icon_count:1][number]つにつき、[card]を[number]枚引く)",
-        "[card]を[number]枚引き、[zone]を[number]枚[zone]に置く"
-      ],
-      "occurrences": 89,
-      "semantic": "card draw effects"
-    },
-    "condition_pattern": {
-      "placeholder": "[condition]",
-      "patterns": [
-        "[player][modifier_card]が[number]枚以上ある場合",
-        "[card]が[number]枚以上ある場合",
-        "[card][card][opt_mod][value_type:score][opt_mod]合計が[number]以上",
-        "[player][modifier_card]が[number]枚以上あり、そ[opt_mod]中に[card]を[number]枚以上含む場合",
-        "[card][card][number]枚を[modifier_card]下に置いてもよい",
-        "[card]に{{icon_blade.png|[card]}}を[number]つ以上持つ『[group_name]』[opt_mod]メンバーがいる場合"
-      ],
-      "occurrences": 288,
-      "semantic": "conditional trigger patterns"
-    },
-    "score_effect": {
-      "placeholder": "[score_effect]",
-      "patterns": [
-        "ライブ[opt_mod]合計[value_type:score]を+[number]",
-        "こ[modifier_card][opt_mod][value_type:score]を+[number]",
-        "こ[modifier_card][opt_mod][value_type:score]は[number]になる",
-        "さらにこ[modifier_card][opt_mod][value_type:score]を+[number]"
-      ],
-      "occurrences": 74,
-      "semantic": "score modification effects"
-    },
-    "zone_placement": {
-      "placeholder": "[zone_placement]",
-      "patterns": [
-        "[zone]に加えてもよい。残りを[zone]に置く",
-        "[zone]から[zone]に置く",
-        "[zone]にし、[zone]に置いてもよい",
-        "[zone]に加え、残りを[zone]に置く"
-      ],
-      "occurrences": 71,
-      "semantic": "zone placement effects"
-    },
-    "card_reveal": {
-      "placeholder": "[card_reveal]",
-      "patterns": [
-        "[card]を[number]枚公開",
-        "[card]を[number]枚公開して[zone]に加えてもよい",
-        "[card]を[number]枚公開する"
-      ],
-      "occurrences": 44,
-      "semantic": "card reveal effects"
-    },
-    "card_look": {
-      "placeholder": "[card_look]",
-      "patterns": [
-        "[card]を[number]枚見る",
-        "[modifier_card]上から[card]を[number]枚見る",
-        "[card]から[number]枚見る"
-      ],
-      "occurrences": 58,
-      "semantic": "card look effects"
-    },
-    "position": {
-      "placeholder": "[position]",
-      "patterns": [
-        "一番下",
-        "一番上",
-        "下に置く",
-        "上に置く",
-        "一番上から.*番目に置く"
-      ],
-      "occurrences": 6,
-      "semantic": "position specification (bottom, top, specific position)"
-    },
-    "free_choice": {
-      "placeholder": "[choice]",
-      "patterns": [
-        "好きな",
-        "好きな順番",
-        "好きな[zone]",
-        "好きな[card]"
-      ],
-      "occurrences": 1,
-      "semantic": "free choice patterns (any, any order)"
-    },
-    "mechanic": {
-      "placeholder": "[mechanic]",
-      "patterns": [
-        "バトンタッチ",
-        "エール",
-        "エールにより",
-        "アクティブフェイズ",
-        "置ける"
-      ],
-      "occurrences": 5,
-      "semantic": "special game mechanics (baton touch, encore, active phase, can place)"
-    }
-  },
-  "card_types": [
-    "カード"
-  ],
-  "card_subtypes": [
-    "このメンバー",
-    "エネルギー",
-    "エネルギーカード",
-    "エネルギーデッキ",
-    "ハート",
-    "ブレード",
-    "メンバーカード",
-    "ライブカード",
-    "ライブ中のカード",
-    "成功ライブカード"
-  ],
+
   "zones": [
     "ウェイト",
     "エネルギー置き場",
     "エリア",
     "ステージ",
     "デッキ",
+    "エネルギーデッキ",
     "成功ライブカード置き場",
     "手札",
     "控え室"
   ],
-  "players": [
-    "相手",
-    "自分"
-  ],
+
   "positions": [
-    "【右サイド】",
-    "【左サイド】",
     "センター",
-    "右サイド",
-    "左サイド"
+    "左サイド",
+    "右サイド"
   ],
-  "timing_modifiers": [
-    "2回",
-    "ターン1回",
-    "［ターン1回］"
-  ],
+
+
   "group_names": [
     "5yncri5e!",
     "A-RISE",
@@ -235,10 +44,6 @@
     "DreamBelievers",
     "EMOTION",
     "MY舞☆TONIGHT",
-    "{{jyouji.png|常時}}ライブの合計スコアを+１する。",
-    "{{jyouji.png|常時}}ライブの合計スコアを+２する。",
-    "{{jyouji.png|常時}}ライブの合計スコアを+３する。",
-    "{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。",
     "ウィーン・マルガレーテ",
     "エマ・ヴェルデ",
     "ミア・テイラー",
@@ -264,28 +69,31 @@
     "米女メイ",
     "絢瀬絵里",
     "葉月恋",
-    "藤島慈",
-    "いない",
-    "コスト[number]以下の",
-    "名前が異なる",
-    "コストがそれぞれ異なる",
-    "元々持つ[icon]の数が[number]つ以下の"
+    "藤島慈"
   ],
-  "object_types": [
-    "カード",
-    "メンバー"
+
+  "card_types": [
+    "メンバーカード",
+    "ライブカード",
+    "エネルギーカード"
   ],
-  "verb_conjugations": [
+
+  "action_verbs": [
     "置く",
-    "置いて",
     "引く",
-    "引き",
+    "公開する",
+    "見る",
     "得る",
     "加える",
-    "見る",
-    "公開する",
-    "移動する",
-    "アクティブにする",
-    "登場させる"
+    "登場させる",
+    "アクティブにする"
+  ],
+
+  "optional_markers": [
+    "でもよい",
+    "支払ってもよい",
+    "置いてもよい",
+    "引きでもよい"
   ]
+
 }

@@ -1,0 +1,1023 @@
+================================================================================
+ALL COSTS FROM ABILITIES_EXTRACTED_FROM_CARDS.JSON
+================================================================================
+Total abilities: 613
+
+
+================================================================================
+COST TYPE: discard_from_deck
+Count: 2
+================================================================================
+
+[86] Raw: デッキの上からカードを3枚控え室に置く
+    Structured: {'discard_from_deck': {'count': 3, 'optional': False}}
+    Cards: 4
+
+[147] Raw: デッキの上からカードを3枚控え室に置く
+    Structured: {'discard_from_deck': {'count': 3, 'optional': False}}
+    Cards: 3
+
+================================================================================
+COST TYPE: discard_from_hand
+Count: 104
+================================================================================
+
+[3] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 15
+
+[11] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 6
+
+[12] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 6
+
+[18] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 5
+
+[20] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[22] Raw: 手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[33] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[34] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[41] Raw: 手札のコスト4以下の『Liella!』のメンバーカードを1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False, 'card_type': 'member_card', 'group': 'Liella!'}}
+    Cards: 4
+
+[48] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[51] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[57] Raw: {{center.png|センター}}このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}, 'position': 'center'}
+    Cards: 4
+
+[71] Raw: 手札のライブカードを1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True, 'card_type': 'live_card'}}
+    Cards: 4
+
+[83] Raw: このメンバーをウェイトにするか、手札を1枚控え室に置く
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[88] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[107] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[109] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 4
+
+[111] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[118] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[124] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 3
+
+[125] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 3
+
+[132] Raw: 手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True, 'group': 'DOLLCHESTRA'}}
+    Cards: 3
+
+[136] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[138] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[143] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[145] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[146] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 3
+
+[148] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[150] Raw: 手札の同じグループ名を持つカード2枚を控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 3
+
+[152] Raw: 手札のブレードハートを持たないメンバーカードを2枚まで控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True, 'card_type': 'member_card'}}
+    Cards: 3
+
+[158] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[160] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 3
+
+[161] Raw: 手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 3
+
+[162] Raw: このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 3
+
+[164] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[166] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[174] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[175] Raw: 手札のメンバーカードを1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False, 'card_type': 'member_card'}}
+    Cards: 2
+
+[176] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[177] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[180] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[183] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[185] Raw: 手札を3枚まで控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 3, 'optional': True}}
+    Cards: 2
+
+[187] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[188] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[189] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 2
+
+[190] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[213] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[218] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[237] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[238] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 2
+
+[244] Raw: 手札のライブカードを1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True, 'card_type': 'live_card'}}
+    Cards: 2
+
+[245] Raw: 手札を2枚まで控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 2
+
+[246] Raw: "{{toujyou.png|登場}}手札のライブカードを1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True, 'card_type': 'live_card'}}
+    Cards: 2
+
+[247] Raw: 手札を2枚まで控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 2
+
+[248] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[252] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[254] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[257] Raw: このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[265] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 2
+
+[267] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 2
+
+[270] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[272] Raw: {{center.png|センター}}このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}, 'position': 'center'}
+    Cards: 2
+
+[279] Raw: 手札を3枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 3, 'optional': False}}
+    Cards: 2
+
+[283] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[290] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[304] Raw: 手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[315] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[319] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[345] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[353] Raw: このメンバーをウェイトにし、手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 2
+
+[355] Raw: 手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[359] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[367] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 1
+
+[368] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 1
+
+[369] Raw: 手札の同じユニット名を持つカード2枚を控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 1
+
+[370] Raw: 手札の同じユニット名を持つカード2枚を控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 1
+
+[376] Raw: 手札の「上原歩夢」と「澁谷かのん」と「日野下花帆」を、好きな組み合わせで合計3枚、控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 3, 'optional': True}}
+    Cards: 1
+
+[391] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[392] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 1
+
+[398] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 1
+
+[404] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[405] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[406] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[438] Raw: 手札の「渡辺曜」と「鬼塚夏美」と「大沢瑠璃乃」を、好きな枚数控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[439] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[440] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[441] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[452] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 1
+
+[474] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[476] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 1
+
+[478] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[528] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 1
+
+[529] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[540] Raw: 手札の『蓮ノ空』のメンバーカードを3枚まで控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 3, 'optional': True, 'card_type': 'member_card', 'group': '蓮ノ空'}}
+    Cards: 1
+
+[544] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[546] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[563] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[566] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[569] Raw: 手札の『蓮ノ空』のカードを1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True, 'group': '蓮ノ空'}}
+    Cards: 1
+
+[573] Raw: 手札を1枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 1, 'optional': True}}
+    Cards: 1
+
+[583] Raw: 手札の『蓮ノ空』のカードを2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True, 'group': '蓮ノ空'}}
+    Cards: 1
+
+[589] Raw: 手札を2枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 2, 'optional': False}}
+    Cards: 1
+
+[590] Raw: 手札を2枚控え室に置いてもよい
+    Structured: {'discard_from_hand': {'count': 2, 'optional': True}}
+    Cards: 1
+
+================================================================================
+COST TYPE: energy
+Count: 64
+================================================================================
+
+[6] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 13
+
+[8] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 7
+
+[16] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 3}
+    Cards: 5
+
+[20] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[21] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 4
+
+[24] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 4
+
+[30] Raw: {{icon_energy.png|E}}
+    Structured: {'energy': 1}
+    Cards: 4
+
+[31] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 3}
+    Cards: 4
+
+[32] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 4
+
+[49] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 4
+
+[82] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 4
+
+[84] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 4}
+    Cards: 4
+
+[89] Raw: {{icon_energy.png|E}}
+    Structured: {'energy': 1}
+    Cards: 4
+
+[98] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 4
+
+[102] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する
+    Structured: {'energy': 2, 'reveal': {'source': 'hand', 'optional': False, 'card_type': 'live_card', 'count': 1}}
+    Cards: 4
+
+[111] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[119] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 3
+
+[120] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 3
+
+[127] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 3
+
+[169] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 2
+
+[172] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 2
+
+[182] Raw: {{icon_energy.png|E}}
+    Structured: {'energy': 1}
+    Cards: 2
+
+[183] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[184] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[190] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[192] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 6}
+    Cards: 2
+
+[195] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[196] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 3}
+    Cards: 2
+
+[208] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 4}
+    Cards: 2
+
+[212] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[214] Raw: {{icon_energy.png|E}}
+    Structured: {'energy': 1}
+    Cards: 2
+
+[217] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 2
+
+[222] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 2
+
+[225] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[250] Raw: {{icon_energy.png|E}}
+    Structured: {'energy': 1}
+    Cards: 2
+
+[263] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[286] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 2
+
+[303] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[314] Raw: {{icon_energy.png|E}}このメンバーをウェイトにする
+    Structured: {'energy': 1, 'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[319] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このカードを手札から控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 2
+
+[333] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[335] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[337] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[343] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 2
+
+[352] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 2
+
+[363] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 1
+
+[379] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 1
+
+[390] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[393] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 1
+
+[400] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 1
+
+[401] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[402] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}
+    Structured: {'energy': 2}
+    Cards: 1
+
+[427] Raw: 自分のメインフェイズの場合、{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 1
+
+[469] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 6}
+    Cards: 1
+
+[501] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[508] Raw: {{icon_energy.png|E}}を2つまで支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[526] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[528] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く
+    Structured: {'energy': 2, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 1
+
+[530] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+[541] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 2}
+    Cards: 1
+
+[586] Raw: {{icon_energy.png|E}}を好きな数支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[591] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[598] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+[599] Raw: {{icon_energy.png|E}}支払ってもよい
+    Structured: {'energy': 1}
+    Cards: 1
+
+================================================================================
+COST TYPE: energy_to_energy_deck
+Count: 1
+================================================================================
+
+[348] Raw: エネルギー2枚をエネルギーデッキに置く
+    Structured: {'energy_to_energy_deck': {'count': 2, 'target': 'energy_deck'}}
+    Cards: 2
+
+================================================================================
+COST TYPE: energy_to_member
+Count: 3
+================================================================================
+
+[94] Raw: エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く
+    Structured: {'energy_to_member': {'count': 1, 'source': 'energy_zone', 'target': 'this_member'}}
+    Cards: 4
+
+[141] Raw: エネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く
+    Structured: {'energy_to_member': {'count': 1, 'source': 'energy_zone', 'target': 'this_member'}}
+    Cards: 3
+
+[330] Raw: 自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置く
+    Structured: {'energy_to_member': {'count': 1, 'source': 'energy_zone', 'target': 'this_member'}}
+    Cards: 2
+
+================================================================================
+COST TYPE: hand_to_deck_bottom
+Count: 1
+================================================================================
+
+[36] Raw: 手札のライブカードを1枚公開し、デッキの一番下に置いてもよい
+    Structured: {'reveal': {'source': 'hand', 'optional': False, 'card_type': 'live_card', 'count': 1}, 'hand_to_deck_bottom': {'count': 1, 'card_type': 'live_card', 'optional': True, 'source': 'hand'}}
+    Cards: 4
+
+================================================================================
+COST TYPE: member_to_wait
+Count: 26
+================================================================================
+
+[10] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 6
+
+[19] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 5
+
+[54] Raw: このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 4
+
+[55] Raw: 『μ's』のメンバー1人をウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1, 'group': "μ's"}}
+    Cards: 4
+
+[56] Raw: {{center.png|センター}}メンバー1人をウェイトにする
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1}, 'position': 'center'}
+    Cards: 4
+
+[83] Raw: このメンバーをウェイトにするか、手札を1枚控え室に置く
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}, 'discard_from_hand': {'count': 1, 'optional': False}}
+    Cards: 4
+
+[93] Raw: 【左サイド】{{turn1.png|ターン1回}}このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}, 'position': 'left_side'}
+    Cards: 4
+
+[163] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 3
+
+[232] Raw: このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[235] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[240] Raw: このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[242] Raw: このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[264] Raw: このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1, 'group': '虹ヶ咲', 'exclude_member': True}}
+    Cards: 2
+
+[266] Raw: "{{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバー以外の『虹ヶ咲』のメンバー1人をウェイトにする
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1, 'group': '虹ヶ咲', 'exclude_member': True}}
+    Cards: 2
+
+[273] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[275] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[280] Raw: メンバーを3人までウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 3, 'max': True}}
+    Cards: 2
+
+[288] Raw: {{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1, 'group': 'BiBi'}, 'position': 'center'}
+    Cards: 2
+
+[291] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[308] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[314] Raw: {{icon_energy.png|E}}このメンバーをウェイトにする
+    Structured: {'energy': 1, 'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[323] Raw: このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[350] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[477] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+[480] Raw: このメンバーをウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+[491] Raw: 『虹ヶ咲」のメンバー1人をウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+================================================================================
+COST TYPE: member_to_waitroom
+Count: 9
+================================================================================
+
+[1] Raw: このメンバーをステージから控え室に置く
+    Structured: {'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 27
+
+[2] Raw: このメンバーをステージから控え室に置く
+    Structured: {'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 18
+
+[184] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}、このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[203] Raw: 「鬼塚冬毬」以外の『Liella!』のメンバー1人をステージから控え室に置いてもよい
+    Structured: {'member_to_waitroom': {'target': 'member', 'optional': True, 'count': 1, 'exclude_member': '鬼塚冬毬', 'group': 'Liella!'}}
+    Cards: 2
+
+[251] Raw: このメンバーをステージから控え室に置く
+    Structured: {'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[263] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 2
+
+[505] Raw: このメンバーをステージから控え室に置く
+    Structured: {'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+[530] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}このメンバーをステージから控え室に置く
+    Structured: {'energy': 2, 'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+[545] Raw: このメンバーをステージから控え室に置く
+    Structured: {'member_to_waitroom': {'target': 'this_member', 'optional': False, 'count': 1}}
+    Cards: 1
+
+================================================================================
+COST TYPE: position
+Count: 5
+================================================================================
+
+[56] Raw: {{center.png|センター}}メンバー1人をウェイトにする
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1}, 'position': 'center'}
+    Cards: 4
+
+[57] Raw: {{center.png|センター}}このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}, 'position': 'center'}
+    Cards: 4
+
+[93] Raw: 【左サイド】{{turn1.png|ターン1回}}このメンバーをウェイトにする
+    Structured: {'member_to_wait': {'target': 'this_member', 'optional': False, 'count': 1}, 'position': 'left_side'}
+    Cards: 4
+
+[272] Raw: {{center.png|センター}}このメンバーをウェイトにし、手札を1枚控え室に置く
+    Structured: {'discard_from_hand': {'count': 1, 'optional': False}, 'position': 'center'}
+    Cards: 2
+
+[288] Raw: {{center.png|センター}}『BiBi』のメンバー1人をウェイトにしてもよい
+    Structured: {'member_to_wait': {'target': 'member', 'optional': False, 'count': 1, 'group': 'BiBi'}, 'position': 'center'}
+    Cards: 2
+
+================================================================================
+COST TYPE: reveal
+Count: 7
+================================================================================
+
+[25] Raw: 手札にあるメンバーカードを好きな枚数公開する
+    Structured: {'reveal': {'source': 'hand', 'optional': False, 'card_type': 'member_card', 'count': 'any'}}
+    Cards: 4
+
+[36] Raw: 手札のライブカードを1枚公開し、デッキの一番下に置いてもよい
+    Structured: {'reveal': {'source': 'hand', 'optional': False, 'card_type': 'live_card', 'count': 1}, 'hand_to_deck_bottom': {'count': 1, 'card_type': 'live_card', 'optional': True, 'source': 'hand'}}
+    Cards: 4
+
+[102] Raw: {{icon_energy.png|E}}{{icon_energy.png|E}}手札のライブカードを1枚公開する
+    Structured: {'energy': 2, 'reveal': {'source': 'hand', 'optional': False, 'card_type': 'live_card', 'count': 1}}
+    Cards: 4
+
+[116] Raw: 手札をすべて公開する
+    Structured: {'reveal': {'source': 'hand', 'optional': False, 'count': 'all'}}
+    Cards: 3
+
+[227] Raw: 手札のライブカードを1枚公開する
+    Structured: {'reveal': {'source': 'hand', 'optional': False, 'card_type': 'live_card', 'count': 1}}
+    Cards: 2
+
+[361] Raw: 手札のライブカードを1枚公開してもよい
+    Structured: {'reveal': {'source': 'hand', 'optional': True, 'card_type': 'live_card', 'count': 1}}
+    Cards: 1
+
+[611] Raw: 手札の『Aqours』のカードを1枚公開してもよい
+    Structured: {'reveal': {'source': 'hand', 'optional': True, 'group': 'Aqours', 'count': 1}}
+    Cards: 1
+
+================================================================================
+COST TYPE: waitroom_to_deck_bottom
+Count: 2
+================================================================================
+
+[59] Raw: 控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい
+    Structured: {'waitroom_to_deck_bottom': {'count': 2, 'card_type': 'member_card', 'optional': True, 'order': 'any'}}
+    Cards: 4
+
+[468] Raw: 自分の控え室にある「園田海未」と「津島善子」と「天王寺璃奈」を、合計6枚をシャッフルしてデッキの一番下に置く
+    Structured: {'waitroom_to_deck_bottom': {'count': 6, 'card_type': 'card', 'optional': False}}
+    Cards: 1
+
+================================================================================
+COST TYPE: null (no cost)
+Count: 407
+================================================================================
+
+[4] Raw: None
+    Cards: 15
+
+[5] Raw: None
+    Cards: 15
+
+[7] Raw: None
+    Cards: 7
+
+[9] Raw: None
+    Cards: 7
+
+[13] Raw: None
+    Cards: 6
+
+[14] Raw: None
+    Cards: 5
+
+[15] Raw: None
+    Cards: 5
+
+[17] Raw: None
+    Cards: 5
+
+[23] Raw: None
+    Cards: 4
+
+[26] Raw: None
+    Cards: 4
+
+[27] Raw: None
+    Cards: 4
+
+[28] Raw: None
+    Cards: 4
+
+[29] Raw: None
+    Cards: 4
+
+[35] Raw: None
+    Cards: 4
+
+[37] Raw: None
+    Cards: 4
+
+[38] Raw: None
+    Cards: 4
+
+[39] Raw: None
+    Cards: 4
+
+[40] Raw: None
+    Cards: 4
+
+[42] Raw: None
+    Cards: 4
+
+[43] Raw: None
+    Cards: 4
+
+... and 387 more null costs

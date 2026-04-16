@@ -30,6 +30,241 @@ class SemanticAbility:
     matched_patterns: List[str]
 
 
+class OperationTaxonomy:
+    """Specific operation types for semantic classification"""
+    
+    # Condition types
+    CONDITIONS = {
+        'score_comparison_condition': r'\[value_type:score\].*?(より高い|以上|以下|未満)',
+        'presence_condition': r'(いる|ある)場合',
+        'count_condition': r'\[number\]枚以上|\[number\]枚以下',
+        'zone_condition': r'\[zone_condition\]に|\[zone\]に',
+        'group_condition': r'『\[group_name\]』の'
+    }
+    
+    # Source types
+    SOURCES = {
+        'zone_source': r'\[zone\]から|\[zone_condition\]から',
+        'hand_source': r'手札から',
+        'deck_source': r'山札から|デッキから',
+        'stage_source': r'ステージから',
+        'energy_source': r'エネルギーから',
+        'discard_source': r'控え室から'
+    }
+    
+    # Action types
+    ACTIONS = {
+        'draw_from_zone': r'(引く|加える).*?\[zone\]に',
+        'move_to_zone': r'(移動|置く).*?\[zone\]に',
+        'place_in_zone_state': r'(置く|配置).*?(状態|で)',
+        'grant_score_modifier': r'\[value_type:score\].*?[+-]',
+        'grant_resource': r'(ハート|ブレード|\[heart\]|\[blade\]).*?得る',
+        'activate_card': r'アクティブにする',
+        'deactivate_card': r'ウェイトにする',
+        'reveal_card': r'公開する',
+        'destroy_card': r'(破壊|捨てる)',
+        'gain_life': r'ライフ.*?[+-]'
+    }
+    
+    # Trigger types
+    TRIGGERS = {
+        'movement_trigger': r'移動するたび',
+        'score_threshold_trigger': r'\[value_type:score\].*?(より高い|以上|以下)',
+        'card_play_trigger': r'(登場|プレイ)するたび',
+        'live_start_trigger': r'ライブ開始時',
+        'live_end_trigger': r'ライブ終了時',
+        'live_success_trigger': r'ライブ成功時',
+        'turn_start_trigger': r'ターン開始時',
+        'turn_end_trigger': r'ターン終了時'
+    }
+    
+    @classmethod
+    def classify_operation(cls, template: str, operation_type: str) -> str:
+        """Classify an operation into specific type based on template patterns"""
+        # Check triggers first (they're most specific)
+        for trigger_name, pattern in cls.TRIGGERS.items():
+            if re.search(pattern, template):
+                return trigger_name
+        
+        # Check conditions
+        for condition_name, pattern in cls.CONDITIONS.items():
+            if re.search(pattern, template):
+                return condition_name
+        
+        # Check sources
+        for source_name, pattern in cls.SOURCES.items():
+            if re.search(pattern, template):
+                return source_name
+        
+        # Check actions
+        for action_name, pattern in cls.ACTIONS.items():
+            if re.search(pattern, template):
+                return action_name
+        
+        # Return original operation type if no specific classification found
+        return operation_type
+
+
+class JapaneseGrammarParser:
+    """Parse Japanese grammar structure for context-aware semantic extraction"""
+    
+    # Zone relationship particles
+    ZONE_PARTICLES = {
+        'から': 'from',  # source zone
+        'に': 'to',      # destination zone
+        'で': 'in',      # location/state
+        'の': 'of',      # possession/relationship
+        'を': 'object'   # direct object marker
+    }
+    
+    # Comparison operators
+    COMPARISON_OPERATORS = {
+        'より高い': 'greater_than',
+        'より低い': 'less_than',
+        '以上': 'greater_than_or_equal',
+        '以下': 'less_than_or_equal',
+        '未満': 'less_than',
+        '超える': 'greater_than',
+        '等しい': 'equal'
+    }
+    
+    # Verb patterns for identifying actions
+    VERB_PATTERNS = {
+        'movement': r'(移動|置く|動く|移る)',
+        'add': r'(加える|足す|増やす)',
+        'remove': r'(減らす|除く|捨てる)',
+        'draw': r'(引く|ドロー)',
+        'activate': r'(アクティブ|発動|起動)',
+        'deactivate': r'(ウェイト|休止)',
+        'reveal': r'(公開|見る|確認)',
+        'gain': r'(得る|獲得)',
+        'change': r'(変更|変える|変換)',
+        'destroy': r'(破壊|除去)'
+    }
+    
+    @classmethod
+    def parse_zone_relationships(cls, template: str) -> Dict[str, Any]:
+        """Parse zone relationships using Japanese particles (から, に, で, の, を)"""
+        relationships = {
+            'source_zones': [],
+            'destination_zones': [],
+            'location_zones': [],
+            'possession_zones': [],
+            'objects': []
+        }
+        
+        # Find all zone placeholders
+        zone_pattern = re.compile(r'\[zone\]|\[zone_condition\]')
+        zones = list(zone_pattern.finditer(template))
+        
+        # Analyze context around each zone to determine relationship
+        for i, zone_match in enumerate(zones):
+            zone_text = zone_match.group()
+            start_pos = zone_match.start()
+            end_pos = zone_match.end()
+            
+            # Look ahead for particles
+            context_after = template[end_pos:end_pos + 10]
+            
+            # Look behind for particles
+            context_before = template[max(0, start_pos - 10):start_pos]
+            
+            # Determine relationship based on particles
+            if 'から' in context_after[:5]:
+                relationships['source_zones'].append(zone_text)
+            elif 'に' in context_after[:5]:
+                relationships['destination_zones'].append(zone_text)
+            elif 'で' in context_after[:5]:
+                relationships['location_zones'].append(zone_text)
+            elif 'の' in context_after[:5]:
+                relationships['possession_zones'].append(zone_text)
+            elif 'を' in context_after[:5]:
+                relationships['objects'].append(zone_text)
+        
+        return relationships
+    
+    @classmethod
+    def extract_comparison_operators(cls, template: str) -> Dict[str, Any]:
+        """Extract comparison operators and their targets"""
+        comparisons = []
+        
+        for operator_jp, operator_en in cls.COMPARISON_OPERATORS.items():
+            if operator_jp in template:
+                # Find what's being compared
+                operator_pos = template.find(operator_jp)
+                
+                # Look for the target before the operator
+                target_pattern = re.compile(r'\[([^\]]+)\](.*?)' + re.escape(operator_jp))
+                target_match = target_pattern.search(template)
+                
+                if target_match:
+                    comparisons.append({
+                        'operator': operator_en,
+                        'operator_jp': operator_jp,
+                        'target': target_match.group(1),
+                        'full_match': target_match.group(0)
+                    })
+                else:
+                    comparisons.append({
+                        'operator': operator_en,
+                        'operator_jp': operator_jp,
+                        'target': 'unknown',
+                        'full_match': operator_jp
+                    })
+        
+        return {'comparisons': comparisons}
+    
+    @classmethod
+    def identify_verb_type(cls, template: str) -> str:
+        """Identify the type of verb/action in the template"""
+        for verb_type, pattern in cls.VERB_PATTERNS.items():
+            if re.search(pattern, template):
+                return verb_type
+        return 'unknown'
+    
+    @classmethod
+    def parse_subject_object_verb(cls, template: str) -> Dict[str, Any]:
+        """Parse subject-object-verb relationships in Japanese"""
+        structure = {
+            'subject': None,
+            'objects': [],
+            'verb': None,
+            'verb_type': None,
+            'modifiers': []
+        }
+        
+        # Identify verb
+        structure['verb_type'] = cls.identify_verb_type(template)
+        
+        # Find objects (marked by を)
+        object_pattern = re.compile(r'\[([^\]]+)\](.*?)を')
+        for obj_match in object_pattern.finditer(template):
+            structure['objects'].append(obj_match.group(1))
+        
+        # Find subject (typically at start, marked by は or implicit)
+        subject_pattern = re.compile(r'^\[([^\]]+)\](.*?)は')
+        subject_match = subject_pattern.search(template)
+        if subject_match:
+            structure['subject'] = subject_match.group(1)
+        else:
+            # If no explicit subject, look for first noun phrase
+            first_noun = re.search(r'\[([^\]]+)\]', template)
+            if first_noun:
+                structure['subject'] = first_noun.group(1)
+        
+        return structure
+    
+    @classmethod
+    def parse_grammar_structure(cls, template: str) -> Dict[str, Any]:
+        """Complete grammar structure analysis"""
+        return {
+            'zone_relationships': cls.parse_zone_relationships(template),
+            'comparisons': cls.extract_comparison_operators(template),
+            'subject_object_verb': cls.parse_subject_object_verb(template),
+            'verb_type': cls.identify_verb_type(template)
+        }
+
+
 class PatternBasedSemanticExtractor:
     """Extract semantic structure from templates using pattern rules"""
     
@@ -101,12 +336,14 @@ class PatternBasedSemanticExtractor:
         return variables
     
     def match_core_operation(self, template: str) -> Tuple[str, Dict[str, str]]:
-        """Match template against core operation patterns"""
+        """Match template against core operation patterns and classify specifically"""
         for op_name, patterns in self.compiled_patterns['core_operations'].items():
             for pattern in patterns:
                 if pattern.search(template):
                     variables = self.extract_variables_from_template(template, pattern)
-                    return op_name, variables
+                    # Use specific operation taxonomy for classification
+                    specific_operation = OperationTaxonomy.classify_operation(template, op_name)
+                    return specific_operation, variables
         
         return "unknown", {}
     
@@ -221,11 +458,12 @@ class PatternBasedSemanticExtractor:
         return None
     
     def extract_sequential_operations(self, effect_template: str) -> List[Dict[str, Any]]:
-        """Extract sequential operations from effect template"""
+        """Extract sequential operations from effect template with specific classification and grammar analysis"""
         sequential_patterns = self.compiled_patterns['wrappers']['sequential_operations']
         operations = []
         
         # Split by multiple delimiters for sequential operations
+        # Skip Japanese parentheses （ and ） to avoid fragment issues
         delimiters = ['、', '。', '：']
         parts = [effect_template]
         for delimiter in delimiters:
@@ -239,14 +477,55 @@ class PatternBasedSemanticExtractor:
         for part in parts:
             part = part.strip()
             if part:  # Skip empty parts
-                # Check for movement trigger patterns first (before core operation matching)
-                if '移動するたび' in part:
-                    operation = "movement_trigger"
-                    variables = self.extract_variables_from_template(part, re.compile(r'\[card\]|\[zone\]'))
-                else:
-                    operation, variables = self.match_core_operation(part)
+                # Skip invalid fragments
+                if part in ['(', ')', 'その後', '。', '、']:
+                    continue
                 
-                # If unknown, try to classify based on pattern
+                operation, variables = self.match_core_operation(part)
+                
+                # Add grammar structure analysis using JapaneseGrammarParser
+                grammar_structure = JapaneseGrammarParser.parse_grammar_structure(part)
+                
+                # Use grammar analysis to improve classification (PRIORITIZE OVER PATTERN MATCHING)
+                verb_type = grammar_structure.get('verb_type', 'unknown')
+                zone_rel = grammar_structure.get('zone_relationships', {})
+                
+                # Override operation based on grammar analysis if it provides better classification
+                if verb_type != 'unknown':
+                    if verb_type == 'add' and zone_rel.get('source_zones') and zone_rel.get('destination_zones'):
+                        operation = 'add_card_to_zone'
+                    elif verb_type == 'add':
+                        operation = 'gain_resource'
+                    elif verb_type == 'movement' and zone_rel.get('source_zones') and zone_rel.get('destination_zones'):
+                        operation = 'move_card'
+                    elif verb_type == 'movement':
+                        operation = 'reposition'
+                    elif verb_type == 'draw':
+                        operation = 'draw_card'
+                    elif verb_type == 'activate':
+                        operation = 'activate_card'
+                    elif verb_type == 'deactivate':
+                        operation = 'deactivate_card'
+                    elif verb_type == 'destroy':
+                        operation = 'destroy_card'
+                    elif verb_type == 'gain':
+                        operation = 'gain_effect'
+                    elif verb_type == 'change':
+                        operation = 'change_state'
+                    else:
+                        operation = verb_type + '_action'
+                elif zone_rel.get('source_zones') and zone_rel.get('destination_zones'):
+                    operation = 'move_between_zones'
+                elif zone_rel.get('destination_zones'):
+                    operation = 'move_to_zone'
+                elif zone_rel.get('source_zones'):
+                    operation = 'from_zone_source'
+                
+                # If still unknown, try to classify using OperationTaxonomy
+                if operation == "unknown":
+                    operation = OperationTaxonomy.classify_operation(part, operation)
+                
+                # If still unknown, try pattern-based classification
                 if operation == "unknown":
                     # Check for resource selection patterns
                     if re.search(r'\[heart\]+\か', part):
@@ -266,15 +545,20 @@ class PatternBasedSemanticExtractor:
                         variables = self.extract_variables_from_template(part, re.compile(r'\[heart\]'))
                     # Check for condition patterns
                     elif '場合' in part or 'とき' in part:
-                        operation = "condition"
+                        operation = OperationTaxonomy.classify_operation(part, "condition")
                         variables = self.extract_variables_from_template(part, re.compile(r'\[card\]|\[zone\]|\[player\]'))
+                    # Check for transition patterns
+                    elif 'その後' in part:
+                        operation = "transition_clause"
+                        variables = {}
                 
                 operations.append({
                     "step": step + 1,
                     "operation": operation,
                     "variables": variables,
                     "type": "sequential",
-                    "text": part
+                    "text": part,
+                    "grammar_analysis": grammar_structure
                 })
                 step += 1
         
