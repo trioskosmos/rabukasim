@@ -2,8 +2,10 @@
 import re
 
 try:
-    from .condition_parser import parse_condition
+    from .condition_parser import parse_condition, _extract_target as _extract_condition_target
+    from .tree_utils import annotate_tree
     from .parser_utils import (
+        extract_all_quoted_names,
         extract_all_groups,
         extract_blade_count,
         extract_cost,
@@ -18,8 +20,10 @@ try:
         strip_suffix_period,
     )
 except ImportError:
-    from condition_parser import parse_condition
+    from condition_parser import parse_condition, _extract_target as _extract_condition_target
+    from tree_utils import annotate_tree
     from parser_utils import (
+        extract_all_quoted_names,
         extract_all_groups,
         extract_blade_count,
         extract_cost,
@@ -88,11 +92,98 @@ def _is_duration_only_action(action):
     return isinstance(action, dict) and set(action.keys()) == {'duration'}
 
 
+def _is_multiplier_only_action(action):
+    """Check if action is only a multiplier modifier."""
+    return isinstance(action, dict) and set(action.keys()) <= {'multiplier', 'per_unit', 'unit_type', 'target'}
+
+
+def _is_timing_only_action(action):
+    """Check if action is only a timing modifier."""
+    return isinstance(action, dict) and set(action.keys()) == {'timing'}
+
+
 def _apply_target_only_action(action, target_action):
     if _is_target_only_action(action) and isinstance(target_action, dict) and 'target' not in target_action:
         target_action['target'] = action['target']
         return True
     return False
+
+
+def _merge_modifier_actions(actions):
+    """Merge modifier-only actions (duration, multiplier, timing, target) with their target actions."""
+    if not actions or not isinstance(actions, list):
+        return actions
+    
+    merged = []
+    i = 0
+    while i < len(actions):
+        current = actions[i]
+        
+        # Skip raw_text actions
+        if not isinstance(current, dict) or 'raw_text' in current:
+            merged.append(current)
+            i += 1
+            continue
+        
+        # Check if this is a modifier-only action
+        is_modifier = (
+            _is_duration_only_action(current) or
+            _is_multiplier_only_action(current) or
+            _is_timing_only_action(current) or
+            _is_target_only_action(current)
+        )
+        
+        if is_modifier:
+            # Find the next actual action to merge with
+            j = i + 1
+            while j < len(actions):
+                next_action = actions[j]
+                if isinstance(next_action, dict) and 'raw_text' not in next_action and 'action' in next_action:
+                    # Merge modifier into this action
+                    if _is_duration_only_action(current):
+                        next_action['duration'] = current['duration']
+                    elif _is_multiplier_only_action(current):
+                        next_action.update({k: v for k, v in current.items()})
+                    elif _is_timing_only_action(current):
+                        next_action['timing'] = current['timing']
+                    elif _is_target_only_action(current):
+                        if 'target' not in next_action:
+                            next_action['target'] = current['target']
+                    # Skip the modifier and continue with the merged action
+                    i = j
+                    break
+                elif isinstance(next_action, dict) and 'raw_text' not in next_action and 'actions' in next_action:
+                    # Merge modifier into the first action of nested actions
+                    nested_actions = next_action['actions']
+                    if nested_actions and isinstance(nested_actions, list) and len(nested_actions) > 0:
+                        first_nested = nested_actions[0]
+                        if isinstance(first_nested, dict) and 'action' in first_nested:
+                            if _is_duration_only_action(current):
+                                first_nested['duration'] = current['duration']
+                            elif _is_multiplier_only_action(current):
+                                first_nested.update({k: v for k, v in current.items()})
+                            elif _is_timing_only_action(current):
+                                first_nested['timing'] = current['timing']
+                            elif _is_target_only_action(current):
+                                if 'target' not in first_nested:
+                                    first_nested['target'] = current['target']
+                    i = j
+                    break
+                else:
+                    # Can't merge, keep both
+                    merged.append(current)
+                    i = j
+                    break
+            else:
+                # No action found to merge with, keep modifier
+                merged.append(current)
+                i += 1
+        else:
+            # This is a regular action, keep it
+            merged.append(current)
+            i += 1
+    
+    return merged
 
 
 def _attach_player_choice(result, text):
@@ -105,13 +196,45 @@ def _attach_player_choice(result, text):
 
 def _extract_optional_payment(text):
     if '支払ってもよい' not in text and '支払った' not in text:
+        if text.startswith('手札を1枚控え室に置いてもよい'):
+            return {
+                'action': 'discard_to_waitroom',
+                'source': 'hand',
+                'count': 1,
+                'optional': True,
+                'text': '手札を1枚控え室に置いてもよい',
+            }, text
+        if text.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
+            return {
+                'action': 'may_place_card',
+                'target': 'self',
+                'source': 'deck_top',
+                'optional': True,
+                'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
+            }, text
         return None, text
 
     prefix, suffix = (text.split('：', 1) + [''])[:2]
     if '支払ってもよい' not in prefix and '支払った' not in prefix:
+        if prefix.startswith('手札を1枚控え室に置いてもよい'):
+            return {
+                'action': 'discard_to_waitroom',
+                'source': 'hand',
+                'count': 1,
+                'optional': True,
+                'text': '手札を1枚控え室に置いてもよい',
+            }, suffix.strip() if suffix else text
+        if prefix.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
+            return {
+                'action': 'may_place_card',
+                'target': 'self',
+                'source': 'deck_top',
+                'optional': True,
+                'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
+            }, suffix.strip() if suffix else text
         return None, text
 
-    payment = {'optional': '支払ってもよい' in prefix}
+    payment = {'optional': '支払ってもよい' in prefix, 'text': prefix.strip()}
     if 'icon_energy' in prefix or 'エネルギー' in prefix:
         payment['resource'] = 'energy'
     elif 'ブレード' in prefix:
@@ -135,15 +258,98 @@ def _merge_subject_stub(parts):
 
 
 def _raw_text(text):
-    return {'raw_text': text}
+    return {'raw_text': text, 'text': text}
 
 
 def _note_action(text):
     return {'action': 'note', 'text': text}
 
 
+def _normalize_parsed_tree(value):
+    """Fill obvious defaults on parsed nodes without changing the shape."""
+    if isinstance(value, dict):
+        action = value.get('action')
+        text = value.get('text', '')
+        if action == 'gain_resource':
+            if 'resource' not in value:
+                if 'ブレード' in text:
+                    value['resource'] = 'blade'
+                elif 'ハート' in text or value.get('heart_types'):
+                    value['resource'] = 'heart'
+                elif 'エネルギー' in text:
+                    value['resource'] = 'energy'
+            if 'resource_count' not in value and 'count' in value:
+                value['resource_count'] = value['count']
+        elif action == 'add_to_hand':
+            if 'card_type' not in value:
+                if 'メンバーカード' in text:
+                    value['card_type'] = 'member_card'
+                elif 'ライブカード' in text:
+                    value['card_type'] = 'live_card'
+                elif 'カード' in text:
+                    value['card_type'] = 'card'
+            if 'group' not in value:
+                group_match = re.search(r'『(.+?)』', text)
+                if group_match:
+                    value['group'] = group_match.group(1)
+        elif action == 'draw_cards' and 'count' not in value:
+            value['count'] = 1
+        elif action == 'look_at_cards' and 'count' not in value:
+            count_match = re.search(r'カードを(\d+)枚', text)
+            if count_match:
+                value['count'] = int(count_match.group(1))
+            else:
+                value['count'] = 1
+        elif action == 'place_card' and 'card_type' not in value:
+            if 'メンバーカード' in text:
+                value['card_type'] = 'member_card'
+            elif 'ライブカード' in text:
+                value['card_type'] = 'live_card'
+            elif 'エネルギー' in text:
+                value['card_type'] = 'energy_card'
+            elif 'エネルギーカード' in text:
+                value['card_type'] = 'energy_card'
+            elif 'カード' in text:
+                value['card_type'] = 'card'
+            else:
+                value['card_type'] = 'card'
+        elif action == 'deploy_to_stage':
+            if 'target' not in value:
+                if '相手' in text:
+                    value['target'] = 'opponent'
+                else:
+                    value['target'] = 'self'
+            if 'card_type' not in value:
+                if 'メンバーカード' in text:
+                    value['card_type'] = 'member_card'
+                elif 'ライブカード' in text:
+                    value['card_type'] = 'live_card'
+                elif 'エネルギーカード' in text:
+                    value['card_type'] = 'energy_card'
+        elif action == 'member_to_wait':
+            if 'target' not in value:
+                if '相手' in text or text.startswith('自身のステージ'):
+                    value['target'] = 'opponent'
+                elif '自分' in text or 'このメンバー' in text:
+                    value['target'] = 'self'
+            if 'source' not in value:
+                value['source'] = 'stage'
+        for item in value.values():
+            _normalize_parsed_tree(item)
+    elif isinstance(value, list):
+        for item in value:
+            _normalize_parsed_tree(item)
+    return value
+
+
+def _annotate_return(fn):
+    def wrapper(text, *args, **kwargs):
+        return _normalize_parsed_tree(annotate_tree(fn(text, *args, **kwargs), text))
+    return wrapper
+
+
 def _select_member_action(text, *, target=None):
-    result = {'action': 'select_member'}
+    result = {'action': 'select_member', 'text': text}
     if target:
         result['target'] = target
     group = extract_group_name(text)
@@ -165,7 +371,7 @@ def _select_member_action(text, *, target=None):
 
 
 def _move_member_action(text):
-    result = {'action': 'move_member'}
+    result = {'action': 'move_member', 'text': text}
     if 'このメンバーがいたエリア' in text:
         result['source'] = 'origin_area'
     if 'そのエリア' in text:
@@ -203,7 +409,13 @@ def _set_action_or_raw(result, text, *, key='action', merge_position=False):
         action = _normalize_action_shape(action)
         if merge_position:
             merge_position_requirement(result, action)
-        result[key] = action
+        if isinstance(action, dict) and 'actions' in action and 'action' not in action:
+            result['actions'] = action['actions']
+            for item_key, item_value in action.items():
+                if item_key != 'actions' and item_key not in result:
+                    result[item_key] = item_value
+        else:
+            result[key] = action
     else:
         result[key] = _raw_text(text)
     return result[key]
@@ -215,29 +427,11 @@ def _append_action_or_raw(actions, text):
     action = parse_effect_backwards(text)
     if _is_parsed_action(action):
         action = _normalize_action_shape(action)
+    if _is_parsed_action(action) and isinstance(action, dict) and 'actions' in action and 'action' not in action:
+        actions.extend(action['actions'])
+        return actions[-1] if actions else None
     actions.append(action if _is_parsed_action(action) else _raw_text(text))
     return actions[-1]
-
-
-def _prune_empty_raw_nodes(value):
-    if isinstance(value, dict):
-        keys_to_delete = []
-        for key, item in value.items():
-            if isinstance(item, dict) and item.get('raw_text') == '':
-                keys_to_delete.append(key)
-            else:
-                _prune_empty_raw_nodes(item)
-        for key in keys_to_delete:
-            del value[key]
-    elif isinstance(value, list):
-        items_to_keep = []
-        for item in value:
-            if isinstance(item, dict) and item.get('raw_text') == '':
-                continue
-            _prune_empty_raw_nodes(item)
-            items_to_keep.append(item)
-        value[:] = items_to_keep
-    return value
 
 
 def _normalize_action_shape(action):
@@ -309,6 +503,7 @@ def _assign_sequence_actions(result, action_parts):
 def _assign_ability_gain(result, ability_text):
     result['action'] = 'gain_ability'
     result['ability'] = ability_text
+    result['text'] = ability_text
     return result
 
 
@@ -334,6 +529,28 @@ def _strip_waitroom_source(text, result):
 def _extract_count_value_from_heart_requirement(text):
     match = re.search(r'必要ハートに.*?を(\d+)以上含む', text)
     return int(match.group(1)) if match else None
+
+
+def _split_leading_condition_clause(text):
+    """Split a sentence that starts with a condition clause into condition and action parts."""
+    text = text.strip()
+    best_idx = None
+    best_marker = None
+    for marker in ('場合', 'とき', 'かぎり', 'なら'):
+        idx = text.find(marker)
+        if idx <= 0:
+            continue
+        suffix = text[idx + len(marker):].lstrip()
+        if not suffix.startswith('、'):
+            continue
+        if best_idx is None or idx < best_idx:
+            best_idx = idx
+            best_marker = marker
+    if best_idx is None:
+        return None, None
+    condition_part = text[:best_idx + len(best_marker)].strip()
+    action_part = text[best_idx + len(best_marker):].lstrip().lstrip('、').strip()
+    return condition_part, action_part
 
 
 def _extract_ability_gain(text):
@@ -445,6 +662,7 @@ def _match_complex_three_part_condition(text):
     return result
 
 
+@_annotate_return
 def parse_effect_backwards(text):
     """Parse text backwards to extract action and variables."""
     result = {}
@@ -453,6 +671,18 @@ def parse_effect_backwards(text):
     payment, text = _extract_optional_payment(text)
     if payment:
         result['payment'] = payment
+
+    condition_part, action_part = _split_leading_condition_clause(text)
+    if condition_part and action_part:
+        condition = parse_condition(condition_part)
+        if condition:
+            result['condition'] = condition
+        action = parse_effect_backwards(action_part)
+        if _is_parsed_action(action):
+            result['action'] = action
+        else:
+            result['action'] = _raw_text(action_part)
+        return result
     
     # Check for ability gain pattern first: "「...」を得る"
     if '「' in text and '」を得る' in text:
@@ -464,6 +694,25 @@ def parse_effect_backwards(text):
                 'ability': ability_text
             }
             return result
+
+    if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
+        result['actions'] = [
+            {
+                'action': 'choose_heart_color',
+                'choice': True,
+                'count': 1,
+                'text': '好きなハートの色を1つ指定する',
+            },
+            {
+                'action': 'gain_resource',
+                'resource': 'heart',
+                'resource_count': 1,
+                'count': 1,
+                'source': 'chosen_heart',
+                'text': 'そのハートを1つ得る',
+            },
+        ]
+        return result
     
     # Check for blade transformation pattern (e.g., "すべて[青ブレード]になる")
     if 'すべて' in text and 'になる' in text:
@@ -482,6 +731,43 @@ def parse_effect_backwards(text):
             result['count'] = int(match.group(1))
             result['source'] = 'deck_top'
             return result
+    
+    # Check for "デッキの上に置く" (place on deck) pattern
+    if 'デッキの上に置く' in text:
+        result['action'] = 'place_on_deck'
+        result['destination'] = 'deck_top'
+        if '好きな枚数' in text:
+            result['up_to'] = True
+        if '好きな順番' in text:
+            result['order'] = 'any'
+        return result
+
+    # Check for "デッキの一番下に置く" (place on bottom of deck) pattern
+    if 'デッキの一番下に置く' in text or 'デッキの下に置く' in text:
+        result['action'] = 'place_card'
+        result['destination'] = 'deck_bottom'
+        if '好きな枚数' in text:
+            result['up_to'] = True
+        if '好きな順番' in text:
+            result['order'] = 'any'
+        if 'メンバーカード' in text:
+            result['card_type'] = 'member_card'
+        elif 'ライブカード' in text:
+            result['card_type'] = 'live_card'
+        elif 'エネルギーカード' in text:
+            result['card_type'] = 'energy_card'
+        count_match = re.search(r'([\d０-９]+)枚', text)
+        if count_match:
+            result['count'] = _normalized_int(count_match.group(1))
+        elif '1枚' in text:
+            result['count'] = 1
+        if 'そのプレイヤー' in text:
+            result['target'] = 'selected_player'
+        elif '相手' in text:
+            result['target'] = 'opponent'
+        elif '自分' in text:
+            result['target'] = 'self'
+        return result
     
     # Check for "ポジションチェンジさせる" (position change) pattern
     if 'ポジションチェンジさせる' in text:
@@ -618,6 +904,34 @@ def parse_effect_backwards(text):
             result['count'] = 1
         return result
 
+    if 'これにより控え室に置いたカードと同じ枚数' in text and '手札に加える' in text:
+        result['action'] = 'add_to_hand'
+        result['count'] = 'discarded_count'
+        result['source'] = 'waitroom'
+        if 'ライブカード' in text:
+            result['card_type'] = 'live_card'
+        elif 'メンバーカード' in text:
+            result['card_type'] = 'member_card'
+        else:
+            result['card_type'] = 'card'
+        return result
+
+    if 'そのライブカードを手札に加える' in text:
+        result['action'] = 'add_to_hand'
+        result['count'] = 1
+        result['card_type'] = 'live_card'
+        result['source'] = 'waitroom'
+        result['target'] = 'self'
+        return result
+
+    if 'そのメンバーカードを手札に加える' in text:
+        result['action'] = 'add_to_hand'
+        result['count'] = 1
+        result['card_type'] = 'member_card'
+        result['source'] = 'waitroom'
+        result['target'] = 'self'
+        return result
+
     if 'ライブの合計スコアを－' in text and '０未満にはならない' in text:
         result['action'] = 'reduce_score'
         match = re.search(r'ライブの合計スコアを－([\d０-９]+)する', text)
@@ -684,9 +998,8 @@ def parse_effect_backwards(text):
     cost_total_match = re.search(r'(それらのカード|公開したカード|それら)のコストの合計', text)
     if cost_total_match:
         result['condition'] = {
-            'type': 'cost_total',
+            'type': 'cost_total_equal',
             'reference': cost_total_match.group(1),  # "それらのカード" or "公開したカード"
-            'operator': '==',
         }
         result['cost_reference'] = True  # Flag indicating this references cost cards
         
@@ -730,6 +1043,29 @@ def parse_effect_backwards(text):
         result['choice'] = True
         result['options'] = ['self', 'opponent']
         text = text.replace('自分か相手を選ぶ。', '', 1).replace('自分か相手を選ぶ', '', 1).strip()
+
+    # High-priority full pattern: choose a player, place a card on the bottom of that player's
+    # deck, then draw. This must run before the generic "場合" splitter so "そうした場合" does
+    # not get misread as a condition marker.
+    if 'そのプレイヤーの控え室にあるライブカードを1枚' in text and 'そのプレイヤーのデッキの一番下に置く' in text and 'そうした場合' in text and 'カードを1枚引く' in text:
+        first_part, second_part = text.split('そうした場合', 1)
+        result['choice'] = True
+        result['options'] = ['self', 'opponent']
+        result['actions'] = [{
+            'action': 'place_card',
+            'source': 'waitroom',
+            'target': 'selected_player',
+            'destination': 'deck_bottom',
+            'card_type': 'live_card',
+            'count': 1,
+            'text': first_part.strip('。 、'),
+        }]
+        second_action = parse_effect_backwards(second_part.strip('。 、'))
+        if _is_parsed_action(second_action):
+            result['actions'].append(second_action)
+        else:
+            result['actions'].append(_raw_text(second_part.strip('。 、')))
+        return result
 
     if text in ('のみ起動できる', 'のみ発動する', 'のみ起動できる。', 'のみ発動する。'):
         result['action'] = 'activation_restriction'
@@ -1046,9 +1382,61 @@ def parse_effect_backwards(text):
         
         # Remove the per-unit clause and continue parsing
         text = re.sub(r'.*?につき、', '', text).strip()
+    if not text:
+        return result
+
+    if text.startswith('手札を1枚控え室に置いてもよい'):
+        result['action'] = 'discard_to_waitroom'
+        result['count'] = 1
+        result['source'] = 'hand'
+        result['optional'] = True
+        return result
+
+    if 'このメンバーをウェイトにし' in text or 'このメンバーをウェイトにする' in text:
+        result['action'] = 'member_to_wait'
+        result['target'] = 'self'
+        result['source'] = 'stage'
+        if 'このメンバー以外' in text:
+            result['target'] = 'selected_member'
+        return result
+
+    if 'ライブの合計スコアを－' in text or 'ライブの合計スコアを-' in text:
+        result['action'] = 'reduce_score'
+        match = re.search(r'ライブの合計スコアを[－-]([\d０-９]+)する', text)
+        if match:
+            result['amount'] = _normalized_int(match.group(1))
+        else:
+            result['amount'] = 1
+        return result
+
+    if '手札の「' in text and '控え室に置いてもよい' in text:
+        result['action'] = 'may_discard_to_waitroom'
+        result['optional'] = True
+        result['source'] = 'hand'
+        names = extract_all_quoted_names(text)
+        if names:
+            result['card_names'] = names
+        count_match = re.search(r'好きな枚数|([\d０-９]+)枚', text)
+        if count_match and count_match.group(1):
+            result['count'] = _normalized_int(count_match.group(1))
+        return result
+
+    if text.startswith('手札の「') and '」を' in text:
+        names = extract_all_quoted_names(text)
+        if names:
+            result['action'] = 'select_card'
+            result['source'] = 'hand'
+            result['card_names'] = names
+            if '好きな枚数' in text:
+                result['up_to'] = True
+            return result
+
+    if '自分のステージのメンバー1人は' in text:
+        result['target'] = 'selected_member'
+        text = text.replace('自分のステージのメンバー1人は', '').strip('、')
         if not text:
             return result
-    
+
     # Check for parenthetical notes (text entirely wrapped in parentheses)
     # Handle both cases: period inside or outside parentheses
     if (text.startswith('(') and (text.endswith(')') or text.endswith(')。'))) or (text.startswith('（') and (text.endswith('）') or text.endswith('）。'))):
@@ -1061,6 +1449,35 @@ def parse_effect_backwards(text):
         result['action'] = 'cannot_baton_touch'
         return result
     
+    # Check for area selection pattern (若菜四季 case)
+    if '登場したエリアとは別の自分のエリア1つを選ぶ' in text or 'いるエリアとは別の自分のエリア1つを選ぶ' in text:
+        result['action'] = 'select_area'
+        result['source'] = 'stage'
+        result['exclude'] = 'deployed_area'
+        result['count'] = 1
+        result['target'] = 'self'
+        return result
+
+    if 'エネルギーカード' in text and ('ウェイト状態で置く' in text or 'アクティブ状態で置く' in text or 'ウェイト状態で' in text or 'アクティブ状態で' in text):
+        state = 'wait' if 'ウェイト状態' in text else 'active'
+        result['action'] = 'place_card'
+        result['card_type'] = 'energy_card'
+        result['state'] = state
+        count_match = re.search(r'([\d０-９]+)枚', text)
+        if count_match:
+            result['count'] = _normalized_int(count_match.group(1))
+        return result
+    
+    # Check for card selection by name pattern (鬼塚冬毬 case)
+    if 'カード名が異なる' in text and 'ライブカード' in text:
+        result['action'] = 'select_card'
+        result['source'] = 'waitroom' if '控え室' in text else None
+        result['card_type'] = 'live_card'
+        result['selection_criteria'] = 'different_names'
+        count_match = re.search(r'(\d+)\s*枚選ぶ', text)
+        result['count'] = int(count_match.group(1)) if count_match else 1
+        return result
+    
     # Check for blade count condition (e.g., "元々持つ{{icon_blade.png|ブレード}}の数が1つ以下")
     blade_condition_match = re.search(r'元々持つ.*?ブレード.*?の数が(\d+)以下', text)
     if blade_condition_match:
@@ -1071,6 +1488,13 @@ def parse_effect_backwards(text):
         }
         # Remove the blade count condition from text
         text = re.sub(r'元々持つ.*?ブレード.*?の数が\d+以下', '', text).strip()
+
+    # Check for explicit energy reduction pattern (e.g., "{{icon_energy.png|E}}減る")
+    if '{{icon_energy.png|E}}' in text and '減る' in text:
+        result['action'] = 'reduce_cost'
+        result['resource'] = 'energy'
+        result['amount'] = text.count('{{icon_energy.png|E}}') or 1
+        return result
     
     # Find the action by checking from the end backwards
     for action, action_type in action_patterns.items():
@@ -1094,6 +1518,17 @@ def parse_effect_backwards(text):
         if 'アクティブ状態の' in text:
             result['source_state'] = 'active'
 
+    # Extract heart type for gain_resource actions
+    if result.get('action') == 'gain_resource':
+        if '{{icon_all.png|ハート}}' in text:
+            result['heart_type'] = 'all'
+        elif '{{icon_any.png|ハート}}' in text:
+            result['heart_type'] = 'any'
+        elif '{{heart_' in text:
+            heart_types = extract_heart_types(text)
+            if heart_types:
+                result['heart_types'] = heart_types
+
     if not result:
         result['raw_text'] = text
     
@@ -1102,6 +1537,11 @@ def parse_effect_backwards(text):
 def parse_effect_context_backwards(context):
     """Parse context backwards to extract variables using utility functions."""
     variables = {}
+    
+    # Extract target (self/opponent/both)
+    target = _extract_condition_target(context)
+    if target:
+        variables['target'] = target
     
     # Extract count (e.g., "1枚", "2枚")
     count = extract_count(context)
@@ -1191,7 +1631,9 @@ def parse_effect_context_backwards(context):
         variables['cost_limit'] = cost_limit
     
     # Extract target (e.g., "相手の", "自分の")
-    if 'そのプレイヤー' in context:
+    if ('自分の' in context and '相手の' in context) or '自分と相手' in context or '自分と相手の' in context:
+        variables['target'] = 'both'
+    elif 'そのプレイヤー' in context:
         variables['target'] = 'selected_player'
     elif '相手' in context:
         variables['target'] = 'opponent'
@@ -1247,10 +1689,46 @@ def parse_effect_context_backwards(context):
     
     return variables
 
+@_annotate_return
 def parse_conditional_effect(text):
     """Parse conditional effect with condition marker."""
     result = {}
     text = text.strip()
+
+    # Specific "choose a player, put a card on the bottom of that player's deck, then draw"
+    # pattern. This needs to be handled before the generic conditional split so
+    # "そうした場合" doesn't get treated as a standalone condition fragment.
+    if (
+        '自分か相手を選ぶ' in text
+        and 'そのプレイヤーの控え室にあるライブカードを1枚' in text
+        and 'そのプレイヤーのデッキの一番下に置く' in text
+        and 'そうした場合' in text
+        and 'カードを1枚引く' in text
+    ):
+        choice_text = text
+        if '自分か相手を選ぶ' in choice_text and '：' in choice_text and choice_text.index('：') < choice_text.index('自分か相手を選ぶ'):
+            choice_text = choice_text.split('：', 1)[1].strip()
+        choice_text = choice_text.replace('自分か相手を選ぶ。', '', 1).replace('自分か相手を選ぶ', '', 1).strip()
+        first_part, second_part = choice_text.split('そうした場合', 1)
+        result['choice'] = True
+        result['options'] = ['self', 'opponent']
+        result['actions'] = [
+            {
+                'action': 'place_card',
+                'source': 'waitroom',
+                'target': 'selected_player',
+                'destination': 'deck_bottom',
+                'card_type': 'live_card',
+                'count': 1,
+                'text': first_part.strip('。 、'),
+            }
+        ]
+        second_action = parse_effect_backwards(second_part.strip('。 、'))
+        if _is_parsed_action(second_action):
+            result['actions'].append(second_action)
+        else:
+            result['actions'].append(_raw_text(second_part.strip('。 、')))
+        return result
 
     if '選んだエリアにメンバーがいる場合' in text:
         result['condition'] = {
@@ -1301,9 +1779,43 @@ def parse_conditional_effect(text):
         if _is_parsed_action(first_action):
             result['actions'].append(first_action)
         else:
-            result['actions'].append(_raw_text(first_part.strip('。 、')))
+            inferred_first = {}
+            if isinstance(first_action, dict):
+                inferred_first.update({k: v for k, v in first_action.items() if k != 'raw_text'})
+            if 'デッキの一番下に置く' in first_part or 'デッキの下に置く' in first_part:
+                inferred_first.setdefault('action', 'place_card')
+                inferred_first.setdefault('destination', 'deck_bottom')
+                if 'ライブカード' in first_part:
+                    inferred_first.setdefault('card_type', 'live_card')
+                elif 'メンバーカード' in first_part:
+                    inferred_first.setdefault('card_type', 'member_card')
+                elif 'エネルギーカード' in first_part:
+                    inferred_first.setdefault('card_type', 'energy_card')
+                if '1枚' in first_part and 'count' not in inferred_first:
+                    inferred_first['count'] = 1
+                if 'そのプレイヤー' in first_part:
+                    inferred_first.setdefault('target', 'selected_player')
+                elif '相手' in first_part:
+                    inferred_first.setdefault('target', 'opponent')
+                elif '自分' in first_part:
+                    inferred_first.setdefault('target', 'self')
+                if 'source' not in inferred_first and '控え室' in first_part:
+                    inferred_first['source'] = 'waitroom'
+                result['actions'].append(inferred_first if inferred_first else _raw_text(first_part.strip('。 、')))
+            else:
+                result['actions'].append(_raw_text(first_part.strip('。 、')))
         second_action = parse_effect_backwards(second_part.strip('。 、'))
         if _is_parsed_action(second_action):
+            if (
+                isinstance(first_action, dict)
+                and first_action.get('target') == 'selected_player'
+                and second_action.get('action') in {'may_place_card', 'place_card', 'discard_to_waitroom'}
+                and 'target' not in second_action
+                and ('そのカード' in second_part or 'そのプレイヤー' in second_part)
+            ):
+                second_action['target'] = 'selected_player'
+                if second_action.get('action') in {'may_place_card', 'place_card'} and 'source' not in second_action:
+                    second_action['source'] = 'looked_at_cards'
             result['actions'].append(second_action)
         else:
             result['actions'].append(_raw_text(second_part.strip('。 、')))
@@ -1375,36 +1887,41 @@ def parse_conditional_effect(text):
     # Split on condition markers
     condition_markers = ['なら', '場合', 'たび']
     for marker in condition_markers:
+        if marker == '場合' and 'そうした場合' in text:
+            continue
         if marker in text:
             parts = text.split(marker, 1)
-            if len(parts) == 2:
-                condition_part = parts[0].strip()
-                action_part = parts[1].strip()
-                
-                # Check if action part contains only activation restriction (e.g., "のみ起動できる")
-                if action_part in ['のみ起動できる', 'のみ発動する', 'のみ起動できる。', 'のみ発動する。）'] or action_part.replace('。', '').replace('）', '') in ['のみ起動できる', 'のみ発動する']:
-                    # This is an activation restriction, add it to the condition
-                    result['activation_restriction'] = 'only_this_card'
-                    # Parse the condition part as the action (since it's actually the effect)
-                    action = parse_effect_backwards(condition_part)
-                    if action:
-                        result['action'] = action
-                    return result
-                
-                # Parse condition
-                _assign_condition(result, condition_part)
-                
-                # Parse action
-                action = parse_effect_backwards(action_part)
+            if len(parts) != 2:
+                continue
+
+            condition_part = parts[0].strip()
+            action_part = parts[1].strip().lstrip('、')
+
+            # Check if action part contains only activation restriction (e.g., "のみ起動できる")
+            if action_part in ['のみ起動できる', 'のみ発動する', 'のみ起動できる。', 'のみ発動する。）'] or action_part.replace('。', '').replace('）', '') in ['のみ起動できる', 'のみ発動する']:
+                # This is an activation restriction, add it to the condition
+                result['activation_restriction'] = 'only_this_card'
+                # Parse the condition part as the action (since it's actually the effect)
+                action = parse_effect_backwards(condition_part)
                 if action:
                     result['action'] = action
-                
                 return result
+
+            # Parse condition
+            _assign_condition(result, condition_part)
+
+            # Parse action
+            action = parse_effect_backwards(action_part)
+            if action:
+                result['action'] = action
+
+            return result
     
     # If no condition marker found, treat as simple effect
     return parse_effect_backwards(text)
 
 
+@_annotate_return
 def parse_compound_effect(text):
     """Parse compound effect (two actions separated by comma)."""
     # Split on comma
@@ -1463,6 +1980,7 @@ def parse_compound_effect(text):
     
     return result
 
+@_annotate_return
 def parse_complex_effect(text):
     """Parse complex effect with multiple parts (e.g., one-period two-comma)."""
     result = {}
@@ -1597,6 +2115,7 @@ def parse_complex_effect(text):
     
     return result
 
+@_annotate_return
 def parse_generic_effect(text):
     """Parse generic effect when no specific pattern matches."""
     result = {}
@@ -1605,14 +2124,754 @@ def parse_generic_effect(text):
     text = text.strip()
     original_text = text
 
+    # Specific "choose a player, place a live card from that player's waitroom on the bottom
+    # of that player's deck, then draw" pattern.
+    if (
+        '自分か相手を選ぶ' in text
+        and 'そのプレイヤーの控え室にあるライブカードを1枚' in text
+        and 'そのプレイヤーのデッキの一番下に置く' in text
+        and 'そうした場合' in text
+        and 'カードを1枚引く' in text
+    ):
+        choice_text = text.replace('自分か相手を選ぶ。', '', 1).replace('自分か相手を選ぶ', '', 1).strip()
+        first_part, second_part = choice_text.split('そうした場合', 1)
+        result['choice'] = True
+        result['options'] = ['self', 'opponent']
+        result['actions'] = [{
+            'action': 'place_card',
+            'source': 'waitroom',
+            'target': 'selected_player',
+            'destination': 'deck_bottom',
+            'card_type': 'live_card',
+            'count': 1,
+            'text': first_part.strip('。 、'),
+        }]
+        second_action = parse_effect_backwards(second_part.strip('。 、'))
+        if _is_parsed_action(second_action):
+            result['actions'].append(second_action)
+        else:
+            result['actions'].append(_raw_text(second_part.strip('。 、')))
+        result['text'] = text
+        return result
+
+    sentence_parts = [sentence.strip() for sentence in text.split('。') if sentence.strip()]
+    if len(sentence_parts) >= 2:
+        leading_condition_markers = ('場合', 'とき', 'かぎり', 'なら')
+        if (
+            any(marker in sentence_parts[0] for marker in leading_condition_markers)
+            and any(marker in sentence_parts[1] for marker in leading_condition_markers)
+            and 'そうした場合' not in text
+        ):
+            parsed_sentences = []
+            for sentence in sentence_parts[:2]:
+                parsed = parse_effect_backwards(sentence)
+                if _is_parsed_action(parsed):
+                    parsed_sentences.append(parsed)
+            if len(parsed_sentences) >= 2:
+                result['actions'] = parsed_sentences
+                result['text'] = text
+                return result
+
+    if '無効にしてもよい' in text and 'これにより無効にした場合' in text:
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            first_sentence = sentences[0]
+            second_sentence = sentences[1]
+            result['actions'] = []
+            invalidate_action = {
+                'action': 'invalidate_ability',
+                'target': 'selected_member',
+                'optional': True,
+                'duration': 'until_end_of_live' if 'ライブ終了時まで' in first_sentence else None,
+                'ability_scope': 'live_start' if 'ライブ開始時' in first_sentence else None,
+                'source': 'stage' if '自分のステージ' in first_sentence else None,
+                'count': 1,
+            }
+            group = extract_group_name(first_sentence)
+            if group:
+                invalidate_action['group'] = group
+            result['actions'].append({key: value for key, value in invalidate_action.items() if value is not None})
+            conditional_text = second_sentence.replace('これにより無効にした場合', '').replace('これにより無効にした', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                result['actions'].append(conditional_raw)
+            return result
+
+    if 'これによりライブカードを控え室に置いた場合' in text and 'ライブ終了時まで、{{icon_blade.png|ブレード}}を得る' in text:
+        sentences = [sentence.strip() for sentence in text.split('。') if sentence.strip()]
+        if len(sentences) >= 2:
+            result['actions'] = []
+            gain_action = parse_effect_backwards(sentences[0])
+            if _is_parsed_action(gain_action):
+                result['actions'].append(gain_action)
+            else:
+                result['actions'].append(_raw_text(sentences[0]))
+
+            follow_up = sentences[1]
+            follow_match = re.search(r'これによりライブカードを控え室に置いた場合、?(.+)', follow_up)
+            follow_text = follow_match.group(1).strip() if follow_match else follow_up
+            draw_action = parse_effect_backwards(follow_text)
+            if _is_parsed_action(draw_action):
+                draw_action['conditional'] = True
+                draw_action['condition'] = {
+                    'type': 'discarded_card',
+                    'value': 'live_card',
+                    'location': 'waitroom',
+                    'target': 'self',
+                    'text': 'これによりライブカードを控え室に置いた場合',
+                }
+                result['actions'].append(draw_action)
+            else:
+                result['actions'].append(
+                    {
+                        'raw_text': follow_text,
+                        'conditional': True,
+                        'condition': {
+                            'type': 'discarded_card',
+                            'value': 'live_card',
+                            'location': 'waitroom',
+                            'target': 'self',
+                            'text': 'これによりライブカードを控え室に置いた場合',
+                        },
+                    }
+                )
+            return result
+
+    # Check for relative-cost adjustment + follow-up reward pattern.
+    # Example: "自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、
+    # 選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、
+    # ライブ終了時まで、{{heart_05.png|heart05}}を得る。"
+    if '選んだメンバーが元々持つコストより' in text and 'このカードのコストが' in text and 'ライブ終了時まで、{{heart_' in text:
+        sentences = [sentence.strip() for sentence in text.split('。') if sentence.strip()]
+        if len(sentences) >= 3:
+            result['actions'] = []
+
+            select_match = re.search(r'自分のステージにいる(.+?)メンバー1人を選ぶ', sentences[0])
+            select_text = sentences[0]
+            if select_match:
+                select_action = _select_member_action(select_text, target='self')
+                if select_action.get('group') is None:
+                    group = extract_group_name(select_text)
+                    if group:
+                        select_action['group'] = group
+                result['actions'].append(select_action)
+            else:
+                select_action = parse_effect_backwards(select_text)
+                if _is_parsed_action(select_action):
+                    result['actions'].append(select_action)
+                else:
+                    result['actions'].append(_raw_text(select_text))
+
+            modify_match = re.search(
+                r'このメンバーのコストは、?選んだメンバーが元々持つコストより([\d０-９]+)低い値に等しくなる',
+                sentences[1],
+            )
+            if modify_match:
+                result['actions'].append(
+                    {
+                        'action': 'modify_cost',
+                        'target': 'this_member',
+                        'source': 'selected_member_original_cost',
+                        'reference': 'selected_member',
+                        'reference_mode': 'relative_cost',
+                        'operator': '-',
+                        'amount': _normalized_int(modify_match.group(1)),
+                        'duration': 'until_end_of_live',
+                        'text': sentences[1],
+                    }
+                )
+            else:
+                modify_action = parse_effect_backwards(sentences[1])
+                if _is_parsed_action(modify_action):
+                    result['actions'].append(modify_action)
+                else:
+                    result['actions'].append(_raw_text(sentences[1]))
+
+            reward_text = sentences[2]
+            reward_match = re.search(r'これによりこのカードのコストが([\d０-９]+)以上になった場合、?(.+)', reward_text)
+            if reward_match:
+                reward_condition_text = reward_match.group(0).split('、', 1)[0].rstrip('。').strip()
+                reward_effect_text = reward_match.group(2).rstrip('。').strip()
+                reward_condition = {
+                    'type': 'cost_at_least',
+                    'target': 'this_card',
+                    'value': _normalized_int(reward_match.group(1)),
+                    'compares': 'card_cost',
+                    'text': reward_condition_text,
+                }
+                reward_action = parse_effect_backwards(reward_effect_text)
+                if _is_parsed_action(reward_action):
+                    reward_action['conditional'] = True
+                    reward_action['condition'] = reward_condition
+                    reward_action['text'] = reward_effect_text
+                    result['actions'].append(reward_action)
+                else:
+                    result['actions'].append(
+                        {
+                            'raw_text': reward_effect_text,
+                            'conditional': True,
+                            'condition': reward_condition,
+                            'text': reward_effect_text,
+                        }
+                    )
+            else:
+                reward_action = parse_effect_backwards(reward_text)
+                if _is_parsed_action(reward_action):
+                    result['actions'].append(reward_action)
+                else:
+                    result['actions'].append(_raw_text(reward_text))
+            return result
+
+    # Check for "その中から...デッキの上に置き、残りを控え室に置く" pattern
+    # This is a complex multi-step action: look at cards, place some on deck, discard rest
+    if 'その中から' in text and '手札に加え' in text and '残りを控え室に置く' in text:
+        result['actions'] = []
+        look_match = re.search(r'カードを([\d０-９]+)枚見る', text)
+        if look_match:
+            result['actions'].append({
+                'action': 'look_at_cards',
+                'count': _normalized_int(look_match.group(1)),
+                'source': 'deck_top',
+            })
+        add_match = re.search(r'([\d０-９]+)枚まで公開して手札に加え', text)
+        add_count = _normalized_int(add_match.group(1)) if add_match else 1
+        add_action = {
+            'action': 'add_to_hand',
+            'count': add_count,
+            'source': 'looked_at_cards',
+            'may': 'もよい' in text or '公開して手札に加えてもよい' in text,
+            'reveal': True,
+        }
+        if 'メンバーカード' in text:
+            add_action['card_type'] = 'member_card'
+        elif 'ライブカード' in text:
+            add_action['card_type'] = 'live_card'
+        else:
+            add_action['card_type'] = 'card'
+        heart_types = extract_heart_types(text)
+        if heart_types:
+            add_action['selection'] = {
+                'heart_types': heart_types,
+                'operator': 'or',
+            }
+        result['actions'].append(add_action)
+        result['actions'].append({
+            'action': 'discard_to_waitroom',
+            'source': 'looked_at_cards',
+        })
+        return result
+
+    if 'その中から' in text and 'メンバーカード' in text and '公開して手札に加えてもよい' in text:
+        result['actions'] = []
+        look_match = re.search(r'カードを([\d０-９]+)枚見る', text)
+        if look_match:
+            result['actions'].append({
+                'action': 'look_at_cards',
+                'count': _normalized_int(look_match.group(1)),
+                'source': 'deck_top',
+            })
+        add_match = re.search(r'(?:{0})?([\d０-９]+)枚まで公開して手札に加えてもよい'.format(''), text)
+        add_count = _normalized_int(add_match.group(1)) if add_match else 3
+        add_action = {
+            'action': 'add_to_hand',
+            'count': add_count,
+            'source': 'looked_at_cards',
+            'may': True,
+            'reveal': True,
+            'card_type': 'member_card',
+        }
+        heart_types = extract_heart_types(text)
+        if heart_types:
+            add_action['selection'] = {
+                'heart_types': heart_types,
+                'operator': 'or',
+            }
+        result['actions'].append(add_action)
+        result['actions'].append({
+            'action': 'discard_to_waitroom',
+            'source': 'looked_at_cards',
+        })
+        return result
+
+    if 'その中から' in text and 'デッキの上に置き' in text and '残りを控え室に置く' in text:
+        result['actions'] = []
+        # Extract look_at_cards count if present in the same text
+        look_match = re.search(r'カードを(\d+)枚見る', text)
+        if look_match:
+            result['actions'].append({
+                'action': 'look_at_cards',
+                'count': int(look_match.group(1)),
+                'source': 'deck_top'
+                ,
+                'text': text.split('。', 1)[0].strip()
+            })
+        result['actions'].append({
+            'action': 'select_from_looked_at_cards',
+            'source': 'looked_at_cards',
+            'selection': {
+                'up_to': True,
+                'order': 'any',
+            },
+            'text': 'その中から好きな枚数を好きな順番で'
+        })
+        result['actions'].append({
+            'action': 'place_on_deck',
+            'destination': 'deck_top',
+            'source': 'selected_cards',
+            'text': 'デッキの上に置き'
+        })
+        result['actions'].append({
+            'action': 'discard_to_waitroom',
+            'source': 'remaining_looked_at_cards',
+            'text': '残りを控え室に置く'
+        })
+        return result
+
+    # Check for "その後" sequential action pattern across period-separated sentences
+    if 'その後' in text and '。' in text:
+        # Split by period to get sentences
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Check if second sentence starts with "その後"
+            if sentences[1].startswith('その後'):
+                # Check for area selection pattern (若菜四季 case)
+                if '登場したエリアとは別の自分のエリア1つを選ぶ' in sentences[1]:
+                    result['actions'] = []
+                    # Parse first sentence
+                    first_action = parse_effect_backwards(sentences[0])
+                    if _is_parsed_action(first_action):
+                        result['actions'].append(first_action)
+                    else:
+                        result['actions'].append(_raw_text(sentences[0]))
+                    
+                    # Parse area selection and movement
+                    second_text = sentences[1].replace('その後', '').strip()
+                    # Split on period to separate area selection from movement
+                    if '。' in second_text:
+                        area_part, move_part = second_text.split('。', 1)
+                        result['actions'].append({
+                            'action': 'select_area',
+                            'source': 'stage',
+                            'exclude': 'deployed_area',
+                            'count': 1,
+                            'target': 'self'
+                        })
+                        move_action = parse_effect_backwards(move_part.strip())
+                        if _is_parsed_action(move_action):
+                            result['actions'].append(move_action)
+                        else:
+                            result['actions'].append(_raw_text(move_part.strip()))
+                    else:
+                        # Treat as single complex action
+                        second_action = parse_effect_backwards(second_text)
+                        if _is_parsed_action(second_action):
+                            result['actions'].append(second_action)
+                        else:
+                            result['actions'].append(_raw_text(second_text))
+                    return result
+                
+                # Default "その後" handling
+                result['actions'] = []
+                # Parse first sentence
+                first_action = parse_effect_backwards(sentences[0])
+                if _is_parsed_action(first_action):
+                    result['actions'].append(first_action)
+                else:
+                    result['actions'].append(_raw_text(sentences[0]))
+                # Parse second sentence (remove "その後" prefix)
+                second_text = sentences[1].replace('その後', '').strip()
+                second_action = parse_effect_backwards(second_text)
+                if _is_parsed_action(second_action):
+                    result['actions'].append(second_action)
+                else:
+                    result['actions'].append(_raw_text(second_text))
+                return result
+
+
+    # Check for complex trigger with payment pattern (e.g., "～たび、{{icon_energy.png|E}}支払ってもよい。そうした場合、～")
+    if 'たび、{{icon_energy' in text and '支払ってもよい。そうした場合' in text:
+        result['actions'] = []
+        # Split on period to separate trigger/payment from conditional action
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse trigger and payment (first sentence)
+            first_sentence = sentences[0]
+            # Extract trigger condition
+            trigger_match = re.search(r'(自分のメインフェイズの間、)?自分のカードが(\d+)枚以上いずれかの領域から控え室に置かれる', first_sentence)
+            if trigger_match:
+                trigger_condition_text = first_sentence.replace('自分のメインフェイズの間、', '').strip()
+                trigger_condition = parse_condition(trigger_condition_text)
+                if not trigger_condition or trigger_condition.get('type') == 'raw':
+                    trigger_condition = trigger_condition_text
+                trigger_action = {
+                    'action': 'whenever_trigger',
+                    'condition': trigger_condition
+                }
+                if trigger_match.group(1):
+                    trigger_action['timing'] = '自分のメインフェイズの間'
+                result['actions'].append(trigger_action)
+            
+            # Extract optional energy payment
+            payment_match = re.search(r'{{icon_energy\.png\|E}}支払ってもよい', first_sentence)
+            if payment_match:
+                result['actions'].append({
+                    'action': 'pay_energy',
+                    'optional': True,
+                    'count': 1
+                })
+            
+            # Parse conditional action (second sentence, remove "そうした場合" prefix)
+            conditional_text = sentences[1].replace('そうした場合', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                result['actions'].append(conditional_raw)
+            return result
+
+    # Check for card selection by name with opponent selection pattern (e.g., "～カード名が異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを～")
+    if ('カード名が異なる' in text or 'カード名の異なる' in text or '、カード名が異なる' in text or '、カード名の異なる' in text) and '選ぶ' in text and 'そうした場合、相手' in text:
+        result['actions'] = []
+        # Split on period to separate selection from opponent selection
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse card selection (first sentence)
+            first_sentence = sentences[0]
+            select_match = re.search(r'(自分の控え室にある)?カード名(?:が|の)異なる(ライブカード|メンバーカード)を(\d+)\s*枚選ぶ', first_sentence)
+            if select_match:
+                source = 'waitroom' if '控え室' in first_sentence else None
+                card_type = 'live_card' if 'ライブカード' in select_match.group(2) else ('member_card' if 'メンバーカード' in select_match.group(2) else None)
+                result['actions'].append({
+                    'action': 'select_card',
+                    'source': source,
+                    'card_type': card_type,
+                    'count': int(select_match.group(3)),
+                    'selection_criteria': 'different_names'
+                })
+            else:
+                fallback_select = _raw_text(first_sentence)
+                fallback_select['action'] = 'select_card'
+                result['actions'].append(fallback_select)
+            
+            # Parse opponent selection (second sentence)
+            second_sentence = sentences[1]
+            opponent_select_part = second_sentence.split('。')[0] if '。' in second_sentence else second_sentence
+            result['actions'].append({
+                'action': 'opponent_selects',
+                'from': 'selected_cards',
+                'count': 1,
+                'target': 'opponent'
+            })
+            
+            # Parse final action (third sentence if exists)
+            if len(sentences) >= 3:
+                final_part = sentences[2]
+                final_action = parse_effect_backwards(final_part)
+                if _is_parsed_action(final_action):
+                    final_action['source'] = 'opponent_selected_card'
+                    final_action['target'] = 'self'
+                    final_action['count'] = 1
+                    final_action.setdefault('card_type', card_type or 'card')
+                    result['actions'].append(final_action)
+                else:
+                    fallback_final = _raw_text(final_part)
+                    fallback_final['action'] = 'add_to_hand'
+                    fallback_final['source'] = 'opponent_selected_card'
+                    fallback_final['target'] = 'self'
+                    fallback_final['count'] = 1
+                    fallback_final['card_type'] = card_type or 'card'
+                    result['actions'].append(fallback_final)
+            return result
+
+    # Check for card selection with variable payment pattern (e.g., "～ライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、～")
+    if '選び、そのカードのスコアに等しい数の' in text and '支払ってもよい。そうした場合' in text:
+        result['actions'] = []
+        # Split on period to separate selection/payment from conditional action
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse selection and payment (first sentence)
+            first_sentence = sentences[0]
+            # Extract card selection
+            select_match = re.search(r'(自分の控え室にある|自分の)?(ライブカード|メンバーカード)を(\d+)枚選び', first_sentence)
+            if select_match:
+                source = 'waitroom' if '控え室' in first_sentence else None
+                card_type = 'live_card' if 'ライブカード' in select_match.group(2) else ('member_card' if 'メンバーカード' in select_match.group(2) else None)
+                result['actions'].append({
+                    'action': 'select_card',
+                    'source': source,
+                    'card_type': card_type,
+                    'count': int(select_match.group(3))
+                })
+            else:
+                result['actions'].append(_raw_text(first_sentence))
+            
+            # Extract variable payment
+            payment_match = re.search(r'そのカードのスコアに等しい数の{{icon_energy\.png\|E}}を支払ってもよい', first_sentence)
+            if payment_match:
+                result['actions'].append({
+                    'action': 'pay_energy',
+                    'optional': True,
+                    'amount': 'selected_card_score'
+                })
+            
+            # Parse conditional action (second sentence, remove "そうした場合" prefix)
+            conditional_text = sentences[1].replace('そうした場合', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                if conditional_action.get('action') == 'add_to_hand' and 'count' not in conditional_action:
+                    conditional_action['count'] = 1
+                if conditional_action.get('action') == 'add_to_hand' and 'card_type' not in conditional_action:
+                    conditional_action['card_type'] = card_type or 'live_card'
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                conditional_raw['count'] = 1
+                conditional_raw['card_type'] = card_type or 'live_card'
+                result['actions'].append(conditional_raw)
+            return result
+
+    # Check for optional draw with conditional follow-up pattern (e.g., "カードを1枚引いてもよい。そうした場合、～")
+    if '引いてもよい。そうした場合' in text:
+        result['actions'] = []
+        # Split on period to separate optional draw from conditional action
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse optional draw (first sentence)
+            draw_match = re.search(r'カードを(\d+)枚引いてもよい', sentences[0])
+            if draw_match:
+                result['actions'].append({
+                    'action': 'draw_cards',
+                    'count': int(draw_match.group(1)),
+                    'optional': True
+                })
+            else:
+                result['actions'].append(_raw_text(sentences[0]))
+            # Parse conditional action (second sentence, remove "そうした場合" prefix)
+            conditional_text = sentences[1].replace('そうした場合', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                result['actions'].append(conditional_raw)
+            return result
+
+    # Check for opponent's optional action pattern (e.g., "相手は～してもよい。そうしなかった場合、～")
+    if '相手は' in text and 'してもよい' in text and ('そうしなかった場合' in text or 'そうしなかった' in text):
+        result['actions'] = []
+        # Split on period to separate opponent's action from conditional effect
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse opponent's optional action (first sentence)
+            opponent_action = parse_effect_backwards(sentences[0])
+            if _is_parsed_action(opponent_action):
+                opponent_action['target'] = 'opponent'
+                opponent_action['optional'] = True
+                result['actions'].append(opponent_action)
+            else:
+                opponent_raw = _raw_text(sentences[0])
+                opponent_raw['target'] = 'opponent'
+                opponent_raw['optional'] = True
+                result['actions'].append(opponent_raw)
+            # Parse conditional effect (second sentence, remove "そうしなかった場合" prefix)
+            conditional_text = sentences[1].replace('そうしなかった場合', '').replace('そうしなかった', '').strip()
+            # Check for duration prefix
+            if conditional_text.startswith('、'):
+                conditional_text = conditional_text[1:].strip()
+            if conditional_text.startswith('ライブ終了時まで、'):
+                result['duration'] = 'until_end_of_live'
+                conditional_text = conditional_text.replace('ライブ終了時まで、', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                conditional_action['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                conditional_raw['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_raw)
+            return result
+
+    # Check for opponent's optional action pattern without "場合" (e.g., "相手は～してもよい。そうしなかった、～")
+    if '相手は' in text and 'してもよい' in text and 'そうしなかった、' in text:
+        result['actions'] = []
+        # Split on period to separate opponent's action from conditional effect
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse opponent's optional action (first sentence)
+            opponent_action = parse_effect_backwards(sentences[0])
+            if _is_parsed_action(opponent_action):
+                opponent_action['target'] = 'opponent'
+                opponent_action['optional'] = True
+                result['actions'].append(opponent_action)
+            else:
+                opponent_raw = _raw_text(sentences[0])
+                opponent_raw['target'] = 'opponent'
+                opponent_raw['optional'] = True
+                result['actions'].append(opponent_raw)
+            # Parse conditional effect (second sentence, remove "そうしなかった、" prefix)
+            conditional_text = sentences[1].replace('そうしなかった、', '').strip()
+            # Check for duration prefix
+            if conditional_text.startswith('ライブ終了時まで、'):
+                result['duration'] = 'until_end_of_live'
+                conditional_text = conditional_text.replace('ライブ終了時まで、', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                conditional_action['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                conditional_raw['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_raw)
+            return result
+
+    # Check for "そうした場合" conditional follow-up action pattern
+    if 'そうした場合' in text and '。' in text:
+        # Split by period to get sentences
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Check if second sentence starts with "そうした場合"
+            if sentences[1].startswith('そうした場合'):
+                result['actions'] = []
+                # Parse first sentence
+                first_action = parse_effect_backwards(sentences[0])
+                if _is_parsed_action(first_action):
+                    result['actions'].append(first_action)
+                else:
+                    result['actions'].append(_raw_text(sentences[0]))
+                # Parse second sentence (remove "そうした場合" prefix)
+                second_text = sentences[1].replace('そうした場合', '').strip()
+                second_action = parse_effect_backwards(second_text)
+                if _is_parsed_action(second_action):
+                    second_action['conditional'] = True
+                    result['actions'].append(second_action)
+                else:
+                    conditional_raw = _raw_text(second_text)
+                    conditional_raw['conditional'] = True
+                    result['actions'].append(conditional_raw)
+                # Merge modifier-only actions with their target actions
+                result['actions'] = _merge_modifier_actions(result['actions'])
+                return result
+
+    # Check for heart cost modification pattern (e.g., "必要ハートは...のうち、選んだ1つにしてもよい")
+    if '必要ハートは' in text and 'のうち、選んだ1つにしてもよい' in text:
+        # Check if there's a condition before the heart cost modification
+        if '場合' in text:
+            # Split on '場合' to separate condition from action
+            parts = text.split('場合', 1)
+            if len(parts) == 2:
+                condition_part = parts[0] + '場合'
+                action_part = parts[1].strip()
+                # Parse condition
+                condition = parse_condition(condition_part)
+                if condition and condition.get('type') != 'raw':
+                    result['condition'] = condition
+                # Parse action
+                result['action'] = 'heart_cost_modifier'
+                result['optional'] = True
+                # Extract heart options
+                heart_options = []
+                heart_matches = re.findall(r'{{heart_(\d+)\.png\|heart\d+}}', action_part)
+                if heart_matches:
+                    # Group hearts into options (3 hearts per option based on pattern)
+                    for i in range(0, len(heart_matches), 3):
+                        if i + 3 <= len(heart_matches):
+                            heart_options.append(heart_matches[i:i+3])
+                result['heart_options'] = heart_options
+                return result
+        # Fallback: parse without condition
+        result['action'] = 'heart_cost_modifier'
+        result['optional'] = True
+        # Extract heart options
+        heart_options = []
+        heart_matches = re.findall(r'{{heart_(\d+)\.png\|heart\d+}}', text)
+        if heart_matches:
+            # Group hearts into options (3 hearts per option based on pattern)
+            for i in range(0, len(heart_matches), 3):
+                if i + 3 <= len(heart_matches):
+                    heart_options.append(heart_matches[i:i+3])
+        result['heart_options'] = heart_options
+        return result
+
+    # Check for activation restriction pattern (e.g., "この能力は、このカードが控え室にある場合のみ起動できる")
+    if 'この能力は' in text and '起動できる' in text:
+        # Split on period to separate effect from activation restriction
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse the effect (first sentence)
+            effect_action = parse_effect_backwards(sentences[0])
+            if _is_parsed_action(effect_action):
+                result['action'] = effect_action
+            else:
+                result['action'] = _raw_text(sentences[0])
+            # Add activation restriction
+            result['activation_restriction'] = 'only_this_card'
+            return result
+
+    # Check for opponent's optional action pattern (e.g., "相手は～してもよい。そうしなかった場合、～")
+    if '相手は' in text and 'してもよい' in text and ('そうしなかった場合' in text or 'そうしなかった' in text):
+        result['actions'] = []
+        # Split on period to separate opponent's action from conditional effect
+        sentences = text.split('。')
+        sentences = [s.strip() for s in sentences if s.strip()]
+        if len(sentences) >= 2:
+            # Parse opponent's optional action (first sentence)
+            opponent_action = parse_effect_backwards(sentences[0])
+            if _is_parsed_action(opponent_action):
+                opponent_action['target'] = 'opponent'
+                opponent_action['optional'] = True
+                result['actions'].append(opponent_action)
+            else:
+                opponent_raw = _raw_text(sentences[0])
+                opponent_raw['target'] = 'opponent'
+                opponent_raw['optional'] = True
+                result['actions'].append(opponent_raw)
+            # Parse conditional effect (second sentence, remove "そうしなかった場合" prefix)
+            conditional_text = sentences[1].replace('そうしなかった場合', '').replace('そうしなかった', '').strip()
+            conditional_action = parse_effect_backwards(conditional_text)
+            if _is_parsed_action(conditional_action):
+                conditional_action['conditional'] = True
+                conditional_action['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_action)
+            else:
+                conditional_raw = _raw_text(conditional_text)
+                conditional_raw['conditional'] = True
+                conditional_raw['condition'] = 'opponent_did_not_act'
+                result['actions'].append(conditional_raw)
+            return result
+
     # Check for cost-total conditional pattern (e.g., "それらのカードのコストの合計が、6の場合")
     # This handles effects that branch based on the total cost of cards placed in the cost
     cost_total_match = re.search(r'(それらのカード|公開したカード|それら)のコストの合計', text)
     if cost_total_match:
         result['condition'] = {
-            'type': 'cost_total',
+            'type': 'cost_total_equal',
             'reference': cost_total_match.group(1),  # "それらのカード" or "公開したカード"
-            'operator': '==',
         }
         result['cost_reference'] = True  # Flag indicating this references cost cards
         
@@ -1664,6 +2923,14 @@ def parse_generic_effect(text):
                 continue
             action = parse_effect_backwards(action_part)
             if action and 'raw_text' not in action:
+                if (
+                    action.get('action') in {'may_place_card', 'place_card', 'discard_to_waitroom'}
+                    and 'そのカード' in action_part
+                    and any(existing.get('target') == 'selected_player' for existing in result['actions'])
+                ):
+                    action['target'] = 'selected_player'
+                    if action.get('action') in {'may_place_card', 'place_card'} and 'source' not in action:
+                        action['source'] = 'looked_at_cards'
                 result['actions'].append(action)
             else:
                 result['actions'].append({'raw_text': action_part})
@@ -1724,6 +2991,16 @@ def parse_generic_effect(text):
         result['action'] = {
             'action': 'reduce_cost',
             'amount': int(cost_reduction_match.group(1))
+        }
+        return result
+
+    # Check for resource-specific reduction pattern (e.g., "{{icon_energy.png|E}}減る")
+    if '{{icon_energy.png|E}}' in text and '減る' in text:
+        energy_count = text.count('{{icon_energy.png|E}}') or 1
+        result['action'] = {
+            'action': 'reduce_cost',
+            'resource': 'energy',
+            'amount': energy_count,
         }
         return result
     
@@ -2052,6 +3329,16 @@ def parse_generic_effect(text):
                         action_part = action_part.strip().lstrip('・')
                     action = parse_effect_backwards(action_part.strip())
                     if action and 'raw_text' not in action:
+                        if (
+                            len(result['actions']) >= 1
+                            and result['actions'][-1].get('target') == 'selected_player'
+                            and action.get('action') in {'may_place_card', 'place_card', 'discard_to_waitroom'}
+                            and 'target' not in action
+                            and ('そのカード' in action_part or 'そのプレイヤー' in action_part)
+                        ):
+                            action['target'] = 'selected_player'
+                            if action.get('action') in {'may_place_card', 'place_card'} and 'source' not in action:
+                                action['source'] = 'looked_at_cards'
                         result['actions'].append(action)
                     else:
                         result['actions'].append({'raw_text': action_part.strip()})
@@ -2094,7 +3381,7 @@ def parse_generic_effect(text):
                 discard_action = {
                     'action': 'discard_to_waitroom',
                     'source': 'hand',
-                    'until_condition': condition_text
+                    'until_condition': f'{condition_text}なるまで'
                 }
                 count_match = re.search(r'(\d+)枚', condition_text)
                 if count_match:
@@ -2118,7 +3405,7 @@ def parse_generic_effect(text):
                 result['action'] = {
                     'action': 'discard_to_waitroom',
                     'source': 'hand',
-                    'until_condition': condition_text
+                    'until_condition': f'{condition_text}なるまで'
                 }
                 # Try to extract target count from condition
                 count_match = re.search(r'(\d+)枚', condition_text)
@@ -2381,6 +3668,43 @@ def parse_generic_effect(text):
                     result['actions'].append({'raw_text': action_part})
                 return result
     
+    # Check for area selection pattern in comma-separated actions
+    if '登場したエリアとは別の自分のエリア1つを選ぶ' in text or 'いるエリアとは別の自分のエリア1つを選ぶ' in text or '、登場したエリアとは別の自分のエリア1つを選ぶ' in text:
+        result['actions'] = []
+        # Split on comma
+        parts = text.rstrip('。').split('、')
+        for part in parts:
+            part = part.strip()
+            if 'カードを1枚引く' in part:
+                result['actions'].append({
+                    'action': 'draw_cards',
+                    'count': 1
+                })
+            elif '登場したエリアとは別の自分のエリア1つを選ぶ' in part:
+                result['actions'].append({
+                    'action': 'select_area',
+                    'source': 'stage',
+                    'exclude': 'deployed_area',
+                    'count': 1,
+                    'target': 'self'
+                })
+            elif 'このメンバーをそのエリアに移動する' in part:
+                result['actions'].append({
+                    'action': 'move_member',
+                    'source': 'this_member',
+                    'destination': 'selected_area'
+                })
+            elif '選んだエリアにメンバーがいる場合' in part or '選んだエリアにメンバーがいる' in part:
+                # This is a condition for the movement
+                result['actions'][-1]['condition'] = 'selected_area_occupied'
+            else:
+                action = parse_effect_backwards(part)
+                if _is_parsed_action(action):
+                    result['actions'].append(action)
+                else:
+                    result['actions'].append(_raw_text(part))
+        return result
+
     # Check for compound action (multiple commas)
     if text.count('、') >= 2:
         # Check if commas are separating list items vs separate actions
@@ -2407,6 +3731,8 @@ def parse_generic_effect(text):
                     result['actions'].append(action)
                 else:
                     result['actions'].append({'raw_text': action_part.strip()})
+            # Merge modifier-only actions with their target actions
+            result['actions'] = _merge_modifier_actions(result['actions'])
         return result
     elif text.count('、') == 1:
         # Could be compound action or single action with comma

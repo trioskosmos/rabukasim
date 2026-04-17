@@ -1,1 +1,0 @@
-"""Verification helpers used by live tooling."""

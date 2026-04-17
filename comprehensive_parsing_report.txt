@@ -1,0 +1,1006 @@
+COMPREHENSIVE PARSING ISSUES REPORT
+================================================================================
+
+Total abilities analyzed: 598
+Abilities with issues: 18
+
+ISSUE SUMMARY
+--------------------------------------------------------------------------------
+429: Pattern '自分の' in text but may not be captured
+258: Pattern '控え室' in text but may not be captured
+230: Pattern '手札' in text but may not be captured
+218: Pattern 'ステージ' in text but may not be captured
+186: Pattern '置く' in text but may not be captured
+166: Pattern '得る' in text but may not be captured
+138: Pattern 'ライブ' in text but may not be captured
+133: Pattern 'デッキ' in text but may not be captured
+107: Pattern 'スコア' in text but may not be captured
+74: Pattern 'エネルギー' in text but may not be captured
+64: Pattern 'エリア' in text but may not be captured
+54: Pattern '相手の' in text but may not be captured
+35: Pattern '選ぶ' in text but may not be captured
+30: Pattern '移動' in text but may not be captured
+5: Action 1 missing action field at 
+4: Action 0 missing action field at 
+1: Action 0 has raw_text at : 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ
+1: Condition missing type at 
+
+
+DETAILED ANALYSIS
+================================================================================
+
+
+Pattern '自分の' in text but may not be captured (429 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[1] PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'member_card'}}
+
+
+[2] PL!-sd1-011-SD | 絢瀬 絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'discard_to_waitroom'}]}
+
+
+[5] PL!S-PR-028-PR | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[9] PL!N-bp1-003-R+ | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[11] PL!-bp3-012-PR | 南 ことり (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。
+Cost: None
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['01', '03', '06']}, {'duration': 'until_end_of_live'}, {'action': 'gain_resource', 'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}]}
+
+
+[13] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#1)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'pay_energy', 'energy': 3}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[16] PL!-bp3-014-N | 星空 凛 (ab#0)
+Full text: {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': True, 'count': 1}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 2, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[19] PL!N-bp1-006-R+ | 近江彼方 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': False}
+Effect: {'time': 'this_turn', 'condition': {'target': 'self', 'type': 'group', 'value': '虹ヶ咲'}, 'actions': [{'action': 'activate_energy', 'count': 2}]}
+
+
+Pattern '控え室' in text but may not be captured (258 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[1] PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'member_card'}}
+
+
+[2] PL!-sd1-011-SD | 絢瀬 絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'discard_to_waitroom'}]}
+
+
+[3] PL!N-bp1-019-PR | 優木せつ菜 (ab#0)
+Full text: {{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[5] PL!S-PR-028-PR | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[9] PL!N-bp1-003-R+ | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[10] PL!HS-bp1-006-R+ | 藤島 慈 (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[12] PL!N-PR-005-PR | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を2枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 2, 'source': 'hand'}]}
+
+
+[13] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#1)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'pay_energy', 'energy': 3}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+Pattern '手札' in text but may not be captured (230 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[1] PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'member_card'}}
+
+
+[2] PL!-sd1-011-SD | 絢瀬 絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'discard_to_waitroom'}]}
+
+
+[3] PL!N-bp1-019-PR | 優木せつ菜 (ab#0)
+Full text: {{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[9] PL!N-bp1-003-R+ | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[10] PL!HS-bp1-006-R+ | 藤島 慈 (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[12] PL!N-PR-005-PR | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を2枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 2, 'source': 'hand'}]}
+
+
+[13] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#1)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'pay_energy', 'energy': 3}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[14] PL!S-bp2-024-L | 君のこころは輝いてるかい？ (ab#1)
+Full text: {{live_success.png|ライブ成功時}}カードを2枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+Pattern 'ステージ' in text but may not be captured (218 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[1] PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'member_card'}}
+
+
+[7] PL!-PR-007-PR | 東條 希 (ab#0)
+Full text: {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': True, 'count': 1}
+Effect: {'cost_limit': 4, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'source_state': 'wait'}, {'action': 'note', 'text': 'エールで公開する枚数を増やさない。）'}]}
+
+
+[15] PL!-bp3-002-R | 絢瀬絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'cost_limit': 4, 'actions': [{'count': 2, 'up_to': 2, 'action': 'member_to_wait', 'target': 'opponent', 'source': 'stage', 'source_state': 'wait'}, {'action': 'note', 'text': 'エールで公開する枚数を増やさない。）'}]}
+
+
+[17] PL!N-bp1-002-R+ | 中須かすみ (ab#1)
+Full text: {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}手札を1枚控え室に置く：このカードを控え室からステージに登場させる。この能力は、このカードが控え室にある場合のみ起動できる。
+Cost: {'type': 'move_cards', 'energy': 2, 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': False}
+Effect: {'action': {'action': 'deploy_to_stage', 'source': 'waitroom'}, 'activation_restriction': 'only_this_card'}
+
+
+[19] PL!N-bp1-006-R+ | 近江彼方 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': False}
+Effect: {'time': 'this_turn', 'condition': {'target': 'self', 'type': 'group', 'value': '虹ヶ咲'}, 'actions': [{'action': 'activate_energy', 'count': 2}]}
+
+
+[21] PL!SP-bp1-002-R+ | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ステージの左サイドエリアに登場しているなら、カードを2枚引く。
+Cost: {'type': 'pay_energy', 'energy': 2}
+Effect: {'condition': {'type': 'position', 'value': 'left_side'}, 'actions': [{'action': 'draw_cards', 'count': 2}]}
+
+
+[25] PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': '蓮ノ空', 'names_different': True}, 'actions': [{'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+[29] PL!HS-bp1-006-R+ | 藤島 慈 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'condition': {'target': 'self', 'type': 'member_presence', 'presence': 'present', 'exclusion': 'other'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource'}]}
+
+
+[34] PL!S-bp2-008-R+ | 小原鞠莉 (ab#1)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': 'Aqours', 'names_different': True}, 'actions': [{'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}}, {'action': 'add_score', 'amount': 1}, {'action': 'add_score', 'amount': 2}]}
+
+
+Pattern '置く' in text but may not be captured (186 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[1] PL!-sd1-002-SD | 絢瀬 絵里 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'member_card'}}
+
+
+[2] PL!-sd1-011-SD | 絢瀬 絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'discard_to_waitroom'}]}
+
+
+[3] PL!N-bp1-019-PR | 優木せつ菜 (ab#0)
+Full text: {{toujyou.png|登場}}カードを1枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[5] PL!S-PR-028-PR | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[10] PL!HS-bp1-006-R+ | 藤島 慈 (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[12] PL!N-PR-005-PR | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}カードを2枚引き、手札を2枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 2, 'source': 'hand'}]}
+
+
+[14] PL!S-bp2-024-L | 君のこころは輝いてるかい？ (ab#1)
+Full text: {{live_success.png|ライブ成功時}}カードを2枚引き、手札を1枚控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 2}, {'action': 'discard_to_waitroom', 'count': 1, 'source': 'hand'}]}
+
+
+[16] PL!-bp3-014-N | 星空 凛 (ab#0)
+Full text: {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': True, 'count': 1}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 2, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+Pattern '得る' in text but may not be captured (166 occurrences):
+--------------------------------------------------------------------------------
+
+[4] PL!HS-PR-018-PR | 大沢瑠璃乃 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'action': {'action': 'gain_resource', 'blade_count': 2, 'resource': 'blade', 'resource_count': 2, 'duration': 'until_end_of_live'}}
+
+
+[11] PL!-bp3-012-PR | 南 ことり (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。
+Cost: None
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['01', '03', '06']}, {'duration': 'until_end_of_live'}, {'action': 'gain_resource', 'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}]}
+
+
+[18] PL!N-bp1-003-R+ | 桜坂しずく (ab#1)
+Full text: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'action': {'action': 'gain_resource', 'duration': 'until_end_of_live'}}
+
+
+[20] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#0)
+Full text: {{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 3, 'location': 'live', 'card_type': 'live_card'}, 'actions': [{'action': 'gain_resource', 'blade_count': 2, 'resource': 'blade', 'resource_count': 2, 'heart_type': 'all'}]}
+
+
+[22] PL!SP-bp1-003-R+ | 嵐 千砂都 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: {'type': 'reveal_cards', 'source': 'hand', 'optional': False, 'card_type': 'member_card', 'count': 'any'}
+Effect: {'condition': {'type': 'cost_total_equal', 'reference': '公開したカード'}, 'cost_reference': True, 'branches': [{'cost_total': 10, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 20, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 30, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 40, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 50, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}]}
+
+
+[25] PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': '蓮ノ空', 'names_different': True}, 'actions': [{'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+[28] PL!HS-bp1-004-R+ | 夕霧綴理 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：ライブ終了時まで、自分のライブ中のカード1枚につき、{{icon_blade.png|ブレード}}を得る。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'duration': 'until_end_of_live', 'condition': {'target': 'self', 'type': 'per_unit', 'value': 1, 'operator': '*'}, 'action': {'action': 'gain_resource', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'duration': 'until_end_of_live'}}
+
+
+[29] PL!HS-bp1-006-R+ | 藤島 慈 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：自分のステージにほかのメンバーがいる場合、好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'condition': {'target': 'self', 'type': 'member_presence', 'presence': 'present', 'exclusion': 'other'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource'}]}
+
+
+[34] PL!S-bp2-008-R+ | 小原鞠莉 (ab#1)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': 'Aqours', 'names_different': True}, 'actions': [{'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}}, {'action': 'add_score', 'amount': 1}, {'action': 'add_score', 'amount': 2}]}
+
+
+[38] PL!SP-bp2-009-R+ | 鬼塚夏美 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}ライブ終了時まで、自分の手札2枚につき、{{icon_blade.png|ブレード}}を得る。
+Cost: None
+Effect: {'duration': 'until_end_of_live', 'condition': {'target': 'self', 'type': 'per_unit', 'value': 2, 'operator': '*'}, 'action': {'action': 'gain_resource', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'duration': 'until_end_of_live'}}
+
+
+Pattern 'ライブ' in text but may not be captured (138 occurrences):
+--------------------------------------------------------------------------------
+
+[0] PL!-sd1-005-SD | 星空 凛 (ab#0)
+Full text: {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'waitroom', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[9] PL!N-bp1-003-R+ | 桜坂しずく (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[13] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#1)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室からライブカードを1枚手札に加える。
+Cost: {'type': 'pay_energy', 'energy': 3}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[20] PL!N-bp1-012-R+ | 鐘 嵐珠 (ab#0)
+Full text: {{jyouji.png|常時}}自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む場合、{{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 3, 'location': 'live', 'card_type': 'live_card'}, 'actions': [{'action': 'gain_resource', 'blade_count': 2, 'resource': 'blade', 'resource_count': 2, 'heart_type': 'all'}]}
+
+
+[22] PL!SP-bp1-003-R+ | 嵐 千砂都 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: {'type': 'reveal_cards', 'source': 'hand', 'optional': False, 'card_type': 'member_card', 'count': 'any'}
+Effect: {'condition': {'type': 'cost_total_equal', 'reference': '公開したカード'}, 'cost_reference': True, 'branches': [{'cost_total': 10, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 20, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 30, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 40, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 50, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}]}
+
+
+[23] PL!SP-bp1-007-R+ | 米女メイ (ab#0)
+Full text: {{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。
+Cost: None
+Effect: {'source': 'waitroom', 'condition': {'target': 'self', 'type': 'energy_at_least', 'value': 11}, 'actions': [{'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}]}
+
+
+[25] PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': '蓮ノ空', 'names_different': True}, 'actions': [{'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+[27] PL!HS-bp1-004-R+ | 夕霧綴理 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：自分の控え室から『蓮ノ空』のライブカードを1枚手札に加える。
+Cost: {'type': 'pay_energy', 'energy': 3}
+Effect: {'source': 'waitroom', 'action': {'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}}
+
+
+[31] PL!S-bp2-007-R+ | 国木田花丸 (ab#0)
+Full text: {{jidou.png|自動}}［ターン1回］エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の場合、カードを1枚引く。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}, 'actions': [{'action': 'draw_cards', 'count': 1}]}
+
+
+[33] PL!S-bp2-008-R+ | 小原鞠莉 (ab#0)
+Full text: {{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。
+Cost: None
+Effect: {'source': 'waitroom', 'action': {'count': 1, 'up_to': 1, 'action': 'place_card', 'source': 'deck_bottom', 'card_type': 'live_card'}}
+
+
+Pattern 'デッキ' in text but may not be captured (133 occurrences):
+--------------------------------------------------------------------------------
+
+[2] PL!-sd1-011-SD | 絢瀬 絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'discard_to_waitroom'}]}
+
+
+[5] PL!S-PR-028-PR | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
+Cost: None
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[16] PL!-bp3-014-N | 星空 凛 (ab#0)
+Full text: {{toujyou.png|登場}}このメンバーをウェイトにしてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': True, 'count': 1}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 2, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[30] PL!S-bp2-005-R+ | 渡辺 曜 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 7, 'source': 'deck_top'}, {'action': 'add_to_hand', 'count': 3, 'may': True, 'reveal': True, 'card_type': 'member_card', 'selection': {'heart_types': ['02', '04', '05'], 'operator': 'or'}}, {'action': 'discard_to_waitroom'}]}
+
+
+[32] PL!S-bp2-007-R+ | 国木田花丸 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}手札のライブカードを1枚公開し、デッキの一番下に置いてもよい：自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'optional': True, 'card_type': 'live_card', 'count': 1, 'destination': 'deck_bottom'}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 2, 'source': 'deck_top'}, {'action': 'place_on_deck', 'destination': 'deck_top', 'up_to': True, 'order': 'any', 'source': 'looked_at_cards'}, {'action': 'discard_to_waitroom', 'source': 'looked_at_cards'}]}
+
+
+[33] PL!S-bp2-008-R+ | 小原鞠莉 (ab#0)
+Full text: {{toujyou.png|登場}}自分の控え室からライブカードを1枚までデッキの一番下に置く。
+Cost: None
+Effect: {'source': 'waitroom', 'action': {'count': 1, 'up_to': 1, 'action': 'place_card', 'source': 'deck_bottom', 'card_type': 'live_card'}}
+
+
+[55] PL!N-bp3-001-R+ | 上原歩夢 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを1枚引き、ライブ終了時まで、自分のステージにいるメンバーは{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）
+Cost: None
+Effect: {'actions': [{'count': 1, 'action': 'may_place_card'}, {'duration': 'until_end_of_live', 'action': 'draw_cards', 'count': 1, 'conditional': True}]}
+
+
+[56] PL!N-bp3-009-R+ | 天王寺璃奈 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: {'type': 'move_cards', 'source': 'waitroom', 'destination': 'deck_bottom', 'count': 2, 'card_type': 'member_card', 'optional': True, 'order': 'any'}
+Effect: {'condition': {'type': 'cost_total_equal', 'reference': 'それらのカード'}, 'cost_reference': True, 'branches': [{'cost_total': 6, 'effect': {'action': 'draw_cards', 'count': 1}}, {'cost_total': 8, 'effect': {'duration': 'until_end_of_live', 'action': 'gain_resource', 'heart_type': 'all'}}, {'cost_total': 25, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}]}
+
+
+[62] PL!N-bp4-004-R+ | 朝香果林 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く。
+Cost: None
+Effect: {'source': 'waitroom', 'action': {'action': 'place_on_deck', 'destination': 'deck_top', 'order': 'any'}}
+
+
+Pattern 'スコア' in text but may not be captured (107 occurrences):
+--------------------------------------------------------------------------------
+
+[22] PL!SP-bp1-003-R+ | 嵐 千砂都 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札にあるメンバーカードを好きな枚数公開する：公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: {'type': 'reveal_cards', 'source': 'hand', 'optional': False, 'card_type': 'member_card', 'count': 'any'}
+Effect: {'condition': {'type': 'cost_total_equal', 'reference': '公開したカード'}, 'cost_reference': True, 'branches': [{'cost_total': 10, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 20, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 30, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 40, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}, {'cost_total': 50, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}]}
+
+
+[25] PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': '蓮ノ空', 'names_different': True}, 'actions': [{'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+[34] PL!S-bp2-008-R+ | 小原鞠莉 (ab#1)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': 'Aqours', 'names_different': True}, 'actions': [{'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}}, {'action': 'add_score', 'amount': 1}, {'action': 'add_score', 'amount': 2}]}
+
+
+[53] PL!S-bp3-001-R+ | 高海千歌 (ab#0)
+Full text: {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'member', 'optional': False, 'count': 1, 'position': 'center'}
+Effect: {'action': {'duration': 'until_end_of_live', 'action': 'add_score', 'amount': 1}, 'activation_restriction': 'only_this_card'}
+
+
+[56] PL!N-bp3-009-R+ | 天王寺璃奈 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}控え室にあるメンバーカード2枚を好きな順番でデッキの一番下に置いてもよい：それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: {'type': 'move_cards', 'source': 'waitroom', 'destination': 'deck_bottom', 'count': 2, 'card_type': 'member_card', 'optional': True, 'order': 'any'}
+Effect: {'condition': {'type': 'cost_total_equal', 'reference': 'それらのカード'}, 'cost_reference': True, 'branches': [{'cost_total': 6, 'effect': {'action': 'draw_cards', 'count': 1}}, {'cost_total': 8, 'effect': {'duration': 'until_end_of_live', 'action': 'gain_resource', 'heart_type': 'all'}}, {'cost_total': 25, 'effect': {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}}]}
+
+
+[59] PL!-bp4-005-R+ | 星空 凛 (ab#1)
+Full text: {{jyouji.png|常時}}{{center.png|センター}}ライブの合計スコアを+１する。
+Cost: None
+Effect: {'condition': {'type': 'position', 'value': 'center', 'operator': '=='}, 'action': {'action': 'add_score', 'amount': 1}}
+
+
+[84] PL!-bp5-001-P | 高坂穂乃果 (ab#0)
+Full text: {{live_success.png|ライブ成功時}}手札を1枚控え室に置いてもよい：自分のデッキの上から、自分のライブの合計スコアに2を足した数に等しい枚数見る。その中からカードを1枚手札に加える。残りを控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'add_to_hand', 'target': 'self', 'count': 1, 'source': 'deck_top'}}
+
+
+[91] PL!N-bp5-012-P | 鐘 嵐珠 (ab#1)
+Full text: {{live_success.png|ライブ成功時}}ライブの合計スコアが相手より高い場合、自分のエネルギーデッキから、このメンバーの下にあるエネルギーカードの枚数に1を足した枚数のエネルギーカードをウェイト状態で置く。
+Cost: None
+Effect: {'condition': {'type': 'score_comparison', 'operator': '>', 'target': 'opponent', 'compares': 'live_total_score'}, 'action': {'action': 'place_card', 'card_type': 'energy_card'}}
+
+
+[92] PL!SP-bp5-111-R | 柊摩央 (ab#0)
+Full text: {{jyouji.png|常時}}自分のエネルギーがちょうど8枚あるかぎり、ライブの合計スコアを+１する。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'exact_count', 'value': 8, 'count_type': 'energy'}, 'actions': [{'action': 'add_score', 'amount': 1}]}
+
+
+[104] PL!N-bp5-001-P | 上原歩夢 (ab#0)
+Full text: {{jidou.png|自動}}{{turn1.png|ターン1回}}自分がエールしたとき、エールにより公開された自分のカードが持つブレードハートの中に[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}のうち、3種類以上ある場合、ライブ終了時まで、{{heart_01.png|heart01}}を得る。6種類以上ある場合、さらにライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'comparison', 'operator': '>', 'location': 'cheer_revealed'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource', 'heart_types': ['01']}, {'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+Pattern 'エネルギー' in text but may not be captured (74 occurrences):
+--------------------------------------------------------------------------------
+
+[8] PL!SP-PR-004-PR | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'place_card', 'count': 1, 'card_type': 'energy_card'}}
+
+
+[19] PL!N-bp1-006-R+ | 近江彼方 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を1枚控え室に置く：このターン、自分のステージに『虹ヶ咲』のメンバーが登場している場合、エネルギーを2枚アクティブにする。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': False}
+Effect: {'time': 'this_turn', 'condition': {'target': 'self', 'type': 'group', 'value': '虹ヶ咲'}, 'actions': [{'action': 'activate_energy', 'count': 2}]}
+
+
+[23] PL!SP-bp1-007-R+ | 米女メイ (ab#0)
+Full text: {{toujyou.png|登場}}自分のエネルギーが11枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。
+Cost: None
+Effect: {'source': 'waitroom', 'condition': {'target': 'self', 'type': 'energy_at_least', 'value': 11}, 'actions': [{'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}]}
+
+
+[24] PL!HS-bp1-001-R | 日野下花帆 (ab#0)
+Full text: {{toujyou.png|登場}}エネルギーを2枚アクティブにする。
+Cost: None
+Effect: {'action': {'action': 'activate_energy', 'count': 2}}
+
+
+[55] PL!N-bp3-001-R+ | 上原歩夢 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい。そうした場合、カードを1枚引き、ライブ終了時まで、自分のステージにいるメンバーは{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。（メンバーの下に置かれているエネルギーカードではコストを支払えない。メンバーがステージから離れたとき、下に置かれているエネルギーカードはエネルギーデッキに置く。）
+Cost: None
+Effect: {'actions': [{'count': 1, 'action': 'may_place_card'}, {'duration': 'until_end_of_live', 'action': 'draw_cards', 'count': 1, 'conditional': True}]}
+
+
+[64] PL!N-bp4-007-R+ | 優木せつ菜 (ab#1)
+Full text: {{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'both', 'type': 'combined_location_count_at_least', 'value': 15, 'location': 'energy'}, 'actions': [{'action': 'gain_resource', 'heart_types': ['02', '02']}]}
+
+
+[65] PL!N-bp4-007-R+ | 優木せつ菜 (ab#2)
+Full text: {{live_success.png|ライブ成功時}}自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く。
+Cost: None
+Effect: {'action': {'action': 'place_card', 'count': 1, 'source': 'energy_deck', 'card_type': 'energy_card'}}
+
+
+[72] PL!SP-bp4-005-R+ | 葉月 恋 (ab#0)
+Full text: {{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'energy_at_least', 'value': 7}, 'actions': [{'action': 'place_card', 'count': 2, 'card_type': 'energy_card'}]}
+
+
+[73] PL!SP-bp4-005-R+ | 葉月 恋 (ab#1)
+Full text: {{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'energy_at_least', 'value': 10}, 'actions': [{'action': 'gain_resource', 'blade_count': 3, 'resource': 'blade', 'resource_count': 3}]}
+
+
+[75] PL!SP-bp4-008-R+ | 若菜四季 (ab#1)
+Full text: {{toujyou.png|登場}}【右サイド】エネルギーを2枚アクティブにする。
+Cost: None
+Effect: {'condition': {'type': 'position', 'value': 'right_side', 'operator': '=='}, 'action': {'action': 'activate_energy', 'count': 2}}
+
+
+Pattern 'エリア' in text but may not be captured (64 occurrences):
+--------------------------------------------------------------------------------
+
+[21] PL!SP-bp1-002-R+ | 唐 可可 (ab#0)
+Full text: {{toujyou.png|登場}}{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい：ステージの左サイドエリアに登場しているなら、カードを2枚引く。
+Cost: {'type': 'pay_energy', 'energy': 2}
+Effect: {'condition': {'type': 'position', 'value': 'left_side'}, 'actions': [{'action': 'draw_cards', 'count': 2}]}
+
+
+[25] PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': '蓮ノ空', 'names_different': True}, 'actions': [{'action': {'action': 'gain_ability', 'ability': '{{jyouji.png|常時}}ライブの合計スコアを+１する。'}}]}
+
+
+[34] PL!S-bp2-008-R+ | 小原鞠莉 (ab#1)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': 'Aqours', 'names_different': True}, 'actions': [{'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}}, {'action': 'add_score', 'amount': 1}, {'action': 'add_score', 'amount': 2}]}
+
+
+[44] PL!HS-bp2-005-R+ | 大沢瑠璃乃 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：自分のステージのエリアすべてにメンバーが登場している場合、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'condition': {'target': 'self', 'type': 'all_areas'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource', 'blade_count': 2, 'resource': 'blade', 'resource_count': 2}]}
+
+
+[53] PL!S-bp3-001-R+ | 高海千歌 (ab#0)
+Full text: {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}メンバー1人をウェイトにする：ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。（この能力はセンターエリアに登場している場合のみ起動できる。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'member', 'optional': False, 'count': 1, 'position': 'center'}
+Effect: {'action': {'duration': 'until_end_of_live', 'action': 'add_score', 'amount': 1}, 'activation_restriction': 'only_this_card'}
+
+
+[54] PL!S-bp3-006-R+ | 津島善子 (ab#0)
+Full text: {{kidou.png|起動}}{{center.png|センター}}{{turn1.png|ターン1回}}このメンバーをウェイトにし、手札を1枚控え室に置く：このメンバー以外の『Aqours』のメンバー1人を自分のステージから控え室に置く。そうした場合、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる。（この能力はセンターエリアに登場している場合のみ起動できる。）
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': False, 'position': 'center'}
+Effect: {'actions': [{'count': 1, 'action': 'discard_to_waitroom', 'target': 'self', 'source': 'stage', 'group': 'Aqours', 'exclude_this_member': True}, {'action': 'deploy_to_stage', 'count': 1, 'card_type': 'member_card', 'group': 'Aqours', 'conditional': True}]}
+
+
+[60] PL!-bp4-005-R+ | 星空 凛 (ab#2)
+Full text: {{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない場合、このメンバーはセンターエリア以外にポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'member_presence', 'value': "μ's", 'presence': 'absent'}, 'actions': [{'action': 'position_change'}]}
+
+
+[71] PL!SP-bp4-004-R+ | 平安名すみれ (ab#1)
+Full text: {{toujyou.png|登場}}{{center.png|センター}}『Liella!』のメンバー2人からバトンタッチして登場している場合、カードを2枚引き、自分の控え室にあるコスト4以下の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる。
+Cost: None
+Effect: {'cost_limit': 4, 'source': 'waitroom', 'condition': {'type': 'raw', 'text': 'Liella!』のメンバー2人からバトンタッチして登場している'}, 'actions': [{'action': 'draw_cards', 'count': 2}, {'count': 1, 'action': 'deploy_to_stage', 'target': 'self', 'source': 'stage', 'card_type': 'member_card', 'group': 'Liella!'}]}
+
+
+[76] PL!SP-bp4-008-R+ | 若菜四季 (ab#2)
+Full text: {{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'action': {'action': 'may_position_change', 'target': 'self'}}
+
+
+[77] PL!SP-bp4-011-R+ | 鬼塚冬毬 (ab#0)
+Full text: {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
+Cost: None
+Effect: {'condition': {'type': 'or_trigger', 'triggers': ['deploy', 'move']}, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'original_blade_count': 3, 'original_blade_operator': '<='}]}
+
+
+Pattern '相手の' in text but may not be captured (54 occurrences):
+--------------------------------------------------------------------------------
+
+[7] PL!-PR-007-PR | 東條 希 (ab#0)
+Full text: {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': True, 'count': 1}
+Effect: {'cost_limit': 4, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'source_state': 'wait'}, {'action': 'note', 'text': 'エールで公開する枚数を増やさない。）'}]}
+
+
+[15] PL!-bp3-002-R | 絢瀬絵里 (ab#0)
+Full text: {{toujyou.png|登場}}手札を1枚控え室に置いてもよい：相手のステージにいるコスト4以下のメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'cost_limit': 4, 'actions': [{'count': 2, 'up_to': 2, 'action': 'member_to_wait', 'target': 'opponent', 'source': 'stage', 'source_state': 'wait'}, {'action': 'note', 'text': 'エールで公開する枚数を増やさない。）'}]}
+
+
+[39] PL!SP-bp2-010-R+ | ウィーン・マルガレーテ (ab#0)
+Full text: {{jyouji.png|常時}}相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる。
+Cost: None
+Effect: {'action': {'action': 'increase_heart_cost', 'target': 'opponent', 'card_type': 'live_card', 'heart_types': ['00'], 'all': True}}
+
+
+[61] PL!N-bp4-004-R+ | 朝香果林 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}カードを1枚引く。相手のステージにいるコスト9以下のメンバーを1人までウェイトにする。
+Cost: None
+Effect: {'cost_limit': 9, 'actions': [{'action': 'draw_cards', 'count': 1}, {'count': 1, 'up_to': 1, 'action': 'member_to_wait', 'target': 'opponent', 'source': 'stage'}]}
+
+
+[62] PL!N-bp4-004-R+ | 朝香果林 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く。
+Cost: None
+Effect: {'source': 'waitroom', 'action': {'action': 'place_on_deck', 'destination': 'deck_top', 'order': 'any'}}
+
+
+[64] PL!N-bp4-007-R+ | 優木せつ菜 (ab#1)
+Full text: {{jyouji.png|常時}}自分と相手のエネルギーの合計が15枚以上あるかぎり、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'both', 'type': 'combined_location_count_at_least', 'value': 15, 'location': 'energy'}, 'actions': [{'action': 'gain_resource', 'heart_types': ['02', '02']}]}
+
+
+[77] PL!SP-bp4-011-R+ | 鬼塚冬毬 (ab#0)
+Full text: {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
+Cost: None
+Effect: {'condition': {'type': 'or_trigger', 'triggers': ['deploy', 'move']}, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'original_blade_count': 3, 'original_blade_operator': '<='}]}
+
+
+[78] PL!SP-bp5-001-SEC | 澁谷かのん (ab#0)
+Full text: {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。
+・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。
+・カードを1枚引く。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'cost_limit': 4, 'choice': True, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage'}, {'action': 'draw_cards', 'count': 1}]}
+
+
+[80] PL!-bp5-004-R+ | 園田海未 (ab#0)
+Full text: {{kidou.png|起動}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}{{icon_energy.png|E}}：相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき、{{icon_energy.png|E}}減る。
+Cost: {'type': 'pay_energy', 'energy': 4}
+Effect: {'condition': {'target': 'opponent', 'type': 'per_unit', 'value': 1, 'operator': '*', 'unit_type': 'stage_member'}, 'action': {'action': 'reduce'}}
+
+
+[100] PL!N-bp5-007-AR | 優木せつ菜 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合、ライブ終了時まで、{{heart_02.png|heart02}}{{heart_02.png|heart02}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'both', 'type': 'card_count', 'operator': '=='}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource', 'heart_types': ['02', '02']}]}
+
+
+Pattern '選ぶ' in text but may not be captured (35 occurrences):
+--------------------------------------------------------------------------------
+
+[11] PL!-bp3-012-PR | 南 ことり (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。
+Cost: None
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['01', '03', '06']}, {'duration': 'until_end_of_live'}, {'action': 'gain_resource', 'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}]}
+
+
+[52] PL!-bp3-009-R+ | 矢澤にこ (ab#1)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}このメンバーをウェイトにする：{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、選んだハートを1つ得る。
+Cost: {'type': 'move_cards', 'source': 'stage', 'destination': 'wait', 'target': 'this_member', 'optional': False, 'count': 1}
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['01', '03', '06']}, {'action': 'gain_resource', 'duration': 'until_end_of_live'}]}
+
+
+[62] PL!N-bp4-004-R+ | 朝香果林 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く。
+Cost: None
+Effect: {'source': 'waitroom', 'action': {'action': 'place_on_deck', 'destination': 'deck_top', 'order': 'any'}}
+
+
+[67] PL!N-bp4-010-R+ | 三船栞子 (ab#1)
+Full text: {{live_start.png|ライブ開始時}}自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある場合、ライブ終了時まで、{{heart_04.png|heart04}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'group', 'value': '虹ヶ咲'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource', 'heart_types': ['04']}]}
+
+
+[78] PL!SP-bp5-001-SEC | 澁谷かのん (ab#0)
+Full text: {{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：以下から1つを選ぶ。
+・相手のステージにいるコスト4以下のメンバー1人をウェイトにする。
+・カードを1枚引く。
+Cost: {'type': 'pay_energy', 'energy': 1}
+Effect: {'cost_limit': 4, 'choice': True, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage'}, {'action': 'draw_cards', 'count': 1}]}
+
+
+[105] PL!S-bp5-005-AR | 渡辺 曜 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}手札を1枚控え室に置いてもよい：{{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True}
+Effect: {'action': {'action': 'choose_heart', 'choice': True, 'heart_types': ['03', '04', '05'], 'count': 1}}
+
+
+[109] PL!-PR-005-PR | 星空 凛 (ab#0)
+Full text: {{toujyou.png|登場}}以下から1つを選ぶ。
+・カードを1枚引き、手札を1枚控え室に置く。
+・相手のステージにいるすべてのコスト2以下のメンバーをウェイトにする。
+Cost: None
+Effect: {'cost_limit': 2, 'choice': True, 'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'member_to_wait', 'target': 'opponent', 'source': 'stage', 'all': True}]}
+
+
+[124] PL!S-bp5-004-P | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}以下から1つを選ぶ。
+・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'condition': {'exclude_this_member': True, 'type': 'member_exclusion'}, 'choice': True, 'actions': [{'action': 'select_member', 'target': 'self', 'group': 'Aqours', 'count': 1}, {'action': 'position_change', 'target': 'self', 'group': 'SaintSnow'}]}
+
+
+[127] PL!HS-bp5-005-P | 徒町 小鈴 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい：自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合、ライブ終了時まで、{{heart_05.png|heart05}}を得る。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 1, 'optional': True, 'group': 'DOLLCHESTRA'}
+Effect: {'condition': {'target': 'self', 'type': 'comparison', 'value': 'DOLLCHESTRA', 'operator': '<', 'compares': 'cost'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'gain_resource', 'heart_types': ['05']}]}
+
+
+[137] PL!N-bp5-011-AR | ミア・テイラー (ab#0)
+Full text: {{toujyou.png|登場}}以下から1つを選ぶ。
+・自分の控え室にカード名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを1枚手札に加える。
+・自分の控え室にグループ名が異なるライブカードが3枚以上ある場合、自分の控え室からライブカードを2枚手札に加える。
+Cost: None
+Effect: {'source': 'waitroom', 'choice': True, 'actions': [{'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card', 'condition': {'target': 'self', 'different': 'card_name', 'type': 'card_count_at_least', 'value': 3, 'location': 'waitroom', 'card_type': 'live_card'}}, {'action': 'add_to_hand', 'count': 2, 'card_type': 'live_card', 'condition': {'target': 'self', 'different': 'group_name', 'type': 'card_count_at_least', 'value': 3, 'location': 'waitroom', 'card_type': 'live_card'}}]}
+
+
+Pattern '移動' in text but may not be captured (30 occurrences):
+--------------------------------------------------------------------------------
+
+[60] PL!-bp4-005-R+ | 星空 凛 (ab#2)
+Full text: {{live_start.png|ライブ開始時}}自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない場合、このメンバーはセンターエリア以外にポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'member_presence', 'value': "μ's", 'presence': 'absent'}, 'actions': [{'action': 'position_change'}]}
+
+
+[76] PL!SP-bp4-008-R+ | 若菜四季 (ab#2)
+Full text: {{live_start.png|ライブ開始時}}このメンバーをポジションチェンジしてもよい。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'action': {'action': 'may_position_change', 'target': 'self'}}
+
+
+[77] PL!SP-bp4-011-R+ | 鬼塚冬毬 (ab#0)
+Full text: {{jidou.png|自動}}このメンバーが登場か、エリアを移動したとき、相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする。
+Cost: None
+Effect: {'condition': {'type': 'or_trigger', 'triggers': ['deploy', 'move']}, 'actions': [{'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'original_blade_count': 3, 'original_blade_operator': '<='}]}
+
+
+[99] PL!SP-bp5-004-SEC | 平安名すみれ (ab#0)
+Full text: {{jidou.png|自動}}{{turn1.png|ターン1回}}自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれたとき、カードを1枚引き、ライブ終了時まで、{{heart_02.png|heart02}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'raw', 'text': '自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた'}, 'duration': 'until_end_of_live', 'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'gain_resource', 'heart_types': ['02']}]}
+
+
+[124] PL!S-bp5-004-P | 黒澤ダイヤ (ab#0)
+Full text: {{toujyou.png|登場}}以下から1つを選ぶ。
+・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: None
+Effect: {'condition': {'exclude_this_member': True, 'type': 'member_exclusion'}, 'choice': True, 'actions': [{'action': 'select_member', 'target': 'self', 'group': 'Aqours', 'count': 1}, {'action': 'position_change', 'target': 'self', 'group': 'SaintSnow'}]}
+
+
+[142] PL!SP-bp5-006-R | 桜小路きな子 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}デッキの上からカードを3枚控え室に置く：このメンバーはポジションチェンジする。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+Cost: {'type': 'move_cards', 'source': 'deck', 'destination': 'waitroom', 'count': 3, 'optional': False}
+Effect: {'action': {'action': 'position_change'}}
+
+
+[149] PL!SP-bp5-010-AR | ウィーン・マルガレーテ (ab#0)
+Full text: {{toujyou.png|登場}}自分と相手は、自身のステージのセンターにいるメンバーをポジションチェンジする。(センターにいるメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはセンターエリアに移動させる。)
+Cost: None
+Effect: {'action': {'action': 'position_change', 'target': 'opponent', 'source': 'stage'}}
+
+
+[188] PL!SP-pb1-003-R | 嵐 千砂都 (ab#0)
+Full text: {{toujyou.png|登場}}自分のステージにいるメンバーが『5yncri5e!』のみの場合、自分と対戦相手は、センターエリアのメンバーを左サイドエリアに、左サイドエリアのメンバーを右サイドエリアに、右サイドエリアのメンバーをセンターエリアに、それぞれ移動させる。
+Cost: None
+Effect: {'action': 'rotate_areas', 'rotation': {'center_to': 'left_side', 'left_side_to': 'right_side', 'right_side_to': 'center'}, 'target': 'both_players'}
+
+
+[192] PL!SP-pb1-006-R | 桜小路きな子 (ab#0)
+Full text: {{jidou.png|自動}}このメンバーが登場か、エリアを移動するたび、ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+(対戦相手のカードの効果でも発動する。)
+Cost: None
+Effect: {'action': {'duration': 'until_end_of_live', 'action': 'gain_resource', 'blade_count': 2, 'resource': 'blade', 'resource_count': 2}}
+
+
+[194] PL!SP-pb1-008-R | 若菜四季 (ab#0)
+Full text: {{toujyou.png|登場}}カードを1枚引く。その後、登場したエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる場合、そのメンバーは、このメンバーがいたエリアに移動させる。
+Cost: None
+Effect: {'actions': [{'action': 'draw_cards', 'count': 1}, {'action': 'select_area', 'source': 'stage', 'exclude': 'deployed_area', 'count': 1, 'target': 'self'}]}
+
+
+Action 1 missing action field at  (5 occurrences):
+--------------------------------------------------------------------------------
+
+[11] PL!-bp3-012-PR | 南 ことり (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。
+Cost: None
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['01', '03', '06']}, {'duration': 'until_end_of_live'}, {'action': 'gain_resource', 'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}]}
+
+
+[209] PL!SP-bp2-011-R | 鬼塚冬毬 (ab#0)
+Full text: {{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+Cost: None
+Effect: {'actions': [{'raw_text': '自分の控え室にある、カード名の異なるライブカードを2枚選ぶ'}, {'count': 1, 'conditional': True}]}
+
+
+[232] PL!-bp3-007-R | 東條 希 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}手札を2枚控え室に置いてもよい：自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、1枚をデッキの上に置き、1枚を控え室に置く。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 2, 'optional': True}
+Effect: {'actions': [{'action': 'look_at_cards', 'count': 3, 'source': 'deck_top'}, {'count': 1}, {'count': 1, 'action': 'discard_to_waitroom'}]}
+
+
+[268] PL!-pb1-007-R | 東條 希 (ab#0)
+Full text: {{kidou.png|起動}}{{turn1.png|ターン1回}}手札を3枚控え室に置く：自分のステージにほかの『lilywhite』のメンバーがいる場合、自分の控え室から『μ's』のライブカードを1枚手札に加える。この能力を起動するためのコストは、自分の成功ライブカード置き場にあるカード1枚につき、控え室に置く手札の数が1枚減る。
+Cost: {'type': 'move_cards', 'source': 'hand', 'destination': 'waitroom', 'count': 3, 'optional': False}
+Effect: {'source': 'waitroom', 'condition': {'target': 'self', 'type': 'member_presence', 'value': 'lilywhite', 'presence': 'present', 'exclusion': 'other'}, 'actions': [{'action': 'add_to_hand', 'count': 1, 'card_type': 'live_card'}, {'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}, {'action': 'discard_to_waitroom'}]}
+
+
+[587] PL!-bp5-011-N | 絢瀬絵里 (ab#0)
+Full text: {{live_start.png|ライブ開始時}}{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分の成功ライブカード置き場にあるカード1枚につき、選んだハートを1つ得る。
+Cost: None
+Effect: {'actions': [{'action': 'choose_heart', 'choice': True, 'heart_types': ['04', '05', '06']}, {'duration': 'until_end_of_live'}, {'action': 'gain_resource', 'multiplier': True, 'per_unit': 1, 'unit_type': 'card', 'target': 'self'}]}
+
+
+Action 0 missing action field at  (4 occurrences):
+--------------------------------------------------------------------------------
+
+[34] PL!S-bp2-008-R+ | 小原鞠莉 (ab#1)
+Full text: {{jyouji.png|常時}}自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる場合、「{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合、ライブの合計スコアを+１する。ライブカードが3枚以上ある場合、代わりに合計スコアを+２する。」を得る。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'all_areas', 'group': 'Aqours', 'names_different': True}, 'actions': [{'condition': {'target': 'self', 'type': 'card_count_at_least', 'value': 1, 'location': 'cheer_revealed', 'card_type': 'live_card'}}, {'action': 'add_score', 'amount': 1}, {'action': 'add_score', 'amount': 2}]}
+
+
+[63] PL!N-bp4-007-R+ | 優木せつ菜 (ab#0)
+Full text: {{toujyou.png|登場}}自分と相手はそれぞれ、自身の控え室からライブカードを1枚手札に加える。
+Cost: None
+Effect: {'actions': [{'target': 'both_players', 'multi_target': True}, {'action': 'add_to_hand', 'count': 1, 'source': 'waitroom', 'card_type': 'live_card'}]}
+
+
+[70] PL!SP-bp4-004-R+ | 平安名すみれ (ab#0)
+Full text: {{jyouji.png|常時}}このカードのプレイに際し、2人のメンバーとバトンタッチしてもよい。
+Cost: None
+Effect: {'actions': [{'timing': 'during_card_play'}, {'action': 'may_baton_touch', 'count': 2}]}
+
+
+[524] PL!-bp5-024-L | Private Wars (ab#0)
+Full text: {{live_start.png|ライブ開始時}}自分のステージに『A-RISE』のメンバーがいる場合、以下から1つを選ぶ。
+・ウェイト状態のメンバー1人をアクティブにし、ライブ終了時まで、そのメンバーは{{icon_blade.png|ブレード}}を得る。
+・相手のステージにいる元々持つ{{icon_blade.png|ブレード}}が3つ以下のメンバー1人をウェイトにする。
+Cost: None
+Effect: {'condition': {'target': 'self', 'type': 'member_presence', 'value': 'A-RISE', 'presence': 'present'}, 'choice': True, 'actions': [{'actions': [{'count': 1, 'action': 'activate_member', 'source_state': 'wait'}, {'duration': 'until_end_of_live', 'action': 'gain_resource', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1}]}, {'count': 1, 'action': 'member_to_wait', 'target': 'opponent', 'up_to': 1, 'source': 'stage', 'blade_count': 1, 'resource': 'blade', 'resource_count': 1, 'original_blade_count': 3, 'original_blade_operator': '<='}]}
+
+
+Action 0 has raw_text at : 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ (1 occurrences):
+--------------------------------------------------------------------------------
+
+[209] PL!SP-bp2-011-R | 鬼塚冬毬 (ab#0)
+Full text: {{toujyou.png|登場}}自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+Cost: None
+Effect: {'actions': [{'raw_text': '自分の控え室にある、カード名の異なるライブカードを2枚選ぶ'}, {'count': 1, 'conditional': True}]}
+
+
+Condition missing type at  (1 occurrences):
+--------------------------------------------------------------------------------
+
+[336] PL!N-PR-020-PR | エマ・ヴェルデ (ab#0)
+Full text: {{jyouji.png|常時}}自分のステージにいるメンバーがちょうど2人であるかぎり、{{heart_05.png|heart05}}{{icon_blade.png|ブレード}}を得る。
+Cost: None
+Effect: {'condition': {'target': 'self'}, 'actions': [{'action': 'gain_resource', 'heart_types': ['05'], 'blade_count': 1, 'resource': 'blade', 'resource_count': 1}]}
+

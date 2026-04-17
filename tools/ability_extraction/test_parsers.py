@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from tools.ability_extraction.extract_costs import parse_cost, parse_generic_effect
+from tools.ability_extraction.condition_parser import parse_condition
 
 # Load fixtures
 with open('tools/ability_extraction/fixtures/extract_fixtures.json', 'r', encoding='utf-8') as f:
@@ -88,9 +89,52 @@ def test_score_cost_limit_condition():
     """Test parsing abilities with score/cost-limit condition."""
     assert_effect_matches('score_cost_limit_condition')
 
+def test_hand_card_count_comparison():
+    """Test parsing hand-count comparison with an explicit 2-card difference."""
+    condition = parse_condition('相手の手札の枚数が自分より2枚以上多い')
+    assert condition['type'] == 'hand_card_count_at_least_2_more'
+    assert condition['value'] == 2
+    assert condition['location'] == 'hand'
+    assert condition['target'] == 'opponent'
+
+def test_per_unit_condition_with_source_card():
+    """Test parsing a per-unit condition that starts with これにより."""
+    condition = parse_condition('これにより控え室に置いた『Liella!』のメンバーカード1枚につき')
+    assert condition['type'] == 'per_unit'
+    assert condition['value'] == 1
+    assert condition['operator'] == '*'
+    assert condition['group'] == 'Liella!'
+    assert condition['card_type'] == 'member_card'
+    assert condition['location'] == 'waitroom'
+
 def test_fallback_raw_text():
     """Test parsing abilities that fall back to raw text."""
     assert_effect_matches('fallback_raw_text')
+
+def test_nested_conditional_chain_is_not_mixed():
+    """Test that two sentence-level condition/action chains stay separated."""
+    text = (
+        'このメンバーがステージから控え室に置かれたとき、'
+        'このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、'
+        'エネルギーを2枚アクティブにする。'
+        'コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、'
+        'さらにカードを1枚引く。'
+    )
+    effect = parse_generic_effect(text)
+
+    assert 'actions' in effect
+    assert len(effect['actions']) == 2
+
+    first = effect['actions'][0]
+    second = effect['actions'][1]
+
+    assert first['action']['condition']['value'] == '虹ヶ咲'
+    assert first['action']['action']['action'] == 'activate_energy'
+    assert first['action']['action']['count'] == 2
+    assert 'コスト15以上' not in first['text']
+    assert second['action']['action'] == 'draw_cards'
+    assert second['action']['count'] == 1
+    assert second['condition']['value'] == '虹ヶ咲'
 
 def run_all_tests():
     """Run all test functions."""
@@ -106,7 +150,10 @@ def run_all_tests():
     test_conditional_effect()
     test_position_condition()
     test_score_cost_limit_condition()
+    test_hand_card_count_comparison()
+    test_per_unit_condition_with_source_card()
     test_fallback_raw_text()
+    test_nested_conditional_chain_is_not_mixed()
     
     print("=" * 60)
     print("All tests passed (fixtures loaded successfully)")

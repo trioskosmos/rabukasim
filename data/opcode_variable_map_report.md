@@ -1,0 +1,4423 @@
+# Opcode Variable Map
+
+- Unique abilities: 598
+- Labels observed: 98
+- Potential variable issues: 0
+
+## Common Mappings
+### (unlabelled)
+- Examples: 691
+- `#0` `root`
+  - Text: 自分の控え室からライブカードを1枚手札に加える。
+  - Segments:
+    - 自分の控え室からライブカードを1枚手札に加える
+  - Variable split:
+    - source = 'waitroom'
+      - From: 自分の控え室からライブカードを1枚手札に加える
+  - Evidence:
+    - source <- 控え室
+  - Vars: source='waitroom'
+- `#1` `root`
+  - Text: 自分の控え室からメンバーカードを1枚手札に加える。
+  - Segments:
+    - 自分の控え室からメンバーカードを1枚手札に加える
+  - Variable split:
+    - source = 'waitroom'
+      - From: 自分の控え室からメンバーカードを1枚手札に加える
+  - Evidence:
+    - source <- 控え室
+  - Vars: source='waitroom'
+- `#2` `root`
+  - Text: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+  - Segments:
+    - 自分のデッキの上からカードを3枚見る
+    - その中から1枚を手札に加え
+    - 残りを控え室に置く
+  - Vars: (no extra variables)
+- `#3` `root`
+  - Text: カードを1枚引き、手札を1枚控え室に置く。
+  - Segments:
+    - カードを1枚引き
+    - 手札を1枚控え室に置く
+  - Vars: (no extra variables)
+- `#4` `root`
+  - Text: ライブ終了時まで、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。
+  - Segments:
+    - ライブ終了時まで
+    - {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Vars: (no extra variables)
+
+### gain_resource
+- Examples: 135
+- `#4` `root.actions[1]`
+  - Text: {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - blade_count = 2
+      - From: {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+    - resource = 'blade'
+      - From: {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+    - resource_count = 2
+      - From: {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Evidence:
+    - resource <- ブレード
+  - Vars: blade_count=2, resource='blade', resource_count=2
+- `#11` `root.actions[3]`
+  - Text: 選んだハートを1つ得る
+  - Segments:
+    - 選んだハートを1つ得る
+  - Variable split:
+    - resource = 'heart'
+      - From: 選んだハートを1つ得る
+  - Evidence:
+    - resource <- ハート
+  - Vars: resource='heart'
+- `#18` `root.actions[1]`
+  - Text: そのハートを1つ得る
+  - Segments:
+    - そのハートを1つ得る
+  - Variable split:
+    - resource = 'heart'
+      - From: そのハートを1つ得る
+  - Evidence:
+    - resource <- ハート
+  - Vars: resource='heart'
+- `#20` `root.actions[0]`
+  - Text: {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - blade_count = 2
+      - From: {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+    - resource = 'blade'
+      - From: {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+    - resource_count = 2
+      - From: {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+    - heart_type = 'all'
+      - From: {{icon_all.png|ハート}}{{icon_all.png|ハート}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Evidence:
+    - resource <- ブレード
+  - Vars: blade_count=2, heart_type='all', resource='blade', resource_count=2
+- `#28` `root.action`
+  - Text: {{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - {{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - blade_count = 1
+      - From: {{icon_blade.png|ブレード}}を得る
+    - resource = 'blade'
+      - From: {{icon_blade.png|ブレード}}を得る
+    - resource_count = 1
+      - From: {{icon_blade.png|ブレード}}を得る
+    - duration = 'until_end_of_live'
+      - From: {{icon_blade.png|ブレード}}を得る
+  - Evidence:
+    - resource <- ブレード
+  - Vars: blade_count=1, duration='until_end_of_live', resource='blade', resource_count=1
+
+### add_to_hand
+- Examples: 124
+- `#0` `root.action`
+  - Text: ライブカードを1枚手札に加える
+  - Segments:
+    - ライブカードを1枚手札に加える
+  - Variable split:
+    - count = 1
+      - From: ライブカードを1枚手札に加える
+    - card_type = 'live_card'
+      - From: ライブカードを1枚手札に加える
+  - Evidence:
+    - count <- ライブカードを1枚手札に加える
+    - card_type <- ライブカード
+  - Vars: card_type='live_card', count=1
+- `#1` `root.action`
+  - Text: メンバーカードを1枚手札に加える
+  - Segments:
+    - メンバーカードを1枚手札に加える
+  - Variable split:
+    - count = 1
+      - From: メンバーカードを1枚手札に加える
+    - card_type = 'member_card'
+      - From: メンバーカードを1枚手札に加える
+  - Evidence:
+    - count <- メンバーカードを1枚手札に加える
+    - card_type <- メンバーカード
+  - Vars: card_type='member_card', count=1
+- `#2` `root.actions[1]`
+  - Text: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+  - Segments:
+    - 自分のデッキの上からカードを3枚見る
+    - その中から1枚を手札に加え
+    - 残りを控え室に置く
+  - Variable split:
+    - count = 1
+      - From: その中から1枚を手札に加え
+    - source = 'looked_at_cards'
+      - From: 自分のデッキの上からカードを3枚見る
+    - may = False
+      - From: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+    - reveal = True
+      - From: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+    - card_type = 'card'
+      - From: 自分のデッキの上からカードを3枚見る
+  - Evidence:
+    - count <- その中から1枚を手札に加え
+    - card_type <- カード
+    - source <- その中から
+  - Vars: card_type='card', count=1, may=False, reveal=True, source='looked_at_cards'
+- `#9` `root.action`
+  - Text: 『虹ヶ咲』のライブカードを1枚手札に加える
+  - Segments:
+    - 『虹ヶ咲』のライブカードを1枚手札に加える
+  - Variable split:
+    - count = 1
+      - From: 『虹ヶ咲』のライブカードを1枚手札に加える
+    - card_type = 'live_card'
+      - From: 『虹ヶ咲』のライブカードを1枚手札に加える
+    - group = '虹ヶ咲'
+      - From: 『虹ヶ咲』のライブカードを1枚手札に加える
+  - Evidence:
+    - count <- 『虹ヶ咲』のライブカードを1枚手札に加える
+    - card_type <- ライブカード
+  - Vars: card_type='live_card', count=1, group='虹ヶ咲'
+- `#13` `root.action`
+  - Text: ライブカードを1枚手札に加える
+  - Segments:
+    - ライブカードを1枚手札に加える
+  - Variable split:
+    - count = 1
+      - From: ライブカードを1枚手札に加える
+    - card_type = 'live_card'
+      - From: ライブカードを1枚手札に加える
+    - use_limit = 'ターン1回'
+      - From: ライブカードを1枚手札に加える
+  - Evidence:
+    - count <- ライブカードを1枚手札に加える
+    - card_type <- ライブカード
+  - Vars: card_type='live_card', count=1, use_limit='ターン1回'
+
+### discard_to_waitroom
+- Examples: 98
+- `#2` `root.actions[2]`
+  - Text: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+  - Segments:
+    - 自分のデッキの上からカードを3枚見る
+    - その中から1枚を手札に加え
+    - 残りを控え室に置く
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: 自分のデッキの上からカードを3枚見る
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+- `#3` `root.actions[1]`
+  - Text: 手札を1枚控え室に置く
+  - Segments:
+    - 手札を1枚控え室に置く
+  - Variable split:
+    - count = 1
+      - From: 手札を1枚控え室に置く
+    - source = 'hand'
+      - From: 手札を1枚控え室に置く
+  - Evidence:
+    - count <- 手札を1枚控え室に置く
+    - source <- 手札
+  - Vars: count=1, source='hand'
+- `#5` `root.actions[3]`
+  - Text: 残りを控え室に置く
+  - Segments:
+    - 残りを控え室に置く
+  - Variable split:
+    - source = 'remaining_looked_at_cards'
+      - From: 残りを控え室に置く
+  - Evidence:
+    - source <- remaining_looked_at_cards
+  - Vars: source='remaining_looked_at_cards'
+- `#10` `root.actions[1]`
+  - Text: 手札を1枚控え室に置く
+  - Segments:
+    - 手札を1枚控え室に置く
+  - Variable split:
+    - count = 1
+      - From: 手札を1枚控え室に置く
+    - source = 'hand'
+      - From: 手札を1枚控え室に置く
+  - Evidence:
+    - count <- 手札を1枚控え室に置く
+    - source <- 手札
+  - Vars: count=1, source='hand'
+- `#12` `root.actions[1]`
+  - Text: 手札を2枚控え室に置く
+  - Segments:
+    - 手札を2枚控え室に置く
+  - Variable split:
+    - count = 2
+      - From: 手札を2枚控え室に置く
+    - source = 'hand'
+      - From: 手札を2枚控え室に置く
+  - Evidence:
+    - count <- 手札を2枚控え室に置く
+    - source <- 手札
+  - Vars: count=2, source='hand'
+
+### draw_cards
+- Examples: 84
+- `#3` `root.actions[0]`
+  - Text: カードを1枚引き
+  - Segments:
+    - カードを1枚引き
+  - Variable split:
+    - count = 1
+      - From: カードを1枚引き
+  - Evidence:
+    - count <- カードを1枚引き
+  - Vars: count=1
+- `#6` `root.action`
+  - Text: カードを1枚引く
+  - Segments:
+    - カードを1枚引く
+  - Variable split:
+    - count = 1
+      - From: カードを1枚引く
+    - use_limit = 'ターン1回'
+      - From: カードを1枚引く
+  - Evidence:
+    - count <- カードを1枚引く
+  - Vars: count=1, use_limit='ターン1回'
+- `#10` `root.actions[0]`
+  - Text: カードを2枚引き
+  - Segments:
+    - カードを2枚引き
+  - Variable split:
+    - count = 2
+      - From: カードを2枚引き
+  - Evidence:
+    - count <- カードを2枚引き
+  - Vars: count=2
+- `#12` `root.actions[0]`
+  - Text: カードを2枚引き
+  - Segments:
+    - カードを2枚引き
+  - Variable split:
+    - count = 2
+      - From: カードを2枚引き
+  - Evidence:
+    - count <- カードを2枚引き
+  - Vars: count=2
+- `#14` `root.actions[0]`
+  - Text: カードを2枚引き
+  - Segments:
+    - カードを2枚引き
+  - Variable split:
+    - count = 2
+      - From: カードを2枚引き
+  - Evidence:
+    - count <- カードを2枚引き
+  - Vars: count=2
+
+### add_score
+- Examples: 69
+- `#34` `root.actions[1]`
+  - Text: ライブの合計スコアを+１する。ライブカードが3枚以上ある場合
+  - Segments:
+    - ライブの合計スコアを+１する
+    - ライブカードが3枚以上ある場合
+  - Variable split:
+    - amount = 1
+      - From: ライブの合計スコアを+１する。ライブカードが3枚以上ある場合
+  - Vars: amount=1
+- `#34` `root.actions[2]`
+  - Text: 代わりに合計スコアを+２する。」を得る
+  - Segments:
+    - 代わりに合計スコアを+２する
+    - 」を得る
+  - Variable split:
+    - amount = 2
+      - From: 代わりに合計スコアを+２する。」を得る
+  - Vars: amount=2
+- `#53` `root.action`
+  - Text: ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する
+  - Segments:
+    - ライブ終了時まで
+    - これによってウェイト状態になったメンバーは
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+  - Variable split:
+    - duration = 'until_end_of_live'
+      - From: ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - amount = 1
+      - From: ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - position_requirement = 'center'
+      - From: ライブ終了時まで、これによってウェイト状態になったメンバーは、「{{jyouji.png|常時}}ライブの合計スコアを+１する
+  - Vars: amount=1, duration='until_end_of_live', position_requirement='center', use_limit='ターン1回'
+- `#59` `root.action`
+  - Text: ライブの合計スコアを+１する
+  - Segments:
+    - ライブの合計スコアを+１する
+  - Variable split:
+    - amount = 1
+      - From: ライブの合計スコアを+１する
+    - position_requirement = 'center'
+      - From: ライブの合計スコアを+１する
+  - Vars: amount=1, position_requirement='center'
+- `#92` `root.actions[0]`
+  - Text: ライブの合計スコアを+１する
+  - Segments:
+    - ライブの合計スコアを+１する
+  - Variable split:
+    - amount = 1
+      - From: ライブの合計スコアを+１する
+  - Vars: amount=1
+
+### look_at_cards
+- Examples: 59
+- `#2` `root.actions[0]`
+  - Text: 自分のデッキの上からカードを3枚見る。その中から1枚を手札に加え、残りを控え室に置く。
+  - Segments:
+    - 自分のデッキの上からカードを3枚見る
+    - その中から1枚を手札に加え
+    - 残りを控え室に置く
+  - Variable split:
+    - count = 3
+      - From: 自分のデッキの上からカードを3枚見る
+    - source = 'deck_top'
+      - From: 自分のデッキの上からカードを3枚見る
+  - Evidence:
+    - count <- 自分のデッキの上からカードを3枚見る
+    - source <- デッキの上
+  - Vars: count=3, source='deck_top'
+- `#5` `root.actions[0]`
+  - Text: 自分のデッキの上からカードを3枚見る
+  - Segments:
+    - 自分のデッキの上からカードを3枚見る
+  - Variable split:
+    - count = 3
+      - From: 自分のデッキの上からカードを3枚見る
+    - source = 'deck_top'
+      - From: 自分のデッキの上からカードを3枚見る
+  - Evidence:
+    - count <- 自分のデッキの上からカードを3枚見る
+    - source <- デッキの上
+  - Vars: count=3, source='deck_top'
+- `#16` `root.actions[0]`
+  - Text: 自分のデッキの上からカードを2枚見る
+  - Segments:
+    - 自分のデッキの上からカードを2枚見る
+  - Variable split:
+    - count = 2
+      - From: 自分のデッキの上からカードを2枚見る
+    - source = 'deck_top'
+      - From: 自分のデッキの上からカードを2枚見る
+  - Evidence:
+    - count <- 自分のデッキの上からカードを2枚見る
+    - source <- デッキの上
+  - Vars: count=2, source='deck_top'
+- `#30` `root.actions[0]`
+  - Text: 自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。
+  - Segments:
+    - 自分のデッキの上からカードを7枚見る
+    - その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい
+    - 残りを控え室に置く
+  - Variable split:
+    - count = 7
+      - From: 自分のデッキの上からカードを7枚見る
+    - source = 'deck_top'
+      - From: 自分のデッキの上からカードを7枚見る
+  - Evidence:
+    - count <- 自分のデッキの上からカードを7枚見る
+    - source <- デッキの上
+  - Vars: count=7, source='deck_top'
+- `#32` `root.actions[0]`
+  - Text: 自分のデッキの上からカードを2枚見る
+  - Segments:
+    - 自分のデッキの上からカードを2枚見る
+  - Variable split:
+    - count = 2
+      - From: 自分のデッキの上からカードを2枚見る
+    - source = 'deck_top'
+      - From: 自分のデッキの上からカードを2枚見る
+  - Evidence:
+    - count <- 自分のデッキの上からカードを2枚見る
+    - source <- デッキの上
+  - Vars: count=2, source='deck_top'
+
+### place_card
+- Examples: 35
+- `#8` `root.actions[1]`
+  - Text: エネルギーカードを1枚ウェイト状態で置く
+  - Segments:
+    - エネルギーカードを1枚ウェイト状態で置く
+  - Variable split:
+    - count = 1
+      - From: エネルギーカードを1枚ウェイト状態で置く
+    - card_type = 'energy_card'
+      - From: エネルギーカードを1枚ウェイト状態で置く
+  - Evidence:
+    - count <- エネルギーカードを1枚ウェイト状態で置く
+    - card_type <- エネルギーカード
+  - Vars: card_type='energy_card', count=1
+- `#33` `root.action`
+  - Text: ライブカードを1枚までデッキの一番下に置く
+  - Segments:
+    - ライブカードを1枚までデッキの一番下に置く
+  - Variable split:
+    - count = 1
+      - From: ライブカードを1枚までデッキの一番下に置く
+    - up_to = 1
+      - From: ライブカードを1枚までデッキの一番下に置く
+    - source = 'deck_bottom'
+      - From: ライブカードを1枚までデッキの一番下に置く
+    - card_type = 'live_card'
+      - From: ライブカードを1枚までデッキの一番下に置く
+  - Evidence:
+    - count <- ライブカードを1枚までデッキの一番下に置く
+    - card_type <- ライブカード
+    - source <- デッキの一番下
+  - Vars: card_type='live_card', count=1, source='deck_bottom', up_to=1
+- `#65` `root.action`
+  - Text: 自分と相手はそれぞれ、自身のエネルギーデッキから、エネルギーカードを1枚ウェイト状態で置く
+  - Segments:
+    - 自分と相手はそれぞれ
+    - 自身のエネルギーデッキから
+    - エネルギーカードを1枚ウェイト状態で置く
+  - Variable split:
+    - count = 1
+      - From: エネルギーカードを1枚ウェイト状態で置く
+    - source = 'energy_deck'
+      - From: 自身のエネルギーデッキから
+    - card_type = 'energy_card'
+      - From: エネルギーカードを1枚ウェイト状態で置く
+  - Evidence:
+    - count <- エネルギーカードを1枚ウェイト状態で置く
+    - card_type <- エネルギーカード
+    - source <- エネルギーデッキ
+  - Vars: card_type='energy_card', count=1, source='energy_deck'
+- `#66` `root.actions[1]`
+  - Text: 、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+  - Segments:
+    - 自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+  - Variable split:
+    - count = 1
+      - From: 自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+    - card_type = 'live_card'
+      - From: 自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+    - group = '虹ヶ咲'
+      - From: 、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+    - conditional = True
+      - From: 、自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+  - Evidence:
+    - count <- 自分の控え室にある『虹ヶ咲』のライブカードを1枚成功ライブカード置き場に置く
+    - card_type <- ライブカード
+  - Vars: card_type='live_card', conditional=True, count=1, group='虹ヶ咲'
+- `#72` `root.actions[0]`
+  - Text: エネルギーカードを2枚ウェイト状態で置く
+  - Segments:
+    - エネルギーカードを2枚ウェイト状態で置く
+  - Variable split:
+    - count = 2
+      - From: エネルギーカードを2枚ウェイト状態で置く
+    - card_type = 'energy_card'
+      - From: エネルギーカードを2枚ウェイト状態で置く
+  - Evidence:
+    - count <- エネルギーカードを2枚ウェイト状態で置く
+    - card_type <- エネルギーカード
+  - Vars: card_type='energy_card', count=2
+
+### comparison
+- Examples: 33
+- `#35` `root.condition`
+  - Text: 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした
+  - Segments:
+    - 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を
+    - ライブ終了時まで
+    - 無効にしてもよい
+    - これにより無効にした
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を
+    - type = 'comparison'
+      - From: 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした
+    - value = 'Liella!'
+      - From: 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした
+    - operator = '>'
+      - From: 自分のステージにいる『Liella!』のメンバー1人のすべての{{live_start.png|ライブ開始時}}能力を、ライブ終了時まで、無効にしてもよい。これにより無効にした
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='>', target='self', type='comparison', value='Liella!'
+- `#42` `root.condition`
+  - Text: 自分のステージに、このメンバーよりコストの大きいメンバーがいる
+  - Segments:
+    - 自分のステージに
+    - このメンバーよりコストの大きいメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに
+    - type = 'comparison'
+      - From: 自分のステージに、このメンバーよりコストの大きいメンバーがいる
+    - operator = '>'
+      - From: 自分のステージに、このメンバーよりコストの大きいメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージに、このメンバーよりコストの大きいメンバーがいる
+    - compares = 'cost'
+      - From: 自分のステージに、このメンバーよりコストの大きいメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: compares='cost', operator='>', presence='present', target='self', type='comparison'
+- `#45` `root.condition`
+  - Text: このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した
+  - Segments:
+    - このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した
+  - Variable split:
+    - type = 'comparison'
+      - From: このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した
+    - operator = '<'
+      - From: このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した
+    - compares = 'cost'
+      - From: このメンバーよりコストが低い『スリーズブーケ』のメンバーからバトンタッチして登場した
+  - Vars: compares='cost', operator='<', type='comparison'
+- `#46` `root.condition`
+  - Text: これにより控え室に置いたカードがメンバーカードの
+  - Segments:
+    - これにより控え室に置いたカードがメンバーカードの
+  - Variable split:
+    - type = 'comparison'
+      - From: これにより控え室に置いたカードがメンバーカードの
+    - operator = '>'
+      - From: これにより控え室に置いたカードがメンバーカードの
+  - Vars: operator='>', type='comparison'
+- `#82` `root.condition`
+  - Text: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+  - Segments:
+    - これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+  - Variable split:
+    - type = 'comparison'
+      - From: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+    - value = 1
+      - From: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+    - operator = '>'
+      - From: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+    - group = 'Liella!'
+      - From: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+    - use_limit = 'ターン1回'
+      - From: これにより控え室に置いた『Liella!』のメンバーカード1枚につき
+  - Vars: group='Liella!', operator='>', type='comparison', use_limit='ターン1回', value=1
+
+### card_count_at_least
+- Examples: 32
+- `#20` `root.condition`
+  - Text: 自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む
+  - Segments:
+    - 自分のライブ中のカードが3枚以上あり
+    - その中に『虹ヶ咲』のライブカードを1枚以上含む
+  - Variable split:
+    - target = 'self'
+      - From: 自分のライブ中のカードが3枚以上あり
+    - type = 'card_count_at_least'
+      - From: 自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む
+    - value = 3
+      - From: 自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む
+    - location = 'live'
+      - From: 自分のライブ中のカードが3枚以上あり、その中に『虹ヶ咲』のライブカードを1枚以上含む
+    - card_type = 'live_card'
+      - From: 自分のライブ中のカードが3枚以上あり
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- 自分
+  - Vars: card_type='live_card', location='live', target='self', type='card_count_at_least', value=3
+- `#31` `root.condition.conditions[0]`
+  - Text: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+  - Segments:
+    - エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+  - Variable split:
+    - target = 'self'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - type = 'card_count_at_least'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - value = 1
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - location = 'cheer_revealed'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - card_type = 'live_card'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - use_limit = 'turn1'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- 自分
+  - Vars: card_type='live_card', location='cheer_revealed', target='self', type='card_count_at_least', use_limit='turn1', value=1
+- `#34` `root.actions[0].condition`
+  - Text: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+  - Segments:
+    - {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+  - Variable split:
+    - target = 'self'
+      - From: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+    - type = 'card_count_at_least'
+      - From: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+    - value = 1
+      - From: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+    - location = 'cheer_revealed'
+      - From: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+    - card_type = 'live_card'
+      - From: {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中にライブカードが1枚以上ある場合
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- 自分
+  - Vars: card_type='live_card', location='cheer_revealed', target='self', type='card_count_at_least', value=1
+- `#81` `root.condition`
+  - Text: 自分がエールしたとき、エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+  - Segments:
+    - 自分がエールしたとき
+    - エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分がエールしたとき
+    - type = 'card_count_at_least'
+      - From: 自分がエールしたとき、エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+    - value = 3
+      - From: 自分がエールしたとき、エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+    - location = 'cheer_revealed'
+      - From: エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+    - card_type = 'member_card'
+      - From: エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+    - use_limit = 'ターン1回'
+      - From: 自分がエールしたとき、エールにより公開された自分のカードの中にブレードハートを持たないメンバーカードが3枚以上ある
+  - Evidence:
+    - card_type <- メンバーカード
+    - target <- 自分
+  - Vars: card_type='member_card', location='cheer_revealed', target='self', type='card_count_at_least', use_limit='ターン1回', value=3
+- `#89` `root.condition`
+  - Text: カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+  - Segments:
+    - カードを3枚引き
+    - 手札を2枚控え室に置く
+    - これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+  - Variable split:
+    - type = 'card_count_at_least'
+      - From: カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+    - value = 1
+      - From: カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+    - location = 'waitroom'
+      - From: 手札を2枚控え室に置く
+    - card_type = 'member_card'
+      - From: カードを3枚引き
+    - use_limit = 'turn1'
+      - From: カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+    - position_requirement = 'left_side'
+      - From: カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある
+  - Evidence:
+    - card_type <- メンバーカード
+  - Vars: card_type='member_card', location='waitroom', position_requirement='left_side', type='card_count_at_least', use_limit='turn1', value=1
+
+### raw
+- Examples: 25
+- `#163` `root.condition`
+  - Text: 自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの
+  - Segments:
+    - 自分のデッキの上からカードを3枚控え室に置く
+    - それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの上からカードを3枚控え室に置く
+    - type = 'raw'
+      - From: 自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_04.png|heart04}}を持つメンバーカードの
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='raw'
+- `#165` `root.condition`
+  - Text: 自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの
+  - Segments:
+    - 自分のデッキの上からカードを3枚控え室に置く
+    - それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの上からカードを3枚控え室に置く
+    - type = 'raw'
+      - From: 自分のデッキの上からカードを3枚控え室に置く。それらがすべて{{heart_01.png|heart01}}を持つメンバーカードの
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='raw'
+- `#180` `root.condition`
+  - Text: 自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの
+  - Segments:
+    - 自分のデッキの上からカードを3枚控え室に置く
+    - それらがすべてメンバーカードの
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの上からカードを3枚控え室に置く
+    - type = 'raw'
+      - From: 自分のデッキの上からカードを3枚控え室に置く。それらがすべてメンバーカードの
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='raw'
+- `#185` `root.condition`
+  - Text: {{icon_energy.png|E}}{{icon_energy.png|E}}支払わない
+  - Segments:
+    - {{icon_energy.png|E}}{{icon_energy.png|E}}支払わない
+  - Variable split:
+    - type = 'raw'
+      - From: {{icon_energy.png|E}}{{icon_energy.png|E}}支払わない
+  - Vars: type='raw'
+- `#208` `root.condition`
+  - Text: このメンバーがいるエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる
+  - Segments:
+    - このメンバーがいるエリアとは別の自分のエリア1つを選ぶ
+    - このメンバーをそのエリアに移動する
+    - 選んだエリアにメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: このメンバーがいるエリアとは別の自分のエリア1つを選ぶ
+    - type = 'raw'
+      - From: このメンバーがいるエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる
+    - use_limit = 'ターン1回'
+      - From: このメンバーがいるエリアとは別の自分のエリア1つを選ぶ。このメンバーをそのエリアに移動する。選んだエリアにメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='raw', use_limit='ターン1回'
+
+### activate_energy
+- Examples: 21
+- `#19` `root.actions[0]`
+  - Text: エネルギーを2枚アクティブにする
+  - Segments:
+    - エネルギーを2枚アクティブにする
+  - Variable split:
+    - count = 2
+      - From: エネルギーを2枚アクティブにする
+    - use_limit = 'ターン1回'
+      - From: エネルギーを2枚アクティブにする
+  - Evidence:
+    - count <- エネルギーを2枚アクティブにする
+  - Vars: count=2, use_limit='ターン1回'
+- `#24` `root.action`
+  - Text: エネルギーを2枚アクティブにする
+  - Segments:
+    - エネルギーを2枚アクティブにする
+  - Variable split:
+    - count = 2
+      - From: エネルギーを2枚アクティブにする
+  - Evidence:
+    - count <- エネルギーを2枚アクティブにする
+  - Vars: count=2
+- `#75` `root.action`
+  - Text: エネルギーを2枚アクティブにする
+  - Segments:
+    - エネルギーを2枚アクティブにする
+  - Variable split:
+    - count = 2
+      - From: エネルギーを2枚アクティブにする
+    - position_requirement = 'right_side'
+      - From: エネルギーを2枚アクティブにする
+  - Evidence:
+    - count <- エネルギーを2枚アクティブにする
+  - Vars: count=2, position_requirement='right_side'
+- `#79` `root.action`
+  - Text: エネルギーを1枚アクティブにする
+  - Segments:
+    - エネルギーを1枚アクティブにする
+  - Variable split:
+    - count = 1
+      - From: エネルギーを1枚アクティブにする
+    - use_limit = 'ターン1回'
+      - From: エネルギーを1枚アクティブにする
+  - Evidence:
+    - count <- エネルギーを1枚アクティブにする
+  - Vars: count=1, use_limit='ターン1回'
+- `#88` `root.actions[0]`
+  - Text: エネルギーを2枚アクティブにする。コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合
+  - Segments:
+    - エネルギーを2枚アクティブにする
+    - コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合
+  - Variable split:
+    - count = 2
+      - From: エネルギーを2枚アクティブにする
+  - Evidence:
+    - count <- エネルギーを2枚アクティブにする
+  - Vars: count=2
+
+### group
+- Examples: 21
+- `#19` `root.condition`
+  - Text: 自分のステージに『虹ヶ咲』のメンバーが登場している
+  - Segments:
+    - 自分のステージに『虹ヶ咲』のメンバーが登場している
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに『虹ヶ咲』のメンバーが登場している
+    - type = 'group'
+      - From: 自分のステージに『虹ヶ咲』のメンバーが登場している
+    - value = '虹ヶ咲'
+      - From: 自分のステージに『虹ヶ咲』のメンバーが登場している
+    - use_limit = 'ターン1回'
+      - From: 自分のステージに『虹ヶ咲』のメンバーが登場している
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='group', use_limit='ターン1回', value='虹ヶ咲'
+- `#67` `root.condition`
+  - Text: 自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある
+  - Segments:
+    - 自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ
+    - それと同じカード名のカードが自分の成功ライブカード置き場にある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ
+    - type = 'group'
+      - From: 自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある
+    - value = '虹ヶ咲'
+      - From: 自分のライブ中の『虹ヶ咲』のライブカードを1枚選ぶ。それと同じカード名のカードが自分の成功ライブカード置き場にある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='group', value='虹ヶ咲'
+- `#88` `root.condition.conditions[1]`
+  - Text: このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Segments:
+    - このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Variable split:
+    - type = 'group'
+      - From: このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+    - value = '虹ヶ咲'
+      - From: このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Vars: type='group', value='虹ヶ咲'
+- `#241` `root.condition`
+  - Text: ライブカードを1枚手札に加える。それがスコア6以上の『Aqours』のライブカードの
+  - Segments:
+    - ライブカードを1枚手札に加える
+    - それがスコア6以上の『Aqours』のライブカードの
+  - Variable split:
+    - type = 'group'
+      - From: ライブカードを1枚手札に加える。それがスコア6以上の『Aqours』のライブカードの
+    - value = 'Aqours'
+      - From: ライブカードを1枚手札に加える。それがスコア6以上の『Aqours』のライブカードの
+  - Vars: type='group', value='Aqours'
+- `#245` `root.condition`
+  - Text: の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。
+（{{toujyou.png|登場}}能力がコストを持つ
+  - Segments:
+    - の『虹ヶ咲』のメンバーカードを1枚選ぶ
+    - そのカードの{{toujyou.png|登場}}能力1つを発動させる
+    - ({{toujyou.png|登場}}能力がコストを持つ
+  - Variable split:
+    - type = 'group'
+      - From: の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。
+（{{toujyou.png|登場}}能力がコストを持つ
+    - value = '虹ヶ咲'
+      - From: の『虹ヶ咲』のメンバーカードを1枚選ぶ。そのカードの{{toujyou.png|登場}}能力1つを発動させる。
+（{{toujyou.png|登場}}能力がコストを持つ
+  - Vars: type='group', value='虹ヶ咲'
+
+### per_unit
+- Examples: 21
+- `#28` `root.condition`
+  - Text: 自分のライブ中のカード1枚につき
+  - Segments:
+    - 自分のライブ中のカード1枚につき
+  - Variable split:
+    - target = 'self'
+      - From: 自分のライブ中のカード1枚につき
+    - type = 'per_unit'
+      - From: 自分のライブ中のカード1枚につき
+    - value = 1
+      - From: 自分のライブ中のカード1枚につき
+    - operator = '*'
+      - From: 自分のライブ中のカード1枚につき
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='*', target='self', type='per_unit', value=1
+- `#38` `root.condition`
+  - Text: 自分の手札2枚につき
+  - Segments:
+    - 自分の手札2枚につき
+  - Variable split:
+    - target = 'self'
+      - From: 自分の手札2枚につき
+    - type = 'per_unit'
+      - From: 自分の手札2枚につき
+    - value = 2
+      - From: 自分の手札2枚につき
+    - operator = '*'
+      - From: 自分の手札2枚につき
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='*', target='self', type='per_unit', value=2
+- `#80` `root.condition`
+  - Text: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+  - Segments:
+    - 相手のステージにいるコスト10以下のメンバー1人をウェイトにする
+    - この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする
+    - type = 'per_unit'
+      - From: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+    - value = 1
+      - From: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+    - operator = '*'
+      - From: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+    - unit_type = 'stage_member'
+      - From: 相手のステージにいるコスト10以下のメンバー1人をウェイトにする。この能力を起動するためのコストは自分のステージにいるメンバーの中のグループ名1種類につき
+  - Evidence:
+    - target <- 相手
+  - Vars: operator='*', target='opponent', type='per_unit', unit_type='stage_member', value=1
+- `#148` `root.condition`
+  - Text: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+  - Segments:
+    - 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+    - type = 'per_unit'
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+    - value = 1
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+    - operator = '*'
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+    - unit_type = 'stage_member'
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+    - group = 'スリーズブーケ'
+      - From: 自分のステージにいるコスト4以上の『スリーズブーケ』以外のメンバー1人につき
+  - Evidence:
+    - target <- 自分
+  - Vars: group='スリーズブーケ', operator='*', target='self', type='per_unit', unit_type='stage_member', value=1
+- `#214` `root.condition`
+  - Text: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+  - Segments:
+    - 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - type = 'per_unit'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - value = 1
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - operator = '*'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - unit_type = 'stage_member'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - group = 'みらくらぱーく！'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+    - exclusion = 'other'
+      - From: 自分のステージにいるほかの『みらくらぱーく！』のメンバー1人につき
+  - Evidence:
+    - target <- 自分
+  - Vars: exclusion='other', group='みらくらぱーく！', operator='*', target='self', type='per_unit', unit_type='stage_member', value=1
+
+### member_to_wait
+- Examples: 20
+- `#7` `root.actions[0]`
+  - Text: 相手のステージにいるのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Segments:
+    - 相手のステージにいるのメンバー1人をウェイトにする
+    - (ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Variable split:
+    - count = 1
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - target = 'opponent'
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - up_to = 1
+      - From: 相手のステージにいるのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+    - source = 'stage'
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - source_state = 'wait'
+      - From: 相手のステージにいるのメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Evidence:
+    - count <- 相手のステージにいるのメンバー1人をウェイトにする
+    - source <- ステージ
+    - target <- 相手
+  - Vars: count=1, source='stage', source_state='wait', target='opponent', up_to=1
+- `#15` `root.actions[0]`
+  - Text: 相手のステージにいるのメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Segments:
+    - 相手のステージにいるのメンバーを2人までウェイトにする
+    - (ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Variable split:
+    - count = 2
+      - From: 相手のステージにいるのメンバーを2人までウェイトにする
+    - up_to = 2
+      - From: 相手のステージにいるのメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+    - target = 'opponent'
+      - From: 相手のステージにいるのメンバーを2人までウェイトにする
+    - source = 'stage'
+      - From: 相手のステージにいるのメンバーを2人までウェイトにする
+    - source_state = 'wait'
+      - From: 相手のステージにいるのメンバーを2人までウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は
+  - Evidence:
+    - count <- 相手のステージにいるのメンバーを2人までウェイトにする
+    - source <- ステージ
+    - target <- 相手
+  - Vars: count=2, source='stage', source_state='wait', target='opponent', up_to=2
+- `#61` `root.actions[1]`
+  - Text: 相手のステージにいるのメンバーを1人までウェイトにする
+  - Segments:
+    - 相手のステージにいるのメンバーを1人までウェイトにする
+  - Variable split:
+    - count = 1
+      - From: 相手のステージにいるのメンバーを1人までウェイトにする
+    - up_to = 1
+      - From: 相手のステージにいるのメンバーを1人までウェイトにする
+    - target = 'opponent'
+      - From: 相手のステージにいるのメンバーを1人までウェイトにする
+    - source = 'stage'
+      - From: 相手のステージにいるのメンバーを1人までウェイトにする
+  - Evidence:
+    - count <- 相手のステージにいるのメンバーを1人までウェイトにする
+    - source <- ステージ
+    - target <- 相手
+  - Vars: count=1, source='stage', target='opponent', up_to=1
+- `#77` `root.actions[0]`
+  - Text: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+  - Segments:
+    - 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+  - Variable split:
+    - count = 1
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - target = 'opponent'
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - up_to = 1
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - source = 'stage'
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - blade_count = 1
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - resource = 'blade'
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - resource_count = 1
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - original_blade_count = 3
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - original_blade_operator = '<='
+      - From: 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+  - Evidence:
+    - count <- 相手のステージにいる元々持つ{{icon_blade.png|ブレード}}の数が3つ以下のメンバー1人をウェイトにする
+    - source <- ステージ
+    - target <- 相手
+    - resource <- ブレード
+  - Vars: blade_count=1, count=1, original_blade_count=3, original_blade_operator='<=', resource='blade', resource_count=1, source='stage', target='opponent', up_to=1
+- `#78` `root.actions[0]`
+  - Text: 相手のステージにいるのメンバー1人をウェイトにする
+  - Segments:
+    - 相手のステージにいるのメンバー1人をウェイトにする
+  - Variable split:
+    - count = 1
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - target = 'opponent'
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - up_to = 1
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+    - source = 'stage'
+      - From: 相手のステージにいるのメンバー1人をウェイトにする
+  - Evidence:
+    - count <- 相手のステージにいるのメンバー1人をウェイトにする
+    - source <- ステージ
+    - target <- 相手
+  - Vars: count=1, source='stage', target='opponent', up_to=1
+
+### member_presence
+- Examples: 18
+- `#29` `root.condition`
+  - Text: 自分のステージにほかのメンバーがいる
+  - Segments:
+    - 自分のステージにほかのメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにほかのメンバーがいる
+    - type = 'member_presence'
+      - From: 自分のステージにほかのメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージにほかのメンバーがいる
+    - exclusion = 'other'
+      - From: 自分のステージにほかのメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: exclusion='other', presence='present', target='self', type='member_presence'
+- `#43` `root.condition`
+  - Text: 自分のステージにほかのメンバーがいる
+  - Segments:
+    - 自分のステージにほかのメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにほかのメンバーがいる
+    - type = 'member_presence'
+      - From: 自分のステージにほかのメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージにほかのメンバーがいる
+    - exclusion = 'other'
+      - From: 自分のステージにほかのメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: exclusion='other', presence='present', target='self', type='member_presence'
+- `#60` `root.condition`
+  - Text: 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+  - Segments:
+    - 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+    - type = 'member_presence'
+      - From: 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+    - value = "μ's"
+      - From: 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+    - presence = 'absent'
+      - From: 自分のステージに{{icon_blade.png|ブレード}}を5つ以上持つ『μ's』のメンバーがいない
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='absent', target='self', type='member_presence', value="μ's"
+- `#121` `root.condition`
+  - Text: 自分のステージにの『EdelNote』のメンバーがいる
+  - Segments:
+    - 自分のステージにの『EdelNote』のメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにの『EdelNote』のメンバーがいる
+    - type = 'member_presence'
+      - From: 自分のステージにの『EdelNote』のメンバーがいる
+    - value = 'EdelNote'
+      - From: 自分のステージにの『EdelNote』のメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージにの『EdelNote』のメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='member_presence', value='EdelNote'
+- `#135` `root.condition`
+  - Text: 自分のステージにのメンバーがいる
+  - Segments:
+    - 自分のステージにのメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにのメンバーがいる
+    - type = 'member_presence'
+      - From: 自分のステージにのメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージにのメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='member_presence'
+
+### gain_ability
+- Examples: 17
+- `#22` `root.branches[0].effect.action`
+  - Text: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Segments:
+    - ライブ終了時まで
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - 」を得る
+  - Variable split:
+    - ability = '{{jyouji.png|常時}}ライブの合計スコアを+１する。'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Vars: ability='{{jyouji.png|常時}}ライブの合計スコアを+１する。', use_limit='ターン1回'
+- `#22` `root.branches[1].effect.action`
+  - Text: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Segments:
+    - ライブ終了時まで
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - 」を得る
+  - Variable split:
+    - ability = '{{jyouji.png|常時}}ライブの合計スコアを+１する。'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Vars: ability='{{jyouji.png|常時}}ライブの合計スコアを+１する。', use_limit='ターン1回'
+- `#22` `root.branches[2].effect.action`
+  - Text: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Segments:
+    - ライブ終了時まで
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - 」を得る
+  - Variable split:
+    - ability = '{{jyouji.png|常時}}ライブの合計スコアを+１する。'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Vars: ability='{{jyouji.png|常時}}ライブの合計スコアを+１する。', use_limit='ターン1回'
+- `#22` `root.branches[3].effect.action`
+  - Text: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Segments:
+    - ライブ終了時まで
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - 」を得る
+  - Variable split:
+    - ability = '{{jyouji.png|常時}}ライブの合計スコアを+１する。'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Vars: ability='{{jyouji.png|常時}}ライブの合計スコアを+１する。', use_limit='ターン1回'
+- `#22` `root.branches[4].effect.action`
+  - Text: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Segments:
+    - ライブ終了時まで
+    - 「{{jyouji.png|常時}}ライブの合計スコアを+１する
+    - 」を得る
+  - Variable split:
+    - ability = '{{jyouji.png|常時}}ライブの合計スコアを+１する。'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+    - use_limit = 'ターン1回'
+      - From: ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る
+  - Vars: ability='{{jyouji.png|常時}}ライブの合計スコアを+１する。', use_limit='ターン1回'
+
+### member_count_at_least
+- Examples: 17
+- `#40` `root.condition`
+  - Text: 自分のステージにのメンバーが1人以上いる
+  - Segments:
+    - 自分のステージにのメンバーが1人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにのメンバーが1人以上いる
+    - type = 'member_count_at_least'
+      - From: 自分のステージにのメンバーが1人以上いる
+    - value = 1
+      - From: 自分のステージにのメンバーが1人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_count_at_least', value=1
+- `#93` `root.condition`
+  - Text: 自分のステージにコストがそれぞれ異なるメンバーが3人以上いる
+  - Segments:
+    - 自分のステージにコストがそれぞれ異なるメンバーが3人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにコストがそれぞれ異なるメンバーが3人以上いる
+    - type = 'member_count_at_least'
+      - From: 自分のステージにコストがそれぞれ異なるメンバーが3人以上いる
+    - value = 3
+      - From: 自分のステージにコストがそれぞれ異なるメンバーが3人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_count_at_least', value=3
+- `#106` `root.condition`
+  - Text: 自分のステージに名前が異なるメンバーが3人以上いる
+  - Segments:
+    - 自分のステージに名前が異なるメンバーが3人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに名前が異なるメンバーが3人以上いる
+    - type = 'member_count_at_least'
+      - From: 自分のステージに名前が異なるメンバーが3人以上いる
+    - value = 3
+      - From: 自分のステージに名前が異なるメンバーが3人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_count_at_least', value=3
+- `#273` `root.condition`
+  - Text: 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+  - Segments:
+    - 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+    - type = 'member_count_at_least'
+      - From: 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+    - value = 2
+      - From: 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+    - different_name = True
+      - From: 自分のステージに名前の異なる『BiBi』のメンバーが2人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: different_name=True, target='self', type='member_count_at_least', value=2
+- `#370` `root.condition`
+  - Text: 自分の、ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる
+  - Segments:
+    - 自分の
+    - ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分の
+    - type = 'member_count_at_least'
+      - From: 自分の、ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる
+    - value = 5
+      - From: 自分の、ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる
+    - different_name = True
+      - From: 自分の、ステージと控え室に名前の異なる『Liella!』のメンバーが5人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: different_name=True, target='self', type='member_count_at_least', value=5
+
+### may_place_card
+- Examples: 16
+- `#48` `root.actions[0]`
+  - Text: 自分の成功ライブカード置き場にカードがある場合、手札を1枚控え室に置いてもよい
+  - Segments:
+    - 自分の成功ライブカード置き場にカードがある場合
+    - 手札を1枚控え室に置いてもよい
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にカードがある場合
+    - count = 1
+      - From: 手札を1枚控え室に置いてもよい
+    - source = 'waitroom'
+      - From: 手札を1枚控え室に置いてもよい
+    - card_type = 'live_card'
+      - From: 自分の成功ライブカード置き場にカードがある場合
+  - Evidence:
+    - count <- 手札を1枚控え室に置いてもよい
+    - card_type <- ライブカード
+    - source <- 控え室
+    - target <- 自分
+  - Vars: card_type='live_card', count=1, source='waitroom', target='self'
+- `#55` `root.actions[0]`
+  - Text: 自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい
+  - Segments:
+    - 自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい
+  - Variable split:
+    - count = 1
+      - From: 自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい
+  - Evidence:
+    - count <- 自分のエネルギー置き場にあるエネルギー1枚をこのメンバーの下に置いてもよい
+  - Vars: count=1
+- `#66` `root.actions[0]`
+  - Text: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+  - Segments:
+    - 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+    - count = 1
+      - From: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+    - source = 'waitroom'
+      - From: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+    - card_type = 'live_card'
+      - From: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+    - group = '虹ヶ咲'
+      - From: 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+  - Evidence:
+    - count <- 自分の成功ライブカード置き場にある『虹ヶ咲』のライブカードを1枚控え室に置いてもよい
+    - card_type <- ライブカード
+    - source <- 控え室
+    - target <- 自分
+  - Vars: card_type='live_card', count=1, group='虹ヶ咲', source='waitroom', target='self'
+- `#126` `root.actions[0]`
+  - Text: 自分のデッキの一番上のカードを控え室に置いてもよい
+  - Segments:
+    - 自分のデッキの一番上のカードを控え室に置いてもよい
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの一番上のカードを控え室に置いてもよい
+    - source = 'waitroom'
+      - From: 自分のデッキの一番上のカードを控え室に置いてもよい
+  - Evidence:
+    - source <- 控え室
+    - target <- 自分
+  - Vars: source='waitroom', target='self'
+- `#199` `root.actions[0]`
+  - Text: このメンバーがステージから控え室に置かれたとき、手札を1枚控え室に置いてもよい
+  - Segments:
+    - このメンバーがステージから控え室に置かれたとき
+    - 手札を1枚控え室に置いてもよい
+  - Variable split:
+    - count = 1
+      - From: 手札を1枚控え室に置いてもよい
+    - source = 'waitroom'
+      - From: このメンバーがステージから控え室に置かれたとき
+  - Evidence:
+    - count <- 手札を1枚控え室に置いてもよい
+    - source <- 控え室
+  - Vars: count=1, source='waitroom'
+
+### note
+- Examples: 15
+- `#7` `root.actions[1]`
+  - Text: エールで公開する枚数を増やさない。）
+  - Segments:
+    - エールで公開する枚数を増やさない
+    - )
+  - Vars: (no extra variables)
+- `#15` `root.actions[1]`
+  - Text: エールで公開する枚数を増やさない。）
+  - Segments:
+    - エールで公開する枚数を増やさない
+    - )
+  - Vars: (no extra variables)
+- `#158` `root.actions[1]`
+  - Text: エールで公開する枚数を増やさない。）
+  - Segments:
+    - エールで公開する枚数を増やさない
+    - )
+  - Vars: (no extra variables)
+- `#226` `root.actions[2]`
+  - Text: エールで公開する枚数を増やさない。）
+  - Segments:
+    - エールで公開する枚数を増やさない
+    - )
+  - Variable split:
+    - use_limit = 'ターン1回'
+      - From: エールで公開する枚数を増やさない。）
+  - Vars: use_limit='ターン1回'
+- `#229` `root.actions[1]`
+  - Text: エールで公開する枚数を増やさない。）
+  - Segments:
+    - エールで公開する枚数を増やさない
+    - )
+  - Vars: (no extra variables)
+
+### position
+- Examples: 15
+- `#21` `root.condition`
+  - Text: ステージの左サイドエリアに登場している
+  - Segments:
+    - ステージの左サイドエリアに登場している
+  - Variable split:
+    - type = 'position'
+      - From: ステージの左サイドエリアに登場している
+    - value = 'left_side'
+      - From: ステージの左サイドエリアに登場している
+  - Vars: type='position', value='left_side'
+- `#59` `root.condition`
+  - Text: {{center.png|センター}}ライブの合計スコアを+１する。
+  - Segments:
+    - {{center.png|センター}}ライブの合計スコアを+１する
+  - Variable split:
+    - type = 'position'
+      - From: {{center.png|センター}}ライブの合計スコアを+１する。
+    - value = 'center'
+      - From: {{center.png|センター}}ライブの合計スコアを+１する。
+    - operator = '=='
+      - From: {{center.png|センター}}ライブの合計スコアを+１する。
+    - position_requirement = 'center'
+      - From: {{center.png|センター}}ライブの合計スコアを+１する。
+  - Vars: operator='==', position_requirement='center', type='position', value='center'
+- `#74` `root.condition`
+  - Text: 【左サイド】カードを2枚引き、手札を1枚控え室に置く。
+  - Segments:
+    - 【左サイド】カードを2枚引き
+    - 手札を1枚控え室に置く
+  - Variable split:
+    - type = 'position'
+      - From: 【左サイド】カードを2枚引き、手札を1枚控え室に置く。
+    - value = 'left_side'
+      - From: 【左サイド】カードを2枚引き、手札を1枚控え室に置く。
+    - operator = '=='
+      - From: 【左サイド】カードを2枚引き、手札を1枚控え室に置く。
+    - position_requirement = 'left_side'
+      - From: 【左サイド】カードを2枚引き、手札を1枚控え室に置く。
+  - Vars: operator='==', position_requirement='left_side', type='position', value='left_side'
+- `#75` `root.condition`
+  - Text: 【右サイド】エネルギーを2枚アクティブにする。
+  - Segments:
+    - 【右サイド】エネルギーを2枚アクティブにする
+  - Variable split:
+    - type = 'position'
+      - From: 【右サイド】エネルギーを2枚アクティブにする。
+    - value = 'right_side'
+      - From: 【右サイド】エネルギーを2枚アクティブにする。
+    - operator = '=='
+      - From: 【右サイド】エネルギーを2枚アクティブにする。
+    - position_requirement = 'right_side'
+      - From: 【右サイド】エネルギーを2枚アクティブにする。
+  - Vars: operator='==', position_requirement='right_side', type='position', value='right_side'
+- `#96` `root.condition`
+  - Text: {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。
+  - Segments:
+    - {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと
+    - 自分のすべてのエネルギーをアクティブにする
+  - Variable split:
+    - type = 'position'
+      - From: {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。
+    - value = 'center'
+      - From: {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。
+    - operator = '=='
+      - From: {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。
+    - position_requirement = 'center'
+      - From: {{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする。
+  - Vars: operator='==', position_requirement='center', type='position', value='center'
+
+### reduce
+- Examples: 15
+- `#40` `root.actions[0]`
+  - Text: エールによって公開される自分のカードの枚数が8枚減る
+  - Segments:
+    - エールによって公開される自分のカードの枚数が8枚減る
+  - Variable split:
+    - target = 'self'
+      - From: エールによって公開される自分のカードの枚数が8枚減る
+    - count = 8
+      - From: エールによって公開される自分のカードの枚数が8枚減る
+  - Evidence:
+    - count <- エールによって公開される自分のカードの枚数が8枚減る
+    - target <- 自分
+  - Vars: count=8, target='self'
+- `#80` `root.action`
+  - Text: {{icon_energy.png|E}}減る
+  - Segments:
+    - {{icon_energy.png|E}}減る
+  - Vars: (no extra variables)
+- `#395` `root.action`
+  - Text: 自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+  - Segments:
+    - 自分のステージにいる
+    - このターン中に登場
+    - またはエリアを移動した『5yncri5e!』のメンバー1人につき
+    - このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+  - Variable split:
+    - multiplier = True
+      - From: 自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+    - per_unit = 1
+      - From: 自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+    - unit_type = 'member'
+      - From: 自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+    - group = '5yncri5e!'
+      - From: 自分のステージにいる、このターン中に登場、またはエリアを移動した『5yncri5e!』のメンバー1人につき、このカードを成功させるための必要ハートを{{heart_00.png|heart0}}減らす
+    - target = 'self'
+      - From: 自分のステージにいる
+  - Evidence:
+    - target <- 自分
+  - Vars: group='5yncri5e!', multiplier=True, per_unit=1, target='self', unit_type='member'
+- `#415` `root.actions[0]`
+  - Text: このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす
+  - Segments:
+    - このカードを成功させるための必要ハートを{{heart_04.png|heart04}}減らす
+  - Vars: (no extra variables)
+- `#417` `root.actions[0]`
+  - Text: このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす
+  - Segments:
+    - このカードを成功させるための必要ハートを{{heart_05.png|heart05}}減らす
+  - Vars: (no extra variables)
+
+### deploy_to_stage
+- Examples: 14
+- `#17` `root.action`
+  - Text: このカードを控え室からステージに登場させる
+  - Segments:
+    - このカードを控え室からステージに登場させる
+  - Variable split:
+    - source = 'waitroom'
+      - From: このカードを控え室からステージに登場させる
+    - target = 'self'
+      - From: このカードを控え室からステージに登場させる
+  - Evidence:
+    - source <- 控え室
+    - target <- 自分
+  - Vars: source='waitroom', target='self'
+- `#54` `root.actions[1]`
+  - Text: 、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる
+  - Segments:
+    - 自分の控え室から
+    - そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚
+    - そのメンバーがいたエリアに登場させる
+  - Variable split:
+    - count = 1
+      - From: そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚
+    - card_type = 'member_card'
+      - From: そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚
+    - group = 'Aqours'
+      - From: 、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる
+    - target = 'self'
+      - From: 自分の控え室から
+    - conditional = True
+      - From: 、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる
+    - use_limit = 'ターン1回'
+      - From: 、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる
+    - position_requirement = 'center'
+      - From: 、自分の控え室から、そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚、そのメンバーがいたエリアに登場させる
+  - Evidence:
+    - count <- そのメンバーのコストに2を足した数に等しいコストの『Aqours』のメンバーカードを1枚
+    - card_type <- メンバーカード
+    - target <- 自分
+  - Vars: card_type='member_card', conditional=True, count=1, group='Aqours', position_requirement='center', target='self', use_limit='ターン1回'
+- `#71` `root.actions[1]`
+  - Text: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+  - Segments:
+    - の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+  - Variable split:
+    - count = 1
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - target = 'self'
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - source = 'stage'
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - card_type = 'member_card'
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - group = 'Liella!'
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - position_requirement = 'center'
+      - From: の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+  - Evidence:
+    - count <- の『Liella!』のメンバーカード1枚を自分のステージのメンバーのいないエリアに登場させる
+    - card_type <- メンバーカード
+    - source <- ステージ
+    - target <- 自分
+  - Vars: card_type='member_card', count=1, group='Liella!', position_requirement='center', source='stage', target='self'
+- `#94` `root.action`
+  - Text: のメンバーカードを1枚、メンバーのいないエリアに登場させる
+  - Segments:
+    - のメンバーカードを1枚
+    - メンバーのいないエリアに登場させる
+  - Variable split:
+    - count = 1
+      - From: のメンバーカードを1枚
+    - card_type = 'member_card'
+      - From: のメンバーカードを1枚
+    - target = 'self'
+      - From: のメンバーカードを1枚、メンバーのいないエリアに登場させる
+    - use_limit = 'ターン1回'
+      - From: のメンバーカードを1枚、メンバーのいないエリアに登場させる
+  - Evidence:
+    - count <- のメンバーカードを1枚
+    - card_type <- メンバーカード
+    - target <- 自分
+  - Vars: card_type='member_card', count=1, target='self', use_limit='ターン1回'
+- `#178` `root.action`
+  - Text: の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる
+  - Segments:
+    - の『蓮ノ空』のメンバーカードを1枚
+    - このメンバーがいたエリアに登場させる
+  - Variable split:
+    - count = 1
+      - From: の『蓮ノ空』のメンバーカードを1枚
+    - card_type = 'member_card'
+      - From: の『蓮ノ空』のメンバーカードを1枚
+    - group = '蓮ノ空'
+      - From: の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる
+    - target = 'self'
+      - From: の『蓮ノ空』のメンバーカードを1枚、このメンバーがいたエリアに登場させる
+  - Evidence:
+    - count <- の『蓮ノ空』のメンバーカードを1枚
+    - card_type <- メンバーカード
+    - target <- 自分
+  - Vars: card_type='member_card', count=1, group='蓮ノ空', target='self'
+
+### character_presence
+- Examples: 13
+- `#175` `root.condition`
+  - Text: カードを1枚引く。自分のステージに「米女メイ」がいる
+  - Segments:
+    - カードを1枚引く
+    - 自分のステージに「米女メイ」がいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに「米女メイ」がいる
+    - type = 'character_presence'
+      - From: カードを1枚引く。自分のステージに「米女メイ」がいる
+    - presence = 'present'
+      - From: カードを1枚引く。自分のステージに「米女メイ」がいる
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='character_presence'
+- `#258` `root.condition`
+  - Text: 相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持つハートの中に同じ色のハートがある
+  - Segments:
+    - 相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ
+    - そのメンバーが持つハートと
+    - このメンバーが持つハートの中に同じ色のハートがある
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ
+    - type = 'character_presence'
+      - From: 相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持つハートの中に同じ色のハートがある
+    - presence = 'present'
+      - From: 相手のステージにいる「ミア・テイラー」以外のメンバーを1人選ぶ。そのメンバーが持つハートと、このメンバーが持つハートの中に同じ色のハートがある
+  - Evidence:
+    - target <- 相手
+  - Vars: presence='present', target='opponent', type='character_presence'
+- `#369` `root.condition`
+  - Text: 自分のステージに「澁谷かのん」と「唐可可」がいる
+  - Segments:
+    - 自分のステージに「澁谷かのん」と「唐可可」がいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに「澁谷かのん」と「唐可可」がいる
+    - type = 'character_presence'
+      - From: 自分のステージに「澁谷かのん」と「唐可可」がいる
+    - presence = 'present'
+      - From: 自分のステージに「澁谷かのん」と「唐可可」がいる
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='character_presence'
+- `#398` `root.condition`
+  - Text: 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+  - Segments:
+    - 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+    - type = 'character_presence'
+      - From: 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+    - value = 'Aqours'
+      - From: 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+    - presence = 'absent'
+      - From: 自分のライブカード置き場に「MY舞☆TONIGHT」以外の『Aqours』のライブカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='absent', target='self', type='character_presence', value='Aqours'
+- `#405` `root.condition`
+  - Text: 自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異なるメンバーが2人以上いる
+  - Segments:
+    - 自分のステージに「澁谷かのん」
+    - 「ウィーン・マルガレーテ」
+    - 「鬼塚冬毬」のうち
+    - 名前の異なるメンバーが2人以上いる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに「澁谷かのん」
+    - type = 'character_presence'
+      - From: 自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異なるメンバーが2人以上いる
+    - value = 2
+      - From: 自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異なるメンバーが2人以上いる
+    - different_name = True
+      - From: 自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異なるメンバーが2人以上いる
+    - presence = 'present'
+      - From: 自分のステージに「澁谷かのん」、「ウィーン・マルガレーテ」、「鬼塚冬毬」のうち、名前の異なるメンバーが2人以上いる
+  - Evidence:
+    - target <- 自分
+  - Vars: different_name=True, presence='present', target='self', type='character_presence', value=2
+
+### activate_member
+- Examples: 12
+- `#89` `root.actions[0]`
+  - Text: このメンバーをアクティブにする。2枚ある場合
+  - Segments:
+    - このメンバーをアクティブにする
+    - 2枚ある場合
+  - Variable split:
+    - use_limit = 'turn1'
+      - From: このメンバーをアクティブにする。2枚ある場合
+    - position_requirement = 'left_side'
+      - From: このメンバーをアクティブにする。2枚ある場合
+  - Vars: position_requirement='left_side', use_limit='turn1'
+- `#160` `root.action`
+  - Text: メンバー1人をアクティブにしてもよい
+  - Segments:
+    - メンバー1人をアクティブにしてもよい
+  - Variable split:
+    - count = 1
+      - From: メンバー1人をアクティブにしてもよい
+    - may = True
+      - From: メンバー1人をアクティブにしてもよい
+  - Evidence:
+    - count <- メンバー1人をアクティブにしてもよい
+  - Vars: count=1, may=True
+- `#227` `root.action`
+  - Text: 自分のステージにいるメンバーを1人までアクティブにする
+  - Segments:
+    - 自分のステージにいるメンバーを1人までアクティブにする
+  - Variable split:
+    - count = 1
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - up_to = 1
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - source = 'stage'
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - target = 'self'
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+  - Evidence:
+    - count <- 自分のステージにいるメンバーを1人までアクティブにする
+    - source <- ステージ
+    - target <- 自分
+  - Vars: count=1, source='stage', target='self', up_to=1
+- `#230` `root.action`
+  - Text: 自分のステージにいるすべてのメンバーをアクティブにする
+  - Segments:
+    - 自分のステージにいるすべてのメンバーをアクティブにする
+  - Variable split:
+    - all = True
+      - From: 自分のステージにいるすべてのメンバーをアクティブにする
+    - source = 'stage'
+      - From: 自分のステージにいるすべてのメンバーをアクティブにする
+    - target = 'self'
+      - From: 自分のステージにいるすべてのメンバーをアクティブにする
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: all=True, source='stage', target='self'
+- `#243` `root.action`
+  - Text: 自分のステージにいるメンバーを1人までアクティブにする
+  - Segments:
+    - 自分のステージにいるメンバーを1人までアクティブにする
+  - Variable split:
+    - count = 1
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - up_to = 1
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - source = 'stage'
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+    - target = 'self'
+      - From: 自分のステージにいるメンバーを1人までアクティブにする
+  - Evidence:
+    - count <- 自分のステージにいるメンバーを1人までアクティブにする
+    - source <- ステージ
+    - target <- 自分
+  - Vars: count=1, source='stage', target='self', up_to=1
+
+### energy_at_least
+- Examples: 12
+- `#23` `root.condition`
+  - Text: 自分のエネルギーが11枚以上ある
+  - Segments:
+    - 自分のエネルギーが11枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーが11枚以上ある
+    - type = 'energy_at_least'
+      - From: 自分のエネルギーが11枚以上ある
+    - value = 11
+      - From: 自分のエネルギーが11枚以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_at_least', value=11
+- `#72` `root.condition`
+  - Text: Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある
+  - Segments:
+    - Liella!』のメンバーからバトンタッチして登場しており
+    - かつ自分のエネルギーが7枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: かつ自分のエネルギーが7枚以上ある
+    - type = 'energy_at_least'
+      - From: Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある
+    - value = 7
+      - From: Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_at_least', value=7
+- `#73` `root.condition`
+  - Text: 自分のエネルギーが10枚以上ある
+  - Segments:
+    - 自分のエネルギーが10枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーが10枚以上ある
+    - type = 'energy_at_least'
+      - From: 自分のエネルギーが10枚以上ある
+    - value = 10
+      - From: 自分のエネルギーが10枚以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_at_least', value=10
+- `#113` `root.condition`
+  - Text: 自分のエネルギーが7枚以上ある
+  - Segments:
+    - 自分のエネルギーが7枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーが7枚以上ある
+    - type = 'energy_at_least'
+      - From: 自分のエネルギーが7枚以上ある
+    - value = 7
+      - From: 自分のエネルギーが7枚以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_at_least', value=7
+- `#187` `root.condition`
+  - Text: 自分のエネルギーが12枚以上ある
+  - Segments:
+    - 自分のエネルギーが12枚以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーが12枚以上ある
+    - type = 'energy_at_least'
+      - From: 自分のエネルギーが12枚以上ある
+    - value = 12
+      - From: 自分のエネルギーが12枚以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_at_least', value=12
+
+### place_on_deck
+- Examples: 12
+- `#5` `root.actions[2]`
+  - Text: デッキの上に置き
+  - Segments:
+    - デッキの上に置き
+  - Variable split:
+    - destination = 'deck_top'
+      - From: デッキの上に置き
+    - source = 'selected_cards'
+      - From: デッキの上に置き
+  - Evidence:
+    - source <- selected_cards
+  - Vars: destination='deck_top', source='selected_cards'
+- `#16` `root.actions[2]`
+  - Text: デッキの上に置き
+  - Segments:
+    - デッキの上に置き
+  - Variable split:
+    - destination = 'deck_top'
+      - From: デッキの上に置き
+    - source = 'selected_cards'
+      - From: デッキの上に置き
+  - Evidence:
+    - source <- selected_cards
+  - Vars: destination='deck_top', source='selected_cards'
+- `#32` `root.actions[2]`
+  - Text: デッキの上に置き
+  - Segments:
+    - デッキの上に置き
+  - Variable split:
+    - destination = 'deck_top'
+      - From: デッキの上に置き
+    - source = 'selected_cards'
+      - From: デッキの上に置き
+  - Evidence:
+    - source <- selected_cards
+  - Vars: destination='deck_top', source='selected_cards'
+- `#62` `root.action`
+  - Text: 相手のステージにいるウェイト状態のメンバーの数まで、『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く
+  - Segments:
+    - 相手のステージにいるウェイト状態のメンバーの数まで
+    - 『虹ヶ咲』のメンバーカードを選ぶ
+    - それらを好きな順番でデッキの上に置く
+  - Variable split:
+    - destination = 'deck_top'
+      - From: 相手のステージにいるウェイト状態のメンバーの数まで
+    - order = 'any'
+      - From: それらを好きな順番でデッキの上に置く
+  - Vars: destination='deck_top', order='any'
+- `#212` `root.actions[2]`
+  - Text: デッキの上に置き
+  - Segments:
+    - デッキの上に置き
+  - Variable split:
+    - destination = 'deck_top'
+      - From: デッキの上に置き
+    - source = 'selected_cards'
+      - From: デッキの上に置き
+  - Evidence:
+    - source <- selected_cards
+  - Vars: destination='deck_top', source='selected_cards'
+
+### card_presence
+- Examples: 11
+- `#57` `root.condition`
+  - Text: 自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがある
+  - Segments:
+    - 自分のライブ中のライブカードに
+    - {{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のライブ中のライブカードに
+    - type = 'card_presence'
+      - From: 自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがある
+    - operator = 'present'
+      - From: 自分のライブ中のライブカードに、{{live_start.png|ライブ開始時}}能力も{{live_success.png|ライブ成功時}}能力も持たないカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='present', target='self', type='card_presence'
+- `#97` `root.condition`
+  - Text: 自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある
+  - Segments:
+    - 自分のデッキの上からカードを4枚控え室に置く
+    - それらの中にライブカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの上からカードを4枚控え室に置く
+    - type = 'card_presence'
+      - From: 自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある
+    - operator = 'present'
+      - From: 自分のデッキの上からカードを4枚控え室に置く。それらの中にライブカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='present', target='self', type='card_presence'
+- `#266` `root.condition`
+  - Text: 自分の成功ライブカード置き場にカードがある
+  - Segments:
+    - 自分の成功ライブカード置き場にカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - type = 'card_presence'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - operator = 'present'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', operator='present', target='self', type='card_presence'
+- `#351` `root.condition`
+  - Text: 自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある
+  - Segments:
+    - 自分のデッキの上からカードを5枚控え室に置く
+    - それらの中にライブカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキの上からカードを5枚控え室に置く
+    - type = 'card_presence'
+      - From: 自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある
+    - operator = 'present'
+      - From: 自分のデッキの上からカードを5枚控え室に置く。それらの中にライブカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='present', target='self', type='card_presence'
+- `#434` `root.condition`
+  - Text: 自分の成功ライブカード置き場にカードがある
+  - Segments:
+    - 自分の成功ライブカード置き場にカードがある
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - type = 'card_presence'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - operator = 'present'
+      - From: 自分の成功ライブカード置き場にカードがある
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にカードがある
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', operator='present', target='self', type='card_presence'
+
+### choose_heart
+- Examples: 11
+- `#11` `root.actions[0]`
+  - Text: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Segments:
+    - {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Variable split:
+    - choice = True
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Vars: choice=True
+- `#52` `root.actions[0]`
+  - Text: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Segments:
+    - {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Variable split:
+    - choice = True
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+    - use_limit = 'ターン1回'
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Vars: choice=True, use_limit='ターン1回'
+- `#105` `root.action`
+  - Text: {{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る
+  - Segments:
+    - {{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち
+    - 1つを選ぶ
+    - ライブ終了時まで
+    - 自分のステージにいるこのターンに登場したメンバーのうち
+    - 『Aqours』以外のすべてのメンバーは選んだハートを1つ得る
+  - Variable split:
+    - choice = True
+      - From: {{heart_03.png|heart03}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのターンに登場したメンバーのうち、『Aqours』以外のすべてのメンバーは選んだハートを1つ得る
+    - count = 1
+      - From: 1つを選ぶ
+  - Evidence:
+    - count <- 1つを選ぶ
+  - Vars: choice=True, count=1
+- `#348` `root.actions[0]`
+  - Text: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Segments:
+    - {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Variable split:
+    - choice = True
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_06.png|heart06}}のうち
+  - Vars: choice=True
+- `#446` `root.actions[0]`
+  - Text: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ。ライブ終了時まで
+  - Segments:
+    - {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ
+    - ライブ終了時まで
+  - Variable split:
+    - choice = True
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ。ライブ終了時まで
+    - count = 1
+      - From: {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ
+  - Evidence:
+    - count <- {{heart_01.png|heart01}}か{{heart_03.png|heart03}}か{{heart_04.png|heart04}}のうち1つを選ぶ
+  - Vars: choice=True, count=1
+
+### state
+- Examples: 11
+- `#228` `root.condition`
+  - Text: 相手のステージにいるウェイト状態のメンバー1人につき
+  - Segments:
+    - 相手のステージにいるウェイト状態のメンバー1人につき
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - type = 'state'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - value = 'wait'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - operator = '=='
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - unit_type = 'stage_member'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - state = 'wait'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+  - Evidence:
+    - target <- 相手
+  - Vars: operator='==', state='wait', target='opponent', type='state', unit_type='stage_member', value='wait'
+- `#263` `root.condition`
+  - Text: 相手のステージにいるウェイト状態のメンバー1人につき
+  - Segments:
+    - 相手のステージにいるウェイト状態のメンバー1人につき
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - type = 'state'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - value = 'wait'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - operator = '=='
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - unit_type = 'stage_member'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+    - state = 'wait'
+      - From: 相手のステージにいるウェイト状態のメンバー1人につき
+  - Evidence:
+    - target <- 相手
+  - Vars: operator='==', state='wait', target='opponent', type='state', unit_type='stage_member', value='wait'
+- `#277` `root.condition`
+  - Text: 相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる
+  - Segments:
+    - 相手は
+    - 自身のステージにいるアクティブ状態のメンバー1人をウェイトにする
+    - (この能力はセンターエリアにいる
+  - Variable split:
+    - type = 'state'
+      - From: 相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる
+    - value = 'active'
+      - From: 相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる
+    - operator = '=='
+      - From: 相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる
+    - position_requirement = 'center'
+      - From: 相手は、自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。（この能力はセンターエリアにいる
+  - Vars: operator='==', position_requirement='center', type='state', value='active'
+- `#278` `root.condition`
+  - Text: 自分のカードの効果によって、相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+  - Segments:
+    - 自分のカードの効果によって
+    - 相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+  - Variable split:
+    - target = 'opponent'
+      - From: 自分のカードの効果によって
+    - type = 'state'
+      - From: 自分のカードの効果によって、相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+    - value = 'active'
+      - From: 自分のカードの効果によって、相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+    - operator = '=='
+      - From: 自分のカードの効果によって、相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+    - use_limit = 'ターン1回'
+      - From: 自分のカードの効果によって、相手のステージにいるアクティブ状態ののメンバーがウェイト状態になった
+  - Evidence:
+    - target <- 相手
+  - Vars: operator='==', target='opponent', type='state', use_limit='ターン1回', value='active'
+- `#344` `root.condition`
+  - Text: ウェイト状態のメンバー1人をアクティブにする。これにより相手のステージにいるメンバーをアクティブにした
+  - Segments:
+    - ウェイト状態のメンバー1人をアクティブにする
+    - これにより相手のステージにいるメンバーをアクティブにした
+  - Variable split:
+    - target = 'opponent'
+      - From: これにより相手のステージにいるメンバーをアクティブにした
+    - type = 'state'
+      - From: ウェイト状態のメンバー1人をアクティブにする。これにより相手のステージにいるメンバーをアクティブにした
+    - value = 'wait'
+      - From: ウェイト状態のメンバー1人をアクティブにする。これにより相手のステージにいるメンバーをアクティブにした
+    - operator = '=='
+      - From: ウェイト状態のメンバー1人をアクティブにする。これにより相手のステージにいるメンバーをアクティブにした
+    - use_limit = 'ターン1回'
+      - From: ウェイト状態のメンバー1人をアクティブにする。これにより相手のステージにいるメンバーをアクティブにした
+  - Evidence:
+    - target <- 相手
+  - Vars: operator='==', target='opponent', type='state', use_limit='ターン1回', value='wait'
+
+### select_from_looked_at_cards
+- Examples: 8
+- `#5` `root.actions[1]`
+  - Text: その中から好きな枚数を好きな順番で
+  - Segments:
+    - その中から好きな枚数を好きな順番で
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.up_to = True
+      - From: その中から好きな枚数を好きな順番で
+    - selection.order = 'any'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.text = '自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.trigger = '登場'
+      - From: その中から好きな枚数を好きな順番で
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+- `#16` `root.actions[1]`
+  - Text: その中から好きな枚数を好きな順番で
+  - Segments:
+    - その中から好きな枚数を好きな順番で
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.up_to = True
+      - From: その中から好きな枚数を好きな順番で
+    - selection.order = 'any'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.text = '自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.trigger = '登場'
+      - From: その中から好きな枚数を好きな順番で
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+- `#32` `root.actions[1]`
+  - Text: その中から好きな枚数を好きな順番で
+  - Segments:
+    - その中から好きな枚数を好きな順番で
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.up_to = True
+      - From: その中から好きな枚数を好きな順番で
+    - selection.order = 'any'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.text = '自分のデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.trigger = 'ライブ開始時'
+      - From: その中から好きな枚数を好きな順番で
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+- `#212` `root.actions[1]`
+  - Text: その中から好きな枚数を好きな順番で
+  - Segments:
+    - その中から好きな枚数を好きな順番で
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.up_to = True
+      - From: その中から好きな枚数を好きな順番で
+    - selection.order = 'any'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.text = '自分のデッキの上からカードを3枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.trigger = 'ライブ開始時'
+      - From: その中から好きな枚数を好きな順番で
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+- `#223` `root.actions[1]`
+  - Text: その中から好きな枚数を好きな順番で
+  - Segments:
+    - その中から好きな枚数を好きな順番で
+  - Variable split:
+    - source = 'looked_at_cards'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.up_to = True
+      - From: その中から好きな枚数を好きな順番で
+    - selection.order = 'any'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.text = '自分か相手を選ぶ。自分は、そのプレイヤーのデッキの上からカードを2枚見る。その中から好きな枚数を好きな順番でデッキの上に置き、残りを控え室に置く。'
+      - From: その中から好きな枚数を好きな順番で
+    - selection.trigger = 'ライブ開始時'
+      - From: その中から好きな枚数を好きな順番で
+  - Evidence:
+    - source <- その中から
+  - Vars: source='looked_at_cards'
+
+### set_state
+- Examples: 8
+- `#219` `root.action`
+  - Text: ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える
+  - Segments:
+    - ライブ終了時まで
+    - このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる
+    - {{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から
+    - ライブカードを1枚手札に加える
+  - Variable split:
+    - duration = 'until_end_of_live'
+      - From: ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える
+    - state_name = '、このメンバーが元々持つハート'
+      - From: ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える
+    - value = 'すべて{{heart_04.png|heart04}}'
+      - From: ライブ終了時まで、このメンバーが元々持つハートはすべて{{heart_04.png|heart04}}になる。{{live_success.png|ライブ成功時}}エールにより公開された自分のカードの中から、ライブカードを1枚手札に加える
+  - Vars: duration='until_end_of_live', state_name='、このメンバーが元々持つハート', value='すべて{{heart_04.png|heart04}}'
+- `#370` `root.actions[0]`
+  - Text: このカードを使用するためのコストは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}になる
+  - Segments:
+    - このカードを使用するためのコストは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}になる
+  - Variable split:
+    - state_name = 'このカードを使用するためのコスト'
+      - From: このカードを使用するためのコストは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}になる
+    - value = '{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}'
+      - From: このカードを使用するためのコストは{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}になる
+  - Vars: state_name='このカードを使用するためのコスト', value='{{heart_02.png|heart02}}{{heart_02.png|heart02}}{{heart_03.png|heart03}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_06.png|heart06}}'
+- `#440` `root.action`
+  - Text: か、または自分が余剰ハートを2つ以上持っている場合、このカードのスコアは４になる
+  - Segments:
+    - か
+    - または自分が余剰ハートを2つ以上持っている場合
+    - このカードのスコアは４になる
+  - Variable split:
+    - state_name = 'か、また'
+      - From: か、または自分が余剰ハートを2つ以上持っている場合、このカードのスコアは４になる
+    - value = '自分が余剰ハートを2つ以上持っている場合、このカードのスコア'
+      - From: か、または自分が余剰ハートを2つ以上持っている場合、このカードのスコアは４になる
+  - Vars: state_name='か、また', value='自分が余剰ハートを2つ以上持っている場合、このカードのスコア'
+- `#446` `root.actions[1]`
+  - Text: このメンバーが元々持つハートは選んだハートになる
+  - Segments:
+    - このメンバーが元々持つハートは選んだハートになる
+  - Variable split:
+    - state_name = 'このメンバーが元々持つハート'
+      - From: このメンバーが元々持つハートは選んだハートになる
+    - value = '選んだハート'
+      - From: このメンバーが元々持つハートは選んだハートになる
+  - Vars: state_name='このメンバーが元々持つハート', value='選んだハート'
+- `#447` `root.actions[1]`
+  - Text: このメンバーが元々持つハートは選んだハートになる
+  - Segments:
+    - このメンバーが元々持つハートは選んだハートになる
+  - Variable split:
+    - state_name = 'このメンバーが元々持つハート'
+      - From: このメンバーが元々持つハートは選んだハートになる
+    - value = '選んだハート'
+      - From: このメンバーが元々持つハートは選んだハートになる
+  - Vars: state_name='このメンバーが元々持つハート', value='選んだハート'
+
+### baton_touch_deploy
+- Examples: 7
+- `#36` `root.condition`
+  - Text: バトンタッチして登場した
+  - Segments:
+    - バトンタッチして登場した
+  - Variable split:
+    - type = 'baton_touch_deploy'
+      - From: バトンタッチして登場した
+  - Vars: type='baton_touch_deploy'
+- `#71` `root.condition`
+  - Text: Liella!』のメンバー2人からバトンタッチして登場している
+  - Segments:
+    - Liella!』のメンバー2人からバトンタッチして登場している
+  - Variable split:
+    - type = 'baton_touch_deploy'
+      - From: Liella!』のメンバー2人からバトンタッチして登場している
+    - source_member_count = 2
+      - From: Liella!』のメンバー2人からバトンタッチして登場している
+    - position_requirement = 'center'
+      - From: Liella!』のメンバー2人からバトンタッチして登場している
+  - Vars: position_requirement='center', source_member_count=2, type='baton_touch_deploy'
+- `#86` `root.condition`
+  - Text: 能力を持たないメンバーからバトンタッチして登場した
+  - Segments:
+    - 能力を持たないメンバーからバトンタッチして登場した
+  - Variable split:
+    - type = 'baton_touch_deploy'
+      - From: 能力を持たないメンバーからバトンタッチして登場した
+    - source_member = 'no_ability'
+      - From: 能力を持たないメンバーからバトンタッチして登場した
+  - Vars: source_member='no_ability', type='baton_touch_deploy'
+- `#323` `root.condition`
+  - Text: 中須かすみ」からバトンタッチして登場した
+  - Segments:
+    - 中須かすみ」からバトンタッチして登場した
+  - Variable split:
+    - type = 'baton_touch_deploy'
+      - From: 中須かすみ」からバトンタッチして登場した
+  - Vars: type='baton_touch_deploy'
+- `#328` `root.condition`
+  - Text: 優木せつ菜」からバトンタッチして登場した
+  - Segments:
+    - 優木せつ菜」からバトンタッチして登場した
+  - Variable split:
+    - type = 'baton_touch_deploy'
+      - From: 優木せつ菜」からバトンタッチして登場した
+  - Vars: type='baton_touch_deploy'
+
+### heart_count_at_least
+- Examples: 7
+- `#101` `root.condition`
+  - Text: 自分が余剰ハートを1つ以上持っている
+  - Segments:
+    - 自分が余剰ハートを1つ以上持っている
+  - Variable split:
+    - type = 'heart_count_at_least'
+      - From: 自分が余剰ハートを1つ以上持っている
+    - value = 1
+      - From: 自分が余剰ハートを1つ以上持っている
+  - Vars: type='heart_count_at_least', value=1
+- `#144` `root.condition`
+  - Text: 相手の余剰ハートが2つ以上ある
+  - Segments:
+    - 相手の余剰ハートが2つ以上ある
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手の余剰ハートが2つ以上ある
+    - type = 'heart_count_at_least'
+      - From: 相手の余剰ハートが2つ以上ある
+    - value = 2
+      - From: 相手の余剰ハートが2つ以上ある
+  - Evidence:
+    - target <- 相手
+  - Vars: target='opponent', type='heart_count_at_least', value=2
+- `#450` `root.condition`
+  - Text: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる
+  - Segments:
+    - 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており
+    - かつ自分のステージに『虹ヶ咲』のメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており
+    - type = 'heart_count_at_least'
+      - From: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる
+    - value = 1
+      - From: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる
+    - presence = 'present'
+      - From: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる
+    - heart_count = 1
+      - From: 自分が余剰ハートに{{heart_04.png|heart04}}を1つ以上持っており、かつ自分のステージに『虹ヶ咲』のメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: heart_count=1, presence='present', target='self', type='heart_count_at_least', value=1
+- `#472` `root.condition`
+  - Text: 自分が余剰ハートに{{heart_01.png|heart01}}を1つ以上持つ
+  - Segments:
+    - 自分が余剰ハートに{{heart_01.png|heart01}}を1つ以上持つ
+  - Variable split:
+    - type = 'heart_count_at_least'
+      - From: 自分が余剰ハートに{{heart_01.png|heart01}}を1つ以上持つ
+    - value = 1
+      - From: 自分が余剰ハートに{{heart_01.png|heart01}}を1つ以上持つ
+  - Vars: type='heart_count_at_least', value=1
+- `#528` `root.condition`
+  - Text: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+  - Segments:
+    - 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+    - type = 'heart_count_at_least'
+      - From: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+    - presence = 'present'
+      - From: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+    - heart_count = 5
+      - From: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+    - value = 5
+      - From: 自分のステージにいるメンバーが持つハートに{{heart_02.png|heart02}}が合計5つ以上ある
+  - Evidence:
+    - target <- 自分
+  - Vars: heart_count=5, presence='present', target='self', type='heart_count_at_least', value=5
+
+### score_sum_at_least
+- Examples: 7
+- `#128` `root.condition`
+  - Text: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Segments:
+    - 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - type = 'score_sum_at_least'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - value = 6
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', target='self', type='score_sum_at_least', value=6
+- `#154` `root.condition`
+  - Text: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Segments:
+    - 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - type = 'score_sum_at_least'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - value = 6
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', target='self', type='score_sum_at_least', value=6
+- `#283` `root.condition`
+  - Text: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Segments:
+    - 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - type = 'score_sum_at_least'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - value = 6
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', target='self', type='score_sum_at_least', value=6
+- `#286` `root.condition`
+  - Text: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Segments:
+    - 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - type = 'score_sum_at_least'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - value = 6
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が6以上である
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', target='self', type='score_sum_at_least', value=6
+- `#288` `root.condition`
+  - Text: 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+  - Segments:
+    - 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+    - type = 'score_sum_at_least'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+    - value = 3
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+    - location = 'success_live_card_zone'
+      - From: 自分の成功ライブカード置き場にあるカードのスコアの合計が3以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: location='success_live_card_zone', target='self', type='score_sum_at_least', value=3
+
+### select_member
+- Examples: 7
+- `#124` `root.actions[0]`
+  - Text: 自分のステージにいるの『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - 自分のステージにいるの『Aqours』のメンバー1人は
+    - ライブ終了時まで
+    - {{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるの『Aqours』のメンバー1人は
+    - group = 'Aqours'
+      - From: 自分のステージにいるの『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る
+    - count = 1
+      - From: 自分のステージにいるの『Aqours』のメンバー1人は
+  - Evidence:
+    - count <- 自分のステージにいるの『Aqours』のメンバー1人は
+    - target <- 自分
+  - Vars: count=1, group='Aqours', target='self'
+- `#244` `root.actions[1]`
+  - Text: 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+  - Segments:
+    - 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+    - group = '虹ヶ咲'
+      - From: 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+    - count = 1
+      - From: 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+  - Evidence:
+    - count <- 自分のステージにいるの『虹ヶ咲』のメンバー1人は
+    - target <- 自分
+  - Vars: count=1, group='虹ヶ咲', target='self'
+- `#308` `root.action`
+  - Text: カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - カードを1枚引き
+    - ライブ終了時まで
+    - 自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る
+    - group = '虹ヶ咲'
+      - From: カードを1枚引き、ライブ終了時まで、自分のステージにいる『虹ヶ咲』のメンバー1人は{{icon_blade.png|ブレード}}を得る
+    - count = 1
+      - From: カードを1枚引き
+  - Evidence:
+    - count <- カードを1枚引き
+    - target <- 自分
+  - Vars: count=1, group='虹ヶ咲', target='self'
+- `#442` `root.actions[1]`
+  - Text: 、ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - ライブ終了時まで
+    - 自分のステージにいるメンバー1人は
+    - {{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバー1人は
+    - count = 1
+      - From: 自分のステージにいるメンバー1人は
+    - conditional = True
+      - From: 、ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}を得る
+  - Evidence:
+    - count <- 自分のステージにいるメンバー1人は
+    - target <- 自分
+  - Vars: conditional=True, count=1, target='self'
+- `#443` `root.actions[0]`
+  - Text: ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Segments:
+    - ライブ終了時まで
+    - 自分のステージにいるメンバー1人は
+    - {{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバー1人は
+    - count = 1
+      - From: 自分のステージにいるメンバー1人は
+  - Evidence:
+    - count <- 自分のステージにいるメンバー1人は
+    - target <- 自分
+  - Vars: count=1, target='self'
+
+### score_comparison
+- Examples: 6
+- `#91` `root.condition`
+  - Text: ライブの合計スコアが相手より高い
+  - Segments:
+    - ライブの合計スコアが相手より高い
+  - Variable split:
+    - type = 'score_comparison'
+      - From: ライブの合計スコアが相手より高い
+    - operator = '>'
+      - From: ライブの合計スコアが相手より高い
+    - target = 'opponent'
+      - From: ライブの合計スコアが相手より高い
+    - compares = 'live_total_score'
+      - From: ライブの合計スコアが相手より高い
+  - Evidence:
+    - target <- 相手
+  - Vars: compares='live_total_score', operator='>', target='opponent', type='score_comparison'
+- `#233` `root.condition`
+  - Text: ライブの合計スコアが相手より高い
+  - Segments:
+    - ライブの合計スコアが相手より高い
+  - Variable split:
+    - type = 'score_comparison'
+      - From: ライブの合計スコアが相手より高い
+    - operator = '>'
+      - From: ライブの合計スコアが相手より高い
+    - target = 'opponent'
+      - From: ライブの合計スコアが相手より高い
+    - compares = 'live_total_score'
+      - From: ライブの合計スコアが相手より高い
+  - Evidence:
+    - target <- 相手
+  - Vars: compares='live_total_score', operator='>', target='opponent', type='score_comparison'
+- `#291` `root.condition`
+  - Text: ライブの合計スコアが相手より高い
+  - Segments:
+    - ライブの合計スコアが相手より高い
+  - Variable split:
+    - type = 'score_comparison'
+      - From: ライブの合計スコアが相手より高い
+    - operator = '>'
+      - From: ライブの合計スコアが相手より高い
+    - target = 'opponent'
+      - From: ライブの合計スコアが相手より高い
+    - compares = 'live_total_score'
+      - From: ライブの合計スコアが相手より高い
+  - Evidence:
+    - target <- 相手
+  - Vars: compares='live_total_score', operator='>', target='opponent', type='score_comparison'
+- `#363` `root.condition`
+  - Text: ライブの合計スコアが相手より高い
+  - Segments:
+    - ライブの合計スコアが相手より高い
+  - Variable split:
+    - type = 'score_comparison'
+      - From: ライブの合計スコアが相手より高い
+    - operator = '>'
+      - From: ライブの合計スコアが相手より高い
+    - target = 'opponent'
+      - From: ライブの合計スコアが相手より高い
+    - compares = 'live_total_score'
+      - From: ライブの合計スコアが相手より高い
+  - Evidence:
+    - target <- 相手
+  - Vars: compares='live_total_score', operator='>', target='opponent', type='score_comparison'
+- `#367` `root.condition`
+  - Text: ライブの合計スコアが相手より高い
+  - Segments:
+    - ライブの合計スコアが相手より高い
+  - Variable split:
+    - type = 'score_comparison'
+      - From: ライブの合計スコアが相手より高い
+    - operator = '>'
+      - From: ライブの合計スコアが相手より高い
+    - target = 'opponent'
+      - From: ライブの合計スコアが相手より高い
+    - compares = 'live_total_score'
+      - From: ライブの合計スコアが相手より高い
+  - Evidence:
+    - target <- 相手
+  - Vars: compares='live_total_score', operator='>', target='opponent', type='score_comparison'
+
+### area_move
+- Examples: 5
+- `#204` `root.condition`
+  - Text: このメンバーがエリアを移動した
+  - Segments:
+    - このメンバーがエリアを移動した
+  - Variable split:
+    - type = 'area_move'
+      - From: このメンバーがエリアを移動した
+    - use_limit = 'ターン1回'
+      - From: このメンバーがエリアを移動した
+  - Vars: type='area_move', use_limit='ターン1回'
+- `#301` `root.condition`
+  - Text: このメンバーがエリアを移動した
+  - Segments:
+    - このメンバーがエリアを移動した
+  - Variable split:
+    - type = 'area_move'
+      - From: このメンバーがエリアを移動した
+    - use_limit = 'ターン1回'
+      - From: このメンバーがエリアを移動した
+  - Vars: type='area_move', use_limit='ターン1回'
+- `#335` `root.condition`
+  - Text: このメンバーがエリアを移動した
+  - Segments:
+    - このメンバーがエリアを移動した
+  - Variable split:
+    - type = 'area_move'
+      - From: このメンバーがエリアを移動した
+  - Vars: type='area_move'
+- `#338` `root.condition`
+  - Text: このメンバーがエリアを移動した
+  - Segments:
+    - このメンバーがエリアを移動した
+  - Variable split:
+    - type = 'area_move'
+      - From: このメンバーがエリアを移動した
+    - use_limit = 'ターン1回'
+      - From: このメンバーがエリアを移動した
+  - Vars: type='area_move', use_limit='ターン1回'
+- `#586` `root.condition`
+  - Text: このメンバーがエリアを移動した
+  - Segments:
+    - このメンバーがエリアを移動した
+  - Variable split:
+    - type = 'area_move'
+      - From: このメンバーがエリアを移動した
+    - use_limit = 'ターン1回'
+      - From: このメンバーがエリアを移動した
+  - Vars: type='area_move', use_limit='ターン1回'
+
+### increase_heart_cost
+- Examples: 5
+- `#39` `root.action`
+  - Text: 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Segments:
+    - 相手のライブカード置き場にあるすべてのライブカードは
+    - 成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のライブカード置き場にあるすべてのライブカードは
+    - card_type = 'live_card'
+      - From: 相手のライブカード置き場にあるすべてのライブカードは
+    - all = True
+      - From: 相手のライブカード置き場にあるすべてのライブカードは、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- 相手
+  - Vars: all=True, card_type='live_card', target='opponent'
+- `#481` `root.actions[1]`
+  - Text: 成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}増やす
+  - Segments:
+    - 成功させるための必要ハートを{{heart_00.png|heart0}}{{heart_00.png|heart0}}{{heart_00.png|heart0}}増やす
+  - Vars: (no extra variables)
+- `#528` `root.action`
+  - Text: 、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Segments:
+    - 成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Vars: (no extra variables)
+- `#541` `root.action`
+  - Text: 、成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Segments:
+    - 成功させるための必要ハートが{{heart_00.png|heart0}}多くなる
+  - Vars: (no extra variables)
+- `#590` `root.actions[1]`
+  - Text: 必要ハートを{{heart_01.png|heart01}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_00.png|heart0}}増やす
+  - Segments:
+    - 必要ハートを{{heart_01.png|heart01}}{{heart_03.png|heart03}}{{heart_06.png|heart06}}{{heart_00.png|heart0}}増やす
+  - Vars: (no extra variables)
+
+### position_change
+- Examples: 5
+- `#60` `root.actions[0]`
+  - Text: このメンバーはセンターエリア以外にポジションチェンジする
+  - Segments:
+    - このメンバーはセンターエリア以外にポジションチェンジする
+  - Vars: (no extra variables)
+- `#85` `root.action`
+  - Text: このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする
+  - Segments:
+    - このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする
+  - Variable split:
+    - group = 'Aqours'
+      - From: このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする
+    - use_limit = 'ターン1回'
+      - From: このメンバーを『Aqours』か『SaintSnow』のメンバーがいるエリアにポジションチェンジする
+  - Vars: group='Aqours', use_limit='ターン1回'
+- `#124` `root.actions[1]`
+  - Text: 自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる
+  - Segments:
+    - 自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる
+    - group = 'SaintSnow'
+      - From: 自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる
+  - Evidence:
+    - target <- 自分
+  - Vars: group='SaintSnow', target='self'
+- `#142` `root.action`
+  - Text: このメンバーはポジションチェンジする
+  - Segments:
+    - このメンバーはポジションチェンジする
+  - Variable split:
+    - use_limit = 'ターン1回'
+      - From: このメンバーはポジションチェンジする
+  - Vars: use_limit='ターン1回'
+- `#149` `root.action`
+  - Text: 自分と相手は、自身のステージのセンターにいるメンバーをポジションチェンジする
+  - Segments:
+    - 自分と相手は
+    - 自身のステージのセンターにいるメンバーをポジションチェンジする
+  - Variable split:
+    - target = 'opponent'
+      - From: 自分と相手は
+    - source = 'stage'
+      - From: 自身のステージのセンターにいるメンバーをポジションチェンジする
+  - Evidence:
+    - source <- ステージ
+    - target <- 相手
+  - Vars: source='stage', target='opponent'
+
+### reduce_cost
+- Examples: 5
+- `#87` `root.action`
+  - Text: 能力を持たないメンバーカードを自分の手札から登場させるためのコストは1減る。
+  - Segments:
+    - 能力を持たないメンバーカードを自分の手札から登場させるためのコストは1減る
+  - Variable split:
+    - amount = 1
+      - From: 能力を持たないメンバーカードを自分の手札から登場させるためのコストは1減る。
+  - Vars: amount=1
+- `#95` `root.action`
+  - Text: コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。
+  - Segments:
+    - コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る
+  - Variable split:
+    - amount = 2
+      - From: コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る。
+  - Vars: amount=2
+- `#276` `root.action`
+  - Text: 自分の成功ライブカード置き場に『lilywhite』のカードがある場合、手札にあるこのメンバーカードのコストは2減る。
+  - Segments:
+    - 自分の成功ライブカード置き場に『lilywhite』のカードがある場合
+    - 手札にあるこのメンバーカードのコストは2減る
+  - Variable split:
+    - amount = 2
+      - From: 自分の成功ライブカード置き場に『lilywhite』のカードがある場合、手札にあるこのメンバーカードのコストは2減る。
+  - Vars: amount=2
+- `#314` `root.action`
+  - Text: 自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり、手札にあるこのメンバーカードのコストは2減る。
+  - Segments:
+    - 自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり
+    - 手札にあるこのメンバーカードのコストは2減る
+  - Variable split:
+    - amount = 2
+      - From: 自分のステージにウェイト状態の『虹ヶ咲』のメンバーがいるかぎり、手札にあるこのメンバーカードのコストは2減る。
+  - Vars: amount=2
+- `#523` `root.action`
+  - Text: 自分のステージにいる『Liella!』のメンバーがこのターンにエリアを移動しているかぎり、手札にあるこのメンバーカードのコストは2減る。
+  - Segments:
+    - 自分のステージにいる『Liella!』のメンバーがこのターンにエリアを移動しているかぎり
+    - 手札にあるこのメンバーカードのコストは2減る
+  - Variable split:
+    - amount = 2
+      - From: 自分のステージにいる『Liella!』のメンバーがこのターンにエリアを移動しているかぎり、手札にあるこのメンバーカードのコストは2減る。
+  - Vars: amount=2
+
+### all_areas
+- Examples: 4
+- `#25` `root.condition`
+  - Text: 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる
+  - Segments:
+    - 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており
+    - かつ名前が異なる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており
+    - type = 'all_areas'
+      - From: 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる
+    - group = '蓮ノ空'
+      - From: 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる
+    - names_different = True
+      - From: 自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる
+  - Evidence:
+    - target <- 自分
+  - Vars: group='蓮ノ空', names_different=True, target='self', type='all_areas'
+- `#34` `root.condition`
+  - Text: 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる
+  - Segments:
+    - 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており
+    - かつ名前が異なる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており
+    - type = 'all_areas'
+      - From: 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる
+    - group = 'Aqours'
+      - From: 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる
+    - names_different = True
+      - From: 自分のステージのエリアすべてに『Aqours』のメンバーが登場しており、かつ名前が異なる
+  - Evidence:
+    - target <- 自分
+  - Vars: group='Aqours', names_different=True, target='self', type='all_areas'
+- `#44` `root.condition`
+  - Text: 自分のステージのエリアすべてにメンバーが登場している
+  - Segments:
+    - 自分のステージのエリアすべてにメンバーが登場している
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージのエリアすべてにメンバーが登場している
+    - type = 'all_areas'
+      - From: 自分のステージのエリアすべてにメンバーが登場している
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='all_areas'
+- `#485` `root.condition`
+  - Text: 自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて、かつそれらのコストの合計が20以上の
+  - Segments:
+    - 自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて
+    - かつそれらのコストの合計が20以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて
+    - type = 'all_areas'
+      - From: 自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて、かつそれらのコストの合計が20以上の
+    - group = '虹ヶ咲'
+      - From: 自分のステージのエリアすべてに『虹ヶ咲』のメンバーがいて、かつそれらのコストの合計が20以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: group='虹ヶ咲', target='self', type='all_areas'
+
+### may_position_change
+- Examples: 4
+- `#76` `root.action`
+  - Text: このメンバーをポジションチェンジしてもよい
+  - Segments:
+    - このメンバーをポジションチェンジしてもよい
+  - Variable split:
+    - target = 'self'
+      - From: このメンバーをポジションチェンジしてもよい
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self'
+- `#102` `root.actions[0]`
+  - Text: メンバー1人をポジションチェンジさせてもよい
+  - Segments:
+    - メンバー1人をポジションチェンジさせてもよい
+  - Variable split:
+    - count = 1
+      - From: メンバー1人をポジションチェンジさせてもよい
+  - Evidence:
+    - count <- メンバー1人をポジションチェンジさせてもよい
+  - Vars: count=1
+- `#468` `root.actions[0]`
+  - Text: 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+  - Segments:
+    - 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+  - Variable split:
+    - count = 1
+      - From: 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+    - target = 'self'
+      - From: 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+    - source = 'stage'
+      - From: 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+  - Evidence:
+    - count <- 自分のステージにいるメンバー1人をポジションチェンジさせてもよい
+    - source <- ステージ
+    - target <- 自分
+  - Vars: count=1, source='stage', target='self'
+- `#487` `root.action`
+  - Text: このメンバーをポジションチェンジしてもよい
+  - Segments:
+    - このメンバーをポジションチェンジしてもよい
+  - Variable split:
+    - target = 'self'
+      - From: このメンバーをポジションチェンジしてもよい
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self'
+
+### member_deploy_count
+- Examples: 4
+- `#247` `root.condition`
+  - Text: 自分のステージにメンバーが3回登場した
+  - Segments:
+    - 自分のステージにメンバーが3回登場した
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにメンバーが3回登場した
+    - type = 'member_deploy_count'
+      - From: 自分のステージにメンバーが3回登場した
+    - value = 3
+      - From: 自分のステージにメンバーが3回登場した
+    - source = 'stage'
+      - From: 自分のステージにメンバーが3回登場した
+    - event = 'deploy'
+      - From: 自分のステージにメンバーが3回登場した
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: event='deploy', source='stage', target='self', type='member_deploy_count', value=3
+- `#248` `root.condition`
+  - Text: 自分のステージにメンバーが2回以上登場している
+  - Segments:
+    - 自分のステージにメンバーが2回以上登場している
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにメンバーが2回以上登場している
+    - type = 'member_deploy_count'
+      - From: 自分のステージにメンバーが2回以上登場している
+    - value = 2
+      - From: 自分のステージにメンバーが2回以上登場している
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_deploy_count', value=2
+- `#249` `root.condition`
+  - Text: "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場した
+  - Segments:
+    - "{{jidou.png|自動}}このターン
+    - 自分のステージにメンバーが3回登場した
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにメンバーが3回登場した
+    - type = 'member_deploy_count'
+      - From: "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場した
+    - value = 3
+      - From: "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場した
+    - source = 'stage'
+      - From: 自分のステージにメンバーが3回登場した
+    - event = 'deploy'
+      - From: "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場した
+    - scope = 'turn'
+      - From: "{{jidou.png|自動}}このターン、自分のステージにメンバーが3回登場した
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: event='deploy', scope='turn', source='stage', target='self', type='member_deploy_count', value=3
+- `#250` `root.condition`
+  - Text: 自分のステージにメンバーが2回以上登場している
+  - Segments:
+    - 自分のステージにメンバーが2回以上登場している
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにメンバーが2回以上登場している
+    - type = 'member_deploy_count'
+      - From: 自分のステージにメンバーが2回以上登場している
+    - value = 2
+      - From: 自分のステージにメンバーが2回以上登場している
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_deploy_count', value=2
+
+### move_to_waitroom_trigger
+- Examples: 4
+- `#88` `root.condition.conditions[0]`
+  - Text: このメンバーがステージから控え室に置かれたとき
+  - Segments:
+    - このメンバーがステージから控え室に置かれたとき
+  - Variable split:
+    - type = 'move_to_waitroom_trigger'
+      - From: このメンバーがステージから控え室に置かれたとき
+    - operator = 'triggered'
+      - From: このメンバーがステージから控え室に置かれたとき
+    - source = 'stage'
+      - From: このメンバーがステージから控え室に置かれたとき
+    - destination = 'waitroom'
+      - From: このメンバーがステージから控え室に置かれたとき
+    - target = 'self'
+      - From: このメンバーがステージから控え室に置かれたとき
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: destination='waitroom', operator='triggered', source='stage', target='self', type='move_to_waitroom_trigger'
+- `#102` `root.condition`
+  - Text: このメンバーがステージから控え室に置かれた
+  - Segments:
+    - このメンバーがステージから控え室に置かれた
+  - Variable split:
+    - type = 'move_to_waitroom_trigger'
+      - From: このメンバーがステージから控え室に置かれた
+    - operator = 'triggered'
+      - From: このメンバーがステージから控え室に置かれた
+    - source = 'stage'
+      - From: このメンバーがステージから控え室に置かれた
+    - destination = 'waitroom'
+      - From: このメンバーがステージから控え室に置かれた
+    - target = 'self'
+      - From: このメンバーがステージから控え室に置かれた
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: destination='waitroom', operator='triggered', source='stage', target='self', type='move_to_waitroom_trigger'
+- `#160` `root.condition`
+  - Text: このメンバーがステージから控え室に置かれた
+  - Segments:
+    - このメンバーがステージから控え室に置かれた
+  - Variable split:
+    - type = 'move_to_waitroom_trigger'
+      - From: このメンバーがステージから控え室に置かれた
+    - operator = 'triggered'
+      - From: このメンバーがステージから控え室に置かれた
+    - source = 'stage'
+      - From: このメンバーがステージから控え室に置かれた
+    - destination = 'waitroom'
+      - From: このメンバーがステージから控え室に置かれた
+    - target = 'self'
+      - From: このメンバーがステージから控え室に置かれた
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: destination='waitroom', operator='triggered', source='stage', target='self', type='move_to_waitroom_trigger'
+- `#409` `root.condition`
+  - Text: このメンバーがステージから控え室に置かれた
+  - Segments:
+    - このメンバーがステージから控え室に置かれた
+  - Variable split:
+    - type = 'move_to_waitroom_trigger'
+      - From: このメンバーがステージから控え室に置かれた
+    - operator = 'triggered'
+      - From: このメンバーがステージから控え室に置かれた
+    - source = 'stage'
+      - From: このメンバーがステージから控え室に置かれた
+    - destination = 'waitroom'
+      - From: このメンバーがステージから控え室に置かれた
+    - target = 'self'
+      - From: このメンバーがステージから控え室に置かれた
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: destination='waitroom', operator='triggered', source='stage', target='self', type='move_to_waitroom_trigger'
+
+### combined_location_count_at_least
+- Examples: 3
+- `#64` `root.condition`
+  - Text: 自分と相手のエネルギーの合計が15枚以上ある
+  - Segments:
+    - 自分と相手のエネルギーの合計が15枚以上ある
+  - Variable split:
+    - target = 'both'
+      - From: 自分と相手のエネルギーの合計が15枚以上ある
+    - type = 'combined_location_count_at_least'
+      - From: 自分と相手のエネルギーの合計が15枚以上ある
+    - value = 15
+      - From: 自分と相手のエネルギーの合計が15枚以上ある
+    - location = 'energy'
+      - From: 自分と相手のエネルギーの合計が15枚以上ある
+  - Evidence:
+    - target <- both
+  - Vars: location='energy', target='both', type='combined_location_count_at_least', value=15
+- `#224` `root.condition`
+  - Text: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+  - Segments:
+    - 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+  - Variable split:
+    - target = 'both'
+      - From: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+    - type = 'combined_location_count_at_least'
+      - From: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+    - value = 3
+      - From: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+    - location = 'success_live_card_zone'
+      - From: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+    - card_type = 'live_card'
+      - From: 自分と相手の成功ライブカード置き場にカードが合計3枚以上ある
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- both
+  - Vars: card_type='live_card', location='success_live_card_zone', target='both', type='combined_location_count_at_least', value=3
+- `#225` `root.condition`
+  - Text: ライブに勝利するプレイヤーを決定するとき、自分と相手のライブの合計スコアが同じ
+  - Segments:
+    - ライブに勝利するプレイヤーを決定するとき
+    - 自分と相手のライブの合計スコアが同じ
+  - Variable split:
+    - target = 'both'
+      - From: 自分と相手のライブの合計スコアが同じ
+    - type = 'combined_location_count_at_least'
+      - From: ライブに勝利するプレイヤーを決定するとき、自分と相手のライブの合計スコアが同じ
+  - Evidence:
+    - target <- both
+  - Vars: target='both', type='combined_location_count_at_least'
+
+### compound
+- Examples: 3
+- `#31` `root.condition`
+  - Text: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の
+  - Segments:
+    - エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - 自分の手札が7枚以下の
+  - Variable split:
+    - type = 'compound'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の
+    - target = 'self'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき
+    - use_limit = 'turn1'
+      - From: エールにより公開された自分のカードの中にライブカードが1枚以上あるとき、自分の手札が7枚以下の
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='compound', use_limit='turn1'
+- `#88` `root.condition`
+  - Text: このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Segments:
+    - このメンバーがステージから控え室に置かれたとき
+    - このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Variable split:
+    - type = 'compound'
+      - From: このメンバーがステージから控え室に置かれたとき、このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた
+  - Vars: type='compound'
+- `#201` `root.condition`
+  - Text: エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた
+  - Segments:
+    - エールにより公開された自分のカードの中にライブカードがないとき
+    - それらのカードをすべて控え室に置いてもよい
+    - これにより1枚以上のカードが控え室に置かれた
+  - Variable split:
+    - type = 'compound'
+      - From: エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた
+    - target = 'self'
+      - From: エールにより公開された自分のカードの中にライブカードがないとき
+    - use_limit = 'turn1'
+      - From: エールにより公開された自分のカードの中にライブカードがないとき、それらのカードをすべて控え室に置いてもよい。これにより1枚以上のカードが控え室に置かれた
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='compound', use_limit='turn1'
+
+### heart_member_presence
+- Examples: 3
+- `#543` `root.condition`
+  - Text: 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+  - Segments:
+    - 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+    - type = 'heart_member_presence'
+      - From: 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+    - heart_count = 4
+      - From: 自分のステージに{{heart_02.png|heart02}}を4つ以上持つメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: heart_count=4, presence='present', target='self', type='heart_member_presence'
+- `#545` `root.condition`
+  - Text: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+  - Segments:
+    - 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}
+    - {{heart_02.png|heart02}}
+    - {{heart_03.png|heart03}}
+    - {{heart_04.png|heart04}}
+    - {{heart_05.png|heart05}}
+    - {{heart_06.png|heart06}}がすべてある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}
+    - type = 'heart_member_presence'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+    - presence = 'present'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='heart_member_presence'
+- `#567` `root.condition`
+  - Text: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+  - Segments:
+    - 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}
+    - {{heart_02.png|heart02}}
+    - {{heart_03.png|heart03}}
+    - {{heart_04.png|heart04}}
+    - {{heart_05.png|heart05}}
+    - {{heart_06.png|heart06}}がすべてある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}
+    - type = 'heart_member_presence'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+    - presence = 'present'
+      - From: 自分のステージにいるメンバーが持つハートの中に{{heart_01.png|heart01}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_06.png|heart06}}がすべてある
+  - Evidence:
+    - target <- 自分
+  - Vars: presence='present', target='self', type='heart_member_presence'
+
+### member_area_move
+- Examples: 3
+- `#489` `root.condition`
+  - Text: このメンバーがエリアを移動している
+  - Segments:
+    - このメンバーがエリアを移動している
+  - Variable split:
+    - type = 'member_area_move'
+      - From: このメンバーがエリアを移動している
+    - target = 'self'
+      - From: このメンバーがエリアを移動している
+    - position_requirement = 'left_side'
+      - From: このメンバーがエリアを移動している
+  - Evidence:
+    - target <- 自分
+  - Vars: position_requirement='left_side', target='self', type='member_area_move'
+- `#491` `root.condition`
+  - Text: このメンバーがエリアを移動している
+  - Segments:
+    - このメンバーがエリアを移動している
+  - Variable split:
+    - type = 'member_area_move'
+      - From: このメンバーがエリアを移動している
+    - target = 'self'
+      - From: このメンバーがエリアを移動している
+    - position_requirement = 'right_side'
+      - From: このメンバーがエリアを移動している
+  - Evidence:
+    - target <- 自分
+  - Vars: position_requirement='right_side', target='self', type='member_area_move'
+- `#550` `root.condition`
+  - Text: 自分のステージにいるほかのメンバーがエリアを移動している
+  - Segments:
+    - 自分のステージにいるほかのメンバーがエリアを移動している
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるほかのメンバーがエリアを移動している
+    - type = 'member_area_move'
+      - From: 自分のステージにいるほかのメンバーがエリアを移動している
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='member_area_move'
+
+### member_exclusion
+- Examples: 3
+- `#124` `root.condition`
+  - Text: 以下から1つを選ぶ。
+・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+  - Segments:
+    - 以下から1つを選ぶ
+    - ・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は
+    - ライブ終了時まで
+    - {{icon_blade.png|ブレード}}を得る
+    - ・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる
+    - (このメンバーを今いるエリア以外のエリアに移動させる
+  - Variable split:
+    - exclude_this_member = True
+      - From: 以下から1つを選ぶ。
+・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+    - type = 'member_exclusion'
+      - From: 以下から1つを選ぶ。
+・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。
+・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合、そのメンバーはこのメンバーがいたエリアに移動させる。)
+  - Vars: exclude_this_member=True, type='member_exclusion'
+- `#244` `root.condition`
+  - Text: 好きなハートの色を1つ指定する。ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハートを1つ得る。
+  - Segments:
+    - 好きなハートの色を1つ指定する
+    - ライブ終了時まで
+    - 自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は
+    - そのハートを1つ得る
+  - Variable split:
+    - exclude_this_member = True
+      - From: 好きなハートの色を1つ指定する。ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハートを1つ得る。
+    - type = 'member_exclusion'
+      - From: 好きなハートの色を1つ指定する。ライブ終了時まで、自分のステージにいるこのメンバー以外の『虹ヶ咲』のメンバー1人は、そのハートを1つ得る。
+  - Vars: exclude_this_member=True, type='member_exclusion'
+- `#568` `root.condition`
+  - Text: {{heart_01.png|heart01}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハートを2つ得る。
+  - Segments:
+    - {{heart_01.png|heart01}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち
+    - 1つを選ぶ
+    - ライブ終了時まで
+    - 自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は
+    - 選んだハートを2つ得る
+  - Variable split:
+    - exclude_this_member = True
+      - From: {{heart_01.png|heart01}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハートを2つ得る。
+    - type = 'member_exclusion'
+      - From: {{heart_01.png|heart01}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}か{{heart_06.png|heart06}}のうち、1つを選ぶ。ライブ終了時まで、自分のステージにいるこのメンバー以外の『蓮ノ空』のメンバー1人は、選んだハートを2つ得る。
+  - Vars: exclude_this_member=True, type='member_exclusion'
+
+### modify_cost
+- Examples: 3
+- `#196` `root.actions[0]`
+  - Text: ステージにいるこのメンバーのコストを+４する
+  - Segments:
+    - ステージにいるこのメンバーのコストを+４する
+  - Variable split:
+    - amount = 4
+      - From: ステージにいるこのメンバーのコストを+４する
+  - Vars: amount=4
+- `#286` `root.actions[0]`
+  - Text: ステージにいるこのメンバーのコストを+３する
+  - Segments:
+    - ステージにいるこのメンバーのコストを+３する
+  - Variable split:
+    - amount = 3
+      - From: ステージにいるこのメンバーのコストを+３する
+  - Vars: amount=3
+- `#439` `root.action`
+  - Text: ステージにいるこのメンバーのコストを+１する
+  - Segments:
+    - ステージにいるこのメンバーのコストを+１する
+  - Variable split:
+    - amount = 1
+      - From: ステージにいるこのメンバーのコストを+１する
+  - Vars: amount=1
+
+### reduce_heart_cost
+- Examples: 3
+- `#355` `root.action`
+  - Text: このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる
+  - Segments:
+    - このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる
+  - Vars: (no extra variables)
+- `#421` `root.action`
+  - Text: 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる
+  - Segments:
+    - 手札にあるこのメンバーカードのコストは
+    - このカード以外の自分の手札1枚につき
+    - 1少なくなる
+  - Variable split:
+    - multiplier = True
+      - From: 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる
+    - per_unit = 1
+      - From: 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる
+    - unit_type = 'member'
+      - From: 手札にあるこのメンバーカードのコストは、このカード以外の自分の手札1枚につき、1少なくなる
+    - target = 'self'
+      - From: このカード以外の自分の手札1枚につき
+  - Evidence:
+    - target <- 自分
+  - Vars: multiplier=True, per_unit=1, target='self', unit_type='member'
+- `#433` `root.actions[0]`
+  - Text: このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる
+  - Segments:
+    - このカードを成功させるための必要ハートは{{heart_00.png|heart0}}{{heart_00.png|heart0}}少なくなる
+  - Vars: (no extra variables)
+
+### blade_count_at_least
+- Examples: 2
+- `#380` `root.condition`
+  - Text: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Segments:
+    - 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+    - type = 'blade_count_at_least'
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+    - value = 10
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='blade_count_at_least', value=10
+- `#433` `root.condition`
+  - Text: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Segments:
+    - 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+    - type = 'blade_count_at_least'
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+    - value = 10
+      - From: 自分のステージにいるメンバーが持つ{{icon_blade.png|ブレード}}の合計が10以上の
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='blade_count_at_least', value=10
+
+### cannot
+- Examples: 2
+- `#172` `root.actions[0]`
+  - Text: 自分はライブできない
+  - Segments:
+    - 自分はライブできない
+  - Variable split:
+    - target = 'self'
+      - From: 自分はライブできない
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self'
+- `#408` `root.actions[1]`
+  - Text: 自分はライブできない
+  - Segments:
+    - 自分はライブできない
+  - Variable split:
+    - target = 'self'
+      - From: 自分はライブできない
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self'
+
+### cannot_place
+- Examples: 2
+- `#225` `root.actions[0]`
+  - Text: 自分と相手は成功ライブカード置き場にカードを置くことができない
+  - Segments:
+    - 自分と相手は成功ライブカード置き場にカードを置くことができない
+  - Variable split:
+    - target = 'opponent'
+      - From: 自分と相手は成功ライブカード置き場にカードを置くことができない
+    - card_type = 'live_card'
+      - From: 自分と相手は成功ライブカード置き場にカードを置くことができない
+  - Evidence:
+    - card_type <- ライブカード
+    - target <- 相手
+  - Vars: card_type='live_card', target='opponent'
+- `#399` `root.action`
+  - Text: このカードは成功ライブカード置き場に置くことができない
+  - Segments:
+    - このカードは成功ライブカード置き場に置くことができない
+  - Variable split:
+    - card_type = 'live_card'
+      - From: このカードは成功ライブカード置き場に置くことができない
+  - Evidence:
+    - card_type <- ライブカード
+  - Vars: card_type='live_card'
+
+### cost_at_least
+- Examples: 2
+- `#51` `root.condition`
+  - Text: 自分のステージにコスト13以上のメンバーがいる
+  - Segments:
+    - 自分のステージにコスト13以上のメンバーがいる
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにコスト13以上のメンバーがいる
+    - type = 'cost_at_least'
+      - From: 自分のステージにコスト13以上のメンバーがいる
+    - presence = 'present'
+      - From: 自分のステージにコスト13以上のメンバーがいる
+    - cost = 13
+      - From: 自分のステージにコスト13以上のメンバーがいる
+    - value = 13
+      - From: 自分のステージにコスト13以上のメンバーがいる
+  - Evidence:
+    - target <- 自分
+  - Vars: cost=13, presence='present', target='self', type='cost_at_least', value=13
+- `#111` `root.condition`
+  - Text: 自分か相手のステージにコスト13以上のメンバーがいる
+  - Segments:
+    - 自分か相手のステージにコスト13以上のメンバーがいる
+  - Variable split:
+    - target = 'opponent'
+      - From: 自分か相手のステージにコスト13以上のメンバーがいる
+    - type = 'cost_at_least'
+      - From: 自分か相手のステージにコスト13以上のメンバーがいる
+    - presence = 'present'
+      - From: 自分か相手のステージにコスト13以上のメンバーがいる
+    - cost = 13
+      - From: 自分か相手のステージにコスト13以上のメンバーがいる
+    - value = 13
+      - From: 自分か相手のステージにコスト13以上のメンバーがいる
+  - Evidence:
+    - target <- 相手
+  - Vars: cost=13, presence='present', target='opponent', type='cost_at_least', value=13
+
+### cost_total_equal
+- Examples: 2
+- `#22` `root.condition`
+  - Text: 公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+  - Segments:
+    - 公開したカードのコストの合計が
+    - 10
+    - 20
+    - 30
+    - 40
+    - 50のいずれかの場合
+  - Variable split:
+    - type = 'cost_total_equal'
+      - From: 公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+    - reference = '公開したカード'
+      - From: 公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+    - use_limit = 'ターン1回'
+      - From: 公開したカードのコストの合計が、10、20、30、40、50のいずれかの場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+  - Vars: reference='公開したカード', type='cost_total_equal', use_limit='ターン1回'
+- `#56` `root.condition`
+  - Text: それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+  - Segments:
+    - それらのカードのコストの合計が
+    - 6の場合
+    - カードを1枚引く
+    - 合計が8の場合
+    - ライブ終了時まで
+    - {{icon_all.png|ハート}}を得る
+  - Variable split:
+    - type = 'cost_total_equal'
+      - From: それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+    - reference = 'それらのカード'
+      - From: それらのカードのコストの合計が、6の場合、カードを1枚引く。合計が8の場合、ライブ終了時まで、{{icon_all.png|ハート}}を得る。合計が25の場合、ライブ終了時まで、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。
+  - Vars: reference='それらのカード', type='cost_total_equal'
+
+### energy_count_greater_than
+- Examples: 2
+- `#220` `root.condition`
+  - Text: 相手のエネルギーが自分より多い
+  - Segments:
+    - 相手のエネルギーが自分より多い
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手のエネルギーが自分より多い
+    - type = 'energy_count_greater_than'
+      - From: 相手のエネルギーが自分より多い
+  - Evidence:
+    - target <- 相手
+  - Vars: target='opponent', type='energy_count_greater_than'
+- `#492` `root.condition`
+  - Text: 自分のエネルギーが相手より多い
+  - Segments:
+    - 自分のエネルギーが相手より多い
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーが相手より多い
+    - type = 'energy_count_greater_than'
+      - From: 自分のエネルギーが相手より多い
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='energy_count_greater_than'
+
+### or_trigger
+- Examples: 2
+- `#77` `root.condition`
+  - Text: このメンバーが登場か、エリアを移動した
+  - Segments:
+    - このメンバーが登場か
+    - エリアを移動した
+  - Variable split:
+    - type = 'or_trigger'
+      - From: このメンバーが登場か、エリアを移動した
+  - Vars: type='or_trigger'
+- `#99` `root.condition`
+  - Text: 自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた
+  - Segments:
+    - 自分のカードの効果によって
+    - このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた
+  - Variable split:
+    - target = 'self'
+      - From: 自分のカードの効果によって
+    - type = 'or_trigger'
+      - From: 自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた
+    - use_limit = 'ターン1回'
+      - From: 自分のカードの効果によって、このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='or_trigger', use_limit='ターン1回'
+
+### pay_energy
+- Examples: 2
+- `#83` `root.actions[1]`
+  - Text: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+  - Segments:
+    - 自分のメインフェイズの間
+    - 自分のカードが1枚以上いずれかの領域から控え室に置かれるたび
+    - {{icon_energy.png|E}}支払ってもよい
+    - そうした場合
+    - それらのカードの中から1枚手札に加える
+  - Variable split:
+    - optional = True
+      - From: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+    - count = 1
+      - From: 自分のカードが1枚以上いずれかの領域から控え室に置かれるたび
+    - use_limit = 'ターン1回'
+      - From: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+  - Evidence:
+    - count <- 自分のカードが1枚以上いずれかの領域から控え室に置かれるたび
+  - Vars: count=1, optional=True, use_limit='ターン1回'
+- `#156` `root.actions[1]`
+  - Text: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+  - Segments:
+    - 自分の控え室にあるライブカードを1枚選び
+    - そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい
+    - そうした場合
+    - そのライブカードを手札に加える
+  - Variable split:
+    - optional = True
+      - From: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+    - amount = 'selected_card_score'
+      - From: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+    - use_limit = 'ターン1回'
+      - From: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+  - Vars: amount='selected_card_score', optional=True, use_limit='ターン1回'
+
+### select_card
+- Examples: 2
+- `#156` `root.actions[0]`
+  - Text: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+  - Segments:
+    - 自分の控え室にあるライブカードを1枚選び
+    - そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい
+    - そうした場合
+    - そのライブカードを手札に加える
+  - Variable split:
+    - source = 'waitroom'
+      - From: 自分の控え室にあるライブカードを1枚選び
+    - card_type = 'live_card'
+      - From: 自分の控え室にあるライブカードを1枚選び
+    - count = 1
+      - From: 自分の控え室にあるライブカードを1枚選び
+    - use_limit = 'ターン1回'
+      - From: 自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合、そのライブカードを手札に加える。
+  - Evidence:
+    - count <- 自分の控え室にあるライブカードを1枚選び
+    - card_type <- ライブカード
+    - source <- 控え室
+  - Vars: card_type='live_card', count=1, source='waitroom', use_limit='ターン1回'
+- `#209` `root.actions[0]`
+  - Text: 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+  - Segments:
+    - 自分の控え室にある
+    - カード名の異なるライブカードを2枚選ぶ
+    - そうした場合
+    - 相手はそれらのカードのうち1枚を選ぶ
+    - これにより相手に選ばれたカードを自分の手札に加える
+  - Variable split:
+    - source = 'waitroom'
+      - From: 自分の控え室にある
+    - card_type = 'live_card'
+      - From: カード名の異なるライブカードを2枚選ぶ
+    - count = 2
+      - From: カード名の異なるライブカードを2枚選ぶ
+    - selection_criteria = 'different_names'
+      - From: 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+  - Evidence:
+    - count <- カード名の異なるライブカードを2枚選ぶ
+    - card_type <- ライブカード
+    - source <- 控え室
+  - Vars: card_type='live_card', count=2, selection_criteria='different_names', source='waitroom'
+
+### selected_discarded_member_card
+- Examples: 2
+- `#169` `root.actions[0]`
+  - Text: これにより控え室に置いたメンバーカードより
+  - Segments:
+    - これにより控え室に置いたメンバーカードより
+  - Variable split:
+    - source = 'waitroom'
+      - From: これにより控え室に置いたメンバーカードより
+    - use_limit = 'ターン1回'
+      - From: これにより控え室に置いたメンバーカードより
+  - Evidence:
+    - source <- 控え室
+  - Vars: source='waitroom', use_limit='ターン1回'
+- `#197` `root.actions[0]`
+  - Text: これにより控え室に置いたメンバーカードを1枚
+  - Segments:
+    - これにより控え室に置いたメンバーカードを1枚
+  - Variable split:
+    - source = 'waitroom'
+      - From: これにより控え室に置いたメンバーカードを1枚
+    - count = 1
+      - From: これにより控え室に置いたメンバーカードを1枚
+  - Evidence:
+    - count <- これにより控え室に置いたメンバーカードを1枚
+    - source <- 控え室
+  - Vars: count=1, source='waitroom'
+
+### surplus_heart_equal
+- Examples: 2
+- `#139` `root.condition`
+  - Text: 自分が余剰ハートを持たない
+  - Segments:
+    - 自分が余剰ハートを持たない
+  - Variable split:
+    - type = 'surplus_heart_equal'
+      - From: 自分が余剰ハートを持たない
+    - value = 0
+      - From: 自分が余剰ハートを持たない
+  - Vars: type='surplus_heart_equal', value=0
+- `#436` `root.condition`
+  - Text: 自分が余剰ハートを持たない
+  - Segments:
+    - 自分が余剰ハートを持たない
+  - Variable split:
+    - type = 'surplus_heart_equal'
+      - From: 自分が余剰ハートを持たない
+    - value = 0
+      - From: 自分が余剰ハートを持たない
+  - Vars: type='surplus_heart_equal', value=0
+
+### transform_blades
+- Examples: 2
+- `#477` `root.action`
+  - Text: すべて[青ブレード]になる
+  - Segments:
+    - すべて[青ブレード]になる
+  - Variable split:
+    - target_blade = '青ブレード'
+      - From: すべて[青ブレード]になる
+  - Vars: target_blade='青ブレード'
+- `#495` `root.action`
+  - Text: すべて[紫ブレード]になる
+  - Segments:
+    - すべて[紫ブレード]になる
+  - Variable split:
+    - target_blade = '紫ブレード'
+      - From: すべて[紫ブレード]になる
+  - Vars: target_blade='紫ブレード'
+
+### activate_ability
+- Examples: 1
+- `#37` `root.action`
+  - Text: これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる
+  - Segments:
+    - これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる
+  - Variable split:
+    - source = 'waitroom'
+      - From: これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる
+    - card_type = 'member_card'
+      - From: これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる
+    - use_limit = 'ターン1回'
+      - From: これにより控え室に置いたメンバーカードの{{toujyou.png|登場}}能力1つを発動させる
+  - Evidence:
+    - card_type <- メンバーカード
+    - source <- 控え室
+  - Vars: card_type='member_card', source='waitroom', use_limit='ターン1回'
+
+### activation_restriction
+- Examples: 1
+- `#233` `root.actions[1]`
+  - Text: このカードが自分のエールによって公開されている場合のみ発動する
+  - Segments:
+    - このカードが自分のエールによって公開されている場合のみ発動する
+  - Variable split:
+    - restriction = 'cheer_revealed_self'
+      - From: このカードが自分のエールによって公開されている場合のみ発動する
+  - Vars: restriction='cheer_revealed_self'
+
+### answer
+- Examples: 1
+- `#360` `root.condition`
+  - Text: 相手に何が好き？と聞く。
+回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの
+  - Segments:
+    - 相手に何が好き？と聞く
+    - 回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの
+  - Variable split:
+    - type = 'answer'
+      - From: 相手に何が好き？と聞く。
+回答がチョコミントかストロベリーフレイバーかクッキー＆クリームの
+  - Vars: type='answer'
+
+### cannot_activate
+- Examples: 1
+- `#134` `root`
+  - Text: このメンバーは自分のアクティブフェイズにアクティブにしない。
+  - Segments:
+    - このメンバーは自分のアクティブフェイズにアクティブにしない
+  - Variable split:
+    - phase = 'active_phase'
+      - From: このメンバーは自分のアクティブフェイズにアクティブにしない。
+    - target = 'this_member'
+      - From: このメンバーは自分のアクティブフェイズにアクティブにしない
+  - Evidence:
+    - target <- this_member
+  - Vars: phase='active_phase', target='this_member'
+
+### cannot_baton_touch
+- Examples: 1
+- `#422` `root.action`
+  - Text: このメンバーはバトンタッチで控え室に置けない
+  - Segments:
+    - このメンバーはバトンタッチで控え室に置けない
+  - Vars: (no extra variables)
+
+### cannot_become_active
+- Examples: 1
+- `#271` `root.action`
+  - Text: 自分と相手のステージにいるメンバーは、効果によってはアクティブにならない
+  - Segments:
+    - 自分と相手のステージにいるメンバーは
+    - 効果によってはアクティブにならない
+  - Vars: (no extra variables)
+
+### card_count
+- Examples: 1
+- `#100` `root.condition`
+  - Text: 自分と相手の成功ライブカード置き場にあるカードの枚数が同じ
+  - Segments:
+    - 自分と相手の成功ライブカード置き場にあるカードの枚数が同じ
+  - Variable split:
+    - target = 'both'
+      - From: 自分と相手の成功ライブカード置き場にあるカードの枚数が同じ
+    - type = 'card_count'
+      - From: 自分と相手の成功ライブカード置き場にあるカードの枚数が同じ
+    - operator = '=='
+      - From: 自分と相手の成功ライブカード置き場にあるカードの枚数が同じ
+  - Evidence:
+    - target <- both
+  - Vars: operator='==', target='both', type='card_count'
+
+### card_score
+- Examples: 1
+- `#546` `root.condition`
+  - Text: このカードのスコアが3の
+  - Segments:
+    - このカードのスコアが3の
+  - Variable split:
+    - type = 'card_score'
+      - From: このカードのスコアが3の
+    - value = 3
+      - From: このカードのスコアが3の
+    - operator = '=='
+      - From: このカードのスコアが3の
+  - Vars: operator='==', type='card_score', value=3
+
+### choose_heart_color
+- Examples: 1
+- `#29` `root.actions[0].actions[0]`
+  - Text: 好きなハートの色を1つ指定する
+  - Segments:
+    - 好きなハートの色を1つ指定する
+  - Variable split:
+    - choice = True
+      - From: 好きなハートの色を1つ指定する
+    - count = 1
+      - From: 好きなハートの色を1つ指定する
+  - Evidence:
+    - count <- 好きなハートの色を1つ指定する
+  - Vars: choice=True, count=1
+
+### deck_refresh
+- Examples: 1
+- `#397` `root.condition`
+  - Text: 自分のデッキがリフレッシュしていた
+  - Segments:
+    - 自分のデッキがリフレッシュしていた
+  - Variable split:
+    - target = 'self'
+      - From: 自分のデッキがリフレッシュしていた
+    - type = 'deck_refresh'
+      - From: 自分のデッキがリフレッシュしていた
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='deck_refresh'
+
+### exact_count
+- Examples: 1
+- `#92` `root.condition`
+  - Text: 自分のエネルギーがちょうど8枚ある
+  - Segments:
+    - 自分のエネルギーがちょうど8枚ある
+  - Variable split:
+    - target = 'self'
+      - From: 自分のエネルギーがちょうど8枚ある
+    - type = 'exact_count'
+      - From: 自分のエネルギーがちょうど8枚ある
+    - value = 8
+      - From: 自分のエネルギーがちょうど8枚ある
+    - count_type = 'energy'
+      - From: 自分のエネルギーがちょうど8枚ある
+  - Evidence:
+    - target <- 自分
+  - Vars: count_type='energy', target='self', type='exact_count', value=8
+
+### formation_change
+- Examples: 1
+- `#502` `root.action`
+  - Text: 自分のステージにいるメンバーをフォーメーションチェンジしてもよい
+  - Segments:
+    - 自分のステージにいるメンバーをフォーメーションチェンジしてもよい
+  - Variable split:
+    - may = True
+      - From: 自分のステージにいるメンバーをフォーメーションチェンジしてもよい
+    - target = 'self'
+      - From: 自分のステージにいるメンバーをフォーメーションチェンジしてもよい
+  - Evidence:
+    - target <- 自分
+  - Vars: may=True, target='self'
+
+### hand_card_count_at_least_2_more
+- Examples: 1
+- `#217` `root.condition`
+  - Text: 相手の手札の枚数が自分より2枚以上多い
+  - Segments:
+    - 相手の手札の枚数が自分より2枚以上多い
+  - Variable split:
+    - target = 'opponent'
+      - From: 相手の手札の枚数が自分より2枚以上多い
+    - type = 'hand_card_count_at_least_2_more'
+      - From: 相手の手札の枚数が自分より2枚以上多い
+    - value = 2
+      - From: 相手の手札の枚数が自分より2枚以上多い
+    - location = 'hand'
+      - From: 相手の手札の枚数が自分より2枚以上多い
+  - Evidence:
+    - target <- 相手
+  - Vars: location='hand', target='opponent', type='hand_card_count_at_least_2_more', value=2
+
+### hand_card_count_at_most
+- Examples: 1
+- `#31` `root.condition.conditions[1]`
+  - Text: 自分の手札が7枚以下の
+  - Segments:
+    - 自分の手札が7枚以下の
+  - Variable split:
+    - target = 'self'
+      - From: 自分の手札が7枚以下の
+    - type = 'hand_card_count_at_most'
+      - From: 自分の手札が7枚以下の
+    - value = 7
+      - From: 自分の手札が7枚以下の
+    - location = 'hand'
+      - From: 自分の手札が7枚以下の
+    - use_limit = 'turn1'
+      - From: 自分の手札が7枚以下の
+  - Evidence:
+    - target <- 自分
+  - Vars: location='hand', target='self', type='hand_card_count_at_most', use_limit='turn1', value=7
+
+### hand_card_count_greater_than
+- Examples: 1
+- `#210` `root.condition`
+  - Text: 自分の手札の枚数が相手より多い
+  - Segments:
+    - 自分の手札の枚数が相手より多い
+  - Variable split:
+    - target = 'self'
+      - From: 自分の手札の枚数が相手より多い
+    - type = 'hand_card_count_greater_than'
+      - From: 自分の手札の枚数が相手より多い
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='hand_card_count_greater_than'
+
+### has_score
+- Examples: 1
+- `#574` `root.condition`
+  - Text: 自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える。
+  - Segments:
+    - 自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える
+  - Variable split:
+    - type = 'has_score'
+      - From: 自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える。
+    - operator = 'present'
+      - From: 自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える。
+    - use_limit = 'ターン1回'
+      - From: 自分の控え室から{{icon_score.png|スコア}}を持つ『Aqours』のライブカードを1枚手札に加える。
+  - Vars: operator='present', type='has_score', use_limit='ターン1回'
+
+### heart_cost_modifier
+- Examples: 1
+- `#413` `root`
+  - Text: 自分のステージに『蓮ノ空』のメンバーがいる場合、このカードを成功させるための必要ハートは、{{heart_01.png|heart01}}{{heart_01.png|heart01}}{{heart_00.png|heart0}}か、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{heart_00.png|heart0}}か、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_00.png|heart0}}のうち、選んだ1つにしてもよい。
+  - Segments:
+    - 自分のステージに『蓮ノ空』のメンバーがいる場合
+    - このカードを成功させるための必要ハートは
+    - {{heart_01.png|heart01}}{{heart_01.png|heart01}}{{heart_00.png|heart0}}か
+    - {{heart_04.png|heart04}}{{heart_04.png|heart04}}{{heart_00.png|heart0}}か
+    - {{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_00.png|heart0}}のうち
+    - 選んだ1つにしてもよい
+  - Variable split:
+    - optional = True
+      - From: 自分のステージに『蓮ノ空』のメンバーがいる場合、このカードを成功させるための必要ハートは、{{heart_01.png|heart01}}{{heart_01.png|heart01}}{{heart_00.png|heart0}}か、{{heart_04.png|heart04}}{{heart_04.png|heart04}}{{heart_00.png|heart0}}か、{{heart_05.png|heart05}}{{heart_05.png|heart05}}{{heart_00.png|heart0}}のうち、選んだ1つにしてもよい。
+    - condition.target = 'self'
+      - From: 自分のステージに『蓮ノ空』のメンバーがいる場合
+    - condition.type = 'member_presence'
+      - From: 自分のステージに『蓮ノ空』のメンバーがいる場合
+    - condition.value = '蓮ノ空'
+      - From: 自分のステージに『蓮ノ空』のメンバーがいる場合
+    - condition.presence = 'present'
+      - From: 自分のステージに『蓮ノ空』のメンバーがいる場合
+  - Evidence:
+    - condition.type <- member_presence
+    - condition.value <- 蓮ノ空
+  - Vars: optional=True
+
+### heart_selection
+- Examples: 1
+- `#364` `root.condition`
+  - Text: 自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち1色につき、このカードのスコアを+１する。
+(エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)
+  - Segments:
+    - 自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}
+    - {{heart_04.png|heart04}}
+    - {{heart_05.png|heart05}}
+    - {{heart_02.png|heart02}}
+    - {{heart_03.png|heart03}}
+    - {{heart_06.png|heart06}}のうち1色につき
+  - Variable split:
+    - type = 'heart_selection'
+      - From: 自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち1色につき、このカードのスコアを+１する。
+(エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)
+    - operator = 'any'
+      - From: 自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}、{{heart_04.png|heart04}}、{{heart_05.png|heart05}}、{{heart_02.png|heart02}}、{{heart_03.png|heart03}}、{{heart_06.png|heart06}}のうち1色につき、このカードのスコアを+１する。
+(エールをすべて行った後、エールで出た{{icon_draw.png|ドロー}}1つにつき、カードを1枚引く。)
+    - target = 'self'
+      - From: 自分のステージにいる『虹ヶ咲』のメンバーが持つ{{heart_01.png|heart01}}
+  - Evidence:
+    - target <- 自分
+  - Vars: operator='any', target='self', type='heart_selection'
+
+### highest_cost_center
+- Examples: 1
+- `#205` `root.condition`
+  - Text: 自分のステージにいるメンバーのうち、センターエリアにいるメンバーが最も大きいコストを持つ
+  - Segments:
+    - 自分のステージにいるメンバーのうち
+    - センターエリアにいるメンバーが最も大きいコストを持つ
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーのうち
+    - type = 'highest_cost_center'
+      - From: 自分のステージにいるメンバーのうち、センターエリアにいるメンバーが最も大きいコストを持つ
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self', type='highest_cost_center'
+
+### may_add_to_hand
+- Examples: 1
+- `#233` `root.actions[0]`
+  - Text: このカードを手札に加えてもよい。この能力は
+  - Segments:
+    - このカードを手札に加えてもよい
+    - この能力は
+  - Variable split:
+    - target = 'self'
+      - From: このカードを手札に加えてもよい。この能力は
+  - Evidence:
+    - target <- 自分
+  - Vars: target='self'
+
+### may_baton_touch
+- Examples: 1
+- `#70` `root.actions[1]`
+  - Text: 2人のメンバーとバトンタッチしてもよい
+  - Segments:
+    - 2人のメンバーとバトンタッチしてもよい
+  - Variable split:
+    - count = 2
+      - From: 2人のメンバーとバトンタッチしてもよい
+  - Evidence:
+    - count <- 2人のメンバーとバトンタッチしてもよい
+  - Vars: count=2
+
+### may_deploy_to_stage
+- Examples: 1
+- `#382` `root.actions[0]`
+  - Text: 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい。
+（この効果で既にメンバーがいるエリアにも登場できる。ただし
+  - Segments:
+    - 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい
+    - (この効果で既にメンバーがいるエリアにも登場できる
+    - ただし
+  - Variable split:
+    - count = 1
+      - From: 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい
+    - source = 'hand'
+      - From: 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい
+    - card_type = 'member_card'
+      - From: 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい
+    - group = 'Liella!'
+      - From: 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい。
+（この効果で既にメンバーがいるエリアにも登場できる。ただし
+  - Evidence:
+    - count <- 手札からの『Liella!』のメンバーカードを1枚ステージに登場させてもよい
+    - card_type <- メンバーカード
+    - source <- 手札
+  - Vars: card_type='member_card', count=1, group='Liella!', source='hand'
+
+### may_move
+- Examples: 1
+- `#213` `root.action`
+  - Text: 自分のステージにいるメンバーを、それぞれ好きなエリアに移動させてもよい
+  - Segments:
+    - 自分のステージにいるメンバーを
+    - それぞれ好きなエリアに移動させてもよい
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいるメンバーを
+    - source = 'stage'
+      - From: 自分のステージにいるメンバーを
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: source='stage', target='self'
+
+### move_member
+- Examples: 1
+- `#208` `root.actions[0]`
+  - Text: そのメンバーは、このメンバーがいたエリアに移動させる
+  - Segments:
+    - そのメンバーは
+    - このメンバーがいたエリアに移動させる
+  - Variable split:
+    - source = 'origin_area'
+      - From: そのメンバーは、このメンバーがいたエリアに移動させる
+    - target = 'selected_member'
+      - From: そのメンバーは
+    - destination = 'chosen_area'
+      - From: そのメンバーは、このメンバーがいたエリアに移動させる
+    - use_limit = 'ターン1回'
+      - From: そのメンバーは、このメンバーがいたエリアに移動させる
+  - Evidence:
+    - source <- origin_area
+    - target <- そのメンバー
+  - Vars: destination='chosen_area', source='origin_area', target='selected_member', use_limit='ターン1回'
+
+### opponent_selects
+- Examples: 1
+- `#209` `root.actions[1]`
+  - Text: 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+  - Segments:
+    - 自分の控え室にある
+    - カード名の異なるライブカードを2枚選ぶ
+    - そうした場合
+    - 相手はそれらのカードのうち1枚を選ぶ
+    - これにより相手に選ばれたカードを自分の手札に加える
+  - Variable split:
+    - from = 'selected_cards'
+      - From: 自分の控え室にある、カード名の異なるライブカードを2枚選ぶ。そうした場合、相手はそれらのカードのうち1枚を選ぶ。これにより相手に選ばれたカードを自分の手札に加える。
+    - count = 1
+      - From: 相手はそれらのカードのうち1枚を選ぶ
+    - target = 'opponent'
+      - From: 自分の控え室にある
+  - Evidence:
+    - count <- 相手はそれらのカードのうち1枚を選ぶ
+    - target <- 相手
+  - Vars: count=1, from='selected_cards', target='opponent'
+
+### reduce_score
+- Examples: 1
+- `#139` `root.actions[1]`
+  - Text: ライブの合計スコアを－１する。この効果ではライブの合計スコアは０未満にはならない
+  - Segments:
+    - ライブの合計スコアを－１する
+    - この効果ではライブの合計スコアは０未満にはならない
+  - Variable split:
+    - amount = 1
+      - From: ライブの合計スコアを－１する。この効果ではライブの合計スコアは０未満にはならない
+    - note = 'live_total_score_cannot_go_below_zero'
+      - From: ライブの合計スコアを－１する。この効果ではライブの合計スコアは０未満にはならない
+  - Vars: amount=1, note='live_total_score_cannot_go_below_zero'
+
+### repeat_same_effect
+- Examples: 1
+- `#258` `root.actions[1]`
+  - Text: 元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う
+  - Segments:
+    - 元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う
+  - Variable split:
+    - compares = 'original_blade_count'
+      - From: 元々の{{icon_blade.png|ブレード}}の数が同じ場合についても同じことを行う
+  - Vars: compares='original_blade_count'
+
+### retry_cheer
+- Examples: 1
+- `#201` `root.action`
+  - Text: そのエールで得たブレードハートを失い、もう一度エールを行う
+  - Segments:
+    - そのエールで得たブレードハートを失い
+    - もう一度エールを行う
+  - Variable split:
+    - use_limit = 'turn1'
+      - From: そのエールで得たブレードハートを失い、もう一度エールを行う
+  - Vars: use_limit='turn1'
+
+### rotate_areas
+- Examples: 1
+- `#188` `root`
+  - Text: 自分のステージにいるメンバーが『5yncri5e!』のみの場合、自分と対戦相手は、センターエリアのメンバーを左サイドエリアに、左サイドエリアのメンバーを右サイドエリアに、右サイドエリアのメンバーをセンターエリアに、それぞれ移動させる。
+  - Segments:
+    - 自分のステージにいるメンバーが『5yncri5e!』のみの場合
+    - 自分と対戦相手は
+    - センターエリアのメンバーを左サイドエリアに
+    - 左サイドエリアのメンバーを右サイドエリアに
+    - 右サイドエリアのメンバーをセンターエリアに
+    - それぞれ移動させる
+  - Variable split:
+    - target = 'both_players'
+      - From: 自分のステージにいるメンバーが『5yncri5e!』のみの場合
+  - Evidence:
+    - target <- both_players
+  - Vars: target='both_players'
+
+### select_area
+- Examples: 1
+- `#194` `root.actions[1]`
+  - Text: 、登場したエリアとは別の自分のエリア1つを選ぶ
+  - Segments:
+    - 登場したエリアとは別の自分のエリア1つを選ぶ
+  - Variable split:
+    - source = 'stage'
+      - From: 、登場したエリアとは別の自分のエリア1つを選ぶ
+    - exclude = 'deployed_area'
+      - From: 、登場したエリアとは別の自分のエリア1つを選ぶ
+    - count = 1
+      - From: 登場したエリアとは別の自分のエリア1つを選ぶ
+    - target = 'self'
+      - From: 登場したエリアとは別の自分のエリア1つを選ぶ
+  - Evidence:
+    - count <- 登場したエリアとは別の自分のエリア1つを選ぶ
+    - source <- ステージ
+    - target <- 自分
+  - Vars: count=1, exclude='deployed_area', source='stage', target='self'
+
+### set_original_blade_count
+- Examples: 1
+- `#498` `root.actions[1]`
+  - Text: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+  - Segments:
+    - 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+  - Variable split:
+    - scope = 'original_blade_count'
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+    - value = 3
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+    - position_requirement = 'center'
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+    - group = 'Liella!'
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+    - source = 'stage'
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+    - target = 'self'
+      - From: 自分のステージのセンターエリアにいる『Liella!』のメンバーが元々持つ{{icon_blade.png|ブレード}}の数は3つになる
+  - Evidence:
+    - source <- ステージ
+    - target <- 自分
+  - Vars: group='Liella!', position_requirement='center', scope='original_blade_count', source='stage', target='self', value=3
+
+### transform_heart
+- Examples: 1
+- `#517` `root.actions[1]`
+  - Text: 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+  - Segments:
+    - 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+  - Variable split:
+    - target = 'self'
+      - From: 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+    - count = 1
+      - From: 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+    - source = 'stage'
+      - From: 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+    - group = '蓮ノ空'
+      - From: 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+  - Evidence:
+    - count <- 自分のステージにいる『蓮ノ空』のメンバー1人が元々持つハートをすべて{{heart_01.png|heart01}}にする
+    - source <- ステージ
+    - target <- 自分
+  - Vars: count=1, group='蓮ノ空', source='stage', target='self'
+
+### treat_as
+- Examples: 1
+- `#118` `root.action`
+  - Text: すべての領域にあるこのカードは『スリーズブーケ』、『DOLLCHESTRA』、『みらくらぱーく！』として扱う
+  - Segments:
+    - すべての領域にあるこのカードは『スリーズブーケ』
+    - 『DOLLCHESTRA』
+    - 『みらくらぱーく！』として扱う
+  - Vars: (no extra variables)
+
+### whenever_trigger
+- Examples: 1
+- `#83` `root.actions[0]`
+  - Text: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+  - Segments:
+    - 自分のメインフェイズの間
+    - 自分のカードが1枚以上いずれかの領域から控え室に置かれるたび
+    - {{icon_energy.png|E}}支払ってもよい
+    - そうした場合
+    - それらのカードの中から1枚手札に加える
+  - Variable split:
+    - timing = '自分のメインフェイズの間'
+      - From: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+    - use_limit = 'ターン1回'
+      - From: 自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合、それらのカードの中から1枚手札に加える。
+  - Vars: condition='自分のカードが1枚以上いずれかの領域から控え室に置かれる', timing='自分のメインフェイズの間', use_limit='ターン1回'

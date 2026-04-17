@@ -131,7 +131,19 @@ def extract_abilities_from_card(card_id: str, card: dict) -> list:
                 abilities[-1]["triggerless_text"] += "\n" + line
             continue
         
+        # Check if this line starts with a trigger pattern (new ability)
+        # If it doesn't have a trigger but the previous ability had one, it might be a continuation
         triggers, use_limit, effect = extract_trigger(line)
+        
+        # Check if this is a continuation of a previous ability (no trigger, but previous had trigger)
+        # This handles cases like "回答がチョコミントの場合、..." which are conditional outcomes
+        if not triggers and abilities and abilities[-1]["trigger_count"] > 0:
+            # Check if this looks like a conditional outcome (starts with "回答が" or similar patterns)
+            if line.startswith('回答が') or line.startswith('場合') or 'の場合' in line:
+                # Append to previous ability
+                abilities[-1]["full_text"] += "\n" + line
+                abilities[-1]["triggerless_text"] += "\n" + line
+                continue
         
         abilities.append({
             "card_id": card_id,

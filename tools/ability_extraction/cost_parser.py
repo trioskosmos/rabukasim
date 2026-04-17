@@ -41,7 +41,7 @@ class CostRule:
     notes: str = ""
 
 
-ENERGY_ICON = '{icon_energy.png|E}'
+ENERGY_ICON = '{{icon_energy.png|E}}'
 MEMBER_COUNT_PATTERN = re.compile(r'メンバー(\d+)人')
 MAX_PEOPLE_PATTERN = re.compile(r'(\d+)人まで')
 
@@ -95,8 +95,25 @@ def _clean_extracted_cost(value):
     return cleaned
 
 
+def _annotate_text(value, text):
+    """Attach source text to parsed cost nodes."""
+    if not text or value is None:
+        return value
+    if isinstance(value, dict):
+        value.setdefault('text', text)
+        for item in value.values():
+            _annotate_text(item, text)
+    elif isinstance(value, list):
+        for item in value:
+            _annotate_text(item, text)
+    return value
+
+
 def _extract_member_to_waitroom_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'stage',
+        'destination': 'waitroom',
         'target': 'this_member' if 'このメンバー' in text else 'member',
         'optional': parse_optional_flag(text, ['置いてもよい', 'でもよい']),
         'count': _extract_member_count(text),
@@ -108,8 +125,11 @@ def _extract_member_to_waitroom_cost(text):
 def _extract_member_to_wait_cost(text):
     max_count = _extract_max_people_count(text)
     return {
+        'type': 'move_cards',
+        'source': 'stage',
+        'destination': 'wait',
         'target': 'member' if 'このメンバー以外' in text else ('this_member' if 'このメンバー' in text else 'member'),
-        'optional': parse_optional_flag(text, ['でもよい']),
+        'optional': parse_optional_flag(text, ['でもよい', 'ウェイトにしてもよい']),
         'count': _extract_member_count(text, default=max_count or 1),
         'max': max_count is not None,
         'group': extract_group_name(text),
@@ -119,6 +139,7 @@ def _extract_member_to_wait_cost(text):
 
 def _extract_reveal_cost(text):
     return {
+        'type': 'reveal_cards',
         'source': 'hand',
         'optional': parse_optional_flag(text, ['でもよい', '公開してもよい']),
         'card_type': _extract_card_type(text),
@@ -129,21 +150,30 @@ def _extract_reveal_cost(text):
 
 def _extract_energy_to_member_cost(text):
     return {
-        'count': extract_count(text) or 1,
+        'type': 'move_cards',
         'source': 'energy_zone',
+        'destination': 'member_under',
         'target': 'this_member',
+        'card_type': 'energy_card',
+        'count': extract_count(text) or 1,
     }
 
 
 def _extract_energy_to_energy_deck_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'energy_zone',
+        'destination': 'energy_deck',
+        'card_type': 'energy_card',
         'count': extract_count(text) or 1,
-        'target': 'energy_deck',
     }
 
 
 def _extract_waitroom_to_deck_bottom_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'waitroom',
+        'destination': 'deck_bottom',
         'count': extract_count(text) or 1,
         'card_type': _extract_card_type(text, default='card'),
         'optional': parse_optional_flag(text, ['でもよい', '置いてもよい']),
@@ -153,15 +183,20 @@ def _extract_waitroom_to_deck_bottom_cost(text):
 
 def _extract_hand_to_deck_bottom_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'hand',
+        'destination': 'deck_bottom',
         'count': extract_count(text) or 1,
         'card_type': _extract_card_type(text, default='card'),
         'optional': parse_optional_flag(text, ['でもよい', '置いてもよい']),
-        'source': 'hand',
     }
 
 
 def _extract_discard_from_hand_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'hand',
+        'destination': 'waitroom',
         'count': extract_count(text) or 1,
         'optional': parse_optional_flag(text, ['置いてもよい', 'でもよい', '支払ってもよい']),
         'card_type': _extract_card_type(text),
@@ -171,6 +206,9 @@ def _extract_discard_from_hand_cost(text):
 
 def _extract_discard_from_deck_cost(text):
     return {
+        'type': 'move_cards',
+        'source': 'deck',
+        'destination': 'waitroom',
         'count': extract_count(text) or 1,
         'optional': parse_optional_flag(text, ['でもよい', '支払ってもよい']),
     }
@@ -184,7 +222,7 @@ COST_RULES = (
         output_key='energy',
         priority=10,
         matches=lambda text: ENERGY_ICON in text,
-        extract=lambda text: text.count(ENERGY_ICON),
+        extract=lambda text: {'type': 'pay_energy', 'energy': text.count(ENERGY_ICON)},
         notes='Counts explicit energy icons before any text-based cost parsing.',
     ),
     CostRule(
@@ -263,10 +301,21 @@ def parse_cost(text):
     cost = {}
     for rule in sorted(COST_RULES, key=lambda item: item.priority):
         if rule.matches(cost_text):
-            cost[rule.output_key] = _clean_extracted_cost(rule.extract(cost_text))
+            extracted = _clean_extracted_cost(rule.extract(cost_text))
+            # For consolidated types (move_cards, reveal_cards), add directly
+            # For energy (now has type field), add directly
+            if rule.name == 'energy':
+                # Energy now has type field, add directly
+                cost.update(extracted)
+            else:
+                # Add consolidated structure directly without wrapper key
+                cost.update(extracted)
 
     position = _extract_position(cost_text)
     if position:
         cost['position'] = position
 
-    return cost_text if not cost else cost
+    if not cost:
+        return _annotate_text(cost_text, cost_text)
+    cost['text'] = cost_text
+    return _annotate_text(cost, cost_text)
