@@ -49,7 +49,10 @@ def _extract_cost_text(text):
     if '：' not in text and ':' not in text:
         return None
     delimiter = '：' if '：' in text else ':'
-    cost_text = normalize_text(text.split(delimiter, 1)[0])
+    cost_text = text.split(delimiter, 1)[0]
+    # Don't strip period here - normalize_text will do it later
+    # But we need to handle the case where cost text might have a period at the end
+    cost_text = cost_text.strip()
     return cost_text or None
 
 
@@ -288,10 +291,13 @@ def parse_cost(text):
     if not cost_text:
         return None
 
+    # Normalize the cost text for matching (don't strip trigger icons here)
+    normalized_cost_text = normalize_text(cost_text)
+    
     cost = {}
     for rule in sorted(COST_RULES, key=lambda item: item.priority):
-        if rule.matches(cost_text):
-            extracted = _clean_extracted_cost(rule.extract(cost_text))
+        if rule.matches(normalized_cost_text):
+            extracted = _clean_extracted_cost(rule.extract(normalized_cost_text))
             cost.update(extracted)
 
     position = _extract_position(cost_text)
@@ -302,6 +308,104 @@ def parse_cost(text):
         return _annotate_text(cost_text, cost_text)
     cost['text'] = cost_text
     return _annotate_text(cost, cost_text)
+
+
+def extract_location_from_text(text):
+    """Extract location from full ability text."""
+    if not text:
+        return None
+    if 'ステージ' in text:
+        return 'stage'
+    if '控え室' in text:
+        return 'waitroom'
+    if '手札' in text:
+        return 'hand'
+    if 'エネルギー置き場' in text:
+        return 'energy_zone'
+    if 'エネルギーデッキ' in text:
+        return 'energy_deck'
+    if 'ライブカード置き場' in text:
+        return 'live_card_zone'
+    if '成功ライブカード置き場' in text:
+        return 'success_live_card_zone'
+    if 'デッキ' in text:
+        return 'deck'
+    return None
+
+
+def extract_energy_from_text(text):
+    """Extract energy count from full ability text."""
+    if not text:
+        return None
+    if '{{icon_energy.png|E}}' in text or 'エネルギー' in text:
+        count = text.count('{{icon_energy.png|E}}')
+        if count == 0:
+            # Try to extract from text patterns like "エネルギーを2枚"
+            match = re.search(r'エネルギー.*?(\d+)枚', text)
+            if match:
+                return int(match.group(1))
+            return 1  # Default to 1 if energy is mentioned but no count
+        return count
+    return None
+
+
+def extract_group_from_text(text):
+    """Extract group name from full ability text."""
+    if not text:
+        return None
+    match = re.search(r'『(.+?)』', text)
+    if match:
+        return match.group(1)
+    return None
+
+
+def extract_heart_from_text(text):
+    """Extract heart types/count from full ability text."""
+    if not text:
+        return None
+    if 'ハート' in text or 'heart' in text.lower():
+        heart_types = re.findall(r'heart_(\d+)', text, re.IGNORECASE)
+        if heart_types:
+            return heart_types
+        # If heart is mentioned but no specific types, return a generic indicator
+        return True
+    return None
+
+
+def extract_card_type_from_text(text):
+    """Extract card type from full ability text."""
+    if not text:
+        return None
+    if 'メンバーカード' in text:
+        return 'member_card'
+    if 'ライブカード' in text:
+        return 'live_card'
+    if 'エネルギーカード' in text:
+        return 'energy_card'
+    if 'ブレードを持つカード' in text:
+        return 'blade_card'
+    if 'メンバー' in text:
+        return 'member_card'
+    if 'カード' in text:
+        return 'card'
+    return None
+
+
+def extract_blade_from_text(text):
+    """Extract blade count from full ability text."""
+    if not text:
+        return None
+    if 'ブレード' in text or 'blade' in text.lower():
+        count = text.count('{{icon_blade.png|ブレード}}')
+        if count > 0:
+            return count
+        # Try to extract from text patterns
+        match = re.search(r'ブレード.*?(\d+)つ', text)
+        if match:
+            return int(match.group(1))
+        # If blade is mentioned but no count, return a generic indicator
+        return True
+    return None
 
 def apply_tree_field(data, field_name, value_factory, *, tree_key='effect'):
     """Copy a computed field onto every dict node in each parsed tree."""
@@ -348,23 +452,42 @@ def process_abilities(data):
             isinstance(ability['cost'], str) and ability['cost'] == triggerless_text
         )
         use_limitless_text = triggerless_text
-        if ability.get('use_limit'):
-            use_limitless_text = re.sub(r'\{\{[^}]+\}\}\s*', '', use_limitless_text)
+        use_limitless_text = re.sub(r'^(?:\{\{[^}]+\}\}\s*)+', '', use_limitless_text)
         ability['use_limitless_text'] = use_limitless_text
         payment, remaining_text = _extract_optional_payment(use_limitless_text)
         if payment:
             ability['payment'] = payment
             costless_text = remaining_text
         else:
-            costless_text = triggerless_text
+            costless_text = use_limitless_text
             if '??' in costless_text:
                 costless_text = costless_text.split('??', 1)[1].strip()
-            elif ':' in costless_text:
-                costless_text = costless_text.split(':', 1)[1].strip()
+            elif ':' in costless_text or '：' in costless_text:
+                # Split on delimiter to get costless_text
+                delimiter = '：' if '：' in costless_text else ':'
+                costless_text = costless_text.split(delimiter, 1)[1].strip()
         ability['costless_text'] = costless_text
-        ability['effect'] = parse_generic_effect(costless_text) if costless_text else None
+        # Strip trailing parenthetical notes before parsing
+        costless_text_stripped = _strip_trailing_parenthetical_note(costless_text)
+        ability['effect'] = parse_generic_effect(costless_text_stripped) if costless_text_stripped else None
     return data
 
+
+def _strip_trailing_parenthetical_note(text):
+    """Strip trailing parenthetical notes like （ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）"""
+    if not text:
+        return text
+    text = text.strip()
+    # Check for trailing parenthetical note
+    if text.endswith(('。）', '.)', ')')):
+        # Find the last opening parenthesis
+        last_open_paren = max(text.rfind('（'), text.rfind('('))
+        if last_open_paren > 0:
+            # Check if it's a trailing parenthetical note (space before it, or starts with common note patterns)
+            paren_content = text[last_open_paren:]
+            if paren_content.startswith(('（この能力は', '（この効果は', '（ウェイト状態のメンバーが持つ')) or text[last_open_paren - 1] in '。 ':
+                return text[:last_open_paren].strip()
+    return text
 
 def post_process(data):
     """Standardize JSON architecture and fix common issues."""
@@ -403,18 +526,639 @@ def post_process(data):
     
     # Ability-level fixes
     for ability in data.get('unique_abilities', []):
+        full_text = ability.get('full_text', '') or ability.get('triggerless_text', '')
+        effect = ability.get('effect')
+        # Fix cost int type mismatch by moving to cost_limit (ability level)
+        if isinstance(ability.get('cost'), int):
+            ability['cost_limit'] = ability['cost']
+            ability['cost'] = None
+        # Extract location from full text if not already present
+        if full_text and not ability.get('location'):
+            location_text = ability.get('costless_text') or full_text
+            location = extract_location_from_text(location_text)
+            if location:
+                ability['location'] = location
+        # Extract energy from full text if not already present
+        if full_text and not ability.get('energy_count') and not ability.get('resource'):
+            energy = extract_energy_from_text(full_text)
+            if energy:
+                ability['energy_count'] = energy
+                ability['resource'] = 'energy'
+        # Extract group from full text if not already present
+        if full_text and not ability.get('group') and not ability.get('value'):
+            group = extract_group_from_text(full_text)
+            if group:
+                ability['group'] = group
+                ability['value'] = group
+        # Extract heart from full text if not already present
+        if full_text and not ability.get('heart_types') and not ability.get('heart_count'):
+            heart = extract_heart_from_text(full_text)
+            if heart:
+                if isinstance(heart, list):
+                    ability['heart_types'] = heart
+                elif isinstance(heart, bool):
+                    ability['heart_present'] = heart
+        # Extract card_type from full text if not already present
+        if full_text and not ability.get('card_type'):
+            card_type = extract_card_type_from_text(full_text)
+            if card_type:
+                ability['card_type'] = card_type
+        # Extract blade from full text if not already present
+        if full_text and not ability.get('blade_count'):
+            blade = extract_blade_from_text(full_text)
+            if blade:
+                if isinstance(blade, int):
+                    ability['blade_count'] = blade
+                elif isinstance(blade, bool):
+                    ability['blade_present'] = blade
+        if isinstance(effect, dict) and ability.get('location') == 'waitroom':
+            effect_source = effect.get('source')
+            if effect_source == 'energy_deck':
+                ability['location'] = 'energy_deck'
+            elif isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and action.get('source') == 'energy_deck':
+                        ability['location'] = 'energy_deck'
+                        break
+
+        # Recover energy-deck source information that can be lost when the
+        # optional payment prefix is stripped before effect parsing.
+        if full_text and 'エネルギーデッキから' in full_text:
+            effect = ability.get('effect')
+            if isinstance(effect, dict):
+                def _mark_energy_deck_source(node):
+                    if not isinstance(node, dict):
+                        return
+                    if (
+                        node.get('action') == 'place_card'
+                        and node.get('card_type') == 'energy_card'
+                        and node.get('state') == 'wait'
+                        and 'source' not in node
+                    ):
+                        node['source'] = 'energy_deck'
+
+                walk_nodes(effect, _mark_energy_deck_source)
+    
+    # Fix missing source/destination fields in actions (run after other fixes)
+    def fix_action_fields(node):
+        """Infer missing source/destination fields based on action type."""
+        if not isinstance(node, dict):
+            return
+        
+        # Fix cost int type mismatch in conditions
+        if isinstance(node.get('cost'), int):
+            if node.get('cost_limit'):
+                del node['cost']  # Delete duplicate cost field if cost_limit exists
+            else:
+                node['cost_limit'] = node['cost']
+                node['cost'] = None
+        
+        action = node.get('action')
+        if not action or not isinstance(action, str):
+            return
+        
+        # Infer missing destination
+        if action in {'add_to_hand', 'draw_cards'} and 'destination' not in node:
+            node['destination'] = 'hand'
+        elif action == 'place_card' and 'destination' not in node:
+            node['destination'] = 'stage'
+        elif action == 'discard_to_waitroom' and 'source' not in node:
+            node['source'] = 'hand'
+        elif action == 'move_cards' and 'source' not in node:
+            node['source'] = 'deck'
+        elif action == 'move_cards' and 'destination' not in node:
+            node['destination'] = 'waitroom'
+        elif action == 'select_member' and 'target' not in node:
+            node['target'] = 'self'
+        
+        # Recursively fix nested actions
+        if 'actions' in node:
+            for child in node['actions']:
+                fix_action_fields(child)
+        if 'action' in node and isinstance(node['action'], dict):
+            fix_action_fields(node['action'])
+        # Also fix condition nodes
+        if 'condition' in node and isinstance(node['condition'], dict):
+            fix_action_fields(node['condition'])
+    
+    for ability in data.get('unique_abilities', []):
         # Convert single action to array
         if isinstance(ability.get('effect'), dict):
             effect = ability['effect']
+            if ability.get('location') == 'waitroom':
+                effect_source = effect.get('source')
+                if effect_source == 'energy_deck':
+                    ability['location'] = 'energy_deck'
+                elif isinstance(effect.get('actions'), list):
+                    for action in effect['actions']:
+                        if isinstance(action, dict) and action.get('source') == 'energy_deck':
+                            ability['location'] = 'energy_deck'
+                            break
             if 'action' in effect:
                 if isinstance(effect['action'], dict):
                     effect['actions'] = [effect['action']]
                 elif isinstance(effect['action'], str):
-                    effect['actions'] = [{'action': effect['action'], 'text': effect['action']}]
+                    # Use the effect's text field if available, otherwise use action name
+                    action_text = effect.get('text', effect['action'])
+                    effect['actions'] = [{'action': effect['action'], 'text': action_text}]
+                    # Copy other relevant fields from effect to action
+                    for field in ['source', 'destination', 'count', 'card_type', 'trigger']:
+                        if field in effect:
+                            effect['actions'][0][field] = effect[field]
                 del effect['action']
-            # Remove redundant payment
+            # Remove redundant payment from effect
+            if isinstance(effect.get('payment'), dict) and ability.get('cost'):
+                del effect['payment']
+            # Remove redundant payment from ability level
             if ability.get('payment') and ability.get('cost'):
                 del ability['payment']
+            
+            # Fix truncated text in member_to_wait actions
+            # If effect has cost_limit but action text is missing "コストX以下", add it back
+            # Also fix action type from discard_to_waitroom to member_to_wait when appropriate
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    # Check if action should be member_to_wait but is mislabeled as discard_to_waitroom
+                    if action.get('action') == 'discard_to_waitroom' and 'ウェイトにする' in action.get('text', ''):
+                        action['action'] = 'member_to_wait'
+                        action['source'] = action.get('source', 'stage')
+                    
+                    # Check if action should be deploy_to_stage but is mislabeled as discard_to_waitroom
+                    if action.get('action') == 'discard_to_waitroom' and '登場させる' in action.get('text', ''):
+                        action['action'] = 'deploy_to_stage'
+                        action['destination'] = 'stage'
+                        if '控え室から' in action.get('text', ''):
+                            action['source'] = 'waitroom'
+                    
+                    # Fix truncated text for both member_to_wait and discard_to_waitroom actions
+                    if action.get('action') in ['member_to_wait', 'discard_to_waitroom']:
+                        if effect.get('cost_limit') and 'コスト' not in action.get('text', ''):
+                            # Reconstruct the full text with cost_limit
+                            original_text = action.get('text', '')
+                            # Find where "のメンバー" appears and insert cost_limit before it
+                            if 'のメンバー' in original_text:
+                                action['text'] = original_text.replace('のメンバー', f'コスト{effect["cost_limit"]}以下のメンバー', 1)
+            
+            # Fix unknown actions that match "choose heart color then gain heart" pattern
+            if isinstance(effect.get('actions'), list):
+                for i, action in enumerate(effect['actions']):
+                    if action.get('action') == 'unknown' and 'parsing_error' in action:
+                        text = action.get('text', '')
+                        # Strip condition prefix if present (text after "場合、" or similar)
+                        for marker in ['場合、', '場合', 'とき、', 'とき']:
+                            if marker in text:
+                                text = text.split(marker, 1)[1].strip()
+                        # Check if this is the "choose heart color then gain heart" pattern
+                        if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
+                            # Replace the unknown action with two actions
+                            effect['actions'][i] = {
+                                'action': 'choose_heart_color',
+                                'choice': True,
+                                'count': 1,
+                                'text': '好きなハートの色を1つ指定する'
+                            }
+                            effect['actions'].insert(i + 1, {
+                                'action': 'gain_resource',
+                                'resource': 'heart',
+                                'resource_count': 1,
+                                'count': 1,
+                                'source': 'chosen_heart',
+                                'text': 'そのハートを1つ得る'
+                            })
+                            # Copy duration from effect to the gain_resource action
+                            if effect.get('duration'):
+                                effect['actions'][i + 1]['duration'] = effect['duration']
+            # Fix cost text appearing in action text
+            if ability.get('cost') and isinstance(ability.get('cost'), dict) and ability.get('cost', {}).get('text'):
+                cost_text = ability['cost']['text']
+                # Remove cost text from action texts
+                if isinstance(effect.get('actions'), list):
+                    for action in effect['actions']:
+                        if isinstance(action, dict) and 'text' in action:
+                            action_text = action['text']
+                            if action_text.startswith(cost_text + '：'):
+                                action['text'] = action_text[len(cost_text) + 1:].strip()
+                            elif action_text.startswith(cost_text):
+                                action['text'] = action_text[len(cost_text):].strip()
+                # Also fix effect text
+                if 'text' in effect and effect['text'].startswith(cost_text + '：'):
+                    effect['text'] = effect['text'][len(cost_text) + 1:].strip()
+                elif 'text' in effect and effect['text'].startswith(cost_text):
+                    effect['text'] = effect['text'][len(cost_text):].strip()
+                # Also fix with energy icons stripped (in case they were removed from action text)
+                cost_text_no_icons = cost_text
+                for icon in ['{{icon_energy.png|E}}', '{{icon_energy.png|e}}']:
+                    cost_text_no_icons = cost_text_no_icons.replace(icon, '')
+                if cost_text_no_icons != cost_text:
+                    if isinstance(effect.get('actions'), list):
+                        for action in effect['actions']:
+                            if isinstance(action, dict) and 'text' in action:
+                                action_text = action['text']
+                                if action_text.startswith(cost_text_no_icons + '：'):
+                                    action['text'] = action_text[len(cost_text_no_icons) + 1:].strip()
+                                elif action_text.startswith(cost_text_no_icons):
+                                    action['text'] = action_text[len(cost_text_no_icons):].strip()
+                    if 'text' in effect and effect['text'].startswith(cost_text_no_icons + '：'):
+                        effect['text'] = effect['text'][len(cost_text_no_icons) + 1:].strip()
+                    elif 'text' in effect and effect['text'].startswith(cost_text_no_icons):
+                        effect['text'] = effect['text'][len(cost_text_no_icons):].strip()
+            # Fix cost text appearing in action text (when cost is in effect.actions instead of ability.cost)
+            if effect.get('actions') and ability.get('cost') and isinstance(ability.get('cost'), dict):
+                for action in effect['actions']:
+                    if action.get('text') and ability.get('cost', {}).get('text'):
+                        cost_text = ability['cost']['text']
+                        action_text = action['text']
+                        if action_text.startswith(cost_text + '：'):
+                            action['text'] = action_text[len(cost_text) + 1:].strip()
+                        elif action_text.startswith(cost_text):
+                            action['text'] = action_text[len(cost_text):].strip()
+                        # Also check for partial cost prefix (any substring from cost text followed by colon)
+                        if '：' in action_text:
+                            # Try to find the longest substring from cost text that appears at the start of action text
+                            for i in range(len(cost_text), 0, -1):
+                                substring = cost_text[-i:]
+                                if action_text.startswith(substring + '：'):
+                                    action['text'] = action_text[len(substring) + 1:].strip()
+                                    break
+            
+            # Fix corrupted action text starting with "こ" instead of "この"
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        if action_text.startswith('こコスト'):
+                            action['text'] = 'この' + action_text[1:]
+            
+            # Fix action type mismatch (member_to_wait with draw text)
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'action' in action and 'text' in action:
+                        action_type = action['action']
+                        action_text = action['text']
+                        # If action is member_to_wait but text is about drawing cards, fix it
+                        if action_type == 'member_to_wait' and 'カードを1枚引く' in action_text and 'ウェイト' not in action_text:
+                            action['action'] = 'draw_cards'
+                        # If action is draw_cards but text is about waiting member, fix it
+                        elif action_type == 'draw_cards' and 'ウェイト' in action_text and 'カードを1枚引く' not in action_text:
+                            action['action'] = 'member_to_wait'
+            
+            # Fix leading punctuation in action texts
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # Remove leading punctuation (、。)
+                        if action_text and action_text[0] in '、。':
+                            action['text'] = action_text[1:].strip()
+                        # Remove leading position markers like 【右サイド】
+                        if action_text and action_text.startswith('【'):
+                            # Remove the position marker
+                            idx = action_text.find('】')
+                            if idx != -1:
+                                action['text'] = action_text[idx + 1:].strip()
+                        # Remove trailing punctuation (：)
+                        if action_text and action_text.endswith('：'):
+                            action['text'] = action_text[:-1].strip()
+                        # Fix double periods
+                        if action_text and action_text.endswith('。。'):
+                            action['text'] = action_text[:-1].strip()
+                        # Fix truncated action text ending with opening parenthesis
+                        if action_text and '（' in action_text and action_text.endswith('（'):
+                            action['text'] = action_text[:-1].strip()
+                        # Also check if action text contains opening parenthesis with text after it
+                        if action_text and '（' in action_text:
+                            # If the part after the parenthesis is a note, remove it
+                            idx = action_text.find('（')
+                            if idx != -1 and len(action_text) > idx + 1:
+                                # Check if it's a note (starts with parenthesized text)
+                                after_paren = action_text[idx:]
+                                if len(after_paren) < 20 and not '。' in after_paren:
+                                    action['text'] = action_text[:idx].strip()
+                                # Also check if the note is already in the ability's notes field
+                                if ability.get('notes') and after_paren in str(ability['notes']):
+                                    action['text'] = action_text[:idx].strip()
+            
+            # Fix truncated condition text ending with 'の' instead of 'の場合' (additional check)
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition']:
+                    condition_text = effect['condition']['text']
+                    # If condition text ends with 'の' and full text has 'の場合', append '場合'
+                    if condition_text.endswith('の') and not condition_text.endswith('の場合'):
+                        full_effect_text = effect.get('text', '')
+                        if full_effect_text:
+                            # Normalize digits for comparison
+                            from parser_utils import normalize_fullwidth_digits
+                            normalized_condition = normalize_fullwidth_digits(condition_text)
+                            normalized_full = normalize_fullwidth_digits(full_effect_text)
+                            if normalized_condition + '場合' in normalized_full:
+                                effect['condition']['text'] = condition_text + '場合'
+                            elif normalized_condition + 'の' in normalized_full:
+                                # Check if the full text has 'の場合' after condition_text
+                                idx = normalized_full.find(normalized_condition)
+                                if idx != -1 and normalized_full[idx + len(normalized_condition):].startswith('場合'):
+                                    effect['condition']['text'] = condition_text + '場合'
+            
+            # Fix truncated condition text ending with "の" to "の場合"
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition'] and effect['condition']['text'].endswith('の'):
+                    # Check if the full text has "の場合" after this
+                    condition_text = effect['condition']['text']
+                    full_effect_text = effect.get('text', '')
+                    if full_effect_text.startswith(condition_text + '場合'):
+                        effect['condition']['text'] = condition_text + '場合'
+            
+            # Fix truncated condition text starting with "の" (missing source location)
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition']:
+                    condition_text = effect['condition']['text']
+                    # If condition text starts with "の", try to reconstruct
+                    if condition_text.startswith('の'):
+                        full_effect_text = effect.get('text', '')
+                        if full_effect_text:
+                            # Check if the full text contains the condition text without the leading "の"
+                            if condition_text[1:] in full_effect_text:
+                                # Find where it appears and extract the prefix
+                                idx = full_effect_text.find(condition_text[1:])
+                                if idx > 0:
+                                    prefix = full_effect_text[:idx]
+                                    # Check if prefix ends with "の" to avoid duplicate
+                                    if prefix.endswith('の'):
+                                        effect['condition']['text'] = prefix + condition_text[1:]
+                                    else:
+                                        effect['condition']['text'] = prefix + condition_text
+                    # Remove truncated note text from condition text (ends with opening parenthesis)
+                    if '\n（' in effect['condition']['text']:
+                        parts = effect['condition']['text'].split('\n（', 1)
+                        if len(parts) > 1:
+                            effect['condition']['text'] = parts[0].strip()
+            
+            # Fix condition text including action text
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition'] and isinstance(effect.get('actions'), list):
+                    condition_text = effect['condition']['text']
+                    for action in effect['actions']:
+                        if isinstance(action, dict) and 'text' in action:
+                            action_text = action['text']
+                            # If condition text starts with action text followed by "。", remove it
+                            if action_text.endswith('。') and condition_text.startswith(action_text):
+                                effect['condition']['text'] = condition_text[len(action_text):].strip()
+                            # If condition text starts with action text followed by "自分", remove it
+                            elif condition_text.startswith(action_text + '自分'):
+                                effect['condition']['text'] = condition_text[len(action_text):].strip()
+            
+            # Fix condition text including cost text
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition'] and ability.get('cost') and isinstance(ability.get('cost'), dict) and ability.get('cost', {}).get('text'):
+                    cost_text = ability['cost']['text']
+                    condition_text = effect['condition']['text']
+                    # Remove cost text prefix (with or without colon)
+                    if condition_text.startswith(cost_text + '：'):
+                        effect['condition']['text'] = condition_text[len(cost_text) + 1:].strip()
+                    elif condition_text.startswith(cost_text):
+                        effect['condition']['text'] = condition_text[len(cost_text):].strip()
+            
+            # Fix condition text including action text (different patterns)
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition'] and isinstance(effect.get('actions'), list):
+                    condition_text = effect['condition']['text']
+                    for action in effect['actions']:
+                        if isinstance(action, dict) and 'text' in action:
+                            action_text = action['text']
+                            # If condition text starts with "カードを1枚引く。" followed by condition, remove it
+                            if condition_text.startswith('カードを1枚引く。') and '自分のステージに' in condition_text:
+                                effect['condition']['text'] = condition_text.replace('カードを1枚引く。', '', 1).strip()
+                            # If condition text starts with action text followed by "。", remove it
+                            elif action_text.endswith('。') and condition_text.startswith(action_text):
+                                effect['condition']['text'] = condition_text[len(action_text):].strip()
+                            # If condition text starts with action text followed by "自分", remove it
+                            elif condition_text.startswith(action_text + '自分'):
+                                effect['condition']['text'] = condition_text[len(action_text):].strip()
+                            # If condition text starts with card discard action followed by condition, remove it
+                            if '控え室に置く。それらの中に' in condition_text:
+                                parts = condition_text.split('控え室に置く。それらの中に', 1)
+                                if len(parts) > 1:
+                                    effect['condition']['text'] = 'それらの中に' + parts[1].strip()
+                            # If condition text starts with card discard action followed by "それらがすべて", remove it
+                            if '控え室に置く。それらがすべて' in condition_text:
+                                parts = condition_text.split('控え室に置く。それらがすべて', 1)
+                                if len(parts) > 1:
+                                    effect['condition']['text'] = 'それらがすべて' + parts[1].strip()
+            
+            # Fix leading '、' punctuation in condition text (including nested conditions)
+            def fix_condition_punctuation(node):
+                if isinstance(node, dict):
+                    if 'condition' in node and isinstance(node['condition'], dict):
+                        if 'text' in node['condition']:
+                            condition_text = node['condition']['text']
+                            if condition_text and condition_text[0] in '、。':
+                                node['condition']['text'] = condition_text[1:].strip()
+                            # Fix use limit marker prefix in condition text
+                            if condition_text and condition_text.startswith('［ターン1回］'):
+                                node['condition']['text'] = condition_text.replace('［ターン1回］', '', 1).strip()
+                            elif condition_text and condition_text.startswith('[ターン1回]'):
+                                node['condition']['text'] = condition_text.replace('[ターン1回]', '', 1).strip()
+                        # Recursively fix nested conditions
+                        fix_condition_punctuation(node['condition'])
+                    if 'actions' in node:
+                        for action in node['actions']:
+                            fix_condition_punctuation(action)
+            fix_condition_punctuation(effect)
+            
+            # Fix action text including condition text
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # Remove condition markers like "場合、" from start of action text
+                        for marker in ['場合、', '場合', 'とき、', 'とき']:
+                            if action_text.startswith(marker):
+                                action['text'] = action_text[len(marker):].strip()
+                                break
+                        # Also check if action text starts with condition text
+                        if isinstance(effect.get('condition'), dict):
+                            condition_text = effect['condition'].get('text', '')
+                            if condition_text and action_text.startswith(condition_text) and len(action_text) > len(condition_text):
+                                remaining = action_text[len(condition_text):].strip()
+                                if remaining and (remaining[0] in '、。' or 'を' in remaining or '加える' in remaining or '引く' in remaining):
+                                    action['text'] = remaining
+            
+            # Fix truncated action text by reconstructing from full text
+            if isinstance(effect.get('actions'), list):
+                full_effect_text = effect.get('text', '')
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # If action text ends with "この能力を起動するためのコストは", it's truncated
+                        if action_text.endswith('この能力を起動するためのコストは'):
+                            # Find the complete text in the full effect text
+                            if full_effect_text and action_text in full_effect_text:
+                                # Extract the complete action text
+                                idx = full_effect_text.find(action_text)
+                                if idx != -1:
+                                    # Get everything from the start of the action text to the end of the full text
+                                    complete_text = full_effect_text[idx:].strip()
+                                    # But we need to split it correctly - the note should be in a separate action
+                                    if '。' in complete_text:
+                                        parts = complete_text.split('。', 1)
+                                        if len(parts) > 1:
+                                            action['text'] = parts[0] + '。'
+                        # If action text starts with "場合、" and there's a condition, reconstruct from full text
+                        if action_text.startswith('場合、') and isinstance(effect.get('condition'), dict):
+                            condition_text = effect['condition'].get('text', '')
+                            if condition_text and full_effect_text:
+                                # The action text should be the part after "場合、" in the full effect text
+                                if condition_text + '場合、' in full_effect_text:
+                                    idx = full_effect_text.find(condition_text + '場合、')
+                                    if idx != -1:
+                                        reconstructed = full_effect_text[idx + len(condition_text + '場合、'):].strip()
+                                        # Remove the note in parentheses if present
+                                        if '\n(' in reconstructed:
+                                            reconstructed = reconstructed.split('\n(')[0].strip()
+                                        if reconstructed:
+                                            action['text'] = reconstructed
+            
+            # Fix leading punctuation in use_limitless_text and costless_text
+            if ability.get('use_limitless_text') and ability['use_limitless_text'].startswith('：'):
+                ability['use_limitless_text'] = ability['use_limitless_text'][1:].strip()
+            if ability.get('costless_text') and ability['costless_text'].startswith('：'):
+                ability['costless_text'] = ability['costless_text'][1:].strip()
+            
+            # Fix use_limitless_text with cost prefix like "支払ってもよい："
+            if ability.get('use_limitless_text') and ability.get('cost') and isinstance(ability.get('cost'), dict) and ability['cost'].get('text'):
+                cost_text = ability['cost']['text']
+                use_limitless_text = ability['use_limitless_text']
+                # Remove cost text prefix (with or without colon)
+                if use_limitless_text.startswith(cost_text + '：'):
+                    ability['use_limitless_text'] = use_limitless_text[len(cost_text) + 1:].strip()
+                elif use_limitless_text.startswith(cost_text):
+                    ability['use_limitless_text'] = use_limitless_text[len(cost_text):].strip()
+                # Also check with energy icons stripped from cost text
+                cost_text_no_icons = cost_text
+                for icon in ['{{icon_energy.png|E}}', '{{icon_energy.png|e}}']:
+                    cost_text_no_icons = cost_text_no_icons.replace(icon, '')
+                if cost_text_no_icons != cost_text:
+                    if use_limitless_text.startswith(cost_text_no_icons + '：'):
+                        ability['use_limitless_text'] = use_limitless_text[len(cost_text_no_icons) + 1:].strip()
+                    elif use_limitless_text.startswith(cost_text_no_icons):
+                        ability['use_limitless_text'] = use_limitless_text[len(cost_text_no_icons):].strip()
+            
+            # Fix escaped quotes in effect text (backslash-quote pattern)
+            if isinstance(effect.get('text'), str):
+                if effect['text'].endswith('\\\"'):
+                    effect['text'] = effect['text'][:-2].strip()
+                elif effect['text'].endswith('"'):
+                    effect['text'] = effect['text'][:-1].strip()
+            
+            # Fix incomplete action text ending with "のうち" (should include "、1つを選ぶ")
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        if action_text.endswith('のうち') and not action_text.endswith('、1つを選ぶ'):
+                            full_effect_text = effect.get('text', '')
+                            if full_effect_text and action_text + '、1つを選ぶ' in full_effect_text:
+                                action['text'] = action_text + '、1つを選ぶ'
+            
+            # Fix action text including activation restriction
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # If action text includes "この能力は、...場合のみ起動できる", remove it
+                        if 'この能力は' in action_text and '起動できる' in action_text:
+                            idx = action_text.find('この能力は')
+                            if idx != -1:
+                                action['text'] = action_text[:idx].strip()
+            
+            # Fix incomplete action text ending with "から" (should include the rest of the action)
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        if action_text.endswith('から') and len(action_text) < 20:
+                            full_effect_text = effect.get('text', '')
+                            if full_effect_text and action_text in full_effect_text:
+                                # Extract the complete action text
+                                idx = full_effect_text.find(action_text)
+                                if idx != -1 and '。' in full_effect_text[idx:]:
+                                    complete = full_effect_text[idx:].split('。')[0] + '。'
+                                    if len(complete) > len(action_text):
+                                        action['text'] = complete
+            
+            # Fix subject field including action text or choice text
+            if effect.get('subject'):
+                subject_text = effect['subject']
+                # If subject includes choice text like "のうち、1つを選ぶ", split it
+                if 'のうち、1つを選ぶ' in subject_text:
+                    parts = subject_text.split('のうち、1つを選ぶ', 1)
+                    if len(parts) > 1:
+                        effect['subject'] = parts[1].strip()
+                # If subject includes action text like "スコアを+１し、", split it
+                if 'スコアを+１し、' in subject_text:
+                    parts = subject_text.split('スコアを+１し、', 1)
+                    if len(parts) > 1:
+                        effect['subject'] = parts[1].strip()
+                # Remove leading punctuation
+                if effect['subject'] and effect['subject'][0] in '。、':
+                    effect['subject'] = effect['subject'][1:].strip()
+            
+            # Fix empty condition text for position conditions
+            if isinstance(effect.get('condition'), dict):
+                if 'text' in effect['condition'] and effect['condition']['text'] == '':
+                    if effect['condition'].get('type') == 'position':
+                        position = effect['condition'].get('value', '')
+                        if position == 'right_side':
+                            effect['condition']['text'] = '右サイドエリアにいる'
+                        elif position == 'left_side':
+                            effect['condition']['text'] = '左サイドエリアにいる'
+                        elif position == 'center':
+                            effect['condition']['text'] = 'センターにいる'
+            
+            # Fix action texts that have full effect text instead of specific action text
+            if isinstance(effect.get('actions'), list) and len(effect['actions']) > 1:
+                full_effect_text = effect.get('text', '')
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # If action text is the same as full effect text, try to extract specific text
+                        if action_text == full_effect_text and len(action_text) > 20:
+                            # Extract based on action type
+                            action_type = action.get('action', '')
+                            if action_type == 'look_at_cards' and '見る' in action_text:
+                                # Extract just the look_at_cards part
+                                if '。' in action_text:
+                                    action['text'] = action_text.split('。')[0] + '。'
+                            elif action_type == 'add_to_hand' and '手札に加えてもよい' in action_text:
+                                # Extract the add_to_hand part
+                                if 'その中から' in action_text:
+                                    idx = action_text.find('その中から')
+                                    if idx != -1 and '。' in action_text[idx:]:
+                                        part = action_text[idx:].split('。')[0]
+                                        action['text'] = part + '。'
+                            elif action_type == 'discard_to_waitroom' and '控え室に置く' in action_text:
+                                # Extract the discard part
+                                if '残りを' in action_text:
+                                    idx = action_text.find('残りを')
+                                    if idx != -1:
+                                        extracted = action_text[idx:]
+                                        # Only add period if it doesn't already end with one
+                                        if not extracted.endswith('。'):
+                                            action['text'] = extracted + '。'
+                                        else:
+                                            action['text'] = extracted
+            
+            # Fix action text including note text (notes starting with "次の")
+            if isinstance(effect.get('actions'), list):
+                for action in effect['actions']:
+                    if isinstance(action, dict) and 'text' in action:
+                        action_text = action['text']
+                        # If action text includes note starting with "次の", split it
+                        if '。次の' in action_text:
+                            parts = action_text.split('。次の', 1)
+                            if len(parts) > 1:
+                                action['text'] = parts[0] + '。'
+                                # The note could be added as a separate field if needed
+            
             # Fix null triggers
             if ability.get('triggers') is None:
                 match = re.search(r'\{\{[^}]+\|([^\}]+)\}\}', ability.get('full_text', ''))
@@ -437,6 +1181,15 @@ def post_process(data):
                     effect['actions'] = filtered
                 elif effect.get('actions'):  # Would be empty, add placeholder
                     effect['actions'] = [{'action': 'unknown', 'text': effect.get('text', ''), 'parsing_error': 'Action field missing'}]
+    
+    # Fix missing source/destination fields in actions (run after all other fixes)
+    for ability in data.get('unique_abilities', []):
+        if ability.get('effect'):
+            fix_action_fields(ability['effect'])
+        if ability.get('cost'):
+            fix_action_fields(ability['cost'])
+        if ability.get('payment'):
+            fix_action_fields(ability['payment'])
     return data
 
 

@@ -42,6 +42,10 @@ from .semantic_processor import (
     semantic_form_to_frame_program,
     select_ability_raw_text as _select_ability_raw_text,
 )
+from .extracted_abilities_loader import (
+    get_ability_for_card,
+    load_extracted_abilities,
+)
 
 # Worker-local adapters (initialized once per process)
 _MEMBER_ADAPTER: TypeAdapter[MemberCard] | None = None
@@ -62,19 +66,23 @@ def _init_worker(
     sparse_mapping: dict,
     manual_translations: dict,
     source_path: str,
+    extracted_abilities_map: dict | None = None,
 ):
     """Initializer for multiprocessing pool to set up expensive adapters."""
-    global _MEMBER_ADAPTER, _LIVE_ADAPTER, _ENERGY_ADAPTER, _manual_translations_en, _sparse_manager
+    global _MEMBER_ADAPTER, _LIVE_ADAPTER, _ENERGY_ADAPTER, _manual_translations_en, _sparse_manager, _extracted_abilities_map
     _MEMBER_ADAPTER = TypeAdapter(MemberCard)
     _LIVE_ADAPTER = TypeAdapter(LiveCard)
     _ENERGY_ADAPTER = TypeAdapter(EnergyCard)
     _manual_translations_en = manual_translations
-    
+
     # We provide a pre-loaded "mapping" to avoid re-parsing YAML in each worker
     _sparse_manager = SparseSourceManager(source_path)
     _sparse_manager.mapping = sparse_mapping
     # Mark it as "loaded" to prevent get_ability() from calling load() again
     _sparse_manager._last_loaded_mtime = float("inf")
+
+    # Set extracted abilities map if provided
+    _extracted_abilities_map = extracted_abilities_map or {}
 
 
 def _build_export_excludes(export_profile: str) -> tuple[dict, dict]:
@@ -147,23 +155,36 @@ def compile_cards(
     quiet: bool = False,
     export_profile: str = "runtime",
     ability_source_path: str | None = None,
+    use_extracted_abilities: bool = False,
+    extracted_abilities_path: str = "data/abilities_extracted_from_cards.json",
 ) -> bool:
     """
     Main compilation pipeline.
-    
+
     FLOW:
     1. Load raw card JSON
     2. Resolve semantic/runtime data for each card
     3. Parallel worker compilation of cards
     4. Write compiled JSON output only when content changed
-    
+
     Args:
         input_path: Path to raw cards.json
         output_path: Path for compiled output
         quiet: Minimize output logging
         export_profile: "runtime" (production) or "full" (with inspection fields)
+        ability_source_path: Optional path to override default ability source
+        use_extracted_abilities: If True, use abilities_extracted_from_cards.json instead of frame_source
+        extracted_abilities_path: Path to abilities_extracted_from_cards.json
     """
-    if ability_source_path:
+    global _extracted_abilities_map
+
+    if use_extracted_abilities:
+        if not quiet:
+            print(f"Loading extracted abilities from {extracted_abilities_path}...")
+        _extracted_abilities_map = load_extracted_abilities(extracted_abilities_path)
+        if not quiet:
+            print(f"Loaded {len(_extracted_abilities_map)} extracted abilities")
+    elif ability_source_path:
         _set_sparse_source_path(ability_source_path)
 
     if not quiet:
@@ -266,6 +287,7 @@ def compile_cards(
         _sparse_manager.mapping,
         _manual_translations_en,
         SPARSE_INDEX_PATH,
+        _extracted_abilities_map,
     )
     
     # Default to single worker for speed (multiprocessing has overhead for small datasets)
@@ -574,6 +596,29 @@ ABILITY_SEMANTIC_DUMP_PATH = "data/ability_semantic_dump.json"
 SPARSE_INDEX_PATH = ABILITY_FRAME_SOURCE_PATH
 _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
+# Global extracted abilities map for the new format
+_extracted_abilities_map: dict[str, Ability] = {}
+
+# Global manual translations
+_manual_translations_en: dict = {}
+
+
+def _load_translations_if_present(quiet: bool = False) -> None:
+    """Load manual English translations if present."""
+    global _manual_translations_en
+    translations_path = "data/manual_translations.json"
+    if os.path.exists(translations_path):
+        try:
+            with open(translations_path, "r", encoding="utf-8") as f:
+                _manual_translations_en = json.load(f)
+            if not quiet:
+                print(f"Loaded {len(_manual_translations_en)} manual translations")
+        except Exception as e:
+            if not quiet:
+                print(f"Warning: Failed to load translations: {e}")
+    else:
+        _manual_translations_en = {}
+
 
 def _set_sparse_source_path(source_path: str) -> None:
     """Rebuild the sparse source manager from a different authored source."""
@@ -661,18 +706,18 @@ def _override_trigger_for_known_choice_cards(card_no: str, ability: Ability) -> 
 
 def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
     """
-    Resolve abilities for a card from the sparse YAML index.
-    
+    Resolve abilities for a card from the sparse YAML index or extracted abilities.
+
     FLOW:
     1. Check if card has ability source data
-    2. For ab_idx in 0..9: look up (card_no, ab_idx) in sparse index
-    3. If found: _build_ability_from_sparse_entry() creates Ability
+    2. For ab_idx in 0..9: look up (card_no, ab_idx) in extracted abilities map or sparse index
+    3. If found: return Ability object from extracted map or build from sparse entry
     4. Return list of abilities (empty list if card has no abilities)
-    
+
     Args:
         card_no: Card number like "LL-PR-001-PR"
         data: Raw card dict from cards.json
-    
+
     Returns:
         List of Ability objects (may be empty)
     """
@@ -684,21 +729,31 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
         return []
 
     abilities: list[Ability] = []
-    used_sparse = False
+    used_source = False
     raw_text = str(data.get("ability", data.get("original_text", "")))
 
     for ab_idx in range(10):
+        # Try extracted abilities map first
+        if _extracted_abilities_map:
+            ability = get_ability_for_card(card_no, ab_idx, _extracted_abilities_map)
+            if ability:
+                _override_trigger_for_known_choice_cards(card_no, ability)
+                abilities.append(ability)
+                used_source = True
+                continue
+
+        # Fall back to sparse source manager
         selected_entry = _sparse_manager.get_ability(card_no, ab_idx)
 
         if selected_entry is None:
-            if used_sparse:
+            if used_source:
                 break
             ability_text = _select_ability_raw_text(raw_text, ab_idx, data)
             if ability_text.strip():
                 ability = build_ability_from_text(card_no, raw_text, ab_idx)
                 _override_trigger_for_known_choice_cards(card_no, ability)
                 abilities.append(ability)
-                used_sparse = True
+                used_source = True
                 continue
             continue
 
@@ -709,9 +764,9 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
         )
         _override_trigger_for_known_choice_cards(card_no, ability)
         abilities.append(ability)
-        used_sparse = True
+        used_source = True
 
-    if used_sparse:
+    if used_source:
         return abilities
     raise ValueError(f"[{card_no}] Missing frame entry and no semantic data was available")
 
@@ -930,10 +985,27 @@ def main():
         default="runtime",
         help="Export schema profile: 'full' keeps inspection fields, 'runtime' prunes inspection-only fields",
     )
+    parser.add_argument(
+        "--use-extracted-abilities",
+        action="store_true",
+        help="Use abilities_extracted_from_cards.json instead of ability_frame_source.json",
+    )
+    parser.add_argument(
+        "--extracted-abilities-path",
+        default="data/abilities_extracted_from_cards.json",
+        help="Path to abilities_extracted_from_cards.json",
+    )
     args = parser.parse_args()
 
     _load_translations_if_present(quiet=args.quiet)
-    compile_cards(args.input, args.output, quiet=args.quiet, export_profile=args.export_profile)
+    compile_cards(
+        args.input,
+        args.output,
+        quiet=args.quiet,
+        export_profile=args.export_profile,
+        use_extracted_abilities=args.use_extracted_abilities,
+        extracted_abilities_path=args.extracted_abilities_path,
+    )
 
 
 if __name__ == "__main__":

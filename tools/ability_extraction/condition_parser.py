@@ -33,6 +33,7 @@ CARD_TYPE_PATTERNS = [
     ('ブレードを持つカード', 'blade_card'),
     ('ライブカード', 'live_card'),
     ('メンバーカード', 'member_card'),
+    ('メンバー', 'member_card'),
     ('エネルギーカード', 'energy_card'),
 ]
 
@@ -72,6 +73,8 @@ POSITION_PATTERNS = [
     ('【左サイド】', 'left_side'),
     ('右サイドエリア', 'right_side'),
     ('【右サイド】', 'right_side'),
+    ('ドルチェストラエリア', 'dollchestra'),
+    ('【ドルチェストラ】', 'dollchestra'),
 ]
 
 def _extract_position_value(text):
@@ -377,6 +380,21 @@ def parse_condition(condition_part):
         group = extract_group_name(condition_part)
         if group:
             _set_condition(condition, 'group', value=group)
+            # Extract additional fields that may be present with group condition
+            position = _extract_position_value(condition_part)
+            if position:
+                condition['position_requirement'] = position
+            card_type = _extract_card_type(condition_part)
+            if card_type:
+                condition['card_type'] = card_type
+            # Extract cost limit (e.g., "コスト9以上")
+            cost_limit_match = re.search(r'コスト(\d+)以上', condition_part)
+            if cost_limit_match:
+                condition['cost_limit'] = int(cost_limit_match.group(1))
+            # Extract location
+            location = _extract_location(condition_part)
+            if location:
+                condition['location'] = location
 
     # Check for "それらがすべて...メンバーカード" condition after milling/revealing cards.
     elif 'それらがすべて' in condition_part and 'メンバーカード' in condition_part:
@@ -395,7 +413,7 @@ def parse_condition(condition_part):
         if 'コスト' in condition_part:
             cost_value = _extract_count_value(condition_part, r'コスト(\d+)')
             if cost_value:
-                condition['cost'] = cost_value
+                condition['cost_limit'] = cost_value
 
     # Check for heart-total conditions on members' hearts.
     elif 'メンバーが持つハートに' in condition_part and '合計' in condition_part:
@@ -529,6 +547,16 @@ def parse_condition(condition_part):
         condition['type'] = 'heart_member_presence' if '{{heart_' in condition_part else 'member_presence'
         if 'いない' in condition_part:
             condition['presence'] = 'absent'
+        # Extract position, cost, and card_type if present
+        position = _extract_position_value(condition_part)
+        if position:
+            condition['position_requirement'] = position
+        cost_limit_match = re.search(r'コスト(\d+)以上', condition_part)
+        if cost_limit_match:
+            condition['cost_limit'] = int(cost_limit_match.group(1))
+        card_type = _extract_card_type(condition_part)
+        if card_type:
+            condition['card_type'] = card_type
         else:
             condition['presence'] = 'present'
         condition['target'] = _extract_target(condition_part) or 'self'
@@ -567,12 +595,31 @@ def parse_condition(condition_part):
         # Extract location
         if '控え室' in condition_part:
             condition['location'] = 'waitroom'
+        
+        # Extract position if present
+        position = _extract_position_value(condition_part)
+        if position:
+            condition['position_requirement'] = position
     
     # Check for cost conditions
     elif re.search(r'コスト(\d+)以上のメンバー', condition_part):
         cost_value = _extract_count_value(condition_part, r'コスト(\d+)以上')
         if cost_value:
             _set_condition(condition, 'cost_at_least', value=cost_value)
+            condition['cost_limit'] = cost_value
+            # Remove cost field if it was set by previous logic
+            if 'cost' in condition and isinstance(condition['cost'], int):
+                del condition['cost']
+        
+        # Extract position if present
+        position = _extract_position_value(condition_part)
+        if position:
+            condition['position_requirement'] = position
+        
+        # Extract card type
+        card_type = _extract_card_type(condition_part)
+        if card_type:
+            condition['card_type'] = card_type
     
     # Check for score sum conditions
     elif re.search(r'スコアの合計が(\d+)以上', condition_part):
@@ -1086,7 +1133,9 @@ def parse_condition(condition_part):
             condition['type'] = 'while'
         else:
             condition['type'] = 'raw'
-            condition['text'] = condition_part
+            # Only set text if not already set (preserve original text)
+            if 'text' not in condition:
+                condition['text'] = condition_part
     
     # Global exclusion check - run for ALL condition types to ensure 以外 is captured
     if 'exclusion' not in condition:
@@ -1096,7 +1145,10 @@ def parse_condition(condition_part):
             # Try to extract what's being excluded
             exclusion_match = re.search(r'([^「『]+?)以外の', condition_part)
             if exclusion_match:
-                condition['exclusion'] = exclusion_match.group(1)
+                exclusion = exclusion_match.group(1)
+                # Remove trailing brackets if present
+                exclusion = exclusion.rstrip('」』')
+                condition['exclusion'] = exclusion
         elif '以外' in condition_part:
             # Generic exclusion marker
             condition['exclusion'] = 'specified'

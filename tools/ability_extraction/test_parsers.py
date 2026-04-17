@@ -9,31 +9,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from effect_parser import parse_generic_effect
 from condition_parser import parse_condition
 
-def test_nested_conditional_chain_is_not_mixed():
-    """Test that two sentence-level condition/action chains stay separated."""
-    text = (
-        'このメンバーがステージから控え室に置かれたとき、'
-        'このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、'
-        'エネルギーを2枚アクティブにする。'
-        'コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、'
-        'さらにカードを1枚引く。'
-    )
-    effect = parse_generic_effect(text)
-
-    assert 'actions' in effect
-    assert len(effect['actions']) == 2
-
-    first = effect['actions'][0]
-    second = effect['actions'][1]
-
-    assert first['action']['condition']['value'] == '虹ヶ咲'
-    assert first['action']['action']['action'] == 'activate_energy'
-    assert first['action']['action']['count'] == 2
-    assert 'コスト15以上' not in first['text']
-    assert second['action']['action'] == 'draw_cards'
-    assert second['action']['count'] == 1
-    assert second['condition']['value'] == '虹ヶ咲'
-
 def test_multi_branch_cost_total_conditions():
     """Test that multi-branch conditions based on cost total stay separate.
     
@@ -111,6 +86,50 @@ def test_surplus_heart_conditions_separate():
     assert effect['actions'][0]['condition']['value'] == 0
     assert effect['actions'][1]['condition']['type'] == 'heart_count_at_least'
     assert effect['actions'][1]['condition']['value'] == 2
+
+def test_nested_conditional_chain_is_not_mixed():
+    """Test that two sentence-level condition/action chains stay separated."""
+    text = (
+        'このメンバーがステージから控え室に置かれたとき、'
+        'このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合、'
+        'エネルギーを2枚アクティブにする。'
+        'コスト15以上のブレードハートを持たない『虹ヶ咲』のメンバーの場合、'
+        'さらにカードを1枚引く。'
+    )
+    effect = parse_generic_effect(text)
+
+    assert 'actions' in effect
+    assert len(effect['actions']) == 2
+
+    first = effect['actions'][0]
+    second = effect['actions'][1]
+
+    assert first['action']['condition']['value'] == '虹ヶ咲'
+    assert first['action']['action']['action'] == 'activate_energy'
+    assert first['action']['action']['count'] == 2
+    assert 'コスト15以上' not in first['text']
+    assert second['action']['action'] == 'draw_cards'
+    assert second['action']['count'] == 1
+    assert second['condition']['value'] == '虹ヶ咲'
+
+def test_opponent_member_to_wait_keeps_opponent_target():
+    text = '相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）'
+    effect = parse_generic_effect(text)
+
+    assert effect['action']['action'] == 'member_to_wait'
+    assert effect['action']['target'] == 'opponent'
+    assert effect['action']['source'] == 'stage'
+    assert effect['action']['cost_limit'] == 4
+
+def test_waitroom_live_recovery_keeps_add_to_hand():
+    text = '自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。'
+    effect = parse_generic_effect(text)
+
+    assert effect['action']['action'] == 'add_to_hand'
+    assert effect['action']['source'] == 'waitroom'
+    assert effect['action']['target'] == 'self'
+    assert effect['action']['card_type'] == 'live_card'
+    assert effect['action']['group'] == '虹ヶ咲'
 
 def test_choice_pattern_with_conditionals():
     """Test that choice patterns with conditional branches stay separate.
@@ -242,7 +261,6 @@ if __name__ == '__main__':
     print("Running new regression tests...")
     print("=" * 60)
     
-    test_nested_conditional_chain_is_not_mixed()
     test_multi_branch_cost_total_conditions()
     test_count_based_conditions_separate()
     test_is_not_conditions_separate()

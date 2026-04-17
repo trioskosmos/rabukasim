@@ -199,14 +199,19 @@ def _extract_optional_payment(text):
             'action': 'may_place_card',
             'target': 'self',
             'source': 'deck_top',
+            'destination': 'waitroom',
             'optional': True,
             'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
         }
     
     if '支払ってもよい' not in text and '支払った' not in text:
         if text.startswith('手札を1枚控え室に置いてもよい'):
+            if '：' in text:
+                return _create_discard_payment(), text.split('：', 1)[1].strip()
             return _create_discard_payment(), text
         if text.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
+            if '：' in text:
+                return _create_deck_top_payment(), text.split('：', 1)[1].strip()
             return _create_deck_top_payment(), text
         return None, text
 
@@ -339,10 +344,16 @@ def _select_member_action(text, *, target=None):
         result['count'] = _normalized_int(count_match.group(1))
     if '以外' in text:
         result['exclude_this_member'] = True
+    if 'すべてのメンバー' in text:
+        result['all'] = True
     if '相手の' in text:
         result['target'] = 'opponent'
     elif '自分の' in text and target is None:
         result['target'] = 'self'
+    if '自分のステージ' in text and 'source' not in result:
+        result['source'] = 'stage'
+    elif '相手のステージ' in text and 'source' not in result:
+        result['source'] = 'stage'
     return result
 
 
@@ -365,9 +376,9 @@ def _is_parenthetical_note(text):
     stripped = text.strip()
     if not stripped:
         return False
+    # Only treat text as a parenthetical note if the ENTIRE text is wrapped in parentheses
+    # Not just if it ends with a parenthetical note
     if stripped.startswith(('(', '（')) and stripped.endswith((')', '）')):
-        return True
-    if stripped.endswith(('。）', '.)', ')')) and 'raw_text' not in stripped:
         return True
     return 'エールで公開する枚数を増やさない' in stripped or '対戦相手のカードの効果でも発動する' in stripped
 
@@ -671,7 +682,26 @@ def parse_effect_backwards(text):
             }
             return result
 
+    if 'エネルギーデッキから' in text and 'エネルギーカード' in text and 'ウェイト状態で置く' in text:
+        result['action'] = 'place_card'
+        result['card_type'] = 'energy_card'
+        result['state'] = 'wait'
+        result['source'] = 'energy_deck'
+        count_match = re.search(r'([\d０-９]+)枚', text)
+        if count_match:
+            result['count'] = _normalized_int(count_match.group(1))
+        return result
+
     if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
+        # Check for duration
+        duration = None
+        if 'ライブ終了時まで、' in text:
+            duration = 'until_end_of_live'
+            text = text.replace('ライブ終了時まで、', '').strip()
+        elif 'ライブ終了時まで' in text:
+            duration = 'until_end_of_live'
+            text = text.replace('ライブ終了時まで', '').strip()
+        
         result['actions'] = [
             {
                 'action': 'choose_heart_color',
@@ -688,6 +718,9 @@ def parse_effect_backwards(text):
                 'text': 'そのハートを1つ得る',
             },
         ]
+        # Add duration to the gain_resource action if present
+        if duration:
+            result['actions'][1]['duration'] = duration
         return result
     
     # Check for blade transformation pattern (e.g., "すべて[青ブレード]になる")
@@ -817,6 +850,17 @@ def parse_effect_backwards(text):
 
     if _is_parenthetical_note(text):
         return _note_action(strip_suffix_period(text).strip())
+
+    # Strip trailing parenthetical notes BEFORE period removal
+    # (e.g., "（この能力はセンターエリアにいる場合のみ発動する。）")
+    if text.endswith(('。）', '.)', ')')):
+        # Find the last opening parenthesis
+        last_open_paren = max(text.rfind('（'), text.rfind('('))
+        if last_open_paren > 0:
+            # Check if it's a trailing parenthetical note (space before it, or starts with common note patterns)
+            paren_content = text[last_open_paren:]
+            if paren_content.startswith(('（この能力は', '（この効果は', '（ウェイト状態のメンバーが持つ')) or text[last_open_paren - 1] in '。 ':
+                text = text[:last_open_paren].strip()
 
     # Check for heart type choice selection pattern BEFORE period removal (e.g., "{{heart_01}}か{{heart_03}}か{{heart_06}}のうち、1つを選ぶ")
     if re.search(r'{{heart_\d+\.png.*?}}.*?のうち.*?1つを選ぶ', text):
@@ -1131,6 +1175,20 @@ def parse_effect_backwards(text):
         if not text:
             return result
     
+    # Check for opponent tap action with source state (e.g., "自身のステージにいるアクティブ状態のメンバー1人をウェイトにする")
+    if 'アクティブ状態のメンバー' in text and 'ウェイトにする' in text:
+        result['action'] = 'member_to_wait'
+        result['source_state'] = 'active'
+        result['source'] = 'stage'
+        # Extract count
+        count_match = re.search(r'(\d+)人', text)
+        if count_match:
+            result['count'] = int(count_match.group(1))
+        else:
+            result['count'] = 1
+        result['destination'] = 'wait'
+        return result
+    
     # Check for choice pattern (～か)
     if 'か' in text and 'エネルギーを' in text:
         result['choice'] = True
@@ -1174,6 +1232,20 @@ def parse_effect_backwards(text):
     }
     
     result = {}
+    
+    # Try to match action patterns anywhere in the text (not just exact match)
+    # This handles cases like "自身のステージにいるアクティブ状態のメンバー1人をウェイトにする。"
+    # where the action is embedded in extra context
+    matched_action = None
+    for pattern, action_type in action_patterns.items():
+        if action_type != 'note' and pattern in text:
+            matched_action = action_type
+            # Prefer longer, more specific patterns
+            if len(pattern) > 3:  # Avoid matching very short patterns like "する"
+                break
+    
+    if matched_action:
+        result['action'] = matched_action
     
     # Check for "up_to" patterns (1人まで, 1枚まで)
     up_to_match = re.search(r'(\d+)人まで', text)
@@ -1233,6 +1305,29 @@ def parse_effect_backwards(text):
         return result
 
     if 'メンバー' in text and 'アクティブ' in text and ('アクティブにし' in text or 'アクティブにする' in text):
+        if 'このメンバー' not in text and ('自分のステージ' in text or '相手のステージ' in text):
+            selection_text = text.split('アクティブ', 1)[0].rstrip('、。')
+            select_action = _select_member_action(selection_text)
+            activate_action = {'action': 'activate_member', 'text': text}
+            if 'ウェイト状態' in text:
+                activate_action['source_state'] = 'wait'
+            elif 'アクティブ状態' in text:
+                activate_action['source_state'] = 'active'
+            if '自分のステージ' in text:
+                activate_action['source'] = 'stage'
+                activate_action['target'] = 'self'
+            elif '相手のステージ' in text:
+                activate_action['source'] = 'stage'
+                activate_action['target'] = 'opponent'
+            count_match = re.search(r'([\d０-９]+)人', text)
+            if count_match:
+                count_value = _normalized_int(count_match.group(1))
+                select_action['count'] = count_value
+                activate_action['count'] = count_value
+            if 'もよい' in text:
+                activate_action['may'] = True
+            result['actions'] = [select_action, activate_action]
+            return result
         result['action'] = 'activate_member'
         if 'ウェイト状態' in text:
             result['source_state'] = 'wait'
@@ -1267,14 +1362,14 @@ def parse_effect_backwards(text):
         if not text:
             return result
     
-    # Check for generic score patterns (+xする)
-    score_match = re.search(r'\+(\d+)する', text)
+    # Check for generic score patterns (+xする) - handle both half-width and full-width digits
+    score_match = re.search(r'\+([０-９\d]+)する', text)
     if score_match:
         if 'コストを' in text or 'コスト' in text:
             result['action'] = 'modify_cost'
         else:
             result['action'] = 'add_score'
-        result['amount'] = int(score_match.group(1))
+        result['amount'] = int(score_match.group(1).translate(str.maketrans("０１２３４５６７８９", "0123456789")))
         return result
     
     # Check for score pattern without "する" (+N)
@@ -1370,7 +1465,7 @@ def parse_effect_backwards(text):
 
     if 'このメンバーをウェイトにし' in text or 'このメンバーをウェイトにする' in text:
         result['action'] = 'member_to_wait'
-        result['target'] = 'self'
+        result['target'] = _infer_target(text) or 'self'
         result['source'] = 'stage'
         if 'このメンバー以外' in text:
             result['target'] = 'selected_member'
@@ -1466,6 +1561,8 @@ def parse_effect_backwards(text):
         result['action'] = 'place_card'
         result['card_type'] = 'energy_card'
         result['state'] = state
+        if 'エネルギーデッキ' in text:
+            result['source'] = 'energy_deck'
         count_match = re.search(r'([\d０-９]+)枚', text)
         if count_match:
             result['count'] = _normalized_int(count_match.group(1))
@@ -1512,10 +1609,21 @@ def parse_effect_backwards(text):
             break
 
     if result.get('action') == 'member_to_wait':
+        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つ
+        original_blade_match = re.search(r'元々持つ.*?ブレード.*?ちょうど(\d+)つ', text)
+        if original_blade_match:
+            result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
+            result['original_blade_operator'] = '=='
+        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数が3つ以下
         original_blade_match = re.search(r'元々持つ.*?ブレード.*?(\d+)つ以下', text)
         if original_blade_match:
             result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
             result['original_blade_operator'] = '<='
+        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数が4つ以上
+        original_blade_match = re.search(r'元々持つ.*?ブレード.*?(\d+)つ以上', text)
+        if original_blade_match:
+            result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
+            result['original_blade_operator'] = '>='
 
     # Extract heart type for gain_resource actions
     if result.get('action') == 'gain_resource':
@@ -1968,11 +2076,22 @@ def parse_compound_effect(text):
     # Check for source/location modifiers in first part
     original_first_part = first_part
     first_part = _assign_prefixed_source(first_part, result)
+    leading_context = {}
     if first_part != original_first_part:
         if 'source' in result:
-            result['actions'].append({'source': result.pop('source')})
-        elif 'location' in result:
-            result['actions'].append({'location': result.pop('location')})
+            leading_context['source'] = result.pop('source')
+        if 'location' in result:
+            leading_context['location'] = result.pop('location')
+        if not first_part:
+            parsed_second = parse_effect_backwards(second_part)
+            if _is_parsed_action(parsed_second):
+                parsed_second.update(leading_context)
+                result['actions'].append(parsed_second)
+            else:
+                raw_second = _raw_text(second_part)
+                raw_second.update(leading_context)
+                result['actions'].append(raw_second)
+            return result
     elif first_part.startswith('自分のステージにいるメンバー1人か'):
         choice_info = {'choice': True, 'options': ['member', 'energy']}
         first_part = first_part.replace('自分のステージにいるメンバー1人か', '').strip()
@@ -3166,8 +3285,7 @@ def parse_generic_effect(text):
         if 'condition' not in result:
             result['condition'] = {}
         result['condition']['exclude_this_member'] = True
-        # Remove the condition from text
-        text = text.replace('このメンバー以外', '').strip()
+        # Don't remove from text - let condition parser handle it
     
     # Check for position markers at the start of text
     if text.startswith('【左サイド】'):
@@ -3219,7 +3337,12 @@ def parse_generic_effect(text):
         heart_types = extract_heart_types(text)
         if heart_types:
             result['heart_types'] = heart_types
-        if 'スコアを+１する' in text or 'スコアを+1する' in text:
+        # Check for score buff pattern with any numeric value
+        score_match = re.search(r'スコアを\+([０-９\d]+)する', text)
+        if score_match:
+            amount = int(score_match.group(1).translate(str.maketrans("０１２３４５６７８９", "0123456789")))
+            result['actions'].append({'action': 'add_score', 'amount': amount})
+        elif 'スコアを+１する' in text or 'スコアを+1する' in text:
             result['actions'].append({'action': 'add_score', 'amount': 1})
         else:
             action = parse_effect_backwards(text)
@@ -3526,6 +3649,16 @@ def parse_generic_effect(text):
     condition_markers = ['場合', 'とき', 'かぎり', 'なら']
     for marker in condition_markers:
         if marker in text:
+            # Check if marker is inside parentheses (parenthetical note) - if so, skip
+            # Find the position of the marker
+            marker_pos = text.find(marker)
+            # Check if there's an opening parenthesis before the marker without a closing parenthesis
+            last_open_paren_before_marker = max(text.rfind('（', 0, marker_pos), text.rfind('(', 0, marker_pos))
+            last_close_paren_before_marker = max(text.rfind('）', 0, marker_pos), text.rfind(')', 0, marker_pos))
+            if last_open_paren_before_marker > last_close_paren_before_marker:
+                # Marker is inside parentheses, skip this split
+                continue
+            
             # Split on the condition marker
             parts = text.split(marker, 1)
             if len(parts) == 2:
