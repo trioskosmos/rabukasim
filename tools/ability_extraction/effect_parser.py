@@ -1,42 +1,22 @@
 ﻿"""Effect parsing for ability extraction."""
 import re
-
-try:
-    from .condition_parser import parse_condition, _extract_target as _extract_condition_target
-    from .tree_utils import annotate_tree
-    from .parser_utils import (
-        extract_all_quoted_names,
-        extract_all_groups,
-        extract_blade_count,
-        extract_cost,
-        extract_count,
-        extract_group_name,
-        extract_heart_types,
-        extract_int,
-        extract_quoted_name,
-        merge_position_requirement,
-        normalize_fullwidth_digits,
-        split_commas_smartly,
-        strip_suffix_period,
-    )
-except ImportError:
-    from condition_parser import parse_condition, _extract_target as _extract_condition_target
-    from tree_utils import annotate_tree
-    from parser_utils import (
-        extract_all_quoted_names,
-        extract_all_groups,
-        extract_blade_count,
-        extract_cost,
-        extract_count,
-        extract_group_name,
-        extract_heart_types,
-        extract_int,
-        extract_quoted_name,
-        merge_position_requirement,
-        normalize_fullwidth_digits,
-        split_commas_smartly,
-        strip_suffix_period,
-    )
+from condition_parser import parse_condition, _extract_target as _extract_condition_target
+from parser_utils import (
+    annotate_tree,
+    extract_all_quoted_names,
+    extract_all_groups,
+    extract_blade_count,
+    extract_cost,
+    extract_count,
+    extract_group_name,
+    extract_heart_types,
+    extract_int,
+    extract_quoted_name,
+    merge_position_requirement,
+    normalize_fullwidth_digits,
+    split_commas_smartly,
+    strip_suffix_period,
+)
 
 
 SOURCE_PATTERNS = [
@@ -84,22 +64,32 @@ def _is_parsed_action(action):
     return bool(action and 'raw_text' not in action)
 
 
+def _is_only_action(action, keys, allow_subset=False):
+    """Check if action dict contains only the specified keys."""
+    if not isinstance(action, dict):
+        return False
+    action_keys = set(action.keys())
+    if allow_subset:
+        return action_keys <= set(keys)
+    return action_keys == set(keys)
+
+
 def _is_target_only_action(action):
-    return isinstance(action, dict) and set(action.keys()) == {'target'}
+    return _is_only_action(action, {'target'})
 
 
 def _is_duration_only_action(action):
-    return isinstance(action, dict) and set(action.keys()) == {'duration'}
+    return _is_only_action(action, {'duration'})
 
 
 def _is_multiplier_only_action(action):
     """Check if action is only a multiplier modifier."""
-    return isinstance(action, dict) and set(action.keys()) <= {'multiplier', 'per_unit', 'unit_type', 'target'}
+    return _is_only_action(action, {'multiplier', 'per_unit', 'unit_type', 'target'}, allow_subset=True)
 
 
 def _is_timing_only_action(action):
     """Check if action is only a timing modifier."""
-    return isinstance(action, dict) and set(action.keys()) == {'timing'}
+    return _is_only_action(action, {'timing'})
 
 
 def _apply_target_only_action(action, target_action):
@@ -195,43 +185,37 @@ def _attach_player_choice(result, text):
 
 
 def _extract_optional_payment(text):
+    def _create_discard_payment():
+        return {
+            'action': 'discard_to_waitroom',
+            'source': 'hand',
+            'count': 1,
+            'optional': True,
+            'text': '手札を1枚控え室に置いてもよい',
+        }
+    
+    def _create_deck_top_payment():
+        return {
+            'action': 'may_place_card',
+            'target': 'self',
+            'source': 'deck_top',
+            'optional': True,
+            'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
+        }
+    
     if '支払ってもよい' not in text and '支払った' not in text:
         if text.startswith('手札を1枚控え室に置いてもよい'):
-            return {
-                'action': 'discard_to_waitroom',
-                'source': 'hand',
-                'count': 1,
-                'optional': True,
-                'text': '手札を1枚控え室に置いてもよい',
-            }, text
+            return _create_discard_payment(), text
         if text.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
-            return {
-                'action': 'may_place_card',
-                'target': 'self',
-                'source': 'deck_top',
-                'optional': True,
-                'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
-            }, text
+            return _create_deck_top_payment(), text
         return None, text
 
     prefix, suffix = (text.split('：', 1) + [''])[:2]
     if '支払ってもよい' not in prefix and '支払った' not in prefix:
         if prefix.startswith('手札を1枚控え室に置いてもよい'):
-            return {
-                'action': 'discard_to_waitroom',
-                'source': 'hand',
-                'count': 1,
-                'optional': True,
-                'text': '手札を1枚控え室に置いてもよい',
-            }, suffix.strip() if suffix else text
+            return _create_discard_payment(), suffix.strip() if suffix else text
         if prefix.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
-            return {
-                'action': 'may_place_card',
-                'target': 'self',
-                'source': 'deck_top',
-                'optional': True,
-                'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
-            }, suffix.strip() if suffix else text
+            return _create_deck_top_payment(), suffix.strip() if suffix else text
         return None, text
 
     payment = {'optional': '支払ってもよい' in prefix, 'text': prefix.strip()}
@@ -265,6 +249,28 @@ def _note_action(text):
     return {'action': 'note', 'text': text}
 
 
+def _infer_card_type(text, default='card'):
+    """Infer card type from text."""
+    if 'メンバーカード' in text:
+        return 'member_card'
+    elif 'ライブカード' in text:
+        return 'live_card'
+    elif 'エネルギーカード' in text or 'エネルギー' in text:
+        return 'energy_card'
+    elif 'カード' in text:
+        return 'card'
+    return default
+
+
+def _infer_target(text):
+    """Infer target from text."""
+    if '相手' in text or text.startswith('自身のステージ'):
+        return 'opponent'
+    elif '自分' in text or 'このメンバー' in text:
+        return 'self'
+    return None
+
+
 def _normalize_parsed_tree(value):
     """Fill obvious defaults on parsed nodes without changing the shape."""
     if isinstance(value, dict):
@@ -282,12 +288,7 @@ def _normalize_parsed_tree(value):
                 value['resource_count'] = value['count']
         elif action == 'add_to_hand':
             if 'card_type' not in value:
-                if 'メンバーカード' in text:
-                    value['card_type'] = 'member_card'
-                elif 'ライブカード' in text:
-                    value['card_type'] = 'live_card'
-                elif 'カード' in text:
-                    value['card_type'] = 'card'
+                value['card_type'] = _infer_card_type(text)
             if 'group' not in value:
                 group_match = re.search(r'『(.+?)』', text)
                 if group_match:
@@ -296,42 +297,17 @@ def _normalize_parsed_tree(value):
             value['count'] = 1
         elif action == 'look_at_cards' and 'count' not in value:
             count_match = re.search(r'カードを(\d+)枚', text)
-            if count_match:
-                value['count'] = int(count_match.group(1))
-            else:
-                value['count'] = 1
+            value['count'] = int(count_match.group(1)) if count_match else 1
         elif action == 'place_card' and 'card_type' not in value:
-            if 'メンバーカード' in text:
-                value['card_type'] = 'member_card'
-            elif 'ライブカード' in text:
-                value['card_type'] = 'live_card'
-            elif 'エネルギー' in text:
-                value['card_type'] = 'energy_card'
-            elif 'エネルギーカード' in text:
-                value['card_type'] = 'energy_card'
-            elif 'カード' in text:
-                value['card_type'] = 'card'
-            else:
-                value['card_type'] = 'card'
+            value['card_type'] = _infer_card_type(text)
         elif action == 'deploy_to_stage':
             if 'target' not in value:
-                if '相手' in text:
-                    value['target'] = 'opponent'
-                else:
-                    value['target'] = 'self'
+                value['target'] = _infer_target(text) or 'self'
             if 'card_type' not in value:
-                if 'メンバーカード' in text:
-                    value['card_type'] = 'member_card'
-                elif 'ライブカード' in text:
-                    value['card_type'] = 'live_card'
-                elif 'エネルギーカード' in text:
-                    value['card_type'] = 'energy_card'
+                value['card_type'] = _infer_card_type(text, default='member_card')
         elif action == 'member_to_wait':
             if 'target' not in value:
-                if '相手' in text or text.startswith('自身のステージ'):
-                    value['target'] = 'opponent'
-                elif '自分' in text or 'このメンバー' in text:
-                    value['target'] = 'self'
+                value['target'] = _infer_target(text)
             if 'source' not in value:
                 value['source'] = 'stage'
         for item in value.values():
@@ -1409,6 +1385,20 @@ def parse_effect_backwards(text):
             result['amount'] = 1
         return result
 
+    if '自分のメインフェイズの間' in text and 'いずれかの領域から控え室に置かれるたび' in text and '支払ってもよい' in text:
+        result['action'] = 'pay_energy'
+        result['resource'] = 'energy'
+        result['count'] = 1
+        result['optional'] = True
+        result['timing'] = 'main_phase'
+        result['condition'] = {
+            'type': 'card_move_trigger',
+            'location': 'waitroom',
+            'trigger': 'discard_or_move',
+            'target': 'self',
+        }
+        return result
+
     if '手札の「' in text and '控え室に置いてもよい' in text:
         result['action'] = 'may_discard_to_waitroom'
         result['optional'] = True
@@ -1436,6 +1426,19 @@ def parse_effect_backwards(text):
         text = text.replace('自分のステージのメンバー1人は', '').strip('、')
         if not text:
             return result
+
+    if 'これにより控え室に置いたカードと同じグループ名を持つメンバー1人は' in text:
+        result['target'] = 'selected_member'
+        result['reference'] = 'discarded_card_group'
+        text = text.replace('これにより控え室に置いたカードと同じグループ名を持つメンバー1人は', '').strip('、')
+        if not text:
+            return result
+
+    if '下に置かれているエネルギーカードはエネルギーデッキに戻す' in text:
+        result['action'] = 'return_energy_card'
+        result['source'] = 'under_member'
+        result['card_type'] = 'energy_card'
+        return result
 
     # Check for parenthetical notes (text entirely wrapped in parentheses)
     # Handle both cases: period inside or outside parentheses
@@ -1513,10 +1516,6 @@ def parse_effect_backwards(text):
         if original_blade_match:
             result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
             result['original_blade_operator'] = '<='
-        if 'ウェイト状態の' in text:
-            result['source_state'] = 'wait'
-        if 'アクティブ状態の' in text:
-            result['source_state'] = 'active'
 
     # Extract heart type for gain_resource actions
     if result.get('action') == 'gain_resource':
@@ -1529,6 +1528,13 @@ def parse_effect_backwards(text):
             if heart_types:
                 result['heart_types'] = heart_types
 
+    # Global opponent targeting check - ensure all actions targeting opponent have target field
+    if 'target' not in result:
+        if '相手のステージ' in text or '相手の' in text:
+            result['target'] = 'opponent'
+        elif '自分のステージ' in text or '自分の' in text:
+            result['target'] = 'self'
+
     if not result:
         result['raw_text'] = text
     
@@ -1537,6 +1543,7 @@ def parse_effect_backwards(text):
 def parse_effect_context_backwards(context):
     """Parse context backwards to extract variables using utility functions."""
     variables = {}
+    # ... (rest of the code remains the same)
     
     # Extract target (self/opponent/both)
     target = _extract_condition_target(context)
@@ -2123,6 +2130,47 @@ def parse_generic_effect(text):
     # Remove leading/trailing whitespace
     text = text.strip()
     original_text = text
+
+    # Check for multi-branch cost total pattern BEFORE period split
+    # This pattern spans multiple sentences and needs to be handled as a unit
+    cost_total_match = re.search(r'(それらのカード|公開したカード|それら)のコストの合計', text)
+    if cost_total_match:
+        # Extract all cost-value branches
+        branches = []
+        # Pattern for single value: "Xの場合、Y" or "合計がXの場合、Y"
+        single_branches = re.findall(r'(?:合計が)?、?(\d+)の場合、(.+?)(?=(?:合計が)?、?\d+の場合|$)', text)
+        
+        if single_branches:
+            for cost_val, effect_text in single_branches:
+                effect_text = effect_text.rstrip('。').strip()
+                if effect_text:
+                    branch = {
+                        'cost_total': int(cost_val),
+                        'effect': parse_effect_backwards(effect_text)
+                    }
+                    branches.append(branch)
+        
+        # Pattern for multiple values: "10、20、30、40、50のいずれかの場合"
+        multi_value_match = re.search(r'(\d+、\d+(?:、\d+)*)のいずれかの場合、(.+)', text)
+        if multi_value_match:
+            values = [int(v) for v in multi_value_match.group(1).split('、')]
+            effect_text = multi_value_match.group(2).rstrip('。').strip()
+            for val in values:
+                branch = {
+                    'cost_total': val,
+                    'effect': parse_effect_backwards(effect_text)
+                }
+                branches.append(branch)
+        
+        if branches:
+            result['condition'] = {
+                'type': 'cost_total_equal',
+                'reference': cost_total_match.group(1),
+            }
+            result['cost_reference'] = True
+            result['branches'] = branches
+            result['text'] = text
+            return result
 
     # Specific "choose a player, place a live card from that player's waitroom on the bottom
     # of that player's deck, then draw" pattern.

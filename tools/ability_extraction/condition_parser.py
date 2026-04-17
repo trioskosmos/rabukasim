@@ -1,55 +1,46 @@
 ﻿"""Condition parsing for ability extraction."""
 import re
+from parser_utils import (
+    annotate_tree,
+    extract_all_quoted_names,
+    extract_group_name,
+    extract_heart_types,
+    extract_int,
+    normalize_fullwidth_digits,
+)
 
-try:
-    from .parser_utils import (
-        extract_all_quoted_names,
-        extract_group_name,
-        extract_heart_types,
-        extract_int,
-        normalize_fullwidth_digits,
-    )
-    from .tree_utils import annotate_tree
-except ImportError:
-    from parser_utils import (
-        extract_all_quoted_names,
-        extract_group_name,
-        extract_heart_types,
-        extract_int,
-        normalize_fullwidth_digits,
-    )
-    from tree_utils import annotate_tree
 
+LOCATION_PATTERNS = [
+    ('成功ライブカード置き場', 'success_live_card_zone'),
+    ('エールにより公開された', 'cheer_revealed'),
+    ('ライブカード置き場', 'live_card_zone'),
+    ('控え室', 'waitroom'),
+    ('エネルギー', 'energy'),
+    ('手札', 'hand'),
+]
 
 def _extract_location(text):
     """Extract location from condition text."""
-    if '成功ライブカード置き場' in text:
-        return 'success_live_card_zone'
-    if 'エールにより公開された' in text:
-        return 'cheer_revealed'
-    if 'ライブカード置き場' in text:
-        return 'live_card_zone'
-    if '控え室' in text:
-        return 'waitroom'
-    if 'エネルギー' in text:
-        return 'energy'
-    if '手札' in text:
-        return 'hand'
+    for pattern, location in LOCATION_PATTERNS:
+        if pattern in text:
+            return location
     if 'ライブ中の' in text or 'ライブカード' in text:
         return 'live'
     return None
 
 
+CARD_TYPE_PATTERNS = [
+    ('ブレードを持つカード', 'blade_card'),
+    ('ライブカード', 'live_card'),
+    ('メンバーカード', 'member_card'),
+    ('エネルギーカード', 'energy_card'),
+]
+
 def _extract_card_type(text):
     """Extract card type from condition text."""
-    if 'ブレードを持つカード' in text:
-        return 'blade_card'
-    if 'ライブカード' in text:
-        return 'live_card'
-    if 'メンバーカード' in text:
-        return 'member_card'
-    if 'エネルギーカード' in text:
-        return 'energy_card'
+    for pattern, card_type in CARD_TYPE_PATTERNS:
+        if pattern in text:
+            return card_type
     return None
 
 
@@ -74,13 +65,19 @@ def _extract_target(text):
     return None
 
 
+POSITION_PATTERNS = [
+    ('センターエリア', 'center'),
+    ('{{center.png|センター}}', 'center'),
+    ('左サイドエリア', 'left_side'),
+    ('【左サイド】', 'left_side'),
+    ('右サイドエリア', 'right_side'),
+    ('【右サイド】', 'right_side'),
+]
+
 def _extract_position_value(text):
-    if 'センターエリア' in text or '{{center.png|センター}}' in text:
-        return 'center'
-    if '左サイドエリア' in text or text.startswith('【左サイド】'):
-        return 'left_side'
-    if '右サイドエリア' in text or text.startswith('【右サイド】'):
-        return 'right_side'
+    for pattern, position in POSITION_PATTERNS:
+        if pattern in text or (pattern.startswith('【') and text.startswith(pattern)):
+            return position
     return None
 
 
@@ -1090,5 +1087,33 @@ def parse_condition(condition_part):
         else:
             condition['type'] = 'raw'
             condition['text'] = condition_part
+    
+    # Global exclusion check - run for ALL condition types to ensure 以外 is captured
+    if 'exclusion' not in condition:
+        if 'このメンバー以外の' in condition_part or 'このメンバー以外' in condition_part:
+            condition['exclusion'] = 'this_member'
+        elif '以外の' in condition_part:
+            # Try to extract what's being excluded
+            exclusion_match = re.search(r'([^「『]+?)以外の', condition_part)
+            if exclusion_match:
+                condition['exclusion'] = exclusion_match.group(1)
+        elif '以外' in condition_part:
+            # Generic exclusion marker
+            condition['exclusion'] = 'specified'
+    
+    # Global negation check for 持たない (does not have) patterns
+    if '持たない' in condition_part and 'negate' not in condition:
+        if condition.get('type') == 'card_presence':
+            # For card presence, set operator to absent
+            if 'operator' not in condition or condition['operator'] == 'present':
+                condition['operator'] = 'absent'
+        else:
+            # Add explicit negation marker
+            condition['negate'] = True
+    
+    # Global negation check for ない場合 (if not) patterns in presence conditions
+    if 'ない場合' in condition_part and condition.get('type') in ['card_presence', 'member_presence']:
+        if 'presence' not in condition:
+            condition['presence'] = 'absent'
     
     return annotate_tree(condition, condition_part)
