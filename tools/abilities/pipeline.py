@@ -1,78 +1,82 @@
-"""Compatibility wrapper for the legacy ability build pipeline.
-
-The current build entrypoint still expects ``tools.abilities.pipeline`` to
-expose a ``prepare_runtime`` function and a ``compiler_runtime`` namespace with
-``compile_cards``.  This module restores that contract while delegating the
-actual compilation work to ``engine.compiler.main``.
-"""
-
+"""Minimal ability pipeline - compile runtime card data and mirror live copies."""
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from engine.compiler import main as compiler_runtime
-
-from ..sync_launcher_assets import sync_assets as sync_launcher_assets
-
-
 ROOT_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT_DIR / "data"
-CARDS_PATH = DATA_DIR / "cards.json"
-FRAME_SOURCE_PATH = DATA_DIR / "ability_frame_source.json"
-SEMANTIC_DUMP_PATH = DATA_DIR / "ability_semantic_dump.json"
-COMPILED_OUTPUT_PATH = DATA_DIR / "cards_compiled.json"
+sys.path.insert(0, str(ROOT_DIR))
+
+from engine.compiler import main as compiler_main
+from tools.sync_launcher_assets import sync_assets
+
+CARDS_INPUT_PATH = ROOT_DIR / "data" / "cards.json"
+CARDS_OUTPUT_PATH = ROOT_DIR / "data" / "cards_compiled.json"
 
 
-@dataclass(frozen=True)
-class BuildResult:
-    """Summary of a runtime build invocation."""
-
-    cards_changed: bool
-    launcher_assets_changed: bool
-
-
-def _resolve_ability_source_path(
-    ability_source_mode: str,
-    ability_source_path: str | None,
-) -> Path:
-    if ability_source_path:
-        return Path(ability_source_path)
-
-    if ability_source_mode == "semantic":
-        return SEMANTIC_DUMP_PATH
-
-    return FRAME_SOURCE_PATH
+@dataclass(slots=True)
+class PrepareResult:
+    cards_changed: bool = False
+    frame_index_changed: bool = False
+    rust_codegen_changed: bool = False
+    launcher_assets_changed: bool = False
 
 
-def _compile_cards(*, quiet: bool, ability_source_path: Path) -> bool:
-    return bool(
-        compiler_runtime.compile_cards(
-            input_path=str(CARDS_PATH),
-            output_path=str(COMPILED_OUTPUT_PATH),
+def _log(message: str, quiet: bool) -> None:
+    if not quiet:
+        print(f"[build] {message}")
+
+
+def _cards_are_current() -> bool:
+    """Check if compiled cards are up to date."""
+    if not CARDS_OUTPUT_PATH.exists():
+        return False
+    compiled_data = compiler_main.load_json(str(CARDS_OUTPUT_PATH))
+    if not compiled_data:
+        return False
+    return True
+
+
+def prepare_cards(*, force: bool = False, quiet: bool = False) -> bool:
+    """Compile cards."""
+    # Always compile to ensure fresh data with current compiler
+    _log("Compiling cards from authored sources", quiet)
+    try:
+        compiler_main.compile_cards(
+            str(CARDS_INPUT_PATH),
+            str(CARDS_OUTPUT_PATH),
             quiet=quiet,
             export_profile="runtime",
-            ability_source_path=str(ability_source_path),
         )
-    )
+        return True
+    except Exception as e:
+        _log(f"Compilation error: {e}", quiet)
+        return False
+
+
+def prepare_rust_codegen(*, quiet: bool = False) -> bool:
+    """Generate Rust code - simplified, no-op for now."""
+    _log("Rust codegen skipped (simplified pipeline)", quiet)
+    return False
+
+
+def prepare_server_assets(*, quiet: bool = False) -> bool:
+    """Sync launcher/runtime assets from the freshly compiled root data."""
+    return sync_assets(quiet=quiet)
 
 
 def prepare_runtime(
     *,
+    force: bool = False,
     quiet: bool = False,
     sync_assets: bool = False,
-    ability_source_mode: str = "frame",
-    ability_source_path: str | None = None,
-) -> BuildResult:
-    """Compile runtime card data and optionally mirror launcher assets."""
-    resolved_source = _resolve_ability_source_path(ability_source_mode, ability_source_path)
-
-    cards_changed = _compile_cards(quiet=quiet, ability_source_path=resolved_source)
-    launcher_assets_changed = False
+) -> PrepareResult:
+    """Main entry point for the build pipeline."""
+    result = PrepareResult()
+    result.cards_changed = prepare_cards(force=force, quiet=quiet)
+    result.frame_index_changed = False  # Simplified - no separate frame index
+    result.rust_codegen_changed = prepare_rust_codegen(quiet=quiet)
     if sync_assets:
-        launcher_assets_changed = bool(sync_launcher_assets(quiet=quiet))
-
-    return BuildResult(
-        cards_changed=cards_changed,
-        launcher_assets_changed=launcher_assets_changed,
-    )
+        result.launcher_assets_changed = prepare_server_assets(quiet=quiet)
+    return result

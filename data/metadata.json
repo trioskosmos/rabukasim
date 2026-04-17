@@ -187,10 +187,12 @@
         "HAS_MOVED": 228,
         "HAND_INCREASED": 229,
         "COUNT_LIVE_ZONE": 230,
+        "COUNT_LIVE_HEARTS": 231,
+        "COUNT_SUCCESS_LIVE_SCORE": 232,
         "COUNT_UNIQUE_COLORS": 250,
-        "BATON": 231,
-        "TYPE_CHECK": 232,
-        "IS_IN_DISCARD": 233,
+        "BATON": 251,
+        "TYPE_CHECK": 252,
+        "IS_IN_DISCARD": 253,
         "AREA_CHECK": 234,
         "COST_LEAD": 235,
         "SCORE_LEAD": 236,
@@ -221,9 +223,7 @@
         "SUM_VALUE": 312,
         "IS_WAIT": 313,
         "ON_ABILITY_RESOLVE": 314,
-        "TARGET_MEMBER_HAS_NO_HEARTS": 315,
-        "COUNT_LIVE_HEARTS": 316,
-        "COUNT_SUCCESS_LIVE_SCORE": 317
+        "TARGET_MEMBER_HAS_NO_HEARTS": 315
     },
     "costs": {
         "ENERGY": 1,
@@ -233,6 +233,8 @@
         "SACRIFICE_SELF": 5,
         "REVEAL_HAND_ALL": 6,
         "SACRIFICE_UNDER": 7,
+        "SELECT_CARDS": 10,
+        "SELECT_MEMBER": 11,
         "DISCARD_ENERGY": 8,
         "REVEAL_HAND": 9,
         "TAP_MEMBER": 20,
@@ -439,7 +441,7 @@
         "SUCCESS_PILE": 16,
         "YELL": 17
     },
-    "packed_layout": {
+    "bytecode_layout": {
         "words": {
             "0": "OP",
             "1": "V",

@@ -444,32 +444,54 @@ def prune_empty_raw_nodes(value):
     return value
 
 def process_abilities(data):
-    """Populate structured cost/effect fields for each unique ability."""
+    """Populate structured cost/effect fields for each unique ability.
+    
+    Processing flow:
+    1. Parse cost from triggerless text
+    2. Strip trigger icons to get effect text
+    3. Extract optional payment from effect text
+    4. Split on cost delimiter (if present) to get costless effect text
+    5. Strip trailing parenthetical notes from costless text
+    6. Parse effect from cleaned costless text
+    """
     for ability in data['unique_abilities']:
+        # Step 1: Parse cost from triggerless text (triggers already removed)
         triggerless_text = ability['triggerless_text']
         ability['cost'] = parse_cost(triggerless_text)
+        
+        # Determine if this ability has no cost
         ability['costless'] = ability['cost'] is None or (
             isinstance(ability['cost'], str) and ability['cost'] == triggerless_text
         )
-        use_limitless_text = triggerless_text
-        use_limitless_text = re.sub(r'^(?:\{\{[^}]+\}\}\s*)+', '', use_limitless_text)
-        ability['use_limitless_text'] = use_limitless_text
-        payment, remaining_text = _extract_optional_payment(use_limitless_text)
+        
+        # Step 2: Strip trigger icons to get raw effect text
+        effect_text_raw = triggerless_text
+        effect_text_raw = re.sub(r'^(?:\{\{[^}]+\}\}\s*)+', '', effect_text_raw)
+        ability['use_limitless_text'] = effect_text_raw
+        
+        # Step 3: Extract optional payment from effect text
+        payment, text_after_payment = _extract_optional_payment(effect_text_raw)
         if payment:
             ability['payment'] = payment
-            costless_text = remaining_text
+            effect_text = text_after_payment
         else:
-            costless_text = use_limitless_text
-            if '??' in costless_text:
-                costless_text = costless_text.split('??', 1)[1].strip()
-            elif ':' in costless_text or '：' in costless_text:
-                # Split on delimiter to get costless_text
-                delimiter = '：' if '：' in costless_text else ':'
-                costless_text = costless_text.split(delimiter, 1)[1].strip()
-        ability['costless_text'] = costless_text
-        # Strip trailing parenthetical notes before parsing
-        costless_text_stripped = _strip_trailing_parenthetical_note(costless_text)
-        ability['effect'] = parse_generic_effect(costless_text_stripped) if costless_text_stripped else None
+            effect_text = effect_text_raw
+        
+        # Step 4: Split on cost delimiter to get costless effect text
+        if '??' in effect_text:
+            effect_text = effect_text.split('??', 1)[1].strip()
+        elif ':' in effect_text or '：' in effect_text:
+            delimiter = '：' if '：' in effect_text else ':'
+            effect_text = effect_text.split(delimiter, 1)[1].strip()
+        
+        ability['costless_text'] = effect_text
+        
+        # Step 5: Strip trailing parenthetical notes before effect parsing
+        effect_text_clean = _strip_trailing_parenthetical_note(effect_text)
+        
+        # Step 6: Parse effect from cleaned text
+        ability['effect'] = parse_generic_effect(effect_text_clean) if effect_text_clean else None
+    
     return data
 
 

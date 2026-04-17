@@ -7,9 +7,9 @@ from datetime import datetime
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT / "tools" / "ability_extraction"))
 
-from effect_parser import parse_effect
+from effect_parser import parse_generic_effect
 from condition_parser import parse_condition
-from extract_costs import extract_cost
+from extract_costs import parse_cost
 
 def main():
     cards_path = ROOT / "data" / "cards.json"
@@ -22,27 +22,26 @@ def main():
     unique_abilities = {}
     
     for card_no, card in cards.items():
-        abilities = card.get("abilities", [])
-        for idx, ability_text in enumerate(abilities):
-            if not ability_text:
-                continue
-            
-            # Create a key for deduplication
-            key = (card.get("name", ""), ability_text)
-            
-            if key not in unique_abilities:
-                unique_abilities[key] = {
-                    "full_text": ability_text,
-                    "card_count": 1,
-                    "cards": [f"{card_no} | {card.get('name', '')} (ab#{idx})"],
-                    "triggers": [],
-                    "cost": None,
-                    "costless": ability_text,
-                    "effect": {},
-                }
-            else:
-                unique_abilities[key]["card_count"] += 1
-                unique_abilities[key]["cards"].append(f"{card_no} | {card.get('name', '')} (ab#{idx})")
+        ability_text = card.get("ability")
+        if not ability_text:
+            continue
+        
+        # Create a key for deduplication
+        key = (card.get("name", ""), ability_text)
+        
+        if key not in unique_abilities:
+            unique_abilities[key] = {
+                "full_text": ability_text,
+                "card_count": 1,
+                "cards": [f"{card_no} | {card.get('name', '')}"],
+                "triggers": "",
+                "cost": None,
+                "costless": ability_text,
+                "effect": {},
+            }
+        else:
+            unique_abilities[key]["card_count"] += 1
+            unique_abilities[key]["cards"].append(f"{card_no} | {card.get('name', '')}")
     
     # Convert to list
     abilities_list = []

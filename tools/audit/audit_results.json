@@ -1,0 +1,1988 @@
+[
+  {
+    "id": "PL!-sd1-001-SD",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_SUCCESS_LIVE {MIN=2}\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-002-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-003-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nCONDITION: HAS_CHOICE\nEFFECT: COLOR_SELECT(1) -> PLAYER; SELECT_MODE(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-004-SD",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-005-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-007-SD",
+    "source": "cards.json",
+    "code": "CONDITION: HAS_LIVE_CARD\nEFFECT: SWAP_CARDS(5) -> CARD_DISCARD; DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-008-SD",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(10) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-011-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-sd1-012-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!-sd1-015-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!-sd1-016-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!-sd1-019-SD",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!-PR-003-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-PR-004-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-PR-013-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-019-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-025-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-026-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-027-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-028-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-032-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-PR-033-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-bp1-019-PR",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-003-PR",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-004-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-005-PR",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-006-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-007-PR",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-008-PR",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-009-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-010-PR",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-011-PR",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-012-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-013-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-PR-014-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-PR-009-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-PR-011-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-PR-012-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-011-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(5) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-PR-001-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-PR-002-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-PR-005-PR",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-PR-014-PR",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-PR-019-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD; ADD_HEARTS(2) -> SLOT {SELF}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-PR-020-PR",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-PR-021-PR",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD; ADD_HEARTS(2) -> SLOT {SELF}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-PR-022-PR",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "LL-bp1-001-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(3)\nEFFECT: BUFF_POWER(1) -> CARD_DISCARD; BOOST_SCORE(3) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-002-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-002-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-002-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(3) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-003-R＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-003-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-003-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-003-SEC",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-007-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-007-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-008-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-008-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-009-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD; RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-009-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD; RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-010-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-010-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-011-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: ADD_TO_HAND(1) -> CARD_DISCARD {ALL}; REVEAL_CARDS(1) -> CARD_DISCARD {ALL}; ADD_TO_HAND(1) -> CARD_DISCARD {ALL}; SWAP_CARDS(1) -> CARD_DISCARD {ALL}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-011-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: ADD_TO_HAND(1) -> CARD_DISCARD {ALL}; REVEAL_CARDS(1) -> CARD_DISCARD {ALL}; ADD_TO_HAND(1) -> CARD_DISCARD {ALL}; SWAP_CARDS(1) -> CARD_DISCARD {ALL}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-012-R＋",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_LIVE_ZONE {MIN=3}, COUNT_GROUP {MIN=1, GROUP_ID=2}\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-012-P",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_LIVE_ZONE {MIN=3}, COUNT_GROUP {MIN=1, GROUP_ID=2}\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-012-P＋",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_LIVE_ZONE {MIN=3}, COUNT_GROUP {MIN=1, GROUP_ID=2}\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-012-SEC",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_LIVE_ZONE {MIN=3}, COUNT_GROUP {MIN=1, GROUP_ID=2}\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-014-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-015-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp1-019-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-005-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-005-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-007-R＋",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-007-P",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-007-P＋",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-007-SEC",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-009-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-009-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-010-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-010-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-011-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-011-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp1-012-N",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-002-R",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-bp1-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!HS-bp1-003-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-003-P",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-003-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-003-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; BOOST_SCORE(1) -> PLAYER\n\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-004-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-004-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-004-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-004-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-006-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-006-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-006-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-006-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-008-R",
+    "source": "cards.json",
+    "code": "CONDITION: GROUP_FILTER\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD; DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-008-P",
+    "source": "cards.json",
+    "code": "CONDITION: GROUP_FILTER\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD; DRAW(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-009-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-009-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-010-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-011-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp1-014-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-sd1-001-SD",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-002-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-003-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-005-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-006-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-007-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-009-SD",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-010-SD",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ADD_HEARTS(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-011-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-013-SD",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-021-SD",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!N-sd1-022-SD",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!SP-sd1-005-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-sd1-006-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-sd1-007-SD",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-sd1-008-SD",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-sd1-009-SD",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_ENERGY {MIN=9}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-sd1-017-SD",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-001-R",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-001-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-011-R",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-011-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-015-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-016-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-017-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-018-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-pb1-021-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp2-002-R",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-004-R",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-004-P",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-005-R＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-005-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-005-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-005-SEC",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-006-R",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-006-P",
+    "source": "cards.json",
+    "code": "EFFECT: PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-007-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_HAND\n\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-007-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_HAND\n\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-007-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_HAND\n\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-007-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_HAND\n\nEFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-008-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-008-P",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-008-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-008-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD\n\nCONDITION: COUNT_GROUP {MIN=1, GROUP_ID=1}, COUNT_STAGE {MIN=1}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nEFFECT: BOOST_SCORE(2) -> PLAYER; BUFF_POWER(1) -> PLAYER",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-009-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-009-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-010-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!S-bp2-016-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp2-024-L",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-001-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: NEGATE_EFFECT(1) -> PLAYER {ALL}\n\nEFFECT: NEGATE_EFFECT(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-001-P",
+    "source": "cards.json",
+    "code": "EFFECT: NEGATE_EFFECT(1) -> PLAYER {ALL}\n\nEFFECT: NEGATE_EFFECT(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-001-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: NEGATE_EFFECT(1) -> PLAYER {ALL}\n\nEFFECT: NEGATE_EFFECT(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-001-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: NEGATE_EFFECT(1) -> PLAYER {ALL}\n\nEFFECT: NEGATE_EFFECT(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-002-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-005-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-005-P",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-006-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; ADD_TO_HAND(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; TRIGGER_REMOTE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-006-P",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; ADD_TO_HAND(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; TRIGGER_REMOTE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-006-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; ADD_TO_HAND(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; TRIGGER_REMOTE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-006-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; ADD_TO_HAND(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; TRIGGER_REMOTE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-007-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-007-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-009-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> CARD_HAND; ADD_BLADES(1) -> CARD_HAND\n\nEFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-009-P",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> CARD_HAND; ADD_BLADES(1) -> CARD_HAND\n\nEFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-009-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> CARD_HAND; ADD_BLADES(1) -> CARD_HAND\n\nEFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-009-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> CARD_HAND; ADD_BLADES(1) -> CARD_HAND\n\nEFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-013-N",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-014-N",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp2-018-N",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-001-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-001-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-002-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-002-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-002-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-003-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-003-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-004-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-004-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-007-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-007-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-007-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-007-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-010-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-011-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(5) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-012-N",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-013-N",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-015-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-016-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-bp2-018-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "LL-bp2-001-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: REDUCE_COST(1) -> CARD_HAND\n\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nCOST: DISCARD_HAND(1)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-004-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-004-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-013-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-014-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-015-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: COUNT_HEARTS {MIN=2}\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-pb1-024-L",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-001-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-001-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-003-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-003-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-004-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-007-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; LOOK_AND_CHOOSE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-007-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; LOOK_AND_CHOOSE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-008-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ADD_HEARTS(2) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-008-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ADD_HEARTS(2) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-008-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ADD_HEARTS(2) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-008-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ADD_HEARTS(2) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-010-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-014-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-017-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-018-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-003-R＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: DRAW(3) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-003-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: DRAW(3) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-003-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: DRAW(3) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-003-SEC",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: DRAW(3) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; BUFF_POWER(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-004-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-004-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-006-R＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: IS_CENTER\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-006-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: IS_CENTER\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-006-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: IS_CENTER\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-006-SEC",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: IS_CENTER\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-008-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-008-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-009-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-009-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-020-L",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!S-bp3-021-L",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> CARD_DISCARD; MOVE_TO_DECK(1) -> CARD_DISCARD; ADD_BLADES(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-003-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-003-P",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER\n\nEFFECT: TRIGGER_REMOTE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-004-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-004-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-012-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-012-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-022-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-024-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp3-028-L",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD; REVEAL_CARDS(1) -> CARD_DISCARD; REVEAL_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-001-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: HAS_CHOICE\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD {ALL}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-001-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nCONDITION: HAS_CHOICE\nEFFECT: SWAP_CARDS(1) -> CARD_DISCARD {ALL}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-007-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(3)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-007-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(3)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-016-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-016-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-017-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-017-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-019-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-024-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-025-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-pb1-030-L",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_GROUP {MIN=2, GROUP_ID=99}, COUNT_STAGE {MIN=2}\nEFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-002-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: ADD_HEARTS(2) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: ADD_HEARTS(2) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-002-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: ADD_HEARTS(2) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-002-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: ADD_HEARTS(2) -> PLAYER\n\nCOST: DISCARD_HAND(2)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-003-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-003-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-005-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nCONDITION: COUNT_BLADES {MIN=5}, IS_CENTER\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-005-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nCONDITION: COUNT_BLADES {MIN=5}, IS_CENTER\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-005-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nCONDITION: COUNT_BLADES {MIN=5}, IS_CENTER\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-005-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD\n\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nCONDITION: COUNT_BLADES {MIN=5}, IS_CENTER\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-006-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp4-006-P",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-010-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: LOOK_AND_CHOOSE(1) -> PLAYER\n\nEFFECT: ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-010-P",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: LOOK_AND_CHOOSE(1) -> PLAYER\n\nEFFECT: ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-010-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: LOOK_AND_CHOOSE(1) -> PLAYER\n\nEFFECT: ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-010-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: LOOK_AND_CHOOSE(1) -> PLAYER\n\nEFFECT: ADD_HEARTS(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-011-R＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER\n\nCONDITION: COUNT_GROUP {MIN=3, GROUP_ID=2}\nEFFECT: SWAP_CARDS(5) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-011-P",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER\n\nCONDITION: COUNT_GROUP {MIN=3, GROUP_ID=2}\nEFFECT: SWAP_CARDS(5) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-011-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER\n\nCONDITION: COUNT_GROUP {MIN=3, GROUP_ID=2}\nEFFECT: SWAP_CARDS(5) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-011-SEC",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: COLOR_SELECT(1) -> PLAYER; ADD_HEARTS(1) -> PLAYER\n\nCONDITION: COUNT_GROUP {MIN=3, GROUP_ID=2}\nEFFECT: SWAP_CARDS(5) -> CARD_DISCARD; RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-016-N",
+    "source": "cards.json",
+    "code": "EFFECT: SWAP_CARDS(2) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-017-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-018-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-020-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-021-N",
+    "source": "cards.json",
+    "code": "EFFECT: MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-bp4-023-N",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-002-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-002-P",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-003-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-003-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-004-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: BATON_TOUCH_MOD(2) -> PLAYER\n\nEFFECT: DRAW(2) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-004-P",
+    "source": "cards.json",
+    "code": "EFFECT: BATON_TOUCH_MOD(2) -> PLAYER\n\nEFFECT: DRAW(2) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-004-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: BATON_TOUCH_MOD(2) -> PLAYER\n\nEFFECT: DRAW(2) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-004-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: BATON_TOUCH_MOD(2) -> PLAYER\n\nEFFECT: DRAW(2) -> CARD_DISCARD; PLAY_MEMBER_FROM_HAND(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-007-R",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-007-P",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_LIVE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-008-R＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER\n\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-008-P",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER\n\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-008-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER\n\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-008-SEC",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD\n\nEFFECT: ACTIVATE_MEMBER(1) -> PLAYER\n\nEFFECT: MOVE_MEMBER(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-015-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-019-N",
+    "source": "cards.json",
+    "code": "EFFECT: RECOVER_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!SP-bp4-026-L",
+    "source": "cards.json",
+    "code": "CONDITION: COUNT_GROUP {MIN=5, GROUP_ID=3}\nEFFECT: BOOST_SCORE(1) -> PLAYER\n\nCONDITION: COUNT_ENERGY {MIN=11}\nEFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-001-R",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-001-P＋",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD\n\nEFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-004-R",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: REVEAL_CARDS(1) -> PLAYER\n\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-004-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: REVEAL_CARDS(1) -> PLAYER\n\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-010-R",
+    "source": "cards.json",
+    "code": "CONDITION: HAS_CHOICE\nEFFECT: SELECT_MODE(1) -> CARD_DISCARD; ACTIVATE_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-010-P＋",
+    "source": "cards.json",
+    "code": "CONDITION: HAS_CHOICE\nEFFECT: SELECT_MODE(1) -> CARD_DISCARD; ACTIVATE_MEMBER(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-011-R",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD; MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-011-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: BUFF_POWER(1) -> PLAYER; ADD_BLADES(1) -> PLAYER\n\nEFFECT: RECOVER_LIVE(1) -> CARD_DISCARD; MOVE_TO_DECK(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-014-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-014-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-016-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-016-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-018-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-018-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-019-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-019-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-020-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-020-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-021-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-021-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-022-R",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-022-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: DRAW(2) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-024-R",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-024-P＋",
+    "source": "cards.json",
+    "code": "EFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-028-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!N-pb1-035-N",
+    "source": "cards.json",
+    "code": "COST: DISCARD_HAND(1)\nEFFECT: LOOK_AND_CHOOSE(1) -> CARD_DISCARD; SWAP_CARDS(1) -> CARD_DISCARD",
+    "in_manual": false
+  },
+  {
+    "id": "PL!-bp3-007-P",
+    "source": "manual_pseudocode.json",
+    "code": "TRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(2)\nEFFECT: LOOK_AND_CHOOSE(1) {COUNT=3} -> CARD_HAND; LOOK_AND_CHOOSE(1) {COUNT=2} -> DECK_TOP; MOVE_TO_DISCARD(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!-bp3-007-R",
+    "source": "manual_pseudocode.json",
+    "code": "TRIGGER: ON_LIVE_START\nCOST: DISCARD_HAND(2)\nEFFECT: LOOK_AND_CHOOSE(1) {COUNT=3} -> CARD_HAND; LOOK_AND_CHOOSE(1) {COUNT=2} -> DECK_TOP; MOVE_TO_DISCARD(1) -> CARD_DISCARD",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-PR-019-PR",
+    "source": "manual_pseudocode.json",
+    "code": "TRIGGER: ON_PLAY\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD; ADD_HEARTS(2) -> SLOT {SELF}",
+    "in_manual": true
+  },
+  {
+    "id": "PL!HS-PR-021-PR",
+    "source": "manual_pseudocode.json",
+    "code": "TRIGGER: ON_PLAY\nEFFECT: SWAP_CARDS(3) -> CARD_DISCARD; ADD_HEARTS(2) -> SLOT {SELF}",
+    "in_manual": true
+  }
+]

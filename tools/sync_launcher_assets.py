@@ -73,16 +73,6 @@ def sync_assets(*, quiet: bool = False):
     else:
         log(f"WARNING: {COMPILED_SRC} not found!")
 
-    FRAME_SOURCE_SRC = os.path.join(ROOT, "data", "ability_frame_source.json")
-    if os.path.exists(FRAME_SOURCE_SRC):
-        frame_source_dst = os.path.join(DATA_DEST, "ability_frame_source.json")
-        if not os.path.exists(frame_source_dst) or os.path.getmtime(FRAME_SOURCE_SRC) > os.path.getmtime(frame_source_dst) or os.path.getsize(FRAME_SOURCE_SRC) != os.path.getsize(frame_source_dst):
-            shutil.copy2(FRAME_SOURCE_SRC, frame_source_dst)
-            changed = True
-        log(f"Synced ability_frame_source.json to {DATA_DEST}")
-    else:
-        log(f"WARNING: {FRAME_SOURCE_SRC} not found!")
-
     # 2. Smart Sync Images
     IMG_DEST = os.path.join(LAUNCH_DEST, "img")
     log(f"Syncing Images -> {IMG_DEST} (Filtering for WebP/Icons)")

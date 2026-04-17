@@ -659,6 +659,39 @@ def parse_effect_backwards(text):
     if payment:
         result['payment'] = payment
 
+    # Check for choose heart color pattern BEFORE condition split to preserve full context
+    if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
+        # Check for duration
+        duration = None
+        if 'ライブ終了時まで、' in text:
+            duration = 'until_end_of_live'
+            text = text.replace('ライブ終了時まで、', '').strip()
+        elif 'ライブ終了時まで' in text:
+            duration = 'until_end_of_live'
+            text = text.replace('ライブ終了時まで', '').strip()
+        
+        result['actions'] = [
+            {
+                'action': 'choose_heart_color',
+                'choice': True,
+                'count': 1,
+                'text': '好きなハートの色を1つ指定する',
+            },
+            {
+                'action': 'gain_resource',
+                'resource': 'heart',
+                'resource_count': 1,
+                'count': 1,
+                'source': 'chosen_heart',
+                'text': 'そのハートを1つ得る',
+            },
+        ]
+        # Add duration to the gain_resource action if present
+        if duration:
+            result['actions'][1]['duration'] = duration
+            result['duration'] = duration
+        return result
+
     condition_part, action_part = _split_leading_condition_clause(text)
     if condition_part and action_part:
         condition = parse_condition(condition_part)
@@ -692,37 +725,6 @@ def parse_effect_backwards(text):
             result['count'] = _normalized_int(count_match.group(1))
         return result
 
-    if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
-        # Check for duration
-        duration = None
-        if 'ライブ終了時まで、' in text:
-            duration = 'until_end_of_live'
-            text = text.replace('ライブ終了時まで、', '').strip()
-        elif 'ライブ終了時まで' in text:
-            duration = 'until_end_of_live'
-            text = text.replace('ライブ終了時まで', '').strip()
-        
-        result['actions'] = [
-            {
-                'action': 'choose_heart_color',
-                'choice': True,
-                'count': 1,
-                'text': '好きなハートの色を1つ指定する',
-            },
-            {
-                'action': 'gain_resource',
-                'resource': 'heart',
-                'resource_count': 1,
-                'count': 1,
-                'source': 'chosen_heart',
-                'text': 'そのハートを1つ得る',
-            },
-        ]
-        # Add duration to the gain_resource action if present
-        if duration:
-            result['actions'][1]['duration'] = duration
-        return result
-    
     # Check for blade transformation pattern (e.g., "すべて[青ブレード]になる")
     if 'すべて' in text and 'になる' in text:
         blade_match = re.search(r'すべて\[([^\]]+)\]になる', text)
@@ -1370,6 +1372,9 @@ def parse_effect_backwards(text):
         else:
             result['action'] = 'add_score'
         result['amount'] = int(score_match.group(1).translate(str.maketrans("０１２３４５６７８９", "0123456789")))
+        # Check if it's a live score bonus
+        if 'ライブのスコア' in text or 'ライブスコア' in text:
+            result['target'] = 'live_score'
         return result
     
     # Check for score pattern without "する" (+N)
@@ -3152,13 +3157,24 @@ def parse_generic_effect(text):
         if not text:
             return result
     
-    # Check for cost reduction pattern (e.g., "コストは1減る")
-    cost_reduction_match = re.search(r'コストは(\d+)減る', text)
+    # Check for "～かぎり" (as long as) condition pattern before action
+    kagiri_match = re.search(r'(.+?)かぎり、(.+)', text)
+    if kagiri_match:
+        condition_text = kagiri_match.group(1).strip()
+        action_text = kagiri_match.group(2).strip()
+        _assign_condition(result, condition_text)
+        text = action_text  # Continue parsing the action part
+    
+    # Check for cost reduction pattern (e.g., "コストは1減る", "手札にあるこのメンバーカードのコストは2減る")
+    cost_reduction_match = re.search(r'コスト[はが](\d+)減る', text)
     if cost_reduction_match:
         result['action'] = {
             'action': 'reduce_cost',
             'amount': int(cost_reduction_match.group(1))
         }
+        # Check if it's hand-based reduction
+        if '手札' in text:
+            result['source'] = 'hand'
         return result
 
     # Check for resource-specific reduction pattern (e.g., "{{icon_energy.png|E}}減る")

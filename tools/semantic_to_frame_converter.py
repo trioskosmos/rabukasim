@@ -113,6 +113,8 @@ SEMANTIC_TO_OPCODE: Dict[str, str] = {
     "set_state": "SET_TAPPED",
     "heart_cost_modifier": "SET_HEART_COST",
     "reduce_score": "SET_SCORE",
+    "choose_heart_color": "META_RULE",
+    "activate_ability": "GRANT_ABILITY",
     "return_energy_card": "ENERGY_CHARGE",
     "selected_discarded_member_card": "SELECT_CARDS",
     "rotate_areas": "SWAP_AREA",
@@ -169,6 +171,9 @@ def map_zone(zone: str) -> str:
 
 def map_trigger(japanese_trigger: str) -> tuple[str, int]:
     """Map Japanese trigger to (English constant, ID)."""
+    if japanese_trigger is None:
+        return ("ACTIVATED", 7)
+    
     # Handle comma-separated multiple triggers
     if "," in japanese_trigger:
         japanese_trigger = japanese_trigger.split(",")[0].strip()
@@ -385,6 +390,10 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
 
     if action_name in {"note", "whenever_trigger"}:
         return None, idx
+    
+    # Skip empty action names
+    if not action_name:
+        return None, idx
 
     opcode = SEMANTIC_TO_OPCODE.get(action_name)
     if opcode is None:
@@ -566,6 +575,14 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         else:
             frame["op"] = "REDUCE_COST"
         frame["slot"] = {"target_slot": "CONTEXT"}
+        
+        # Handle hand-based cost reduction (e.g., "reduce by 1 per other hand card")
+        if payload.get("source") == "hand" or "手札" in str(payload.get("text", "")):
+            frame["attr"]["zone_mask"] = "HAND"
+            # If this is per-card reduction, add filter to exclude self
+            if payload.get("per_card") or "枚につき" in str(payload.get("text", "")) or "枚ごと" in str(payload.get("text", "")):
+                frame["attr"]["not_self"] = 1
+        
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
             frame["attr"]["group_id"] = _group_id(payload["group"])
@@ -1155,7 +1172,7 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
             i += 1
             continue
 
-        if isinstance(action, dict) and action.get("action") in {"play_member_from_hand", "deploy_to_stage", "may_deploy_to_stage"}:
+        if isinstance(action, dict) and isinstance(action.get("action"), str) and action.get("action") in {"play_member_from_hand", "deploy_to_stage", "may_deploy_to_stage"}:
             value = action.get("count", 1)
             cost_limit = action.get("cost_limit")
             text = str(action.get("text", "") or effect_text)
@@ -1296,6 +1313,9 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
         frames.extend(cost_frames)
     
     # Convert effect actions
+    # Effect parser returns single action, frame converter expects array
+    if "actions" not in effect_data and "action" in effect_data:
+        effect_data = {"actions": [effect_data]}
     effect_frames, frame_index = convert_effect_to_frames(effect_data, frame_index)
     frames.extend(effect_frames)
     
