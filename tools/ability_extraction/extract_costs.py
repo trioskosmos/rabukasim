@@ -104,109 +104,48 @@ def _annotate_text(value, text):
     return value
 
 
-def _extract_member_to_waitroom_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'stage',
-        'destination': 'waitroom',
-        'target': 'this_member' if 'このメンバー' in text else 'member',
-        'optional': parse_optional_flag(text, ['置いてもよい', 'でもよい']),
-        'count': _extract_member_count(text),
-        'exclude_member': extract_quoted_name(text) if '以外' in text else None,
-        'group': extract_group_name(text),
+def _build_move_cost(text, *, source, destination, cost_type='move_cards', **kwargs):
+    """Generic cost builder for card movement costs."""
+    result = {
+        'type': cost_type,
+        'source': source,
+        'destination': destination,
+        'count': extract_count(text) or kwargs.get('default_count', 1),
     }
-
-
-def _extract_member_to_wait_cost(text):
-    max_count = _extract_max_people_count(text)
-    return {
-        'type': 'move_cards',
-        'source': 'stage',
-        'destination': 'wait',
-        'target': 'member' if 'このメンバー以外' in text else ('this_member' if 'このメンバー' in text else 'member'),
-        'optional': parse_optional_flag(text, ['でもよい', 'ウェイトにしてもよい']),
-        'count': _extract_member_count(text, default=max_count or 1),
-        'max': max_count is not None,
-        'group': extract_group_name(text),
-        'exclude_member': True if 'このメンバー以外' in text else None,
-    }
-
-
-def _extract_reveal_cost(text):
-    return {
-        'type': 'reveal_cards',
-        'source': 'hand',
-        'optional': parse_optional_flag(text, ['でもよい', '公開してもよい']),
-        'card_type': _extract_card_type(text),
-        'group': extract_group_name(text),
-        'count': 'all' if 'すべて' in text else (extract_count(text) or 'any'),
-    }
-
-
-def _extract_energy_to_member_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'energy_zone',
-        'destination': 'member_under',
-        'target': 'this_member',
-        'card_type': 'energy_card',
-        'count': extract_count(text) or 1,
-    }
-
-
-def _extract_energy_to_energy_deck_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'energy_zone',
-        'destination': 'energy_deck',
-        'card_type': 'energy_card',
-        'count': extract_count(text) or 1,
-    }
-
-
-def _extract_waitroom_to_deck_bottom_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'waitroom',
-        'destination': 'deck_bottom',
-        'count': extract_count(text) or 1,
-        'card_type': _extract_card_type(text, default='card'),
-        'optional': parse_optional_flag(text, ['でもよい', '置いてもよい']),
-        'order': 'any' if '好きな順番' in text else None,
-    }
-
-
-def _extract_hand_to_deck_bottom_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'hand',
-        'destination': 'deck_bottom',
-        'count': extract_count(text) or 1,
-        'card_type': _extract_card_type(text, default='card'),
-        'optional': parse_optional_flag(text, ['でもよい', '置いてもよい']),
-    }
-
-
-def _extract_discard_from_hand_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'hand',
-        'destination': 'waitroom',
-        'count': extract_count(text) or 1,
-        'optional': parse_optional_flag(text, ['置いてもよい', 'でもよい', '支払ってもよい']),
-        'card_type': _extract_card_type(text),
-        'group': extract_group_name(text),
-    }
-
-
-def _extract_discard_from_deck_cost(text):
-    return {
-        'type': 'move_cards',
-        'source': 'deck',
-        'destination': 'waitroom',
-        'count': extract_count(text) or 1,
-        'optional': parse_optional_flag(text, ['でもよい', '支払ってもよい']),
-    }
+    # Add optional fields based on context
+    if 'このメンバー' in text:
+        result['target'] = "this_member"
+        if 'このメンバー以外' in text:
+            result['exclude_member'] = True
+        elif '以外' in text:
+            result['exclude_member'] = extract_quoted_name(text)
+        if 'ウェイト' in text:
+            result['destination'] = 'wait'
+        max_count = _extract_max_people_count(text) if '人まで' in text else None
+        if max_count:
+            result['count'] = _extract_member_count(text, default=max_count)
+            result['max'] = True
+        else:
+            result['count'] = _extract_member_count(text) if 'メンバー' in text else result['count']
+    if 'hand' in source or '公開' in text:
+        result['optional'] = parse_optional_flag(text, ['置いてもよい', 'でもよい', '公開してもよい', '支払ってもよい'])
+    if 'カード' in text or 'card_type' in kwargs:
+        result['card_type'] = _extract_card_type(text) or kwargs.get('card_type') or kwargs.get('default_card_type', 'card')
+    if 'エネルギー' in text or 'energy' in source or 'energy' in destination:
+        result['card_type'] = 'energy_card'
+    if '『' in text:
+        result['group'] = extract_group_name(text)
+    if '好きな順番' in text:
+        result['order'] = 'any'
+    if 'すべて' in text:
+        result['count'] = 'all'
+    # Override with any explicit kwargs, but don't override target if already set
+    for k, v in kwargs.items():
+        if v is not None and k not in ('default_count', 'default_card_type', 'card_type'):
+            if k == 'target' and 'target' in result:
+                continue  # Don't override target if already set by logic
+            result[k] = v
+    return result
 
 
 COST_RULES = (
@@ -219,11 +158,19 @@ COST_RULES = (
         notes='Counts explicit energy icons before any text-based cost parsing.',
     ),
     CostRule(
+        name='this_member_to_waitroom',
+        output_key='member_to_waitroom',
+        priority=25,
+        matches=lambda text: has_any(text, ['このメンバーをステージから控え室に置く']),
+        extract=lambda text: _build_move_cost(text, source='stage', destination='waitroom', target='this_member'),
+        notes='Self-discard cost with this_member target.',
+    ),
+    CostRule(
         name='member_to_waitroom',
         output_key='member_to_waitroom',
         priority=20,
         matches=lambda text: has_any(text, ['ステージから控え室に置']),
-        extract=_extract_member_to_waitroom_cost,
+        extract=lambda text: _build_move_cost(text, source='stage', destination='waitroom'),
         notes='Specific stage-to-waitroom movement should win over generic discard rules.',
     ),
     CostRule(
@@ -231,56 +178,56 @@ COST_RULES = (
         output_key='member_to_wait',
         priority=30,
         matches=lambda text: has_any(text, ['ウェイトにする', 'ウェイトにしてもよい']),
-        extract=_extract_member_to_wait_cost,
+        extract=lambda text: _build_move_cost(text, source='stage', destination='wait'),
     ),
     CostRule(
         name='reveal',
         output_key='reveal',
         priority=40,
         matches=lambda text: '手札' in text and has_any(text, ['公開する', '公開してもよい', '公開し']),
-        extract=_extract_reveal_cost,
+        extract=lambda text: _build_move_cost(text, source='hand', destination=None, cost_type='reveal_cards', default_count='any'),
     ),
     CostRule(
         name='energy_to_member',
         output_key='energy_to_member',
         priority=50,
         matches=lambda text: 'エネルギー置き場' in text and 'このメンバーの下に置く' in text,
-        extract=_extract_energy_to_member_cost,
+        extract=lambda text: _build_move_cost(text, source='energy_zone', destination='member_under', target='this_member', card_type='energy_card'),
     ),
     CostRule(
         name='energy_to_energy_deck',
         output_key='energy_to_energy_deck',
         priority=60,
         matches=lambda text: 'エネルギーデッキ' in text and '置く' in text,
-        extract=_extract_energy_to_energy_deck_cost,
+        extract=lambda text: _build_move_cost(text, source='energy_zone', destination='energy_deck', card_type='energy_card'),
     ),
     CostRule(
         name='waitroom_to_deck_bottom',
         output_key='waitroom_to_deck_bottom',
         priority=70,
         matches=lambda text: '控え室' in text and has_any(text, ['デッキの一番下に置く', 'デッキの一番下に置いてもよい']),
-        extract=_extract_waitroom_to_deck_bottom_cost,
+        extract=lambda text: _build_move_cost(text, source='waitroom', destination='deck_bottom', default_card_type='card'),
     ),
     CostRule(
         name='hand_to_deck_bottom',
         output_key='hand_to_deck_bottom',
         priority=80,
         matches=lambda text: '手札' in text and has_any(text, ['デッキの一番下に置く', 'デッキの一番下に置いてもよい']),
-        extract=_extract_hand_to_deck_bottom_cost,
+        extract=lambda text: _build_move_cost(text, source='hand', destination='deck_bottom', default_card_type='card'),
     ),
     CostRule(
         name='discard_from_hand',
         output_key='discard_from_hand',
         priority=90,
         matches=lambda text: '手札' in text and has_any(text, ['控え室に置く', '控え室に置いてもよい']),
-        extract=_extract_discard_from_hand_cost,
+        extract=lambda text: _build_move_cost(text, source='hand', destination='waitroom'),
     ),
     CostRule(
         name='discard_from_deck',
         output_key='discard_from_deck',
         priority=100,
         matches=lambda text: 'デッキ' in text and '控え室に置く' in text,
-        extract=_extract_discard_from_deck_cost,
+        extract=lambda text: _build_move_cost(text, source='deck', destination='waitroom'),
     ),
 )
 

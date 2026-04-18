@@ -1025,10 +1025,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -1184,10 +1191,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -1356,9 +1370,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "DRAW",
@@ -1494,9 +1516,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "DRAW",
@@ -1880,10 +1910,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -1967,10 +2004,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -2693,7 +2737,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -2787,7 +2831,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -3056,9 +3100,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "RECOVER_LIVE",
@@ -3181,9 +3233,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "RECOVER_LIVE",
@@ -3306,9 +3366,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "RECOVER_LIVE",
@@ -3431,9 +3499,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "RECOVER_LIVE",
@@ -3556,14 +3632,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -3602,28 +3679,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
-              },
-              {
-                "op": "SELECT_MODE",
-                "frame_index": 1,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 5
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 5
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COLOR_SELECT",
-                "frame_index": 4,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -3634,13 +3704,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -3701,14 +3766,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -3747,28 +3813,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
-              },
-              {
-                "op": "SELECT_MODE",
-                "frame_index": 1,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 5
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 5
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COLOR_SELECT",
-                "frame_index": 4,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -3779,13 +3838,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -3846,14 +3900,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -3892,28 +3947,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
-              },
-              {
-                "op": "SELECT_MODE",
-                "frame_index": 1,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 5
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 5
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COLOR_SELECT",
-                "frame_index": 4,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -3924,13 +3972,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -3991,14 +4034,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -4037,28 +4081,21 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
-              },
-              {
-                "op": "SELECT_MODE",
-                "frame_index": 1,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 5
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 5
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COLOR_SELECT",
-                "frame_index": 4,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4069,13 +4106,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 5,
-                "value": 3
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4236,23 +4268,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4263,13 +4280,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -4278,7 +4290,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4339,23 +4351,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4366,13 +4363,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -4381,7 +4373,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4442,23 +4434,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4469,13 +4446,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -4484,7 +4456,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4545,23 +4517,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4572,13 +4529,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -4587,7 +4539,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4648,23 +4600,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -4675,13 +4612,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -4690,7 +4622,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -4751,10 +4683,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -4930,10 +4869,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -5023,10 +4969,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -7404,10 +7357,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -7849,10 +7809,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -11077,23 +11044,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -11104,13 +11056,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -11119,7 +11066,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -12024,10 +11971,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -12133,10 +12087,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -12422,10 +12383,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -12554,10 +12522,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -12686,10 +12661,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -12771,10 +12753,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -14176,11 +14165,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "BiBi",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに名前の異なる『BIBI』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -14267,11 +14258,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "BiBi",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに名前の異なる『BIBI』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -15306,10 +15299,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -15318,8 +15318,27 @@
                 "value": 1
               },
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
+                "value": "Printemps",
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "カードを1枚引く。その後、このメンバーが『PRINTEMPS』のメンバーからバトンタッチして登場していないかぎり"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 4,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
@@ -15332,7 +15351,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -15393,10 +15412,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -15405,8 +15431,27 @@
                 "value": 1
               },
               {
-                "op": "MOVE_TO_DISCARD",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
+                "value": "Printemps",
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "カードを1枚引く。その後、このメンバーが『PRINTEMPS』のメンバーからバトンタッチして登場していないかぎり"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 3,
+                "value": 1
+              },
+              {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": 4,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
@@ -15419,7 +15464,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 5
               }
             ]
           },
@@ -16391,23 +16436,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -16418,13 +16448,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 7
+                "frame_index": 3
               }
             ]
           },
@@ -18844,8 +18869,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -18924,8 +18948,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -19091,8 +19114,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -19171,8 +19193,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -20098,11 +20119,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "HASUNOSORA"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -20213,11 +20236,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "HASUNOSORA"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -20328,11 +20353,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "HASUNOSORA"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -20443,11 +20470,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "HASUNOSORA"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -21938,8 +21967,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -22029,8 +22057,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -24651,7 +24678,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "スリーズブーケ",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -24783,7 +24810,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "スリーズブーケ",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -24915,7 +24942,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "スリーズブーケ",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -25047,7 +25074,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "スリーズブーケ",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -25179,7 +25206,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "DOLLCHESTRA",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -25258,7 +25285,7 @@
               {
                 "op": "BATON",
                 "frame_index": 0,
-                "value": 0,
+                "value": "DOLLCHESTRA",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -25350,7 +25377,7 @@
               {
                 "op": "BATON",
                 "frame_index": 2,
-                "value": 0,
+                "value": "みらくらぱーく！",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -25442,7 +25469,7 @@
               {
                 "op": "BATON",
                 "frame_index": 2,
-                "value": 0,
+                "value": "みらくらぱーく！",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -26784,8 +26811,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_HEARTS",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
+                "value": 3,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -26794,7 +26838,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -26907,8 +26951,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_HEARTS",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
+                "value": 3,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -26917,7 +26978,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -27030,8 +27091,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_HEARTS",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
+                "value": 3,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -27040,7 +27118,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -27153,8 +27231,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "ADD_HEARTS",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
+                "value": 3,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "ADD_HEARTS",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -27163,7 +27258,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -27830,7 +27925,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -27901,7 +27996,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -27972,7 +28067,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -28662,7 +28757,7 @@
               {
                 "op": "HAS_MEMBER",
                 "frame_index": 0,
-                "value": 0,
+                "value": "EdelNote",
                 "attr": {
                   "target_player": "SELF",
                   "card_type": "MEMBER"
@@ -28800,7 +28895,7 @@
               {
                 "op": "HAS_MEMBER",
                 "frame_index": 0,
-                "value": 0,
+                "value": "EdelNote",
                 "attr": {
                   "target_player": "SELF",
                   "card_type": "MEMBER"
@@ -28938,7 +29033,7 @@
               {
                 "op": "HAS_MEMBER",
                 "frame_index": 0,
-                "value": 0,
+                "value": "EdelNote",
                 "attr": {
                   "target_player": "SELF",
                   "card_type": "MEMBER"
@@ -29531,8 +29626,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -30049,7 +30143,7 @@
                   "target_player": "SELF",
                   "zone_mask": "Guest+Friend",
                   "group_enabled": 1,
-                  "group_id": "HASUNOSORA"
+                  "group_id": "蓮ノ空"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -30257,13 +30351,11 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_GROUP",
+                "op": "BATON",
                 "frame_index": 0,
                 "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "徒町小鈴」以外の『蓮ノ空』のメンバーからバトンタッチして登場した場合"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -30617,23 +30709,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -30645,19 +30722,14 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "SELECT_MEMBER",
-                "frame_index": 7,
+                "frame_index": 3,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF",
                   "zone_mask": "Guest+Friend",
                   "group_enabled": 1,
-                  "group_id": "HASUNOSORA"
+                  "group_id": "蓮ノ空"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -30666,7 +30738,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 4
               }
             ]
           },
@@ -30935,8 +31007,7 @@
                 "frame_index": 0,
                 "value": 0,
                 "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -35882,11 +35953,13 @@
                 "value": 1
               },
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
-                "value": 1,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "その中に『虹ヶ咲』のライブカードを1枚以上含む場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -36022,11 +36095,13 @@
                 "value": 1
               },
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
-                "value": 1,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "その中に『虹ヶ咲』のライブカードを1枚以上含む場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -36162,11 +36237,13 @@
                 "value": 1
               },
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
-                "value": 1,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "その中に『虹ヶ咲』のライブカードを1枚以上含む場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -36302,11 +36379,13 @@
                 "value": 1
               },
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
-                "value": 1,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "その中に『虹ヶ咲』のライブカードを1枚以上含む場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -40425,23 +40504,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -40452,13 +40516,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "TRANSFORM_HEART",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": "選んだハート",
                 "attr": {
                   "target_player": "SELF"
@@ -40469,7 +40528,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -40530,23 +40589,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -40557,13 +40601,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "TRANSFORM_HEART",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": "選んだハート",
                 "attr": {
                   "target_player": "SELF"
@@ -40574,7 +40613,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -40678,10 +40717,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -40936,10 +40982,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -41029,10 +41082,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -44785,10 +44845,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -46210,10 +46277,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -46296,10 +46370,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -46382,10 +46463,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -48237,9 +48325,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_EXCESS_HEART",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
-                "value": 0,
+                "value": 2,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -48254,25 +48342,8 @@
                 "value": 1
               },
               {
-                "op": "COUNT_HEARTS",
-                "frame_index": 2,
-                "value": 2,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 2
               }
             ]
           },
@@ -48333,9 +48404,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_EXCESS_HEART",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
-                "value": 0,
+                "value": 2,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -48350,25 +48421,8 @@
                 "value": 1
               },
               {
-                "op": "COUNT_HEARTS",
-                "frame_index": 2,
-                "value": 2,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 2
               }
             ]
           },
@@ -48429,9 +48483,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_EXCESS_HEART",
+                "op": "COUNT_HEARTS",
                 "frame_index": 0,
-                "value": 0,
+                "value": 2,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -48446,25 +48500,8 @@
                 "value": 1
               },
               {
-                "op": "COUNT_HEARTS",
-                "frame_index": 2,
-                "value": 2,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 3,
-                "value": 1
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 4
+                "frame_index": 2
               }
             ]
           },
@@ -51294,9 +51331,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "ACTIVATE_ENERGY",
@@ -51372,9 +51417,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "ACTIVATE_ENERGY",
@@ -55130,23 +55183,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -55157,13 +55195,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "TRANSFORM_HEART",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": "選んだハート",
                 "attr": {
                   "target_player": "SELF"
@@ -55174,7 +55207,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -55335,23 +55368,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -55362,13 +55380,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "TRANSFORM_HEART",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": "選んだハート",
                 "attr": {
                   "target_player": "SELF"
@@ -55379,7 +55392,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -58693,14 +58706,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "OPPONENT",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -58781,14 +58795,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "OPPONENT",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -58869,14 +58884,15 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_STAGE",
                 "frame_index": 0,
-                "value": 13,
+                "value": 1,
                 "attr": {
-                  "target_player": "OPPONENT"
+                  "target_player": "OPPONENT",
+                  "min_cost": 13
                 },
                 "slot": {
-                  "target_slot": "CONTEXT",
+                  "target_slot": "STAGE_0",
                   "comparison": "GE"
                 }
               },
@@ -60546,27 +60562,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "source_zone": "HAND",
-                  "dest_zone": "DECK_BOTTOM",
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": {
                   "count": 2,
                   "reveal": 1
@@ -60585,7 +60582,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -60698,27 +60695,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "source_zone": "HAND",
-                  "dest_zone": "DECK_BOTTOM",
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": {
                   "count": 2,
                   "reveal": 1
@@ -60737,7 +60715,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -60850,27 +60828,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "source_zone": "HAND",
-                  "dest_zone": "DECK_BOTTOM",
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": {
                   "count": 2,
                   "reveal": 1
@@ -60889,7 +60848,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -61002,27 +60961,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "MOVE_TO_DISCARD",
-                "frame_index": 0,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "is_optional": 1
-                },
-                "slot": {
-                  "source_zone": "HAND",
-                  "dest_zone": "DECK_BOTTOM",
-                  "target_slot": "CONTEXT"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "LOOK_AND_CHOOSE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": {
                   "count": 2,
                   "reveal": 1
@@ -61041,7 +60981,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -61132,11 +61072,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "Aqours",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "AQOURS"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -61258,11 +61200,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "Aqours",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "AQOURS"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -61384,11 +61328,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "Aqours",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "AQOURS"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -61510,11 +61456,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "Aqours",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "AQOURS"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -62806,7 +62754,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -62948,7 +62896,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -63090,7 +63038,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -63232,7 +63180,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 3,
-                "value": 2,
+                "value": 1,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -63679,35 +63627,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_DISCARD_PLAY",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
-                "op": "PLAY_MEMBER_FROM_HAND",
-                "frame_index": 4,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "AQOURS"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "HAND"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
@@ -63800,35 +63721,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_DISCARD_PLAY",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
-                "op": "PLAY_MEMBER_FROM_HAND",
-                "frame_index": 4,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "AQOURS"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "HAND"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
@@ -63921,35 +63815,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_DISCARD_PLAY",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
-                "op": "PLAY_MEMBER_FROM_HAND",
-                "frame_index": 4,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "AQOURS"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "HAND"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
@@ -64042,35 +63909,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_DISCARD_PLAY",
-                "frame_index": 3,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "DISCARD"
-                }
-              },
-              {
-                "op": "PLAY_MEMBER_FROM_HAND",
-                "frame_index": 4,
-                "value": 1,
-                "attr": {
-                  "target_player": "SELF",
-                  "card_type": "MEMBER",
-                  "group_enabled": 1,
-                  "group_id": "AQOURS"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "source_zone": "HAND"
-                }
-              },
-              {
                 "op": "RETURN",
-                "frame_index": 5
+                "frame_index": 3
               }
             ]
           },
@@ -64855,10 +64695,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -65143,10 +64990,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -66815,23 +66669,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -66842,13 +66681,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 7,
+                "frame_index": 3,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -66857,7 +66691,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 4
               }
             ]
           },
@@ -66937,23 +66771,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -66964,13 +66783,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 7,
+                "frame_index": 3,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -66979,7 +66793,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 4
               }
             ]
           },
@@ -67059,23 +66873,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -67086,13 +66885,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 7,
+                "frame_index": 3,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -67101,7 +66895,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 4
               }
             ]
           },
@@ -67181,23 +66975,8 @@
                 "value": 1
               },
               {
-                "op": "SELECT_MODE",
-                "frame_index": 2,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 3,
-                "value": 6
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 6
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 5,
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -67208,13 +66987,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 6,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 7,
+                "frame_index": 3,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -67223,7 +66997,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 8
+                "frame_index": 4
               }
             ]
           },
@@ -77240,7 +77014,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいる『LIELLA』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -77334,7 +77108,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいる『LIELLA』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -77428,7 +77202,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいる『LIELLA』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -77522,7 +77296,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいる『LIELLA』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバー1人のすべての{{LIVE_START.PNG|ライブ開始時}}能力を"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -79242,7 +79016,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 1,
+                "value": 2,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -79355,7 +79129,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 1,
+                "value": 2,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -79468,7 +79242,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 1,
+                "value": 2,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -79581,7 +79355,7 @@
               {
                 "op": "ADD_BLADES",
                 "frame_index": 0,
-                "value": 1,
+                "value": 2,
                 "attr": {},
                 "slot": {
                   "target_slot": "CONTEXT"
@@ -81036,7 +80810,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいるメンバーが『LIELLA』のみで"
+                  "group_id": "自分のステージにいるメンバーが『LIELLA!』のみで"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -81145,7 +80919,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいるメンバーが『LIELLA』のみで"
+                  "group_id": "自分のステージにいるメンバーが『LIELLA!』のみで"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -81248,10 +81022,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -81341,10 +81122,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
+                "value": 1,
                 "attr": {
+                  "target_player": "SELF",
                   "is_optional": 1
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
                 }
               },
               {
@@ -83786,9 +83574,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "ENERGY_CHARGE",
@@ -83864,9 +83660,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "ENERGY_CHARGE",
@@ -83942,8 +83746,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "TAP_OPPONENT",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
+                "value": 0,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "TAP_OPPONENT",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT"
@@ -83955,7 +83776,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -84016,8 +83837,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "TAP_OPPONENT",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
+                "value": 0,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "TAP_OPPONENT",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT"
@@ -84029,7 +83867,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -84090,8 +83928,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "TAP_OPPONENT",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
+                "value": 0,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "TAP_OPPONENT",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT"
@@ -84103,7 +83958,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -84164,8 +84019,25 @@
           "frame_program": {
             "frames": [
               {
-                "op": "TAP_OPPONENT",
+                "op": "IS_SELF_MOVE",
                 "frame_index": 0,
+                "value": 0,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "TAP_OPPONENT",
+                "frame_index": 2,
                 "value": 1,
                 "attr": {
                   "target_player": "OPPONENT"
@@ -84177,7 +84049,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -85446,9 +85318,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COUNT_STAGE",
@@ -85530,9 +85410,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COUNT_STAGE",
@@ -85614,9 +85502,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COUNT_STAGE",
@@ -85698,9 +85594,17 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SET_TAPPED",
+                "op": "MOVE_TO_DISCARD",
                 "frame_index": 0,
-                "attr": {}
+                "value": 1,
+                "attr": {
+                  "target_player": "SELF"
+                },
+                "slot": {
+                  "source_zone": "STAGE",
+                  "dest_zone": "DISCARD",
+                  "target_slot": "CONTEXT"
+                }
               },
               {
                 "op": "COUNT_STAGE",
@@ -85802,7 +85706,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": "LIELLA!"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -85921,7 +85825,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": "LIELLA!"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -86040,7 +85944,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": "LIELLA!"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -86159,7 +86063,7 @@
                   "target_player": "SELF",
                   "card_type": "MEMBER",
                   "group_enabled": 1,
-                  "group_id": "LIELLA"
+                  "group_id": "LIELLA!"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -88724,9 +88628,10 @@
               {
                 "op": "HAS_MEMBER",
                 "frame_index": 0,
-                "value": 0,
+                "value": "Liella!",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "card_type": "LIVE"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -89163,8 +89068,27 @@
           "frame_program": {
             "frames": [
               {
-                "op": "REDUCE_COST",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
+                "value": "Liella!",
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバーがこのターンにエリアを移動しているかぎり"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "REDUCE_COST",
+                "frame_index": 2,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF",
@@ -89176,7 +89100,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -90477,7 +90401,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいるメンバーが『5YNCRI5E』のみの場合"
+                  "group_id": "自分のステージにいるメンバーが『5YNCRI5E!』のみの場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -90558,7 +90482,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいるメンバーが『5YNCRI5E』のみの場合"
+                  "group_id": "自分のステージにいるメンバーが『5YNCRI5E!』のみの場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -92907,7 +92831,7 @@
                   "target_player": "SELF",
                   "zone_mask": "Guest+Friend",
                   "group_enabled": 1,
-                  "group_id": "LIELLA",
+                  "group_id": "LIELLA!",
                   "card_type": "MEMBER",
                   "is_optional": 1
                 },
@@ -94919,7 +94843,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -95190,25 +95114,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "HAS_EXCESS_HEART",
-                "frame_index": 0,
-                "value": 0,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "BOOST_SCORE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF"
@@ -95219,7 +95126,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -95399,7 +95306,7 @@
               {
                 "op": "COUNT_SUCCESS_LIVE",
                 "frame_index": 0,
-                "value": 0,
+                "value": "μ's",
                 "attr": {
                   "target_player": "SELF",
                   "card_type": "LIVE"
@@ -95690,13 +95597,11 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_GROUP",
+                "op": "COUNT_BLADES",
                 "frame_index": 0,
-                "value": "μ's",
+                "value": 9,
                 "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "自分のセンターエリアに{{ICON_BLADE.PNG|ブレード}}を9つ以上持つ『Μ'S』のメンバーがいる場合"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -96223,7 +96128,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -96631,11 +96536,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "BiBi",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに名前の異なる『BIBI』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -97614,7 +97521,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -97894,7 +97801,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -97964,9 +97871,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 2,
+                "value": "蓮ノ空",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -98138,9 +98045,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 2,
+                "value": "蓮ノ空",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -98329,9 +98236,9 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "BATON",
                 "frame_index": 0,
-                "value": 2,
+                "value": "蓮ノ空",
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -98550,11 +98457,13 @@
                 "value": 1
               },
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 2,
-                "value": 2,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに『蓮ノ空』のメンバー1人を含むメンバーが2人以上おり、かつそれらのメンバーのユニット名がそれぞれ異なる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -98664,25 +98573,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
-                "frame_index": 0,
-                "value": 3,
-                "attr": {
-                  "target_player": "SELF"
-                },
-                "slot": {
-                  "target_slot": "CONTEXT",
-                  "comparison": "GE"
-                }
-              },
-              {
-                "op": "JUMP_IF_FALSE",
-                "frame_index": 1,
-                "value": 1
-              },
-              {
                 "op": "BOOST_SCORE",
-                "frame_index": 2,
+                "frame_index": 0,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF"
@@ -98693,7 +98585,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 3
+                "frame_index": 1
               }
             ]
           },
@@ -98819,11 +98711,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージにコスト10以上の『蓮ノ空』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -98937,11 +98831,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 3,
+                "value": "みらくらぱーく！",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに『みらくらぱーく！』のメンバーが3人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -99220,11 +99116,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 3,
+                "value": "蓮ノ空",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに『蓮ノ空』のメンバーが3人以上いて"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -99615,23 +99513,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -99645,13 +99528,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "DRAW",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {
                   "target_player": "SELF"
@@ -99662,7 +99540,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -99751,7 +99629,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 4,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -99836,7 +99714,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -100145,8 +100023,27 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BOOST_SCORE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
+                "value": "虹ヶ咲",
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "BOOST_SCORE",
+                "frame_index": 2,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF"
@@ -100157,7 +100054,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -100213,8 +100110,27 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BOOST_SCORE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
+                "value": "虹ヶ咲",
+                "attr": {
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
+                },
+                "slot": {
+                  "target_slot": "CONTEXT",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "BOOST_SCORE",
+                "frame_index": 2,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF"
@@ -100225,7 +100141,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -100406,7 +100322,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -100737,7 +100653,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -101080,11 +100996,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "AREA_CHECK",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 0,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "NIJIGASAKI"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -102105,11 +102023,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "虹ヶ咲",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに同じ名前の『虹ヶ咲』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -102365,7 +102285,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -103444,13 +103364,11 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_GROUP",
+                "op": "COUNT_BLADES",
                 "frame_index": 0,
-                "value": "Aqours",
+                "value": 6,
                 "attr": {
-                  "target_player": "SELF",
-                  "group_enabled": 1,
-                  "group_id": "自分のステージにいる『AQOURS』のメンバー1人を選ぶ。そのメンバーが持つ{{ICON_BLADE.PNG|ブレード}}が6つ以上の場合"
+                  "target_player": "SELF"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -105022,11 +104940,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 5,
+                "value": "Liella!",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分の、ステージと控え室に名前の異なる『LIELLA!』のメンバーが5人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -105126,7 +105046,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },
@@ -105700,7 +105620,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のセンターエリアにいる『LIELLA』のメンバーのコストが"
+                  "group_id": "自分のセンターエリアにいる『LIELLA!』のメンバーのコストが"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -106056,7 +105976,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいるメンバーが『LIELLA』のみの場合"
+                  "group_id": "自分のステージにいるメンバーが『LIELLA!』のみの場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -106137,8 +106057,22 @@
           "frame_program": {
             "frames": [
               {
-                "op": "BOOST_SCORE",
+                "op": "COUNT_ENERGY",
                 "frame_index": 0,
+                "value": 1,
+                "slot": {
+                  "target_slot": "STAGE_0",
+                  "comparison": "GE"
+                }
+              },
+              {
+                "op": "JUMP_IF_FALSE",
+                "frame_index": 1,
+                "value": 1
+              },
+              {
+                "op": "BOOST_SCORE",
+                "frame_index": 2,
                 "value": 0,
                 "attr": {
                   "target_player": "SELF"
@@ -106149,7 +106083,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 1
+                "frame_index": 3
               }
             ]
           },
@@ -106383,23 +106317,8 @@
           "frame_program": {
             "frames": [
               {
-                "op": "SELECT_MODE",
-                "frame_index": 0,
-                "value": 2
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 1,
-                "value": 4
-              },
-              {
-                "op": "JUMP",
-                "frame_index": 2,
-                "value": 4
-              },
-              {
                 "op": "COLOR_SELECT",
-                "frame_index": 3,
+                "frame_index": 0,
                 "value": 1,
                 "attr": {
                   "choices": [
@@ -106410,13 +106329,8 @@
                 }
               },
               {
-                "op": "JUMP",
-                "frame_index": 4,
-                "value": 3
-              },
-              {
                 "op": "ADD_HEARTS",
-                "frame_index": 5,
+                "frame_index": 1,
                 "value": 1,
                 "attr": {},
                 "slot": {
@@ -106425,7 +106339,7 @@
               },
               {
                 "op": "RETURN",
-                "frame_index": 6
+                "frame_index": 2
               }
             ]
           },
@@ -106568,7 +106482,7 @@
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
-                  "group_id": "自分のステージにいる『LIELLA』のメンバーが持つハートの総数が11以上の場合"
+                  "group_id": "自分のステージにいる『LIELLA!』のメンバーが持つハートの総数が11以上の場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -106715,11 +106629,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "CatChu!",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに名前の異なる『CATCHU!』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -106791,11 +106707,13 @@
           "frame_program": {
             "frames": [
               {
-                "op": "COUNT_STAGE",
+                "op": "COUNT_GROUP",
                 "frame_index": 0,
-                "value": 2,
+                "value": "KALEIDOSCORE",
                 "attr": {
-                  "target_player": "SELF"
+                  "target_player": "SELF",
+                  "group_enabled": 1,
+                  "group_id": "自分のステージに名前の異なる『KALEIDOSCORE』のメンバーが2人以上いる場合"
                 },
                 "slot": {
                   "target_slot": "CONTEXT",
@@ -106880,7 +106798,7 @@
               {
                 "op": "REDUCE_HEART_REQ",
                 "frame_index": 0,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF",
                   "group_enabled": 1,
@@ -107201,7 +107119,7 @@
               {
                 "op": "BOOST_SCORE",
                 "frame_index": 2,
-                "value": 0,
+                "value": 1,
                 "attr": {
                   "target_player": "SELF"
                 },

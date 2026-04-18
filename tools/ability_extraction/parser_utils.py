@@ -170,6 +170,46 @@ def split_commas_smartly(text):
     return parts
 
 
+# Known unit names (groups that are units, not individual characters)
+KNOWN_UNITS = {
+    'μ\'s', 'Aqours', 'Saint Snow', '虹ヶ咲', 'Liella!',
+    'Nijigaku', 'Liella', 'SaintSnow', 'Muse',
+    'CYaRon!', 'AZALEA', 'Guilty Kiss', 'Dance',
+    'Qu4rtz', 'R3BIRTH', 'SIF', 'Love Live',
+    'LoveLive', 'ラブライブ', 'ラブライブ！',
+    'CatChu!', '5yncri5e!', 'BiBi', 'Printemps',
+    'lily white', 'DOLLCHESTRA', 'スリーズブーケ',
+    'みらくらぱーく！', 'MIRAPARK', 'EdelNote',
+    'A-RISE', 'SunnyPassion', 'KALEIDOSCORE',
+}
+
+
+def detect_group_type(group_name):
+    """Detect whether a group name is a unit or character.
+    Returns 'unit' if it's a known unit name, 'character' otherwise."""
+    # Normalize the group name for comparison
+    normalized = group_name.strip()
+    
+    # Check against known units
+    if normalized in KNOWN_UNITS:
+        return 'unit'
+    
+    # Check for common unit patterns
+    # Units often have special characters like !, ', or are in English
+    if '!' in normalized or "'" in normalized:
+        return 'unit'
+    
+    # Japanese katakana/hiragana names are typically characters
+    # Units are usually in English or have special formatting
+    # This is a heuristic - may need refinement
+    if any(c in normalized for c in 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン'):
+        # If it's mostly katakana and not a known unit, it's likely a character
+        return 'character'
+    
+    # Default to character if unknown
+    return 'character'
+
+
 def extract_all_groups(text):
     """Extract all group names from text (『...』 patterns)."""
     matches = GROUP_PATTERN.findall(text)

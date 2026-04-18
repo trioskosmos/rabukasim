@@ -214,6 +214,28 @@ def _char_id(name: str) -> Optional[str]:
     return CHAR_ID_MAP.get(name, name.replace(" ", "_").upper())
 
 
+def _group_or_char_id(name: str, group_type: Optional[str] = None) -> Optional[str]:
+    """Get group or character ID based on group_type field.
+    If group_type is 'unit', use GROUP_ID_MAP.
+    If group_type is 'character', use CHAR_ID_MAP.
+    If group_type is None, try GROUP_ID_MAP first, then CHAR_ID_MAP."""
+    if not name:
+        return None
+    
+    if group_type == 'unit':
+        return _group_id(name)
+    elif group_type == 'character':
+        return _char_id(name)
+    else:
+        # Try group first, then character
+        result = _group_id(name)
+        if result != name.replace("!", "").replace(" ", "_").upper():
+            # It was found in GROUP_ID_MAP
+            return result
+        # Try character map
+        return _char_id(name)
+
+
 def _card_type(value: str) -> Optional[str]:
     if not value:
         return None
@@ -335,7 +357,7 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
         
         # Special case: returning this member from stage to waitroom should use RETURN opcode
         # Special case: tapping this member (stage to wait) should use SET_TAPPED opcode
-        if target == "this_member" and source == "STAGE" and destination == "DISCARD":
+        if (target == "this_member" or target == "member") and source == "STAGE" and destination == "DISCARD":
             if original_destination == "wait":
                 frame = {
                     "op": "SET_TAPPED",
@@ -451,7 +473,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         # Add group filter if present
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         
         # Add card type filter if present
         if payload.get("card_type"):
@@ -503,7 +525,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["attr"]["zone_mask"] = "Guest+Friend"
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("target") == "opponent":
             frame["attr"]["target_player"] = "OPPONENT"
         if payload.get("cost_limit") is not None:
@@ -571,7 +593,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         # Set group filter if present
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
 
     elif action_name == "place_card":
         destination = payload.get("destination", "waitroom")
@@ -610,7 +632,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["attr"]["zone_mask"] = "Guest+Friend"
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("card_type"):
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
 
@@ -619,7 +641,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "DISCARD"}
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("card_type"):
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
 
@@ -628,7 +650,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "DISCARD"}
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("card_type"):
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
 
@@ -652,7 +674,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("count") is not None:
             frame["value"] = payload.get("count", 0)
         elif payload.get("amount") is not None:
@@ -685,7 +707,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["attr"]["zone_mask"] = "Guest+Friend"
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("card_type"):
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
         if action_name.startswith("may_") or payload.get("may"):
@@ -760,7 +782,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["value"] = payload.get("count", 1)
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
 
     elif action_name == "select_player":
         frame["op"] = "SELECT_PLAYER"
@@ -824,7 +846,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
             frame["value"] = payload.get("count", 1)
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
 
     elif action_name == "heart_cost_modifier":
         frame["op"] = "SET_HEART_COST"
@@ -886,7 +908,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
-            frame["attr"]["group_id"] = _group_id(payload["group"])
+            frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
         if payload.get("target") == "opponent":
             frame["attr"]["target_player"] = "OPPONENT"
 
@@ -914,10 +936,12 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         local_attr = dict(attr)
         if extra_attr:
             local_attr.update(extra_attr)
+        # Filter out None values from attr
+        local_attr = {k: v for k, v in local_attr.items() if v is not None}
         local_slot = dict(slot)
         if extra_slot:
             local_slot.update(extra_slot)
-        return [_frame(op, idx, val, attr=local_attr, slot=local_slot), _frame("JUMP_IF_FALSE", idx + 1, 1)], idx + 2
+        return [_frame(op, idx, val, attr=local_attr if local_attr else None, slot=local_slot), _frame("JUMP_IF_FALSE", idx + 1, 1)], idx + 2
 
     if cond_type in {"card_count_at_least", "card_count_at_most", "hand_card_count_at_most", "hand_card_count_at_least", "hand_card_count_greater_than", "card_count", "exact_count"}:
         if "hand" in cond_type:
@@ -944,6 +968,11 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         frames, idx = append_count("COUNT_ENERGY")
         return frames, idx
 
+    if cond_type == "state" and location == "energy" and condition_data.get("state") == "active":
+        # Convert "active energy" condition to COUNT_ENERGY
+        frames, idx = append_count("COUNT_ENERGY", val=1, extra_attr={"target_player": None}, extra_slot={"target_slot": "STAGE_0"})
+        return frames, idx
+
     if cond_type in {"score_sum_at_least", "has_score"}:
         frames, idx = append_count("SCORE_TOTAL_CHECK")
         return frames, idx
@@ -955,7 +984,8 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
 
     if cond_type in {"member_count_at_least", "member_count_exact"}:
         if group:
-            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_id(group)})
+            group_type = condition_data.get("group_type")
+            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_or_char_id(group, group_type)})
         else:
             frames, idx = append_count("COUNT_STAGE")
         return frames, idx
@@ -978,13 +1008,27 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         return frames, idx
 
     if cond_type in {"group"}:
-        if "ハート" in text or condition_data.get("heart_type") or "総数" in text:
-            extra_attr = {"group_enabled": 1, "group_id": _group_id(group or text)}
+        group_type = condition_data.get("group_type")
+        threshold = condition_data.get("threshold")
+        if threshold and "ブレード" in text:
+            # Convert group with threshold to COUNT_BLADES
+            # First add SELECT_MEMBER frame for group selection
+            if group:
+                group_id = _group_or_char_id(group, group_type)
+                frames.append(_frame("SELECT_MEMBER", idx, 1, attr={"target_player": "SELF", "group_enabled": 1, "group_id": group_id}, slot={"target_slot": "CONTEXT", "source_zone": "STAGE"}))
+                idx += 1
+            # Then add COUNT_BLADES with threshold as value
+            frames, idx = append_count("COUNT_BLADES", val=threshold)
+        elif threshold:
+            # Other group with threshold conditions
+            frames, idx = append_count("COUNT_GROUP", extra_attr={"value_enabled": 1, "value_threshold": threshold, "group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)})
+        elif "ハート" in text or condition_data.get("heart_type") or "総数" in text:
+            extra_attr = {"group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)}
             if condition_data.get("heart_type"):
                 extra_attr["heart_type"] = condition_data["heart_type"]
             frames, idx = append_count("COUNT_HEARTS", extra_attr=extra_attr)
         else:
-            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_id(group or text)})
+            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)})
         return frames, idx
 
     if cond_type in {"position"}:
@@ -1047,6 +1091,10 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
             frames, idx = append_count("CALC_SUM_COST")
         elif cond_type == "member_deploy_cost":
             frames, idx = append_count("GROUP_FILTER")
+        elif location == "stage" and condition_data.get("min_cost"):
+            # Convert cost-based stage condition to COUNT_STAGE with min_cost
+            min_cost = condition_data.get("min_cost", condition_data.get("cost_limit", value))
+            frames, idx = append_count("COUNT_STAGE", val=1, extra_attr={"min_cost": min_cost}, extra_slot={"target_slot": "STAGE_0"})
         else:
             frames, idx = append_count("REDUCE_COST")
         return frames, idx
@@ -1215,7 +1263,7 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
                             frame["attr"]["card_type"] = _card_type(next_action["card_type"])
                         if next_action.get("group"):
                             frame["attr"]["group_enabled"] = 1
-                            frame["attr"]["group_id"] = _group_id(next_action["group"])
+                            frame["attr"]["group_id"] = _group_or_char_id(next_action["group"], next_action.get("group_type"))
                     frames.append(frame)
                     idx += 1
                     skip = 2

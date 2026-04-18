@@ -2,6 +2,7 @@
 import re
 from parser_utils import (
     annotate_tree,
+    detect_group_type,
     extract_all_quoted_names,
     extract_group_name,
     extract_heart_types,
@@ -87,6 +88,188 @@ def _extract_position_value(text):
 
 def _extract_count_value(text, pattern):
     return extract_int(pattern, text)
+
+
+# Pattern registry: list of (matcher, condition_type, extractor_fn) tuples
+# This replaces 100+ elif blocks with a data-driven approach
+# matcher: string (substring check) or callable (returns truthy if matches)
+# condition_type: string for the condition type
+# extractor_fn: callable that extracts additional fields from text, or None
+CONDITION_PATTERN_REGISTRY = [
+    # COUNT_ENERGY: Active energy conditions (e.g., "アクティブ状態の自分のエネルギーがある場合")
+    # Must come before general 'state' pattern to avoid conflict
+    (lambda t: 'アクティブ状態の自分のエネルギー' in t and ('ある場合' in t or 'がある' in t),
+     'count_energy', lambda t, m: {'location': 'energy', 'state': 'active', 'target': 'self', 'comparison': 'GE', 'value': 1}),
+    (lambda t: 'アクティブ状態のエネルギー' in t and ('ある場合' in t or 'がある' in t),
+     'count_energy', lambda t, m: {'location': 'energy', 'state': 'active', 'target': 'self', 'comparison': 'GE', 'value': 1}),
+    # COUNT_STAGE with min_cost: Cost-based stage conditions (e.g., "コスト13以上のメンバーがいる場合")
+    # Must come before general 'cost_at_least' pattern to avoid conflict
+    (lambda t: re.search(r'コスト(\d+)以上のメンバー.*?いる', t) or re.search(r'コスト(\d+)以上.*?メンバーが.*?ステージ', t),
+     'count_stage', lambda t, m: {'min_cost': int(m.group(1)), 'target': _extract_target(t) or 'self', 'location': 'stage',
+                                 'comparison': 'GE', 'value': 1, 'card_type': 'member_card'}),
+    (lambda t: re.search(r'コスト(\d+)以上.*?ステージ', t),
+     'count_stage', lambda t, m: {'min_cost': int(m.group(1)), 'target': _extract_target(t) or 'self', 'location': 'stage',
+                                 'comparison': 'GE', 'value': 1, 'card_type': 'member_card'}),
+    # Energy conditions
+    (lambda t: re.search(r'エネルギーが(\d+)枚以上', t), 'energy_at_least', lambda t, m: {'value': int(m.group(1))}),
+    ('エネルギーが相手より少ない', 'energy_comparison', lambda t: {'operator': '<', 'target': 'opponent', 'compares': 'energy'}),
+    ('自分のエネルギーが相手より少ない', 'energy_comparison', lambda t: {'operator': '<', 'target': 'opponent', 'compares': 'energy'}),
+    # Card count conditions
+    (lambda t: '枚以上' in t and re.search(r'(\d+)枚以上', t), 'card_count_at_least',
+     lambda t, m: {'value': int(m.group(1)), 'location': _extract_location(t), 'card_type': _extract_card_type(t)}),
+    # UNIQUE_NAMES_COUNT: Multi-name counting (e.g., "名前が異なるメンバーが3人以上いる場合")
+    # Must come before general 'member_count_at_least' pattern to avoid conflict
+    (lambda t: '名前が異なる' in t and re.search(r'(\d+)人以上', t),
+     'unique_names_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self'}),
+    (lambda t: '名前とコストが両方ともそれぞれ異なる' in t and re.search(r'(\d+)人以上', t),
+     'unique_names_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self', 'different_cost': True}),
+    # UNIQUE_MEMBER_COSTS_COUNT: Cost uniqueness (e.g., "コストが異なるメンバーが3人以上いる場合")
+    # Must come before general 'member_count_at_least' pattern to avoid conflict
+    (lambda t: 'コストが異なる' in t and re.search(r'(\d+)人以上', t),
+     'unique_member_costs_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self'}),
+    # Member count conditions
+    (lambda t: re.search(r'(\d+)人以上', t), 'member_count_at_least',
+     lambda t, m: {'value': int(m.group(1))}),
+    # Cost conditions
+    (lambda t: re.search(r'コスト(\d+)以上のメンバー', t) and not 'ステージ' in t,
+     'cost_at_least',
+     lambda t, m: {'value': int(m.group(1)), 'cost_limit': int(m.group(1))}),
+    # Energy conditions
+    (lambda t: re.search(r'エネルギーが(\d+)枚以上', t), 'energy_at_least', lambda t, m: {'value': int(m.group(1))}),
+    ('エネルギーが相手より少ない', 'energy_comparison', lambda t: {'operator': '<', 'target': 'opponent', 'compares': 'energy'}),
+    ('自分のエネルギーが相手より少ない', 'energy_comparison', lambda t: {'operator': '<', 'target': 'opponent', 'compares': 'energy'}),
+    # Card count conditions
+    (lambda t: '枚以上' in t and re.search(r'(\d+)枚以上', t), 'card_count_at_least',
+     lambda t, m: {'value': int(m.group(1)), 'location': _extract_location(t), 'card_type': _extract_card_type(t)}),
+    # Member count conditions
+    (lambda t: re.search(r'(\d+)人以上', t), 'member_count_at_least',
+     lambda t, m: {'value': int(m.group(1))}),
+    # Cost conditions (note: cost-based stage conditions handled by count_stage pattern above)
+    # Score conditions
+    (lambda t: re.search(r'スコアの合計が(\d+)以上', t), 'score_sum_at_least',
+     lambda t, m: {'value': int(m.group(1)), 'location': 'success_live_card_zone' if '成功ライブカード置き場' in t else None}),
+    ('スコアが相手より高い', 'score_comparison', lambda t: {'operator': '>', 'target': 'opponent'}),
+    ('スコアが相手より低い', 'score_comparison', lambda t: {'operator': '<', 'target': 'opponent'}),
+    # Hand count conditions
+    (lambda t: re.search(r'手札が(\d+)枚以下', t), 'hand_card_count_at_most',
+     lambda t, m: {'value': int(m.group(1)), 'location': 'hand'}),
+    (lambda t: re.search(r'手札が(\d+)枚以上', t), 'hand_card_count_at_least',
+     lambda t, m: {'value': int(m.group(1)), 'location': 'hand'}),
+    # Deck refresh
+    ('デッキがリフレッシュしていた', 'deck_refresh', None),
+    # State conditions
+    ('ウェイト状態の', 'state', lambda t: {'value': 'wait', 'operator': '=='}),
+    # Note: 'アクティブ状態の' is handled by count_energy pattern for energy conditions
+    # Area movement
+    ('エリアを移動した', 'area_move', None),
+    ('エリアを移動している', 'member_area_move', lambda t: {'target': 'self'}),
+    # Deploy conditions
+    (lambda t: re.search(r'(\d+)回登場した', t), 'member_deploy_count',
+     lambda t, m: {'value': int(m.group(1)), 'target': 'self', 'source': 'stage', 'event': 'deploy',
+                   'scope': 'turn' if 'このターン' in t else None}),
+    # Special conditions
+    ('余剰ハート', 'surplus_heart', lambda t: {'value': 0 if '持たない' in t else (_extract_count_value(t, r'余剰ハート.*?(\d+)つ以上') or 1)}),
+    ('かぎり', 'while', None),
+    ('登場か、エリアを移動した', 'or_trigger', lambda t: {'triggers': ['deploy', 'move']}),
+    ('このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた', 'or_trigger',
+     lambda t: {'triggers': ['move_by_effect', 'energy_placed'], 'target': 'self'}),
+    ('ステージから控え室に置かれた', 'move_to_waitroom_trigger',
+     lambda t: {'operator': 'triggered', 'source': 'stage', 'destination': 'waitroom',
+                'target': 'self' if 'このメンバー' in t else ('selected_member' if 'そのメンバー' in t else None)}),
+    ('効果によってはアクティブにならない', 'cannot_become_active', None),
+    ('センターエリアにいるメンバーが最も大きいコストを持つ', 'highest_cost_center', None),
+    ('エリアすべてに', 'all_areas', lambda t: {'group': extract_group_name(t), 'names_different': '名前が異なる' in t}),
+    # Opponent live cards location
+    ('相手のライブカード置き場にあるすべてのライブカードは', 'opponent_live_cards_location', None),
+    # Waitroom location
+    ('自分の控え室にある', 'waitroom_location', None),
+    # Cost comparison conditions
+    (lambda t: re.search(r'コストの大きい|コストが高い', t), 'cost_comparison', lambda t: {'operator': '>'}),
+    (lambda t: re.search(r'コストが低い', t), 'cost_comparison', lambda t: {'operator': '<'}),
+    # Card count equal comparison
+    ('カードの枚数が同じ', 'card_count', lambda t: {'operator': '=='}),
+    ('枚数が同じ', 'card_count', lambda t: {'operator': '=='}),
+    # Exact count conditions
+    (lambda t: re.search(r'ちょうど(\d+)枚', t), 'exact_count',
+     lambda t, m: {'value': int(m.group(1)), 'count_type': 'energy' if 'エネルギー' in t else ('heart' if 'ハート' in t else 'card')}),
+    # Per-unit modifier
+    (lambda t: 'につき' in t, 'per_unit',
+     lambda t: {'value': _extract_count_value(t, r'(\d+)枚につき') or 1, 'operator': '*',
+                'unit_type': ('energy_under_member' if 'このメンバーの下にあるエネルギーカード' in t
+                             else 'wait_by_this_effect' if 'これによりウェイト状態にしたメンバー' in t
+                             else 'energy_paid_by_this_effect' if 'これにより支払った' in t
+                             else 'stage_member' if 'ステージにいる' in t
+                             else 'live_card' if 'ライブカード置き場にある' in t
+                             else 'success_live_card' if '成功ライブカード置き場にある' in t
+                             else None)}),
+    # Combined location count
+    (lambda t: '自分と相手の' in t and '合計' in t, 'combined_location_count_at_least',
+     lambda t, m: {'value': _extract_count_value(t, r'(\d+)枚以上'), 'location': _extract_location(t)}),
+    # Heart member presence
+    (lambda t: '{{heart_' in t and 'メンバーが' in t, 'heart_member_presence',
+     lambda t: {'heart_types': extract_heart_types(t), 'presence': 'present' if 'いる' in t else 'absent',
+                'target': _extract_target(t) or 'self'}),
+    # Batôn touch deploy
+    (lambda t: 'バトンタッチして登場' in t, 'baton_touch_deploy',
+     lambda t: {'cost_comparison': 'lower' if 'コストが低い' in t or 'コストより低い' in t else None,
+                'source_group': extract_group_name(t)}),
+    # Comparison conditions with 'より'
+    (lambda t: 'より' in t and 'につき' not in t and re.search(r'高い|低い|少ない|多い', t), 'comparison',
+     lambda t: {'operator': '>' if '高い' in t or '多い' in t else '<',
+                'compares': ('member_cost_total' if 'メンバーのコストの合計' in t
+                            else 'live_total_score' if 'ライブの合計スコア' in t
+                            else 'card_count' if 'カード枚数' in t
+                            else 'heart_total' if 'ハートの総数' in t
+                            else 'score_sum' if 'スコア' in t and '合計' in t
+                            else 'hand_card_count' if '手札の枚数' in t
+                            else 'energy_count' if 'エネルギー' in t
+                            else 'cost' if 'コスト' in t
+                            else None)}),
+    # All revealed cards match pattern
+    (lambda t: 'それらがすべて' in t and 'メンバーカード' in t, 'all_revealed_cards_match',
+     lambda t: {'card_type': 'member_card', 'location': 'waitroom', 'target': 'self',
+                'heart_types': extract_heart_types(t) if '{{heart_' in t else None,
+                'reference': 'those_cards' if '公開したカード' in t or 'それらがすべて' in t else None,
+                'cost_limit': (_extract_count_value(t, r'コスト(\d+)') or None) if 'コスト' in t else None}),
+    # Heart total at least on members
+    (lambda t: 'メンバーが持つハートに' in t and '合計' in t, 'heart_total_at_least',
+     lambda t: {'value': _extract_count_value(t, r'(\d+)個以上') or _extract_count_value(t, r'(\d+)以上'),
+                'location': 'stage', 'target': 'self', 'heart_types': extract_heart_types(t) if '{{heart_' in t else None,
+                'group': extract_group_name(t) if '『' in t else None}),
+    # Heart card presence in cheer revealed
+    (lambda t: 'エールにより公開された自分の' in t and 'メンバーカードが持つハートの中に' in t and 'がある場合' in t,
+     'heart_card_presence', lambda t: {'location': 'cheer_revealed', 'card_type': 'member_card', 'target': 'self',
+                                        'presence': 'present', 'heart_types': extract_heart_types(t) if '{{heart_' in t else None,
+                                        'group': extract_group_name(t) if '『' in t else None}),
+    # COUNT_BLADES with threshold: Blade threshold conditions (e.g., "ブレードが6つ以上の場合")
+    # Must come before general 'group' pattern to avoid conflict
+    (lambda t: re.search(r'{{icon_blade.*?}}.*?(\d+)つ以上', t) or re.search(r'ブレード.*?(\d+)つ以上', t) or re.search(r'(\d+)つ以上.*?ブレード', t),
+     'count_blades', lambda t, m: {'threshold': int(m.group(1)), 'target': 'self', 'comparison': 'GE', 'value': 1}),
+]
+
+
+def _apply_pattern_registry(condition, text):
+    """Apply the pattern registry to extract condition type and fields."""
+    for matcher, condition_type, extractor in CONDITION_PATTERN_REGISTRY:
+        matched = False
+        match_obj = None
+        if callable(matcher) and not isinstance(matcher, str):
+            match_obj = matcher(text)
+            matched = bool(match_obj)
+        elif isinstance(matcher, str):
+            matched = matcher in text
+        if matched:
+            _set_condition(condition, condition_type)
+            if extractor:
+                if callable(extractor):
+                    try:
+                        fields = extractor(text, match_obj) if match_obj else extractor(text)
+                        if fields:
+                            condition.update({k: v for k, v in fields.items() if v is not None})
+                    except Exception:
+                        pass
+            return True
+    return False
 
 
 def parse_condition(condition_part):
@@ -177,119 +360,23 @@ def parse_condition(condition_part):
             condition['heart_types'] = heart_matches
             condition['operator'] = 'or'
     
-    # Check for energy condition
-    energy_match = re.search(r'エネルギーが(\d+)枚以上', condition_part)
-    if energy_match:
-        _set_condition(condition, 'energy_at_least', value=int(energy_match.group(1)))
+    # Apply pattern registry for common conditions (replaces many elif blocks)
+    if not _apply_pattern_registry(condition, condition_part):
+        # Fallback for conditions not in registry
+        pass
     
-    # Check for surplus heart condition
-    elif '余剰ハート' in condition_part:
-        condition['type'] = 'surplus_heart'
-        if '持たない' in condition_part:
-            _set_condition(condition, 'surplus_heart_equal', value=0)
-        else:
-            # Extract value if present
-            value = _extract_count_value(condition_part, r'余剰ハート.*?(\d+)つ以上') or 1
-            _set_condition(condition, 'surplus_heart_at_least', value=value)
-        
-        target = _extract_target(condition_part)
-        if target in {'opponent', 'self'}:
-            condition['target'] = target
-    
-    # Check for deck refresh condition
-    elif 'デッキがリフレッシュしていた' in condition_part:
-        condition['type'] = 'deck_refresh'
-    
-    # Check for all areas condition
-    elif 'エリアすべてに' in condition_part:
-        _set_condition(condition, 'all_areas', group=extract_group_name(condition_part))
-        # Check for different names condition
-        if '名前が異なる' in condition_part:
-            condition['names_different'] = True
-    
-    # Check for 'かぎり' (while/as long as) condition
-    elif 'かぎり' in condition_part:
-        condition['type'] = 'while'
-    
-    # Check for "登場か、エリアを移動したとき" (or condition)
-    elif '登場か、エリアを移動したとき' in condition_part:
-        _set_condition(condition, 'or_trigger', triggers=['deploy', 'move'])
-    
-    # Check for "登場か、エリアを移動した" (or condition without marker)
-    elif '登場か、エリアを移動した' in condition_part:
-        _set_condition(condition, 'or_trigger', triggers=['deploy', 'move'])
-
-    # Check for "このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた" trigger.
-    elif 'このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた' in condition_part:
-        _set_condition(
-            condition,
-            'or_trigger',
-            triggers=['move_by_effect', 'energy_placed'],
-            target='self',
-        )
-    
-    # Check for "エリアを移動した" (area movement) condition
-    elif 'エリアを移動した' in condition_part:
-        _set_condition(condition, 'area_move')
-    
-    # Check for member deployment count (e.g., "メンバーが2回以上登場している場合")
-    elif re.search(r'(\d+)回登場した', condition_part):
-        deploy_match = re.search(r'(\d+)回登場した', condition_part)
-        if deploy_match:
-            _set_condition(
-                condition,
-                'member_deploy_count',
-                value=int(deploy_match.group(1)),
-                target='self',
-                source='stage',
-                event='deploy',
-                scope='turn' if 'このターン' in condition_part else None,
-            )
-    elif '登場している' in condition_part and '回' in condition_part:
-        deploy_match = re.search(r'メンバーが(\d+)回以上登場している', condition_part)
-        if deploy_match:
-            _set_condition(condition, 'member_deploy_count', value=int(deploy_match.group(1)), target='self')
-    
-    # Check for member area movement state (e.g., "メンバーがエリアを移動している場合")
-    elif 'エリアを移動している' in condition_part:
-        _set_condition(condition, 'member_area_move', target='self')
-    
-    # Check for "効果によってはアクティブにならない" (cannot become active by effects) condition
-    elif '効果によってはアクティブにならない' in condition_part:
-        _set_condition(condition, 'cannot_become_active')
-    
-    # Check for "センターエリアにいるメンバーが最も大きいコストを持つ" (highest cost in center area) condition
-    elif 'センターエリアにいるメンバーが最も大きいコストを持つ' in condition_part:
-        _set_condition(condition, 'highest_cost_center')
-    
-    # Check for card count condition
-    elif '枚以上' in condition_part:
-        count_value = _extract_count_value(condition_part, r'(\d+)枚以上')
-        if count_value:
-            _set_condition(
-                condition,
-                'card_count_at_least',
-                value=count_value,
-                location=_extract_location(condition_part),
-                card_type=_extract_card_type(condition_part),
-            )
-    
-    # Check for member count condition
-    elif re.search(r'(\d+)人以上', condition_part):
-        count_value = _extract_count_value(condition_part, r'(\d+)人以上')
-        if count_value:
-            _set_condition(condition, 'member_count_at_least', value=count_value)
-            # Check for modifiers
-            if '名前とコストが両方ともそれぞれ異なる' in condition_part:
-                condition['different_name'] = True
-                condition['different_cost'] = True
-            elif '名前の異なる' in condition_part:
-                condition['different_name'] = True
-            elif 'コストの異なる' in condition_part:
-                condition['different_cost'] = True
+    # Check for member count condition modifiers
+    if condition.get('type') == 'member_count_at_least':
+        if '名前とコストが両方ともそれぞれ異なる' in condition_part:
+            condition['different_name'] = True
+            condition['different_cost'] = True
+        elif '名前の異なる' in condition_part:
+            condition['different_name'] = True
+        elif 'コストの異なる' in condition_part:
+            condition['different_cost'] = True
     
     # Check for per-unit modifier (～につき)
-    elif 'につき' in condition_part:
+    if 'につき' in condition_part:
         _set_condition(
             condition,
             'per_unit',
@@ -333,6 +420,7 @@ def parse_condition(condition_part):
         group = extract_group_name(condition_part)
         if group:
             condition['group'] = group
+            condition['group_type'] = detect_group_type(group)
         
         # Check for exclusion modifiers
         if 'このメンバー以外の' in condition_part:
@@ -342,42 +430,8 @@ def parse_condition(condition_part):
         elif '名前の異なる' in condition_part:
             condition['exclusion'] = 'different_name'
     
-    # Check for opponent live card location modifier
-    elif '相手のライブカード置き場にあるすべてのライブカードは' in condition_part:
-        condition['type'] = 'opponent_live_cards_location'
-    
-    # Check for waitroom location modifier (自分の控え室にある)
-    elif '自分の控え室にある' in condition_part:
-        condition['type'] = 'waitroom_location'
-    
-    # Check for comparison condition (cost comparison)
-    elif re.search(r'コストの大きい|コストが高い', condition_part):
-        condition['type'] = 'cost_comparison'
-        condition['operator'] = '>'
-    elif re.search(r'コストが低い', condition_part):
-        condition['type'] = 'cost_comparison'
-        condition['operator'] = '<'
-    
-    # Check for card count equal comparison
-    elif 'カードの枚数が同じ' in condition_part or '枚数が同じ' in condition_part:
-        _set_condition(condition, 'card_count', operator='==')
-    
-    # Check for exact number conditions (ちょうどX枚)
-    elif 'ちょうど' in condition_part:
-        exact_count = _extract_count_value(condition_part, r'ちょうど(\d+)枚')
-        if exact_count:
-            _set_condition(condition, 'exact_count', value=exact_count)
-            # Extract what's being counted
-            if 'エネルギー' in condition_part:
-                condition['count_type'] = 'energy'
-            elif 'カード' in condition_part:
-                condition['count_type'] = 'card'
-            elif 'ハート' in condition_part:
-                condition['count_type'] = 'heart'
-        return condition
-    
-    # Check for group condition
-    elif '『' in condition_part and '』' in condition_part:
+    # Check for group condition (special handling for group extraction)
+    if '『' in condition_part and '』' in condition_part:
         group = extract_group_name(condition_part)
         if group:
             _set_condition(condition, 'group', value=group)
@@ -397,61 +451,8 @@ def parse_condition(condition_part):
             if location:
                 condition['location'] = location
 
-    # Check for "それらがすべて...メンバーカード" condition after milling/revealing cards.
-    elif 'それらがすべて' in condition_part and 'メンバーカード' in condition_part:
-        heart_types = extract_heart_types(condition_part)
-        _set_condition(
-            condition,
-            'all_revealed_cards_match',
-            card_type='member_card',
-            location='waitroom',
-            target='self',
-        )
-        if heart_types:
-            condition['heart_types'] = heart_types
-        if '公開したカード' in condition_part or 'それらがすべて' in condition_part:
-            condition['reference'] = 'those_cards'
-        if 'コスト' in condition_part:
-            cost_value = _extract_count_value(condition_part, r'コスト(\d+)')
-            if cost_value:
-                condition['cost_limit'] = cost_value
-
-    # Check for heart-total conditions on members' hearts.
-    elif 'メンバーが持つハートに' in condition_part and '合計' in condition_part:
-        heart_types = extract_heart_types(condition_part)
-        value = _extract_count_value(condition_part, r'(\d+)個以上') or _extract_count_value(condition_part, r'(\d+)以上')
-        _set_condition(
-            condition,
-            'heart_total_at_least',
-            value=value,
-            location='stage',
-            target='self',
-        )
-        group = extract_group_name(condition_part)
-        if group:
-            condition['group'] = group
-        if heart_types:
-            condition['heart_types'] = heart_types
-
-    # Check for cheer-revealed member-card heart presence conditions.
-    elif 'エールにより公開された自分の' in condition_part and 'メンバーカードが持つハートの中に' in condition_part and 'がある場合' in condition_part:
-        _set_condition(
-            condition,
-            'heart_card_presence',
-            location='cheer_revealed',
-            card_type='member_card',
-            target='self',
-            presence='present',
-        )
-        group = extract_group_name(condition_part)
-        if group:
-            condition['group'] = group
-        heart_types = extract_heart_types(condition_part)
-        if heart_types:
-            condition['heart_types'] = heart_types
-
-    # Check for heart-icon member presence conditions.
-    elif '{{heart_' in condition_part and 'メンバーが' in condition_part:
+    # Check for heart-icon member presence conditions (special handling for value extraction).
+    if condition.get('type') == 'heart_member_presence':
         heart_types = extract_heart_types(condition_part)
         if heart_types:
             condition['type'] = 'heart_member_presence'

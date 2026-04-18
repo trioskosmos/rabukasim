@@ -3,6 +3,7 @@ import re
 from condition_parser import parse_condition, _extract_target as _extract_condition_target
 from parser_utils import (
     annotate_tree,
+    detect_group_type,
     extract_all_quoted_names,
     extract_all_groups,
     extract_blade_count,
@@ -196,12 +197,20 @@ def _extract_optional_payment(text):
     
     def _create_deck_top_payment():
         return {
-            'action': 'may_place_card',
-            'target': 'self',
+            'action': 'discard_to_waitroom',
             'source': 'deck_top',
-            'destination': 'waitroom',
+            'count': 1,
             'optional': True,
             'text': '自分のデッキの一番上のカードを控え室に置いてもよい',
+        }
+    
+    def _create_self_discard_payment():
+        return {
+            'action': 'member_to_wait',
+            'source': 'stage',
+            'target': 'self',
+            'count': 1,
+            'text': 'このメンバーをステージから控え室に置く',
         }
     
     if '支払ってもよい' not in text and '支払った' not in text:
@@ -213,6 +222,10 @@ def _extract_optional_payment(text):
             if '：' in text:
                 return _create_deck_top_payment(), text.split('：', 1)[1].strip()
             return _create_deck_top_payment(), text
+        if text.startswith('このメンバーをステージから控え室に置く'):
+            if '：' in text:
+                return _create_self_discard_payment(), text.split('：', 1)[1].strip()
+            return _create_self_discard_payment(), text
         return None, text
 
     prefix, suffix = (text.split('：', 1) + [''])[:2]
@@ -221,6 +234,8 @@ def _extract_optional_payment(text):
             return _create_discard_payment(), suffix.strip() if suffix else text
         if prefix.startswith('自分のデッキの一番上のカードを控え室に置いてもよい'):
             return _create_deck_top_payment(), suffix.strip() if suffix else text
+        if prefix.startswith('このメンバーをステージから控え室に置く'):
+            return _create_self_discard_payment(), suffix.strip() if suffix else text
         return None, text
 
     payment = {'optional': '支払ってもよい' in prefix, 'text': prefix.strip()}
@@ -254,6 +269,27 @@ def _note_action(text):
     return {'action': 'note', 'text': text}
 
 
+def _extract_count_patterns(text, result):
+    """Extract count patterns from text and update result dict.
+    Consolidates up_to patterns and explicit count patterns."""
+    # Check for "up_to" patterns (1人まで, 1枚まで)
+    for pattern, key in [(r'(\d+)人まで', 'people'), (r'(\d+)枚まで', 'cards')]:
+        match = re.search(pattern, text)
+        if match:
+            count = int(match.group(1))
+            result['count'] = count
+            result['up_to'] = count
+            break
+    
+    # Check for explicit count patterns (1人, 1枚) if not already set
+    if 'count' not in result:
+        for pattern in [r'(\d+)人を', r'(\d+)枚を', r'(\d+)人', r'(\d+)枚']:
+            match = re.search(pattern, text)
+            if match:
+                result['count'] = int(match.group(1))
+                break
+
+
 def _infer_card_type(text, default='card'):
     if 'メンバーカード' in text:
         return 'member_card'
@@ -270,6 +306,36 @@ def _infer_target(text):
     if '自分' in text and '相手' not in text:
         return 'self'
     return None
+
+
+def _extract_group_with_type(text, result, key='group'):
+    """Extract group name and type from text, set in result dict.
+    Returns True if group was found and set."""
+    group = extract_group_name(text)
+    if group:
+        result[key] = group
+        result['group_type'] = detect_group_type(group)
+        return True
+    return False
+
+
+def _handle_multi_sentence(text, first_action):
+    """Handle multi-sentence effects by parsing the second sentence if present.
+    Returns updated result dict or None if not multi-sentence."""
+    if text.count('。') <= 1:
+        return None
+    sentences = text.split('。')
+    if len(sentences) < 2 or not sentences[1].strip():
+        return None
+    second_sentence = sentences[1].strip()
+    if not second_sentence:
+        return None
+    second_action = parse_effect_backwards(second_sentence)
+    if not _is_parsed_action(second_action):
+        return None
+    # Build result with actions array
+    result = {'actions': [first_action, second_action]}
+    return result
 
 
 def _normalized_int(value):
@@ -294,6 +360,7 @@ def _select_member_action(text, *, target=None):
     group = extract_group_name(text)
     if group:
         result['group'] = group
+        result['group_type'] = detect_group_type(group)
     char_name = extract_quoted_name(text)
     if char_name:
         result['character'] = char_name
@@ -319,6 +386,7 @@ def _move_member_action(text):
     group = extract_group_name(text)
     if group:
         result['group'] = group
+        result['group_type'] = detect_group_type(group)
     
     count_match = re.search(r'([\d０-９]+)人', text)
     if count_match:
@@ -404,31 +472,32 @@ def _normalize_action_shape(action):
     return action
 
 
+def _assign_to_result(result, **kwargs):
+    """Generic assignment helper - assigns key-value pairs to result dict."""
+    for key, value in kwargs.items():
+        if value is not None:
+            result[key] = value
+    return result
+
+
+# Backward-compatible wrappers (consolidated from 6 separate functions)
 def _assign_condition(result, condition_text):
     """Assign condition to result."""
     condition = parse_condition(condition_text)
-    if condition:
-        result['condition'] = condition
-    return condition
+    return _assign_to_result(result, condition=condition) if condition else None
 
 
 def _assign_conditions(result, condition_parts):
     """Assign multiple conditions to result."""
-    conditions = []
-    for condition_part in condition_parts:
-        condition = parse_condition(condition_part.strip())
-        if condition:
-            conditions.append(condition)
-    if conditions:
-        result['conditions'] = conditions
-    return conditions
+    conditions = [c for c in (parse_condition(p.strip()) for p in condition_parts) if c]
+    return _assign_to_result(result, conditions=conditions) if conditions else None
 
 
 def _assign_duration_action(result, condition_text, action_text, *, duration='until_end_of_live'):
     """Assign duration action to result."""
     if condition_text:
         _assign_condition(result, condition_text)
-    result['duration'] = duration
+    _assign_to_result(result, duration=duration)
     _set_action_or_raw(result, action_text)
     return result
 
@@ -439,7 +508,6 @@ def _assign_subject_action(result, text, *, merge_position=False):
     if not subject:
         result['action'] = _raw_text(text)
         return False
-
     action = parse_effect_backwards(actual_action)
     if _is_parsed_action(action):
         if merge_position:
@@ -453,18 +521,13 @@ def _assign_subject_action(result, text, *, merge_position=False):
 
 def _assign_sequence_actions(result, action_parts):
     """Assign sequence of actions to result."""
-    result['actions'] = []
-    for action_part in action_parts:
-        _append_action_or_raw(result['actions'], action_part.strip())
+    result['actions'] = [_append_action_or_raw([], p.strip()) or {'raw_text': p.strip()} for p in action_parts]
     return result['actions']
 
 
 def _assign_ability_gain(result, ability_text):
     """Assign ability gain to result."""
-    result['action'] = 'gain_ability'
-    result['ability'] = ability_text
-    result['text'] = ability_text
-    return result
+    return _assign_to_result(result, action='gain_ability', ability=ability_text, text=ability_text)
 
 
 def _extract_limit(text, label):
@@ -481,17 +544,13 @@ def _strip_waitroom_source(text, result):
             if marker.startswith('そのプレイヤー'):
                 result['target'] = 'selected_player'
             text = text.replace(marker, '').strip()
-            heart_count = _extract_count_value_from_heart_requirement(text)
+            heart_count = extract_int(r'必要ハートに.*?を(\d+)以上含む', text)
             if heart_count:
                 result['heart_count'] = heart_count
                 text = re.sub(r'必要ハートに.*?を\d+以上含む', '', text).strip()
     return text
 
 
-def _extract_count_value_from_heart_requirement(text):
-    """Extract count value from heart requirement text."""
-    match = re.search(r'必要ハートに.*?を(\d+)以上含む', text)
-    return int(match.group(1)) if match else None
 
 
 def _split_leading_condition_clause(text):
@@ -842,6 +901,7 @@ def parse_effect_backwards(text, parent_source=None):
                 group_match = re.search(r'『(.+?)』', selection_text)
                 if group_match:
                     select_action['group'] = group_match.group(1)
+                    select_action['group_type'] = detect_group_type(group_match.group(1))
                 
                 # Extract card type
                 if 'ライブカード' in selection_text:
@@ -912,9 +972,7 @@ def parse_effect_backwards(text, parent_source=None):
         elif '相手のステージにいる' in text:
             result['target'] = 'opponent'
         # Extract group if present
-        group_match = re.search(r'『(.+?)』', text)
-        if group_match:
-            result['group'] = group_match.group(1)
+        _extract_group_with_type(text, result)
         return result
     
     # Check for "公開して手札に加えてもよい" (reveal and add to hand, may) pattern
@@ -936,9 +994,7 @@ def parse_effect_backwards(text, parent_source=None):
                 result['card_type'] = 'card'
             
             # Extract group if present
-            group_match = re.search(r"『(.+?)』", text)
-            if group_match:
-                result['group'] = group_match.group(1)
+            _extract_group_with_type(text, result)
             
             # Extract heart type selection if present (e.g., "{{heart_02.png|heart02}}か{{heart_04.png|heart04}}を持つ")
             if re.search(r'{{heart_\d+\.png.*?}}.*?を持つ', text):
@@ -995,59 +1051,19 @@ def parse_effect_backwards(text, parent_source=None):
                 text = text[:last_open_paren].strip()
 
     # Check for heart type choice selection pattern BEFORE period removal (e.g., "{{heart_01}}か{{heart_03}}か{{heart_06}}のうち、1つを選ぶ")
-    if re.search(r'{{heart_\d+\.png.*?}}.*?のうち.*?1つを選ぶ', text):
+    if re.search(r'{{heart_\d+\.png.*?}}.*?のうち.*?1つを選ぶ', text) or ('{{heart_' in text and 'のうち' in text):
         result = {}
         result['action'] = 'choose_heart'
         result['choice'] = True
-        # Extract heart types
         heart_matches = extract_heart_types(text)
         if heart_matches:
             result['heart_types'] = heart_matches
-            result['count'] = 1
-        
-        # Check if there's additional content after the period (multi-sentence effect)
-        if text.count('。') > 1:
-            # Split into sentences and parse the second part
-            sentences = text.split('。')
-            if len(sentences) >= 2 and sentences[1].strip():
-                second_sentence = sentences[1].strip()
-                if second_sentence:
-                    second_action = parse_effect_backwards(second_sentence)
-                    if _is_parsed_action(second_action):
-                        # Convert to actions array
-                        first_action = dict(result)
-                        result['actions'] = [first_action, second_action]
-                        result.pop('action', None)
-                        result.pop('count', None)
-                        return result
+        result['count'] = 1 if ('1つ' in text or re.search(r'{{heart_\d+\.png.*?}}.*?のうち.*?1つを選ぶ', text)) else None
+        # Check for multi-sentence effect
+        multi_result = _handle_multi_sentence(text, dict(result))
+        if multi_result:
+            return multi_result
         return result
-
-    if '{{heart_' in text and 'のうち' in text:
-        heart_matches = extract_heart_types(text)
-        if heart_matches:
-            result = {}
-            result['action'] = 'choose_heart'
-            result['choice'] = True
-            result['heart_types'] = heart_matches
-            if '1つ' in text:
-                result['count'] = 1
-            
-            # Check if there's additional content after the period (multi-sentence effect)
-            if text.count('。') > 1:
-                # Split into sentences and parse the second part
-                sentences = text.split('。')
-                if len(sentences) >= 2 and sentences[1].strip():
-                    second_sentence = sentences[1].strip()
-                    if second_sentence:
-                        second_action = parse_effect_backwards(second_sentence)
-                        if _is_parsed_action(second_action):
-                            # Convert to actions array
-                            first_action = dict(result)
-                            result['actions'] = [first_action, second_action]
-                            result.pop('action', None)
-                            result.pop('count', None)
-                            return result
-            return result
 
     # Remove the final period
     text = strip_suffix_period(text)
@@ -1163,9 +1179,7 @@ def parse_effect_backwards(text, parent_source=None):
         heart_types = extract_heart_types(text)
         if heart_types:
             result['heart_types'] = heart_types
-        group = extract_group_name(text)
-        if group:
-            result['group'] = group
+        _extract_group_with_type(text, result)
         return result
 
     if text in ('そのメンバーは', 'そのメンバーは、'):
@@ -1426,23 +1440,8 @@ def parse_effect_backwards(text, parent_source=None):
         if parent_source and 'source' not in result:
             result['source'] = parent_source
     
-    # Check for "up_to" patterns (1人まで, 1枚まで)
-    up_to_match = re.search(r'(\d+)人まで', text)
-    if up_to_match:
-        result['count'] = int(up_to_match.group(1))
-        result['up_to'] = int(up_to_match.group(1))
-    up_to_match = re.search(r'(\d+)枚まで', text)
-    if up_to_match:
-        result['count'] = int(up_to_match.group(1))
-        result['up_to'] = int(up_to_match.group(1))
-    
-    # Check for explicit count patterns (1人, 1枚)
-    count_match = re.search(r'(\d+)人を', text)
-    if count_match:
-        result['count'] = int(count_match.group(1))
-    count_match = re.search(r'(\d+)枚を', text)
-    if count_match:
-        result['count'] = int(count_match.group(1))
+    # Extract count patterns using consolidated helper
+    _extract_count_patterns(text, result)
     
     # Check for comma-separated additional actions (e.g., "draw 2, discard 1")
     # This handles cases like "カードを2枚引き、手札を1枚控え室に置く"
@@ -1598,6 +1597,7 @@ def parse_effect_backwards(text, parent_source=None):
                 group = extract_group_name(text)
                 if group:
                     result['group'] = group
+                    result['group_type'] = detect_group_type(group)
             if '自分のステージ' in text and 'source' not in result:
                 result['source'] = 'stage'
                 result['target'] = 'self'
@@ -1641,9 +1641,7 @@ def parse_effect_backwards(text, parent_source=None):
             result['unit_type'] = 'card'
         
         # Extract group if present
-        group_match = re.search(r"『(.+?)』", text)
-        if group_match:
-            result['group'] = group_match.group(1)
+        _extract_group_with_type(text, result)
         
         # Extract target
         if '相手の' in text:
@@ -1820,21 +1818,18 @@ def parse_effect_backwards(text, parent_source=None):
             break
 
     if result.get('action') == 'member_to_wait':
-        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数がちょうど4つ
-        original_blade_match = re.search(r'元々持つ.*?ブレード.*?ちょうど(\d+)つ', text)
-        if original_blade_match:
-            result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
-            result['original_blade_operator'] = '=='
-        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数が3つ以下
-        original_blade_match = re.search(r'元々持つ.*?ブレード.*?(\d+)つ以下', text)
-        if original_blade_match:
-            result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
-            result['original_blade_operator'] = '<='
-        # Pattern: 元々持つ{{icon_blade.png|ブレード}}の数が4つ以上
-        original_blade_match = re.search(r'元々持つ.*?ブレード.*?(\d+)つ以上', text)
-        if original_blade_match:
-            result['original_blade_count'] = _normalized_int(original_blade_match.group(1))
-            result['original_blade_operator'] = '>='
+        # Consolidated blade count patterns
+        blade_patterns = [
+            (r'元々持つ.*?ブレード.*?ちょうど(\d+)つ', '=='),
+            (r'元々持つ.*?ブレード.*?(\d+)つ以下', '<='),
+            (r'元々持つ.*?ブレード.*?(\d+)つ以上', '>='),
+        ]
+        for pattern, operator in blade_patterns:
+            match = re.search(pattern, text)
+            if match:
+                result['original_blade_count'] = _normalized_int(match.group(1))
+                result['original_blade_operator'] = operator
+                break
 
     # Extract heart type for gain_resource actions
     if result.get('action') == 'gain_resource':
@@ -1883,9 +1878,11 @@ def parse_effect_context_backwards(context):
     
     # Extract source FIRST - this is critical for correct zone mapping
     # Check waitroom FIRST before any other source to prevent override
-    if '控え室' in context or '自分の控え室から' in context or '控え室から' in context:
+    waitroom_markers = ['控え室', '自分の控え室から', '控え室から']
+    is_waitroom = any(m in context for m in waitroom_markers)
+    
+    if is_waitroom:
         variables['source'] = 'waitroom'
-        # DEBUG: print(f"DEBUG: Set source to waitroom, context={context}")
     elif 'デッキ' in context and '上' in context:
         variables['source'] = 'deck_top'
     elif 'デッキ' in context and '下' in context:
@@ -1894,14 +1891,12 @@ def parse_effect_context_backwards(context):
         variables['source'] = 'hand'
     elif 'エネルギーデッキ' in context:
         variables['source'] = 'energy_deck'
-    elif '自分のエネルギーデッキから' in context:
-        variables['source'] = 'energy_deck'
-    # Only set source to stage if not already set by waitroom check
+    # Only set source to stage if not already set
     elif 'ステージ' in context and 'source' not in variables:
         variables['source'] = 'stage'
     
     # FINAL CHECK: If waitroom is in context, override any other source
-    if '控え室' in context or '自分の控え室から' in context or '控え室から' in context:
+    if is_waitroom:
         variables['source'] = 'waitroom'
     
     # Extract person count with up_to (e.g., "1人を" implies up_to 1 in some contexts)
@@ -2643,6 +2638,7 @@ def parse_generic_effect(text):
                     group = extract_group_name(select_text)
                     if group:
                         select_action['group'] = group
+                        select_action['group_type'] = detect_group_type(group)
                 result['actions'].append(select_action)
             else:
                 select_action = parse_effect_backwards(select_text)
@@ -3501,6 +3497,7 @@ def parse_generic_effect(text):
         group_match = re.search(r'『(.+?)』', text)
         if group_match:
             result['group'] = group_match.group(1)
+            result['group_type'] = detect_group_type(group_match.group(1))
         # Don't return yet, continue with other extractions
         member_count_match = re.search(r'メンバー(\d+)人', text)
         if member_count_match:
