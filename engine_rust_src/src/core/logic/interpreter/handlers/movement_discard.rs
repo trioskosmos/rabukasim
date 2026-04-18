@@ -121,7 +121,13 @@ pub fn handle_move_to_discard(
     if self_stage_discard {
         let idx = ctx.area_idx as usize;
         if let Some(removed_cid) = remove_card_at_index(state, target_player_idx, Zone::Stage, idx, discard.allow_under_member_selection) {
-            state.players[target_player_idx].push_discard_card(removed_cid);
+            // When moving from ENERGY, treat destination as ENERGY_ZONE (waitroom)
+            // Note: self_stage_discard is from Stage, so this won't trigger, but kept for consistency
+            if source_zone == Zone::Energy {
+                state.players[target_player_idx].push_energy_card(removed_cid, false);
+            } else {
+                state.players[target_player_idx].push_discard_card(removed_cid);
+            }
             let mut next_ctx = ctx.clone();
             next_ctx.selected_cards.push(removed_cid);
             next_ctx.v_remaining = (count - 1).max(0) as i16;
@@ -228,7 +234,12 @@ pub fn handle_move_to_discard(
             return HandlerResult::Continue;
         }
 
-        state.players[target_player_idx].push_discard_card(removed_cid as i32);
+        // When moving from ENERGY, treat destination as ENERGY_ZONE (waitroom)
+        if source_zone == Zone::Energy {
+            state.players[target_player_idx].push_energy_card(removed_cid as i32, false);
+        } else {
+            state.players[target_player_idx].push_discard_card(removed_cid as i32);
+        }
         moved_cards.push(removed_cid as i32);
         
         next_ctx.v_remaining = if next_ctx.v_remaining > 0 {
@@ -288,7 +299,12 @@ pub fn handle_move_to_discard(
         // === Auto-discard path (no player choice needed) ===
         for _ in 0..count {
             if let Some(cid) = pop_card_from_zone(state, target_player_idx, source_zone, next_ctx.area_idx as i32) {
-                state.players[target_player_idx].push_discard_card(cid);
+                // When moving from ENERGY, treat destination as ENERGY_ZONE (waitroom)
+                if source_zone == Zone::Energy {
+                    state.players[target_player_idx].push_energy_card(cid, false);
+                } else {
+                    state.players[target_player_idx].push_discard_card(cid);
+                }
                 moved_cards.push(cid);
                 next_ctx.selected_cards.push(cid);
             }
@@ -439,6 +455,7 @@ fn pop_card_from_zone(
         Zone::Deck | Zone::DeckTop | Zone::DeckBottom | Zone::Default => {
             state.players[player_idx].pop_deck_card()
         }
+        Zone::Energy => state.players[player_idx].energy_deck.pop(),
         _ => None,
     }
 }
@@ -475,6 +492,14 @@ fn remove_card_at_index(
                 } else {
                     None
                 }
+            } else {
+                None
+            }
+        }
+        Zone::Energy => {
+            if idx < state.players[player_idx].energy_deck.len() {
+                let card_id = state.players[player_idx].energy_deck.remove(idx);
+                Some(card_id)
             } else {
                 None
             }

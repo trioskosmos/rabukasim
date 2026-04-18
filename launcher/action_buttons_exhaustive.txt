@@ -107,22 +107,13 @@ ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
 === Scenario: Choice: Recover Live to Hand ===
 Phase: Response
 [Logic Entry] Opcode: 15 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Unknown Card #10001 | このカードを回収します。 (CHOICE)
-       | [EN] Unknown Card #10001 | Recover this card. (CHOICE)
--------
-ID 11001 | [JP] Unknown Card #10002 | このカードを回収します。 (CHOICE)
-       | [EN] Unknown Card #10002 | Recover this card. (CHOICE)
+ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
+       | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
 -------
 
 === Scenario: Choice: Recover Member to Hand ===
 Phase: Response
 [Logic Entry] Opcode: 17 | CardID: 17 | AbIdx: 0
-ID 11000 | [JP] Energy #1       | このカードを回収します。 (CHOICE)
-       | [EN] Energy #1       | Recover this card. (CHOICE)
--------
-ID 11001 | [JP] Energy #2       | このカードを回収します。 (CHOICE)
-       | [EN] Energy #2       | Recover this card. (CHOICE)
--------
 ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | このカードを回収します。 (CHOICE)
        | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Recover this card. (CHOICE)
 -------
@@ -158,6 +149,9 @@ ID 11001 | [JP] Energy #2       | この順番で戻します。 (CHOICE)
 -------
 ID 11002 | [JP] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | この順番で戻します。 (CHOICE)
        | [EN] 渡辺 曜&鬼塚夏美&大沢瑠璃乃 (LL-bp2-001-R+) | Return in this order. (CHOICE)
+-------
+ID 11099 | [JP] 完了              | 選択を確定します。 (CHOICE)
+       | [EN] Done            | Finish selecting cards. (CHOICE)
 -------
 
 === Scenario: Choice: Select Cards (Generic) ===
@@ -195,8 +189,3 @@ Phase: Main
 ID   0 | [JP] 【スキップ】パス        | 何もしない。 (PASS)
        | [EN] Pass / Confirm  | Skip or confirm current action. (PASS)
 -------
-ID 8300 | [JP] 近江彼方 (PL!N-sd1-006-SD): 【起動】全体: 控え室に置く: 1 (左) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
-       | [EN] Use Kanata Konoe (PL!N-sd1-006-SD): [Act]All: Discard: 1 (Left) | {{kidou.png|起動}}このメンバーをステージから控え室に置く：自分の控え室からメンバーカードを1枚手札に加える。 (ABILITY)
--------
-
-[Dump Complete]

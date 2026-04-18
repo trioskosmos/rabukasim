@@ -1436,6 +1436,16 @@ fn calculate_board_aura_with_exclusions(
                         filter_mask: a & !crate::core::logic::filter::FILTER_STATE_FLAGS_MASK,
                         ability_idx: ab_idx as u16,
                     });
+                } else if op == O_INCREASE_HEART_COST {
+                    let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
+                    let color = semantic.resolved_color_index(6, 6);
+                    if color < 7 {
+                        for target_slot in 0..3 {
+                            if (target_mask & (1 << target_slot)) != 0 {
+                                aura.heart_req_additions.add_to_color(color, v);
+                            }
+                        }
+                    }
                 } else {
                     for target_slot in 0..3 {
                         if (target_mask & (1 << target_slot)) != 0 {

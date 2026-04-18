@@ -1612,6 +1612,24 @@ pub(crate) fn parse_color_mask_value(value: &Value) -> Option<u8> {
         .map(|value| value as u8)
         .or_else(|| {
             value.as_str().and_then(|text| {
+                // Handle numeric string values like "00", "01", etc.
+                if let Ok(num) = text.trim().parse::<u8>() {
+                    // Map "00" to rainbow/generic (index 6 = bit 64)
+                    if num == 0 {
+                        return Some(64);
+                    }
+                    // Map 1-6 to color bits
+                    if num >= 1 && num <= 6 {
+                        return Some(1 << (num - 1));
+                    }
+                    // Map 7 to rainbow
+                    if num == 7 {
+                        return Some(64);
+                    }
+                    return None;
+                }
+                
+                // Handle semantic color strings
                 let mut mask = 0u8;
                 for part in text.split(['|', '+', ',']) {
                     let trimmed = part.trim();
@@ -1654,7 +1672,7 @@ pub(crate) fn parse_zone_mask_value(value: &Value) -> Option<u8> {
                 "ALL" | "ALL AREAS" => Some(0),
                 "STAGE" => Some(ZONE_STAGE as u8),
                 "HAND" => Some(ZONE_HAND as u8),
-                "DISCARD" => Some(ZONE_DISCARD as u8),
+                "DISCARD" | "WAITROOM" | "WAIT ROOM" => Some(ZONE_DISCARD as u8),
                 // Stage-side masks appear in authored data but are not representable in the
                 // legacy 3-bit zone field, so keep them non-restrictive instead of inventing bits.
                 "GUEST+FRIEND" | "GUEST + FRIEND" => Some(0),

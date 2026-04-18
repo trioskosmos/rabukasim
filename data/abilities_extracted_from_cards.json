@@ -1,6 +1,6 @@
 {
   "schema": "extracted_abilities.v1",
-  "generated_at": "2026-04-18T22:07:17.291478",
+  "generated_at": "2026-04-19T01:55:57.314389",
   "generated_by": "tools/ability_extraction/extract_card_abilities.py",
   "source_file": "data\\cards.json",
   "statistics": {
@@ -2498,13 +2498,22 @@
         "text": "{{icon_energy.png|E}}支払ってもよい"
       },
       "effect": {
-        "action": "draw_cards",
-        "count": 1,
-        "target": "opponent",
-        "source": "stage",
-        "up_to": 1,
-        "cost_limit": 4,
-        "cost": 4
+        "choice": true,
+        "actions": [
+          {
+            "action": "member_to_wait",
+            "count": 1,
+            "target": "opponent",
+            "source": "stage",
+            "up_to": 1,
+            "cost_limit": 4,
+            "cost": 4
+          },
+          {
+            "action": "draw_cards",
+            "count": 1
+          }
+        ]
       }
     },
     {
@@ -2906,7 +2915,9 @@
           "action": "place_card",
           "card_type": "energy_card",
           "state": "wait",
-          "source": "energy_deck"
+          "source": "energy_deck",
+          "multiplier": 1,
+          "count_source": "energy_under_member"
         }
       }
     },
@@ -3147,8 +3158,7 @@
         "condition": {
           "text": "自分と相手の成功ライブカード置き場にあるカードの枚数が同じ場合",
           "target": "both",
-          "type": "card_count",
-          "operator": "=="
+          "type": "success_live_count_equal_opponent"
         },
         "action": {
           "resource": "heart",
@@ -3499,9 +3509,30 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "action": "draw_cards",
-        "count": 1,
-        "target": "opponent"
+        "choice": true,
+        "actions": [
+          {
+            "actions": [
+              {
+                "action": "draw_cards",
+                "count": 1
+              },
+              {
+                "action": "discard_to_waitroom",
+                "count": 1,
+                "source": "hand"
+              }
+            ]
+          },
+          {
+            "action": "member_to_wait",
+            "target": "opponent",
+            "source": "stage",
+            "cost_limit": 2,
+            "cost": 2,
+            "all": true
+          }
+        ]
       }
     },
     {
@@ -3968,11 +3999,14 @@
           "text": "以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合",
           "target": "self"
         },
-        "action": {
-          "action": "move_member",
-          "text": "そのメンバーはこのメンバーがいたエリアに移動させる。)",
-          "target": "selected_member"
-        }
+        "choice": true,
+        "actions": [
+          {
+            "action": "move_member",
+            "text": "そのメンバーはこのメンバーがいたエリアに移動させる。)",
+            "target": "selected_member"
+          }
+        ]
       }
     },
     {
@@ -4364,22 +4398,30 @@
           "location": "waitroom",
           "card_type": "live_card"
         },
-        "action": {
-          "condition": {
-            "text": "自分の控え室からライブカードを1枚手札に加える。\n・自分の控え室にグループ名が異なるライブカードが3枚以上ある場合",
-            "target": "self",
-            "different": "group_name",
-            "type": "card_count_at_least",
-            "value": 3,
-            "location": "waitroom",
+        "choice": true,
+        "actions": [
+          {
+            "action": "add_to_hand",
+            "count": 1,
             "card_type": "live_card"
           },
-          "action": {
-            "action": "add_to_hand",
-            "count": 2,
-            "card_type": "live_card"
+          {
+            "condition": {
+              "text": "自分の控え室にグループ名が異なるライブカードが3枚以上ある場合",
+              "target": "self",
+              "different": "group_name",
+              "type": "card_count_at_least",
+              "value": 3,
+              "location": "waitroom",
+              "card_type": "live_card"
+            },
+            "action": {
+              "action": "add_to_hand",
+              "count": 2,
+              "card_type": "live_card"
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -9841,9 +9883,18 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "action": "place_on_deck",
-        "destination": "deck_top",
-        "order": "any"
+        "choice": true,
+        "actions": [
+          {
+            "action": "activate_energy",
+            "count": 1
+          },
+          {
+            "action": "place_on_deck",
+            "destination": "deck_top",
+            "order": "any"
+          }
+        ]
       }
     },
     {
@@ -13473,12 +13524,24 @@
           "cost_limit": 9,
           "type": "raw"
         },
-        "action": {
-          "action": "select_member",
-          "text": "以下から1つを選ぶ。\n・ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。\n・相手のステージにいるコスト4以下のメンバー1人をウェイトにする",
-          "target": "self",
-          "count": 1
-        }
+        "choice": true,
+        "actions": [
+          {
+            "action": "select_member",
+            "text": "ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る",
+            "target": "self",
+            "count": 1
+          },
+          {
+            "action": "member_to_wait",
+            "count": 1,
+            "target": "opponent",
+            "source": "stage",
+            "up_to": 1,
+            "cost_limit": 4,
+            "cost": 4
+          }
+        ]
       }
     },
     {
@@ -14604,13 +14667,24 @@
           "type": "card_presence",
           "operator": "present"
         },
-        "action": {
-          "action": "place_card",
-          "card_type": "energy_card",
-          "state": "wait",
-          "source": "energy_deck",
-          "count": 1
-        }
+        "choice": true,
+        "actions": [
+          {
+            "raw_text": "代わりに1つ以上を選ぶ"
+          },
+          {
+            "action": "place_card",
+            "card_type": "energy_card",
+            "state": "wait",
+            "source": "energy_deck",
+            "count": 1
+          },
+          {
+            "action": "add_to_hand",
+            "count": 1,
+            "card_type": "member_card"
+          }
+        ]
       }
     },
     {
@@ -15731,34 +15805,44 @@
           "card_type": "member_card",
           "type": "member_presence"
         },
-        "action": {
-          "actions": [
-            {
-              "count": 1,
-              "action": "activate_member",
-              "source_state": "wait"
-            },
-            {
-              "actions": [
-                {
-                  "duration": "until_end_of_live"
-                },
-                {
-                  "action": "member_to_wait",
-                  "count": 1,
-                  "target": "opponent",
-                  "source": "stage",
-                  "up_to": 1,
-                  "blade_count": 2,
-                  "resource": "blade",
-                  "resource_count": 2,
-                  "original_blade_count": 3,
-                  "original_blade_operator": "<="
-                }
-              ]
-            }
-          ]
-        }
+        "choice": true,
+        "actions": [
+          {
+            "actions": [
+              {
+                "count": 1,
+                "action": "activate_member",
+                "source_state": "wait"
+              },
+              {
+                "resource": "blade",
+                "actions": [
+                  {
+                    "duration": "until_end_of_live"
+                  },
+                  {
+                    "action": "gain_resource",
+                    "resource": "blade",
+                    "blade_count": 1,
+                    "resource_count": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "action": "member_to_wait",
+            "count": 1,
+            "target": "opponent",
+            "source": "stage",
+            "up_to": 1,
+            "blade_count": 1,
+            "resource": "blade",
+            "resource_count": 1,
+            "original_blade_count": 3,
+            "original_blade_operator": "<="
+          }
+        ]
       }
     },
     {
@@ -15817,14 +15901,23 @@
           "cost_limit": 9,
           "type": "member_presence"
         },
-        "action": {
-          "action": "deploy_to_stage",
-          "count": 1,
-          "card_type": "member_card",
-          "group": "EdelNote",
-          "cost_limit": 4,
-          "cost": 4
-        }
+        "choice": true,
+        "actions": [
+          {
+            "action": "deploy_to_stage",
+            "count": 1,
+            "card_type": "member_card",
+            "group": "EdelNote",
+            "cost_limit": 4,
+            "cost": 4
+          },
+          {
+            "action": "reduce",
+            "heart_types": [
+              "06"
+            ]
+          }
+        ]
       }
     },
     {

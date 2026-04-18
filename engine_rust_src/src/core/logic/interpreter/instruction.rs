@@ -100,16 +100,16 @@ where
 }
 
 fn deserialize_zone_text(text: &str) -> Option<Zone> {
-    match text.trim().to_ascii_uppercase().as_str() {
-        "HAND" | "CARD_HAND" => Some(Zone::Hand),
-        "DISCARD" | "CARD_DISCARD" => Some(Zone::Discard),
+    match text.trim().to_ascii_uppercase().replace('_', " ").as_str() {
+        "HAND" | "CARD HAND" => Some(Zone::Hand),
+        "DISCARD" | "CARD DISCARD" | "WAITROOM" | "WAIT ROOM" => Some(Zone::Discard),
         "STAGE" => Some(Zone::Stage),
         "DECK" => Some(Zone::Deck),
-        "DECK_TOP" | "TOP_DECK" => Some(Zone::DeckTop),
-        "DECK_BOTTOM" | "BOTTOM_DECK" => Some(Zone::DeckBottom),
+        "DECK TOP" | "TOP DECK" => Some(Zone::DeckTop),
+        "DECK BOTTOM" | "BOTTOM DECK" => Some(Zone::DeckBottom),
         "ENERGY" => Some(Zone::Energy),
-        "LIVE" | "SUCCESS_LIVE" | "SUCCESS_PILE" => Some(Zone::SuccessPile),
-        "YELL" | "YELL_PILE" => Some(Zone::Yell),
+        "LIVE" | "SUCCESS LIVE" | "SUCCESS PILE" => Some(Zone::SuccessPile),
+        "YELL" | "YELL PILE" => Some(Zone::Yell),
         _ => None,
     }
 }
@@ -124,7 +124,7 @@ pub(crate) fn parse_target_slot_value(value: &Value) -> Option<u8> {
                 "STAGE_2" => Some(2),
                 "CONTEXT" => Some(4),
                 "HAND" => Some(6),
-                "DISCARD" => Some(7),
+                "DISCARD" | "WAITROOM" | "WAIT_ROOM" => Some(7),
                 "CHOICE_TARGET" => Some(10),
                 "LIVE_0" | "LIVE_SET" => Some(13),
                 "LIVE_1" => Some(14),
@@ -157,6 +157,7 @@ pub(crate) fn parse_remainder_zone_value(value: &Value) -> Option<u8> {
         match text.trim().to_ascii_uppercase().replace('-', "_").replace(' ', "_").as_str() {
             "STAGE" => Some(203),
             "HAND" => Some(204),
+            "DISCARD" | "WAITROOM" | "WAIT_ROOM" => Some(7),
             "SUCCESS_PILE" | "SUCCESS_LIVE" | "LIVE_AREA" => Some(218),
             "YELL_PILE" | "YELL" => Some(17),
             _ => deserialize_zone_text(text)

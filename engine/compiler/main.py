@@ -536,6 +536,7 @@ class SparseSourceManager:
 
             for entry in abilities_list:
                 trigger_id = _coerce_int(entry.get("trigger_id", 0))
+                trigger_str = entry.get("trigger", "")
                 frames = list(entry.get("frames", []) or [])
                 if not frames:
                     semantic_form = entry.get("semantic_form", {})
@@ -554,6 +555,7 @@ class SparseSourceManager:
                     card_no, ab_idx = extracted
                     next_mapping[(card_no, ab_idx)] = {
                         "trigger_id": trigger_id,
+                        "trigger": trigger_str,
                         "frames": frames,
                         "semantic_form": semantic_form,
                         "raw_text": str(
@@ -622,30 +624,6 @@ def _set_sparse_source_path(source_path: str) -> None:
     _sparse_manager = SparseSourceManager(SPARSE_INDEX_PATH)
 
 
-def _post_process_frames(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Post-process frames to insert JUMP_IF_FALSE after SELECT_MEMBER when followed by target-dependent effects."""
-    i = 0
-    while i < len(frames) - 1:
-        frame = frames[i]
-        next_frame = frames[i + 1]
-        op = str(frame.get("op", frame.get("opcode", ""))).upper()
-        next_op = str(next_frame.get("op", next_frame.get("opcode", ""))).upper()
-        
-        # If SELECT_MEMBER is followed by an effect that needs a target (ADD_BLADES, ADD_HEARTS, ACTIVATE_MEMBER)
-        # insert JUMP_IF_FALSE to skip the effect if selection failed
-        if op == "SELECT_MEMBER" and next_op in {"ADD_BLADES", "ADD_HEARTS", "ACTIVATE_MEMBER"}:
-            jump_frame = {
-                "op": "JUMP_IF_FALSE",
-                "value": 1,  # Skip 1 frame (the next effect)
-                "frame_index": i + 1,
-            }
-            frames.insert(i + 1, jump_frame)
-            i += 1  # Skip the jump frame we just inserted
-        i += 1
-    
-    return frames
-
-
 def _build_ability_from_sparse_entry(
     entry: dict[str, Any],
     raw_text: str,
@@ -655,20 +633,40 @@ def _build_ability_from_sparse_entry(
     Build an Ability object from a sparse authored entry.
     
     FLOW:
-    1. Extract trigger_id, frames, flags from sparse entry
+    1. Extract trigger, frames, flags from sparse entry
     2. _post_process_frames() - insert JUMP_IF_FALSE where needed
     3. _select_ability_raw_text() - get appropriate raw text for this ability
     4. Return Ability with trigger, empty effects/conditions/costs (filled later by semantic processor)
     
     Args:
-        entry: Sparse index entry with trigger_id, frames, flags
-    raw_text: Full ability text from cards.json
-    ability_index: Index of this ability on the card (0, 1, 2...)
+        entry: Sparse index entry with trigger, frames, flags
+        raw_text: Full ability text from cards.json
+        ability_index: Index of this ability on the card (0, 1, 2...)
     
     Returns:
         Ability object ready for semantic population
     """
-    trigger_id = _coerce_int(entry.get("trigger_id", 0))
+    # Use trigger string instead of trigger_id to get correct enum value
+    trigger_str = entry.get("trigger", "").upper()
+    trigger_map = {
+        "NONE": TriggerType.NONE,
+        "ON_PLAY": TriggerType.ON_PLAY,
+        "ON_LIVE_START": TriggerType.ON_LIVE_START,
+        "ON_LIVE_SUCCESS": TriggerType.ON_LIVE_SUCCESS,
+        "TURN_START": TriggerType.TURN_START,
+        "TURN_END": TriggerType.TURN_END,
+        "CONSTANT": TriggerType.CONSTANT,
+        "ACTIVATED": TriggerType.ACTIVATED,
+        "ON_LEAVES": TriggerType.ON_LEAVES,
+        "ON_REVEAL": TriggerType.ON_REVEAL,
+        "ON_POSITION_CHANGE": TriggerType.ON_POSITION_CHANGE,
+        "ON_ABILITY_RESOLVE": TriggerType.ON_ABILITY_RESOLVE,
+        "ON_ABILITY_SUCCESS": TriggerType.ON_ABILITY_SUCCESS,
+        "ON_MOVE_TO_DISCARD": TriggerType.ON_MOVE_TO_DISCARD,
+        "ON_MEMBER_TAP": TriggerType.ON_MEMBER_TAP,
+    }
+    trigger = trigger_map.get(trigger_str, TriggerType(_coerce_int(entry.get("trigger_id", 0))))
+    
     semantic_form = entry.get("semantic_form", {})
     if not isinstance(semantic_form, dict):
         semantic_form = {}
@@ -676,12 +674,11 @@ def _build_ability_from_sparse_entry(
     frames = list(entry.get("frames", []) or [])
     if not frames:
         frames = list(semantic_form_to_frame_program(semantic_form).get("frames", []) or [])
-    frames = _post_process_frames(frames)
     
     ability_raw_text = str(entry.get("raw_text", "") or "").strip() or _select_ability_raw_text(raw_text, ability_index, entry)
     return Ability(
         raw_text=ability_raw_text,
-        trigger=TriggerType(trigger_id),
+        trigger=trigger,
         effects=[],
         frame_program={"frames": frames},
         semantic_form=semantic_form,

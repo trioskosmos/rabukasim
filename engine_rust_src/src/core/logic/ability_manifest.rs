@@ -347,7 +347,7 @@ fn friendly_zone(zone: Option<&Value>) -> String {
     };
     match zone.to_ascii_uppercase().as_str() {
         "HAND" => "hand".to_string(),
-        "DISCARD" => "discard".to_string(),
+        "DISCARD" | "WAITROOM" | "WAIT ROOM" => "discard".to_string(),
         "STAGE" => "stage".to_string(),
         "DECK" => "deck".to_string(),
         "DECK_TOP" => "top of deck".to_string(),

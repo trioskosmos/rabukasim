@@ -6548,6 +6548,7 @@ mod tests {
         let prior_success = first_live_without_trigger(&db, TriggerType::OnLiveStart, live_id);
 
         let mut state = create_test_state();
+        state.debug.debug_mode = true;
         state.ui.silent = true;
         state.players[0].live_zone[0] = live_id;
         state.players[0].stage = [self_target, self_off_group, -1];

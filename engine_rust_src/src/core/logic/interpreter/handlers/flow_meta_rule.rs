@@ -186,5 +186,31 @@ pub fn handle_meta_rule(
         return HandlerResult::Continue;
     }
 
+    // Handle DID_ACTIVATE_ENERGY and DID_ACTIVATE_MEMBER patterns
+    if frame_data.opcode == O_META_RULE {
+        if matches!(raw_effect, Some("DID_ACTIVATE_ENERGY")) {
+            // Check if energy was activated by a specific group's effect this turn
+            // For now, check if there's tapped energy (activated from wait state)
+            let has_tapped_energy = state.players[target_p_idx].tapped_energy_count() > 0;
+            return HandlerResult::SetCond(has_tapped_energy);
+        } else if matches!(raw_effect, Some("DID_ACTIVATE_MEMBER")) {
+            // Check if members were activated by a specific group's effect this turn
+            // For now, check if there's tapped members (activated from wait state)
+            let has_tapped_member = state.players[target_p_idx].stage.iter().enumerate().any(|(slot_idx, &cid)| {
+                if cid >= 0 {
+                    if let Some(_member) = db.get_member(cid) {
+                        // Check if member is tapped (activated from wait state)
+                        state.players[target_p_idx].is_tapped(slot_idx)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            });
+            return HandlerResult::SetCond(has_tapped_member);
+        }
+    }
+
     HandlerResult::Continue
 }

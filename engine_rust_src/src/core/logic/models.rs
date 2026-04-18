@@ -773,7 +773,7 @@ impl<'a> AbilityFrameComponents<'a> {
         {
             let zone = match per_card.to_ascii_uppercase().as_str() {
                 "HAND" => Some(SemanticCountZone::Hand),
-                "DISCARD" | "DISCARD_COUNT" => Some(SemanticCountZone::Discard),
+                "DISCARD" | "DISCARD_COUNT" | "WAITROOM" | "WAIT ROOM" => Some(SemanticCountZone::Discard),
                 "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
                     Some(SemanticCountZone::SuccessPile)
                 }
@@ -1592,7 +1592,7 @@ impl AbilityFrame {
     fn zone_from_text(value: &str) -> Option<Zone> {
         match value.trim().to_ascii_uppercase().as_str() {
             "HAND" => Some(Zone::Hand),
-            "DISCARD" => Some(Zone::Discard),
+            "DISCARD" | "WAITROOM" | "WAIT ROOM" => Some(Zone::Discard),
             "STAGE" => Some(Zone::Stage),
             "DECK" => Some(Zone::Deck),
             "DECK_TOP" => Some(Zone::DeckTop),

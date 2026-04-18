@@ -294,6 +294,31 @@ fn resolve_structured_zone_count(
     };
     let check_success =
         is_explicit_success_count || inferred_zone == Some(SemanticCountZone::SuccessPile);
+    
+    // Special handling for keyword_energy and keyword_member flags
+    // These check turn-level activation masks instead of current tapped state
+    if filter.keyword_energy {
+        // Check if energy was activated this turn by the specified group
+        let group_mask = if filter.group_enabled {
+            1u32 << filter.group_id
+        } else {
+            0xFFFFFFFFu32 // All groups
+        };
+        let activated = (state.players[p_idx].activated_energy_group_mask & group_mask) != 0;
+        return if activated { 1 } else { 0 };
+    }
+    
+    if filter.keyword_member {
+        // Check if members were activated this turn by the specified group
+        let group_mask = if filter.group_enabled {
+            1u32 << filter.group_id
+        } else {
+            0xFFFFFFFFu32 // All groups
+        };
+        let activated = (state.players[p_idx].activated_member_group_mask & group_mask) != 0;
+        return if activated { 1 } else { 0 };
+    }
+    
     let can_use_simple_len =
         !frame.counts_unique_names() && !frame.counts_unique_groups() && !needs_card_scan(&filter);
 

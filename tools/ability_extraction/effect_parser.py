@@ -750,6 +750,10 @@ def _normalize_parsed_tree(value, parent_source=None):
                 value['target'] = _infer_target(text)
             if 'source' not in value:
                 value['source'] = 'stage'
+        elif action == 'reduce' and 'amount' not in value:
+            amount_match = re.search(r'(\d+)減る', text)
+            if amount_match:
+                value['amount'] = int(amount_match.group(1))
         for item in value.values():
             _normalize_parsed_tree(item, value.get('source'))
     elif isinstance(value, list):
@@ -773,6 +777,50 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
     payment, text = _extract_optional_payment(text)
     if payment:
         result['payment'] = payment
+
+    # Check for choice pattern EARLY - before any other pattern checks
+    # This ensures it's reached even if other patterns match
+    if '以下から1つを選ぶ' in text and '・' in text:
+        # Check if there's a leading condition
+        condition_part, action_part = _split_leading_condition_clause(text)
+        if condition_part and action_part:
+            condition = parse_condition(condition_part)
+            if condition:
+                result['condition'] = condition
+            # Handle choice pattern directly without recursing to prevent incorrect parsing
+            result['choice'] = True
+            result['actions'] = []
+            # Strip the choice marker from action_part
+            choice_text = action_part.replace('以下から1つを選ぶ。', '').replace('以下から1つを選ぶ', '').strip()
+            # Split by bullet points
+            bullet_options = _merge_subject_stub(choice_text.split('・'))
+            for option in bullet_options:
+                option = option.strip()
+                if option and option not in ['以下から1つを選ぶ', '以下から1つを選ぶ。']:
+                    option = option.rstrip('。')
+                    action = parse_effect_backwards(option)
+                    if action and 'raw_text' not in action:
+                        result['actions'].append(action)
+                    else:
+                        result['actions'].append({'raw_text': option})
+            return result
+        # No leading condition - handle choice pattern directly here
+        result['choice'] = True
+        result['actions'] = []
+        # Strip the choice marker
+        choice_text = text.replace('以下から1つを選ぶ。', '').replace('以下から1つを選ぶ', '').strip()
+        # Split by bullet points
+        bullet_options = _merge_subject_stub(choice_text.split('・'))
+        for option in bullet_options:
+            option = option.strip()
+            if option and option not in ['以下から1つを選ぶ', '以下から1つを選ぶ。']:
+                option = option.rstrip('。')
+                action = parse_effect_backwards(option)
+                if action and 'raw_text' not in action:
+                    result['actions'].append(action)
+                else:
+                    result['actions'].append({'raw_text': option})
+        return result
 
     # Check for "その後、" (then) separator - BEFORE condition split
     # This handles patterns like "if X, do A. Then, if Y, do B"
@@ -917,6 +965,10 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
         count_match = re.search(r'([\d０-９]+)枚', text)
         if count_match:
             result['count'] = _normalized_int(count_match.group(1))
+        elif '枚数に1を足した枚数' in text:
+            # Dynamic count: number of energy cards under member + 1
+            result['multiplier'] = 1
+            result['count_source'] = 'energy_under_member'
         return result
 
     # Check for blade transformation pattern (e.g., "すべて[青ブレード]になる")
@@ -2736,17 +2788,20 @@ def parse_generic_effect(text):
         result['text'] = text
         return result
 
-    sentence_parts = [sentence.strip() for sentence in text.split('。') if sentence.strip()]
-    if len(sentence_parts) >= 2:
-        leading_condition_markers = ('場合', 'とき', 'かぎり', 'なら')
-        if (
-            any(marker in sentence_parts[0] for marker in leading_condition_markers)
-            and any(marker in sentence_parts[1] for marker in leading_condition_markers)
-            and 'そうした場合' not in text
-        ):
-            parsed_sentences = []
-            for sentence in sentence_parts[:2]:
-                parsed = parse_effect_backwards(sentence)
+    # Don't split on periods if there's a choice pattern
+    # This preserves "以下から1つを選ぶ" with bullet points
+    if not ('以下から1つを選ぶ' in text and '・' in text):
+        sentence_parts = [sentence.strip() for sentence in text.split('。') if sentence.strip()]
+        if len(sentence_parts) >= 2:
+            leading_condition_markers = ('場合', 'とき', 'かぎり', 'なら')
+            if (
+                any(marker in sentence_parts[0] for marker in leading_condition_markers)
+                and any(marker in sentence_parts[1] for marker in leading_condition_markers)
+                and 'そうした場合' not in text
+            ):
+                parsed_sentences = []
+                for sentence in sentence_parts[:2]:
+                    parsed = parse_effect_backwards(sentence)
                 if _is_parsed_action(parsed):
                     parsed_sentences.append(parsed)
             if len(parsed_sentences) >= 2:
