@@ -37,11 +37,6 @@ from ..models.ability import (
 )
 from ..models.card import EnergyCard, LiveCard, MemberCard
 from ..models.enums import CHAR_MAP
-from .semantic_processor import (
-    build_ability_from_text,
-    semantic_form_to_frame_program,
-    select_ability_raw_text as _select_ability_raw_text,
-)
 from .extracted_abilities_loader import (
     get_ability_for_card,
     load_extracted_abilities,
@@ -748,13 +743,6 @@ def _resolve_abilities(card_no: str, data: dict) -> list[Ability]:
         if selected_entry is None:
             if used_source:
                 break
-            ability_text = _select_ability_raw_text(raw_text, ab_idx, data)
-            if ability_text.strip():
-                ability = build_ability_from_text(card_no, raw_text, ab_idx)
-                _override_trigger_for_known_choice_cards(card_no, ability)
-                abilities.append(ability)
-                used_source = True
-                continue
             continue
 
         ability = _build_ability_from_sparse_entry(

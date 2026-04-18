@@ -170,18 +170,25 @@ def split_commas_smartly(text):
     return parts
 
 
-# Known unit names (groups that are units, not individual characters)
-KNOWN_UNITS = {
+# Main groups (large idol groups)
+MAIN_GROUPS = {
     'μ\'s', 'Aqours', 'Saint Snow', '虹ヶ咲', 'Liella!',
     'Nijigaku', 'Liella', 'SaintSnow', 'Muse',
+    '蓮ノ空',  # Hasunosora
+}
+
+# Subunits (smaller groups within main groups)
+SUBUNITS = {
     'CYaRon!', 'AZALEA', 'Guilty Kiss', 'Dance',
-    'Qu4rtz', 'R3BIRTH', 'SIF', 'Love Live',
-    'LoveLive', 'ラブライブ', 'ラブライブ！',
+    'Qu4rtz', 'R3BIRTH',
     'CatChu!', '5yncri5e!', 'BiBi', 'Printemps',
     'lily white', 'DOLLCHESTRA', 'スリーズブーケ',
     'みらくらぱーく！', 'MIRAPARK', 'EdelNote',
     'A-RISE', 'SunnyPassion', 'KALEIDOSCORE',
 }
+
+# Combined known units (both main groups and subunits)
+KNOWN_UNITS = MAIN_GROUPS | SUBUNITS
 
 
 def detect_group_type(group_name):

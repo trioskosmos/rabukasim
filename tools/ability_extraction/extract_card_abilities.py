@@ -82,6 +82,9 @@ def extract_trigger(text: str) -> tuple[list, str, str]:
         # Check if this is a use limit (turn restriction)
         if any(use_limit_pattern in icon_file for use_limit_pattern in use_limit_patterns):
             use_limit = icon_text
+            # Set once_per_turn if use_limit is ターン1回
+            if use_limit == "ターン1回":
+                use_limit = 1  # Convert to integer
             # Remove use limit from effect
             trigger_pattern = f"{{{{{icon_file}|{icon_text}}}}}"
             effect = effect.replace(trigger_pattern, '', 1)
@@ -137,6 +140,18 @@ def extract_abilities_from_card(card_id: str, card: dict) -> list:
             if abilities:
                 abilities[-1]["full_text"] += "\n" + line
                 abilities[-1]["triggerless_text"] += "\n" + line
+            else:
+                # Standalone parenthetical note - treat as null ability (no-op)
+                abilities.append({
+                    "card_id": card_id,
+                    "full_text": line,
+                    "triggerless_text": "",
+                    "use_limit": None,
+                    "triggers": [],
+                    "trigger_count": 0,
+                    "ability_index": i,
+                    "is_null": True,
+                })
             continue
         
         # Check if this line starts with a trigger pattern (new ability)
@@ -158,6 +173,7 @@ def extract_abilities_from_card(card_id: str, card: dict) -> list:
             "full_text": line,
             "triggerless_text": effect,
             "use_limit": use_limit,
+            "once_per_turn": use_limit == 1 if use_limit else False,
             "triggers": triggers,
             "trigger_count": len(triggers),
             "ability_index": i,

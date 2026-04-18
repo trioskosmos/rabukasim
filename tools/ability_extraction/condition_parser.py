@@ -65,7 +65,8 @@ def _set_condition(condition, condition_type, *, value=None, operator=None, **ex
         condition['value'] = value
     if operator is not None:
         condition['operator'] = operator
-    condition.update({key: item for key, item in extra.items() if item is not None})
+    # Allow None values for group field to preserve it even if not found
+    condition.update({key: item for key, item in extra.items() if item is not None or key == 'group'})
     return condition
 
 
@@ -158,7 +159,8 @@ CONDITION_PATTERN_REGISTRY = [
     # Deck refresh
     ('デッキがリフレッシュしていた', 'deck_refresh', None),
     # State conditions
-    ('ウェイト状態の', 'state', lambda t: {'value': 'wait', 'operator': '=='}),
+    (lambda t: 'ウェイト状態の' in t, 'state', lambda t: {'value': 'wait', 'operator': '==', 'group': extract_group_name(t), 'card_type': 'member_card'}),
+    # Note: 'かぎり' (while/as long as) marker - must come after state pattern to allow state conditions to match first
     # Note: 'アクティブ状態の' is handled by count_energy pattern for energy conditions
     # Area movement
     ('エリアを移動した', 'area_move', None),
@@ -167,9 +169,14 @@ CONDITION_PATTERN_REGISTRY = [
     (lambda t: re.search(r'(\d+)回登場した', t), 'member_deploy_count',
      lambda t, m: {'value': int(m.group(1)), 'target': 'self', 'source': 'stage', 'event': 'deploy',
                    'scope': 'turn' if 'このターン' in t else None}),
+    (lambda t: '回以上登場している' in t and re.search(r'(\d+)回以上登場している', t), 'member_deploy_count',
+     lambda t, m: {'value': int(m.group(1)), 'operator': '>=', 'target': 'self', 'source': 'stage', 'event': 'deploy',
+                   'scope': 'turn' if 'このターン' in t else None}),
     # Special conditions
-    ('余剰ハート', 'surplus_heart', lambda t: {'value': 0 if '持たない' in t else (_extract_count_value(t, r'余剰ハート.*?(\d+)つ以上') or 1)}),
-    ('かぎり', 'while', None),
+    (lambda t: '余剰ハート' in t, 'surplus_heart', lambda t: {
+        'value': 0 if '持たない' in t else (_extract_count_value(t, r'余剰ハート.*?(\d+)つ以上') or 1),
+        'type': 'surplus_heart_equal' if '持たない' in t else 'surplus_heart'
+    }),
     ('登場か、エリアを移動した', 'or_trigger', lambda t: {'triggers': ['deploy', 'move']}),
     ('このメンバーがエリアを移動するか自分のエネルギー置き場にエネルギーが置かれた', 'or_trigger',
      lambda t: {'triggers': ['move_by_effect', 'energy_placed'], 'target': 'self'}),
@@ -181,6 +188,8 @@ CONDITION_PATTERN_REGISTRY = [
     ('エリアすべてに', 'all_areas', lambda t: {'group': extract_group_name(t), 'names_different': '名前が異なる' in t}),
     # Opponent live cards location
     ('相手のライブカード置き場にあるすべてのライブカードは', 'opponent_live_cards_location', None),
+    # Success live card count equality (must come before general card count patterns)
+    (lambda t: '自分と相手の成功ライブカード置き場にあるカードの枚数が同じ' in t, 'success_live_count_equal_opponent', None),
     # Waitroom location
     ('自分の控え室にある', 'waitroom_location', None),
     # Cost comparison conditions
@@ -265,7 +274,11 @@ def _apply_pattern_registry(condition, text):
                     try:
                         fields = extractor(text, match_obj) if match_obj else extractor(text)
                         if fields:
-                            condition.update({k: v for k, v in fields.items() if v is not None})
+                            # Allow None values for group field to preserve it even if not found
+                            condition.update({k: v for k, v in fields.items() if v is not None or k == 'group'})
+                            # Allow extractor to override condition type
+                            if 'type' in fields:
+                                condition['type'] = fields['type']
                     except Exception:
                         pass
             return True
@@ -278,6 +291,20 @@ def parse_condition(condition_part):
     condition_part = normalize_fullwidth_digits(condition_part).strip()
     condition_part = condition_part.lstrip('「『').rstrip('」』')
     condition['text'] = condition_part
+    
+    # Check for "その後、" (then) separator in condition text - MUST BE FIRST
+    # This handles patterns like "activate energy. Then, if all energy is active, +1 score"
+    if 'その後、' in condition_part:
+        before_then, after_then = condition_part.split('その後、', 1)
+        # Check if before_then ends with a period (is an action, not a condition)
+        # If so, this should be split into two separate parts
+        if before_then.rstrip('。 、').endswith('。'):
+            # This is an action followed by a condition
+            # Return a special marker to indicate this should be split
+            condition['_sequential_marker'] = True
+            condition['_before_then'] = before_then.rstrip('。')
+            condition['_after_then'] = after_then
+            return condition
 
     if '、' in condition_part and any(marker in condition_part for marker in ['とき', '場合', 'かぎり']):
         fragments = [frag.strip('。 ') for frag in condition_part.split('、') if frag.strip('。 ')]
@@ -365,6 +392,13 @@ def parse_condition(condition_part):
         # Fallback for conditions not in registry
         pass
     
+    # Post-process: Extract group name if not already set and condition contains group markers
+    if 'group' not in condition and '『' in condition_part:
+        group = extract_group_name(condition_part)
+        if group:
+            condition['group'] = group
+            condition['group_type'] = detect_group_type(group)
+    
     # Check for member count condition modifiers
     if condition.get('type') == 'member_count_at_least':
         if '名前とコストが両方ともそれぞれ異なる' in condition_part:
@@ -434,7 +468,8 @@ def parse_condition(condition_part):
     if '『' in condition_part and '』' in condition_part:
         group = extract_group_name(condition_part)
         if group:
-            _set_condition(condition, 'group', value=group)
+            condition['group'] = group
+            condition['group_type'] = detect_group_type(group)
             # Extract additional fields that may be present with group condition
             position = _extract_position_value(condition_part)
             if position:
@@ -1172,6 +1207,10 @@ def parse_condition(condition_part):
             # For card presence, set operator to absent
             if 'operator' not in condition or condition['operator'] == 'present':
                 condition['operator'] = 'absent'
+        elif condition.get('type') == 'surplus_heart':
+            # For surplus_heart, change type to surplus_heart_equal with value 0
+            condition['type'] = 'surplus_heart_equal'
+            condition['value'] = 0
         else:
             # Add explicit negation marker
             condition['negate'] = True

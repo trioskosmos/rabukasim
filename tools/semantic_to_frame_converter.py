@@ -14,8 +14,8 @@ GROUP_ID_MAP: Dict[str, str] = {
     "Liella!": "LIELLA",
     "Liella": "LIELLA",
     "Aqours": "AQOURS",
-    "μ's": "MUS",
-    "μs": "MUS",
+    "μ's": "MUSE",
+    "μs": "MUSE",
     "Nijigasaki": "NIJIGASAKI",
     "虹ヶ咲": "NIJIGASAKI",
     "蓮ノ空": "HASUNOSORA",
@@ -24,11 +24,18 @@ GROUP_ID_MAP: Dict[str, str] = {
     "BiBi": "BIBI",
     "Printemps": "PRINTEMPS",
     "lily white": "LILYWHITE",
+    "lilywhite": "LILYWHITE",
     "Guilty Kiss": "GUILTY_KISS",
     "AZALEA": "AZALEA",
     "DOLLCHESTRA": "DOLLCHESTRA",
     "スリーズブーケ": "SUISEIBOUQUETTE",
     "みらくらぱーく！": "MIRAPARK",
+    "5yncri5e!": "SYNCR5",
+    "A-RISE": "ARISE",
+    "CatChu!": "CATCHU",
+    "EdelNote": "EDELNOTE",
+    "KALEIDOSCORE": "KALEIDOSCORE",
+    "SunnyPassion": "SUNNYPASSION",
 }
 
 CHAR_ID_MAP: Dict[str, str] = {
@@ -40,6 +47,7 @@ CHAR_ID_MAP: Dict[str, str] = {
     "エマ・ヴェルデ": "EMMA",
     "三船栞子": "SHIORIKO",
     "宮下 愛": "AI",
+    "宮下愛": "AI",
     "朝香果林": "KARIN",
     "中須かすみ": "KASUMI",
     "若菜四季": "SHIKI",
@@ -56,6 +64,8 @@ CHAR_ID_MAP: Dict[str, str] = {
     "星空 凛": "RIN",
     "桜内梨子": "RIKO",
     "黒澤ダイヤ": "DIA",
+    "ミア・テイラー": "MIA",
+    "澁谷かのん": "KANON",
 }
 
 # Semantic action to frame opcode mapping.
@@ -63,8 +73,10 @@ SEMANTIC_TO_OPCODE: Dict[str, str] = {
     "draw_cards": "DRAW",
     "add_to_hand": "ADD_TO_HAND",
     "gain_resource": "ADD_BLADES",
+    "add_blades": "ADD_BLADES",
     "look_at_cards": "LOOK_DECK",
     "select_from_looked_at_cards": "LOOK_AND_CHOOSE",
+    "look_reorder_discard": "LOOK_REORDER_DISCARD",
     "place_on_deck": "MOVE_TO_DECK",
     "discard_to_waitroom": "MOVE_TO_DISCARD",
     "member_to_wait": "SET_TAPPED",
@@ -97,6 +109,7 @@ SEMANTIC_TO_OPCODE: Dict[str, str] = {
     "select_player": "SELECT_PLAYER",
     "may_add_to_hand": "ADD_TO_HAND",
     "modify_cost": "INCREASE_COST",
+    "reduce": None,  # Opcode determined dynamically based on payload (REDUCE_COST or REDUCE_HEART_REQ)
     "activation_restriction": "RESTRICTION",
     "repeat_same_effect": "SYNC_COST",
     "cannot_become_active": "PREVENT_ACTIVATE",
@@ -135,6 +148,7 @@ ZONE_MAP: Dict[str, str] = {
     "success_pile": "SUCCESS_PILE",
     "energy": "ENERGY",
     "yell": "YELL",
+    "yell_pile": "YELL",
 }
 
 # Trigger mapping (Japanese to English constant)
@@ -152,7 +166,7 @@ TRIGGER_MAP: Dict[str, tuple[str, int]] = {
 
 
 TRIGGER_MAP = {
-    "自動": ("ACTIVATED", 7),
+    "自動": ("ON_LEAVES", 6),
     "起動": ("ACTIVATED", 7),
     "登場": ("ON_PLAY", 1),
     "ライブ開始時": ("LIVE_START", 2),
@@ -222,18 +236,36 @@ def _group_or_char_id(name: str, group_type: Optional[str] = None) -> Optional[s
     if not name:
         return None
     
+    # If name is very long (likely full Japanese text), return None to avoid putting it in group_id
+    if len(name) > 50:
+        return None
+    
     if group_type == 'unit':
-        return _group_id(name)
+        result = _group_id(name)
+        normalized = name.replace("!", "").replace(" ", "_").upper()
+        # Check if result exists in GROUP_ID_MAP (result != normalized means it was found)
+        if result != normalized or result in GROUP_ID_MAP.values():
+            return result
+        return None
     elif group_type == 'character':
-        return _char_id(name)
+        result = _char_id(name)
+        normalized = name.replace(" ", "_").upper()
+        if result != normalized or result in CHAR_ID_MAP.values():
+            return result
+        return None
     else:
         # Try group first, then character
         result = _group_id(name)
-        if result != name.replace("!", "").replace(" ", "_").upper():
-            # It was found in GROUP_ID_MAP
+        normalized = name.replace("!", "").replace(" ", "_").upper()
+        if result != normalized or result in GROUP_ID_MAP.values():
             return result
         # Try character map
-        return _char_id(name)
+        result = _char_id(name)
+        normalized = name.replace(" ", "_").upper()
+        if result != normalized or result in CHAR_ID_MAP.values():
+            return result
+        # Not found in either map, return None to avoid putting raw text
+        return None
 
 
 def _card_type(value: str) -> Optional[str]:
@@ -248,11 +280,54 @@ def _card_type(value: str) -> Optional[str]:
     return value.upper()
 
 
-_FULLWIDTH_DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
+__FULLWIDTH_DIGITS = str.maketrans("０１２３４５６７８９", "0123456789")
 
 
 def _to_int(value: str) -> int:
     return int(str(value).translate(_FULLWIDTH_DIGITS))
+
+
+# Heart type to color mask mapping
+HEART_TYPE_TO_COLOR_MASK: Dict[str, str] = {
+    "01": "RED",
+    "02": "RED",
+    "03": "GREEN",
+    "04": "GREEN",
+    "05": "BLUE",
+    "06": "ANY",  # heart06 is "any color" not blue
+    "heart01": "RED",
+    "heart02": "RED",
+    "heart03": "GREEN",
+    "heart04": "GREEN",
+    "heart05": "BLUE",
+    "heart06": "ANY",  # heart06 is "any color" not blue
+    "red": "RED",
+    "green": "GREEN",
+    "blue": "BLUE",
+    "any": "ANY",
+}
+
+
+def _heart_types_to_color_mask(heart_types: List[str]) -> str:
+    """Convert a list of heart types to a color mask string."""
+    if not heart_types:
+        return "ANY"
+    
+    colors = set()
+    for ht in heart_types:
+        ht_lower = ht.lower().replace("heart", "").replace("{{", "").replace("}}", "").strip()
+        color = HEART_TYPE_TO_COLOR_MASK.get(ht_lower)
+        if color:
+            colors.add(color)
+    
+    if not colors:
+        return "ANY"
+    
+    # Sort colors for consistency
+    color_order = ["RED", "GREEN", "BLUE", "ANY"]
+    sorted_colors = [c for c in color_order if c in colors]
+    
+    return "|".join(sorted_colors)
 
 
 def _maybe_recover_opcode(payload: Dict[str, Any]) -> Optional[str]:
@@ -322,19 +397,28 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
     
     cost_type = cost_data.get("type", "")
     is_optional = cost_data.get("optional", False)
+    payment = cost_data.get("payment", False)
     value = cost_data.get("count", 0) or cost_data.get("energy", 0)
     full_text = str(cost_data.get("_full_text", ""))
     
     if cost_type == "pay_energy":
         if not is_optional and "支払ってもよい" in full_text:
             is_optional = True
+        if payment:
+            is_optional = True  # Payment costs are optional
         frame = {
             "op": "PAY_ENERGY",
             "frame_index": idx,
             "value": value,
+            "is_cost": True,
         }
+        # Add once_per_turn if turn1 is in the text
+        if "turn1" in full_text or "ターン1回" in full_text:
+            frame.setdefault("attr", {})["once_per_turn"] = 1
         if is_optional:
-            frame["attr"] = {"is_optional": 1}
+            if "attr" not in frame:
+                frame["attr"] = {}
+            frame["attr"]["is_optional"] = 1
             # Add JUMP_IF_FALSE after optional cost
             frames.append(frame)
             idx += 1
@@ -352,24 +436,68 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
         destination = map_zone(cost_data.get("destination", ""))
         target = cost_data.get("target", "")
         original_destination = cost_data.get("destination", "")
+        exclude_member = cost_data.get("exclude_member", False)
+        max_count = cost_data.get("max", False)
+        order = cost_data.get("order", "")
+        position = cost_data.get("position", "")
+        energy_cost = cost_data.get("energy", 0)
+        
+        # Check for once_per_turn
+        has_once_per_turn = "turn1" in full_text or "ターン1回" in full_text
+        
         if not is_optional and "てもよい" in full_text:
             is_optional = True
         
-        # Special case: returning this member from stage to waitroom should use RETURN opcode
-        # Special case: tapping this member (stage to wait) should use SET_TAPPED opcode
+        # If cost has energy, generate PAY_ENERGY frame first
+        if energy_cost > 0:
+            frame = {
+                "op": "PAY_ENERGY",
+                "frame_index": idx,
+                "value": energy_cost,
+                "is_cost": True,
+            }
+            if is_optional:
+                frame["attr"] = {"is_optional": 1}
+                frames.append(frame)
+                idx += 1
+                frames.append({
+                    "op": "JUMP_IF_FALSE",
+                    "frame_index": idx,
+                    "value": 1,
+                })
+            else:
+                frames.append(frame)
+            idx += 1
+        
+        # Determine opcode based on source/destination/target combination
+        # source="STAGE" + destination="DISCARD" + target="this_member" → RETURN or SET_TAPPED
         if (target == "this_member" or target == "member") and source == "STAGE" and destination == "DISCARD":
             if original_destination == "wait":
                 frame = {
                     "op": "SET_TAPPED",
                     "frame_index": idx,
                     "attr": {},
+                    "is_cost": True,
                 }
             else:
-                frame = {
-                    "op": "RETURN",
-                    "frame_index": idx,
-                    "attr": {},
-                }
+                # Check if this is an activated ability cost (discard self to activate)
+                # If so, use MOVE_TO_DISCARD instead of RETURN
+                if "起動" in full_text or "ACTIVATED" in full_text:
+                    frame = {
+                        "op": "MOVE_TO_DISCARD",
+                        "frame_index": idx,
+                        "value": value,
+                        "attr": {"target_player": "SELF"},
+                        "slot": {"target_slot": "CONTEXT", "source_zone": "STAGE", "dest_zone": "DISCARD"},
+                        "is_cost": True,
+                    }
+                else:
+                    frame = {
+                        "op": "RETURN",
+                        "frame_index": idx,
+                        "attr": {},
+                        "is_cost": True,
+                    }
         else:
             frame = {
                 "op": "MOVE_TO_DISCARD",
@@ -380,24 +508,64 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
                     "source_zone": source,
                     "dest_zone": destination,
                     "target_slot": "CONTEXT",
-                }
+                },
+                "is_cost": True,
             }
+        
+        # Add once_per_turn to attr if present
+        if has_once_per_turn:
+            frame.setdefault("attr", {})["once_per_turn"] = 1
+        
+        # Add exclude_member to attr if present
+        if exclude_member:
+            frame["attr"]["exclude_this_member"] = 1
+        
+        # Add max to params if present (for "up to N" patterns)
+        if max_count:
+            if "params" not in frame:
+                frame["params"] = {}
+            frame["params"]["max"] = True
+        
+        # Add order to params if present (for "any order" patterns)
+        if order == "any":
+            if "params" not in frame:
+                frame["params"] = {}
+            frame["params"]["any_order"] = True
+        
+        # Add position to attr if present (for center/left_side/right_side requirements)
+        if position:
+            position_map = {
+                "center": 1,
+                "left_side": 0,
+                "right_side": 2,
+            }
+            if position in position_map:
+                frame["attr"]["position"] = position_map[position]
         
         if is_optional:
             frame["attr"]["is_optional"] = 1
             frames.append(frame)
             idx += 1
-            if source == "HAND" and destination == "DISCARD" and "ブレード" in full_text:
-                frames.append({
-                    "op": "SUM_VALUE",
-                    "frame_index": idx,
-                })
-                idx += 1
-                frames.append({
-                    "op": "JUMP_IF_FALSE",
-                    "frame_index": idx,
-                    "value": 3,
-                })
+            # Add SUM_VALUE + JUMP_IF_FALSE for optional costs that require checking resources
+            # Pattern: optional discard to hand followed by energy charge or other resource-dependent action
+            if source == "HAND" and destination == "DISCARD":
+                if "ブレード" in full_text or "エネルギー" in full_text:
+                    frames.append({
+                        "op": "SUM_VALUE",
+                        "frame_index": idx,
+                    })
+                    idx += 1
+                    frames.append({
+                        "op": "JUMP_IF_FALSE",
+                        "frame_index": idx,
+                        "value": 3,
+                    })
+                else:
+                    frames.append({
+                        "op": "JUMP_IF_FALSE",
+                        "frame_index": idx,
+                        "value": 1,
+                    })
             else:
                 frames.append({
                     "op": "JUMP_IF_FALSE",
@@ -412,8 +580,9 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
     return frames, idx
 
 
-def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tuple[Optional[Dict], int]:
+def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int, effect_data: Optional[Dict[str, Any]] = None) -> tuple[Optional[Dict], int]:
     """Convert a single semantic action to a frame."""
+    import sys
     idx = frame_index
 
     if isinstance(action_data, str):
@@ -435,10 +604,67 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         return None, idx
 
     opcode = SEMANTIC_TO_OPCODE.get(action_name)
-    if opcode is None:
+    if opcode is None and action_name not in {"reduce", "reduce_cost"}:
         raise NotImplementedError(f"Unsupported semantic action: {action_name!r}")
 
-    frame = _frame(opcode, idx, payload.get("count", 0), attr={"target_player": "SELF"}, slot={})
+    # Extract value with multiple fallback options
+    value = payload.get("count")
+    if value is None:
+        value = payload.get("amount")
+    if value is None:
+        value = payload.get("value")
+    if value is None:
+        value = 0
+    
+    frame = _frame(opcode, idx, value, attr={"target_player": "SELF"}, slot={})
+    
+    # Handle timing field for effects with duration constraints
+    timing = payload.get("timing", "")
+    if timing:
+        timing_map = {
+            "until_live_end": "LIVE_END",
+            "until_turn_end": "TURN_END",
+            "permanent": "PERMANENT",
+        }
+        if timing in timing_map:
+            if "params" not in frame:
+                frame["params"] = {}
+            frame["params"]["timing"] = timing_map[timing]
+    
+    # Handle duration field for effects with duration constraints
+    duration = payload.get("duration", "")
+    if duration:
+        duration_map = {
+            "live_end": "LIVE_END",
+            "turn_end": "TURN_END",
+        }
+        if duration in duration_map:
+            if "params" not in frame:
+                frame["params"] = {}
+            frame["params"]["timing"] = duration_map[duration]
+    
+    # Store nested 'then' action for later processing
+    then_action = payload.get("then")
+    
+    # Handle multiplier, per_unit, unit_type for dynamic value calculation
+    multiplier = payload.get("multiplier", 0)
+    per_unit = payload.get("per_unit", "")
+    unit_type = payload.get("unit_type", "")
+    
+    if multiplier or per_unit:
+        if "params" not in frame:
+            frame["params"] = {}
+        if multiplier:
+            frame["params"]["multiplier"] = multiplier
+        if per_unit:
+            unit_type_map = {
+                "success_live": "SUCCESS_LIVE",
+                "stage_member": "STAGE_MEMBER",
+                "energy": "ENERGY",
+                "hand": "HAND",
+            }
+            if unit_type in unit_type_map:
+                frame["params"]["per_unit"] = unit_type_map[unit_type]
 
     if action_name == "draw_cards":
         frame["slot"] = {"target_slot": "CONTEXT"}
@@ -451,7 +677,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
     elif action_name == "select_from_looked_at_cards":
         selection = payload.get("selection", {})
         target_slot = "HAND"
-        remainder_zone = "DISCARD"
+        remainder_zone = payload.get("remainder_zone", "DISCARD")
         if selection.get("destination") == "deck_bottom":
             target_slot = "DECK"
         
@@ -486,6 +712,10 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
 
     elif action_name == "add_to_hand":
         source = map_zone(payload.get("source", "waitroom"))
+        # Check for yell_pile in text
+        text = str(payload.get("text", "")).lower()
+        if "yell" in text or "エール" in text:
+            source = "YELL"
         recover_opcode = _maybe_recover_opcode(payload)
         if recover_opcode:
             frame["op"] = recover_opcode
@@ -494,14 +724,27 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
             frame["attr"]["is_optional"] = 1
         if recover_opcode and payload.get("card_type") == "live_card":
             frame["attr"].pop("target_player", None)
-            frame["attr"]["zone_mask"] = "ALL"
+            # Use group_id if group is present, otherwise use zone_mask
+            if payload.get("group"):
+                frame["attr"]["group_enabled"] = 1
+                frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
+            else:
+                frame["attr"]["zone_mask"] = "ALL"
         elif payload.get("card_type"):
             frame["attr"]["card_type"] = _card_type(payload["card_type"])
+        # Add cost_limit filtering attributes
+        if payload.get("cost_limit"):
+            frame["attr"]["value_enabled"] = 1
+            frame["attr"]["value_threshold"] = payload["cost_limit"]
+            frame["attr"]["is_le"] = 1
+            frame["attr"]["is_cost_type"] = 1
 
     elif action_name == "discard_to_waitroom":
         source = map_zone(payload.get("source", "hand"))
         frame["slot"] = {"source_zone": source, "dest_zone": "DISCARD"}
-        frame["attr"]["zone_mask"] = "Guest+Friend"
+        # Only add zone_mask for hand/stage sources, not for deck/waitroom
+        if source in ["HAND", "STAGE"]:
+            frame["attr"]["zone_mask"] = "Guest+Friend"
 
     elif action_name == "member_to_wait":
         if payload.get("target") == "opponent":
@@ -511,6 +754,19 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["slot"] = {"source_zone": map_zone(payload.get("source", "stage")), "target_slot": "CONTEXT"}
         if payload.get("target"):
             frame["attr"]["target_player"] = "OPPONENT" if payload["target"] == "opponent" else "SELF"
+        # Add blade count filter if present
+        original_blade_count = payload.get("original_blade_count")
+        original_blade_operator = payload.get("original_blade_operator")
+        if original_blade_count is not None and original_blade_operator:
+            filter_map = {
+                "<=": "BLADE_LE2",
+                "<": "BLADE_LT",
+                ">=": "BLADE_GE",
+                ">": "BLADE_GT",
+                "==": "BLADE_EQ"
+            }
+            if original_blade_operator in filter_map:
+                frame["params"] = {"filter": filter_map[original_blade_operator]}
 
     elif action_name in {"place_on_deck"}:
         destination = map_zone(payload.get("destination", "deck_top"))
@@ -526,6 +782,9 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
             frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
+        if payload.get("character"):
+            frame["attr"]["unique_names"] = 1
+            frame["attr"]["unit_id"] = _char_id(payload["character"])
         if payload.get("target") == "opponent":
             frame["attr"]["target_player"] = "OPPONENT"
         if payload.get("cost_limit") is not None:
@@ -536,24 +795,67 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
 
     elif action_name == "choose_heart":
         frame["op"] = "COLOR_SELECT"
-        frame["attr"] = {"choices": payload.get("heart_types", [])}
+        heart_types = payload.get("heart_types", [])
+        color_mask = _heart_types_to_color_mask(heart_types)
+        frame["attr"] = {"target_player": "SELF", "color_mask": color_mask}
+        frame["slot"] = {"target_slot": "CONTEXT"}
 
     elif action_name == "gain_resource":
         resource = payload.get("resource", "")
         heart_types = payload.get("heart_types", [])
-        if resource == "heart" or heart_types:
+        per_unit = payload.get("per_unit", "")
+        multiplier = payload.get("multiplier", False)
+        unit_type = payload.get("unit_type", "")
+        
+        # Determine opcode based on resource field
+        is_heart = (resource == "heart" or 
+                   resource == "ハート" or
+                   (isinstance(resource, str) and "heart" in resource.lower()) or
+                   heart_types)
+        
+        if is_heart:
             frame["op"] = "ADD_HEARTS"
+            frame["attr"] = {"target_player": "SELF"}
+            # Add compare_accumulated if per_unit is success_live or if it's a multiplier with card unit
+            if per_unit == "success_live" or (multiplier and unit_type == "card"):
+                frame["attr"]["compare_accumulated"] = 1
+                frame["attr"]["remainder_zone"] = "SUCCESS_PILE"
+                frame["attr"]["is_dynamic"] = 1
+            # Add heart_type if specific heart types specified
+            if heart_types:
+                # For ADD_HEARTS, preserve original heart type format (e.g., "HEART03") instead of converting to color mask
+                if len(heart_types) == 1:
+                    ht = heart_types[0].upper().replace("HEART", "").replace("{{", "").replace("}}", "").strip()
+                    if ht in {"01", "02", "03", "04", "05", "06"}:
+                        frame["attr"]["heart_type"] = f"HEART{ht}"
+                    else:
+                        color_mask = _heart_types_to_color_mask(heart_types)
+                        if color_mask != "ANY":
+                            frame["attr"]["heart_type"] = color_mask
+                else:
+                    color_mask = _heart_types_to_color_mask(heart_types)
+                    if color_mask != "ANY":
+                        frame["attr"]["heart_type"] = color_mask
+            # Check for SELECTED heart type
+            elif payload.get("heart_type") == "SELECTED":
+                frame["attr"]["heart_type"] = "SELECTED"
         else:
             frame["op"] = "ADD_BLADES"
+            frame["attr"] = {}
+        
         frame["slot"] = {"target_slot": "CONTEXT"}
-        frame["attr"] = {}
-        if resource == "blade" and not frame.get("value"):
-            frame["value"] = payload.get("blade_count", payload.get("resource_count", payload.get("count", 1)))
-        if resource == "heart" and not frame.get("value"):
-            frame["value"] = payload.get("heart_count", payload.get("resource_count", payload.get("count", 1)))
+        
+        # Set value
+        if not frame.get("value"):
+            frame["value"] = payload.get("count", payload.get("resource_count", 1))
+        
+        # Add multiplier parameter for other cases
+        if multiplier:
+            frame["params"] = {"multiplier": True}
 
     elif action_name == "add_score":
         frame["op"] = "BOOST_SCORE"
+        frame["value"] = payload.get("amount", 1)
         frame["slot"] = {"target_slot": "CONTEXT"}
 
     elif action_name == "pay_energy":
@@ -601,26 +903,32 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         card_type = payload.get("card_type", "")
         target = payload.get("target", "")
         state = payload.get("state", "")
-        if card_type == "energy_card" and state == "wait" and source == "energy_deck":
+        
+        # Map source and destination to opcode
+        source_zone = map_zone(source)
+        dest_zone = map_zone(destination)
+        
+        # Determine opcode based on source/destination combination
+        if source_zone == "ENERGY" and dest_zone == "STAGE" and card_type == "energy_card":
             frame["op"] = "ENERGY_CHARGE"
             frame["slot"] = {"source_zone": "ENERGY"}
-        elif card_type == "energy_card" and state == "wait":
+        elif source_zone == "ENERGY" and card_type == "energy_card" and state == "wait":
             frame["op"] = "PLACE_ENERGY_UNDER_MEMBER"
             frame["slot"] = {"source_zone": "ENERGY"}
-        elif destination in {"deck_top", "deck_bottom", "deck"}:
+        elif dest_zone == "DECK":
             frame["op"] = "MOVE_TO_DECK"
-            frame["slot"] = {"source_zone": map_zone(source or "waitroom"), "dest_zone": map_zone(destination)}
-        elif destination in {"success_pile", "success"}:
+            frame["slot"] = {"source_zone": source_zone, "dest_zone": dest_zone}
+        elif dest_zone == "SUCCESS_PILE":
             frame["op"] = "MOVE_TO_SUCCESS"
-            frame["slot"] = {"source_zone": map_zone(source or "hand"), "target_slot": "CONTEXT"}
-        elif source == "waitroom" and (target == "self" or destination == "stage"):
+            frame["slot"] = {"source_zone": source_zone or "HAND", "target_slot": "CONTEXT"}
+        elif source_zone == "DISCARD" and dest_zone == "STAGE":
             frame["op"] = "PLAY_MEMBER_FROM_DISCARD" if card_type == "member_card" else "PLAY_LIVE_FROM_DISCARD"
             frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "DISCARD", "is_baton_slot": 1}
-        elif source == "hand":
+        elif source_zone == "HAND" and dest_zone == "STAGE":
             frame["op"] = "PLAY_MEMBER_FROM_HAND"
             frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "HAND"}
         else:
-            frame["slot"] = {"dest_zone": map_zone(destination), "target_slot": "CONTEXT"}
+            frame["slot"] = {"source_zone": source_zone, "dest_zone": dest_zone, "target_slot": "CONTEXT"}
 
     elif action_name == "activate_energy":
         frame["op"] = "ACTIVATE_ENERGY"
@@ -659,11 +967,43 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         frame["slot"] = {"target_slot": "CONTEXT"}
 
     elif action_name in {"reduce", "reduce_cost"}:
-        if payload.get("heart_types") or "必要ハート" in str(payload.get("text", "")) or "ハート" in str(payload.get("text", "")):
+        heart_types = payload.get("heart_types", [])
+        if heart_types or "必要ハート" in str(payload.get("text", "")) or "ハート" in str(payload.get("text", "")):
             frame["op"] = "REDUCE_HEART_REQ"
+            # Use heart_types count as value
+            if heart_types:
+                frame["value"] = len(heart_types)
+                # Store heart_types count in attr to prevent regex overwriting
+                frame.setdefault("attr", {})["heart_types_count"] = len(heart_types)
+            elif payload.get("amount"):
+                frame["value"] = payload.get("amount")
         else:
             frame["op"] = "REDUCE_COST"
         frame["slot"] = {"target_slot": "CONTEXT"}
+        
+        # Generate COUNT_STAGE before REDUCE_HEART_REQ when there's a group filter with multiplier
+        # Check both action payload and effect-level condition
+        group = payload.get("group")
+        if not group and effect_data.get("condition"):
+            group = effect_data["condition"].get("group")
+        multiplier = payload.get("multiplier") or payload.get("per_unit") or effect_data.get("multiplier")
+        
+        if group and multiplier:
+            group_id = _group_or_char_id(group, payload.get("group_type") or effect_data.get("condition", {}).get("group_type"))
+            count_frame = _frame("COUNT_STAGE", idx, 0)
+            count_frame["attr"] = {"unit_enabled": 1, "group_id": group_id}
+            count_frame["slot"] = {"target_slot": "STAGE_0", "comparison": "GE"}
+            frames.append(count_frame)
+            idx += 1
+            # Set REDUCE_HEART_REQ to use accumulated count
+            frame["attr"]["compare_accumulated"] = 1
+            # Add scalar_dynamic params for authored-style structure
+            frame.setdefault("params", {})["scalar_dynamic"] = {"base_value": frame.get("value", 1), "divisor": 1}
+        # Also add compare_accumulated if effect has multiplier even without group (for area_move case)
+        if effect_data.get("condition") and effect_data["condition"].get("group") and frame["op"] == "REDUCE_HEART_REQ":
+            frame["attr"]["compare_accumulated"] = 1
+            # Add scalar_dynamic params for authored-style structure
+            frame.setdefault("params", {})["scalar_dynamic"] = {"base_value": frame.get("value", 1), "divisor": 1}
         
         # Handle hand-based cost reduction (e.g., "reduce by 1 per other hand card")
         if payload.get("source") == "hand" or "手札" in str(payload.get("text", "")):
@@ -675,12 +1015,38 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         if payload.get("group"):
             frame["attr"]["group_enabled"] = 1
             frame["attr"]["group_id"] = _group_or_char_id(payload["group"], payload.get("group_type"))
+        
+        # Final check: add compare_accumulated if condition has group (ensure it's set after all other attr modifications)
+        if effect_data.get("condition") and effect_data["condition"].get("group") and frame["op"] == "REDUCE_HEART_REQ":
+            frame["attr"]["compare_accumulated"] = 1
+            frame.setdefault("params", {})["scalar_dynamic"] = {"base_value": frame.get("value", 1), "divisor": 1}
+        
+        # Extract value with fallbacks
         if payload.get("count") is not None:
-            frame["value"] = payload.get("count", 0)
+            frame["value"] = payload.get("count")
         elif payload.get("amount") is not None:
-            frame["value"] = payload.get("amount", 0)
+            frame["value"] = payload.get("amount")
         elif payload.get("cost_reduction") is not None:
-            frame["value"] = payload.get("cost_reduction", 0)
+            frame["value"] = payload.get("cost_reduction")
+        
+        # For REDUCE_COST, extract reduction amount from text if not already set
+        if frame["op"] == "REDUCE_COST" and frame.get("value") == 0:
+            # effect_data may have actions array with _full_text in first action
+            if effect_data:
+                if isinstance(effect_data, dict) and "_full_text" in effect_data:
+                    effect_text = effect_data["_full_text"]
+                elif isinstance(effect_data, dict) and "actions" in effect_data and len(effect_data["actions"]) > 0:
+                    effect_text = effect_data["actions"][0].get("_full_text", "")
+                else:
+                    effect_text = ""
+            else:
+                effect_text = ""
+            
+            if effect_text:
+                import re
+                cost_reduce_match = re.search(r"コストは(\d+)減る", effect_text)
+                if cost_reduce_match:
+                    frame["value"] = int(cost_reduce_match.group(1))
 
     elif action_name == "increase_heart_cost":
         frame["op"] = "INCREASE_HEART_COST"
@@ -688,10 +1054,18 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         hearts = payload.get("heart_types", [])
         if hearts:
             frame["attr"] = {"color_mask": hearts[0] if isinstance(hearts[0], str) else str(hearts[0])}
+            # Set value to 1 for heart type modifications (generic increase by 1)
+            frame["value"] = 1
 
     elif action_name == "reduce_heart_cost":
         frame["op"] = "REDUCE_HEART_REQ"
         frame["slot"] = {"target_slot": "CONTEXT"}
+        # Use heart_types count as value
+        heart_types = payload.get("heart_types", [])
+        if heart_types:
+            frame["value"] = len(heart_types)
+        elif payload.get("amount"):
+            frame["value"] = payload["amount"]
 
     elif action_name in {"deploy_to_stage", "may_deploy_to_stage"}:
         source = map_zone(payload.get("source", "hand"))
@@ -747,8 +1121,11 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
 
     elif action_name == "gain_ability":
         frame["op"] = "GRANT_ABILITY"
-        frame["value"] = 1
         frame["slot"] = {"target_slot": "CONTEXT"}
+        frame["attr"] = {"target_player": "SELF"}
+        # Set value to 1 if not specified
+        if not frame.get("value"):
+            frame["value"] = 1
         frame["params"] = {"raw_effect": payload.get("ability", "")}
 
     elif action_name == "modify_cost":
@@ -928,7 +1305,9 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
     location = condition_data.get("location", "")
     card_type = condition_data.get("card_type", "")
     group = condition_data.get("group", "")
+    group_type = condition_data.get("group_type", "")
     text = condition_data.get("text", "")
+    threshold = condition_data.get("threshold", "")
     attr: Dict[str, Any] = {"target_player": "SELF" if target != "opponent" else "OPPONENT"}
     slot: Dict[str, Any] = {"target_slot": "CONTEXT", "comparison": operator if operator in {"GE", "GT", "LE", "LT", "EQ", "NE"} else "GE"}
 
@@ -968,10 +1347,45 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         frames, idx = append_count("COUNT_ENERGY")
         return frames, idx
 
-    if cond_type == "state" and location == "energy" and condition_data.get("state") == "active":
-        # Convert "active energy" condition to COUNT_ENERGY
-        frames, idx = append_count("COUNT_ENERGY", val=1, extra_attr={"target_player": None}, extra_slot={"target_slot": "STAGE_0"})
+    if cond_type == "state" and condition_data.get("card_type") == "member_card" and condition_data.get("value") == "wait":
+        # Convert "tapped member" condition to SELECT_MEMBER frame
+        target_player = condition_data.get("target", "SELF")
+        attr = {"target_player": target_player.upper(), "is_tapped": 1}
+        
+        # Extract group from condition text if present
+        group = condition_data.get("group", "")
+        if group:
+            group_id = _group_or_char_id(group, condition_data.get("group_type"))
+            if group_id:
+                attr["group_enabled"] = 1
+                attr["group_id"] = group_id
+        
+        frames.append(_frame("SELECT_MEMBER", idx, 1, attr=attr, slot={"target_slot": "STAGE_0", "comparison": "GE"}))
+        idx += 1
+        frames.append(_frame("JUMP_IF_FALSE", idx, 1))
+        idx += 1
         return frames, idx
+
+    if cond_type == "state" and (location == "energy" or "エネルギー" in text) and condition_data.get("value") == "active":
+        # Convert "all energy active" condition
+        if "すべて" in text or "all" in text.lower():
+            # Check if all energy is active by comparing total energy count to active energy count
+            # Count total energy
+            frames.append(_frame("COUNT_ENERGY", idx, 0, slot={"target_slot": "STAGE_0"}))
+            idx += 1
+            # Count active energy (target_player: None means active/untapped)
+            frames.append(_frame("COUNT_ENERGY", idx, 0, attr={"target_player": None}, slot={"target_slot": "STAGE_0"}))
+            idx += 1
+            # Compare: total energy == active energy
+            frames.append(_frame("EQ", idx))
+            idx += 1
+            frames.append(_frame("JUMP_IF_FALSE", idx, 1))
+            idx += 1
+            return frames, idx
+        else:
+            # Just check if at least 1 energy is active
+            frames, idx = append_count("COUNT_ENERGY", val=1, extra_attr={"target_player": None}, extra_slot={"target_slot": "STAGE_0"})
+            return frames, idx
 
     if cond_type in {"score_sum_at_least", "has_score"}:
         frames, idx = append_count("SCORE_TOTAL_CHECK")
@@ -985,9 +1399,20 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
     if cond_type in {"member_count_at_least", "member_count_exact"}:
         if group:
             group_type = condition_data.get("group_type")
-            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_or_char_id(group, group_type)})
+            extra_attr = {"group_enabled": 1, "group_id": _group_or_char_id(group, group_type)}
+            # Add unique_names if condition specifies different names
+            if condition_data.get("names_different") or condition_data.get("different_name"):
+                extra_attr["unique_names"] = 1
+            # Add all_areas if condition specifies all areas
+            if "エリアすべて" in text or "all_areas" in text.lower():
+                extra_attr["all_areas"] = 1
+            frames, idx = append_count("COUNT_GROUP", extra_attr=extra_attr)
         else:
             frames, idx = append_count("COUNT_STAGE")
+        return frames, idx
+
+    if cond_type == "unique_names_count":
+        frames, idx = append_count("COUNT_STAGE", extra_attr={"unique_names": 1}, extra_slot={"target_slot": "STAGE_0"})
         return frames, idx
 
     if cond_type in {"member_presence", "card_presence", "presence"}:
@@ -1007,9 +1432,52 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         frames, idx = append_count("HAS_KEYWORD", extra_attr=extra_attr)
         return frames, idx
 
+    # Success live card count equality (self vs opponent)
+    if cond_type == "card_count" and "成功ライブカード置き場" in text and "自分と相手" in text:
+        frames.append(_frame("RETURN", idx, 0, params={"raw_cond": "SUCCESS_LIVE_COUNT_EQUAL_OPPONENT"}))
+        idx += 1
+        frames.append(_frame("JUMP_IF_FALSE", idx, 1))
+        idx += 1
+        return frames, idx
+    
     if cond_type in {"group"}:
         group_type = condition_data.get("group_type")
         threshold = condition_data.get("threshold")
+        different_name = condition_data.get("different_name", False)
+        
+        # Extract numeric value from text (e.g., "2人以上" -> 2)
+        numeric_value = value
+        if isinstance(value, str) and not value.isdigit():
+            import re
+            num_match = re.search(r'(\d+)', value)
+            if num_match:
+                numeric_value = int(num_match.group(1))
+            else:
+                num_match = re.search(r'(\d+)', text)
+                if num_match:
+                    numeric_value = int(num_match.group(1))
+        
+        # Determine if this is a unit condition (member_card group) or regular group
+        is_unit = card_type == "member_card" or group_type == "unit"
+        
+        # Build attributes
+        extra_attr = {}
+        extra_slot = {"target_slot": "STAGE_0"} if location == "stage" else {}
+        
+        if different_name:
+            extra_attr["unique_names"] = 1
+        
+        if is_unit:
+            extra_attr["unit_enabled"] = 1
+            unit_id = _group_or_char_id(group or value, "unit")
+            if unit_id:
+                extra_attr["unit_id"] = unit_id
+        else:
+            extra_attr["group_enabled"] = 1
+            group_id = _group_or_char_id(group or value, group_type)
+            if group_id:
+                extra_attr["group_id"] = group_id
+        
         if threshold and "ブレード" in text:
             # Convert group with threshold to COUNT_BLADES
             # First add SELECT_MEMBER frame for group selection
@@ -1021,14 +1489,18 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
             frames, idx = append_count("COUNT_BLADES", val=threshold)
         elif threshold:
             # Other group with threshold conditions
-            frames, idx = append_count("COUNT_GROUP", extra_attr={"value_enabled": 1, "value_threshold": threshold, "group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)})
+            frames, idx = append_count("COUNT_GROUP", extra_attr={"value_enabled": 1, "value_threshold": threshold, **extra_attr}, extra_slot=extra_slot)
         elif "ハート" in text or condition_data.get("heart_type") or "総数" in text:
-            extra_attr = {"group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)}
             if condition_data.get("heart_type"):
                 extra_attr["heart_type"] = condition_data["heart_type"]
-            frames, idx = append_count("COUNT_HEARTS", extra_attr=extra_attr)
+            frames, idx = append_count("COUNT_HEARTS", extra_attr=extra_attr, extra_slot=extra_slot)
         else:
-            frames, idx = append_count("COUNT_GROUP", extra_attr={"group_enabled": 1, "group_id": _group_or_char_id(group or text, group_type)})
+            # Use numeric value if available, otherwise use group_id as value
+            if isinstance(numeric_value, int) and numeric_value > 0:
+                frames, idx = append_count("COUNT_GROUP", val=numeric_value, extra_attr=extra_attr, extra_slot=extra_slot)
+            else:
+                group_id_value = group or value or text
+                frames, idx = append_count("COUNT_GROUP", extra_attr=extra_attr, extra_slot=extra_slot)
         return frames, idx
 
     if cond_type in {"position"}:
@@ -1055,6 +1527,12 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
         return frames, idx
 
     if cond_type in {"card_move_trigger", "move_to_waitroom_trigger", "area_move", "member_area_move"}:
+        # Check if this is area_move with group filter - should generate COUNT_STAGE instead of IS_SELF_MOVE
+        if cond_type == "area_move" and group:
+            group_id = _group_or_char_id(group, group_type)
+            frames.append(_frame("COUNT_STAGE", idx, 0, attr={"unit_enabled": 1, "group_id": group_id}, slot={"target_slot": "STAGE_0", "comparison": "GE"}))
+            idx += 1
+            return frames, idx
         if cond_type == "move_to_waitroom_trigger" or target == "self":
             frames, idx = append_count("IS_SELF_MOVE")
         else:
@@ -1080,8 +1558,14 @@ def convert_condition_to_frames(condition_data: Dict[str, Any], frame_index: int
             frames, idx = append_count("COUNT_LIVE_HEARTS")
         return frames, idx
 
-    if cond_type in {"blade_count_at_least"}:
-        frames, idx = append_count("COUNT_BLADES")
+    if cond_type in {"blade_count_at_least", "count_blades"}:
+        # Check if there's a group - need to SELECT_MEMBER first
+        if group:
+            group_id = _group_or_char_id(group, group_type)
+            if group_id:
+                frames.append(_frame("SELECT_MEMBER", idx, 1, attr={"target_player": "SELF", "group_enabled": 1, "group_id": group_id}, slot={"target_slot": "CONTEXT", "source_zone": "STAGE"}))
+                idx += 1
+        frames, idx = append_count("COUNT_BLADES", val=threshold if threshold else value)
         return frames, idx
 
     if cond_type in {"cost_comparison", "cost_at_least", "cost_total_equal", "member_deploy_cost", "highest_cost_center"}:
@@ -1136,18 +1620,40 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
     """Convert effect object to effect frames."""
     frames = []
     idx = frame_index
+    
     effect_text = effect_data.get("text", "")
     actions = effect_data.get("actions", [])
     
     # Handle condition first
     condition_data = effect_data.get("condition")
     if condition_data:
+        # Check if this is a multiplier condition (e.g., "X人につき")
+        is_multiplier = condition_data.get("multiplier", False)
         cond_frames, idx = convert_condition_to_frames(condition_data, idx)
         frames.extend(cond_frames)
+        # For multiplier conditions, add DIV_VALUE frame to multiply the effect
+        if is_multiplier:
+            frames.append({
+                "op": "DIV_VALUE",
+                "frame_index": idx,
+                "value": condition_data.get("multiplier_value", 1)
+            })
+            idx += 1
     
     # Check for choice: true (SELECT_MODE branching)
     is_choice = effect_data.get("choice", False)
     if is_choice:
+        # Reconstruct actions array if missing (parser may not have populated it)
+        if not actions or len(actions) == 0:
+            options = effect_data.get("options", [])
+            if "member" in options and "energy" in options:
+                member_count = effect_data.get("member_count", 1)
+                energy_count = effect_data.get("energy_count", 1)
+                actions = [
+                    {"action": "activate_member", "count": member_count, "target": "self", "source": "stage"},
+                    {"action": "activate_energy", "count": energy_count}
+                ]
+                effect_data["actions"] = actions
         # Generate SELECT_MODE + JUMP branching for choices
         num_choices = len(actions)
         frames.append(_frame("SELECT_MODE", idx, num_choices))
@@ -1201,6 +1707,54 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
             cond_frames, idx = convert_condition_to_frames(action["condition"], idx)
             frames.extend(cond_frames)
             action = {k: v for k, v in action.items() if k != "condition"}
+
+        # Handle furthermore_condition/furthermore_action pattern
+        # This is used for "if X, then Y. Furthermore, if Z, then W" patterns
+        # Authored frame pattern: META_RULE -> JUMP_IF_FALSE(skip base) -> base_action -> META_RULE -> JUMP_IF_FALSE(skip further) -> further_action
+        if isinstance(action, dict) and action.get("furthermore_condition") and action.get("furthermore_action"):
+            # First, add META_RULE and JUMP for furthermore condition
+            further_cond = action["furthermore_condition"]
+            further_action = action["furthermore_action"]
+            
+            # Extract group from condition if present
+            group = further_cond.get("group", "")
+            group_id = None
+            if group:
+                group_id = _group_or_char_id(group, further_cond.get("group_type"))
+            
+            # Determine META_RULE type based on condition
+            meta_params = {}
+            if further_cond.get("location") == "energy":
+                meta_params["raw_cond"] = "DID_ACTIVATE_ENERGY"
+                meta_params["keyword_energy"] = True
+            elif further_cond.get("card_type") == "member_card":
+                meta_params["raw_cond"] = "DID_ACTIVATE_MEMBER"
+                meta_params["keyword_member"] = True
+            
+            if group_id:
+                meta_params["FILTER"] = f"GROUP={group_id}"
+            
+            # Add META_RULE frame for furthermore condition
+            frames.append(_frame("META_RULE", idx, 0, params=meta_params))
+            idx += 1
+            
+            # Add JUMP_IF_FALSE to skip base action if furthermore condition is met
+            # Jump target: skip base action (1 frame) and go to furthermore action
+            frames.append(_frame("JUMP_IF_FALSE", idx, 2))
+            idx += 1
+            
+            # Convert base action
+            base_frame, idx = convert_action_to_frame(action, idx)
+            if base_frame:
+                frames.append(base_frame)
+            
+            # Convert furthermore action
+            further_frame, idx = convert_action_to_frame(further_action, idx)
+            if further_frame:
+                frames.append(further_frame)
+            
+            i += 1
+            continue
 
         if isinstance(action, dict) and action.get("action") == "unknown":
             synthesized_frames, idx = _convert_unknown_action_to_frames(action, idx)
@@ -1286,7 +1840,7 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
                 )
                 frames.append(select_frame)
                 idx += 1
-            frame, idx = convert_action_to_frame(action, idx)
+            frame, idx = convert_action_to_frame(action, idx, effect_data)
             if frame:
                 frames.append(frame)
             i += 1
@@ -1346,14 +1900,27 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
                 select_frame["attr"]["is_cost_type"] = 1
             frames.append(select_frame)
             idx += 1
-            frame, idx = convert_action_to_frame(action, idx)
+            frame, idx = convert_action_to_frame(action, idx, effect_data)
             if frame:
                 frames.append(frame)
             i += 1
             continue
         
-        frame, idx = convert_action_to_frame(action, idx)
+        frame, idx = convert_action_to_frame(action, idx, effect_data)
         if frame:
+            # Check if action has nested 'then' action
+            if isinstance(action, dict) and action.get("then"):
+                then_action = action["then"]
+                # Recursively convert the 'then' action
+                then_frame, idx = convert_action_to_frame(then_action, idx, effect_data)
+                if then_frame:
+                    frames.append(then_frame)
+                    # Check if the 'then' action also has a nested 'then'
+                    if isinstance(then_action, dict) and then_action.get("then"):
+                        then_then_action = then_action["then"]
+                        then_then_frame, idx = convert_action_to_frame(then_then_action, idx, effect_data)
+                        if then_then_frame:
+                            frames.append(then_then_frame)
             # Check if this is draw after discard pattern
             if frame.get("op") == "DRAW" and i > 0:
                 prev_action = actions[i - 1]
@@ -1396,17 +1963,19 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
                         ))
                         idx += 1
                 if frame.get("op") == "REDUCE_HEART_REQ" and "???????????" in effect_text:
-                    heart_match = re.search(r"??????.*?([0-9?-?]+)?????", effect_text)
-                    if heart_match:
-                        reduce_value = _to_int(heart_match.group(1))
-                        frames.append(_frame(
-                            "COUNT_SUCCESS_LIVE",
-                            idx,
-                            0,
-                            slot={"target_slot": "STAGE_0", "comparison": "GE"},
-                        ))
-                        idx += 1
-                        frame["value"] = reduce_value
+                    # Check if heart_types_count was set (from heart_types array)
+                    if not frame.get("attr", {}).get("heart_types_count"):
+                        heart_match = re.search(r"??????.*?([0-9?-?]+)?????", effect_text)
+                        if heart_match:
+                            reduce_value = _to_int(heart_match.group(1))
+                            frames.append(_frame(
+                                "COUNT_SUCCESS_LIVE",
+                                idx,
+                                0,
+                                slot={"target_slot": "STAGE_0", "comparison": "GE"},
+                            ))
+                            idx += 1
+                            frame["value"] = reduce_value
             frames.append(frame)
             is_optional_pay = False
             if isinstance(action, dict) and action.get("action") == "pay_energy":
@@ -1435,6 +2004,13 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
                 idx += 1
         i += 1
     
+    # Post-processing: add compare_accumulated to REDUCE_HEART_REQ when effect has multiplier
+    if effect_data.get("multiplier"):
+        for frame in frames:
+            if frame.get("op") == "REDUCE_HEART_REQ":
+                frame.setdefault("attr", {})["compare_accumulated"] = 1
+                frame.setdefault("params", {})["scalar_dynamic"] = {"base_value": frame.get("value", 1), "divisor": 1}
+    
     return frames, idx
 
 
@@ -1446,6 +2022,30 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
     effect_data = dict(extracted_ability.get("effect", {}))
     use_limit = extracted_ability.get("use_limit")
     card_refs = extracted_ability.get("cards", [])
+    is_null = extracted_ability.get("is_null", False)
+    
+    
+    # Skip frame generation for null abilities (parenthetical notes only)
+    if is_null:
+        frame_ability = {
+            "primary_text_jp": full_text,
+            "primary_text_en": "",
+            "source_ability_texts": [
+                {
+                    "jp": full_text,
+                    "en": "",
+                    "card_examples": card_refs[:3],
+                }
+            ],
+            "trigger_id": 0,  # No trigger for null abilities
+            "trigger": "NONE",
+            "frames": [],  # Empty frames for null abilities
+            "card_refs": [],
+            "is_null": True,
+        }
+        if use_limit:
+            frame_ability["use_limit"] = use_limit
+        return frame_ability
     
     # Map trigger
     trigger_name, trigger_id = map_trigger(triggers)
@@ -1459,16 +2059,69 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
         cost_data["_full_text"] = full_text
     
     # Convert cost
+    cost_jump_idx = -1  # Track where to fix jump distance later
     if cost_data:
         cost_frames, frame_index = convert_cost_to_frames(cost_data, frame_index)
         frames.extend(cost_frames)
+        # If the last cost frame was JUMP_IF_FALSE with value=1, mark it for later fix
+        if frames and frames[-1].get("op") == "JUMP_IF_FALSE" and frames[-1].get("value") == 1:
+            cost_jump_idx = len(frames) - 1
+    
+    # Add once_per_turn attribute to first frame if present
+    once_per_turn = extracted_ability.get("once_per_turn")
+    if once_per_turn and frames:
+        frames[0]["attr"] = frames[0].get("attr", {})
+        frames[0]["attr"]["once_per_turn"] = 1
+    
+    # Add position_requirement handling (center_only, etc.)
+    position_requirement = effect_data.get("position_requirement")
+    if position_requirement and frames:
+        frames[0]["attr"] = frames[0].get("attr", {})
+        if position_requirement == "center":
+            frames[0]["attr"]["center_only"] = 1
     
     # Convert effect actions
-    # Effect parser returns single action, frame converter expects array
-    if "actions" not in effect_data and "action" in effect_data:
-        effect_data = {"actions": [effect_data]}
-    effect_frames, frame_index = convert_effect_to_frames(effect_data, frame_index)
-    frames.extend(effect_frames)
+    # Check if effect has top-level condition (not inside actions)
+    effect_condition = effect_data.get("condition")
+    effect_action = effect_data.get("action")
+    
+    if effect_condition and effect_action:
+        # Handle effect-level condition + action structure
+        # Generate condition frames first
+        cond_frames, frame_index = convert_condition_to_frames(effect_condition, frame_index)
+        frames.extend(cond_frames)
+        
+        # Mark the JUMP_IF_FALSE after condition for later fix
+        cond_jump_idx = len(frames) - 1 if frames and frames[-1].get("op") == "JUMP_IF_FALSE" else -1
+        
+        # Generate action frames
+        if "actions" not in effect_action:
+            effect_action = {"actions": [effect_action]}
+        action_frames, frame_index = convert_effect_to_frames(effect_action, frame_index)
+        frames.extend(action_frames)
+        
+        # Fix condition JUMP_IF_FALSE to skip action frames
+        if cond_jump_idx >= 0 and cond_jump_idx < len(frames):
+            jump_distance = len(frames) - cond_jump_idx - 1
+            frames[cond_jump_idx]["value"] = jump_distance
+    else:
+        # Normal effect processing
+        if "actions" not in effect_data and "action" in effect_data:
+            effect_data = {"actions": [effect_data]}
+        effect_frames, frame_index = convert_effect_to_frames(effect_data, frame_index)
+        frames.extend(effect_frames)
+    
+    # Fix cost JUMP_IF_FALSE jump distance to skip entire effect block
+    if cost_jump_idx >= 0 and cost_jump_idx < len(frames):
+        jump_distance = len(frames) - cost_jump_idx - 1
+        frames[cost_jump_idx]["value"] = jump_distance
+    
+    # Post-processing: add compare_accumulated to REDUCE_HEART_REQ when effect has multiplier
+    if extracted_ability.get("effect", {}).get("multiplier"):
+        for frame in frames:
+            if frame.get("op") == "REDUCE_HEART_REQ":
+                frame.setdefault("attr", {})["compare_accumulated"] = 1
+                frame.setdefault("params", {})["scalar_dynamic"] = {"base_value": frame.get("value", 1), "divisor": 1}
     
     # Add RETURN at end, unless the cost already included a RETURN frame
     has_return_cost = any(f.get("op") == "RETURN" for f in frames)
@@ -1516,6 +2169,11 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
         "frames": frames,
         "card_refs": formatted_card_refs,
     }
+    
+    # Add use_limit if present
+    if use_limit:
+        frame_ability["use_limit"] = use_limit
+    
     return frame_ability
 
 
@@ -1524,7 +2182,7 @@ def convert_extracted_to_frame_format(
     output_path: str,
 ) -> None:
     """Convert abilities_extracted_from_cards.json to ability_frame_source.json format."""
-    with open(extracted_path, "r", encoding="utf-8") as f:
+    with open(extracted_path, "r", encoding="utf-8-sig") as f:
         extracted_data = json.load(f)
     
     unique_abilities = extracted_data.get("unique_abilities", [])
