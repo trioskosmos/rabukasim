@@ -329,20 +329,37 @@ def convert_cost_to_frames(cost_data: Dict[str, Any], frame_index: int) -> tuple
         source = map_zone(cost_data.get("source", ""))
         destination = map_zone(cost_data.get("destination", ""))
         target = cost_data.get("target", "")
+        original_destination = cost_data.get("destination", "")
         if not is_optional and "てもよい" in full_text:
             is_optional = True
         
-        frame = {
-            "op": "MOVE_TO_DISCARD",
-            "frame_index": idx,
-            "value": value,
-            "attr": {"target_player": "OPPONENT" if target == "opponent" else "SELF"},
-            "slot": {
-                "source_zone": source,
-                "dest_zone": destination,
-                "target_slot": "CONTEXT",
+        # Special case: returning this member from stage to waitroom should use RETURN opcode
+        # Special case: tapping this member (stage to wait) should use SET_TAPPED opcode
+        if target == "this_member" and source == "STAGE" and destination == "DISCARD":
+            if original_destination == "wait":
+                frame = {
+                    "op": "SET_TAPPED",
+                    "frame_index": idx,
+                    "attr": {},
+                }
+            else:
+                frame = {
+                    "op": "RETURN",
+                    "frame_index": idx,
+                    "attr": {},
+                }
+        else:
+            frame = {
+                "op": "MOVE_TO_DISCARD",
+                "frame_index": idx,
+                "value": value,
+                "attr": {"target_player": "OPPONENT" if target == "opponent" else "SELF"},
+                "slot": {
+                    "source_zone": source,
+                    "dest_zone": destination,
+                    "target_slot": "CONTEXT",
+                }
             }
-        }
         
         if is_optional:
             frame["attr"]["is_optional"] = 1
@@ -415,12 +432,30 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         remainder_zone = "DISCARD"
         if selection.get("destination") == "deck_bottom":
             target_slot = "DECK"
+        
         frame["op"] = "LOOK_AND_CHOOSE"
         frame["value"] = {
             "count": payload.get("count", 1),
             "reveal": 1 if payload.get("reveal", True) else 0,
         }
         frame["attr"] = {"is_optional": 1} if payload.get("may") else {}
+        
+        # Add heart threshold filter if present
+        if payload.get("value_threshold") is not None:
+            frame["attr"]["value_threshold"] = payload["value_threshold"]
+        if payload.get("is_le") is not None:
+            frame["attr"]["is_le"] = 1 if payload["is_le"] else 0
+        if payload.get("is_cost_type") is not None:
+            frame["attr"]["is_cost_type"] = 1 if payload["is_cost_type"] else 0
+        
+        # Add group filter if present
+        if payload.get("group"):
+            frame["attr"]["group_enabled"] = 1
+            frame["attr"]["group_id"] = _group_id(payload["group"])
+        
+        # Add card type filter if present
+        if payload.get("card_type"):
+            frame["attr"]["card_type"] = _card_type(payload["card_type"])
         frame["slot"] = {
             "target_slot": target_slot,
             "source_zone": "DECK_TOP",
@@ -506,6 +541,38 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         if payload.get("optional"):
             frame["attr"]["is_optional"] = 1
 
+    elif action_name == "deploy_to_stage":
+        # Handle deploy_to_stage based on source zone
+        source = payload.get("source", "hand")
+        card_type = payload.get("card_type", "member_card")
+        target = payload.get("target", "self")
+        
+        if source == "waitroom":
+            frame["op"] = "SELECT_DISCARD_PLAY" if card_type == "member_card" else "SELECT_DISCARD_LIVE"
+            frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "DISCARD"}
+        elif source == "hand":
+            frame["op"] = "PLAY_MEMBER_FROM_HAND"
+            frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "HAND"}
+        else:
+            # Default to hand if source not specified
+            frame["op"] = "PLAY_MEMBER_FROM_HAND"
+            frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "HAND"}
+        
+        # Set count if present
+        if payload.get("count") is not None:
+            frame["value"] = payload.get("count")
+        if payload.get("up_to") is not None:
+            frame["attr"]["up_to"] = 1
+        
+        # Set card type filter
+        if card_type:
+            frame["attr"]["card_type"] = _card_type(card_type)
+        
+        # Set group filter if present
+        if payload.get("group"):
+            frame["attr"]["group_enabled"] = 1
+            frame["attr"]["group_id"] = _group_id(payload["group"])
+
     elif action_name == "place_card":
         destination = payload.get("destination", "waitroom")
         source = payload.get("source", "")
@@ -580,7 +647,7 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         if payload.get("source") == "hand" or "手札" in str(payload.get("text", "")):
             frame["attr"]["zone_mask"] = "HAND"
             # If this is per-card reduction, add filter to exclude self
-            if payload.get("per_card") or "枚につき" in str(payload.get("text", "")) or "枚ごと" in str(payload.get("text", "")):
+            if payload.get("per_card") or payload.get("per_unit") or "枚につき" in str(payload.get("text", "")) or "枚ごと" in str(payload.get("text", "")):
                 frame["attr"]["not_self"] = 1
         
         if payload.get("group"):
@@ -590,6 +657,8 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
             frame["value"] = payload.get("count", 0)
         elif payload.get("amount") is not None:
             frame["value"] = payload.get("amount", 0)
+        elif payload.get("cost_reduction") is not None:
+            frame["value"] = payload.get("cost_reduction", 0)
 
     elif action_name == "increase_heart_cost":
         frame["op"] = "INCREASE_HEART_COST"
@@ -607,6 +676,9 @@ def convert_action_to_frame(action_data: Dict[str, Any], frame_index: int) -> tu
         if source == "DISCARD":
             frame["op"] = "PLAY_MEMBER_FROM_DISCARD"
             frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "DISCARD"}
+        elif source == "STAGE":
+            frame["op"] = "PLAY_MEMBER_FROM_DISCARD"
+            frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "STAGE"}
         else:
             frame["op"] = "PLAY_MEMBER_FROM_HAND"
             frame["slot"] = {"target_slot": "CONTEXT", "source_zone": "HAND"}
@@ -1176,18 +1248,49 @@ def convert_effect_to_frames(effect_data: Dict[str, Any], frame_index: int) -> t
             value = action.get("count", 1)
             cost_limit = action.get("cost_limit")
             text = str(action.get("text", "") or effect_text)
+            source = action.get("source")
+            # Determine actual source based on semantic data and text analysis
+            # Priority: 1. text analysis for 控え室 (highest priority to fix parser bugs), 2. semantic source, 3. default to hand
+            actual_source = source
+            if "控え室" in text or "自分の控え室から" in text:
+                actual_source = "waitroom"
+            elif actual_source is None or actual_source == "stage":
+                actual_source = source if source else "hand"
+            
+            # Determine destination from action name and text
+            destination = "stage"  # deploy_to_stage implies stage destination
+            
             if cost_limit is None:
                 import re
                 m = re.search(r"コスト(\d+)以下", text)
                 if m:
                     cost_limit = int(m.group(1))
-            select_frame = _frame(
-                "SELECT_MEMBER",
-                idx,
-                value,
-                attr={"target_player": "SELF", "zone_mask": "Guest+Friend"},
-                slot={"target_slot": "CONTEXT", "source_zone": map_zone(action.get("source", "hand"))},
-            )
+            
+            # Base opcode on source and destination
+            if actual_source == "waitroom" and destination == "stage":
+                select_frame = _frame(
+                    "SELECT_DISCARD_PLAY",
+                    idx,
+                    value,
+                    attr={"target_player": "SELF"},
+                    slot={"target_slot": "CONTEXT", "source_zone": "DISCARD"},
+                )
+            elif actual_source == "hand" and destination == "stage":
+                select_frame = _frame(
+                    "SELECT_MEMBER",
+                    idx,
+                    value,
+                    attr={"target_player": "SELF", "zone_mask": "Guest+Friend"},
+                    slot={"target_slot": "CONTEXT", "source_zone": "HAND"},
+                )
+            else:
+                select_frame = _frame(
+                    "SELECT_MEMBER",
+                    idx,
+                    value,
+                    attr={"target_player": "SELF", "zone_mask": "Guest+Friend"},
+                    slot={"target_slot": "CONTEXT", "source_zone": map_zone(actual_source)},
+                )
             if cost_limit is not None:
                 select_frame["attr"]["value_enabled"] = 1
                 select_frame["attr"]["value_threshold"] = cost_limit
@@ -1319,12 +1422,14 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
     effect_frames, frame_index = convert_effect_to_frames(effect_data, frame_index)
     frames.extend(effect_frames)
     
-    # Add RETURN at end
-    frames.append({
-        "op": "RETURN",
-        "frame_index": frame_index,
-    })
-    frame_index += 1
+    # Add RETURN at end, unless the cost already included a RETURN frame
+    has_return_cost = any(f.get("op") == "RETURN" for f in frames)
+    if not has_return_cost:
+        frames.append({
+            "op": "RETURN",
+            "frame_index": frame_index,
+        })
+        frame_index += 1
     
     # Build card_refs
     formatted_card_refs = []
@@ -1348,7 +1453,7 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
                 "trigger": trigger_id,
             })
     
-    return {
+    frame_ability = {
         "primary_text_jp": full_text,
         "primary_text_en": "",
         "source_ability_texts": [
@@ -1363,6 +1468,7 @@ def convert_semantic_ability_to_frame_format(extracted_ability: Dict[str, Any]) 
         "frames": frames,
         "card_refs": formatted_card_refs,
     }
+    return frame_ability
 
 
 def convert_extracted_to_frame_format(

@@ -158,23 +158,79 @@ cargo test
 ```
 
 ### Test Output Analysis
-1. Run `cargo test` to execute all Rust unit tests
-2. Capture output to identify failing tests
+**IMPORTANT DEBUGGING RULES:**
+- **ALWAYS run every Rust test, never a subset** - use `cargo test --lib` not `cargo test --lib repro::card_XXX`
+- **ALWAYS write full debug output to a text file** - use `cargo test --lib > test_output.txt 2>&1`
+- **ALWAYS use Python scripts for analysis, not Select-String/grep** - write Python scripts to parse test output
+
+1. Run `cargo test --lib > test_output.txt 2>&1` to execute ALL Rust unit tests and capture full output
+2. Use Python script to parse test_output.txt and identify failing tests
 3. Group failures by pattern (cost reduction, live start, multi-pick, etc.)
 4. Identify specific card IDs causing failures
 5. Find those cards in ability_frame_source.json
 6. Compare generated frames vs authored frames
 7. Fix parser or converter to match structure (not content)
-8. Re-run pipeline: `python pipeline_build_cards.py`
-9. Re-run tests: `cargo test`
-10. Repeat until 0 failures
+8. Re-run pipeline: `python tools/build_cards.py`
+9. Re-run tests with full output: `cargo test --lib > test_output.txt 2>&1`
+10. Use Python script to compare before/after failure counts
+11. Repeat until 0 failures
 
 ### Current Test Status
 - **Before fixes:** 536 passed; 157 failed
 - **After cost reduction fix:** 545 passed; 148 failed (+9 tests)
+- **After semantic extraction fixes:** 572 passed; 121 failed (+27 tests total from initial state)
 - **Goal:** 0 failures
 
+### Recent Fixes Applied
+1. Cost parsing bug (extract_costs.py) - Fixed parse_cost to handle pre-split text
+2. Frame converter bug (semantic_to_frame_converter.py) - Fixed this_member stage->waitroom costs to generate RETURN instead of MOVE_TO_DISCARD
+3. Duplicate RETURN bug (semantic_to_frame_converter.py) - Fixed converter to not add trailing RETURN if cost already has RETURN
+4. SET_TAPPED for wait destination (semantic_to_frame_converter.py) - Added handling for this_member stage->wait to use SET_TAPPED opcode
+5. "その中から" pattern (effect_parser.py) - Added handling for "look at cards, then select from them" pattern
+6. Comma-separated action parsing (effect_parser.py) - Fixed parsing of actions like "draw 2, discard 1"
+7. Multi-sentence effects (effect_parser.py) - Added handling for choose_heart pattern followed by additional sentences
+8. Fixed undefined result references (semantic_to_frame_converter.py) - Removed references to undefined variables
+9. Reverted note detection fix (effect_parser.py) - Fixed regression where actions with trailing notes were incorrectly parsed
+10. "これにより無効にした場合" fix (condition_parser.py) - Added specific check to prevent incorrect comparison parsing
+11. "発動させる" pattern fix (condition_parser.py) - Added specific check to prevent incorrect comparison parsing
+12. "その後、" separator fix (effect_parser.py) - Added handling for "then" separator in multi-action effects
+13. "自分と相手はそれぞれ" pattern fix (effect_parser.py) - Fixed to set target to 'both_players'
+14. "その後、" pattern fix (effect_parser.py) - Fixed to always treat as multi-action sequence (not conditional)
+
 ## Key Patterns to Fix
+
+### Current Failing Test Patterns (121 failures)
+
+#### test_suite failures (86)
+- **ability_frame_audit_tests:**
+  - test_ability_55_kurosawa_ruby_missing_saintsnow_filter - Missing group filter
+  - test_ability_64_* - Multiple option parsing issues (flavor choice, blade, position change)
+  - test_card_574_self_discards_without_stage_selection - Self-discard targeting issues
+- **ability_tests:**
+  - test_ability_64_* - Option parsing for ability 64 (Kurosawa Ruby)
+  - test_card_574_self_discards_without_stage_selection - Stage selection missing
+
+#### repro failures (33)
+- **card_10_cost_bug (6 failures):**
+  - Cost reduction hand size variations
+  - Cost reduction opcode per card filter
+  - Baton touch cost handling
+  - Playability cost verification
+- **card_579_verification (2 failures):**
+  - Ability 0 cost comparison
+  - Ability 1 heart filter
+- **card_420 (2 failures):**
+  - Cost sum limit
+  - Multi-pick from discard
+- **card_4558 (4 failures):**
+  - Multiple ability issues (on_live_start pay_energy, live_success recover_live)
+- **Other repro failures:**
+  - card_459 live_start member selection
+  - card_874 self-discard
+  - Various softlock and interaction resumption issues
+
+#### core failures (2)
+- logic tests - general engine logic issues
 
 ### 1. Cost Reduction (FIXED)
 - **Issue:** Hand-based cost reduction not extracting zone mask and not_self filter

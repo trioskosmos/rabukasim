@@ -19,6 +19,26 @@ LOCATION_PATTERNS = [
     ('手札', 'hand'),
 ]
 
+CARD_TYPE_PATTERNS = [
+    ('ブレードを持つカード', 'blade_card'),
+    ('ライブカード', 'live_card'),
+    ('メンバーカード', 'member_card'),
+    ('メンバー', 'member_card'),
+    ('エネルギーカード', 'energy_card'),
+]
+
+POSITION_PATTERNS = [
+    ('センターエリア', 'center'),
+    ('{{center.png|センター}}', 'center'),
+    ('左サイドエリア', 'left_side'),
+    ('【左サイド】', 'left_side'),
+    ('右サイドエリア', 'right_side'),
+    ('【右サイド】', 'right_side'),
+    ('ドルチェストラエリア', 'dollchestra'),
+    ('【ドルチェストラ】', 'dollchestra'),
+]
+
+
 def _extract_location(text):
     """Extract location from condition text."""
     for pattern, location in LOCATION_PATTERNS:
@@ -28,14 +48,6 @@ def _extract_location(text):
         return 'live'
     return None
 
-
-CARD_TYPE_PATTERNS = [
-    ('ブレードを持つカード', 'blade_card'),
-    ('ライブカード', 'live_card'),
-    ('メンバーカード', 'member_card'),
-    ('メンバー', 'member_card'),
-    ('エネルギーカード', 'energy_card'),
-]
 
 def _extract_card_type(text):
     """Extract card type from condition text."""
@@ -65,17 +77,6 @@ def _extract_target(text):
         return 'self'
     return None
 
-
-POSITION_PATTERNS = [
-    ('センターエリア', 'center'),
-    ('{{center.png|センター}}', 'center'),
-    ('左サイドエリア', 'left_side'),
-    ('【左サイド】', 'left_side'),
-    ('右サイドエリア', 'right_side'),
-    ('【右サイド】', 'right_side'),
-    ('ドルチェストラエリア', 'dollchestra'),
-    ('【ドルチェストラ】', 'dollchestra'),
-]
 
 def _extract_position_value(text):
     for pattern, position in POSITION_PATTERNS:
@@ -720,6 +721,10 @@ def parse_condition(condition_part):
         group = extract_group_name(condition_part)
         if group:
             condition['group'] = group
+    
+    # Check for "これにより無効にした場合" (if invalidated by this action) pattern
+    elif 'これにより無効にした場合' in condition_part:
+        _set_condition(condition, 'invalidation_happened', type='conditional_check')
 
     # Check for selection-target conditions
     elif '自分のステージにいるの' in condition_part and 'メンバー1人は' in condition_part:
@@ -998,6 +1003,13 @@ def parse_condition(condition_part):
         if group:
             condition['group'] = group
 
+    # Check for activate_ability pattern (発動させる) - must be before generic comparison check
+    elif '発動させる' in condition_part:
+        # This is not a comparison condition, it's an action
+        # Return early to prevent it from being parsed as comparison
+        condition['type'] = 'raw'
+        return annotate_tree(condition, condition_part)
+    
     # Check for comparison conditions (～より～)
     elif 'より' in condition_part and 'につき' not in condition_part:
         if '高い' in condition_part:

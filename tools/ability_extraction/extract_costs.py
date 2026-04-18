@@ -289,7 +289,10 @@ def parse_cost(text):
     """Parse cost from triggerless text using ordered cost rules."""
     cost_text = _extract_cost_text(text)
     if not cost_text:
-        return None
+        # If no delimiter found, assume text is already split cost text
+        cost_text = text
+        if not cost_text:
+            return None
 
     # Normalize the cost text for matching (don't strip trigger icons here)
     normalized_cost_text = normalize_text(cost_text)
