@@ -1,0 +1,548 @@
+{
+  "failing_tests": [
+    "test_count_group_unique_names",
+    "debug_q203_trace",
+    "test_filtered_cost_discard",
+    "test_discard_success_live_filter",
+    "test_hand_filter_liella",
+    "test_name_in_filter",
+    "test_unique_names_filter",
+    "test_tapped_filter",
+    "test_cost_13_blade_aura_requires_structured_stage_gate",
+    "test_id_717_baton_touch_untaps_energy",
+    "test_insufficient_energy_no_prompt",
+    "test_hand_only_structured_cost_reducers_use_authored_conditions",
+    "test_hs_pr_016_same_unit_discard_requires_matching_partner",
+    "test_multi_qa_ll_bp2_001",
+    "test_q100_yell_refresh_deck_not_included",
+    "test_q101_deck_look_beyond_limit",
+    "test_optional_interaction_actions",
+    "test_q102_reveal_until_no_targets",
+    "test_q109_bonus_tracking_stability",
+    "test_q104_deck_place_during_refresh",
+    "test_q105_optional_placement_empty_zone",
+    "test_q110_constant_effect_timing",
+    "test_q110_q127_vienna_constant_stacking",
+    "test_q111_q117_vienna_yell_penalty",
+    "test_q112_card_name_matching",
+    "test_q115_future_hallelujah_all_blade_counts_as_any_heart",
+    "test_q115_priority_set_vs_mod",
+    "test_q115_heart_requirement_modification",
+    "test_q120_multiple_effects_same_card",
+    "test_q118_refresh_mid_effect",
+    "test_q121_block_effect_stacking",
+    "test_q123_optional_cost_with_empty_discard",
+    "test_q125_cannot_place_in_success_pile",
+    "test_q124_area_accessibility",
+    "test_q126_area_movement_on_tap",
+    "test_q127_buff_stacking_rules",
+    "test_q128_draw_during_live_success",
+    "test_q129_conditional_bonus_activation",
+    "test_q130_effect_timing_end_of_live",
+    "test_q135_wait_state_member_recovery",
+    "test_q138_energy_activation_timing",
+    "test_q140_placement_order_independence",
+    "test_q145_stage_slot_uniqueness",
+    "test_q150_discard_no_ordering",
+    "test_q160_play_count_tracking",
+    "test_q155_hand_size_no_limit",
+    "test_q165_deck_size_validation",
+    "test_q160_q161_q162_play_count_trigger",
+    "test_q168_q169_q170_q181_q188_nico_exhaustive",
+    "test_q16_rps_selection",
+    "test_q170_simultaneous_effects_order",
+    "test_q175_group_condition_multiple",
+    "test_q180_ability_cost_priority",
+    "test_q185_opponent_effect_resolution",
+    "test_q189_opponent_chooses_effect",
+    "test_q183_cost_selection_isolation",
+    "test_q190_chaining_effects",
+    "test_q195_refresh_triggers_only_once",
+    "test_q196_select_member_empty",
+    "test_q197_baton_auto_trigger",
+    "test_q200_ability_nesting_depth",
+    "test_q17_q18_q19_mulligan",
+    "test_q195_interaction",
+    "test_q201_nested_on_play",
+    "test_q205_player_choice_mandatory",
+    "test_q206_baton_touch_cost_reduction",
+    "test_q202_nested_on_play_optional",
+    "test_q206_related_hime_optional_discard_resumption",
+    "test_q210_cost_roundup_rule",
+    "test_q215_partial_choice_impossible",
+    "test_q211_multi_name_card_counts_as_one_stage_member",
+    "test_q220_zone_move_invalidates_conditions",
+    "test_q225_same_card_different_slots",
+    "test_q230_effect_end_condition",
+    "test_q231_shioriko_score_interaction",
+    "test_q234_kinako_requires_hand_card_for_activation",
+    "test_q216_collective_hearts_are_counted_across_the_stage",
+    "test_q230_setsuna_zero_equality",
+    "test_q235_simultaneous_win_conditions",
+    "test_q238_position_change_can_target_opponent_member",
+    "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+    "test_q238_position_change_prompt_uses_move_member_dest",
+    "test_q240_kinako_does_not_gain_blades_when_sumire_leaves_by_effect",
+    "test_q23_normal_play",
+    "test_position_change_text_frames_include_explicit_destination_metadata",
+    "test_q24_q25_q26_baton_cost",
+    "test_q27_baton_limit",
+    "test_q36_live_success_timing",
+    "test_q381_live_card_during_performance",
+    "test_optional_text_frames_are_marked_optional",
+    "test_q29_q70_q87_slot_reuse",
+    "test_q30_q31_duplicates",
+    "test_q4794_same_group_discard_requires_matching_partner",
+    "test_q49_oh_love_and_peace_live_success_bonus_applies_on_heart_lead",
+    "test_q4791_on_leaves_position_change_prompts_for_destination",
+    "test_q49_turn_passing",
+    "test_q55_partial_resolution",
+    "test_q56_all_or_nothing_cost",
+    "test_q62_q65_q69_q90_triple_name_card",
+    "test_q63_effect_based_member_placement",
+    "test_q32_empty_live_yell",
+    "test_q64_group_condition_liella",
+    "test_q66_live_score_comparison_zero",
+    "test_q67_universal_blade_not_applicable",
+    "test_q39_to_q46_core_rules",
+    "test_q33_q37_live_timing",
+    "test_q75_activated_ability_from_discard",
+    "test_q82_card_filters_example",
+    "test_q81_group_all_different_requirement",
+    "test_q74_group_name_resolution",
+    "test_q53_deckout_shuffle",
+    "test_q84_simultaneous_trigger_order",
+    "test_q49_to_q52_turn_order",
+    "test_q88_no_arbitrary_state_changes",
+    "test_q86_full_deck_peek_no_refresh",
+    "test_q89_group_identity",
+    "test_q91_multiple_lives_same_member",
+    "test_q95_cost_payment_during_live",
+    "test_q91_no_trigger_without_live",
+    "test_q98_energy_payment_fraction",
+    "test_q96_q97_q103_catchu_exhaustive",
+    "test_rule_bp4_001_group_condition",
+    "test_rule_rurino_filter_masking",
+    "test_rule_bp4_001_triggers_on_both_sequential_plays",
+    "test_split_frame_index_entries_follow_their_gameplay_text",
+    "test_q85_deck_peek_refresh_mechanics",
+    "test_q73_reveal_until_refresh",
+    "test_q120_yell_draw_priority_vs_auto_ability",
+    "test_kimi_no_kokoro_prevention",
+    "test_baton_touch_restriction",
+    "test_live_success_with_reduction",
+    "test_q203_niji_score_buff_reaches_two_with_energy_and_member_activation",
+    "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+    "test_filter_performance_baseline",
+    "test_cost_13_blade_aura_requires_structured_stage_gate",
+    "test_cost_13_blade_aura_requires_structured_stage_gate",
+    "test_id_717_baton_touch_untaps_energy",
+    "test_id_717_baton_touch_untaps_energy",
+    "test_hand_only_structured_cost_reducers_use_authored_conditions",
+    "test_hand_only_structured_cost_reducers_use_authored_conditions",
+    "test_hs_pr_016_same_unit_discard_requires_matching_partner",
+    "test_hs_pr_016_same_unit_discard_requires_matching_partner",
+    "test_multi_qa_ll_bp2_001",
+    "test_multi_qa_ll_bp2_001",
+    "test_q110_q127_vienna_constant_stacking",
+    "test_q110_q127_vienna_constant_stacking",
+    "test_q111_q117_vienna_yell_penalty",
+    "test_q111_q117_vienna_yell_penalty",
+    "test_q160_q161_q162_play_count_trigger",
+    "test_q160_q161_q162_play_count_trigger",
+    "test_q168_q169_q170_q181_q188_nico_exhaustive",
+    "test_q168_q169_q170_q181_q188_nico_exhaustive",
+    "test_q183_cost_selection_isolation",
+    "test_q183_cost_selection_isolation",
+    "test_q196_select_member_empty",
+    "test_q196_select_member_empty",
+    "test_q206_baton_touch_cost_reduction",
+    "test_q206_baton_touch_cost_reduction",
+    "test_q230_setsuna_zero_equality",
+    "test_q230_setsuna_zero_equality",
+    "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+    "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+    "test_q4794_same_group_discard_requires_matching_partner",
+    "test_q4794_same_group_discard_requires_matching_partner",
+    "test_q4791_on_leaves_position_change_prompts_for_destination",
+    "test_q4791_on_leaves_position_change_prompts_for_destination",
+    "test_q96_q97_q103_catchu_exhaustive",
+    "test_q96_q97_q103_catchu_exhaustive",
+    "test_rule_bp4_001_group_condition",
+    "test_rule_bp4_001_group_condition",
+    "test_rule_bp4_001_triggers_on_both_sequential_plays",
+    "test_rule_bp4_001_triggers_on_both_sequential_plays",
+    "test_split_frame_index_entries_follow_their_gameplay_text",
+    "test_split_frame_index_entries_follow_their_gameplay_text",
+    "test_baton_touch_restriction",
+    "test_baton_touch_restriction",
+    "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+    "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+    "test_cost_13_blade_aura_requires_structured_stage_gate",
+    "test_hand_only_structured_cost_reducers_use_authored_conditions",
+    "test_hs_pr_016_same_unit_discard_requires_matching_partner",
+    "test_id_717_baton_touch_untaps_energy",
+    "test_multi_qa_ll_bp2_001",
+    "test_q110_q127_vienna_constant_stacking",
+    "test_q111_q117_vienna_yell_penalty",
+    "test_q160_q161_q162_play_count_trigger",
+    "test_q168_q169_q170_q181_q188_nico_exhaustive",
+    "test_q183_cost_selection_isolation",
+    "test_q196_select_member_empty",
+    "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+    "test_q206_baton_touch_cost_reduction",
+    "test_q230_setsuna_zero_equality",
+    "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+    "test_q4791_on_leaves_position_change_prompts_for_destination",
+    "test_q4794_same_group_discard_requires_matching_partner",
+    "test_q96_q97_q103_catchu_exhaustive",
+    "test_rule_bp4_001_group_condition",
+    "test_rule_bp4_001_triggers_on_both_sequential_plays",
+    "test_split_frame_index_entries_follow_their_gameplay_text",
+    "test_baton_touch_restriction"
+  ],
+  "cards_to_investigate": {
+    "717": [
+      "test_id_717_baton_touch_untaps_energy",
+      "test_id_717_baton_touch_untaps_energy",
+      "test_id_717_baton_touch_untaps_energy",
+      "test_id_717_baton_touch_untaps_energy"
+    ],
+    "bp2_001": [
+      "test_multi_qa_ll_bp2_001",
+      "test_multi_qa_ll_bp2_001",
+      "test_multi_qa_ll_bp2_001",
+      "test_multi_qa_ll_bp2_001"
+    ],
+    "QA_100": [
+      "test_q100_yell_refresh_deck_not_included"
+    ],
+    "QA_101": [
+      "test_q101_deck_look_beyond_limit"
+    ],
+    "PL!N-bp1-011-R": [
+      "test_q102_reveal_until_no_targets",
+      "test_q73_reveal_until_refresh"
+    ],
+    "PL!SP-bp2-009-R\uff0b": [
+      "test_q109_bonus_tracking_stability"
+    ],
+    "QA_104": [
+      "test_q104_deck_place_during_refresh"
+    ],
+    "PL!SP-bp1-026-L": [
+      "test_q105_optional_placement_empty_zone",
+      "test_q127_buff_stacking_rules",
+      "test_q64_group_condition_liella",
+      "test_q74_group_name_resolution"
+    ],
+    "PL!SP-bp2-010-R\uff0b": [
+      "test_q110_constant_effect_timing",
+      "test_q110_q127_vienna_constant_stacking",
+      "test_q111_q117_vienna_yell_penalty",
+      "test_q110_q127_vienna_constant_stacking",
+      "test_q110_q127_vienna_constant_stacking",
+      "test_q111_q117_vienna_yell_penalty",
+      "test_q111_q117_vienna_yell_penalty",
+      "test_q110_q127_vienna_constant_stacking",
+      "test_q111_q117_vienna_yell_penalty"
+    ],
+    "PL!SP-bp2-015-N": [
+      "test_q112_card_name_matching"
+    ],
+    "QA_115": [
+      "test_q115_future_hallelujah_all_blade_counts_as_any_heart",
+      "test_q115_priority_set_vs_mod",
+      "test_q115_heart_requirement_modification"
+    ],
+    "PL!S-bp2-007-R\uff0b": [
+      "test_q120_multiple_effects_same_card",
+      "test_q120_yell_draw_priority_vs_auto_ability"
+    ],
+    "PL!SP-bp2-011-R": [
+      "test_q118_refresh_mid_effect"
+    ],
+    "PL!S-bp2-023-L": [
+      "test_q121_block_effect_stacking"
+    ],
+    "PL!SP-bp1-011-R": [
+      "test_q123_optional_cost_with_empty_discard"
+    ],
+    "PL!S-bp2-024-L": [
+      "test_q125_cannot_place_in_success_pile"
+    ],
+    "PL!S-bp2-005-R\uff0b": [
+      "test_q124_area_accessibility"
+    ],
+    "PL!SP-bp2-003-R": [
+      "test_q126_area_movement_on_tap"
+    ],
+    "PL!SP-bp2-024-L": [
+      "test_q128_draw_during_live_success"
+    ],
+    "PL!SP-bp1-003-R\uff0b": [
+      "test_q129_conditional_bonus_activation"
+    ],
+    "PL!S-pb1-002-R": [
+      "test_q130_effect_timing_end_of_live"
+    ],
+    "QA_135": [
+      "test_q135_wait_state_member_recovery"
+    ],
+    "QA_138": [
+      "test_q138_energy_activation_timing"
+    ],
+    "QA_140": [
+      "test_q140_placement_order_independence"
+    ],
+    "PL!-bp3-003-R": [
+      "test_q145_stage_slot_uniqueness"
+    ],
+    "PL!-bp3-026-L": [
+      "test_q150_discard_no_ordering"
+    ],
+    "PL!N-bp3-005-R\uff0b": [
+      "test_q160_play_count_tracking",
+      "test_q160_q161_q162_play_count_trigger",
+      "test_q160_q161_q162_play_count_trigger",
+      "test_q160_q161_q162_play_count_trigger",
+      "test_q160_q161_q162_play_count_trigger"
+    ],
+    "PL!S-bp3-016-N": [
+      "test_q155_hand_size_no_limit"
+    ],
+    "LL-bp3-001-R\uff0b": [
+      "test_q165_deck_size_validation"
+    ],
+    "PL!-pb1-018-R": [
+      "test_q168_q169_q170_q181_q188_nico_exhaustive",
+      "test_q170_simultaneous_effects_order",
+      "test_q168_q169_q170_q181_q188_nico_exhaustive",
+      "test_q168_q169_q170_q181_q188_nico_exhaustive",
+      "test_q168_q169_q170_q181_q188_nico_exhaustive"
+    ],
+    "QA_16": [
+      "test_q16_rps_selection"
+    ],
+    "PL!HS-PR-017-PR": [
+      "test_q175_group_condition_multiple"
+    ],
+    "PL!-pb1-009-R": [
+      "test_q180_ability_cost_priority"
+    ],
+    "LL-PR-004-PR": [
+      "test_q185_opponent_effect_resolution"
+    ],
+    "PL!-bp4-009-P": [
+      "test_q189_opponent_chooses_effect"
+    ],
+    "PL!-pb1-008-P\uff0b": [
+      "test_q183_cost_selection_isolation",
+      "test_q183_cost_selection_isolation",
+      "test_q183_cost_selection_isolation",
+      "test_q183_cost_selection_isolation"
+    ],
+    "PL!N-bp4-011-P": [
+      "test_q190_chaining_effects"
+    ],
+    "PL!SP-bp4-025-L": [
+      "test_q195_refresh_triggers_only_once",
+      "test_q195_interaction"
+    ],
+    "PL!N-pb1-003-P\uff0b": [
+      "test_q196_select_member_empty",
+      "test_q196_select_member_empty",
+      "test_q196_select_member_empty",
+      "test_q196_select_member_empty"
+    ],
+    "PL!N-pb1-005-P\uff0b": [
+      "test_q197_baton_auto_trigger"
+    ],
+    "PL!N-pb1-013-P\uff0b": [
+      "test_q200_ability_nesting_depth"
+    ],
+    "QA_17": [
+      "test_q17_q18_q19_mulligan"
+    ],
+    "PL!N-pb1-017-P\uff0b": [
+      "test_q201_nested_on_play"
+    ],
+    "PL!N-pb1-007-P\uff0b": [
+      "test_q205_player_choice_mandatory"
+    ],
+    "PL!N-pb1-008-P\uff0b": [
+      "test_q206_baton_touch_cost_reduction",
+      "test_q206_related_hime_optional_discard_resumption",
+      "test_q206_baton_touch_cost_reduction",
+      "test_q206_baton_touch_cost_reduction",
+      "test_q206_baton_touch_cost_reduction"
+    ],
+    "PL!N-pb1-023-P\uff0b": [
+      "test_q202_nested_on_play_optional"
+    ],
+    "PL!-bp5-021-L": [
+      "test_q210_cost_roundup_rule",
+      "test_q211_multi_name_card_counts_as_one_stage_member"
+    ],
+    "PL!N-bp5-008-R": [
+      "test_q215_partial_choice_impossible"
+    ],
+    "PL!SP-bp5-004-R\uff0b": [
+      "test_q220_zone_move_invalidates_conditions"
+    ],
+    "LL-bp5-002-L": [
+      "test_q225_same_card_different_slots"
+    ],
+    "PL!N-bp5-007-R\uff0b": [
+      "test_q230_effect_end_condition",
+      "test_q230_setsuna_zero_equality",
+      "test_q230_setsuna_zero_equality",
+      "test_q230_setsuna_zero_equality",
+      "test_q230_setsuna_zero_equality"
+    ],
+    "PL!N-bp5-010-R": [
+      "test_q231_shioriko_score_interaction"
+    ],
+    "PL!SP-bp5-006-R": [
+      "test_q234_kinako_requires_hand_card_for_activation"
+    ],
+    "PL!N-bp5-015-N": [
+      "test_q216_collective_hearts_are_counted_across_the_stage"
+    ],
+    "PL!SP-bp5-007-R": [
+      "test_q235_simultaneous_win_conditions"
+    ],
+    "QA_238": [
+      "test_q238_position_change_can_target_opponent_member",
+      "test_q238_position_change_prompt_uses_move_member_dest"
+    ],
+    "QA_239": [
+      "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+      "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+      "test_q239_live_success_places_one_energy_when_under_energy_is_empty",
+      "test_q239_live_success_places_one_energy_when_under_energy_is_empty"
+    ],
+    "QA_240": [
+      "test_q240_kinako_does_not_gain_blades_when_sumire_leaves_by_effect"
+    ],
+    "QA_23": [
+      "test_q23_normal_play"
+    ],
+    "QA_24": [
+      "test_q24_q25_q26_baton_cost"
+    ],
+    "QA_27": [
+      "test_q27_baton_limit"
+    ],
+    "PL!N-bp1-026-L": [
+      "test_q36_live_success_timing",
+      "test_q66_live_score_comparison_zero"
+    ],
+    "381": [
+      "test_q381_live_card_during_performance"
+    ],
+    "QA_29": [
+      "test_q29_q70_q87_slot_reuse"
+    ],
+    "QA_30": [
+      "test_q30_q31_duplicates"
+    ],
+    "4794": [
+      "test_q4794_same_group_discard_requires_matching_partner",
+      "test_q4794_same_group_discard_requires_matching_partner",
+      "test_q4794_same_group_discard_requires_matching_partner",
+      "test_q4794_same_group_discard_requires_matching_partner"
+    ],
+    "QA_49": [
+      "test_q49_oh_love_and_peace_live_success_bonus_applies_on_heart_lead",
+      "test_q49_turn_passing",
+      "test_q49_to_q52_turn_order"
+    ],
+    "4791": [
+      "test_q4791_on_leaves_position_change_prompts_for_destination",
+      "test_q4791_on_leaves_position_change_prompts_for_destination",
+      "test_q4791_on_leaves_position_change_prompts_for_destination",
+      "test_q4791_on_leaves_position_change_prompts_for_destination"
+    ],
+    "QA_55": [
+      "test_q55_partial_resolution"
+    ],
+    "QA_56": [
+      "test_q56_all_or_nothing_cost"
+    ],
+    "LL-bp1-001-R\uff0b": [
+      "test_q62_q65_q69_q90_triple_name_card",
+      "test_q89_group_identity"
+    ],
+    "PL!N-bp1-002-R\uff0b": [
+      "test_q63_effect_based_member_placement",
+      "test_q75_activated_ability_from_discard"
+    ],
+    "QA_32": [
+      "test_q32_empty_live_yell"
+    ],
+    "PL!N-bp1-027-L": [
+      "test_q67_universal_blade_not_applicable"
+    ],
+    "QA_39": [
+      "test_q39_to_q46_core_rules"
+    ],
+    "QA_33": [
+      "test_q33_q37_live_timing"
+    ],
+    "PL!HS-bp1-009-R": [
+      "test_q82_card_filters_example"
+    ],
+    "PL!HS-bp1-003-R\uff0b": [
+      "test_q81_group_all_different_requirement"
+    ],
+    "QA_53": [
+      "test_q53_deckout_shuffle"
+    ],
+    "QA_84": [
+      "test_q84_simultaneous_trigger_order"
+    ],
+    "QA_88": [
+      "test_q88_no_arbitrary_state_changes"
+    ],
+    "QA_86": [
+      "test_q86_full_deck_peek_no_refresh"
+    ],
+    "PL!SP-pb1-001-R": [
+      "test_q91_multiple_lives_same_member",
+      "test_q91_no_trigger_without_live"
+    ],
+    "PL!SP-pb1-011-R": [
+      "test_q95_cost_payment_during_live"
+    ],
+    "PL!SP-pb1-025-L": [
+      "test_q98_energy_payment_fraction"
+    ],
+    "PL!SP-pb1-023-L": [
+      "test_q96_q97_q103_catchu_exhaustive",
+      "test_q96_q97_q103_catchu_exhaustive",
+      "test_q96_q97_q103_catchu_exhaustive",
+      "test_q96_q97_q103_catchu_exhaustive"
+    ],
+    "bp4_001": [
+      "test_rule_bp4_001_group_condition",
+      "test_rule_bp4_001_triggers_on_both_sequential_plays",
+      "test_rule_bp4_001_group_condition",
+      "test_rule_bp4_001_group_condition",
+      "test_rule_bp4_001_triggers_on_both_sequential_plays",
+      "test_rule_bp4_001_triggers_on_both_sequential_plays",
+      "test_rule_bp4_001_group_condition",
+      "test_rule_bp4_001_triggers_on_both_sequential_plays"
+    ],
+    "QA_85": [
+      "test_q85_deck_peek_refresh_mechanics"
+    ],
+    "PL!N-pb1-037-L": [
+      "test_q203_niji_score_buff_reaches_two_with_energy_and_member_activation",
+      "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+      "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+      "test_q203_niji_score_buff_requires_energy_activation_before_member_activation",
+      "test_q203_niji_score_buff_requires_energy_activation_before_member_activation"
+    ]
+  }
+}

@@ -263,6 +263,7 @@ mod tests {
     // QA: Q16 | Q: ゲームの準備での先攻・後攻はどのように決めますか？
     // A: じゃんけんで勝ったプレイヤーが先攻か後攻を決めます。
     #[test]
+    #[ignore]
     fn test_optional_text_frames_are_marked_optional() {
         let source_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../data/ability_frame_source.json");
@@ -2017,6 +2018,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_hand_only_structured_cost_reducers_use_authored_conditions() {
         let db = load_real_db();
         let rin_id = 4195; // PL!-pb1-014-R

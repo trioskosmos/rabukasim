@@ -1,6 +1,6 @@
 {
   "schema": "extracted_abilities.v1",
-  "generated_at": "2026-04-19T01:55:57.314389",
+  "generated_at": "2026-04-19T11:05:08.563551",
   "generated_by": "tools/ability_extraction/extract_card_abilities.py",
   "source_file": "data\\cards.json",
   "statistics": {
@@ -176,6 +176,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           },
           {
@@ -304,6 +305,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -417,6 +419,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -485,6 +488,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -537,6 +541,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -787,6 +792,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 2
         }
       }
@@ -1084,6 +1090,7 @@
           },
           "action": {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           }
         }
@@ -1593,6 +1600,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 1
             },
             {
@@ -1632,10 +1640,6 @@
             "count": 1,
             "optional": true,
             "text": "手札を1枚控え室に置いてもよい"
-          },
-          "condition": {
-            "text": "手札を1枚控え室に置いてもよい。そうした場合",
-            "type": "raw"
           },
           "action": {
             "action": "add_to_hand",
@@ -2291,6 +2295,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -2394,6 +2399,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -2511,6 +2517,7 @@
           },
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           }
         ]
@@ -2669,13 +2676,6 @@
           "resource": "energy",
           "count": 1
         },
-        "condition": {
-          "text": "自分のメインフェイズの間、自分のカードが1枚以上いずれかの領域から控え室に置かれるたび、{{icon_energy.png|E}}支払ってもよい。そうした場合",
-          "target": "self",
-          "type": "card_count_at_least",
-          "value": 1,
-          "location": "waitroom"
-        },
         "action": {
           "action": "add_to_hand",
           "count": 1
@@ -2759,6 +2759,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -2798,29 +2799,39 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "このメンバーがステージから控え室に置かれたとき",
-          "type": "move_to_waitroom_trigger",
-          "operator": "triggered",
-          "source": "stage",
-          "destination": "waitroom",
-          "target": "self"
-        },
-        "action": {
-          "condition": {
-            "text": "このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合",
-            "group": "虹ヶ咲",
-            "group_type": "unit",
-            "card_type": "member_card",
-            "cost_limit": 10,
-            "type": "raw",
-            "negate": true
+        "actions": [
+          {
+            "condition": {
+              "text": "このメンバーがステージから控え室に置かれたとき",
+              "type": "move_to_waitroom_trigger",
+              "operator": "triggered",
+              "source": "stage",
+              "destination": "waitroom",
+              "target": "self"
+            },
+            "action": {
+              "condition": {
+                "text": "このメンバーがコスト10以上のブレードハートを持たない『虹ヶ咲』のメンバーとバトンタッチしていた場合",
+                "group": "虹ヶ咲",
+                "group_type": "unit",
+                "card_type": "member_card",
+                "cost_limit": 10,
+                "type": "baton_touch_deploy",
+                "source_group": "虹ヶ咲",
+                "negate": true
+              },
+              "action": {
+                "action": "activate_energy",
+                "count": 2
+              }
+            }
           },
-          "action": {
-            "action": "activate_energy",
-            "count": 2
+          {
+            "action": "draw_cards",
+            "source": "deck",
+            "count": 1
           }
-        }
+        ]
       }
     },
     {
@@ -2845,18 +2856,36 @@
         "text": "【左サイド】{{turn1.png|ターン1回}}このメンバーをウェイトにする"
       },
       "effect": {
-        "condition": {
-          "text": "カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある場合",
-          "type": "card_count_at_least",
-          "value": 1,
-          "location": "waitroom",
-          "card_type": "member_card",
-          "negate": true
-        },
-        "action": {
-          "action": "activate_member",
-          "count": 2
-        }
+        "actions": [
+          {
+            "condition": {
+              "text": "カードを3枚引き、手札を2枚控え室に置く。これにより控え室に置いたカードの中にブレードハートを持たないメンバーカードが1枚以上ある場合",
+              "type": "card_count_at_least",
+              "value": 1,
+              "location": "waitroom",
+              "card_type": "member_card",
+              "negate": true
+            },
+            "action": {
+              "action": "activate_member",
+              "count": 2
+            }
+          },
+          {
+            "resource": "blade",
+            "actions": [
+              {
+                "duration": "until_end_of_live"
+              },
+              {
+                "action": "gain_resource",
+                "resource": "blade",
+                "blade_count": 2,
+                "resource_count": 2
+              }
+            ]
+          }
+        ]
       }
     },
     {
@@ -3205,6 +3234,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -3300,42 +3330,48 @@
       "use_limit": 1,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分がエールしたとき",
-          "type": "cheer_action",
-          "target": "self"
-        },
-        "action": {
-          "condition": {
-            "text": "エールにより公開された自分のカードが持つブレードハートの中に[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}のうち、3種類以上ある場合",
-            "target": "self",
-            "type": "blade_heart_presence",
-            "location": "cheer_revealed",
-            "presence": "present"
-          },
-          "action": {
-            "resource": "heart",
-            "heart_types": [
-              "01"
-            ],
-            "actions": [
-              {
-                "duration": "until_end_of_live"
+        "actions": [
+          {
+            "condition": {
+              "text": "自分がエールしたとき",
+              "type": "cheer_action",
+              "target": "self"
+            },
+            "action": {
+              "condition": {
+                "text": "エールにより公開された自分のカードが持つブレードハートの中に[桃ブレード]、[赤ブレード]、[黄ブレード]、[緑ブレード]、[青ブレード]、[紫ブレード]、{{icon_b_all.png|ALLブレード}}のうち、3種類以上ある場合",
+                "target": "self",
+                "type": "blade_heart_presence",
+                "location": "cheer_revealed",
+                "presence": "present"
               },
-              {
-                "action": "gain_resource",
+              "action": {
                 "resource": "heart",
                 "heart_types": [
                   "01"
+                ],
+                "actions": [
+                  {
+                    "duration": "until_end_of_live"
+                  },
+                  {
+                    "action": "gain_resource",
+                    "resource": "heart",
+                    "heart_types": [
+                      "01"
+                    ]
+                  }
                 ]
               }
-            ]
+            }
           },
-          "furthermore_action": {
-            "action": "gain_ability",
-            "ability": "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+          {
+            "action": {
+              "action": "gain_ability",
+              "ability": "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -3515,6 +3551,7 @@
             "actions": [
               {
                 "action": "draw_cards",
+                "source": "deck",
                 "count": 1
               },
               {
@@ -3655,6 +3692,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -3679,16 +3717,25 @@
         "text": "手札を1枚控え室に置いてもよい"
       },
       "effect": {
-        "resource": "blade",
         "actions": [
           {
-            "duration": "until_end_of_live"
+            "resource": "blade",
+            "actions": [
+              {
+                "duration": "until_end_of_live"
+              },
+              {
+                "action": "gain_resource",
+                "resource": "blade",
+                "blade_count": 1,
+                "resource_count": 1
+              }
+            ]
           },
           {
-            "action": "gain_resource",
-            "resource": "blade",
-            "blade_count": 1,
-            "resource_count": 1
+            "action": "draw_cards",
+            "source": "deck",
+            "count": 1
           }
         ]
       }
@@ -3974,20 +4021,22 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "type": "compound",
-          "conditions": [
-            {
-              "text": "以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は",
-              "target": "self",
-              "type": "member_exclusion",
-              "group": "Aqours",
-              "group_type": "unit",
-              "card_type": "member_card",
-              "exclusion": "this_member"
-            },
-            {
-              "text": "{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合",
+        "choice": true,
+        "actions": [
+          {
+            "action": "select_member",
+            "text": "自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る",
+            "target": "self",
+            "group": "Aqours",
+            "group_type": "unit",
+            "count": 1
+          },
+          {
+            "action": "move_member",
+            "text": "そのメンバーはこのメンバーがいたエリアに移動させる。)",
+            "target": "selected_member",
+            "condition": {
+              "text": "自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合",
               "target": "self",
               "group": "SaintSnow",
               "group_type": "unit",
@@ -3995,16 +4044,6 @@
               "type": "member_presence",
               "exclusion": "SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア"
             }
-          ],
-          "text": "以下から1つを選ぶ。\n・自分のステージにいるこのメンバー以外の『Aqours』のメンバー1人は、ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。\n・自分のステージにいる『SaintSnow』のメンバー1人をポジションチェンジさせる。(このメンバーを今いるエリア以外のエリアに移動させる。そのエリアにメンバーがいる場合",
-          "target": "self"
-        },
-        "choice": true,
-        "actions": [
-          {
-            "action": "move_member",
-            "text": "そのメンバーはこのメンバーがいたエリアに移動させる。)",
-            "target": "selected_member"
           }
         ]
       }
@@ -4029,9 +4068,24 @@
           "ongoing": false
         },
         "action": {
-          "action": "draw_cards",
-          "count": 3,
-          "source": "waitroom"
+          "target": "both_players",
+          "multi_target": true,
+          "actions": [
+            {
+              "action": "discard_to_waitroom",
+              "target": "both_players",
+              "source": "hand",
+              "destination": "waitroom",
+              "text": "手札を控え室に置く"
+            },
+            {
+              "action": "draw_cards",
+              "target": "both_players",
+              "count": 3,
+              "source": "deck",
+              "text": "カードを3枚引く"
+            }
+          ]
         }
       }
     },
@@ -4048,6 +4102,8 @@
       "use_limit": null,
       "cost": null,
       "effect": {
+        "repeatable": true,
+        "repeat_count": 4,
         "payment": {
           "action": "discard_to_waitroom",
           "source": "deck_top",
@@ -4055,22 +4111,26 @@
           "optional": true,
           "text": "自分のデッキの一番上のカードを控え室に置いてもよい"
         },
-        "condition": {
-          "text": "自分のデッキの一番上のカードを控え室に置いてもよい。そうした場合",
-          "target": "self",
-          "type": "raw"
-        },
-        "action": {
-          "condition": {
-            "text": "ライブ終了時まで、{{icon_blade.png|ブレード}}を得る。これにより控え室に置いたカードがライブカードの場合",
-            "type": "raw"
+        "actions": [
+          {
+            "action": "gain_resource",
+            "resource": "blade",
+            "duration": "until_end_of_live",
+            "blade_count": 1,
+            "resource_count": 1
           },
-          "action": {
-            "action": "member_to_wait",
-            "target": "self",
-            "source": "stage"
+          {
+            "condition": {
+              "text": "これにより控え室に置いたカードがライブカードの場合",
+              "type": "live_card_in_discard"
+            },
+            "action": {
+              "action": "member_to_wait",
+              "target": "self",
+              "source": "stage"
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -4095,34 +4155,44 @@
         "text": "手札の『DOLLCHESTRA』のカードを1枚控え室に置いてもよい"
       },
       "effect": {
-        "condition": {
-          "text": "自分のステージにいる『DOLLCHESTRA』のメンバー1人を選ぶ。ライブ終了時まで、このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる。これによりこのカードのコストが10以上になった場合",
-          "target": "self",
-          "type": "comparison",
-          "group": "DOLLCHESTRA",
-          "group_type": "unit",
-          "card_type": "member_card",
-          "operator": "<",
-          "compares": "cost"
-        },
-        "action": {
-          "resource": "heart",
-          "heart_types": [
-            "05"
-          ],
-          "actions": [
-            {
-              "duration": "until_end_of_live"
+        "actions": [
+          {
+            "count": 1,
+            "target": "self"
+          },
+          {
+            "duration": "until_end_of_live",
+            "action": "modify_cost",
+            "target": "self",
+            "offset": 1,
+            "operator": "-",
+            "reference": "selected_member_cost"
+          },
+          {
+            "condition": {
+              "text": "このカードのコストが10以上になった場合",
+              "type": "raw"
             },
-            {
-              "action": "gain_resource",
+            "action": {
               "resource": "heart",
               "heart_types": [
                 "05"
+              ],
+              "actions": [
+                {
+                  "duration": "until_end_of_live"
+                },
+                {
+                  "action": "gain_resource",
+                  "resource": "heart",
+                  "heart_types": [
+                    "05"
+                  ]
+                }
               ]
             }
-          ]
-        }
+          }
+        ]
       }
     },
     {
@@ -4189,6 +4259,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           },
           {
@@ -4233,6 +4304,7 @@
             "destination": "hand",
             "remainder_zone": "DISCARD",
             "text": "コスト9以上の『Aqours』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 9,
             "group": "Aqours",
             "group_type": "unit",
             "card_type": "member_card"
@@ -4263,6 +4335,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -4301,6 +4374,7 @@
             "destination": "hand",
             "remainder_zone": "DISCARD",
             "text": "コスト9以上の『虹ヶ咲』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 9,
             "group": "虹ヶ咲",
             "group_type": "unit",
             "card_type": "member_card"
@@ -4389,23 +4463,26 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "以下から1つを選ぶ。\n・自分の控え室にカード名が異なるライブカードが3枚以上ある場合",
-          "target": "self",
-          "different": "card_name",
-          "type": "card_count_at_least",
-          "value": 3,
-          "location": "waitroom",
-          "card_type": "live_card"
-        },
         "choice": true,
         "actions": [
           {
             "action": "add_to_hand",
             "count": 1,
-            "card_type": "live_card"
+            "card_type": "live_card",
+            "condition": {
+              "text": "自分の控え室にカード名が異なるライブカードが3枚以上ある場合",
+              "target": "self",
+              "different": "card_name",
+              "type": "card_count_at_least",
+              "value": 3,
+              "location": "waitroom",
+              "card_type": "live_card"
+            }
           },
           {
+            "action": "add_to_hand",
+            "count": 2,
+            "card_type": "live_card",
             "condition": {
               "text": "自分の控え室にグループ名が異なるライブカードが3枚以上ある場合",
               "target": "self",
@@ -4413,11 +4490,6 @@
               "type": "card_count_at_least",
               "value": 3,
               "location": "waitroom",
-              "card_type": "live_card"
-            },
-            "action": {
-              "action": "add_to_hand",
-              "count": 2,
               "card_type": "live_card"
             }
           }
@@ -4458,6 +4530,7 @@
             "destination": "hand",
             "remainder_zone": "DISCARD",
             "text": "コスト9以上の『μ's』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 9,
             "group": "μ's",
             "group_type": "unit",
             "card_type": "member_card"
@@ -4900,6 +4973,7 @@
             "destination": "hand",
             "remainder_zone": "DISCARD",
             "text": "コスト9以上の『Liella!』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 9,
             "group": "Liella!",
             "group_type": "unit",
             "card_type": "member_card"
@@ -4970,6 +5044,7 @@
             "destination": "hand",
             "remainder_zone": "DISCARD",
             "text": "コスト9以上の『蓮ノ空』のメンバーカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 9,
             "group": "蓮ノ空",
             "group_type": "unit",
             "card_type": "member_card"
@@ -5003,11 +5078,6 @@
           "resource": "energy",
           "count": 1
         },
-        "condition": {
-          "text": "自分の控え室にあるライブカードを1枚選び、そのカードのスコアに等しい数の{{icon_energy.png|E}}を支払ってもよい。そうした場合",
-          "target": "self",
-          "type": "waitroom_location"
-        },
         "action": {
           "action": "add_to_hand",
           "count": 1,
@@ -5039,6 +5109,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -5185,7 +5256,8 @@
       "effect": {
         "action": "discard_to_waitroom",
         "count": 5,
-        "source": "deck_top"
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -5426,19 +5498,10 @@
         "text": "手札を1枚控え室に置いてもよい"
       },
       "effect": {
-        "actions": [
-          {
-            "action": "discard_to_waitroom",
-            "count": 2,
-            "target": "self",
-            "source": "deck_top"
-          },
-          {
-            "action": "add_to_hand",
-            "count": 1,
-            "card_type": "member_card"
-          }
-        ]
+        "action": "discard_to_waitroom",
+        "count": 2,
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -5569,9 +5632,19 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "action": "draw_cards",
-        "count": 1,
-        "target": "self"
+        "actions": [
+          {
+            "action": "draw_cards",
+            "source": "deck",
+            "count": 1,
+            "target": "self"
+          },
+          {
+            "action": "draw_cards",
+            "source": "deck",
+            "count": 1
+          }
+        ]
       }
     },
     {
@@ -5593,6 +5666,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           },
           {
@@ -5689,7 +5763,8 @@
         "text": "手札を3枚まで控え室に置いてもよい"
       },
       "effect": {
-        "action": "draw_cards"
+        "action": "draw_cards",
+        "source": "deck"
       }
     },
     {
@@ -5711,6 +5786,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -5977,6 +6053,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -6082,6 +6159,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -6196,10 +6274,6 @@
             "count": 1,
             "optional": true,
             "text": "手札を1枚控え室に置いてもよい"
-          },
-          "condition": {
-            "text": "手札を1枚控え室に置いてもよい。そうした場合",
-            "type": "raw"
           },
           "action": {
             "action": "add_to_hand",
@@ -6324,7 +6398,8 @@
             "count": 1,
             "destination": "hand",
             "remainder_zone": "DISCARD",
-            "text": "コスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。"
+            "text": "コスト11以上のカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
+            "min_cost": 11
           }
         ]
       }
@@ -7018,6 +7093,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           },
           {
@@ -7232,6 +7308,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -7308,6 +7385,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -7405,6 +7483,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 3
       }
     },
@@ -7459,6 +7538,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 3
       }
     },
@@ -7563,6 +7643,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -7594,6 +7675,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1,
           "target": "self"
         }
@@ -7817,8 +7899,8 @@
         },
         "action": {
           "action": "draw_cards",
-          "count": 5,
-          "source": "hand"
+          "source": "hand",
+          "count": 5
         }
       }
     },
@@ -7875,8 +7957,8 @@
         },
         "action": {
           "action": "draw_cards",
-          "count": 5,
-          "source": "hand"
+          "source": "hand",
+          "count": 5
         }
       }
     },
@@ -7985,6 +8067,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -8047,6 +8130,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -8419,6 +8503,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -8448,6 +8533,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -8525,6 +8611,7 @@
         "multiplier": true,
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -8779,6 +8866,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -8895,6 +8983,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -9059,6 +9148,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -9129,6 +9219,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -9212,6 +9303,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -9314,7 +9406,7 @@
             "text": "必要ハートの合計が8以上の『Liella!』のライブカードを1枚公開して手札に加えてもよい。残りを控え室に置く。",
             "value_threshold": 8,
             "is_le": false,
-            "is_cost_type": true,
+            "is_cost_type": false,
             "group": "Liella!",
             "group_type": "unit",
             "card_type": "live_card"
@@ -9337,6 +9429,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -9713,6 +9806,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -10052,6 +10146,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -10193,6 +10288,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -10224,6 +10320,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -10285,6 +10382,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -10865,6 +10963,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -10886,8 +10985,8 @@
       "effect": {
         "action": "discard_to_waitroom",
         "count": 10,
-        "target": "self",
-        "source": "deck_top"
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -11255,6 +11354,7 @@
           },
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1,
             "multiplier": true,
             "per_unit": 1,
@@ -11288,6 +11388,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 1
         }
@@ -11313,6 +11414,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 2
         }
@@ -11443,6 +11545,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 1
         }
@@ -11488,6 +11591,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 1
         }
@@ -11693,6 +11797,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 1
         }
@@ -11709,6 +11814,7 @@
       "use_limit": null,
       "cost": null,
       "effect": {
+        "source": "deck",
         "actions": [
           {
             "count": 6,
@@ -11718,6 +11824,7 @@
           },
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           }
         ]
@@ -11902,6 +12009,7 @@
         },
         "action": {
           "action": "add_score",
+          "source": "deck",
           "count": 1,
           "amount": 1
         }
@@ -12030,6 +12138,7 @@
       "cost": null,
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1,
         "target": "opponent"
       }
@@ -12517,6 +12626,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1,
             "duration": "until_end_of_live"
           },
@@ -12550,6 +12660,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -12609,6 +12720,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -13192,6 +13304,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 2
           },
           {
@@ -13514,18 +13627,11 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分のステージのセンターエリアにコスト9以上の『Aqours』のメンバーがいる場合",
-          "target": "self",
-          "group": "Aqours",
-          "group_type": "unit",
-          "position_requirement": "center",
-          "card_type": "member_card",
-          "cost_limit": 9,
-          "type": "raw"
-        },
         "choice": true,
         "actions": [
+          {
+            "target": "self"
+          },
           {
             "action": "select_member",
             "text": "ライブ終了時まで、自分のステージにいるメンバー1人は、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る",
@@ -14017,6 +14123,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -14279,19 +14386,27 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の場合",
-          "target": "self",
-          "type": "score_sum_at_least",
-          "value": 6,
-          "location": "success_live_card_zone"
-        },
-        "action": {
-          "action": "reduce",
-          "heart_types": [
-            "00"
-          ]
-        }
+        "actions": [
+          {
+            "condition": {
+              "text": "自分の成功ライブカード置き場にあるカードのスコアの合計が6以上の場合",
+              "target": "self",
+              "type": "score_sum_at_least",
+              "value": 6,
+              "location": "success_live_card_zone"
+            },
+            "action": {
+              "action": "reduce",
+              "heart_types": [
+                "00"
+              ]
+            }
+          },
+          {
+            "action": "add_score",
+            "amount": 1
+          }
+        ]
       }
     },
     {
@@ -14341,6 +14456,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -14386,6 +14502,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 1
             },
             {
@@ -14433,6 +14550,7 @@
         "actions": [
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           },
           {
@@ -14657,20 +14775,10 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "以下から1つを選ぶ。自分の成功ライブカード置き場に『虹ヶ咲』のカードがある場合",
-          "target": "self",
-          "group": "虹ヶ咲",
-          "group_type": "unit",
-          "card_type": "live_card",
-          "location": "success_live_card_zone",
-          "type": "card_presence",
-          "operator": "present"
-        },
         "choice": true,
         "actions": [
           {
-            "raw_text": "代わりに1つ以上を選ぶ"
+            "raw_text": "自分の成功ライブカード置き場に『虹ヶ咲』のカードがある場合、代わりに1つ以上を選ぶ"
           },
           {
             "action": "place_card",
@@ -15154,6 +15262,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 2
             },
             {
@@ -15454,6 +15563,7 @@
       },
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -15756,8 +15866,8 @@
       "effect": {
         "action": "discard_to_waitroom",
         "count": 5,
-        "target": "self",
-        "source": "deck_top"
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -15797,16 +15907,11 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分のステージに『A-RISE』のメンバーがいる場合",
-          "target": "self",
-          "group": "A-RISE",
-          "group_type": "unit",
-          "card_type": "member_card",
-          "type": "member_presence"
-        },
         "choice": true,
         "actions": [
+          {
+            "target": "self"
+          },
           {
             "actions": [
               {
@@ -15892,17 +15997,11 @@
         "text": "{{icon_energy.png|E}}{{icon_energy.png|E}}支払ってもよい"
       },
       "effect": {
-        "condition": {
-          "text": "自分のステージにコスト9以上の『EdelNote』のメンバーがいる場合",
-          "target": "self",
-          "group": "EdelNote",
-          "group_type": "unit",
-          "card_type": "member_card",
-          "cost_limit": 9,
-          "type": "member_presence"
-        },
         "choice": true,
         "actions": [
+          {
+            "target": "self"
+          },
           {
             "action": "deploy_to_stage",
             "count": 1,
@@ -16083,19 +16182,10 @@
         "text": "手札を1枚控え室に置いてもよい"
       },
       "effect": {
-        "actions": [
-          {
-            "action": "discard_to_waitroom",
-            "count": 3,
-            "target": "self",
-            "source": "deck_top"
-          },
-          {
-            "action": "add_to_hand",
-            "count": 1,
-            "card_type": "member_card"
-          }
-        ]
+        "action": "discard_to_waitroom",
+        "count": 3,
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -16315,8 +16405,8 @@
       "effect": {
         "action": "discard_to_waitroom",
         "count": 10,
-        "target": "self",
-        "source": "deck_top"
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -16630,21 +16720,10 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "actions": [
-          {
-            "action": "discard_to_waitroom",
-            "count": 2,
-            "target": "self",
-            "source": "deck_top"
-          },
-          {
-            "action": "may_place_card",
-            "count": 1,
-            "target": "self",
-            "source": "deck_top",
-            "card_type": "live_card"
-          }
-        ]
+        "action": "discard_to_waitroom",
+        "count": 2,
+        "source": "deck_top",
+        "destination": "waitroom"
       }
     },
     {
@@ -16665,6 +16744,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -17051,12 +17131,14 @@
       "use_limit": null,
       "cost": null,
       "effect": {
+        "source": "deck",
         "actions": [
           {
             "target": "self"
           },
           {
             "action": "draw_cards",
+            "source": "deck",
             "count": 1
           }
         ]
@@ -17073,26 +17155,47 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分のステージにメンバーが1人以上いる場合",
-          "target": "self",
-          "type": "member_count_at_least",
-          "value": 1
-        },
-        "action": {
-          "actions": [
-            {
-              "action": "draw_cards",
-              "count": 1,
-              "target": "both"
+        "actions": [
+          {
+            "condition": {
+              "text": "自分のステージにメンバーが1人以上いる場合",
+              "target": "self",
+              "type": "member_count_at_least",
+              "value": 1
             },
-            {
-              "action": "discard_to_waitroom",
-              "count": 1,
-              "source": "hand"
+            "action": {
+              "actions": [
+                {
+                  "action": "draw_cards",
+                  "source": "deck",
+                  "count": 1,
+                  "target": "both"
+                },
+                {
+                  "action": "discard_to_waitroom",
+                  "count": 1,
+                  "source": "hand"
+                }
+              ]
             }
-          ]
-        }
+          },
+          {
+            "condition": {
+              "text": "自分のステージにいる『μ's』のメンバー1人は、ライブ終了時まで、{{heart_03.png|heart03}}を得る。3人以上おり、かつそれぞれ名前が異なる場合",
+              "target": "self",
+              "type": "unique_names_count",
+              "value": 3,
+              "location": "stage",
+              "group": "μ's",
+              "group_type": "unit",
+              "card_type": "member_card"
+            },
+            "action": {
+              "action": "add_score",
+              "amount": 1
+            }
+          }
+        ]
       }
     },
     {
@@ -17118,6 +17221,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 1
             },
             {
@@ -17140,32 +17244,32 @@
       "use_limit": null,
       "cost": null,
       "effect": {
-        "condition": {
-          "text": "自分のステージに「中須かすみ」がいる場合",
-          "target": "self",
-          "type": "character_presence",
-          "characters": [
-            "中須かすみ"
-          ],
-          "presence": "present"
-        },
-        "action": {
-          "actions": [
-            {
-              "count": 4,
-              "duration": "until_end_of_live",
-              "target": "self"
-            },
-            {
-              "action": "discard_to_waitroom",
-              "count": 1,
+        "actions": [
+          {
+            "condition": {
+              "text": "自分のステージに「中須かすみ」がいる場合",
               "target": "self",
-              "source": "stage",
-              "character": "中須かすみ",
-              "all": true
+              "type": "character_presence",
+              "characters": [
+                "中須かすみ"
+              ],
+              "presence": "present"
+            },
+            "action": {
+              "count": 4,
+              "target": "self"
             }
-          ]
-        }
+          },
+          {
+            "count": 1,
+            "duration": "until_end_of_live",
+            "target": "self"
+          },
+          {
+            "action": "discard_to_waitroom",
+            "all": true
+          }
+        ]
       }
     },
     {
@@ -17270,6 +17374,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }
@@ -17291,7 +17396,7 @@
           "type": "unique_names_count",
           "value": 3,
           "location": "stage",
-          "different_cost": true
+          "unique_costs": true
         },
         "action": {
           "action": "add_score",
@@ -17511,6 +17616,7 @@
       "cost": null,
       "effect": {
         "action": "draw_cards",
+        "source": "deck",
         "count": 1
       }
     },
@@ -17580,6 +17686,7 @@
           "actions": [
             {
               "action": "draw_cards",
+              "source": "deck",
               "count": 1
             },
             {
@@ -17637,6 +17744,7 @@
         "condition": {
           "text": "自分のステージに『蓮ノ空』のメンバー1人を含むメンバーが2人以上おり、かつそれらのメンバーのユニット名がそれぞれ異なる場合",
           "target": "self",
+          "different": "unit_name",
           "type": "member_count_at_least",
           "value": 2,
           "group": "蓮ノ空",
@@ -17917,6 +18025,7 @@
         },
         "action": {
           "action": "draw_cards",
+          "source": "deck",
           "count": 1
         }
       }

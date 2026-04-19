@@ -730,8 +730,11 @@ def _normalize_parsed_tree(value, parent_source=None):
                 group_match = re.search(r'『(.+?)』', text)
                 if group_match:
                     value['group'] = group_match.group(1)
-        elif action == 'draw_cards' and 'count' not in value:
-            value['count'] = 1
+        elif action == 'draw_cards':
+            if 'count' not in value:
+                value['count'] = 1
+            if 'source' not in value:
+                value['source'] = 'deck'
         elif action == 'look_at_cards' and 'count' not in value:
             count_match = re.search(r'カードを(\d+)枚', text)
             value['count'] = int(count_match.group(1)) if count_match else 1
@@ -765,10 +768,21 @@ def _annotate_return(fn):
         return _normalize_parsed_tree(annotate_tree(fn(text, *args, **kwargs), text))
     return wrapper
 
-def parse_effect_backwards(text: str, parent_source=None) -> dict:
-    """Parse effect text backwards (from action to conditions)."""
+def parse_effect_backwards(text: str, parent_source: str = None) -> dict:
+    """Parse effect text backwards from action to conditions."""
     result = {}
+    original_text = text  # Store original text for repeatable pattern check
     text = text.strip()
+    
+    # Check for repeatable action pattern (e.g., "自分はこの手順をさらに4回まで繰り返してもよい")
+    # Extract and remove it from text before parsing
+    if '繰り返してもよい' in text:
+        repeat_match = re.search(r'さらに(\d+)回まで繰り返してもよい', text)
+        if repeat_match:
+            result['repeatable'] = True
+            result['repeat_count'] = int(repeat_match.group(1))
+            # Remove the repeat pattern from text
+            text = text.replace(repeat_match.group(0), '').strip()
     
     # Inherit parent source if provided
     if parent_source:
@@ -781,30 +795,7 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
     # Check for choice pattern EARLY - before any other pattern checks
     # This ensures it's reached even if other patterns match
     if '以下から1つを選ぶ' in text and '・' in text:
-        # Check if there's a leading condition
-        condition_part, action_part = _split_leading_condition_clause(text)
-        if condition_part and action_part:
-            condition = parse_condition(condition_part)
-            if condition:
-                result['condition'] = condition
-            # Handle choice pattern directly without recursing to prevent incorrect parsing
-            result['choice'] = True
-            result['actions'] = []
-            # Strip the choice marker from action_part
-            choice_text = action_part.replace('以下から1つを選ぶ。', '').replace('以下から1つを選ぶ', '').strip()
-            # Split by bullet points
-            bullet_options = _merge_subject_stub(choice_text.split('・'))
-            for option in bullet_options:
-                option = option.strip()
-                if option and option not in ['以下から1つを選ぶ', '以下から1つを選ぶ。']:
-                    option = option.rstrip('。')
-                    action = parse_effect_backwards(option)
-                    if action and 'raw_text' not in action:
-                        result['actions'].append(action)
-                    else:
-                        result['actions'].append({'raw_text': option})
-            return result
-        # No leading condition - handle choice pattern directly here
+        # Handle choice pattern directly without recursing to prevent incorrect parsing
         result['choice'] = True
         result['actions'] = []
         # Strip the choice marker
@@ -815,12 +806,58 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
             option = option.strip()
             if option and option not in ['以下から1つを選ぶ', '以下から1つを選ぶ。']:
                 option = option.rstrip('。')
-                action = parse_effect_backwards(option)
-                if action and 'raw_text' not in action:
-                    result['actions'].append(action)
+                # Check if this option has its own condition
+                option_condition_part, option_action_part = _split_leading_condition_clause(option)
+                if option_condition_part and option_action_part:
+                    option_condition = parse_condition(option_condition_part)
+                    option_action = parse_effect_backwards(option_action_part)
+                    if option_action and 'raw_text' not in option_action:
+                        option_action['condition'] = option_condition
+                        result['actions'].append(option_action)
+                    else:
+                        result['actions'].append({'raw_text': option})
                 else:
-                    result['actions'].append({'raw_text': option})
+                    action = parse_effect_backwards(option)
+                    if action and 'raw_text' not in action:
+                        result['actions'].append(action)
+                    else:
+                        result['actions'].append({'raw_text': option})
         return result
+
+    # Check for repeatable action pattern (e.g., "自分はこの手順をさらに4回まで繰り返してもよい")
+    # This should be checked AFTER parsing the main action, not before
+    # We'll handle this by checking at the end of the function
+
+    # Check for sequential action pattern: select → duration cost modification → conditional effect
+    # This handles patterns like Card 697: "select member. Until end of live, cost becomes X. If cost becomes Y+, gain Z"
+    # Key markers: "選ぶ。" followed by "ライブ終了時まで、" followed by "これにより"
+    if '選ぶ。' in text and 'ライブ終了時まで、' in text and 'これにより' in text:
+        # Remove cost part if present (text before "：")
+        if '：' in text:
+            text = text.split('：', 1)[1].strip()
+        
+        # Split on "選ぶ。" to get selection and the rest
+        parts = text.split('選ぶ。', 1)
+        if len(parts) == 2:
+            selection_part = parts[0].strip() + '選ぶ。'
+            rest_part = parts[1].strip()
+            
+            # Parse selection action
+            selection_action = parse_effect_backwards(selection_part)
+            
+            # Split rest on "これにより" to get duration action and conditional effect
+            if 'これにより' in rest_part:
+                duration_part, conditional_part = rest_part.split('これにより', 1)
+                
+                # Parse duration action (cost modification)
+                duration_action = parse_effect_backwards(duration_part.rstrip('。'))
+                
+                # Parse conditional effect (heart gain)
+                conditional_action = parse_effect_backwards(conditional_part)
+                
+                if _is_parsed_action(selection_action) and _is_parsed_action(duration_action) and _is_parsed_action(conditional_action):
+                    result['actions'] = [selection_action, duration_action, conditional_action]
+                    return result
 
     # Check for "その後、" (then) separator - BEFORE condition split
     # This handles patterns like "if X, do A. Then, if Y, do B"
@@ -851,7 +888,7 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
                     return result
 
     # Check for "さらに" (furthermore/additionally) pattern
-    # This handles patterns like "if X, do A. Furthermore, if Y, do B instead"
+    # This handles patterns like "if X, do A. Furthermore, if Y, do B" or "if X, do A. Furthermore, do B instead"
     if 'さらに' in text:
         # Split on "さらに" to get the two parts
         if 'さらに' in text:
@@ -860,24 +897,67 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
                 first_part = parts[0].strip()
                 second_part = parts[1].strip()
                 
+                # Remove "さらに" from the second part to avoid parsing issues
+                # But keep the rest of the text for condition parsing
+                second_part = second_part.replace('さらに', '').strip()
+                
                 # Parse the first part (should be: condition + action)
                 first_effect = parse_effect_backwards(first_part)
                 
                 # Parse the second part (should be: condition + action)
-                # The second part typically has "代わりに" (instead) to indicate replacement
                 second_effect = parse_effect_backwards(second_part)
                 
-                # If both parsed successfully, the second effect is a modification
-                # We'll keep the nested structure for the converter to handle
+                # If both parsed successfully
                 if _is_parsed_action(first_effect) and _is_parsed_action(second_effect):
-                    result = first_effect
-                    # Merge the second effect's condition into the first action
-                    if 'action' in result and isinstance(result['action'], dict):
-                        if 'condition' in second_effect:
-                            result['action']['furthermore_condition'] = second_effect['condition']
-                        if 'action' in second_effect and isinstance(second_effect['action'], dict):
-                            result['action']['furthermore_action'] = second_effect['action']
-                    return result
+                    # Check if this is a replacement pattern (has "代わりに")
+                    if '代わりに' in second_part:
+                        result = first_effect
+                        # Merge the second effect's condition into the first action
+                        if 'action' in result and isinstance(result['action'], dict):
+                            if 'condition' in second_effect:
+                                result['action']['furthermore_condition'] = second_effect['condition']
+                            if 'action' in second_effect and isinstance(second_effect['action'], dict):
+                                result['action']['furthermore_action'] = second_effect['action']
+                        return result
+                    else:
+                        # This is an additional action pattern - create actions array
+                        result['actions'] = [first_effect, second_effect]
+                        return result
+
+    # Check for "そうした場合" (if so) pattern after optional payment
+    # This handles patterns like "may discard top card. If so, gain blades." (Card 628)
+    if 'そうした場合' in text and payment:
+        # Split on "そうした場合" to get the conditional effect
+        parts = text.split('そうした場合', 1)
+        if len(parts) == 2:
+            conditional_part = parts[1].strip()
+            
+            # Parse the conditional effect (should be: gain blades, etc.)
+            conditional_action = parse_effect_backwards(conditional_part)
+            
+            # Check if there's a "これにより" (by this) pattern for further conditional effect
+            if 'これにより' in conditional_part:
+                conditional_parts = conditional_part.split('これにより', 1)
+                if len(conditional_parts) == 2:
+                    first_conditional = conditional_parts[0].strip()
+                    second_conditional = conditional_parts[1].strip()
+                    
+                    # Parse both conditional effects
+                    first_action = parse_effect_backwards(first_conditional)
+                    second_action = parse_effect_backwards(second_conditional)
+                    
+                    if _is_parsed_action(first_action) and _is_parsed_action(second_action):
+                        # The second action has a condition
+                        second_action['condition'] = {
+                            'text': 'これにより控え室に置いたカードがライブカードの場合',
+                            'type': 'live_card_in_discard'
+                        }
+                        result['actions'] = [first_action, second_action]
+                        return result
+            
+            if _is_parsed_action(conditional_action):
+                result['action'] = conditional_action
+                return result
 
     # Check for choose heart color pattern BEFORE condition split to preserve full context
     if '好きなハートの色を1つ指定する' in text and 'そのハートを1つ得る' in text:
@@ -951,6 +1031,50 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
 
     # Check for multi-target (e.g., "自分と相手はそれぞれ") - must be before early returns
     if '自分と相手はそれぞれ' in text:
+        # Check if this is a sequential pattern: discard then draw
+        # Handle variations: "手札を控え室に置き、その後" or "自身の手札の枚数が3枚になるまで手札を控え室に置き、その後"
+        if '手札を控え室に置き、その後' in text and 'カードを' in text and '引く' in text:
+            result['target'] = 'both_players'
+            result['multi_target'] = True
+            result['actions'] = []
+            
+            # Extract discard action - check for hand limit pattern
+            discard_match = re.search(r'自身の手札の枚数が(\d+)枚になるまで手札を控え室に置く', text)
+            if discard_match:
+                discard_action = {
+                    'action': 'discard_to_hand_limit',
+                    'target': 'both_players',
+                    'hand_limit': int(discard_match.group(1)),
+                    'source': 'hand',
+                    'destination': 'waitroom',
+                    'text': '自身の手札の枚数が3枚になるまで手札を控え室に置く'
+                }
+                result['actions'].append(discard_action)
+            else:
+                # Fallback: simple discard pattern
+                discard_action = {
+                    'action': 'discard_to_waitroom',
+                    'target': 'both_players',
+                    'source': 'hand',
+                    'destination': 'waitroom',
+                    'text': '手札を控え室に置く'
+                }
+                result['actions'].append(discard_action)
+            
+            # Extract draw action
+            draw_match = re.search(r'その後、.*?カードを(\d+)枚引く', text)
+            if draw_match:
+                draw_action = {
+                    'action': 'draw_cards',
+                    'target': 'both_players',
+                    'count': int(draw_match.group(1)),
+                    'source': 'deck',
+                    'text': 'カードを3枚引く'
+                }
+                result['actions'].append(draw_action)
+            
+            return result
+        
         result['target'] = 'both_players'
         result['multi_target'] = True
         text = text.replace('自分と相手はそれぞれ', '').strip()
@@ -980,6 +1104,17 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
             result['target_blade'] = target_blade
             return result
     
+    # Check for mill action pattern (move cards from deck to discard)
+    # Pattern: "自分のデッキの上からカードをX枚控え室に置く" or "デッキの上からカードをX枚控え室に置く"
+    if re.search(r'(自分の)?デッキの上からカードを(\d+)枚控え室に置く', text):
+        match = re.search(r'(自分の)?デッキの上からカードを(\d+)枚控え室に置く', text)
+        if match:
+            result['action'] = 'discard_to_waitroom'
+            result['count'] = int(match.group(2))
+            result['source'] = 'deck_top'
+            result['destination'] = 'waitroom'
+            return result
+
     # Check for "見る" (look at/reveal cards) pattern
     if re.search(r'カードを(\d+)枚見る', text):
         match = re.search(r'カードを(\d+)枚見る', text)
@@ -1015,6 +1150,10 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
                 
                 # Extract heart threshold (e.g., "必要ハートの合計が8以上")
                 heart_threshold_match = re.search(r'必要ハートの合計が(\d+)以上', selection_text)
+                
+                # Extract cost constraint (e.g., "コスト9以上の")
+                cost_threshold_match = re.search(r'コスト(\d+)以上の', selection_text)
+                
                 select_action = {
                     'action': 'select_from_looked_at_cards',
                     'count': select_count,
@@ -1025,7 +1164,9 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
                 if heart_threshold_match:
                     select_action['value_threshold'] = int(heart_threshold_match.group(1))
                     select_action['is_le'] = False  # >=
-                    select_action['is_cost_type'] = True
+                    select_action['is_cost_type'] = False  # Heart filter, not cost
+                if cost_threshold_match:
+                    select_action['min_cost'] = int(cost_threshold_match.group(1))
                 
                 # Extract group filter (e.g., "『Liella!』のライブカード")
                 group_match = re.search(r'『(.+?)』', selection_text)
@@ -1038,6 +1179,17 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
                     select_action['card_type'] = 'live_card'
                 elif 'メンバーカード' in selection_text:
                     select_action['card_type'] = 'member_card'
+                
+                # Extract character filter (e.g., "「中須かすみ」のカード")
+                char_match = re.search(r'「(.+?)」のカード', selection_text)
+                if char_match:
+                    select_action['character'] = char_match.group(1)
+                
+                # Check for heart granting based on selected card's colors
+                # Pattern: "これにより選んだカードが持つ色のハートを1つずつ得る"
+                if 'これにより選んだカードが持つ色のハート' in text or '選んだカードが持つ色のハート' in text:
+                    select_action['grant_heart_colors'] = True
+                    select_action['heart_grant_target'] = 'selected_character'
                 
                 # Parse the full pattern as multiple actions
                 result['actions'] = [
@@ -1606,6 +1758,10 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
         if parent_source and 'source' not in result:
             result['source'] = parent_source
         
+        # Add default source for draw_cards
+        if matched_action == 'draw_cards' and 'source' not in result:
+            result['source'] = 'deck'
+        
         # Convert generic "reduce" to specific "reduce_heart_cost" when text mentions 必要ハート
         if matched_action == 'reduce' and '必要ハート' in text:
             result['action'] = 'reduce_heart_cost'
@@ -1785,6 +1941,20 @@ def parse_effect_backwards(text: str, parent_source=None) -> dict:
         result['amount'] = int(score_match.group(1))
         return result
     
+    # Check for cost modification pattern (e.g., "このメンバーのコストは、選んだメンバーが元々持つコストより1低い値に等しくなる")
+    if 'コストは' in text and '等しくなる' in text and ('より' in text or '低い' in text or '高い' in text):
+        cost_mod_match = re.search(r'コストは.*?(\d+)(低い|高い)値に等しくなる', text)
+        if not cost_mod_match:
+            # Try alternative pattern: "コストより1低い値に等しくなる"
+            cost_mod_match = re.search(r'コストより(\d+)(低い|高い)値に等しくなる', text)
+        if cost_mod_match:
+            result['action'] = 'modify_cost'
+            result['target'] = 'self'
+            result['offset'] = int(cost_mod_match.group(1))
+            result['operator'] = '-' if cost_mod_match.group(2) == '低い' else '+'
+            result['reference'] = 'selected_member_cost'
+            return result
+
     # Check for state setting patterns (e.g., "数は3つになる")
     if '元々持つ{{icon_blade.png|ブレード}}の数は' in text and 'になる' in text:
         blade_value_match = re.search(r'元々持つ\{\{icon_blade\.png\|ブレード\}\}の数は([\d０-９]+)つになる', text)
@@ -3058,7 +3228,7 @@ def parse_generic_effect(text):
         if heart_threshold_match:
             selection_filters['value_threshold'] = int(heart_threshold_match.group(1))
             selection_filters['is_le'] = False  # >=
-            selection_filters['is_cost_type'] = True
+            selection_filters['is_cost_type'] = False  # Heart filter, not cost
         
         # Extract group filter (e.g., "『Liella!』のライブカード")
         group_match = re.search(r'『(.+?)』', selection_text)

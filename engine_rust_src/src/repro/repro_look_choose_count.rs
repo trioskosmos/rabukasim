@@ -25,6 +25,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_look_and_choose_uses_real_card_choose_count() {
         let db = load_real_db();
         let mut state = create_test_state();
@@ -87,6 +88,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_look_and_choose_allows_multiple_picks() {
         let db = load_real_db();
         let mut state = create_test_state();

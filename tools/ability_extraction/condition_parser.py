@@ -1,4 +1,4 @@
-﻿"""Condition parsing for ability extraction."""
+"""Condition parsing for ability extraction."""
 import re
 from parser_utils import (
     annotate_tree,
@@ -123,7 +123,7 @@ CONDITION_PATTERN_REGISTRY = [
     (lambda t: '名前が異なる' in t and re.search(r'(\d+)人以上', t),
      'unique_names_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self'}),
     (lambda t: '名前とコストが両方ともそれぞれ異なる' in t and re.search(r'(\d+)人以上', t),
-     'unique_names_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self', 'different_cost': True}),
+     'unique_names_count', lambda t, m: {'value': int(m.group(1)), 'location': 'stage', 'target': 'self', 'unique_costs': True}),
     # UNIQUE_MEMBER_COSTS_COUNT: Cost uniqueness (e.g., "コストが異なるメンバーが3人以上いる場合")
     # Must come before general 'member_count_at_least' pattern to avoid conflict
     (lambda t: 'コストが異なる' in t and re.search(r'(\d+)人以上', t),
@@ -379,6 +379,10 @@ def parse_condition(condition_part):
     # Check for different group names condition (e.g., "グループ名が異なる")
     if 'グループ名が異なる' in condition_part:
         condition['different'] = 'group_name'
+
+    # Check for different unit names condition (e.g., "ユニット名がそれぞれ異なる")
+    if 'ユニット名がそれぞれ異なる' in condition_part or 'ユニット名が異なる' in condition_part:
+        condition['different'] = 'unit_name'
     
     # Check for heart type selection with "のうち" (among) pattern (e.g., "{{heart_01}}か{{heart_03}}か{{heart_06}}のうち")
     if re.search(r'{{heart_\d+\.png.*?}}.*?のうち', condition_part):
@@ -502,7 +506,7 @@ def parse_condition(condition_part):
                 condition['location'] = location
     
     # Check for baton touch deployment condition
-    elif 'バトンタッチして登場した' in condition_part or 'バトンタッチして登場している' in condition_part or 'バトンタッチして登場しており' in condition_part:
+    elif 'バトンタッチして登場した' in condition_part or 'バトンタッチして登場している' in condition_part or 'バトンタッチして登場しており' in condition_part or 'バトンタッチしていた場合' in condition_part:
         condition['type'] = 'baton_touch_deploy'
         
         # Extract source member detail

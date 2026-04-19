@@ -42,10 +42,46 @@ from .extracted_abilities_loader import (
     load_extracted_abilities,
 )
 
+# Import semantic to frame converter for generating frames from semantic forms
+try:
+    from tools.semantic_to_frame_converter import convert_semantic_ability_to_frame_format
+    _has_semantic_converter = True
+except ImportError:
+    _has_semantic_converter = False
+    convert_semantic_ability_to_frame_format = None
+
 # Worker-local adapters (initialized once per process)
 _MEMBER_ADAPTER: TypeAdapter[MemberCard] | None = None
 _LIVE_ADAPTER: TypeAdapter[LiveCard] | None = None
 _ENERGY_ADAPTER: TypeAdapter[EnergyCard] | None = None
+
+
+def semantic_form_to_frame_program(semantic_form: dict[str, Any]) -> dict[str, Any]:
+    """Convert semantic form to frame program using the semantic_to_frame_converter.
+    
+    This function is called by the compiler when a card has semantic_form data
+    but no pre-authored frames.
+    """
+    if not _has_semantic_converter or not convert_semantic_ability_to_frame_format:
+        return {"frames": []}
+    
+    # Convert semantic form to the format expected by convert_semantic_ability_to_frame_format
+    extracted_ability = {
+        "full_text": semantic_form.get("source_text", ""),
+        "triggers": semantic_form.get("trigger", ""),
+        "triggerless_text": semantic_form.get("triggerless_text", ""),
+        "cost": semantic_form.get("cost"),
+        "effect": semantic_form.get("effect", {}),
+        "use_limit": semantic_form.get("use_limit"),
+        "cards": semantic_form.get("cards", []),
+    }
+    
+    try:
+        frame_ability = convert_semantic_ability_to_frame_format(extracted_ability)
+        return {"frames": frame_ability.get("frames", [])}
+    except Exception as e:
+        print(f"Warning: Failed to convert semantic form to frames: {e}")
+        return {"frames": []}
 
 
 def _coerce_int(v: Any) -> int:

@@ -1,0 +1,4628 @@
+{
+  "names_different": {
+    "pattern": "名前が異なる場合",
+    "cards": [
+      {
+        "card_no": "PL!HS-bp1-003-R+",
+        "name": "乙宗 梢",
+        "ability_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 6,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 6,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_STAGE",
+                  "frame_index": 0,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "unique_names": 1,
+                    "all_areas": 1
+                  },
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "GRANT_ABILITY",
+                  "frame_index": 2,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: CONSTANT",
+                  "Text: {{jyouji.png|常時}}自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?��?「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る。",
+                  "Fixed: Changed COUNT_ENERGY to COUNT_STAGE with all_areas and unique_names check",
+                  "Frame 0: COUNT_STAGE - checks for unique Hasunosora members in all stage areas",
+                  "Frame 1: JUMP_IF_FALSE - jumps if condition not met",
+                  "Frame 2: GRANT_ABILITY - grants +1 score ability",
+                  "Frame 3: RETURN"
+                ],
+                "text_mapping": {
+                  "自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?�": "Frame 0-1: COUNT_STAGE + JUMP_IF_FALSE",
+                  "「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る": "Frame 2: GRANT_ABILITY"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "SUM_VALUE",
+                  "frame_index": 0,
+                  "attr": {
+                    "once_per_turn": 1
+                  }
+                },
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 1,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1,
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: ACTIVATED",
+                  "Text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分�?�控�?�室�?�ら4コスト以下�?�『蓮ノ空�?�?�メン�?ーカードを1枚手札�?�加�?�る。",
+                  "Frames appear correct",
+                  "Frame 0: SUM_VALUE - once per turn check",
+                  "Frame 1: PAY_ENERGY - pays 1 energy",
+                  "Frame 2: RECOVER_MEMBER - recovers Hasunosora member with cost <= 4",
+                  "Frame 3: RETURN"
+                ]
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 0,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 0,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_GROUP",
+                  "frame_index": 0,
+                  "value": "蓮ノ空",
+                  "attr": {
+                    "target_player": "SELF",
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA"
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 1,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                }
+              ],
+              "use_limit": "ターン1回"
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "triggerless_text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#0)"
+            ],
+            "triggers": "常時",
+            "use_limit": null,
+            "cost": null,
+            "effect": {
+              "condition": {
+                "text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合",
+                "target": "self",
+                "type": "group",
+                "group": "蓮ノ空",
+                "names_different": true,
+                "value": "蓮ノ空",
+                "card_type": "member_card"
+              },
+              "action": {
+                "action": {
+                  "action": "gain_ability",
+                  "ability": "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+                }
+              }
+            }
+          },
+          {
+            "full_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "triggerless_text": "{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#1)"
+            ],
+            "triggers": "起動",
+            "use_limit": "ターン1回",
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "member_card",
+              "group": "蓮ノ空",
+              "cost_limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!HS-bp1-003-P",
+        "name": "乙宗 梢",
+        "ability_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 6,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 6,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_STAGE",
+                  "frame_index": 0,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "unique_names": 1,
+                    "all_areas": 1
+                  },
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "GRANT_ABILITY",
+                  "frame_index": 2,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: CONSTANT",
+                  "Text: {{jyouji.png|常時}}自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?��?「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る。",
+                  "Fixed: Changed COUNT_ENERGY to COUNT_STAGE with all_areas and unique_names check",
+                  "Frame 0: COUNT_STAGE - checks for unique Hasunosora members in all stage areas",
+                  "Frame 1: JUMP_IF_FALSE - jumps if condition not met",
+                  "Frame 2: GRANT_ABILITY - grants +1 score ability",
+                  "Frame 3: RETURN"
+                ],
+                "text_mapping": {
+                  "自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?�": "Frame 0-1: COUNT_STAGE + JUMP_IF_FALSE",
+                  "「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る": "Frame 2: GRANT_ABILITY"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "SUM_VALUE",
+                  "frame_index": 0,
+                  "attr": {
+                    "once_per_turn": 1
+                  }
+                },
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 1,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1,
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: ACTIVATED",
+                  "Text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分�?�控�?�室�?�ら4コスト以下�?�『蓮ノ空�?�?�メン�?ーカードを1枚手札�?�加�?�る。",
+                  "Frames appear correct",
+                  "Frame 0: SUM_VALUE - once per turn check",
+                  "Frame 1: PAY_ENERGY - pays 1 energy",
+                  "Frame 2: RECOVER_MEMBER - recovers Hasunosora member with cost <= 4",
+                  "Frame 3: RETURN"
+                ]
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 0,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 0,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_GROUP",
+                  "frame_index": 0,
+                  "value": "蓮ノ空",
+                  "attr": {
+                    "target_player": "SELF",
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA"
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 1,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                }
+              ],
+              "use_limit": "ターン1回"
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "triggerless_text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#0)"
+            ],
+            "triggers": "常時",
+            "use_limit": null,
+            "cost": null,
+            "effect": {
+              "condition": {
+                "text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合",
+                "target": "self",
+                "type": "group",
+                "group": "蓮ノ空",
+                "names_different": true,
+                "value": "蓮ノ空",
+                "card_type": "member_card"
+              },
+              "action": {
+                "action": {
+                  "action": "gain_ability",
+                  "ability": "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+                }
+              }
+            }
+          },
+          {
+            "full_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "triggerless_text": "{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#1)"
+            ],
+            "triggers": "起動",
+            "use_limit": "ターン1回",
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "member_card",
+              "group": "蓮ノ空",
+              "cost_limit": 4
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!HS-bp1-003-P+",
+        "name": "乙宗 梢",
+        "ability_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 6,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#0)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 6,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_STAGE",
+                  "frame_index": 0,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "unique_names": 1,
+                    "all_areas": 1
+                  },
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "GRANT_ABILITY",
+                  "frame_index": 2,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 6
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: CONSTANT",
+                  "Text: {{jyouji.png|常時}}自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?��?「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る。",
+                  "Fixed: Changed COUNT_ENERGY to COUNT_STAGE with all_areas and unique_names check",
+                  "Frame 0: COUNT_STAGE - checks for unique Hasunosora members in all stage areas",
+                  "Frame 1: JUMP_IF_FALSE - jumps if condition not met",
+                  "Frame 2: GRANT_ABILITY - grants +1 score ability",
+                  "Frame 3: RETURN"
+                ],
+                "text_mapping": {
+                  "自分�?�ステージ�?�エリア�?��?��?��?�『蓮ノ空�?�?�メン�?ー�?�登場�?��?��?�り�?�?��?��??�?�?�異�?�る場�?�": "Frame 0-1: COUNT_STAGE + JUMP_IF_FALSE",
+                  "「{{jyouji.png|常時}}ライブ�?��?�計スコアを+１�?�る。�?を得る": "Frame 2: GRANT_ABILITY"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。\n{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-P | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-R+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-P+ | ä¹å® æ¢¢ (ab#1)",
+                    "PL!HS-bp1-003-SEC | ä¹å® æ¢¢ (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "SUM_VALUE",
+                  "frame_index": 0,
+                  "attr": {
+                    "once_per_turn": 1
+                  }
+                },
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 1,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1,
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 168,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4264,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8360,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12456,
+                  "name": "ä¹å® æ¢¢",
+                  "trigger": 7
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "Trigger: ACTIVATED",
+                  "Text: {{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分�?�控�?�室�?�ら4コスト以下�?�『蓮ノ空�?�?�メン�?ーカードを1枚手札�?�加�?�る。",
+                  "Frames appear correct",
+                  "Frame 0: SUM_VALUE - once per turn check",
+                  "Frame 1: PAY_ENERGY - pays 1 energy",
+                  "Frame 2: RECOVER_MEMBER - recovers Hasunosora member with cost <= 4",
+                  "Frame 3: RETURN"
+                ]
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 0,
+            "full_ability": {
+              "primary_text_jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 0,
+              "trigger": "CONSTANT",
+              "frames": [
+                {
+                  "op": "COUNT_GROUP",
+                  "frame_index": 0,
+                  "value": "蓮ノ空",
+                  "attr": {
+                    "target_player": "SELF",
+                    "group_enabled": 1,
+                    "group_id": "HASUNOSORA"
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 0
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 7,
+            "full_ability": {
+              "primary_text_jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+                    "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 7,
+              "trigger": "ACTIVATED",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true
+                },
+                {
+                  "op": "RECOVER_MEMBER",
+                  "frame_index": 1,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 2
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!HS-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                },
+                {
+                  "card_no": "PL!HS-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "乙宗 梢",
+                  "trigger": 7
+                }
+              ],
+              "use_limit": "ターン1回"
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{jyouji.png|常時}}自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "triggerless_text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合、「{{jyouji.png|常時}}ライブの合計スコアを+１する。」を得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#0)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#0)"
+            ],
+            "triggers": "常時",
+            "use_limit": null,
+            "cost": null,
+            "effect": {
+              "condition": {
+                "text": "自分のステージのエリアすべてに『蓮ノ空』のメンバーが登場しており、かつ名前が異なる場合",
+                "target": "self",
+                "type": "group",
+                "group": "蓮ノ空",
+                "names_different": true,
+                "value": "蓮ノ空",
+                "card_type": "member_card"
+              },
+              "action": {
+                "action": {
+                  "action": "gain_ability",
+                  "ability": "{{jyouji.png|常時}}ライブの合計スコアを+１する。"
+                }
+              }
+            }
+          },
+          {
+            "full_text": "{{kidou.png|起動}}{{turn1.png|ターン1回}}{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "triggerless_text": "{{icon_energy.png|E}}：自分の控え室から4コスト以下の『蓮ノ空』のメンバーカードを1枚手札に加える。",
+            "card_count": 4,
+            "cards": [
+              "PL!HS-bp1-003-R+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-P+ | 乙宗 梢 (ab#1)",
+              "PL!HS-bp1-003-SEC | 乙宗 梢 (ab#1)"
+            ],
+            "triggers": "起動",
+            "use_limit": "ターン1回",
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "member_card",
+              "group": "蓮ノ空",
+              "cost_limit": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "opponent_member_to_wait": {
+    "pattern": "相手のステージにいるコスト4以下のメンバー1人をウェイトにする",
+    "cards": [
+      {
+        "card_no": "PL!-PR-007-PR",
+        "name": "東條 希",
+        "ability_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#0)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#0)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#0)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#0)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#0)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              },
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#1)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#1)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#1)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#1)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#1)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  },
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START/CENTER: Activate all Liella! members on your stage and all your energy. (Note: The ALWAYS cost reduction for cost 10 Liella! members is a separate entry)",
+                  "Frame 0: ACTIVATE_MEMBER with value=99, group_enabled=1, group_id=LIELLA, target_slot=CONTEXT - activates all Liella! members on stage",
+                  "Frame 1: ACTIVATE_ENERGY with value=99, target_slot=CONTEXT - activates all energy",
+                  "Frame 2: RETURN",
+                  "4 cards share this pattern (可可夏叶都)"
+                ],
+                "text_mapping": {
+                  "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る": "Note: This is a separate ALWAYS ability, not covered by these LIVE_START frames",
+                  "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする": "Frame 0: ACTIVATE_MEMBER with group_id=LIELLA, value=99 + Frame 1: ACTIVATE_ENERGY with value=99"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | 東條 希 (ab#0)",
+                    "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+                    "PL!S-bp3-012-N | 松浦果南 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "TAP_OPPONENT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT"
+                  },
+                  "slot": {
+                    "source_zone": "STAGE",
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "東條 希",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "矢澤にこ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "松浦果南",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "小原鞠莉",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "宮下 愛",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "ミア・テイラー",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "triggerless_text": "このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "card_count": 6,
+            "cards": [
+              "PL!-PR-007-PR | 東條 希 (ab#0)",
+              "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+              "PL!S-bp3-012-N | 松浦果南 (ab#0)",
+              "PL!S-bp3-017-N | 小原鞠莉 (ab#0)",
+              "PL!N-bp3-017-N | 宮下 愛 (ab#0)",
+              "PL!N-bp3-023-N | ミア・テイラー (ab#0)"
+            ],
+            "triggers": "ライブ開始時, 登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "stage",
+              "destination": "wait",
+              "count": 1,
+              "target": "this_member",
+              "text": "このメンバーをウェイトにしてもよい"
+            },
+            "effect": {
+              "action": "member_to_wait",
+              "count": 1,
+              "target": "opponent",
+              "source": "stage",
+              "up_to": 1,
+              "cost_limit": 4,
+              "cost": 4
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!-PR-009-PR",
+        "name": "矢澤にこ",
+        "ability_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#0)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#0)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#0)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#0)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#0)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              },
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#1)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#1)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#1)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#1)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#1)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  },
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START/CENTER: Activate all Liella! members on your stage and all your energy. (Note: The ALWAYS cost reduction for cost 10 Liella! members is a separate entry)",
+                  "Frame 0: ACTIVATE_MEMBER with value=99, group_enabled=1, group_id=LIELLA, target_slot=CONTEXT - activates all Liella! members on stage",
+                  "Frame 1: ACTIVATE_ENERGY with value=99, target_slot=CONTEXT - activates all energy",
+                  "Frame 2: RETURN",
+                  "4 cards share this pattern (可可夏叶都)"
+                ],
+                "text_mapping": {
+                  "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る": "Note: This is a separate ALWAYS ability, not covered by these LIVE_START frames",
+                  "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする": "Frame 0: ACTIVATE_MEMBER with group_id=LIELLA, value=99 + Frame 1: ACTIVATE_ENERGY with value=99"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | 東條 希 (ab#0)",
+                    "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+                    "PL!S-bp3-012-N | 松浦果南 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "TAP_OPPONENT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT"
+                  },
+                  "slot": {
+                    "source_zone": "STAGE",
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "東條 希",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "矢澤にこ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "松浦果南",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "小原鞠莉",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "宮下 愛",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "ミア・テイラー",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "triggerless_text": "このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "card_count": 6,
+            "cards": [
+              "PL!-PR-007-PR | 東條 希 (ab#0)",
+              "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+              "PL!S-bp3-012-N | 松浦果南 (ab#0)",
+              "PL!S-bp3-017-N | 小原鞠莉 (ab#0)",
+              "PL!N-bp3-017-N | 宮下 愛 (ab#0)",
+              "PL!N-bp3-023-N | ミア・テイラー (ab#0)"
+            ],
+            "triggers": "ライブ開始時, 登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "stage",
+              "destination": "wait",
+              "count": 1,
+              "target": "this_member",
+              "text": "このメンバーをウェイトにしてもよい"
+            },
+            "effect": {
+              "action": "member_to_wait",
+              "count": 1,
+              "target": "opponent",
+              "source": "stage",
+              "up_to": 1,
+              "cost_limit": 4,
+              "cost": 4
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!S-bp3-012-N",
+        "name": "松浦果南",
+        "ability_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 1,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#0)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#0)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#0)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#0)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#0)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              },
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | æ�?±æ¢�? å¸ (ab#1)",
+                    "PL!-PR-009-PR | ç¢æ¾¤ã«ã (ab#1)",
+                    "PL!N-bp3-017-N | å®®ä¸ æ (ab#1)",
+                    "PL!N-bp3-023-N | ãã¢ã»ãã¤ã©ã¼ (ab#1)",
+                    "PL!S-bp3-012-N | æ�?¾æµ¦æå�? (ab#1)",
+                    "PL!S-bp3-017-N | å°�?åé è (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "SELECT_MEMBER",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT",
+                    "value_enabled": 1,
+                    "value_threshold": 4,
+                    "is_le": 1,
+                    "is_cost_type": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "source_zone": "STAGE"
+                  }
+                },
+                {
+                  "op": "MOVE_MEMBER",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  },
+                  "params": {
+                    "destination": "POSITION_CHANGE",
+                    "source": "STAGE"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 19,
+                  "name": "æ�?±æ¢�? å¸",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 21,
+                  "name": "ç¢æ¾¤ã«ã",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 284,
+                  "name": "å®®ä¸ æ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 287,
+                  "name": "ãã¢ã»ãã¤ã©ã¼",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 450,
+                  "name": "æ�?¾æµ¦æå�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 452,
+                  "name": "å°�?åé è",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START/CENTER: Activate all Liella! members on your stage and all your energy. (Note: The ALWAYS cost reduction for cost 10 Liella! members is a separate entry)",
+                  "Frame 0: ACTIVATE_MEMBER with value=99, group_enabled=1, group_id=LIELLA, target_slot=CONTEXT - activates all Liella! members on stage",
+                  "Frame 1: ACTIVATE_ENERGY with value=99, target_slot=CONTEXT - activates all energy",
+                  "Frame 2: RETURN",
+                  "4 cards share this pattern (可可夏叶都)"
+                ],
+                "text_mapping": {
+                  "{{jyouji.png|常時}}コスト10の『Liella!』のメンバーカードを自分の手札から登場させるためのコストは2減る": "Note: This is a separate ALWAYS ability, not covered by these LIVE_START frames",
+                  "{{live_start.png|ライブ開始時}}{{center.png|センター}}自分のステージにいるすべての『Liella!』のメンバーと、自分のすべてのエネルギーをアクティブにする": "Frame 0: ACTIVATE_MEMBER with group_id=LIELLA, value=99 + Frame 1: ACTIVATE_ENERGY with value=99"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+                  "en": "",
+                  "card_examples": [
+                    "PL!-PR-007-PR | 東條 希 (ab#0)",
+                    "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+                    "PL!S-bp3-012-N | 松浦果南 (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "SET_TAPPED",
+                  "frame_index": 0,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "TAP_OPPONENT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "OPPONENT"
+                  },
+                  "slot": {
+                    "source_zone": "STAGE",
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!-PR-007-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "東條 希",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!-PR-009-PR",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "矢澤にこ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-012-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "松浦果南",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!S-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "小原鞠莉",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-017-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "宮下 愛",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp3-023-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "ミア・テイラー",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}/{{live_start.png|ライブ開始時}}このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "triggerless_text": "このメンバーをウェイトにしてもよい：相手のステージにいるコスト4以下のメンバー1人をウェイトにする。（ウェイト状態のメンバーが持つ{{icon_blade.png|ブレード}}は、エールで公開する枚数を増やさない。）",
+            "card_count": 6,
+            "cards": [
+              "PL!-PR-007-PR | 東條 希 (ab#0)",
+              "PL!-PR-009-PR | 矢澤にこ (ab#0)",
+              "PL!S-bp3-012-N | 松浦果南 (ab#0)",
+              "PL!S-bp3-017-N | 小原鞠莉 (ab#0)",
+              "PL!N-bp3-017-N | 宮下 愛 (ab#0)",
+              "PL!N-bp3-023-N | ミア・テイラー (ab#0)"
+            ],
+            "triggers": "ライブ開始時, 登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "stage",
+              "destination": "wait",
+              "count": 1,
+              "target": "this_member",
+              "text": "このメンバーをウェイトにしてもよい"
+            },
+            "effect": {
+              "action": "member_to_wait",
+              "count": 1,
+              "target": "opponent",
+              "source": "stage",
+              "up_to": 1,
+              "cost_limit": 4,
+              "cost": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "waitroom_live_recovery": {
+    "pattern": "自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える",
+    "cards": [
+      {
+        "card_no": "PL!N-bp1-003-R+",
+        "name": "桜坂しずく",
+        "ability_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!SP-bp4-005-P | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-R+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-P+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-SEC | èæ æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "BATON",
+                  "frame_index": 0,
+                  "attr": {
+                    "unit_enabled": 1,
+                    "unit_id": "LIELLA"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 3
+                },
+                {
+                  "op": "COUNT_ENERGY",
+                  "frame_index": 2,
+                  "value": 7,
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 3,
+                  "value": 1
+                },
+                {
+                  "op": "ENERGY_CHARGE",
+                  "frame_index": 4,
+                  "value": 2,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 5
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: If baton touched from Liella member and energy >= 7, charge 2 energy (wait state)",
+                  "Frame 0: BATON with unit_id=LIELLA checks if baton touched from Liella",
+                  "Frame 1: JUMP_IF_FALSE skips to RETURN if baton condition not met (jump to frame 5)",
+                  "Frame 2: COUNT_ENERGY with value=7, comparison=GE checks if energy >= 7",
+                  "Frame 3: JUMP_IF_FALSE skips to RETURN if energy < 7",
+                  "Frame 4: ENERGY_CHARGE with value=2, is_wait=1 places 2 energy in wait state",
+                  "Frame 5: RETURN",
+                  "4 card variants share this pattern (朝香果林 variants)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}": "Trigger is LIVE_START",
+                  "『Liella!』のメンバーからバトンタッチして登場した場合": "Frame 0: BATON with unit_id=LIELLA",
+                  "自分のエネルギーが7枚以上ある場合": "Frame 2: COUNT_ENERGY with value=7, comparison=GE",
+                  "自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く": "Frame 4: ENERGY_CHARGE with value=2, is_wait=1"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!S-bp2-005-P | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-R+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-P+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-SEC | æ¸¡è¾º æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "LOOK_AND_CHOOSE",
+                  "frame_index": 2,
+                  "value": {
+                    "count": 7,
+                    "choose_count": 3,
+                    "reveal": 1,
+                    "dest_discard": 1
+                  },
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER",
+                    "color_mask": "RED|GREEN|BLUE",
+                    "value_enabled": 1,
+                    "value_threshold": 1,
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "remainder_zone": "DISCARD",
+                    "source_zone": "DECK_TOP"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "NIJIGASAKI",
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "COLOR_SELECT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  },
+                  "params": {
+                    "heart_type": "SELECTED"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: Draw 1 card. Tap up to 1 opponent member with cost 9 or less. (Note: The second LIVE_START ability to select Nijigasaki members from discard is a separate entry)",
+                  "Frame 0: DRAW with value=1, target_slot=CONTEXT - draws 1 card",
+                  "Frame 1: SELECT_MEMBER with value=1, target_player=OPPONENT, value_enabled=1, value_threshold=9, is_le=1, is_cost_type=1, source_zone=STAGE - selects up to 1 opponent member with cost≤9",
+                  "Frame 2: MOVE_MEMBER with value=1, target_player=OPPONENT, is_optional=1, is_wait=1 - optionally moves selected member to wait",
+                  "Frame 3: RETURN",
+                  "4 cards share this pattern (桜小路きな子)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}カードを1枚引く": "Frame 0: DRAW with value=1",
+                  "相手のステージにいるコスト9以下のメンバーを1人までウェイトにする": "Frame 1-2: SELECT_MEMBER with value_threshold=9, is_le=1, is_cost_type=1 + MOVE_MEMBER with is_optional=1, is_wait=1",
+                  "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く": "Note: This is a separate LIVE_START ability, not covered by these frames"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 1,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "ON_PLAY",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "source_zone": "HAND",
+                    "dest_zone": "DISCARD",
+                    "target_slot": "CONTEXT"
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-019-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "優木せつ菜",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-022-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "三船栞子",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "META_RULE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "attr": {},
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "triggerless_text": "手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "card_count": 6,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#0)",
+              "PL!N-bp5-019-N | 優木せつ菜 (ab#0)",
+              "PL!N-bp5-022-N | 三船栞子 (ab#0)"
+            ],
+            "triggers": "登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "hand",
+              "destination": "waitroom",
+              "count": 1,
+              "optional": true,
+              "text": "手札を1枚控え室に置いてもよい"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "live_card",
+              "group": "虹ヶ咲"
+            }
+          },
+          {
+            "full_text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "triggerless_text": "{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#1)"
+            ],
+            "triggers": "ライブ開始時",
+            "use_limit": null,
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}支払ってもよい"
+            },
+            "effect": {
+              "actions": [
+                {
+                  "action": "choose_heart_color",
+                  "choice": true,
+                  "count": 1,
+                  "text": "好きなハートの色を1つ指定する"
+                },
+                {
+                  "action": "gain_resource",
+                  "resource": "heart",
+                  "resource_count": 1,
+                  "count": 1,
+                  "source": "chosen_heart",
+                  "text": "そのハートを1つ得る",
+                  "duration": "until_end_of_live"
+                }
+              ],
+              "duration": "until_end_of_live"
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!N-bp1-003-P",
+        "name": "桜坂しずく",
+        "ability_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!SP-bp4-005-P | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-R+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-P+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-SEC | èæ æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "BATON",
+                  "frame_index": 0,
+                  "attr": {
+                    "unit_enabled": 1,
+                    "unit_id": "LIELLA"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 3
+                },
+                {
+                  "op": "COUNT_ENERGY",
+                  "frame_index": 2,
+                  "value": 7,
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 3,
+                  "value": 1
+                },
+                {
+                  "op": "ENERGY_CHARGE",
+                  "frame_index": 4,
+                  "value": 2,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 5
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: If baton touched from Liella member and energy >= 7, charge 2 energy (wait state)",
+                  "Frame 0: BATON with unit_id=LIELLA checks if baton touched from Liella",
+                  "Frame 1: JUMP_IF_FALSE skips to RETURN if baton condition not met (jump to frame 5)",
+                  "Frame 2: COUNT_ENERGY with value=7, comparison=GE checks if energy >= 7",
+                  "Frame 3: JUMP_IF_FALSE skips to RETURN if energy < 7",
+                  "Frame 4: ENERGY_CHARGE with value=2, is_wait=1 places 2 energy in wait state",
+                  "Frame 5: RETURN",
+                  "4 card variants share this pattern (朝香果林 variants)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}": "Trigger is LIVE_START",
+                  "『Liella!』のメンバーからバトンタッチして登場した場合": "Frame 0: BATON with unit_id=LIELLA",
+                  "自分のエネルギーが7枚以上ある場合": "Frame 2: COUNT_ENERGY with value=7, comparison=GE",
+                  "自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く": "Frame 4: ENERGY_CHARGE with value=2, is_wait=1"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!S-bp2-005-P | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-R+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-P+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-SEC | æ¸¡è¾º æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "LOOK_AND_CHOOSE",
+                  "frame_index": 2,
+                  "value": {
+                    "count": 7,
+                    "choose_count": 3,
+                    "reveal": 1,
+                    "dest_discard": 1
+                  },
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER",
+                    "color_mask": "RED|GREEN|BLUE",
+                    "value_enabled": 1,
+                    "value_threshold": 1,
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "remainder_zone": "DISCARD",
+                    "source_zone": "DECK_TOP"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "NIJIGASAKI",
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "COLOR_SELECT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  },
+                  "params": {
+                    "heart_type": "SELECTED"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: Draw 1 card. Tap up to 1 opponent member with cost 9 or less. (Note: The second LIVE_START ability to select Nijigasaki members from discard is a separate entry)",
+                  "Frame 0: DRAW with value=1, target_slot=CONTEXT - draws 1 card",
+                  "Frame 1: SELECT_MEMBER with value=1, target_player=OPPONENT, value_enabled=1, value_threshold=9, is_le=1, is_cost_type=1, source_zone=STAGE - selects up to 1 opponent member with cost≤9",
+                  "Frame 2: MOVE_MEMBER with value=1, target_player=OPPONENT, is_optional=1, is_wait=1 - optionally moves selected member to wait",
+                  "Frame 3: RETURN",
+                  "4 cards share this pattern (桜小路きな子)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}カードを1枚引く": "Frame 0: DRAW with value=1",
+                  "相手のステージにいるコスト9以下のメンバーを1人までウェイトにする": "Frame 1-2: SELECT_MEMBER with value_threshold=9, is_le=1, is_cost_type=1 + MOVE_MEMBER with is_optional=1, is_wait=1",
+                  "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く": "Note: This is a separate LIVE_START ability, not covered by these frames"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 1,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "ON_PLAY",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "source_zone": "HAND",
+                    "dest_zone": "DISCARD",
+                    "target_slot": "CONTEXT"
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-019-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "優木せつ菜",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-022-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "三船栞子",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "META_RULE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "attr": {},
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "triggerless_text": "手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "card_count": 6,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#0)",
+              "PL!N-bp5-019-N | 優木せつ菜 (ab#0)",
+              "PL!N-bp5-022-N | 三船栞子 (ab#0)"
+            ],
+            "triggers": "登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "hand",
+              "destination": "waitroom",
+              "count": 1,
+              "optional": true,
+              "text": "手札を1枚控え室に置いてもよい"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "live_card",
+              "group": "虹ヶ咲"
+            }
+          },
+          {
+            "full_text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "triggerless_text": "{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#1)"
+            ],
+            "triggers": "ライブ開始時",
+            "use_limit": null,
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}支払ってもよい"
+            },
+            "effect": {
+              "actions": [
+                {
+                  "action": "choose_heart_color",
+                  "choice": true,
+                  "count": 1,
+                  "text": "好きなハートの色を1つ指定する"
+                },
+                {
+                  "action": "gain_resource",
+                  "resource": "heart",
+                  "resource_count": 1,
+                  "count": 1,
+                  "source": "chosen_heart",
+                  "text": "そのハートを1つ得る",
+                  "duration": "until_end_of_live"
+                }
+              ],
+              "duration": "until_end_of_live"
+            }
+          }
+        ]
+      },
+      {
+        "card_no": "PL!N-bp1-003-P+",
+        "name": "桜坂しずく",
+        "ability_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+        "authored_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}『Liella!』のメンバーからバトンタッチして登場しており、かつ自分のエネルギーが7枚以上ある場合、自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く。\n{{jyouji.png|常時}}自分のエネルギーが10枚以上あるかぎり、{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}{{icon_blade.png|ブレード}}を得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!SP-bp4-005-P | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-R+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-P+ | èæ æ (ab#0)",
+                    "PL!SP-bp4-005-SEC | èæ æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "BATON",
+                  "frame_index": 0,
+                  "attr": {
+                    "unit_enabled": 1,
+                    "unit_id": "LIELLA"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 3
+                },
+                {
+                  "op": "COUNT_ENERGY",
+                  "frame_index": 2,
+                  "value": 7,
+                  "slot": {
+                    "target_slot": "STAGE_0",
+                    "comparison": "GE"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 3,
+                  "value": 1
+                },
+                {
+                  "op": "ENERGY_CHARGE",
+                  "frame_index": 4,
+                  "value": 2,
+                  "slot": {
+                    "target_slot": "CONTEXT",
+                    "is_wait": 1
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 5
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ�?é¦ææ",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: If baton touched from Liella member and energy >= 7, charge 2 energy (wait state)",
+                  "Frame 0: BATON with unit_id=LIELLA checks if baton touched from Liella",
+                  "Frame 1: JUMP_IF_FALSE skips to RETURN if baton condition not met (jump to frame 5)",
+                  "Frame 2: COUNT_ENERGY with value=7, comparison=GE checks if energy >= 7",
+                  "Frame 3: JUMP_IF_FALSE skips to RETURN if energy < 7",
+                  "Frame 4: ENERGY_CHARGE with value=2, is_wait=1 places 2 energy in wait state",
+                  "Frame 5: RETURN",
+                  "4 card variants share this pattern (朝香果林 variants)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}": "Trigger is LIVE_START",
+                  "『Liella!』のメンバーからバトンタッチして登場した場合": "Frame 0: BATON with unit_id=LIELLA",
+                  "自分のエネルギーが7枚以上ある場合": "Frame 2: COUNT_ENERGY with value=7, comparison=GE",
+                  "自分のエネルギーデッキから、エネルギーカードを2枚ウェイト状態で置く": "Frame 4: ENERGY_CHARGE with value=2, is_wait=1"
+                }
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分のデッキの上からカードを7枚見る。その中から{{heart_02.png|heart02}}か{{heart_04.png|heart04}}か{{heart_05.png|heart05}}を持つメンバーカードを3枚まで公開して手札に加えてもよい。残りを控え室に置く。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!S-bp2-005-P | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-R+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-P+ | æ¸¡è¾º æ (ab#0)",
+                    "PL!S-bp2-005-SEC | æ¸¡è¾º æ (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "LOOK_AND_CHOOSE",
+                  "frame_index": 2,
+                  "value": {
+                    "count": 7,
+                    "choose_count": 3,
+                    "reveal": 1,
+                    "dest_discard": 1
+                  },
+                  "attr": {
+                    "target_player": "SELF",
+                    "card_type": "MEMBER",
+                    "color_mask": "RED|GREEN|BLUE",
+                    "value_enabled": 1,
+                    "value_threshold": 1,
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "remainder_zone": "DISCARD",
+                    "source_zone": "DECK_TOP"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 0,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#0)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "group_enabled": 1,
+                    "group_id": "NIJIGASAKI",
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "target_slot": "HAND",
+                    "source_zone": "DISCARD"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": false,
+                "issues": [
+                  "Verification needed - frames need manual review"
+                ]
+              }
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。\n{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-P | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-R+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-P+ | æ¡å�?ããã�? (ab#1)",
+                    "PL!N-bp1-003-SEC | æ¡å�?ããã�? (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 2
+                },
+                {
+                  "op": "COLOR_SELECT",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  },
+                  "params": {
+                    "heart_type": "SELECTED"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 236,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 4332,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 8428,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "card_id": 12524,
+                  "name": "æ¡å�?ããã�?",
+                  "trigger": 2
+                }
+              ],
+              "frame_verification": {
+                "verified": true,
+                "notes": [
+                  "LIVE_START: Draw 1 card. Tap up to 1 opponent member with cost 9 or less. (Note: The second LIVE_START ability to select Nijigasaki members from discard is a separate entry)",
+                  "Frame 0: DRAW with value=1, target_slot=CONTEXT - draws 1 card",
+                  "Frame 1: SELECT_MEMBER with value=1, target_player=OPPONENT, value_enabled=1, value_threshold=9, is_le=1, is_cost_type=1, source_zone=STAGE - selects up to 1 opponent member with cost≤9",
+                  "Frame 2: MOVE_MEMBER with value=1, target_player=OPPONENT, is_optional=1, is_wait=1 - optionally moves selected member to wait",
+                  "Frame 3: RETURN",
+                  "4 cards share this pattern (桜小路きな子)"
+                ],
+                "text_mapping": {
+                  "{{live_start.png|ライブ開始時}}カードを1枚引く": "Frame 0: DRAW with value=1",
+                  "相手のステージにいるコスト9以下のメンバーを1人までウェイトにする": "Frame 1-2: SELECT_MEMBER with value_threshold=9, is_le=1, is_cost_type=1 + MOVE_MEMBER with is_optional=1, is_wait=1",
+                  "{{live_start.png|ライブ開始時}}相手のステージにいるウェイト状態のメンバーの数まで、自分の控え室にある『虹ヶ咲』のメンバーカードを選ぶ。それらを好きな順番でデッキの上に置く": "Note: This is a separate LIVE_START ability, not covered by these frames"
+                }
+              }
+            }
+          }
+        ],
+        "converted_abilities": [
+          {
+            "ability_index": 0,
+            "trigger": 1,
+            "full_ability": {
+              "primary_text_jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)"
+                  ]
+                }
+              ],
+              "trigger_id": 1,
+              "trigger": "ON_PLAY",
+              "frames": [
+                {
+                  "op": "MOVE_TO_DISCARD",
+                  "frame_index": 0,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF",
+                    "is_optional": 1
+                  },
+                  "slot": {
+                    "source_zone": "HAND",
+                    "dest_zone": "DISCARD",
+                    "target_slot": "CONTEXT"
+                  },
+                  "is_cost": true
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "RECOVER_LIVE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "zone_mask": "ALL"
+                  },
+                  "slot": {
+                    "source_zone": "DISCARD",
+                    "target_slot": "HAND"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 3
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-019-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "優木せつ菜",
+                  "trigger": 1
+                },
+                {
+                  "card_no": "PL!N-bp5-022-N",
+                  "ability_index": 0,
+                  "db": "member_db",
+                  "name": "三船栞子",
+                  "trigger": 1
+                }
+              ]
+            }
+          },
+          {
+            "ability_index": 1,
+            "trigger": 2,
+            "full_ability": {
+              "primary_text_jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+              "primary_text_en": "",
+              "source_ability_texts": [
+                {
+                  "jp": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+                  "en": "",
+                  "card_examples": [
+                    "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+                    "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)"
+                  ]
+                }
+              ],
+              "trigger_id": 2,
+              "trigger": "LIVE_START",
+              "frames": [
+                {
+                  "op": "PAY_ENERGY",
+                  "frame_index": 0,
+                  "value": 1,
+                  "is_cost": true,
+                  "attr": {
+                    "is_optional": 1
+                  }
+                },
+                {
+                  "op": "JUMP_IF_FALSE",
+                  "frame_index": 1,
+                  "value": 1
+                },
+                {
+                  "op": "META_RULE",
+                  "frame_index": 2,
+                  "value": 1,
+                  "attr": {
+                    "target_player": "SELF"
+                  }
+                },
+                {
+                  "op": "ADD_HEARTS",
+                  "frame_index": 3,
+                  "value": 1,
+                  "attr": {},
+                  "slot": {
+                    "target_slot": "CONTEXT"
+                  }
+                },
+                {
+                  "op": "RETURN",
+                  "frame_index": 4
+                }
+              ],
+              "card_refs": [
+                {
+                  "card_no": "PL!N-bp1-003-R+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-P+",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                },
+                {
+                  "card_no": "PL!N-bp1-003-SEC",
+                  "ability_index": 1,
+                  "db": "member_db",
+                  "name": "桜坂しずく",
+                  "trigger": 2
+                }
+              ]
+            }
+          }
+        ],
+        "extracted_abilities": [
+          {
+            "full_text": "{{toujyou.png|登場}}手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "triggerless_text": "手札を1枚控え室に置いてもよい：自分の控え室から『虹ヶ咲』のライブカードを1枚手札に加える。",
+            "card_count": 6,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#0)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#0)",
+              "PL!N-bp5-019-N | 優木せつ菜 (ab#0)",
+              "PL!N-bp5-022-N | 三船栞子 (ab#0)"
+            ],
+            "triggers": "登場",
+            "use_limit": null,
+            "cost": {
+              "type": "move_cards",
+              "source": "hand",
+              "destination": "waitroom",
+              "count": 1,
+              "optional": true,
+              "text": "手札を1枚控え室に置いてもよい"
+            },
+            "effect": {
+              "action": "add_to_hand",
+              "count": 1,
+              "card_type": "live_card",
+              "group": "虹ヶ咲"
+            }
+          },
+          {
+            "full_text": "{{live_start.png|ライブ開始時}}{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "triggerless_text": "{{icon_energy.png|E}}支払ってもよい：好きなハートの色を1つ指定する。ライブ終了時まで、そのハートを1つ得る。",
+            "card_count": 4,
+            "cards": [
+              "PL!N-bp1-003-R+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-P+ | 桜坂しずく (ab#1)",
+              "PL!N-bp1-003-SEC | 桜坂しずく (ab#1)"
+            ],
+            "triggers": "ライブ開始時",
+            "use_limit": null,
+            "cost": {
+              "type": "pay_energy",
+              "energy": 1,
+              "text": "{{icon_energy.png|E}}支払ってもよい"
+            },
+            "effect": {
+              "actions": [
+                {
+                  "action": "choose_heart_color",
+                  "choice": true,
+                  "count": 1,
+                  "text": "好きなハートの色を1つ指定する"
+                },
+                {
+                  "action": "gain_resource",
+                  "resource": "heart",
+                  "resource_count": 1,
+                  "count": 1,
+                  "source": "chosen_heart",
+                  "text": "そのハートを1つ得る",
+                  "duration": "until_end_of_live"
+                }
+              ],
+              "duration": "until_end_of_live"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

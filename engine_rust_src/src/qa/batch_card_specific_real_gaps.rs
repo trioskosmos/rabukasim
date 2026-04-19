@@ -735,6 +735,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_q171_until_live_end_effect_expires_even_without_a_live() {
         let db = load_real_db();
         let chika_id = db

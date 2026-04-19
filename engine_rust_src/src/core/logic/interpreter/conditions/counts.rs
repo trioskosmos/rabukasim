@@ -802,6 +802,17 @@ pub fn get_condition_count(
 
     match cond_id {
         C_COUNT_STAGE => {
+            // Special handling for keyword_member flag - check turn-level activation masks
+            if filter.keyword_member {
+                let group_mask = if filter.group_enabled {
+                    1u32 << filter.group_id
+                } else {
+                    0xFFFFFFFFu32 // All groups
+                };
+                let activated = (state.players[primary_player].activated_member_group_mask & group_mask) != 0;
+                return if activated { 1 } else { 0 };
+            }
+            
             if !filter.unique_names && !needs_card_scan(&filter) {
                 if zone_mask_blocks_simple_count(&filter, Zone::Stage as u8) {
                     0
@@ -859,6 +870,17 @@ pub fn get_condition_count(
             }
         }
         C_COUNT_ENERGY => {
+            // Special handling for keyword_energy flag - check turn-level activation masks
+            if filter.keyword_energy {
+                let group_mask = if filter.group_enabled {
+                    1u32 << filter.group_id
+                } else {
+                    0xFFFFFFFFu32 // All groups
+                };
+                let activated = (state.players[primary_player].activated_energy_group_mask & group_mask) != 0;
+                return if activated { 1 } else { 0 };
+            }
+            
             let mut total = (state.players[primary_player].energy_zone.len()
                 - state.players[primary_player].tapped_energy_count() as usize) as i32;
             if let Some(other_player) = secondary_player {
