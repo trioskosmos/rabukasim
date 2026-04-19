@@ -290,6 +290,19 @@ pub struct CardFilter {
     pub keyword_energy: bool,
     #[serde(deserialize_with = "bool_from_int", default)]
     pub keyword_member: bool,
+    // Passthrough flags (previously bits 56-63 and other high bits)
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub any_stage: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub revealed_context: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub played_this_turn: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub yell_count: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub has_live_set: bool,
+    #[serde(deserialize_with = "bool_from_int", default)]
+    pub total_cost: bool,
 }
 
 /// Conversion helpers for filter operations
@@ -337,6 +350,14 @@ impl CardFilter {
         // but not handled by serde deserialization
         if let Some(obj) = value.as_object() {
             let attr_obj = obj.get("attr").or_else(|| obj.get("filter")).unwrap_or(value);
+            
+            // Handle REVEALED context in filter strings
+            if let Some(filter_str) = attr_obj.as_str() {
+                if filter_str.contains("REVEALED") {
+                    filter.revealed_context = true;
+                }
+            }
+            
             if let Some(attr_obj) = attr_obj.as_object() {
                 let is_cost_field = attr_obj.get("min_cost").is_some()
                     || attr_obj.get("cost_ge").is_some()
@@ -515,6 +536,26 @@ impl CardFilter {
         }
         if self.keyword_member {
             attr |= 1 << 63;
+        }
+        
+        // Passthrough flags - added to high bits
+        if self.any_stage {
+            attr |= crate::core::generated_constants::FILTER_ANY_STAGE;
+        }
+        if self.revealed_context {
+            attr |= crate::core::logic::constants::FILTER_REVEALED_CONTEXT;
+        }
+        if self.played_this_turn {
+            attr |= crate::core::generated_constants::KEYWORD_PLAYED_THIS_TURN;
+        }
+        if self.yell_count {
+            attr |= crate::core::generated_constants::KEYWORD_YELL_COUNT;
+        }
+        if self.has_live_set {
+            attr |= crate::core::generated_constants::KEYWORD_HAS_LIVE_SET;
+        }
+        if self.total_cost {
+            attr |= crate::core::generated_constants::FILTER_TOTAL_COST;
         }
 
         attr
@@ -914,6 +955,13 @@ impl CardFilter {
             is_optional: ((attr >> A_STANDARD_IS_OPTIONAL_SHIFT) & A_STANDARD_IS_OPTIONAL_MASK) != 0,
             keyword_energy: ((attr >> A_STANDARD_KEYWORD_ENERGY_SHIFT) & A_STANDARD_KEYWORD_ENERGY_MASK) != 0,
             keyword_member: ((attr >> A_STANDARD_KEYWORD_MEMBER_SHIFT) & A_STANDARD_KEYWORD_MEMBER_MASK) != 0,
+            // Passthrough flags - extracted from high bits
+            any_stage: (attr & crate::core::generated_constants::FILTER_ANY_STAGE) != 0,
+            revealed_context: (attr & crate::core::logic::constants::FILTER_REVEALED_CONTEXT) != 0,
+            played_this_turn: (attr & crate::core::generated_constants::KEYWORD_PLAYED_THIS_TURN) != 0,
+            yell_count: (attr & crate::core::generated_constants::KEYWORD_YELL_COUNT) != 0,
+            has_live_set: (attr & crate::core::generated_constants::KEYWORD_HAS_LIVE_SET) != 0,
+            total_cost: (attr & crate::core::generated_constants::FILTER_TOTAL_COST) != 0,
         }
     }
 
@@ -1102,6 +1150,25 @@ impl CardFilter {
         }
         if overlay.keyword_member {
             self.keyword_member = true;
+        }
+        // Preserve passthrough flags
+        if overlay.any_stage {
+            self.any_stage = true;
+        }
+        if overlay.revealed_context {
+            self.revealed_context = true;
+        }
+        if overlay.played_this_turn {
+            self.played_this_turn = true;
+        }
+        if overlay.yell_count {
+            self.yell_count = true;
+        }
+        if overlay.has_live_set {
+            self.has_live_set = true;
+        }
+        if overlay.total_cost {
+            self.total_cost = true;
         }
         self
     }

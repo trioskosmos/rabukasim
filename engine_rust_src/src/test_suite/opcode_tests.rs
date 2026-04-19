@@ -386,6 +386,7 @@ fn test_look_and_choose_source_zone_fix() {
     };
     let bc = InstructionWordBuilder::new(O_LOOK_AND_CHOOSE)
         .v(2)
+        .source(Zone::Deck)
         .optional(true)
         .target(6)
         .op(O_RETURN)

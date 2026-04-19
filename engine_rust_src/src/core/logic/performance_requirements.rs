@@ -24,7 +24,7 @@ pub fn process_heart_modifiers_frames(
         let frame_data = frame.components();
         if op == O_SET_HEART_COST {
             let val = frame_data.value;
-            let attr = frame_data.raw_attr as i32;
+            let attr = frame_data.raw_attr() as i32;
 
             adjustments.push(json!({
                 "source": source_name,
@@ -69,7 +69,7 @@ pub fn process_heart_modifiers_frames(
             }
         } else if op == O_TRANSFORM_HEART {
             let from_attr = frame_data.value as usize;
-            let to_attr = frame_data.raw_attr as usize;
+            let to_attr = frame_data.raw_attr() as usize;
             let from_idx = if from_attr == 7 {
                 6
             } else if from_attr >= 1 && from_attr <= 6 {

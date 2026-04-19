@@ -11,7 +11,7 @@ pub fn discard_play_choice_type(target_slot_flags: i32) -> ChoiceType {
     if crate::core::logic::models::AbilityFrameComponents::from_raw_parts(
         0,
         0,
-        0,
+        crate::core::logic::filter::CardFilter::default(),
         target_slot_flags,
         false,
         None,
@@ -38,7 +38,7 @@ pub fn discard_play_slot_is_legal(
     let baton_only = crate::core::logic::models::AbilityFrameComponents::from_raw_parts(
         0,
         0,
-        0,
+        crate::core::logic::filter::CardFilter::default(),
         target_slot_flags,
         false,
         None,

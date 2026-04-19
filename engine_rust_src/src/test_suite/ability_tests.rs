@@ -176,6 +176,7 @@ fn test_look_and_choose_remainder() {
         .v(4)
         .source(Zone::Deck)
         .dest(Zone::Discard)
+        .dest_discard(true)
         .target(Zone::Hand as u8)
         .op(O_RETURN)
         .build();

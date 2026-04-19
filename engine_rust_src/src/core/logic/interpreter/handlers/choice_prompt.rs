@@ -56,7 +56,12 @@ pub fn handle_optional_nop(
         if frame_data.slot.target_slot == TARGET_SLOT_STAGE {
             ChoiceType::SelectStage
         } else if frame_data.opcode == O_SELECT_CARDS {
-            frame_data.semantic_select_cards_spec().choice_type()
+            // Determine choice type directly from frame data
+            match frame_data.slot.source_zone {
+                crate::core::enums::Zone::Hand => ChoiceType::SelectHandDiscard,
+                crate::core::enums::Zone::Discard => ChoiceType::SelectDiscardPlay,
+                _ => ChoiceType::LookAndChoose,
+            }
         } else if frame_data.opcode == O_SELECT_MEMBER
             && frame_data.slot.source_zone == crate::core::enums::Zone::Stage
         {

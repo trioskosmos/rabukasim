@@ -24,13 +24,13 @@ pub fn handle_select_ops(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.raw_attr() as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let partial_selection_prompt = -1000 - (v as i16);
     let frame_filter_attr = frame_data.filter.to_attr();
-    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr != 0 {
+    let raw_filter_attr = if frame_filter_attr != 0 || frame_data.raw_attr() != 0 {
         frame_data.resolved_filter_attr()
     } else {
         a as u64

@@ -129,9 +129,17 @@ fn resolve_draw_count(
     fallback_count: u32,
 ) -> u32 {
     // Fast path: if no scaling and no accumulation, use direct value
-    if frame_data.scale_source() == crate::core::logic::models::SemanticScaleSource::None
-        && !frame_data.filter.compare_accumulated
-    {
+    const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+    let has_per_card = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+        .is_some();
+    let has_scale_source = has_per_card
+        || (frame_data.raw_attr() & LEGACY_SUCCESS_PILE_FLAG) != 0
+        || frame_data.raw_attr() == crate::core::enums::ConditionType::SuccessPileCount as u64;
+    
+    if !has_scale_source && !frame_data.filter.compare_accumulated {
         return frame_data.value as u32;
     }
 
@@ -143,15 +151,42 @@ fn resolve_draw_count(
         return resolve_count_frame(state, db, frame_data, ctx, 0).max(0) as u32;
     }
 
-    if frame_data.scale_source() != crate::core::logic::models::SemanticScaleSource::None {
-        if let Some(count_opcode) = frame_data.count_opcode_hint(false) {
+    if has_scale_source {
+        // Determine count opcode directly from frame data
+        let count_opcode = if let Some(per_card) = frame_data
+            .params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+            .and_then(|value| value.as_str())
+        {
+            match per_card.to_ascii_uppercase().as_str() {
+                "HAND" => Some(C_COUNT_HAND),
+                "DISCARD" | "DISCARD_COUNT" => Some(C_COUNT_DISCARD),
+                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => Some(C_COUNT_SUCCESS_LIVE),
+                "STAGE" => Some(C_COUNT_STAGE),
+                "ENERGY" => Some(C_COUNT_ENERGY),
+                _ => None,
+            }
+        } else if frame_data.slot.source_zone == Zone::Default
+            && (frame_data.slot.is_dynamic
+                || frame_data.filter.compare_accumulated
+                || frame_data.filter.special_id == 3
+                || frame_data.slot.remainder_zone >= 200
+                || frame_data.params.is_some())
+        {
+            Some(C_COUNT_HAND)
+        } else {
+            None
+        };
+
+        if let Some(count_opcode) = count_opcode {
             use crate::core::logic::interpreter::conditions::resolve_count;
 
             let source_count = resolve_count(
                 state,
                 db,
                 count_opcode,
-                frame_data.raw_attr,
+                frame_data.raw_attr(),
                 frame_data.raw_slot,
                 ctx,
                 0,

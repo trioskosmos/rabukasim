@@ -16,7 +16,7 @@ pub fn handle_move_member(
     resolved_slot: i32,
     slot_info: crate::core::logic::interpreter::instruction::DecodedSlot,
 ) -> HandlerResult {
-    let is_optional = (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0;
+    let is_optional = (a as u64 & crate::core::logic::constants::FILTER_IS_OPTIONAL) != 0 || frame_data.filter.is_optional;
     let is_position_change_choice = frame_data
         .params
         .map(|params| {
@@ -26,7 +26,7 @@ pub fn handle_move_member(
                 || params.get("SOURCE").is_some()
         })
         .unwrap_or(false);
-    let filter_attr = if frame_data.raw_attr != 0 || frame_data.filter.to_attr() != 0 {
+    let filter_attr = if frame_data.raw_attr() != 0 || frame_data.filter.to_attr() != 0 {
         frame_data.resolved_filter_attr()
     } else {
         a as u64

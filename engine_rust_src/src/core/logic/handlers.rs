@@ -656,7 +656,7 @@ impl ResponseController for GameState {
                                     && self.card_matches_filter_with_ctx(
                                         db,
                                         cid,
-                                        selected_frame.attr(),
+                                        selected_frame.filter.to_attr(),
                                         &pi_ctx,
                                     )
                             })

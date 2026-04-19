@@ -20,13 +20,18 @@ pub fn resolve_select_cards(
     _effective_zone: u8,
     _is_optional: bool,
 ) -> HandlerResult {
-    let spec = frame_data.semantic_select_cards_spec();
+    let source_zone = frame_data.slot.source_zone;
+    // Determine choice type directly from frame data
+    let choice_type = match source_zone {
+        crate::core::enums::Zone::Hand => ChoiceType::SelectHandDiscard,
+        crate::core::enums::Zone::Discard => ChoiceType::SelectDiscardPlay,
+        _ => ChoiceType::LookAndChoose,
+    };
     let choice = ctx.choice_index as i32;
     if choice == CHOICE_DONE as i32 {
         return HandlerResult::Continue;
     }
 
-    let choice_type = spec.choice_type();
     let is_variable_selection = v < 0;
 
     if choice != CHOICE_DONE as i32
@@ -41,8 +46,7 @@ pub fn resolve_select_cards(
             state.players[p_idx].revealed_cards.push(chosen);
         }
         if dest_zone != 0 {
-            let actual_source = spec.source_zone;
-            let found = remove_card_from_zone(state, db, ctx, p_idx, actual_source, chosen);
+            let found = remove_card_from_zone(state, db, ctx, p_idx, source_zone, chosen);
 
             if found {
                 if dest_zone == 4 {
@@ -59,7 +63,7 @@ pub fn resolve_select_cards(
                             Some(slot),
                             slot_info.is_wait,
                             false,
-                            spec.source_zone,
+                            source_zone,
                         );
                         finish_pending_interaction(state);
                     } else {
@@ -73,7 +77,7 @@ pub fn resolve_select_cards(
                             None,
                             slot_info.is_wait,
                             false,
-                            spec.source_zone,
+                            source_zone,
                         );
                     }
                 } else {
@@ -87,7 +91,7 @@ pub fn resolve_select_cards(
                         None,
                         slot_info.is_wait,
                         false,
-                        spec.source_zone,
+                        source_zone,
                     );
                 }
             }

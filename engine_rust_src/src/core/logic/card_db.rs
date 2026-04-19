@@ -690,12 +690,12 @@ impl CardDatabase {
                     .contains(&op)
                     {
                         let val = frame.value();
-                        let attr = frame.attr();
+                        let filter = frame.filter();
                         let slot = frame.slot();
                         ab.preparsed_modifiers.push(PreparsedModifier {
                             op,
                             val,
-                            attr,
+                            filter,
                             slot,
                         });
                     }

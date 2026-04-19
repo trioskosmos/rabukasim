@@ -810,7 +810,7 @@ pub fn evaluate_raw_condition(
                 }
                 }
                 compare_count_thresholds(params, costs.len() as i32)
-            }
+        }
         "UNIQUE_DISCARD_LIVE_NAMES_COUNT" => {
             let target_player = resolved_condition_player(params, ctx);
             let mut names = std::collections::HashSet::<String>::new();
@@ -831,6 +831,14 @@ pub fn evaluate_raw_condition(
                 }
             }
             compare_count_thresholds(params, groups.len() as i32)
+        }
+        "UNIQUE_DISCARD_LIVE_COSTS_COUNT" => {
+            let target_player = resolved_condition_player(params, ctx);
+            let mut costs = std::collections::HashSet::<i32>::new();
+            for card in discard_live_cards(state, db, target_player) {
+                costs.insert(card.score as i32);
+            }
+            compare_count_thresholds(params, costs.len() as i32)
         }
         "STAGE_TOTAL_COST_GE" => {
             let target_player = resolved_condition_player(params, ctx);

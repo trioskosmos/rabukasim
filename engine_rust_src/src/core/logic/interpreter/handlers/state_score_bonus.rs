@@ -33,7 +33,42 @@ fn resolve_multiplier_count_opcode(
         return Some(C_COUNT_SUCCESS_LIVE);
     }
 
-    frame_data.count_opcode_hint(frame_data.opcode == O_REDUCE_COST)
+    // Determine count opcode directly from frame data
+    if let Some(per_card) = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+        .and_then(|value| value.as_str())
+    {
+        match per_card.to_ascii_uppercase().as_str() {
+            "HAND" => Some(C_COUNT_HAND),
+            "DISCARD" | "DISCARD_COUNT" | "WAITROOM" | "WAIT ROOM" => Some(C_COUNT_DISCARD),
+            "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => Some(C_COUNT_SUCCESS_LIVE),
+            "STAGE" => Some(C_COUNT_STAGE),
+            "ENERGY" => Some(C_COUNT_ENERGY),
+            _ => None,
+        }
+    } else if frame_data.slot.source_zone == Zone::Default
+        && (frame_data.slot.is_dynamic
+            || frame_data.filter.compare_accumulated
+            || frame_data.filter.special_id == 3
+            || frame_data.slot.remainder_zone >= 200
+            || frame_data.params.is_some())
+    {
+        Some(C_COUNT_HAND)
+    } else if frame_data.filter.compare_accumulated || frame_data.filter.special_id == 3 {
+        // When compare_accumulated or special_id==3 is set, count from source zone
+        match frame_data.slot.source_zone {
+            Zone::Hand => Some(C_COUNT_HAND),
+            Zone::Discard => Some(C_COUNT_DISCARD),
+            Zone::Stage => Some(C_COUNT_STAGE),
+            Zone::SuccessPile => Some(C_COUNT_SUCCESS_LIVE),
+            Zone::Energy => Some(C_COUNT_ENERGY),
+            _ => Some(C_COUNT_HAND),
+        }
+    } else {
+        None
+    }
 }
 
 pub(super) fn resolve_dynamic_multiplier(
@@ -42,8 +77,18 @@ pub(super) fn resolve_dynamic_multiplier(
     ctx: &AbilityContext,
     frame_data: &crate::core::logic::models::AbilityFrameComponents<'_>,
 ) -> Option<i32> {
+    // Check if this frame uses a count source (success pile or per_card)
+    const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+    let has_per_card = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+        .is_some();
     let uses_explicit_count_source = frame_data.slot.is_dynamic
-        || frame_data.scale_source() != crate::core::logic::models::SemanticScaleSource::None;
+        || has_per_card
+        || (frame_data.raw_attr() & LEGACY_SUCCESS_PILE_FLAG) != 0
+        || frame_data.raw_attr() == crate::core::enums::ConditionType::SuccessPileCount as u64;
+    
     if !uses_explicit_count_source {
         return None;
     }
@@ -55,7 +100,7 @@ pub(super) fn resolve_dynamic_multiplier(
         state,
         db,
         count_opcode,
-        frame_data.raw_attr,
+        frame_data.raw_attr(),
         frame_data.raw_slot,
         ctx,
         0,
@@ -171,7 +216,7 @@ pub fn handle_boost_score(
     }
 
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.raw_attr() as i64;
     let s = frame_data.raw_slot;
 
     // Q203 Fix: Check activated keyword conditions

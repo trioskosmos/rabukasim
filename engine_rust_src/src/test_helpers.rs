@@ -65,14 +65,14 @@ impl FrameBuilder {
 
     pub fn a(mut self, a_val: i64) -> Self {
         if let Some(frame) = self.frames.last_mut() {
-            frame.attr = a_val as u64;
+            frame.filter = crate::core::logic::filter::CardFilter::from_attr(a_val as u64);
         }
         self
     }
 
     pub fn optional(mut self, val: bool) -> Self {
         if let Some(frame) = self.frames.last_mut() {
-            let mut filter = frame.filter();
+            let mut filter = frame.filter.clone();
             filter.is_optional = val;
             let a = filter.to_attr() as i64;
             self = self.a(a);
@@ -263,6 +263,18 @@ impl InstructionWordBuilder {
         self
     }
 
+    pub fn dest_discard(mut self, val: bool) -> Self {
+        let idx = self.last_idx();
+        let mut v = self.words[idx + 1] as u32;
+        if val {
+            v |= 1u32 << 31;
+        } else {
+            v &= !(1u32 << 31);
+        }
+        self.words[idx + 1] = v as i32;
+        self
+    }
+
     pub fn area_idx(mut self, idx_val: u8) -> Self {
         let idx = self.last_idx();
         let mut s = self.words[idx + 4] as u32;
@@ -278,12 +290,12 @@ impl InstructionWordBuilder {
             Zone::DeckBottom => 2,
             Zone::Energy => 3,
             Zone::Stage => 4,
+            Zone::Deck => 5,
             Zone::Hand => 6,
             Zone::Discard => 7,
-            Zone::Deck => 8,
             Zone::LiveSet => 13,
-            Zone::SuccessPile => 14,
-            Zone::Yell => 15,
+            Zone::SuccessPile => 16,
+            Zone::Yell => 17,
             _ => 0,
         }
     }

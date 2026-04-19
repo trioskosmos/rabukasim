@@ -1,7 +1,7 @@
 use crate::core::logic::constants::*;
 use crate::core::hearts::HeartBoard;
 use crate::core::logic::filter::CardFilter;
-use crate::core::logic::models::{AbilityFrameComponents, SemanticCountZone};
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::enums::TriggerType;
 use crate::core::models::Zone;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
@@ -123,7 +123,6 @@ fn count_components(op: i32, attr: u64, slot: i32) -> AbilityFrameComponents<'st
         value: 0,
         filter: decode_count_filter(attr),
         slot: crate::core::logic::interpreter::instruction::DecodedSlot::decode(slot),
-        raw_attr: attr,
         raw_slot: slot,
         is_negated,
         is_cost: false,
@@ -240,7 +239,7 @@ fn resolve_structured_zone_count(
 
     let mut filter = frame.filter;
     if frame.opcode == C_COUNT_GROUP {
-        if let Some(group_id) = frame.semantic_group_id(frame.raw_attr as i32) {
+        if let Some(group_id) = frame.semantic_group_id(frame.filter.to_attr() as i32) {
             filter.group_enabled = true;
             filter.group_id = group_id;
         }
@@ -252,7 +251,24 @@ fn resolve_structured_zone_count(
 
     let zone_mask = filter.zone_mask as u64;
     let has_zone_mask = zone_mask != 0;
-    let inferred_zone = frame.inferred_count_zone();
+    // Determine inferred zone directly from frame data
+    let inferred_zone = match frame.slot.source_zone {
+        Zone::Hand => Some("HAND"),
+        Zone::Discard => Some("DISCARD"),
+        Zone::Stage => Some("STAGE"),
+        Zone::SuccessPile => Some("SUCCESS_PILE"),
+        Zone::Energy => Some("ENERGY"),
+        Zone::Default if frame.slot.is_dynamic => {
+            if frame.slot.remainder_zone >= 200 {
+                Some("HAND")
+            } else if frame.slot.remainder_zone >= 100 {
+                Some("DISCARD")
+            } else {
+                Some("STAGE")
+            }
+        }
+        _ => None,
+    };
 
     let is_explicit_success_count =
         frame.opcode == C_COUNT_SUCCESS_LIVE || frame.opcode == 307 || frame.opcode == 405;
@@ -262,38 +278,38 @@ fn resolve_structured_zone_count(
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 401
             || (has_zone_mask && zone_mask == ZONE_STAGE as u64)
-            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Stage))
+            || (!has_zone_mask && inferred_zone == Some("STAGE"))
     } else if has_zone_mask {
         zone_mask == ZONE_STAGE as u64
     } else {
         frame.opcode == C_COUNT_STAGE
             || frame.opcode == C_COUNT_GROUP
-            || inferred_zone == Some(SemanticCountZone::Stage)
+            || inferred_zone == Some("STAGE")
     };
     let check_discard = if is_explicit_success_count {
         false
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 403
             || (has_zone_mask && zone_mask == ZONE_DISCARD as u64)
-            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Discard))
+            || (!has_zone_mask && inferred_zone == Some("DISCARD"))
     } else if has_zone_mask {
         zone_mask == ZONE_DISCARD as u64
     } else {
-        frame.opcode == C_COUNT_DISCARD || inferred_zone == Some(SemanticCountZone::Discard)
+        frame.opcode == C_COUNT_DISCARD || inferred_zone == Some("DISCARD")
     };
     let check_hand = if is_explicit_success_count {
         false
     } else if frame.opcode >= 400 && frame.opcode < 500 {
         frame.opcode == 402
             || (has_zone_mask && zone_mask == ZONE_HAND as u64)
-            || (!has_zone_mask && inferred_zone == Some(SemanticCountZone::Hand))
+            || (!has_zone_mask && inferred_zone == Some("HAND"))
     } else if has_zone_mask {
         zone_mask == ZONE_HAND as u64
     } else {
-        frame.opcode == C_COUNT_HAND || inferred_zone == Some(SemanticCountZone::Hand)
+        frame.opcode == C_COUNT_HAND || inferred_zone == Some("HAND")
     };
     let check_success =
-        is_explicit_success_count || inferred_zone == Some(SemanticCountZone::SuccessPile);
+        is_explicit_success_count || inferred_zone == Some("SUCCESS_PILE");
     
     // Special handling for keyword_energy and keyword_member flags
     // These check turn-level activation masks instead of current tapped state

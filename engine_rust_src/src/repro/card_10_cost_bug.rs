@@ -524,7 +524,7 @@ mod tests {
         for (i, frame) in ability_0_frames.iter().enumerate() {
             let frame_data = frame.components();
             println!("  Frame {}: opcode={}, value={}, raw_attr={:#x}, raw_slot={:#x}, source_zone={:?}", 
-                     i, frame_data.opcode, frame_data.value, frame_data.raw_attr, frame_data.raw_slot, frame_data.slot.source_zone);
+                     i, frame_data.opcode, frame_data.value, frame_data.raw_attr(), frame_data.raw_slot, frame_data.slot.source_zone);
         }
 
         for (hand_cards, expected_other_count) in hand_sizes {

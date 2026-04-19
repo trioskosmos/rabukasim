@@ -14,7 +14,6 @@ pub fn handle_state_modifiers(
 ) -> HandlerResult {
     let op = frame_data.opcode;
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
     let s = frame_data.raw_slot;
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.player_id as usize;
@@ -27,7 +26,7 @@ pub fn handle_state_modifiers(
             }
         }
         O_RESTRICTION => {
-            let restriction_id = frame_data.restriction_id();
+            let restriction_id = frame_data.value as u8;
             state.players[p_idx].restrictions.push(restriction_id);
             if restriction_id == 1 || v == 1 {
                 state.players[p_idx].set_flag(crate::core::logic::player::PlayerState::FLAG_CANNOT_LIVE, true);
@@ -58,9 +57,9 @@ pub fn handle_state_modifiers(
             state.players[p_idx].set_prevent_success_pile_set(new_v);
         }
         O_REDUCE_YELL_COUNT => {
-            let final_v = if (a as u64 & DYNAMIC_VALUE) != 0 {
+            let final_v = if frame_data.filter.compare_accumulated {
                 let count_op = frame_data.embedded_count_opcode().unwrap_or(s);
-                resolve_count(state, db, count_op, frame_data.dynamic_count_filter_attr(), p_idx as i32, ctx, 0)
+                resolve_count(state, db, count_op, frame_data.count_filter_attr(), p_idx as i32, ctx, 0)
             } else {
                 v
             };

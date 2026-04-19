@@ -53,6 +53,7 @@
 
 use super::card_db::{CardDatabase, MemberCard};
 use super::game::GameState;
+use crate::core::logic::filter::CardFilter;
 use crate::core::logic::interpreter::check_condition;
 use crate::core::logic::interpreter::conditions::{check_condition_frame, resolve_count};
 use std::cell::Cell;
@@ -120,11 +121,25 @@ fn frame_uses_count_multiplier(
         return true;
     }
 
-    match frame_data.scale_source() {
-        SemanticScaleSource::SuccessPile => true,
-        SemanticScaleSource::CountZone(_) => frame_data.slot.source_zone == Zone::Default,
-        SemanticScaleSource::None => false,
+    // Check if this is a success pile count operation (legacy success pile flag)
+    const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+    const LEGACY_LOW_WORD_MASK: u64 = 0xFFFF_FFFF;
+    const LEGACY_SUCCESS_PILE_SENTINEL: u64 = 1;
+    const LEGACY_SUCCESS_PILE_HIGH_WORD_FLOOR: u64 = 0x00FF_FFFF;
+    const LEGACY_MULTIPLIER_FLAG: i32 = 0x1_0000;
+    
+    let raw_attr = frame_data.raw_attr();
+    let is_success_pile = (raw_attr & LEGACY_SUCCESS_PILE_FLAG) != 0
+        || raw_attr == crate::core::enums::ConditionType::SuccessPileCount as u64
+        || ((raw_attr & LEGACY_LOW_WORD_MASK) == LEGACY_SUCCESS_PILE_SENTINEL
+            && (raw_attr >> 32) > LEGACY_SUCCESS_PILE_HIGH_WORD_FLOOR)
+        || (frame_data.value > 0xFFFF && (frame_data.value & LEGACY_MULTIPLIER_FLAG) != 0);
+    
+    if is_success_pile {
+        return true;
     }
+
+    frame_data.slot.source_zone == Zone::Default
 }
 
 fn cost_scope_frames<'a>(ab: &'a Ability) -> Cow<'a, [AbilityFrame]> {
@@ -155,19 +170,30 @@ fn is_hand_only_self_cost_modifier(
         return false;
     }
 
-    let count_zone = match frame_data.scale_source() {
-        SemanticScaleSource::CountZone(zone) => Some(zone),
-        SemanticScaleSource::SuccessPile => Some(SemanticCountZone::SuccessPile),
-        SemanticScaleSource::None => match frame_data.count_opcode_hint(op == O_REDUCE_COST) {
-            Some(C_COUNT_HAND) => Some(SemanticCountZone::Hand),
-            Some(C_COUNT_DISCARD) => Some(SemanticCountZone::Discard),
-            Some(C_COUNT_STAGE) => Some(SemanticCountZone::Stage),
-            Some(C_COUNT_SUCCESS_LIVE) => Some(SemanticCountZone::SuccessPile),
+    // Determine count zone directly from frame data
+    let count_zone = if let Some(per_card) = frame_data
+        .params
+        .and_then(|value| value.as_object())
+        .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+        .and_then(|value| value.as_str())
+    {
+        match per_card.to_ascii_uppercase().as_str() {
+            "HAND" => Some("HAND"),
+            "DISCARD" | "DISCARD_COUNT" => Some("DISCARD"),
+            "STAGE" => Some("STAGE"),
+            "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => Some("SUCCESS_PILE"),
+            "ENERGY" => Some("ENERGY"),
             _ => None,
-        },
+        }
+    } else {
+        None
     };
 
-    matches!(count_zone, Some(SemanticCountZone::Hand))
+    // Check if count zone is hand
+    let is_hand_zone = count_zone == Some("HAND")
+        || frame_data.slot.source_zone == Zone::Hand;
+
+    is_hand_zone
         && frame_data.filter.target_player == TARGET_PLAYER_SELF as u8
         && (frame_data.filter.special_id == 3 || frame_data.compare_accumulated())
 }
@@ -354,7 +380,7 @@ fn apply_reduce_cost_modifiers(
         let semantic = AbilityFrameComponents::from_raw_parts(
             frame_data.raw_opcode,
             frame_data.value,
-            frame_data.raw_attr,
+            frame_data.filter,
             frame_data.raw_slot,
             frame_data.is_cost,
             params,
@@ -367,7 +393,39 @@ fn apply_reduce_cost_modifiers(
             .and_then(|value| value.as_str())
             .map(|value| value.to_ascii_uppercase());
         if frame_uses_count_multiplier(&frame_data, per_card.is_some()) {
-            if let Some(count_op) = semantic.count_opcode_hint(op == O_REDUCE_COST) {
+            // Determine count opcode directly from frame data
+            let count_op = if let Some(per_card) = &per_card {
+                match per_card.as_str() {
+                    "HAND" => Some(C_COUNT_HAND),
+                    "DISCARD" | "DISCARD_COUNT" | "WAITROOM" | "WAIT ROOM" => Some(C_COUNT_DISCARD),
+                    "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => Some(C_COUNT_SUCCESS_LIVE),
+                    "STAGE" => Some(C_COUNT_STAGE),
+                    "ENERGY" => Some(C_COUNT_ENERGY),
+                    _ => None,
+                }
+            } else if frame_data.slot.source_zone == Zone::Default
+                && (frame_data.slot.is_dynamic
+                    || frame_data.filter.compare_accumulated
+                    || frame_data.filter.special_id == 3
+                    || frame_data.slot.remainder_zone >= 200
+                    || params.is_some())
+            {
+                Some(C_COUNT_HAND)
+            } else if frame_data.filter.compare_accumulated || frame_data.filter.special_id == 3 {
+                // When compare_accumulated or special_id==3 is set, count from source zone
+                match frame_data.slot.source_zone {
+                    Zone::Hand => Some(C_COUNT_HAND),
+                    Zone::Discard => Some(C_COUNT_DISCARD),
+                    Zone::Stage => Some(C_COUNT_STAGE),
+                    Zone::SuccessPile => Some(C_COUNT_SUCCESS_LIVE),
+                    Zone::Energy => Some(C_COUNT_ENERGY),
+                    _ => Some(C_COUNT_HAND),
+                }
+            } else {
+                None
+            };
+
+            if let Some(count_op) = count_op {
                 if state.debug.debug_mode && !state.ui.silent {
                     println!("[DEBUG] apply_reduce_cost_modifiers: count_op={}", count_op);
                 }
@@ -375,7 +433,7 @@ fn apply_reduce_cost_modifiers(
                     state,
                     db,
                     count_op,
-                    frame_data.raw_attr,
+                    frame_data.filter.to_attr(),
                     frame_data.raw_slot,
                     ctx,
                     depth + 1,
@@ -387,24 +445,42 @@ fn apply_reduce_cost_modifiers(
                         p_idx
                     };
                     let source_card_id = ctx.source_card_id;
-                    let source_is_counted = match semantic.inferred_count_zone() {
-                        Some(SemanticCountZone::Hand) => state.players[owner_idx]
+                    // Determine count zone directly from frame data
+                    let count_zone = match frame_data.slot.source_zone {
+                        Zone::Hand => Some("HAND"),
+                        Zone::Discard => Some("DISCARD"),
+                        Zone::Stage => Some("STAGE"),
+                        Zone::SuccessPile => Some("SUCCESS_PILE"),
+                        Zone::Energy => Some("ENERGY"),
+                        Zone::Default if frame_data.slot.is_dynamic => {
+                            if frame_data.slot.remainder_zone >= 200 {
+                                Some("HAND")
+                            } else if frame_data.slot.remainder_zone >= 100 {
+                                Some("DISCARD")
+                            } else {
+                                Some("STAGE")
+                            }
+                        }
+                        _ => None,
+                    };
+                    let source_is_counted = match count_zone {
+                        Some("HAND") => state.players[owner_idx]
                             .hand
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Some(SemanticCountZone::Discard) => state.players[owner_idx]
+                        Some("DISCARD") => state.players[owner_idx]
                             .discard
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Some(SemanticCountZone::Stage) => state.players[owner_idx]
+                        Some("STAGE") => state.players[owner_idx]
                             .stage
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Some(SemanticCountZone::SuccessPile) => state.players[owner_idx]
+                        Some("SUCCESS_PILE") => state.players[owner_idx]
                             .success_lives
                             .iter()
                             .any(|&id| id == source_card_id),
-                        Some(SemanticCountZone::Energy) => state.players[owner_idx]
+                        Some("ENERGY") => state.players[owner_idx]
                             .energy_zone
                             .iter()
                             .any(|&id| id == source_card_id),
@@ -412,48 +488,48 @@ fn apply_reduce_cost_modifiers(
                             .hand
                             .iter()
                             .any(|&id| id == source_card_id),
-                        None => false,
+                        None | Some(_) => false,
                     };
-                    let source_checked_slot = match semantic.inferred_count_zone() {
-                        Some(SemanticCountZone::Hand) => state.players[owner_idx]
+                    let source_checked_slot = match count_zone {
+                        Some("HAND") => state.players[owner_idx]
                             .hand
                             .iter()
                             .position(|&id| id == source_card_id)
                             .map(|idx| (owner_idx as u8, 200 + idx as i16)),
-                        Some(SemanticCountZone::Discard) => state.players[owner_idx]
+                        Some("DISCARD") => state.players[owner_idx]
                             .discard
                             .iter()
                             .position(|&id| id == source_card_id)
                             .map(|idx| (owner_idx as u8, 100 + idx as i16)),
-                        Some(SemanticCountZone::Stage) => state.players[owner_idx]
+                        Some("STAGE") => state.players[owner_idx]
                             .stage
                             .iter()
                             .position(|&id| id == source_card_id)
                             .map(|idx| (owner_idx as u8, idx as i16)),
-                        Some(SemanticCountZone::Energy) | Some(SemanticCountZone::SuccessPile) | None => None,
+                        Some("ENERGY") | Some("SUCCESS_PILE") | None | Some(_) => None,
                     };
-                    let source_matches_filter = if semantic.raw_attr == 0 {
+                    let source_matches_filter = if frame_data.filter == CardFilter::default() {
                         true
                     } else if let Some(slot) = source_checked_slot {
                         state.card_matches_filter_with_struct(
                             db,
                             source_card_id,
                             Some(slot),
-                            &semantic.filter,
+                            &frame_data.filter,
                             ctx,
                         )
                     } else {
                         state.card_matches_filter_with_ctx(
                             db,
                             source_card_id,
-                            semantic.raw_attr,
+                            frame_data.filter.to_attr(),
                             ctx,
                         )
                     };
                     let should_exclude_source = source_is_counted
                         && source_matches_filter
-                        && (semantic.slot.source_zone != Zone::Default
-                            || semantic.compare_accumulated()
+                        && (frame_data.slot.source_zone != Zone::Default
+                            || frame_data.compare_accumulated()
                             || per_card.is_some());
                     if should_exclude_source {
                         multiplier -= 1;
@@ -474,13 +550,14 @@ fn apply_reduce_cost_modifiers(
                 && ((pm.slot as u32) & 0xFF == 0 || (pm.slot as u32) & 0xFF == 4)
             {
                 let mut multiplier = 1;
-                if (pm.attr & DYNAMIC_VALUE) != 0 {
+                let attr = pm.filter.to_attr();
+                if (attr & DYNAMIC_VALUE) != 0 {
                     let count_op = (pm.slot >> 8) & 0xFFFF;
                     multiplier = resolve_count(
                         state,
                         db,
                         count_op as i32,
-                        pm.attr & !DYNAMIC_VALUE,
+                        attr & !DYNAMIC_VALUE,
                         pm.slot,
                         ctx,
                         depth + 1,
@@ -1437,7 +1514,7 @@ fn calculate_board_aura_with_exclusions(
                         ability_idx: ab_idx as u16,
                     });
                 } else if op == O_INCREASE_HEART_COST {
-                    let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
+                    let semantic = AbilityFrameComponents::from_raw_parts(op, v, CardFilter::from_attr(a), s, false, params);
                     let color = semantic.resolved_color_index(6, 6);
                     if color < 7 {
                         for target_slot in 0..3 {
@@ -1597,7 +1674,7 @@ fn apply_aura_modifier(
     p_idx: usize,
     target_slot: usize,
 ) {
-    let semantic = AbilityFrameComponents::from_raw_parts(op, v, a, s, false, params);
+    let semantic = AbilityFrameComponents::from_raw_parts(op, v, crate::core::logic::filter::CardFilter::from_attr(a), s, false, params);
 
     let value = if v > 0xFFFF { v & 0xFFFF } else { v };
     let mut multiplier = 1;
@@ -1606,33 +1683,41 @@ fn apply_aura_modifier(
     }
 
     if multiplier == 1 {
-        multiplier = match semantic.scale_source() {
-            SemanticScaleSource::None => multiplier,
-            SemanticScaleSource::SuccessPile => state.players[p_idx].success_lives.len() as i32,
-            SemanticScaleSource::CountZone(SemanticCountZone::Hand) => {
-                state.players[p_idx].hand.len() as i32
-            }
-            SemanticScaleSource::CountZone(SemanticCountZone::Discard) => {
-                state.players[p_idx].discard.len() as i32
-            }
-            SemanticScaleSource::CountZone(SemanticCountZone::Stage) => state.players[p_idx]
-                .stage
-                .iter()
-                .copied()
-                .filter(|&cid| cid >= 0)
-                .count() as i32,
-            SemanticScaleSource::CountZone(SemanticCountZone::SuccessPile) => {
-                state.players[p_idx].success_lives.len() as i32
-            }
-            SemanticScaleSource::CountZone(SemanticCountZone::Energy) => {
-                state.players[p_idx].energy_zone.len() as i32
-            }
-        };
+        // Determine scale directly from frame data
+        const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+        let is_success_pile = (a & LEGACY_SUCCESS_PILE_FLAG) != 0
+            || a == crate::core::enums::ConditionType::SuccessPileCount as u64;
+        
+        if is_success_pile {
+            multiplier = state.players[p_idx].success_lives.len() as i32;
+        } else if let Some(per_card) = params
+            .and_then(|value| value.as_object())
+            .and_then(|params| params.get("per_card").or_else(|| params.get("PER_CARD")))
+            .and_then(|value| value.as_str())
+        {
+            multiplier = match per_card.to_ascii_uppercase().as_str() {
+                "HAND" => state.players[p_idx].hand.len() as i32,
+                "DISCARD" | "DISCARD_COUNT" => state.players[p_idx].discard.len() as i32,
+                "STAGE" => state.players[p_idx].stage.iter().filter(|&&c| c >= 0).count() as i32,
+                "SUCCESS_LIVE" | "SUCCESS_PILE" | "COUNT" | "COUNT_VAL" => {
+                    state.players[p_idx].success_lives.len() as i32
+                }
+                "ENERGY" => state.players[p_idx].energy_zone.len() as i32,
+                _ => multiplier,
+            };
+        } else if semantic.filter.compare_accumulated && semantic.slot.remainder_zone == 203 {
+            // Fallback: if compare_accumulated is set and remainder_zone is STAGE (203),
+            // count from success pile (this handles legacy card data encoding issues)
+            multiplier = state.players[p_idx].success_lives.len() as i32;
+        }
     }
 
     match op {
         O_ADD_BLADES | O_BUFF_POWER => {
-            if semantic.scale_source() == SemanticScaleSource::SuccessPile {
+            const LEGACY_SUCCESS_PILE_FLAG: u64 = 0x40;
+            let is_success_pile = (a & LEGACY_SUCCESS_PILE_FLAG) != 0
+                || a == crate::core::enums::ConditionType::SuccessPileCount as u64;
+            if is_success_pile {
                 multiplier = state.players[p_idx].success_lives.len() as i32;
             }
             aura.blades[target_slot] += value * multiplier;

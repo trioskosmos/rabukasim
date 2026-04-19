@@ -10,7 +10,7 @@ use crate::core::logic::interpreter::conditions::json_params::evaluate_raw_condi
 use crate::core::logic::interpreter::instruction::DecodedSlot;
 use crate::core::logic::interpreter::logging;
 use crate::core::logic::interpreter::suspension::resolve_target_slot;
-use crate::core::logic::models::{AbilityFrameComponents, SemanticComparisonMode};
+use crate::core::logic::models::AbilityFrameComponents;
 use crate::core::logic::models::Condition;
 use crate::core::logic::{AbilityContext, CardDatabase, GameState};
 
@@ -67,7 +67,7 @@ impl<'a> ConditionParams<'a> {
             ctx,
             opcode: frame.opcode,
             value: frame.value,
-            raw_attr: frame.raw_attr,
+            raw_attr: frame.filter.to_attr(),
             raw_slot: frame.raw_slot,
             params: frame.params,
             filter: frame.filter,
@@ -260,7 +260,7 @@ pub fn check_condition_frame(
             let cond = Condition {
                 condition_type: ConditionType::None,
                 value: frame.value,
-                attr: frame.raw_attr,
+                attr: frame.filter.to_attr(),
                 target_slot: 0,
                 is_negated: frame.is_negated,
                 params: frame.params.cloned().unwrap_or_default(),
@@ -331,7 +331,7 @@ fn check_condition_with_parts(
     }
     let player = &state.players[p_idx];
     let opponent = &state.players[1 - p_idx];
-    let semantic = AbilityFrameComponents::from_raw_parts(op, val, attr, slot, false, params);
+    let semantic = AbilityFrameComponents::from_raw_parts(op, val, crate::core::logic::filter::CardFilter::from_attr(attr), slot, false, params);
     let get_cid = || {
         if ctx.source_card_id >= 0 {
             ctx.source_card_id
@@ -546,7 +546,7 @@ fn check_condition_with_parts(
         C_LIFE_LEAD => {
             let my_lives = player.success_lives.len() as i32;
             let opp_lives = opponent.success_lives.len() as i32;
-            let reversed = semantic.comparison_reversed();
+            let reversed = semantic.slot.comparison == 2;
             let diff = if reversed {
                 opp_lives - my_lives
             } else {
@@ -570,10 +570,13 @@ fn check_condition_with_parts(
                         .filter(|&&cid| cid >= 0)
                         .all(|&cid| card_matches_group(db, cid, group_id))
                 })
-            } else if let (Some(cid), Some(group_id)) = (state.get_context_card_id(ctx), group_id) {
-                card_matches_group(db, cid, group_id)
             } else {
-                false
+                let cid = state.get_context_card_id(ctx).or(Some(ctx.source_card_id));
+                if let (Some(cid), Some(group_id)) = (cid, group_id) {
+                    card_matches_group(db, cid, group_id)
+                } else {
+                    false
+                }
             }
         }
         C_SELF_IS_GROUP => {
@@ -697,6 +700,21 @@ fn check_condition_with_parts(
                     res = compare_i32(player.play_count_this_turn() as i32, val, slot);
                 }
             }
+            // Fallback: if no specific keyword is requested but value is set, check play_count
+            if !res && !semantic.requests_keyword_energy() && !semantic.requests_keyword_member() && !semantic.requests_yell_count_keyword() && !semantic.requests_has_live_set_keyword() {
+                let play_count = player.play_count_this_turn();
+                // Only use group_id if the filter actually has group_enabled set
+                if semantic.filter.group_enabled {
+                    if let Some(group_id) = semantic.semantic_group_id(val) {
+                        let group_id = group_id as u64;
+                        res = (player.played_group_mask & (1 << group_id)) != 0;
+                    }
+                } else if val == 0 {
+                    res = play_count > 0;
+                } else {
+                    res = compare_i32(play_count as i32, val, slot);
+                }
+            }
             if semantic.requests_yell_count_keyword() {
                 res = compare_i32(player.yell_cards.len() as i32, val, slot);
             }
@@ -743,7 +761,7 @@ fn check_condition_with_parts(
             if !count_ok {
                 return false;
             }
-            let filter_attr = semantic.normalized_baton_filter_attr();
+            let filter_attr = semantic.resolved_filter_attr();
             if filter_attr != 0 {
                 player
                     .baton_source_ids
@@ -811,7 +829,7 @@ fn check_condition_with_parts(
                 .and_then(|id| db.get_member(id))
                 .map(|m| m.cost as i32)
                 .unwrap_or(0);
-            let reversed = semantic.comparison_reversed();
+            let reversed = semantic.slot.comparison == 2;
             let diff = if reversed {
                 opp_cost - self_cost
             } else {
@@ -826,7 +844,7 @@ fn check_condition_with_parts(
         C_SCORE_LEAD => {
             let self_score = player.score as i32;
             let opp_score = opponent.score as i32;
-            let reversed = semantic.comparison_reversed();
+            let reversed = semantic.slot.comparison == 2;
             let diff = if reversed {
                 opp_score - self_score
             } else {
@@ -847,7 +865,7 @@ fn check_condition_with_parts(
                 .map(|&x| x as i32)
                 .sum::<i32>();
             let opp_total = opp_hearts.to_array().iter().map(|&x| x as i32).sum::<i32>();
-            let reversed = semantic.comparison_reversed();
+            let reversed = semantic.slot.comparison == 2;
             let diff = if reversed {
                 opp_total - self_total
             } else {
@@ -930,7 +948,7 @@ fn check_condition_with_parts(
         C_BLADE_COMPARE => {
             let slot = resolve_slot_index(area_val, ctx.area_idx).unwrap_or(0);
             let blades = state.get_effective_blades(p_idx, slot, db, depth + 1);
-            if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
+            if semantic.filter.is_le {
                 blades <= val as u32
             } else {
                 blades >= val as u32
@@ -951,16 +969,16 @@ fn check_condition_with_parts(
             };
             if state.debug.debug_mode || std::env::var("TRACE_HEART_COMPARE").is_ok() {
                 eprintln!(
-                    "[DEBUG_HEART_COMPARE] slot={}, color_idx={}, hearts={:?}, count={}, val={}, mode={:?}",
+                    "[DEBUG_HEART_COMPARE] slot={}, color_idx={}, hearts={:?}, count={}, val={}, is_le={}",
                     slot,
                     color_idx,
                     hearts.to_array(),
                     count,
                     val,
-                    semantic.comparison_mode()
+                    semantic.filter.is_le
                 );
             }
-            if semantic.comparison_mode() == SemanticComparisonMode::LessEqual {
+            if semantic.filter.is_le {
                 count <= val
             } else {
                 count >= val

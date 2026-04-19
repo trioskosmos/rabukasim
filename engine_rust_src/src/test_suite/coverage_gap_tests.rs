@@ -192,9 +192,23 @@ fn test_conditions_member_properties() {
     assert!(check_cond(&mut state, &db, C_COUNT_GROUP, 1, 1, 0));
 
     // C_GROUP_FILTER: Source/Context card group check.
-    ctx.source_card_id = 4332; // Group 2 (from test_helpers.rs)
-    assert!(state.check_condition_opcode(&db, C_GROUP_FILTER, 0, 2, 0, &ctx, 0));
-    assert!(!state.check_condition_opcode(&db, C_GROUP_FILTER, 0, 1, 0, &ctx, 0));
+    // Add card 4332 with group 2 to the database
+    let m4332 = MemberCard {
+        card_id: 4332,
+        groups: vec![2],
+        ..Default::default()
+    };
+    db.members.insert(4332, m4332.clone());
+    if db.members_vec.len() <= (4332 as usize & LOGIC_ID_MASK as usize) {
+        db.members_vec.resize((4332 as usize & LOGIC_ID_MASK as usize) + 1, None);
+    }
+    db.members_vec[4332 as usize & LOGIC_ID_MASK as usize] = Some(m4332);
+    
+    ctx.source_card_id = 4332; // Group 2
+    let group_2_attr = (2u64 << 5) | (1u64 << 4); // group_id=2 at bits 5-11, group_enabled at bit 4
+    let group_1_attr = (1u64 << 5) | (1u64 << 4); // group_id=1 at bits 5-11, group_enabled at bit 4
+    assert!(state.check_condition_opcode(&db, C_GROUP_FILTER, 0, group_2_attr, 0, &ctx, 0));
+    assert!(!state.check_condition_opcode(&db, C_GROUP_FILTER, 0, group_1_attr, 0, &ctx, 0));
 
     // C_COUNT_HEARTS: Has at least 1 heart (Pink Heart on 3001)
     // Manually add heart to state to satisfy condition for generic card 3001
@@ -209,7 +223,8 @@ fn test_conditions_member_properties() {
     // C_SELF_IS_GROUP: Source card has group 1
     ctx.source_card_id = 19;
     ctx.area_idx = 0;
-    assert!(state.check_condition_opcode(&db, C_SELF_IS_GROUP, 0, 10, 0, &ctx, 0));
+    let group_10_attr = (10u64 << 5) | (1u64 << 4); // group_id=10 at bits 5-11, group_enabled at bit 4
+    assert!(state.check_condition_opcode(&db, C_SELF_IS_GROUP, 0, group_10_attr, 0, &ctx, 0));
 
     // C_HAS_LIVE_CARD: Player 0 has a live revealed?
     state.players[0].live_zone[0] = 100;

@@ -93,7 +93,7 @@ pub fn handle_recovery(
     op: i32,
 ) -> HandlerResult {
     let v = frame_data.value;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.raw_attr() as i64;
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let recovery_branch_spec = semantic_recovery_branch_spec_from_params(frame_data.params);
@@ -137,7 +137,7 @@ pub fn handle_recovery(
             state.players[p_idx].looked_cards,
             ctx.choice_index,
             ctx.v_remaining,
-            frame_data.raw_attr
+            frame_data.raw_attr()
         );
     }
 

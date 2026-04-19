@@ -136,8 +136,8 @@ fn semantic_heart_color_from_frame(frame: &AbilityFrameComponents<'_>, fallback:
     }
 
     // Validate raw attribute mask
-    if frame.raw_attr != 0 {
-        if let Some(color) = validation::validate_color_mask(frame.raw_attr as usize) {
+    if frame.raw_attr() != 0 {
+        if let Some(color) = validation::validate_color_mask(frame.raw_attr() as usize) {
             return color;
         }
     }

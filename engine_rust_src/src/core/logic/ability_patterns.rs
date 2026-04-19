@@ -54,7 +54,7 @@ fn structured_targeted_live_heart_bonus_signature(ability: &Ability) -> Option<(
             _ => None,
         })?;
 
-    Some((select_frame.attr(), heart_color))
+    Some((select_frame.filter.to_attr(), heart_color))
 }
 
 pub const OPTIONAL_MODE_MASK_BASE: i16 = 1900;

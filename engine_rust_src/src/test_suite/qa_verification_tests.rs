@@ -2750,7 +2750,7 @@ mod tests {
             crate::core::logic::models::AbilityFrame {
                 opcode: O_MOVE_TO_DISCARD,
                 value: 2,
-                attr: (6u64 << 53),
+                filter: crate::core::logic::filter::CardFilter::from_attr(6u64 << 53),
                 slot: crate::core::logic::interpreter::instruction::DecodedSlot {
                     target_slot: SLOT_HAND as u8,
                     ..Default::default()
@@ -3255,7 +3255,7 @@ mod tests {
             AbilityFrame {
                 opcode: O_SELECT_MEMBER,
                 value: 1,
-                attr: 0,
+                filter: crate::core::logic::filter::CardFilter::from_attr(0),
                 slot: crate::core::logic::interpreter::instruction::DecodedSlot {
                     target_slot: crate::core::generated_constants::SLOT_CONTEXT as u8,
                     source_zone: crate::core::enums::Zone::Stage,
@@ -3335,7 +3335,6 @@ mod tests {
                 is_opponent: false,
                 ..Default::default()
             },
-            raw_attr: crate::core::logic::constants::FILTER_IS_OPTIONAL | 99,
             raw_slot: crate::core::logic::constants::TARGET_SLOT_STAGE as i32,
             is_negated: false,
             is_cost: false,

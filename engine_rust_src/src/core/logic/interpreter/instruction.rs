@@ -10,7 +10,7 @@ use serde_json::Value;
 
 pub const WORDS_PER_INSTRUCTION: usize = 5;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(from = "DecodedSlotRaw")]
 pub struct DecodedSlot {
     pub target_slot: u8,
@@ -262,7 +262,25 @@ impl DecodedSlot {
         }
     }
 
-    fn decode_zone(val: u8) -> Zone {
+    fn remainder_zone_to_string(val: u8) -> String {
+        match val {
+            // Zone constants (these overlap with hand index range, so check them first)
+            203 => "STAGE".to_string(),
+            204 => "HAND".to_string(),
+            7 => "DISCARD".to_string(),
+            218 => "SUCCESS_PILE".to_string(),
+            17 => "YELL_PILE".to_string(),
+            // Hand indices (200 + index)
+            200 => "HAND[0]".to_string(),
+            201 => "HAND[1]".to_string(),
+            202 => "HAND[2]".to_string(),
+            _ if val >= 205 => format!("HAND[{}]", val - 200),
+            _ if val >= 100 => format!("DISCARD[{}]", val - 100),
+            _ => format!("ZONE_{}", val),
+        }
+    }
+
+    pub fn decode_zone(val: u8) -> Zone {
         let v = val as i32;
         if v == ZONE_DECK_TOP {
             Zone::DeckTop
@@ -320,6 +338,25 @@ impl DecodedSlot {
             s |= 1 << S_STANDARD_IS_DYNAMIC_SHIFT;
         }
         s as i32
+    }
+}
+
+impl std::fmt::Debug for DecodedSlot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DecodedSlot")
+            .field("target_slot", &self.target_slot)
+            .field("comparison", &self.comparison)
+            .field("source_zone", &self.source_zone)
+            .field("dest_zone", &self.dest_zone)
+            .field("remainder_zone", &Self::remainder_zone_to_string(self.remainder_zone))
+            .field("is_opponent", &self.is_opponent)
+            .field("is_reveal_until_live", &self.is_reveal_until_live)
+            .field("is_baton_slot", &self.is_baton_slot)
+            .field("is_empty_slot", &self.is_empty_slot)
+            .field("is_wait", &self.is_wait)
+            .field("is_dynamic", &self.is_dynamic)
+            .field("area_idx", &self.area_idx)
+            .finish()
     }
 }
 
@@ -443,16 +480,15 @@ impl From<DecodedLookAndChooseRaw> for DecodedLookAndChoose {
 impl DecodedLookAndChoose {
     pub fn decode(v: i32) -> Self {
         let uv = v as u32;
+        let count = ((uv >> V_LOOK_CHOOSE_COUNT_SHIFT) & V_LOOK_CHOOSE_COUNT_MASK) as u8;
         Self {
-            count: ((uv >> V_LOOK_CHOOSE_COUNT_SHIFT) & V_LOOK_CHOOSE_COUNT_MASK) as u8,
+            count,
             choose_count: 0,
             char_id_1: ((uv >> V_LOOK_CHOOSE_CHAR_ID_1_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_1_MASK) as u8,
             char_id_2: ((uv >> V_LOOK_CHOOSE_CHAR_ID_2_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_2_MASK) as u8,
             char_id_3: ((uv >> V_LOOK_CHOOSE_CHAR_ID_3_SHIFT) & V_LOOK_CHOOSE_CHAR_ID_3_MASK) as u8,
             reveal: ((uv >> V_LOOK_CHOOSE_REVEAL_SHIFT) & V_LOOK_CHOOSE_REVEAL_MASK) != 0,
-            dest_discard: ((uv >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT)
-                & V_LOOK_CHOOSE_DEST_DISCARD_MASK)
-                != 0,
+            dest_discard: ((uv >> V_LOOK_CHOOSE_DEST_DISCARD_SHIFT) & V_LOOK_CHOOSE_DEST_DISCARD_MASK) != 0,
         }
     }
 
@@ -542,6 +578,12 @@ pub struct DecodedFilterAttr {
     pub is_optional: bool,
     pub keyword_energy: bool,
     pub keyword_member: bool,
+    pub any_stage: bool,
+    pub revealed_context: bool,
+    pub played_this_turn: bool,
+    pub yell_count: bool,
+    pub has_live_set: bool,
+    pub total_cost: bool,
 }
 
 impl<'de> Deserialize<'de> for DecodedFilterAttr {
@@ -608,6 +650,12 @@ impl<'de> Deserialize<'de> for DecodedFilterAttr {
             is_optional: get_bool(map, "is_optional"),
             keyword_energy: get_bool(map, "keyword_energy"),
             keyword_member: get_bool(map, "keyword_member"),
+            any_stage: get_bool(map, "any_stage"),
+            revealed_context: get_bool(map, "revealed_context"),
+            played_this_turn: get_bool(map, "played_this_turn"),
+            yell_count: get_bool(map, "yell_count"),
+            has_live_set: get_bool(map, "has_live_set"),
+            total_cost: get_bool(map, "total_cost"),
         })
     }
 }
@@ -670,6 +718,18 @@ struct DecodedFilterAttrStructuredRaw {
     keyword_energy: Option<Value>,
     #[serde(default)]
     keyword_member: Option<Value>,
+    #[serde(default)]
+    any_stage: Option<Value>,
+    #[serde(default)]
+    revealed_context: Option<Value>,
+    #[serde(default)]
+    played_this_turn: Option<Value>,
+    #[serde(default)]
+    yell_count: Option<Value>,
+    #[serde(default)]
+    has_live_set: Option<Value>,
+    #[serde(default)]
+    total_cost: Option<Value>,
 }
 
 impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
@@ -761,6 +821,30 @@ impl From<DecodedFilterAttrRaw> for DecodedFilterAttr {
                     .keyword_member
                     .map(|v| as_bool_robust(&v))
                     .unwrap_or_default(),
+                any_stage: raw
+                    .any_stage
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                revealed_context: raw
+                    .revealed_context
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                played_this_turn: raw
+                    .played_this_turn
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                yell_count: raw
+                    .yell_count
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                has_live_set: raw
+                    .has_live_set
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
+                total_cost: raw
+                    .total_cost
+                    .map(|v| as_bool_robust(&v))
+                    .unwrap_or_default(),
             }
             .into(),
         }
@@ -795,6 +879,12 @@ impl From<CardFilter> for DecodedFilterAttr {
             is_optional: filter.is_optional,
             keyword_energy: filter.keyword_energy,
             keyword_member: filter.keyword_member,
+            any_stage: filter.any_stage,
+            revealed_context: filter.revealed_context,
+            played_this_turn: filter.played_this_turn,
+            yell_count: filter.yell_count,
+            has_live_set: filter.has_live_set,
+            total_cost: filter.total_cost,
         }
     }
 }
@@ -828,6 +918,12 @@ impl From<DecodedFilterAttr> for CardFilter {
             is_optional: filter.is_optional,
             keyword_energy: filter.keyword_energy,
             keyword_member: filter.keyword_member,
+            any_stage: filter.any_stage,
+            revealed_context: filter.revealed_context,
+            played_this_turn: filter.played_this_turn,
+            yell_count: filter.yell_count,
+            has_live_set: filter.has_live_set,
+            total_cost: filter.total_cost,
         }
     }
 }

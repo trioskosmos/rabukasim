@@ -1,4 +1,5 @@
 use crate::core::enums::Zone;
+use crate::core::logic::ChoiceType;
 use crate::core::logic::constants::{CHOICE_ALL, CHOICE_DONE};
 use crate::core::logic::interpreter::handlers::choice_prompt::suspend_choice;
 use crate::core::logic::interpreter::handlers::interaction_zone::{
@@ -39,14 +40,26 @@ pub fn handle_look_and_choose(
     frame_idx: usize,
 ) -> HandlerResult {
     let choose_count = resolve_choose_count(db, ctx, frame_data);
-    let spec = frame_data.semantic_look_and_choose_spec(choose_count);
+    
+    // Extract data directly from frame instead of using semantic type
+    let look_count = frame_data.look_choose().count.max(1) as usize;
+    let source_zone = if frame_data.slot.source_zone == Zone::Default {
+        Zone::Deck
+    } else {
+        frame_data.slot.source_zone
+    };
+    let remainder_zone = frame_data.slot.remainder_zone;
+    let reveal_flag = frame_data.look_choose().reveal;
+    let remainder_to_discard = frame_data.look_choose().dest_discard;
+    let is_optional = frame_data.filter.is_optional;
+    let selection_filter = frame_data.filter;
+    let selection_filter_attr = frame_data.resolved_filter_attr();
+    let suspend_slot = frame_data.raw_slot;
+    
     let p_idx = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = slot_info.target_slot;
-    let source_zone = spec.source_zone;
-    let look_count = spec.look_count;
-    let reveal_flag = spec.reveal;
-    let compiled_choice_count = spec.choose_count;
+    let compiled_choice_count = choose_count;
     if ctx.choice_index == -1 {
         state.players[p_idx].looked_cards.clear();
     }
@@ -63,6 +76,14 @@ pub fn handle_look_and_choose(
 
     if ctx.choice_index == -1 {
         let pick_count = i16::from(compiled_choice_count as i16);
+        
+        // Determine choice type directly from frame data
+        let choice_type = match source_zone {
+            Zone::Hand => ChoiceType::SelectHandDiscard,
+            Zone::Discard => ChoiceType::SelectDiscardPlay,
+            _ => ChoiceType::LookAndChoose,
+        };
+        
         if matches!(
             suspend_choice(
                 state,
@@ -71,14 +92,13 @@ pub fn handle_look_and_choose(
                 ctx,
                 frame_idx,
                 O_LOOK_AND_CHOOSE,
-                spec.suspend_slot,
-                spec.choice_type(),
-                spec.selection_filter_attr,
+                suspend_slot,
+                choice_type,
+                selection_filter_attr,
                 pick_count,
             ),
             HandlerResult::Suspend
         ) {
-            let is_optional = spec.selection_filter.is_optional;
             if is_optional && ctx.choice_index == CHOICE_DONE {
                 let cards: Vec<i32> = state.players[p_idx].looked_cards.drain(..).collect();
                 state.players[p_idx].deck.extend(cards.into_iter().rev());
@@ -95,18 +115,21 @@ pub fn handle_look_and_choose(
     // Handle CHOICE_DONE (skip) by finalizing the remaining looked cards.
     if choice == CHOICE_DONE as i32 {
         let final_destination = {
-            let dest = spec.finalize_destination();
-            if dest != spec.source_zone
-                || spec.remainder_to_discard
-                || spec.remainder_zone != Zone::Default
-            {
+            let dest = if remainder_to_discard {
+                Zone::Discard
+            } else if remainder_zone as i32 != Zone::Default as i32 {
+                crate::core::logic::interpreter::instruction::DecodedSlot::decode_zone(remainder_zone)
+            } else {
+                source_zone
+            };
+            if dest != source_zone || remainder_to_discard || remainder_zone as i32 != Zone::Default as i32 {
                 dest
             } else {
                 let is_real_ability = ctx.ability_index >= 0
                     || ctx.ability_card_id >= 0
                     || ctx.trigger_type != crate::core::models::TriggerType::None;
                 if is_real_ability
-                    && matches!(spec.source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom)
+                    && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom)
                 {
                     Zone::Discard
                 } else {
@@ -145,8 +168,14 @@ pub fn handle_look_and_choose(
             let rem = if ctx.v_remaining > 0 { ctx.v_remaining - 1 } else { 0 };
             if allow_multi_pick && rem > 0 && revealed.iter().any(|&c| c != -1) {
                 state.players[p_idx].looked_cards = revealed.clone();
+                // Determine choice type directly from frame data
+                let choice_type = match source_zone {
+                    Zone::Hand => ChoiceType::SelectHandDiscard,
+                    Zone::Discard => ChoiceType::SelectDiscardPlay,
+                    _ => ChoiceType::LookAndChoose,
+                };
                 if matches!(
-                    suspend_choice(state, db, ctx, ctx, frame_idx, O_LOOK_AND_CHOOSE, spec.suspend_slot, spec.choice_type(), spec.selection_filter_attr, rem),
+                    suspend_choice(state, db, ctx, ctx, frame_idx, O_LOOK_AND_CHOOSE, suspend_slot, choice_type, selection_filter_attr, rem),
                     HandlerResult::Suspend
                 ) {
                     return HandlerResult::Suspend;
@@ -157,14 +186,20 @@ pub fn handle_look_and_choose(
 
     // === Phase 4: Finalize (move unchosen cards to destination) ===
     let final_destination = {
-        let dest = spec.finalize_destination();
-        if dest != spec.source_zone || spec.remainder_to_discard || spec.remainder_zone != Zone::Default {
+        let dest = if remainder_to_discard {
+            Zone::Discard
+        } else if remainder_zone as i32 != Zone::Default as i32 {
+            crate::core::logic::interpreter::instruction::DecodedSlot::decode_zone(remainder_zone)
+        } else {
+            source_zone
+        };
+        if dest != source_zone || remainder_to_discard || remainder_zone as i32 != Zone::Default as i32 {
             dest
         } else {
             let is_real_ability = ctx.ability_index >= 0
                 || ctx.ability_card_id >= 0
                 || ctx.trigger_type != crate::core::models::TriggerType::None;
-            if is_real_ability && matches!(spec.source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom) {
+            if is_real_ability && matches!(source_zone, Zone::Deck | Zone::DeckTop | Zone::DeckBottom) {
                 Zone::Discard
             } else {
                 dest

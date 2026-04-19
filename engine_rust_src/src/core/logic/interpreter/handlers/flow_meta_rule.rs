@@ -37,7 +37,7 @@ pub fn handle_meta_rule(
     frame_data: &AbilityFrameComponents<'_>,
     frame_idx: usize,
 ) -> HandlerResult {
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.raw_attr() as i64;
     let v = frame_data.value;
     let p_idx = ctx.player_id as usize;
     let base_p = ctx.activator_id as usize;
@@ -62,7 +62,7 @@ pub fn handle_meta_rule(
         .map(|value| value.to_ascii_uppercase());
 
     if matches!(raw_effect, Some("COUNT_MEMBER")) {
-        let filter_attr = merge_filter_attr_with_params(frame_data.raw_attr, frame_data.params);
+        let filter_attr = merge_filter_attr_with_params(frame_data.raw_attr(), frame_data.params);
         ctx.v_accumulated = get_condition_count(state, db, C_COUNT_STAGE, filter_attr, ctx) as i16;
     } else if matches!(raw_effect, Some("DISCARD_YELL_PILE")) {
         if (a as u64 & FILTER_IS_OPTIONAL) != 0 && ctx.choice_index == -1 {

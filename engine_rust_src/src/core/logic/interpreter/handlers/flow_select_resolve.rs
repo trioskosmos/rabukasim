@@ -54,7 +54,7 @@ fn recover_select_filter_attr(db: &CardDatabase, ctx: &AbilityContext, current: 
         .resolved_frames()
         .get(ctx.program_counter as usize)
         .filter(|frame| frame.opcode() == O_SELECT_MEMBER)
-        .map(|frame| current | frame.attr())
+        .map(|frame| current | frame.filter.to_attr())
         .unwrap_or(current)
 }
 

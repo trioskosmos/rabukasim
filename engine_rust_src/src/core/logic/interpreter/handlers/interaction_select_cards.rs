@@ -48,7 +48,14 @@ pub fn handle_select_cards(
     let is_variable_selection = v < 0;
 
     let slot_info = frame_data.slot;
-    let spec = frame_data.semantic_select_cards_spec();
+    let source_zone = frame_data.slot.source_zone;
+    
+    // Determine choice type directly from frame data
+    let choice_type = match source_zone {
+        crate::core::enums::Zone::Hand => ChoiceType::SelectHandDiscard,
+        crate::core::enums::Zone::Discard => ChoiceType::SelectDiscardPlay,
+        _ => ChoiceType::LookAndChoose,
+    };
 
     if is_optional
         && is_variable_selection
@@ -133,7 +140,7 @@ pub fn handle_select_cards(
 
     if ctx.choice_index == -1 {
         state.players[p_idx].looked_cards.clear();
-        let cards_to_filter = match spec.source_zone {
+        let cards_to_filter = match source_zone {
             crate::core::enums::Zone::Hand => state.players[p_idx].hand.to_vec(),
             crate::core::enums::Zone::Discard => state.players[p_idx].discard.to_vec(),
             crate::core::enums::Zone::Deck => state.players[p_idx].deck.to_vec(),
@@ -157,8 +164,8 @@ pub fn handle_select_cards(
             eprintln!(
                 "[SELECT_CARDS_DBG] opcode={} choice_type={:?} source_zone={:?} looked_cards={:?} optional={} variable={} v={} filter_attr={:#x}",
                 frame_data.opcode,
-                spec.choice_type(),
-                spec.source_zone,
+                choice_type,
+                source_zone,
                 state.players[p_idx].looked_cards,
                 is_optional,
                 is_variable_selection,
@@ -179,7 +186,7 @@ pub fn handle_select_cards(
                 instr_ip,
                 O_SELECT_CARDS,
                 0,
-                spec.choice_type(),
+                choice_type,
                 a as u64,
                 if ctx.v_remaining >= 0 {
                     ctx.v_remaining
@@ -212,7 +219,7 @@ pub fn handle_select_cards(
         v,
         a,
         slot_info,
-        spec.source_zone as u8,
+        source_zone as u8,
         is_optional,
     )
 }

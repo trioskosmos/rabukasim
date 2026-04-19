@@ -293,6 +293,7 @@ fn modal_option_is_legal(
         return ability.has_authored_frame_program() && option_idx < ability.modal_option_count();
     };
 
+    // Try semantic_recovery_branch_spec first
     if let Some(spec) = frames
         .first()
         .and_then(|frame| crate::core::logic::models::semantic_recovery_branch_spec_from_params(frame.components().params))
@@ -332,22 +333,86 @@ fn modal_option_is_legal(
         };
     }
 
+    // Fall back to raw_cond format
     let Some(first_frame) = frames.first() else {
         return false;
     };
 
-    match first_frame.opcode() {
-        O_PAY_ENERGY => {
-            let required = first_frame.value().max(0) as usize;
-            let available = state.players[p_idx]
-                .energy_zone
-                .iter()
-                .enumerate()
-                .filter(|(idx, _)| !state.players[p_idx].is_energy_tapped(*idx))
-                .count();
-            available >= required
+    let Some(params) = first_frame.components().params else {
+        // Original fallback logic
+        return match first_frame.opcode() {
+            O_PAY_ENERGY => {
+                let required = first_frame.value().max(0) as usize;
+                let available = state.players[p_idx]
+                    .energy_zone
+                    .iter()
+                    .enumerate()
+                    .filter(|(idx, _)| !state.players[p_idx].is_energy_tapped(*idx))
+                    .count();
+                available >= required
+            }
+            _ => true,
+        };
+    };
+
+    let Some(raw_cond) = params.get("raw_cond").and_then(|v| v.as_str()) else {
+        // Original fallback logic
+        return match first_frame.opcode() {
+            O_PAY_ENERGY => {
+                let required = first_frame.value().max(0) as usize;
+                let available = state.players[p_idx]
+                    .energy_zone
+                    .iter()
+                    .enumerate()
+                    .filter(|(idx, _)| !state.players[p_idx].is_energy_tapped(*idx))
+                    .count();
+                available >= required
+            }
+            _ => true,
+        };
+    };
+
+    let minimum = params.get("MIN").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+
+    let mut distinct_names: Vec<&str> = Vec::new();
+    let mut distinct_groups: Vec<u8> = Vec::new();
+
+    for cid in state.players[p_idx].discard.iter().copied() {
+        let Some(card) = db.get_live(cid) else {
+            continue;
+        };
+
+        let name = card.name.as_str();
+        if !distinct_names.iter().any(|existing| *existing == name) {
+            distinct_names.push(name);
         }
-        _ => true,
+
+        for group_id in card.groups.iter().copied() {
+            if !distinct_groups.contains(&group_id) {
+                distinct_groups.push(group_id);
+            }
+        }
+    }
+
+    match raw_cond {
+        "UNIQUE_DISCARD_LIVE_NAMES_COUNT" => distinct_names.len() >= minimum,
+        "UNIQUE_DISCARD_LIVE_GROUPS_COUNT" => distinct_groups.len() >= minimum,
+        _ => {
+            // Original fallback logic
+            match first_frame.opcode() {
+                O_PAY_ENERGY => {
+                    let required = first_frame.value().max(0) as usize;
+                    let available = state.players[p_idx]
+                        .energy_zone
+                        .iter()
+                        .enumerate()
+                        .filter(|(idx, _)| !state.players[p_idx].is_energy_tapped(*idx))
+                        .count();
+                    available >= required
+                }
+                _ => true,
+            }
+        }
     }
 }
 

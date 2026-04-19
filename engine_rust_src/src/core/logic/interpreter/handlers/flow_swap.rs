@@ -11,7 +11,7 @@ pub fn handle_swap_area(
     let base_p = ctx.player_id as usize;
     let slot_info = frame_data.slot;
     let target_slot = frame_data.slot.target_slot as i32;
-    let a = frame_data.raw_attr as i64;
+    let a = frame_data.raw_attr() as i64;
     let s = frame_data.raw_slot;
     let v = frame_data.value;
     let target_p_idx = if slot_info.is_opponent || target_slot == 2 {
